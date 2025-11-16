@@ -39,17 +39,64 @@ export default function RootLayout() {
 					<Tabs
 						tabBar={(props) => <StyledTab {...props} />}
 						screenOptions={{ headerShown: false }}
+						initialRouteName="inventory/index"
 					>
-						<Tabs.Screen name="inventory/index" options={{ href: '/inventory' }} />
-						<Tabs.Screen name="sales/index" options={{ href: '/sales' }} />
-						<Tabs.Screen name="products/index" options={{ href: '/products' }} />
-						<Tabs.Screen name="credits/index" options={{ href: '/credits' }} />
-						<Tabs.Screen name="reports/index" options={{ href: '/reports' }} />
-						<Tabs.Screen name="credits/add" options={{ href: null }} />
-						<Tabs.Screen name="inventory/add" options={{ href: null }} />
-						<Tabs.Screen name="sales/add" options={{ href: null }} />
-						<Tabs.Screen name="products/add" options={{ href: null }} />
-						<Tabs.Screen name="products/edit/[id]" options={{ href: null }} />
+						<Tabs.Screen
+							name="inventory/index"
+							options={{ href: '/inventory' }}
+						/>
+						<Tabs.Screen
+							name="sales/index"
+							options={{ href: '/sales' }}
+						/>
+						<Tabs.Screen
+							name="products/index"
+							options={{ href: '/products' }}
+						/>
+						<Tabs.Screen
+							name="credits/index"
+							options={{ href: '/credits' }}
+						/>
+						<Tabs.Screen
+							name="reports/index"
+							options={{ href: '/reports' }}
+						/>
+						<Tabs.Screen
+							name="credits/add"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="credits/details/[id]"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="credits/add-credit/[id]"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="credits/add-payment/[id]"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="inventory/add"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="sales/add"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="sales/[id]"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="products/add"
+							options={{ href: null }}
+						/>
+						<Tabs.Screen
+							name="products/edit/[id]"
+							options={{ href: null }}
+						/>
 					</Tabs>
 				</SafeAreaProvider>
 			</SQLiteProvider>

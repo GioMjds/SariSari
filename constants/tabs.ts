@@ -1,12 +1,15 @@
+import { FontAwesome } from '@expo/vector-icons';
+
 interface Tab {
     name: string;
     href: string;
+    icon: keyof typeof FontAwesome.glyphMap;
 }
 
 export const tabs: Tab[] = [
-    { name: 'Credits', href: '/credits' },
-    { name: 'Inventory', href: '/inventory' },
-    { name: 'Sales', href: '/sales' },
-    { name: 'Products', href: '/products' },
-    { name: 'Reports', href: '/reports' },
+    { name: 'Inventory', href: '/inventory', icon: 'archive' },
+    { name: 'Sales', href: '/sales', icon: 'shopping-cart' },
+    { name: 'Products', href: '/products', icon: 'cube' },
+    { name: 'Credits', href: '/credits', icon: 'credit-card' },
+    { name: 'Reports', href: '/reports', icon: 'bar-chart' },
 ];
