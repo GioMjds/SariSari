@@ -2,7 +2,6 @@ import StyledText from '@/components/elements/StyledText';
 import { initCreditsTable, insertCustomer } from '@/db/credits';
 import { NewCustomer } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
@@ -36,7 +35,6 @@ export default function AddCustomer() {
 
 			await insertCustomer(newCustomer);
 
-			Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 			Alert.alert('Success', 'Customer added successfully', [
 				{
 					text: 'OK',

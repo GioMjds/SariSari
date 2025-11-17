@@ -8,7 +8,6 @@ import {
 import { CreditTransaction, Customer, NewPayment } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
@@ -86,7 +85,6 @@ export default function AddPaymentTransaction() {
 
 			await insertPayment(newPayment);
 
-			Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 			Alert.alert('Success', 'Payment recorded successfully', [
 				{
 					text: 'OK',

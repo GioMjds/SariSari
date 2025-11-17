@@ -1,7 +1,12 @@
-// Modal component to display content in a dialog box.
+import { View } from 'react-native';
+import StyledText from '../elements/StyledText';
 
 const Modal = () => {
-	return <div>Modal</div>;
+	return (
+		<View>
+			<StyledText>Modal</StyledText>
+		</View>
+	);
 };
 
 export default Modal;

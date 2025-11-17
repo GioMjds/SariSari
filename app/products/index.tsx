@@ -1,41 +1,53 @@
 import StyledText from '@/components/elements/StyledText';
-import { Product, deleteProduct, getAllProducts, initProductsTable } from '@/db/products';
+import {
+	Product,
+	deleteProduct,
+	getAllProducts,
+	initProductsTable,
+} from '@/db/products';
 import { FontAwesome } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    Pressable,
-    RefreshControl,
-    Text,
-    TextInput,
-    View
+	ActivityIndicator,
+	FlatList,
+	Modal,
+	Pressable,
+	RefreshControl,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SortOption = 'name' | 'price' | 'stock' | 'sku';
 type SortDirection = 'asc' | 'desc';
 
-const CATEGORIES = ['All', 'Snacks', 'Drinks', 'Household', 'Frozen', 'Cigarettes', 'Other'];
 const LOW_STOCK_THRESHOLD = 5;
 
 export default function Products() {
-	const router = useRouter();
-	const queryClient = useQueryClient();
-
-	const [search, setSearch] = useState('');
-	const [debouncedSearch, setDebouncedSearch] = useState('');
-	const [selectedCategory, setSelectedCategory] = useState('All');
+	const [search, setSearch] = useState<string>('');
+	const [debouncedSearch, setDebouncedSearch] = useState<string>('');
 	const [sortBy, setSortBy] = useState<SortOption>('name');
 	const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-	const [showSortModal, setShowSortModal] = useState(false);
-	const [showDeleteModal, setShowDeleteModal] = useState(false);
-	const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+	const [showSortModal, setShowSortModal] = useState<boolean>(false);
+	const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+	const [selectedProduct, setSelectedProduct] = useState<Product | null>(
+		null
+	);
 	const [showContextMenu, setShowContextMenu] = useState<number | null>(null);
-	const [refreshing, setRefreshing] = useState(false);
+	const [refreshing, setRefreshing] = useState<boolean>(false);
+
+	const router = useRouter();
+	const queryClient = useQueryClient();
 
 	const debounceRef = useRef<number | null>(null);
 
@@ -47,7 +59,10 @@ export default function Products() {
 	// Debounce search
 	useEffect(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current);
-		debounceRef.current = setTimeout(() => setDebouncedSearch(search.trim()), 300) as unknown as number;
+		debounceRef.current = setTimeout(
+			() => setDebouncedSearch(search.trim()),
+			300
+		) as unknown as number;
 	}, [search]);
 
 	// Fetch products
@@ -74,7 +89,6 @@ export default function Products() {
 	const filteredProducts = useMemo(() => {
 		let result = [...products];
 
-		// Search filter
 		if (debouncedSearch) {
 			const term = debouncedSearch.toLowerCase();
 			result = result.filter(
@@ -84,12 +98,6 @@ export default function Products() {
 			);
 		}
 
-		// Category filter (future enhancement - requires category field in DB)
-		// if (selectedCategory !== 'All') {
-		//   result = result.filter((p) => p.category === selectedCategory);
-		// }
-
-		// Sort
 		result.sort((a, b) => {
 			let comparison = 0;
 			switch (sortBy) {
@@ -110,14 +118,18 @@ export default function Products() {
 		});
 
 		return result;
-	}, [products, debouncedSearch, selectedCategory, sortBy, sortDirection]);
+	}, [products, debouncedSearch, sortBy, sortDirection]);
 
 	// Stats
 	const stats = useMemo(() => {
 		return {
 			total: products.length,
-			lowStock: products.filter((p) => p.quantity < LOW_STOCK_THRESHOLD).length,
-			totalValue: products.reduce((sum, p) => sum + p.price * p.quantity, 0),
+			lowStock: products.filter((p) => p.quantity < LOW_STOCK_THRESHOLD)
+				.length,
+			totalValue: products.reduce(
+				(sum, p) => sum + p.price * p.quantity,
+				0
+			),
 		};
 	}, [products]);
 
@@ -162,34 +174,52 @@ export default function Products() {
 			<View className="bg-white mx-4 mb-3 rounded-2xl p-4 shadow-sm">
 				<View className="flex-row justify-between items-start">
 					<View className="flex-1 pr-3">
-						<StyledText variant="semibold" className="text-text-primary text-base mb-1">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-base mb-1"
+						>
 							{item.name}
 						</StyledText>
-						<StyledText variant="regular" className="text-text-secondary text-xs mb-2">
+						<StyledText
+							variant="regular"
+							className="text-text-secondary text-xs mb-2"
+						>
 							SKU: {item.sku}
 						</StyledText>
 						<View className="flex-row items-center gap-4">
 							<View>
-								<StyledText variant="extrabold" className="text-primary text-lg">
+								<StyledText
+									variant="extrabold"
+									className="text-primary text-lg"
+								>
 									₱{item.price.toFixed(2)}
 								</StyledText>
 							</View>
 							<View>
-								<Text className={`${getStockColor(item.quantity)} font-stack-sans-medium text-sm`}>
+								<Text
+									className={`${getStockColor(item.quantity)} font-stack-sans-medium text-sm`}
+								>
 									Stock: {item.quantity}
 								</Text>
 							</View>
 						</View>
-						{item.quantity < LOW_STOCK_THRESHOLD && item.quantity > 0 && (
-							<View className="bg-yellow-100 px-2 py-1 rounded-md mt-2 self-start">
-								<StyledText variant="medium" className="text-yellow-700 text-xs">
-									⚠️ Low Stock
-								</StyledText>
-							</View>
-						)}
+						{item.quantity < LOW_STOCK_THRESHOLD &&
+							item.quantity > 0 && (
+								<View className="bg-yellow-100 px-2 py-1 rounded-md mt-2 self-start">
+									<StyledText
+										variant="medium"
+										className="text-yellow-700 text-xs"
+									>
+										⚠️ Low Stock
+									</StyledText>
+								</View>
+							)}
 						{item.quantity === 0 && (
 							<View className="bg-red-100 px-2 py-1 rounded-md mt-2 self-start">
-								<StyledText variant="medium" className="text-red-700 text-xs">
+								<StyledText
+									variant="medium"
+									className="text-red-700 text-xs"
+								>
 									❌ Out of Stock
 								</StyledText>
 							</View>
@@ -200,50 +230,82 @@ export default function Products() {
 					<View>
 						<Pressable
 							hitSlop={20}
-							onPress={() => setShowContextMenu(isMenuOpen ? null : item.id)}
+							onPress={() =>
+								setShowContextMenu(isMenuOpen ? null : item.id)
+							}
 							className="p-2 active:opacity-50"
 						>
-							<FontAwesome name="ellipsis-v" size={18} color="#7A1CAC" />
+							<FontAwesome
+								name="ellipsis-v"
+								size={18}
+								color="#7A1CAC"
+							/>
 						</Pressable>
 
 						{isMenuOpen && (
-							<View className="absolute right-0 top-10 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[150px] z-50">
-								<Pressable
+							<View className="absolute right-0 top-10 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[150px] z-[9999]">
+								<TouchableOpacity
 									onPress={() => {
-										router.push(`/products/edit/${item.id}`);
+										router.push(
+											`/products/edit/${item.id}`
+										);
 										setShowContextMenu(null);
 									}}
+									activeOpacity={0.2}
 									hitSlop={20}
 									className="flex-row items-center px-4 py-3 border-b border-gray-100 active:bg-background"
 								>
-									<FontAwesome name="edit" size={16} color="#7A1CAC" />
-									<StyledText variant="medium" className="text-text-primary ml-3 text-sm">
+									<FontAwesome
+										name="edit"
+										size={16}
+										color="#7A1CAC"
+									/>
+									<StyledText
+										variant="medium"
+										className="text-text-primary ml-3 text-sm"
+									>
 										Edit Product
 									</StyledText>
-								</Pressable>
-								<Pressable
+								</TouchableOpacity>
+								<TouchableOpacity
 									onPress={() => {
 										router.push('/inventory');
 										setShowContextMenu(null);
 									}}
 									hitSlop={20}
+									activeOpacity={0.2}
 									className="flex-row items-center px-4 py-3 border-b border-gray-100 active:bg-background"
 								>
-									<FontAwesome name="history" size={16} color="#7A1CAC" />
-									<StyledText variant="medium" className="text-text-primary ml-3 text-sm">
+									<FontAwesome
+										name="history"
+										size={16}
+										color="#7A1CAC"
+									/>
+									<StyledText
+										variant="medium"
+										className="text-text-primary ml-3 text-sm"
+									>
 										View History
 									</StyledText>
-								</Pressable>
-								<Pressable
+								</TouchableOpacity>
+								<TouchableOpacity
 									onPress={() => handleDelete(item)}
 									hitSlop={20}
+									activeOpacity={0.2}
 									className="flex-row items-center px-4 py-3 active:bg-red-50"
 								>
-									<FontAwesome name="trash" size={16} color="#dc2626" />
-									<StyledText variant="medium" className="text-red-600 ml-3 text-sm">
+									<FontAwesome
+										name="trash"
+										size={16}
+										color="#dc2626"
+									/>
+									<StyledText
+										variant="medium"
+										className="text-red-600 ml-3 text-sm"
+									>
 										Delete
 									</StyledText>
-								</Pressable>
+								</TouchableOpacity>
 							</View>
 						)}
 					</View>
@@ -255,75 +317,110 @@ export default function Products() {
 	return (
 		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
 			{/* Header */}
-			<View className="bg-primary px-4 py-4 pb-6">
+			<View className="px-4 py-4 pb-2">
 				<View className="flex-row justify-between items-center">
-					<StyledText variant="extrabold" className="text-white text-3xl">
+					<StyledText
+						variant="extrabold"
+						className="text-primary text-3xl"
+					>
 						Your Products
 					</StyledText>
 					<View className="flex-row gap-2">
-						<Pressable
+						<TouchableOpacity
 							onPress={() => setShowSortModal(true)}
-							className="bg-secondary/30 rounded-xl px-4 py-2 active:opacity-70"
+							hitSlop={20}
+							activeOpacity={0.2}
+							className="bg-secondary rounded-xl px-4 py-2"
 						>
 							<FontAwesome name="sort" size={18} color="#fff" />
-						</Pressable>
-						<Pressable
+						</TouchableOpacity>
+						<TouchableOpacity
 							onPress={() => router.push('/products/add')}
-							className="bg-accent rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
+							hitSlop={20}
+							activeOpacity={0.2}
+							className="bg-secondary rounded-xl px-4 py-2 flex-row items-center gap-2"
 						>
 							<FontAwesome name="plus" size={18} color="#fff" />
-							<StyledText variant="semibold" className="text-white text-sm">
+							<StyledText
+								variant="semibold"
+								className="text-white text-sm"
+							>
 								Add Product
 							</StyledText>
-						</Pressable>
+						</TouchableOpacity>
+					</View>
+				</View>
+
+				{/* Search Bar */}
+				<View className="py-3">
+					<View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
+						<FontAwesome name="search" size={16} color="#9ca3af" />
+						<TextInput
+							placeholder="Search by name or SKU..."
+							value={search}
+							onChangeText={setSearch}
+							className="flex-1 ml-3 font-stack-sans text-base text-text-primary"
+							placeholderTextColor="#9ca3af"
+						/>
+						{search.length > 0 && (
+							<Pressable
+								onPress={() => setSearch('')}
+								className="p-1"
+							>
+								<FontAwesome
+									name="times-circle"
+									size={16}
+									color="#9ca3af"
+								/>
+							</Pressable>
+						)}
 					</View>
 				</View>
 
 				{/* Stats Cards */}
-				<View className="flex-row justify-between mt-4 gap-3">
-					<View className="flex-1 bg-white/10 rounded-xl p-3">
-						<StyledText variant="regular" className="text-white/70 text-xs mb-1">
+				<View className="flex-row justify-between mt-2 gap-3">
+					<View className="flex-1 bg-white rounded-xl p-3">
+						<StyledText
+							variant="regular"
+							className="text-secondary text-sm mb-1"
+						>
 							Total Products
 						</StyledText>
-						<StyledText variant="extrabold" className="text-white text-lg">
+						<StyledText
+							variant="extrabold"
+							className="text-secondary text-xl"
+						>
 							{stats.total}
 						</StyledText>
 					</View>
-					<View className="flex-1 bg-white/10 rounded-xl p-3">
-						<StyledText variant="regular" className="text-white/70 text-xs mb-1">
+					<View className="flex-1 bg-white rounded-xl p-3">
+						<StyledText
+							variant="regular"
+							className="text-secondary text-sm mb-1"
+						>
 							Low Stock
 						</StyledText>
-						<StyledText variant="extrabold" className="text-white text-lg">
+						<StyledText
+							variant="extrabold"
+							className="text-secondary text-xl"
+						>
 							{stats.lowStock}
 						</StyledText>
 					</View>
-					<View className="flex-1 bg-white/10 rounded-xl p-3">
-						<StyledText variant="regular" className="text-white/70 text-xs mb-1">
+					<View className="flex-1 bg-white rounded-xl p-3">
+						<StyledText
+							variant="regular"
+							className="text-secondary text-sm mb-1"
+						>
 							Total Value
 						</StyledText>
-						<StyledText variant="extrabold" className="text-white text-lg">
+						<StyledText
+							variant="extrabold"
+							className="text-secondary text-xl"
+						>
 							₱{stats.totalValue.toFixed(0)}
 						</StyledText>
 					</View>
-				</View>
-			</View>
-
-			{/* Search Bar */}
-			<View className="px-4 py-3">
-				<View className="bg-white rounded-xl flex-row items-center px-4 py-3 shadow-sm">
-					<FontAwesome name="search" size={16} color="#9ca3af" />
-					<TextInput
-						placeholder="Search by name or SKU..."
-						value={search}
-						onChangeText={setSearch}
-						className="flex-1 ml-3 font-stack-sans text-base text-text-primary"
-						placeholderTextColor="#9ca3af"
-					/>
-					{search.length > 0 && (
-						<Pressable onPress={() => setSearch('')} className="p-1">
-							<FontAwesome name="times-circle" size={16} color="#9ca3af" />
-						</Pressable>
-					)}
 				</View>
 			</View>
 
@@ -334,19 +431,35 @@ export default function Products() {
 				</View>
 			) : filteredProducts.length === 0 ? (
 				<View className="flex-1 justify-center items-center px-8">
-					<FontAwesome name="cube" size={64} color="#AD49E1" style={{ opacity: 0.3 }} />
-					<StyledText variant="semibold" className="text-text-secondary text-lg mt-4 text-center">
+					<FontAwesome
+						name="cube"
+						size={64}
+						color="#AD49E1"
+						style={{ opacity: 0.3 }}
+					/>
+					<StyledText
+						variant="semibold"
+						className="text-text-secondary text-lg mt-4 text-center"
+					>
 						{search ? 'No products found' : 'No products yet'}
 					</StyledText>
-					<StyledText variant="regular" className="text-text-muted text-sm mt-2 text-center">
-						{search ? 'Try a different search term' : 'Start by adding your first product'}
+					<StyledText
+						variant="regular"
+						className="text-text-muted text-sm mt-2 text-center"
+					>
+						{search
+							? 'Try a different search term'
+							: 'Start by adding your first product'}
 					</StyledText>
 					{!search && (
 						<Pressable
 							onPress={() => router.push('/products/add')}
 							className="bg-accent rounded-xl px-6 py-3 mt-6 active:opacity-70"
 						>
-							<StyledText variant="semibold" className="text-white text-base">
+							<StyledText
+								variant="semibold"
+								className="text-white text-base"
+							>
 								Add Product
 							</StyledText>
 						</Pressable>
@@ -357,49 +470,104 @@ export default function Products() {
 					data={filteredProducts}
 					renderItem={renderProduct}
 					keyExtractor={(item) => item.id.toString()}
-					contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
-					refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7A1CAC" />}
+					contentContainerStyle={{
+						paddingTop: 8,
+						paddingBottom: 100,
+					}}
+					refreshControl={
+						<RefreshControl
+							refreshing={refreshing}
+							onRefresh={onRefresh}
+							tintColor="#7A1CAC"
+						/>
+					}
 				/>
 			)}
 
 			{/* Sort Modal */}
-			<Modal visible={showSortModal} transparent animationType="fade" onRequestClose={() => setShowSortModal(false)}>
-				<Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setShowSortModal(false)}>
-					<Pressable className="bg-white rounded-t-3xl p-6" onPress={(e) => e.stopPropagation()}>
-						<StyledText variant="extrabold" className="text-text-primary text-xl mb-4">
+			<Modal
+				visible={showSortModal}
+				transparent
+				animationType="fade"
+				onRequestClose={() => setShowSortModal(false)}
+			>
+				<Pressable
+					className="flex-1 bg-black/60 justify-end"
+					onPress={() => setShowSortModal(false)}
+				>
+					<Pressable
+						className="bg-white rounded-t-3xl p-6"
+						onPress={(e) => e.stopPropagation()}
+					>
+						<StyledText
+							variant="extrabold"
+							className="text-text-primary text-xl mb-4"
+						>
 							Sort By
 						</StyledText>
 						{[
-							{ key: 'name' as SortOption, label: 'Name', icon: 'font' },
-							{ key: 'price' as SortOption, label: 'Price', icon: 'money' },
-							{ key: 'stock' as SortOption, label: 'Stock Level', icon: 'cubes' },
-							{ key: 'sku' as SortOption, label: 'SKU', icon: 'barcode' },
+							{
+								key: 'name' as SortOption,
+								label: 'Name',
+								icon: 'font',
+							},
+							{
+								key: 'price' as SortOption,
+								label: 'Price',
+								icon: 'money',
+							},
+							{
+								key: 'stock' as SortOption,
+								label: 'Stock Level',
+								icon: 'cubes',
+							},
+							{
+								key: 'sku' as SortOption,
+								label: 'SKU',
+								icon: 'barcode',
+							},
 						].map((option) => (
-							<Pressable
+							<TouchableOpacity
 								key={option.key}
+								hitSlop={20}
 								onPress={() => handleSort(option.key)}
-								className="flex-row items-center justify-between py-4 border-b border-gray-100 active:bg-background"
+								activeOpacity={0.2}
+								className="flex-row items-center justify-between py-4 border-b border-gray-100"
 							>
 								<View className="flex-row items-center">
-									<FontAwesome name={option.icon as any} size={18} color="#7A1CAC" />
-									<StyledText variant="medium" className="text-text-primary ml-4 text-base">
+									<FontAwesome
+										name={option.icon as any}
+										size={18}
+										color="#7A1CAC"
+									/>
+									<StyledText
+										variant="medium"
+										className="text-text-primary ml-4 text-base"
+									>
 										{option.label}
 									</StyledText>
 								</View>
 								{sortBy === option.key && (
 									<FontAwesome
-										name={sortDirection === 'asc' ? 'sort-asc' : 'sort-desc'}
+										name={
+											sortDirection === 'asc'
+												? 'sort-asc'
+												: 'sort-desc'
+										}
 										size={18}
 										color="#7A1CAC"
 									/>
 								)}
-							</Pressable>
+							</TouchableOpacity>
 						))}
 						<Pressable
 							onPress={() => setShowSortModal(false)}
 							className="bg-gray-200 rounded-xl py-3 mt-4 active:opacity-70"
 						>
-							<StyledText variant="semibold" className="text-text-primary text-center text-base">
+							<StyledText
+								variant="semibold"
+								className="text-text-primary text-center text-base"
+							>
 								Close
 							</StyledText>
 						</Pressable>
@@ -416,18 +584,29 @@ export default function Products() {
 			>
 				<View className="flex-1 bg-black/40 justify-center items-center px-6">
 					<View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-						<StyledText variant="extrabold" className="text-text-primary text-xl mb-2">
+						<StyledText
+							variant="extrabold"
+							className="text-text-primary text-xl mb-2"
+						>
 							Delete Product?
 						</StyledText>
-						<StyledText variant="regular" className="text-text-secondary text-sm mb-4">
-							Are you sure you want to delete "{selectedProduct?.name}"? This action cannot be undone.
+						<StyledText
+							variant="regular"
+							className="text-text-secondary text-sm mb-4"
+						>
+							Are you sure you want to delete "
+							{selectedProduct?.name}"? This action cannot be
+							undone.
 						</StyledText>
 						<View className="flex-row gap-3">
 							<Pressable
 								onPress={() => setShowDeleteModal(false)}
 								className="flex-1 bg-gray-200 rounded-xl py-3 active:opacity-70"
 							>
-								<StyledText variant="semibold" className="text-text-primary text-center text-base">
+								<StyledText
+									variant="semibold"
+									className="text-text-primary text-center text-base"
+								>
 									Cancel
 								</StyledText>
 							</Pressable>
@@ -436,8 +615,13 @@ export default function Products() {
 								className="flex-1 bg-red-600 rounded-xl py-3 active:opacity-70"
 								disabled={deleteMutation.isPending}
 							>
-								<StyledText variant="semibold" className="text-white text-center text-base">
-									{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+								<StyledText
+									variant="semibold"
+									className="text-white text-center text-base"
+								>
+									{deleteMutation.isPending
+										? 'Deleting...'
+										: 'Delete'}
 								</StyledText>
 							</Pressable>
 						</View>

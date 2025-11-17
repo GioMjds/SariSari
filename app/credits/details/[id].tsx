@@ -9,7 +9,6 @@ import {
 import { CreditHistory, CreditTransaction, CustomerWithDetails } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
@@ -62,7 +61,6 @@ export default function CustomerDetails() {
 				text: 'Confirm',
 				style: 'destructive',
 				onPress: async () => {
-					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 					await markAllCreditsAsPaid(customer.id);
 					loadData();
 				},
@@ -79,7 +77,6 @@ export default function CustomerDetails() {
 				text: 'Delete',
 				style: 'destructive',
 				onPress: async () => {
-					Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 					await deleteCustomer(customer.id);
 					router.back();
 				},
@@ -89,14 +86,12 @@ export default function CustomerDetails() {
 
 	const handleAddCredit = () => {
 		if (!customer) return;
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 		// Navigate to add credit with customer ID
 		router.push(`/credits/add-credit/${customer.id}` as any);
 	};
 
 	const handleAddPayment = () => {
 		if (!customer) return;
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 		// Navigate to add payment with customer ID
 		router.push(`/credits/add-payment/${customer.id}` as any);
 	};
@@ -260,10 +255,7 @@ export default function CustomerDetails() {
 						<TouchableOpacity
 							key={tab}
 							activeOpacity={0.7}
-							onPress={() => {
-								Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-								setActiveTab(tab);
-							}}
+							onPress={() => setActiveTab(tab)}
 							className={`flex-1 py-2 rounded-lg ${activeTab === tab ? 'bg-secondary' : 'bg-transparent'}`}
 						>
 							<StyledText

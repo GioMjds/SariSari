@@ -11,7 +11,6 @@ import {
 } from '@/db/credits';
 import { CreditFilter, CreditKPIs, CreditSort, Customer } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
@@ -76,23 +75,19 @@ export default function Credits() {
 	};
 
 	const handleFilterChange = (filter: CreditFilter) => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 		setActiveFilter(filter);
 	};
 
 	const handleSortChange = (sort: CreditSort) => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 		setActiveSort(sort);
 	};
 
 	const handleCustomerPress = async (customer: Customer) => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 		// Navigate to customer details (we'll implement this modal next)
 		router.push(`/credits/details/${customer.id}` as any);
 	};
 
 	const handleAddCustomer = () => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 		router.push('/credits/add');
 	};
 

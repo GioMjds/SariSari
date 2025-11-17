@@ -2,7 +2,6 @@ import { tabs } from '@/constants/tabs';
 import { useTabVisibilityStore } from '@/stores/ScrollStore';
 import { FontAwesome } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import * as Haptics from 'expo-haptics';
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { Animated, Platform, TouchableOpacity, View } from 'react-native';
 import StyledText from '../elements/StyledText';
@@ -29,9 +28,6 @@ const StyledTab = ({ state, navigation }: BottomTabBarProps) => {
 			});
 
 			if (!isFocused && !event.defaultPrevented) {
-				if (Platform.OS === 'ios') {
-					Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-				}
 				navigation.navigate(route.name);
 			}
 		},
@@ -40,9 +36,6 @@ const StyledTab = ({ state, navigation }: BottomTabBarProps) => {
 
 	const handleLongPress = useCallback(
 		(route: typeof state.routes[0]) => {
-			if (Platform.OS === 'ios') {
-				Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-			}
 			navigation.emit({
 				type: 'tabLongPress',
 				target: route.key,

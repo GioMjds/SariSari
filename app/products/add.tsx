@@ -1,19 +1,19 @@
 import StyledText from '@/components/elements/StyledText';
 import { insertInventoryTransaction } from '@/db/inventory';
 import { insertProduct } from '@/db/products';
+import { useToastStore } from '@/stores/ToastStore';
 import { FontAwesome } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    TextInput,
-    View
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	ScrollView,
+	TextInput,
+	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,6 +22,7 @@ const CATEGORIES = ['Snacks', 'Drinks', 'Household', 'Frozen', 'Cigarettes', 'Ot
 export default function AddProduct() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const addToast = useToastStore((state) => state.addToast);
 
 	const [productName, setProductName] = useState('');
 	const [sku, setSku] = useState('');
@@ -79,15 +80,19 @@ export default function AddProduct() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
-			Alert.alert('Success', 'Product added successfully!', [
-				{
-					text: 'OK',
-					onPress: () => router.back(),
-				},
-			]);
+			addToast({
+				message: 'Product added successfully!',
+				variant: 'success',
+				duration: 2000,
+			});
+			router.push('/inventory');
 		},
 		onError: (error: Error) => {
-			Alert.alert('Error', error.message || 'Failed to add product');
+			addToast({
+				message: error.message || 'Failed to add product',
+				variant: 'error',
+				duration: 2000,
+			});
 		},
 	});
 

@@ -97,21 +97,21 @@ export default function Sales() {
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top']}>
             {/* Header */}
-            <View className="bg-primary px-4 py-4 pb-6">
+            <View className="px-4 py-4 pb-6">
                 <View className="flex-row justify-between items-center">
-                    <StyledText variant="extrabold" className="text-white text-3xl">
+                    <StyledText variant="extrabold" className="text-primary text-3xl">
                         My Sales
                     </StyledText>
                     <View className="flex-row gap-2">
                         <Pressable
                             onPress={() => {/* TODO: Open filter modal */}}
-                            className="bg-secondary/30 rounded-xl px-4 py-2 active:opacity-70"
+                            className="bg-secondary rounded-xl px-4 py-2 active:opacity-70"
                         >
                             <FontAwesome name="filter" size={18} color="#fff" />
                         </Pressable>
                         <Pressable
                             onPress={handleNewSale}
-                            className="bg-accent rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
+                            className="bg-secondary rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
                         >
                             <FontAwesome name="plus" size={18} color="#fff" />
                             <StyledText variant="semibold" className="text-white text-sm">
@@ -124,27 +124,27 @@ export default function Sales() {
                 {/* Summary Stats */}
                 {stats && (
                     <View className="flex-row justify-between mt-4 gap-3">
-                        <View className="flex-1 bg-white/10 rounded-xl p-3">
-                            <StyledText variant="regular" className="text-white/70 text-xs mb-1">
+                        <View className="flex-1 bg-white rounded-xl p-3">
+                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
                                 Today's Total
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-white text-lg">
+                            <StyledText variant="extrabold" className="text-secondary text-xl">
                                 ₱{stats.total.toFixed(2)}
                             </StyledText>
                         </View>
-                        <View className="flex-1 bg-white/10 rounded-xl p-3">
-                            <StyledText variant="regular" className="text-white/70 text-xs mb-1">
+                        <View className="flex-1 bg-white rounded-xl p-3">
+                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
                                 Items Sold
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-white text-lg">
+                            <StyledText variant="extrabold" className="text-secondary text-xl">
                                 {stats.items_sold}
                             </StyledText>
                         </View>
-                        <View className="flex-1 bg-white/10 rounded-xl p-3">
-                            <StyledText variant="regular" className="text-white/70 text-xs mb-1">
+                        <View className="flex-1 bg-white rounded-xl p-3">
+                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
                                 Credit Sales
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-white text-lg">
+                            <StyledText variant="extrabold" className="text-secondary text-xl">
                                 {stats.credit_sales}
                             </StyledText>
                         </View>

@@ -1,5 +1,5 @@
-import '../global.css';
 import StyledTab from '@/components/layout/StyledTab';
+import ToastContainer from '@/components/ui/Toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Tabs } from 'expo-router';
@@ -8,6 +8,7 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,10 +79,6 @@ export default function RootLayout() {
 							options={{ href: null }}
 						/>
 						<Tabs.Screen
-							name="inventory/add"
-							options={{ href: null }}
-						/>
-						<Tabs.Screen
 							name="sales/add"
 							options={{ href: null }}
 						/>
@@ -98,6 +95,7 @@ export default function RootLayout() {
 							options={{ href: null }}
 						/>
 					</Tabs>
+					<ToastContainer />
 				</SafeAreaProvider>
 			</SQLiteProvider>
 		</QueryClientProvider>

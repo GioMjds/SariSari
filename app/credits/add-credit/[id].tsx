@@ -3,7 +3,6 @@ import { getCustomer, initCreditsTable, insertCreditTransaction } from '@/db/cre
 import { getAllProducts, Product } from '@/db/products';
 import { Customer, NewCredit } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
@@ -79,7 +78,6 @@ export default function AddCreditTransaction() {
 
 			await insertCreditTransaction(newCredit);
 
-			Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 			Alert.alert('Success', 'Credit added successfully', [
 				{
 					text: 'OK',

@@ -1,6 +1,5 @@
 import StyledText from '@/components/elements/StyledText';
 import { DateRangeType } from '@/types/reports.types';
-import * as Haptics from 'expo-haptics';
 import { ScrollView, TouchableOpacity } from 'react-native';
 
 interface DateRangeSelectorProps {
@@ -17,7 +16,6 @@ const ranges: { type: DateRangeType; label: string }[] = [
 
 export default function DateRangeSelector({ activeRange, onRangeChange }: DateRangeSelectorProps) {
 	const handlePress = (range: DateRangeType) => {
-		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 		onRangeChange(range);
 	};
 
