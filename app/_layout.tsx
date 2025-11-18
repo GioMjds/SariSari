@@ -1,4 +1,6 @@
+import '../global.css';
 import StyledTab from '@/components/layout/StyledTab';
+import Sonner from '@/components/ui/Sonner';
 import ToastContainer from '@/components/ui/Toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
@@ -8,7 +10,6 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -96,6 +97,7 @@ export default function RootLayout() {
 						/>
 					</Tabs>
 					<ToastContainer />
+					<Sonner />
 				</SafeAreaProvider>
 			</SQLiteProvider>
 		</QueryClientProvider>

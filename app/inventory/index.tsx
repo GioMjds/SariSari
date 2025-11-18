@@ -1,6 +1,8 @@
 import StyledText from '@/components/elements/StyledText';
+import Dialog from '@/components/ui/Dialog';
 import { initInventoryTable, insertInventoryTransaction } from '@/db/inventory';
 import { Product, getAllProducts, initProductsTable } from '@/db/products';
+import { useDialogStore } from '@/stores/DialogStore';
 import { useToastStore } from '@/stores/ToastStore';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,10 +17,14 @@ import React, {
 } from 'react';
 import {
 	ActivityIndicator,
+	BackHandler,
 	FlatList,
+	KeyboardAvoidingView,
+	Modal,
+	Platform,
 	TextInput,
 	TouchableOpacity,
-	View
+	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -39,11 +45,13 @@ export default function Inventory() {
 		null
 	);
 	const [quantityInput, setQuantityInput] = useState<string>('');
+
 	const addToast = useToastStore((state) => state.addToast);
+	const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
 
 	const debounceRef = useRef<number | null>(null);
 
-    const router = useRouter();
+	const router = useRouter();
 
 	useEffect(() => {
 		(async () => {
@@ -78,6 +86,35 @@ export default function Inventory() {
 		}, [refetch])
 	);
 
+	useFocusEffect(
+		useCallback(() => {
+			const backAction = () => {
+				showDialog({
+					title: 'Exit App',
+					message: 'Are you sure you want to exit the app?',
+					showCloseButton: false,
+				});
+				return true;
+			};
+
+			const backHandler = BackHandler.addEventListener(
+				'hardwareBackPress',
+				backAction
+			);
+
+			return () => backHandler.remove();
+		}, [showDialog])
+	);
+
+	const handleExitApp = () => {
+		hideDialog();
+		BackHandler.exitApp();
+	};
+
+	const handleCancelExit = () => {
+		hideDialog();
+	};
+
 	// Mutation for inventory transaction
 	const transactionMutation = useMutation({
 		mutationFn: async ({
@@ -96,7 +133,8 @@ export default function Inventory() {
 			addToast({
 				message: 'Stock updated successfully',
 				variant: 'success',
-				duration: 2000,
+				duration: 5000,
+				position: 'top-center',
 			});
 		},
 	});
@@ -138,6 +176,7 @@ export default function Inventory() {
 				message: 'Please enter a valid quantity',
 				variant: 'error',
 				duration: 1800,
+				position: 'top-center',
 			});
 			return;
 		}
@@ -150,6 +189,7 @@ export default function Inventory() {
 				message: 'Not enough stock available',
 				variant: 'error',
 				duration: 1800,
+				position: 'top-center',
 			});
 			return;
 		}
@@ -159,32 +199,68 @@ export default function Inventory() {
 			quantity: qty,
 		});
 		closeAction();
-	}, [pendingAction, quantityInput, transactionMutation, closeAction, addToast]);
+	}, [
+		pendingAction,
+		quantityInput,
+		transactionMutation,
+		closeAction,
+		addToast,
+	]);
 
 	const getStockStatus = (quantity: number) => {
-		if (quantity === 0) return { color: 'text-red-600', label: 'Out of Stock', bg: 'bg-red-50' };
-		if (quantity < LOW_STOCK_THRESHOLD) return { color: 'text-red-600', label: 'Low Stock', bg: 'bg-red-50' };
-		if (quantity < LOW_STOCK_THRESHOLD * 3) return { color: 'text-yellow-600', label: 'Medium Stock', bg: 'bg-yellow-50' };
-		return { color: 'text-green-600', label: 'In Stock', bg: 'bg-green-50' };
+		if (quantity === 0)
+			return {
+				color: 'text-red-600',
+				label: 'Out of Stock',
+				bg: 'bg-red-50',
+			};
+		if (quantity < LOW_STOCK_THRESHOLD)
+			return {
+				color: 'text-red-600',
+				label: 'Low Stock',
+				bg: 'bg-red-50',
+			};
+		if (quantity < LOW_STOCK_THRESHOLD * 3)
+			return {
+				color: 'text-yellow-600',
+				label: 'Medium Stock',
+				bg: 'bg-yellow-50',
+			};
+		return {
+			color: 'text-green-600',
+			label: 'In Stock',
+			bg: 'bg-green-50',
+		};
 	};
 
 	const renderItem = ({ item }: { item: Product }) => {
 		const stockStatus = getStockStatus(item.quantity);
-		
+
 		return (
 			<View className="mx-4 my-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
 				<View className="p-4">
 					<View className="flex-row justify-between items-start mb-2">
 						<View className="flex-1 mr-3">
-							<StyledText variant="semibold" className="text-lg text-text-primary mb-1">
+							<StyledText
+								variant="semibold"
+								className="text-lg text-text-primary mb-1"
+							>
 								{item.name}
 							</StyledText>
-							<StyledText variant="regular" className="text-sm text-text-muted mb-2">
+							<StyledText
+								variant="regular"
+								className="text-sm text-text-muted mb-2"
+							>
 								SKU: {item.sku}
 							</StyledText>
 						</View>
-						<View className={`px-2 py-1 rounded-full ${stockStatus.bg}`}>
-							<StyledText variant="medium" className={`text-xs ${stockStatus.color}`}>
+						<View
+							className={`px-2 py-1 rounded-full ${stockStatus.bg}`}
+						>
+							<StyledText
+								variant="medium"
+								className={`text-xs ${stockStatus.color}`}
+							>
 								{stockStatus.label}
 							</StyledText>
 						</View>
@@ -193,19 +269,31 @@ export default function Inventory() {
 					<View className="flex-row justify-between items-center">
 						<View className="flex-row items-baseline gap-3">
 							<View>
-								<StyledText variant="regular" className="text-xs text-text-muted">
+								<StyledText
+									variant="regular"
+									className="text-xs text-text-muted"
+								>
 									Quantity
 								</StyledText>
-								<StyledText variant="extrabold" className={`text-xl ${stockStatus.color}`}>
+								<StyledText
+									variant="extrabold"
+									className={`text-xl ${stockStatus.color}`}
+								>
 									{item.quantity}
 								</StyledText>
 							</View>
 							<View className="h-8 w-px bg-gray-200" />
 							<View>
-								<StyledText variant="regular" className="text-xs text-text-muted">
+								<StyledText
+									variant="regular"
+									className="text-xs text-text-muted"
+								>
 									Price
 								</StyledText>
-								<StyledText variant="semibold" className="text-lg text-text-primary">
+								<StyledText
+									variant="semibold"
+									className="text-lg text-text-primary"
+								>
 									₱{item.price.toFixed(2)}
 								</StyledText>
 							</View>
@@ -216,15 +304,25 @@ export default function Inventory() {
 								onPress={() => openAction(item, 'restock')}
 								className="w-10 h-10 rounded-full bg-primary items-center justify-center shadow-sm"
 							>
-								<FontAwesome name="plus" size={16} color="#ffffff" />
+								<FontAwesome
+									name="plus"
+									size={16}
+									color="#ffffff"
+								/>
 							</TouchableOpacity>
 							<TouchableOpacity
 								onPress={() => openAction(item, 'sale')}
 								className="w-10 h-10 rounded-full bg-secondary items-center justify-center shadow-sm"
 								disabled={item.quantity === 0}
-								style={{ opacity: item.quantity === 0 ? 0.5 : 1 }}
+								style={{
+									opacity: item.quantity === 0 ? 0.5 : 1,
+								}}
 							>
-								<FontAwesome name="minus" size={16} color="#ffffff" />
+								<FontAwesome
+									name="minus"
+									size={16}
+									color="#ffffff"
+								/>
 							</TouchableOpacity>
 						</View>
 					</View>
@@ -236,9 +334,11 @@ export default function Inventory() {
 	// Summary footer stats
 	const summary = useMemo(() => {
 		if (!products) return { total: 0, low: 0, totalQty: 0 };
-		const lowStockCount = products.filter((p) => p.quantity < LOW_STOCK_THRESHOLD).length;
+		const lowStockCount = products.filter(
+			(p) => p.quantity < LOW_STOCK_THRESHOLD
+		).length;
 		const outOfStockCount = products.filter((p) => p.quantity === 0).length;
-		
+
 		return {
 			total: products.length,
 			low: lowStockCount,
@@ -252,10 +352,13 @@ export default function Inventory() {
 			{/* Header */}
 			<View className="px-6 pt-6 pb-4 bg-background">
 				<View className="flex-row items-center justify-between mb-4">
-					<StyledText variant="extrabold" className="text-3xl text-text-primary">
+					<StyledText
+						variant="extrabold"
+						className="text-3xl text-text-primary"
+					>
 						Inventory
 					</StyledText>
-					<TouchableOpacity 
+					<TouchableOpacity
 						onPress={() => router.push('/products/add')}
 						className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
 					>
@@ -276,11 +379,15 @@ export default function Inventory() {
 						<FontAwesome name="search" size={18} color="#9CA3AF" />
 					</View>
 					{search.length > 0 && (
-						<TouchableOpacity 
+						<TouchableOpacity
 							onPress={() => setSearch('')}
 							className="absolute right-3 top-3.5"
 						>
-							<FontAwesome name="times-circle" size={18} color="#9CA3AF" />
+							<FontAwesome
+								name="times-circle"
+								size={18}
+								color="#9CA3AF"
+							/>
 						</TouchableOpacity>
 					)}
 				</View>
@@ -291,14 +398,14 @@ export default function Inventory() {
 						onPress={() => setShowLowOnly((prev) => !prev)}
 						className={`flex-row items-center px-4 py-2 rounded-full ${showLowOnly ? 'bg-red-500' : 'bg-white border border-gray-200'}`}
 					>
-						<FontAwesome 
-							name="exclamation-triangle" 
-							size={14} 
-							color={showLowOnly ? '#ffffff' : '#EF4444'} 
+						<FontAwesome
+							name="exclamation-triangle"
+							size={14}
+							color={showLowOnly ? '#ffffff' : '#EF4444'}
 							style={{ marginRight: 6 }}
 						/>
-						<StyledText 
-							variant="medium" 
+						<StyledText
+							variant="medium"
 							className={`text-xs ${showLowOnly ? 'text-white' : 'text-red-500'}`}
 						>
 							Low Stock
@@ -307,38 +414,58 @@ export default function Inventory() {
 
 					<View className="flex-row items-center gap-4">
 						<View className="items-center">
-							<StyledText variant="black" className="text-lg text-text-primary">
+							<StyledText
+								variant="black"
+								className="text-lg text-text-primary"
+							>
 								{summary.total}
 							</StyledText>
-							<StyledText variant="light" className="text-xs text-text-muted">
+							<StyledText
+								variant="light"
+								className="text-xs text-text-muted"
+							>
 								Total
 							</StyledText>
 						</View>
 						<View className="items-center">
-							<StyledText variant="black" className="text-lg text-red-500">
+							<StyledText
+								variant="black"
+								className="text-lg text-red-500"
+							>
 								{summary.low}
 							</StyledText>
-							<StyledText variant="light" className="text-xs text-text-muted">
+							<StyledText
+								variant="light"
+								className="text-xs text-text-muted"
+							>
 								Low
 							</StyledText>
 						</View>
 						<View className="items-center">
-							<StyledText variant="black" className="text-lg text-text-primary">
+							<StyledText
+								variant="black"
+								className="text-lg text-text-primary"
+							>
 								{summary.totalQty}
 							</StyledText>
-							<StyledText variant="light" className="text-xs text-text-muted">
+							<StyledText
+								variant="light"
+								className="text-xs text-text-muted"
+							>
 								Items
 							</StyledText>
 						</View>
 					</View>
 				</View>
 			</View>
-
 			{/* Inventory List */}
 			{isLoading || isRefetching ? (
 				<View className="flex-1 items-center justify-center">
 					<ActivityIndicator size="large" color="#7A1CAC" />
-					<StyledText variant="medium" className="text-text-muted mt-3">
+					<StyledText
+						variant="medium"
+						className="text-text-muted mt-3"
+					>
 						Loading inventory...
 					</StyledText>
 				</View>
@@ -347,26 +474,41 @@ export default function Inventory() {
 					data={filtered}
 					keyExtractor={(item) => item.id.toString()}
 					renderItem={renderItem}
-					contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
+					contentContainerStyle={{
+						paddingBottom: 100,
+						paddingTop: 8,
+					}}
 					showsVerticalScrollIndicator={false}
 					ListEmptyComponent={
 						<View className="items-center justify-center py-12 px-6">
-							<FontAwesome name="inbox" size={48} color="#E5E7EB" />
-							<StyledText variant="semibold" className="text-text-primary text-lg mt-4 mb-2">
+							<FontAwesome
+								name="inbox"
+								size={48}
+								color="#E5E7EB"
+							/>
+							<StyledText
+								variant="semibold"
+								className="text-text-primary text-lg mt-4 mb-2"
+							>
 								No products found
 							</StyledText>
-							<StyledText variant="regular" className="text-text-muted text-center text-sm">
-								{showLowOnly 
-									? "No low stock items. Great job!" 
-									: "Add your first product to get started"
-								}
+							<StyledText
+								variant="regular"
+								className="text-text-muted text-center text-sm"
+							>
+								{showLowOnly
+									? 'No low stock items. Great job!'
+									: 'Add your first product to get started'}
 							</StyledText>
 							{!showLowOnly && (
-								<TouchableOpacity 
+								<TouchableOpacity
 									onPress={() => router.push('/products/add')}
 									className="mt-4 bg-accent px-6 py-3 rounded-full"
 								>
-									<StyledText variant="semibold" className="text-white text-sm">
+									<StyledText
+										variant="semibold"
+										className="text-white text-sm"
+									>
 										Add Product
 									</StyledText>
 								</TouchableOpacity>
@@ -377,79 +519,176 @@ export default function Inventory() {
 			)}
 
 			{/* Action Modal */}
-			{pendingAction && (
-				<View className="absolute inset-0 bg-black/50 items-center justify-center px-6">
-					<View className="w-full bg-white rounded-2xl p-6 shadow-xl">
-						<View className="flex-row items-center justify-between mb-4">
-							<StyledText variant="extrabold" className="text-xl text-text-primary">
-								{pendingAction.type === 'restock' ? 'Restock Product' : 'Record Sale'}
-							</StyledText>
-							<TouchableOpacity onPress={closeAction} className="p-1">
-								<FontAwesome name="times" size={20} color="#9CA3AF" />
-							</TouchableOpacity>
-						</View>
+			<Modal
+				visible={!!pendingAction}
+				transparent
+				animationType="fade"
+				statusBarTranslucent
+				onRequestClose={closeAction}
+			>
+				<KeyboardAvoidingView
+					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+					className="flex-1"
+				>
+					<View className="flex-1 justify-end bg-black/50">
+						<TouchableOpacity
+							className="flex-1"
+							activeOpacity={1}
+							onPress={closeAction}
+						/>
+						{pendingAction && (
+							<View className="w-full bg-white rounded-t-2xl p-6 shadow-xl">
+							<View className="flex-row items-center justify-between mb-4">
+								<StyledText
+									variant="extrabold"
+									className="text-xl text-text-primary"
+								>
+									{pendingAction.type === 'restock'
+										? 'Restock Product'
+										: 'Record Sale'}
+								</StyledText>
+								<TouchableOpacity
+									onPress={closeAction}
+									className="p-1"
+								>
+									<FontAwesome
+										name="times"
+										size={20}
+										color="#9CA3AF"
+									/>
+								</TouchableOpacity>
+							</View>
 
-						<View className="bg-gray-50 rounded-xl p-4 mb-4">
-							<StyledText variant="semibold" className="text-text-primary text-base mb-1">
-								{pendingAction.product.name}
-							</StyledText>
-							<StyledText variant="regular" className="text-text-muted text-sm">
-								SKU: {pendingAction.product.sku}
-							</StyledText>
-							<View className="flex-row gap-6 mt-2">
-								<View>
-									<StyledText variant="regular" className="text-text-muted text-xs">
-										Current Stock
-									</StyledText>
-									<StyledText variant="semibold" className="text-text-primary text-lg">
-										{pendingAction.product.quantity}
-									</StyledText>
-								</View>
-								<View>
-									<StyledText variant="regular" className="text-text-muted text-xs">
-										Price
-									</StyledText>
-									<StyledText variant="semibold" className="text-text-primary text-lg">
-										₱{pendingAction.product.price.toFixed(2)}
-									</StyledText>
+							<View className="bg-gray-50 rounded-xl p-4 mb-4">
+								<StyledText
+									variant="semibold"
+									className="text-text-primary text-base mb-1"
+								>
+									{pendingAction.product.name}
+								</StyledText>
+								<StyledText
+									variant="regular"
+									className="text-text-muted text-sm"
+								>
+									SKU: {pendingAction.product.sku}
+								</StyledText>
+								<View className="flex-row gap-6 mt-2">
+									<View>
+										<StyledText
+											variant="regular"
+											className="text-text-muted text-xs"
+										>
+											Current Stock
+										</StyledText>
+										<StyledText
+											variant="semibold"
+											className="text-text-primary text-lg"
+										>
+											{pendingAction.product.quantity}
+										</StyledText>
+									</View>
+									<View>
+										<StyledText
+											variant="regular"
+											className="text-text-muted text-xs"
+										>
+											Price
+										</StyledText>
+										<StyledText
+											variant="semibold"
+											className="text-text-primary text-lg"
+										>
+											₱
+											{pendingAction.product.price.toFixed(
+												2
+											)}
+										</StyledText>
+									</View>
 								</View>
 							</View>
-						</View>
 
-						<View className="mb-6">
-							<StyledText variant="medium" className="text-text-primary mb-2">
-								Quantity
-							</StyledText>
-							<TextInput
-								placeholder="Enter quantity"
-								keyboardType="number-pad"
-								value={quantityInput}
-								onChangeText={setQuantityInput}
-								className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-text-primary text-lg text-center"
-							/>
-						</View>
+							<View className="mb-6">
+								<StyledText
+									variant="medium"
+									className="text-text-primary mb-2"
+								>
+									Quantity
+								</StyledText>
+								<TextInput
+									placeholder="Enter quantity"
+									keyboardType="number-pad"
+									value={quantityInput}
+									onChangeText={setQuantityInput}
+									className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-text-primary text-lg text-center"
+								/>
+							</View>
 
-						<View className="flex-row gap-3">
-							<TouchableOpacity
-								onPress={closeAction}
-								className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
-							>
-								<StyledText variant="medium" className="text-text-muted">
-									Cancel
-								</StyledText>
-							</TouchableOpacity>
-							<TouchableOpacity
-								onPress={submitAction}
-								className={`flex-1 rounded-xl py-3 items-center ${pendingAction.type === 'restock' ? 'bg-primary' : 'bg-secondary'}`}
-							>
-								<StyledText variant="semibold" className="text-white">
-									Confirm
-								</StyledText>
-							</TouchableOpacity>
+							<View className="flex-row gap-3">
+								<TouchableOpacity
+									onPress={closeAction}
+									className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
+								>
+									<StyledText
+										variant="medium"
+										className="text-text-muted"
+									>
+										Cancel
+									</StyledText>
+								</TouchableOpacity>
+								<TouchableOpacity
+									onPress={submitAction}
+									className={`flex-1 rounded-xl py-3 items-center ${
+										pendingAction.type === 'restock'
+											? 'bg-primary'
+											: 'bg-secondary'
+									}`}
+								>
+									<StyledText
+										variant="semibold"
+										className="text-white"
+									>
+										Confirm
+									</StyledText>
+								</TouchableOpacity>
+							</View>
 						</View>
-					</View>
+					)}
 				</View>
-			)}
+			</KeyboardAvoidingView>
+			</Modal>
+			{/* Exit Confirmation Dialog */}
+			<Dialog
+				visible={dialogVisible}
+				onClose={handleCancelExit}
+				title="Exit App"
+				message="Are you sure you want to exit the app?"
+			>
+				<View className="flex-row gap-4 mt-4">
+					<TouchableOpacity
+						onPress={handleCancelExit}
+						activeOpacity={0.2}
+						hitSlop={20}
+						className="flex-1 border border-black rounded-xl py-3 items-center"
+					>
+						<StyledText
+							variant="medium"
+							className="text-text-muted"
+						>
+							Cancel
+						</StyledText>
+					</TouchableOpacity>
+					<TouchableOpacity
+						onPress={handleExitApp}
+						activeOpacity={0.2}
+						hitSlop={20}
+						className="flex-1 bg-secondary rounded-xl py-3 items-center"
+					>
+						<StyledText variant="semibold" className="text-white">
+							Exit
+						</StyledText>
+					</TouchableOpacity>
+				</View>
+			</Dialog>
 		</SafeAreaView>
 	);
 }

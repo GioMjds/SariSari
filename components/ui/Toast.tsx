@@ -7,6 +7,11 @@ export const ToastContainer = () => {
 	const toasts = useToastStore((state) => state.toasts);
 	const removeToast = useToastStore((state) => state.removeToast);
 
+	const bottomToasts = toasts.filter((toast) => {
+		const position = toast.position || 'bottom-right';
+		return position.startsWith('bottom');
+	});
+
 	const getVariantStyles = (variant?: string) => {
 		switch (variant) {
 			case 'success':
@@ -47,11 +52,11 @@ export const ToastContainer = () => {
 		}
 	};
 
-	if (toasts.length === 0) return null;
+	if (bottomToasts.length === 0) return null;
 
 	return (
 		<View pointerEvents="box-none" style={{ position: 'absolute', inset: 0 }}>
-			{toasts.map((toast) => {
+			{bottomToasts.map((toast) => {
 				const variantStyles = getVariantStyles(toast.variant);
 				const positionStyle = getPositionStyle(toast.position);
 
