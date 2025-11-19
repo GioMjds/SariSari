@@ -1,93 +1,208 @@
 import StyledText from '@/components/elements/StyledText';
-import { Alert } from '@/utils/alert';
 import {
-    deleteCustomer,
-    getCreditHistory,
-    getCustomerWithDetails,
-    initCreditsTable,
-    markAllCreditsAsPaid,
+	deleteCustomer,
+	getCreditHistory,
+	getCustomerWithDetails,
+	initCreditsTable,
+	markAllCreditsAsPaid,
 } from '@/db/credits';
-import { CreditHistory, CreditTransaction, CustomerWithDetails } from '@/types/credits.types';
+import { useModalStore } from '@/stores/ModalStore';
+import { useToastStore } from '@/stores/ToastStore';
+import {
+	CreditHistory,
+	CreditTransaction,
+	CustomerWithDetails,
+} from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import {
+	ActivityIndicator,
+	RefreshControl,
+	ScrollView,
+	TouchableOpacity,
+	View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'credits' | 'payments' | 'history';
 
 export default function CustomerDetails() {
-	const { id } = useLocalSearchParams<{ id: string }>();
-	const [customer, setCustomer] = useState<CustomerWithDetails | null>(null);
-	const [history, setHistory] = useState<CreditHistory[]>([]);
 	const [activeTab, setActiveTab] = useState<TabType>('credits');
-	const [isLoading, setIsLoading] = useState(true);
-	const [isRefreshing, setIsRefreshing] = useState(false);
 
-	const loadData = useCallback(async () => {
-		try {
-			if (!id) return;
-			await initCreditsTable();
-			const [customerData, historyData] = await Promise.all([
-				getCustomerWithDetails(parseInt(id)),
-				getCreditHistory(parseInt(id)),
-			]);
+	const { id } = useLocalSearchParams<{ id: string }>();
 
-			setCustomer(customerData);
-			setHistory(historyData);
-		} catch (error) {
-			console.error('Error loading customer details:', error);
-		} finally {
-			setIsLoading(false);
-			setIsRefreshing(false);
-		}
-	}, [id]);
+	const queryClient = useQueryClient();
 
+	const addToast = useToastStore((state) => state.addToast);
+	const { openModal } = useModalStore();
+
+	// Initialize database
 	useEffect(() => {
-		loadData();
-	}, [loadData]);
+		(async () => {
+			try {
+				await initCreditsTable();
+			} catch (error) {
+				console.error('Error initializing credits table:', error);
+				addToast({
+					message: 'Failed to initialize database',
+					variant: 'error',
+					duration: 5000,
+					position: 'top-center',
+				});
+			}
+		})();
+	}, []);
+
+	// Query customer details
+	const {
+		data: customer,
+		isLoading,
+		isRefetching,
+		refetch,
+	} = useQuery<CustomerWithDetails | null>({
+		queryKey: ['customer-details', id],
+		queryFn: () => getCustomerWithDetails(parseInt(id)),
+		enabled: !!id,
+		staleTime: 1000 * 60 * 2, // 2 minutes
+	});
+
+	// Query credit history
+	const { data: history = [] } = useQuery<CreditHistory[]>({
+		queryKey: ['credit-history', id],
+		queryFn: () => getCreditHistory(parseInt(id)),
+		enabled: !!id,
+		staleTime: 1000 * 60 * 2, // 2 minutes
+	});
+
+	// Refetch on focus
+	useFocusEffect(
+		useCallback(() => {
+			refetch();
+			queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
+			queryClient.invalidateQueries({ queryKey: ['customers'] });
+			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+		}, [refetch, queryClient, id])
+	);
 
 	const handleRefresh = () => {
-		setIsRefreshing(true);
-		loadData();
+		refetch();
+		queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
 	};
+
+	// Mark all as paid mutation
+	const markAllPaidMutation = useMutation({
+		mutationFn: (customerId: number) => markAllCreditsAsPaid(customerId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['customer-details', id] });
+			queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
+			queryClient.invalidateQueries({ queryKey: ['customers'] });
+			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+			addToast({
+				message: 'All credits marked as paid',
+				variant: 'success',
+				duration: 5000,
+				position: 'top-center',
+			});
+		},
+		onError: (error: Error) => {
+			addToast({
+				message: error.message || 'Failed to mark credits as paid',
+				variant: 'error',
+				duration: 5000,
+				position: 'top-center',
+			});
+		},
+	});
+
+	// Delete customer mutation
+	const deleteCustomerMutation = useMutation({
+		mutationFn: (customerId: number) => deleteCustomer(customerId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['customers'] });
+			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+			addToast({
+				message: 'Customer deleted successfully',
+				variant: 'success',
+				duration: 5000,
+				position: 'top-center',
+			});
+			router.back();
+		},
+		onError: (error: Error) => {
+			addToast({
+				message: error.message || 'Failed to delete customer',
+				variant: 'error',
+				duration: 5000,
+				position: 'top-center',
+			});
+		},
+	});
 
 	const handleMarkAllPaid = () => {
 		if (!customer) return;
 
-		Alert.alert('Mark All as Paid', `Mark all credits for ${customer.name} as paid?`, [
-			{ text: 'Cancel', style: 'cancel' },
-			{
-				text: 'Confirm',
-				style: 'destructive',
-				onPress: async () => {
-					await markAllCreditsAsPaid(customer.id);
-					loadData();
+		openModal({
+			title: 'Mark All as Paid',
+			description: `Mark all credits for ${customer.name} as paid?`,
+			variant: 'warning',
+			icon: 'check-circle',
+			buttons: [
+				{
+					text: 'Cancel',
+					style: 'cancel',
 				},
-			},
-		]);
+				{
+					text: 'Confirm',
+					style: 'default',
+					onPress: () => {
+						markAllPaidMutation.mutate(customer.id);
+					},
+				},
+			],
+		});
 	};
 
 	const handleDeleteCustomer = () => {
 		if (!customer) return;
 
-		Alert.alert('Delete Customer', `Are you sure you want to delete ${customer.name}? This will delete all credits and payments.`, [
-			{ text: 'Cancel', style: 'cancel' },
-			{
-				text: 'Delete',
-				style: 'destructive',
-				onPress: async () => {
-					await deleteCustomer(customer.id);
-					router.back();
+		openModal({
+			title: 'Delete Customer',
+			description: `Are you sure you want to delete ${customer.name}? This will delete all credits and payments.`,
+			variant: 'danger',
+			icon: 'trash',
+			buttons: [
+				{
+					text: 'Cancel',
+					style: 'cancel',
 				},
-			},
-		]);
+				{
+					text: 'Delete',
+					style: 'destructive',
+					onPress: () => {
+						deleteCustomerMutation.mutate(customer.id);
+					},
+				},
+			],
+		});
 	};
+
+	const paymentMethod = (payment: string) => {
+		switch (payment) {
+			case 'cash':
+				return 'Cash';
+			case 'bank_transfer':
+				return 'Bank Transfer';
+			default: 
+				return 'Other';
+		}
+	}
 
 	const handleAddCredit = () => {
 		if (!customer) return;
-		// Navigate to add credit with customer ID
 		router.push(`/credits/add-credit/${customer.id}` as any);
 	};
 
@@ -273,7 +388,13 @@ export default function CustomerDetails() {
 			<ScrollView
 				className="flex-1 px-4"
 				showsVerticalScrollIndicator={false}
-				refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#7A1CAC" />}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefetching}
+						onRefresh={handleRefresh}
+						tintColor="#7A1CAC"
+					/>
+				}
 			>
 				{/* Credits Tab */}
 				{activeTab === 'credits' && (
@@ -378,8 +499,8 @@ export default function CustomerDetails() {
 											{payment.payment_method && (
 												<View className="flex-row items-center">
 													<FontAwesome name="credit-card" size={12} color="#7A1CAC" />
-													<StyledText variant="regular" className="text-gray-500 text-xs ml-1">
-														{payment.payment_method}
+													<StyledText variant="regular" className="text-gray-500 text-sm ml-1">
+														Method: {paymentMethod(payment.payment_method)}
 													</StyledText>
 												</View>
 											)}
@@ -414,7 +535,7 @@ export default function CustomerDetails() {
 								</StyledText>
 							</View>
 						) : (
-							history.map((item, index) => (
+							history.map((item) => (
 								<View key={`${item.type}-${item.id}`} className="mb-3">
 									<View className="flex-row">
 										{/* Timeline */}
@@ -430,7 +551,6 @@ export default function CustomerDetails() {
 													color={item.type === 'credit' ? '#ef4444' : '#10b981'}
 												/>
 											</View>
-											{index < history.length - 1 && <View className="w-0.5 h-full bg-gray-200 mt-2" />}
 										</View>
 
 										{/* Content */}

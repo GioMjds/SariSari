@@ -21,7 +21,11 @@ const filters: { key: CreditFilter; label: string }[] = [
 	{ key: 'overdue', label: 'Overdue' },
 ];
 
-export default function FilterBar({ activeFilter, onFilterChange, counts }: FilterBarProps) {
+export default function FilterBar({
+	activeFilter,
+	onFilterChange,
+	counts,
+}: FilterBarProps) {
 	return (
 		<ScrollView
 			horizontal
@@ -29,7 +33,7 @@ export default function FilterBar({ activeFilter, onFilterChange, counts }: Filt
 			className="mb-4"
 			contentContainerStyle={{ paddingHorizontal: 16 }}
 		>
-			{filters.map((filter, index) => {
+			{filters.map((filter) => {
 				const isActive = activeFilter === filter.key;
 				const count = counts?.[filter.key];
 
@@ -39,24 +43,26 @@ export default function FilterBar({ activeFilter, onFilterChange, counts }: Filt
 						activeOpacity={0.7}
 						onPress={() => onFilterChange(filter.key)}
 						className={`px-4 py-2 rounded-full mr-2 ${
-							isActive ? 'bg-secondary' : 'bg-white border border-gray-200'
+							isActive
+								? 'bg-secondary'
+								: 'bg-white border border-gray-200'
 						}`}
 					>
 						<View className="flex-row items-center">
 							<StyledText
 								variant={isActive ? 'semibold' : 'medium'}
-								className={isActive ? 'text-white' : 'text-gray-700'}
+								className={
+									isActive ? 'text-white' : 'text-gray-700'
+								}
 							>
 								{filter.label}
 							</StyledText>
-							{count !== undefined && (
-								<StyledText
-									variant="semibold"
-									className={`ml-1.5 text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}
-								>
-									({count})
-								</StyledText>
-							)}
+							<StyledText
+								variant="semibold"
+								className={`ml-1.5 text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}
+							>
+								{" "}({count})
+							</StyledText>
 						</View>
 					</TouchableOpacity>
 				);

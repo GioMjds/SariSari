@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Sales() {
@@ -102,13 +102,17 @@ export default function Sales() {
                         My Sales
                     </StyledText>
                     <View className="flex-row gap-2">
-                        <Pressable
+                        <TouchableOpacity
+                            hitSlop={20}
+                            activeOpacity={0.2}
                             onPress={() => {/* TODO: Open filter modal */}}
                             className="bg-secondary rounded-xl px-4 py-2 active:opacity-70"
                         >
                             <FontAwesome name="filter" size={18} color="#fff" />
-                        </Pressable>
-                        <Pressable
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            hitSlop={20}
+                            activeOpacity={0.2}
                             onPress={handleNewSale}
                             className="bg-secondary rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
                         >
@@ -116,7 +120,7 @@ export default function Sales() {
                             <StyledText variant="semibold" className="text-white text-sm">
                                 New Sale
                             </StyledText>
-                        </Pressable>
+                        </TouchableOpacity>
                     </View>
                 </View>
 

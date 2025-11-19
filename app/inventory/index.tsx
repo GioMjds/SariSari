@@ -1,5 +1,5 @@
 import StyledText from '@/components/elements/StyledText';
-import Dialog from '@/components/ui/Dialog';
+import CustomModal from '@/components/ui/Modal';
 import { initInventoryTable, insertInventoryTransaction } from '@/db/inventory';
 import { Product, getAllProducts, initProductsTable } from '@/db/products';
 import { useDialogStore } from '@/stores/DialogStore';
@@ -652,38 +652,25 @@ export default function Inventory() {
 			</Modal>
 
 			{/* Exit Confirmation Dialog */}
-			<Dialog
+			<CustomModal
 				visible={dialogVisible}
 				onClose={handleCancelExit}
 				title="Exit App"
-				message="Are you sure you want to exit the app?"
-			>
-				<View className="flex-row gap-4 mt-4">
-					<TouchableOpacity
-						onPress={handleCancelExit}
-						activeOpacity={0.2}
-						hitSlop={20}
-						className="flex-1 border border-black rounded-xl py-3 items-center"
-					>
-						<StyledText
-							variant="medium"
-							className="text-text-muted"
-						>
-							Cancel
-						</StyledText>
-					</TouchableOpacity>
-					<TouchableOpacity
-						onPress={handleExitApp}
-						activeOpacity={0.2}
-						hitSlop={20}
-						className="flex-1 bg-secondary rounded-xl py-3 items-center"
-					>
-						<StyledText variant="semibold" className="text-white">
-							Exit
-						</StyledText>
-					</TouchableOpacity>
-				</View>
-			</Dialog>
+				description="Are you sure you want to exit the app?"
+				variant="warning"
+				buttons={[
+					{
+						text: 'Cancel',
+						style: 'cancel',
+						onPress: handleCancelExit,
+					},
+					{
+						text: 'Exit',
+						style: 'destructive',
+						onPress: handleExitApp,
+					},
+				]}
+			/>
 		</SafeAreaView>
 	);
 }
