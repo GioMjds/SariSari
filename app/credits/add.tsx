@@ -1,10 +1,11 @@
 import StyledText from '@/components/elements/StyledText';
+import { Alert } from '@/utils/alert';
 import { initCreditsTable, insertCustomer } from '@/db/credits';
 import { NewCustomer } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AddCustomer() {

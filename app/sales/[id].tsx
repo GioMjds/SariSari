@@ -1,10 +1,11 @@
 import StyledText from "@/components/elements/StyledText";
+import { Alert } from "@/utils/alert";
 import { deleteSale, getSale } from "@/db/sales";
 import { FontAwesome } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SaleDetails() {

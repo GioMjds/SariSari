@@ -1,11 +1,12 @@
 import StyledText from '@/components/elements/StyledText';
+import { Alert } from '@/utils/alert';
 import { getCustomer, initCreditsTable, insertCreditTransaction } from '@/db/credits';
 import { getAllProducts, Product } from '@/db/products';
 import { Customer, NewCredit } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AddCreditTransaction() {

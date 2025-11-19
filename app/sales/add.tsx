@@ -1,4 +1,5 @@
 import StyledText from "@/components/elements/StyledText";
+import { Alert } from "@/utils/alert";
 import { getAllCustomers } from "@/db/credits";
 import { getAllProducts, Product } from "@/db/products";
 import { insertSale } from "@/db/sales";
@@ -9,7 +10,6 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     Modal,
     Pressable,

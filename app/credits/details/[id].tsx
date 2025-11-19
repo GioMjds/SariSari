@@ -1,4 +1,5 @@
 import StyledText from '@/components/elements/StyledText';
+import { Alert } from '@/utils/alert';
 import {
     deleteCustomer,
     getCreditHistory,
@@ -11,7 +12,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'credits' | 'payments' | 'history';

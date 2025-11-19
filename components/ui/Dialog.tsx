@@ -24,7 +24,7 @@ const Dialog = ({
 			onRequestClose={onClose}
 		>
 			{/* Backdrop */}
-			<View className="flex-1 justify-center items-center bg-black/50 px-4">
+			<View className="flex-1 justify-center items-center bg-black/40 px-4">
 				{/* Dialog Container */}
 				<View className="bg-background rounded-2xl p-6 w-full max-w-sm shadow-lg border border-accent/20">
 					{/* Header */}

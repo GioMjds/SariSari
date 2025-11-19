@@ -13,11 +13,18 @@ import {
 	Pressable,
 	ScrollView,
 	TextInput,
-	View
+	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CATEGORIES = ['Snacks', 'Drinks', 'Household', 'Frozen', 'Cigarettes', 'Other'];
+const CATEGORIES = [
+	'Snacks',
+	'Drinks',
+	'Household',
+	'Frozen',
+	'Cigarettes',
+	'Other',
+];
 
 export default function AddProduct() {
 	const router = useRouter();
@@ -69,11 +76,20 @@ export default function AddProduct() {
 			const stockValue = initialStock ? parseInt(initialStock, 10) : 0;
 
 			// Insert product
-			const productId = await insertProduct(productName.trim(), sku.trim(), priceValue, stockValue);
+			const productId = await insertProduct(
+				productName.trim(),
+				sku.trim(),
+				priceValue,
+				stockValue
+			);
 
 			// If initial stock > 0, create an inventory transaction
 			if (stockValue > 0) {
-				await insertInventoryTransaction(productId, 'restock', stockValue);
+				await insertInventoryTransaction(
+					productId,
+					'restock',
+					stockValue
+				);
 			}
 
 			return productId;
@@ -107,19 +123,31 @@ export default function AddProduct() {
 				className="flex-1"
 			>
 				{/* Header */}
-				<View className="bg-primary px-4 py-4 flex-row items-center">
-					<Pressable onPress={() => router.back()} className="mr-3 active:opacity-50">
+				<View className="bg-primary px-4 py-6 flex-row items-center">
+					<Pressable
+						onPress={() => router.back()}
+						className="mr-3 active:opacity-50"
+					>
 						<FontAwesome name="arrow-left" size={20} color="#fff" />
 					</Pressable>
-					<StyledText variant="extrabold" className="text-white text-2xl">
+					<StyledText
+						variant="extrabold"
+						className="text-white text-2xl"
+					>
 						Add Product
 					</StyledText>
 				</View>
 
-				<ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+				<ScrollView
+					className="flex-1"
+					contentContainerStyle={{ padding: 16 }}
+				>
 					{/* Product Name */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Product Name *
 						</StyledText>
 						<TextInput
@@ -135,21 +163,37 @@ export default function AddProduct() {
 					{/* SKU */}
 					<View className="mb-4">
 						<View className="flex-row justify-between items-center mb-2">
-							<StyledText variant="semibold" className="text-text-primary text-sm">
+							<StyledText
+								variant="semibold"
+								className="text-text-primary text-sm"
+							>
 								SKU (Stock Keeping Unit) *
 							</StyledText>
 							<Pressable
-								onPress={() => setAutoGenerateSku(!autoGenerateSku)}
+								onPress={() =>
+									setAutoGenerateSku(!autoGenerateSku)
+								}
 								className="flex-row items-center active:opacity-50"
 							>
 								<View
 									className={`w-5 h-5 rounded border-2 mr-2 items-center justify-center ${
-										autoGenerateSku ? 'bg-accent border-accent' : 'border-gray-300'
+										autoGenerateSku
+											? 'bg-accent border-accent'
+											: 'border-gray-300'
 									}`}
 								>
-									{autoGenerateSku && <FontAwesome name="check" size={12} color="#fff" />}
+									{autoGenerateSku && (
+										<FontAwesome
+											name="check"
+											size={12}
+											color="#fff"
+										/>
+									)}
 								</View>
-								<StyledText variant="regular" className="text-text-secondary text-xs">
+								<StyledText
+									variant="regular"
+									className="text-text-secondary text-xs"
+								>
 									Auto-generate
 								</StyledText>
 							</Pressable>
@@ -166,7 +210,10 @@ export default function AddProduct() {
 							}}
 						/>
 						{autoGenerateSku && (
-							<StyledText variant="regular" className="text-text-muted text-xs mt-1">
+							<StyledText
+								variant="regular"
+								className="text-text-muted text-xs mt-1"
+							>
 								SKU will be auto-generated based on product name
 							</StyledText>
 						)}
@@ -174,11 +221,17 @@ export default function AddProduct() {
 
 					{/* Price */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Price (₱) *
 						</StyledText>
 						<View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-							<StyledText variant="medium" className="text-text-secondary text-base mr-2">
+							<StyledText
+								variant="medium"
+								className="text-text-secondary text-base mr-2"
+							>
 								₱
 							</StyledText>
 							<TextInput
@@ -194,7 +247,10 @@ export default function AddProduct() {
 
 					{/* Initial Stock */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Initial Stock Quantity
 						</StyledText>
 						<TextInput
@@ -205,23 +261,37 @@ export default function AddProduct() {
 							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
 							placeholderTextColor="#9ca3af"
 						/>
-						<StyledText variant="regular" className="text-text-muted text-xs mt-1">
-							You can leave this as 0 and add stock later via Inventory
+						<StyledText
+							variant="regular"
+							className="text-text-muted text-xs mt-1"
+						>
+							You can leave this as 0 and add stock later via
+							Inventory
 						</StyledText>
 					</View>
 
 					{/* Category (Optional - UI only for now) */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Category (Optional)
 						</StyledText>
-						<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+						<ScrollView
+							horizontal
+							showsHorizontalScrollIndicator={false}
+						>
 							<View className="flex-row gap-2">
 								{CATEGORIES.map((category) => (
 									<Pressable
 										key={category}
 										onPress={() =>
-											setSelectedCategory(selectedCategory === category ? '' : category)
+											setSelectedCategory(
+												selectedCategory === category
+													? ''
+													: category
+											)
 										}
 										className={`px-4 py-2 rounded-xl ${
 											selectedCategory === category
@@ -232,7 +302,9 @@ export default function AddProduct() {
 										<StyledText
 											variant="medium"
 											className={`text-sm ${
-												selectedCategory === category ? 'text-white' : 'text-text-secondary'
+												selectedCategory === category
+													? 'text-white'
+													: 'text-text-secondary'
 											}`}
 										>
 											{category}
@@ -245,14 +317,26 @@ export default function AddProduct() {
 
 					{/* Info Box */}
 					<View className="bg-blue-50 rounded-xl p-4 flex-row mb-6">
-						<FontAwesome name="info-circle" size={20} color="#3b82f6" style={{ marginRight: 12 }} />
+						<FontAwesome
+							name="info-circle"
+							size={20}
+							color="#3b82f6"
+							style={{ marginRight: 12 }}
+						/>
 						<View className="flex-1">
-							<StyledText variant="semibold" className="text-blue-700 text-sm mb-1">
+							<StyledText
+								variant="semibold"
+								className="text-blue-700 text-sm mb-1"
+							>
 								Quick Tip
 							</StyledText>
-							<StyledText variant="regular" className="text-blue-600 text-xs leading-5">
-								Fields marked with * are required. You can update product details anytime from the
-								Products screen.
+							<StyledText
+								variant="regular"
+								className="text-blue-600 text-xs leading-5"
+							>
+								Fields marked with * are required. You can
+								update product details anytime from the Products
+								screen.
 							</StyledText>
 						</View>
 					</View>
@@ -268,7 +352,10 @@ export default function AddProduct() {
 						{addProductMutation.isPending ? (
 							<ActivityIndicator color="#fff" />
 						) : (
-							<StyledText variant="extrabold" className="text-white text-base">
+							<StyledText
+								variant="extrabold"
+								className="text-white text-base"
+							>
 								Add Product
 							</StyledText>
 						)}
@@ -279,7 +366,10 @@ export default function AddProduct() {
 						onPress={() => router.back()}
 						className="bg-gray-200 rounded-xl py-4 items-center mt-3 active:opacity-70"
 					>
-						<StyledText variant="semibold" className="text-text-primary text-base">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-base"
+						>
 							Cancel
 						</StyledText>
 					</Pressable>

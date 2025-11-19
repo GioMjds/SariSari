@@ -1,10 +1,13 @@
 import StyledText from '@/components/elements/StyledText';
+import ProductItem from '@/components/products/ProductItem';
+import { SortOption, sortOption } from '@/constants/sort-option';
 import {
 	Product,
 	deleteProduct,
 	getAllProducts,
 	initProductsTable,
 } from '@/db/products';
+import { useToastStore } from '@/stores/ToastStore';
 import { FontAwesome } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -21,14 +24,12 @@ import {
 	Modal,
 	Pressable,
 	RefreshControl,
-	Text,
 	TextInput,
 	TouchableOpacity,
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type SortOption = 'name' | 'price' | 'stock' | 'sku';
 type SortDirection = 'asc' | 'desc';
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -48,6 +49,7 @@ export default function Products() {
 
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const addToast = useToastStore((state) => state.addToast);
 
 	const debounceRef = useRef<number | null>(null);
 
@@ -81,7 +83,21 @@ export default function Products() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
 			setShowDeleteModal(false);
+			addToast({
+				message: `"${selectedProduct?.name}" deleted successfully`,
+				variant: 'success',
+				duration: 5000,
+				position: 'top-center',
+			});
 			setSelectedProduct(null);
+		},
+		onError: (error: Error) => {
+			addToast({
+				message: error.message || 'Failed to delete product',
+				variant: 'error',
+				duration: 5000,
+				position: 'top-center',
+			});
 		},
 	});
 
@@ -167,152 +183,11 @@ export default function Products() {
 		return 'text-green-600';
 	};
 
-	const renderProduct = ({ item }: { item: Product }) => {
-		const isMenuOpen = showContextMenu === item.id;
-
-		return (
-			<View className="bg-white mx-4 mb-3 rounded-2xl p-4 shadow-sm">
-				<View className="flex-row justify-between items-start">
-					<View className="flex-1 pr-3">
-						<StyledText
-							variant="semibold"
-							className="text-text-primary text-base mb-1"
-						>
-							{item.name}
-						</StyledText>
-						<StyledText
-							variant="regular"
-							className="text-text-secondary text-xs mb-2"
-						>
-							SKU: {item.sku}
-						</StyledText>
-						<View className="flex-row items-center gap-4">
-							<View>
-								<StyledText
-									variant="extrabold"
-									className="text-primary text-lg"
-								>
-									₱{item.price.toFixed(2)}
-								</StyledText>
-							</View>
-							<View>
-								<Text
-									className={`${getStockColor(item.quantity)} font-stack-sans-medium text-sm`}
-								>
-									Stock: {item.quantity}
-								</Text>
-							</View>
-						</View>
-						{item.quantity < LOW_STOCK_THRESHOLD &&
-							item.quantity > 0 && (
-								<View className="bg-yellow-100 px-2 py-1 rounded-md mt-2 self-start">
-									<StyledText
-										variant="medium"
-										className="text-yellow-700 text-xs"
-									>
-										⚠️ Low Stock
-									</StyledText>
-								</View>
-							)}
-						{item.quantity === 0 && (
-							<View className="bg-red-100 px-2 py-1 rounded-md mt-2 self-start">
-								<StyledText
-									variant="medium"
-									className="text-red-700 text-xs"
-								>
-									❌ Out of Stock
-								</StyledText>
-							</View>
-						)}
-					</View>
-
-					{/* Three-dot menu */}
-					<View>
-						<Pressable
-							hitSlop={20}
-							onPress={() =>
-								setShowContextMenu(isMenuOpen ? null : item.id)
-							}
-							className="p-2 active:opacity-50"
-						>
-							<FontAwesome
-								name="ellipsis-v"
-								size={18}
-								color="#7A1CAC"
-							/>
-						</Pressable>
-
-						{isMenuOpen && (
-							<View className="absolute right-0 top-10 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[150px] z-[9999]">
-								<TouchableOpacity
-									onPress={() => {
-										router.push(
-											`/products/edit/${item.id}`
-										);
-										setShowContextMenu(null);
-									}}
-									activeOpacity={0.2}
-									hitSlop={20}
-									className="flex-row items-center px-4 py-3 border-b border-gray-100 active:bg-background"
-								>
-									<FontAwesome
-										name="edit"
-										size={16}
-										color="#7A1CAC"
-									/>
-									<StyledText
-										variant="medium"
-										className="text-text-primary ml-3 text-sm"
-									>
-										Edit Product
-									</StyledText>
-								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={() => {
-										router.push('/inventory');
-										setShowContextMenu(null);
-									}}
-									hitSlop={20}
-									activeOpacity={0.2}
-									className="flex-row items-center px-4 py-3 border-b border-gray-100 active:bg-background"
-								>
-									<FontAwesome
-										name="history"
-										size={16}
-										color="#7A1CAC"
-									/>
-									<StyledText
-										variant="medium"
-										className="text-text-primary ml-3 text-sm"
-									>
-										View History
-									</StyledText>
-								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={() => handleDelete(item)}
-									hitSlop={20}
-									activeOpacity={0.2}
-									className="flex-row items-center px-4 py-3 active:bg-red-50"
-								>
-									<FontAwesome
-										name="trash"
-										size={16}
-										color="#dc2626"
-									/>
-									<StyledText
-										variant="medium"
-										className="text-red-600 ml-3 text-sm"
-									>
-										Delete
-									</StyledText>
-								</TouchableOpacity>
-							</View>
-						)}
-					</View>
-				</View>
-			</View>
-		);
-	};
+	if (isLoading) {
+		<View className="flex-1 justify-center items-center">
+			<ActivityIndicator size="large" color="#7A1CAC" />
+		</View>;
+	}
 
 	return (
 		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -418,71 +293,78 @@ export default function Products() {
 							variant="extrabold"
 							className="text-secondary text-xl"
 						>
-							₱{stats.totalValue.toFixed(0)}
+							₱
+							{stats.totalValue.toLocaleString('en-PH', {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
 						</StyledText>
 					</View>
 				</View>
 			</View>
 
 			{/* Products List */}
-			{isLoading ? (
-				<View className="flex-1 justify-center items-center">
-					<ActivityIndicator size="large" color="#7A1CAC" />
-				</View>
-			) : filteredProducts.length === 0 ? (
-				<View className="flex-1 justify-center items-center px-8">
-					<FontAwesome
-						name="cube"
-						size={64}
-						color="#AD49E1"
-						style={{ opacity: 0.3 }}
+			<FlatList
+				data={filteredProducts}
+				keyExtractor={(item) => item.id.toString()}
+				renderItem={({ item }) => (
+					<ProductItem
+						item={item}
+						onEdit={(id) => router.push(`/products/edit/${id}`)}
+						onDelete={handleDelete}
+						getStockColor={getStockColor}
+						lowStockThreshold={LOW_STOCK_THRESHOLD}
 					/>
-					<StyledText
-						variant="semibold"
-						className="text-text-secondary text-lg mt-4 text-center"
-					>
-						{search ? 'No products found' : 'No products yet'}
-					</StyledText>
-					<StyledText
-						variant="regular"
-						className="text-text-muted text-sm mt-2 text-center"
-					>
-						{search
-							? 'Try a different search term'
-							: 'Start by adding your first product'}
-					</StyledText>
-					{!search && (
-						<Pressable
-							onPress={() => router.push('/products/add')}
-							className="bg-accent rounded-xl px-6 py-3 mt-6 active:opacity-70"
-						>
-							<StyledText
-								variant="semibold"
-								className="text-white text-base"
-							>
-								Add Product
-							</StyledText>
-						</Pressable>
-					)}
-				</View>
-			) : (
-				<FlatList
-					data={filteredProducts}
-					renderItem={renderProduct}
-					keyExtractor={(item) => item.id.toString()}
-					contentContainerStyle={{
-						paddingTop: 8,
-						paddingBottom: 100,
-					}}
-					refreshControl={
-						<RefreshControl
-							refreshing={refreshing}
-							onRefresh={onRefresh}
-							tintColor="#7A1CAC"
+				)}
+				contentContainerStyle={{
+					paddingTop: 8,
+					paddingBottom: 100,
+				}}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefresh}
+						tintColor="#7A1CAC"
+					/>
+				}
+				ListEmptyComponent={
+					<View className="flex-1 justify-center items-center px-8">
+						<FontAwesome
+							name="cube"
+							size={64}
+							color="#AD49E1"
+							style={{ opacity: 0.3 }}
 						/>
-					}
-				/>
-			)}
+						<StyledText
+							variant="semibold"
+							className="text-text-secondary text-lg mt-4 text-center"
+						>
+							{search ? 'No products found' : 'No products yet'}
+						</StyledText>
+						<StyledText
+							variant="regular"
+							className="text-text-muted text-sm mt-2 text-center"
+						>
+							{search
+								? 'Try a different search term'
+								: 'Start by adding your first product'}
+						</StyledText>
+						{!search && (
+							<Pressable
+								onPress={() => router.push('/products/add')}
+								className="bg-accent rounded-xl px-6 py-3 mt-6 active:opacity-70"
+							>
+								<StyledText
+									variant="semibold"
+									className="text-white text-base"
+								>
+									Add Product
+								</StyledText>
+							</Pressable>
+						)}
+					</View>
+				}
+			/>
 
 			{/* Sort Modal */}
 			<Modal
@@ -505,28 +387,7 @@ export default function Products() {
 						>
 							Sort By
 						</StyledText>
-						{[
-							{
-								key: 'name' as SortOption,
-								label: 'Name',
-								icon: 'font',
-							},
-							{
-								key: 'price' as SortOption,
-								label: 'Price',
-								icon: 'money',
-							},
-							{
-								key: 'stock' as SortOption,
-								label: 'Stock Level',
-								icon: 'cubes',
-							},
-							{
-								key: 'sku' as SortOption,
-								label: 'SKU',
-								icon: 'barcode',
-							},
-						].map((option) => (
+						{sortOption.map((option) => (
 							<TouchableOpacity
 								key={option.key}
 								hitSlop={20}
@@ -584,44 +445,60 @@ export default function Products() {
 			>
 				<View className="flex-1 bg-black/40 justify-center items-center px-6">
 					<View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-						<StyledText
-							variant="extrabold"
-							className="text-text-primary text-xl mb-2"
-						>
-							Delete Product?
-						</StyledText>
-						<StyledText
-							variant="regular"
-							className="text-text-secondary text-sm mb-4"
-						>
-							Are you sure you want to delete "
-							{selectedProduct?.name}"? This action cannot be
-							undone.
-						</StyledText>
-						<View className="flex-row gap-3">
+						<View className="items-center mb-4">
+							<View className="bg-red-100 rounded-full p-4 mb-3">
+								<FontAwesome
+									name="exclamation-triangle"
+									size={32}
+									color="#dc2626"
+								/>
+							</View>
+							<StyledText
+								variant="extrabold"
+								className="text-text-primary text-xl mb-2 text-center"
+							>
+								Delete Product?
+							</StyledText>
+							<StyledText
+								variant="regular"
+								className="text-text-secondary text-sm text-center"
+							>
+								Are you sure you want to delete "{selectedProduct?.name}
+								"?
+							</StyledText>
+							<StyledText
+								variant="semibold"
+								className="text-red-600 text-sm mt-2 text-center"
+							>
+								This action cannot be undone.
+							</StyledText>
+						</View>
+						<View className="gap-3">
+							<Pressable
+								onPress={confirmDelete}
+								disabled={deleteMutation.isPending}
+								className="bg-red-600 rounded-xl py-3 active:opacity-70"
+							>
+								{deleteMutation.isPending ? (
+									<ActivityIndicator color="#fff" />
+								) : (
+									<StyledText
+										variant="extrabold"
+										className="text-white text-center text-base"
+									>
+										Yes, Delete Product
+									</StyledText>
+								)}
+							</Pressable>
 							<Pressable
 								onPress={() => setShowDeleteModal(false)}
-								className="flex-1 bg-gray-200 rounded-xl py-3 active:opacity-70"
+								className="bg-gray-200 rounded-xl py-3 active:opacity-70"
 							>
 								<StyledText
 									variant="semibold"
 									className="text-text-primary text-center text-base"
 								>
 									Cancel
-								</StyledText>
-							</Pressable>
-							<Pressable
-								onPress={confirmDelete}
-								className="flex-1 bg-red-600 rounded-xl py-3 active:opacity-70"
-								disabled={deleteMutation.isPending}
-							>
-								<StyledText
-									variant="semibold"
-									className="text-white text-center text-base"
-								>
-									{deleteMutation.isPending
-										? 'Deleting...'
-										: 'Delete'}
 								</StyledText>
 							</Pressable>
 						</View>
@@ -634,7 +511,7 @@ export default function Products() {
 				<Pressable
 					onPress={() => setShowContextMenu(null)}
 					className="absolute inset-0"
-					style={{ backgroundColor: 'transparent' }}
+					style={{ backgroundColor: 'transparent', zIndex: 50 }}
 				/>
 			)}
 		</SafeAreaView>

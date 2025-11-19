@@ -1,34 +1,41 @@
 import StyledText from '@/components/elements/StyledText';
+import Modal from '@/components/ui/Modal';
 import { deleteProduct, getProduct, updateProduct } from '@/db/products';
+import { useToastStore } from '@/stores/ToastStore';
+import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    TextInput,
-    View
+	ActivityIndicator,
+	BackHandler,
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	ScrollView,
+	TextInput,
+	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CATEGORIES = ['Snacks', 'Drinks', 'Household', 'Frozen', 'Cigarettes', 'Other'];
+const CATEGORIES = [
+	'Snacks',
+	'Drinks',
+	'Household',
+	'Frozen',
+	'Cigarettes',
+	'Other',
+];
 
 export default function EditProduct() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const addToast = useToastStore((state) => state.addToast);
 
-	const [productName, setProductName] = useState('');
-	const [sku, setSku] = useState('');
-	const [price, setPrice] = useState('');
-	const [selectedCategory, setSelectedCategory] = useState('');
-	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
 	// Fetch product data
 	const { data: product, isLoading } = useQuery({
@@ -37,20 +44,92 @@ export default function EditProduct() {
 		enabled: !!id,
 	});
 
-	// Populate form when product data loads
-	useEffect(() => {
-		if (product) {
-			setProductName(product.name);
-			setSku(product.sku);
-			setPrice(product.price.toString());
+	const {
+		control,
+		handleSubmit,
+		formState: { isDirty },
+	} = useForm({
+		defaultValues: {
+			name: '',
+			sku: '',
+			price: '',
+			category: '',
+		},
+		values: product
+			? {
+					name: product.name,
+					sku: product.sku,
+					price: product.price.toString(),
+					category: '',
+				}
+			: undefined,
+	});
+
+	// Check for unsaved changes
+	const hasUnsavedChanges = isDirty;
+
+	const handleBackPress = () => {
+		if (hasUnsavedChanges) {
+			Alert.alert(
+				'Unsaved Changes',
+				'You have unsaved changes. Are you sure you want to discard them?',
+				[
+					{ text: "Don't Leave", style: 'cancel', onPress: () => {} },
+					{
+						text: 'Discard',
+						style: 'destructive',
+						onPress: () => router.back(),
+					},
+				]
+			);
+		} else {
+			router.back();
 		}
-	}, [product]);
+	};
+
+	// Handle hardware back button
+	useEffect(() => {
+		const onBackPress = () => {
+			if (hasUnsavedChanges) {
+				Alert.alert(
+					'Unsaved Changes',
+					'You have unsaved changes. Are you sure you want to discard them?',
+					[
+						{
+							text: "Don't Leave",
+							style: 'cancel',
+							onPress: () => {},
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: () => router.back(),
+						},
+					]
+				);
+				return true;
+			}
+			return false;
+		};
+
+		const backHandler = BackHandler.addEventListener(
+			'hardwareBackPress',
+			onBackPress
+		);
+
+		return () => backHandler.remove();
+	}, [hasUnsavedChanges]);
 
 	// Update product mutation
 	const updateMutation = useMutation({
-		mutationFn: async () => {
-			// Validation
-			if (!productName.trim()) {
+		mutationFn: async (data: {
+			name: string;
+			sku: string;
+			price: string;
+		}) => {
+			const { name, sku, price } = data;
+
+			if (!name.trim()) {
 				throw new Error('Product name is required');
 			}
 			if (!sku.trim()) {
@@ -65,7 +144,7 @@ export default function EditProduct() {
 			// Note: We don't update quantity here - that's handled via Inventory
 			await updateProduct(
 				parseInt(id, 10),
-				productName.trim(),
+				name.trim(),
 				sku.trim(),
 				priceValue,
 				product?.quantity || 0
@@ -74,15 +153,21 @@ export default function EditProduct() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
 			queryClient.invalidateQueries({ queryKey: ['product', id] });
-			Alert.alert('Success', 'Product updated successfully!', [
-				{
-					text: 'OK',
-					onPress: () => router.back(),
-				},
-			]);
+			addToast({
+				message: `"${product?.name}" updated successfully!`,
+				variant: 'success',
+				duration: 5000,
+				position: 'top-center',
+			});
+			router.back();
 		},
 		onError: (error: Error) => {
-			Alert.alert('Error', error.message || 'Failed to update product');
+			addToast({
+				message: error.message || 'Failed to update product',
+				variant: 'error',
+				duration: 5000,
+				position: 'top-center',
+			});
 		},
 	});
 
@@ -91,20 +176,26 @@ export default function EditProduct() {
 		mutationFn: () => deleteProduct(parseInt(id, 10)),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
-			Alert.alert('Deleted', 'Product deleted successfully', [
-				{
-					text: 'OK',
-					onPress: () => router.replace('/products'),
-				},
-			]);
+			addToast({
+				message: `"${product?.name}" deleted successfully`,
+				variant: 'success',
+				duration: 5000,
+				position: 'top-center',
+			});
+			router.replace('/products');
 		},
 		onError: (error: Error) => {
-			Alert.alert('Error', error.message || 'Failed to delete product');
+			addToast({
+				message: error.message || 'Failed to delete product',
+				variant: 'error',
+				duration: 5000,
+				position: 'top-center',
+			});
 		},
 	});
 
-	const handleUpdate = () => {
-		updateMutation.mutate();
+	const onSubmit = (data: { name: string; sku: string; price: string }) => {
+		updateMutation.mutate(data);
 	};
 
 	const handleDelete = () => {
@@ -127,15 +218,26 @@ export default function EditProduct() {
 	if (!product) {
 		return (
 			<SafeAreaView className="flex-1 bg-background items-center justify-center px-8">
-				<FontAwesome name="exclamation-circle" size={64} color="#dc2626" style={{ opacity: 0.5 }} />
-				<StyledText variant="semibold" className="text-text-primary text-xl mt-4 text-center">
+				<FontAwesome
+					name="exclamation-circle"
+					size={64}
+					color="#dc2626"
+					style={{ opacity: 0.5 }}
+				/>
+				<StyledText
+					variant="semibold"
+					className="text-text-primary text-xl mt-4 text-center"
+				>
 					Product Not Found
 				</StyledText>
 				<Pressable
 					onPress={() => router.back()}
 					className="bg-accent rounded-xl px-6 py-3 mt-6 active:opacity-70"
 				>
-					<StyledText variant="semibold" className="text-white text-base">
+					<StyledText
+						variant="semibold"
+						className="text-white text-base"
+					>
 						Go Back
 					</StyledText>
 				</Pressable>
@@ -145,125 +247,160 @@ export default function EditProduct() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
-			<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+			<KeyboardAvoidingView
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+				className="flex-1"
+			>
 				{/* Header */}
-				<View className="bg-primary px-4 py-4 flex-row items-center justify-between">
+				<View className="bg-primary px-4 py-6 flex-row items-center justify-between">
 					<View className="flex-row items-center flex-1">
-						<Pressable onPress={() => router.back()} className="mr-3 active:opacity-50">
-							<FontAwesome name="arrow-left" size={20} color="#fff" />
+						<Pressable
+							onPress={handleBackPress}
+							className="mr-3 active:opacity-50"
+						>
+							<FontAwesome
+								name="arrow-left"
+								size={20}
+								color="#fff"
+							/>
 						</Pressable>
-						<StyledText variant="extrabold" className="text-white text-2xl">
+						<StyledText
+							variant="extrabold"
+							className="text-white text-2xl"
+						>
 							Edit Product
 						</StyledText>
 					</View>
-					<Pressable onPress={handleDelete} className="p-2 active:opacity-50">
-						<FontAwesome name="trash" size={20} color="#fff" />
-					</Pressable>
 				</View>
 
-				<ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
-					{/* Current Stock Info (Read-only) */}
-					<View className="bg-white rounded-xl p-4 mb-4 shadow-sm">
-						<StyledText variant="semibold" className="text-text-secondary text-xs mb-2">
-							CURRENT STOCK
-						</StyledText>
-						<View className="flex-row items-center justify-between">
-							<StyledText variant="extrabold" className="text-primary text-2xl">
-								{product.quantity}
-							</StyledText>
-							<Pressable
-								onPress={() => router.push('/inventory')}
-								className="bg-accent rounded-lg px-4 py-2 active:opacity-70"
-							>
-								<StyledText variant="semibold" className="text-white text-xs">
-									Manage Stock →
-								</StyledText>
-							</Pressable>
-						</View>
-						<StyledText variant="regular" className="text-text-muted text-xs mt-2">
-							To update stock quantity, use the Inventory screen
-						</StyledText>
-					</View>
-
+				<ScrollView
+					className="flex-1"
+					contentContainerStyle={{ padding: 16 }}
+				>
 					{/* Product Name */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Product Name *
 						</StyledText>
-						<TextInput
-							placeholder="e.g., Lucky Me Pancit Canton"
-							value={productName}
-							onChangeText={setProductName}
-							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
-							placeholderTextColor="#9ca3af"
+						<Controller
+							control={control}
+							name="name"
+							render={({ field: { onChange, value } }) => (
+								<TextInput
+									placeholder="e.g., Lucky Me Pancit Canton"
+									value={value}
+									onChangeText={onChange}
+									className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+									placeholderTextColor="#9ca3af"
+								/>
+							)}
 						/>
 					</View>
-
 					{/* SKU */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
-							SKU (Stock Keeping Unit) *
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
+							SKU (Stock Keeping Unit)
 						</StyledText>
-						<TextInput
-							placeholder="e.g., PC-001"
-							value={sku}
-							onChangeText={setSku}
-							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
-							placeholderTextColor="#9ca3af"
+						<Controller
+							control={control}
+							name="sku"
+							render={({ field: { value } }) => (
+								<TextInput
+									placeholder="e.g., PC-001"
+									value={value}
+									editable={false}
+									className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary/40 shadow-sm"
+									placeholderTextColor="#9ca3af"
+								/>
+							)}
 						/>
-						<StyledText variant="regular" className="text-text-muted text-xs mt-1">
-							⚠️ Changing SKU may affect inventory tracking
-						</StyledText>
 					</View>
-
 					{/* Price */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Price (₱) *
 						</StyledText>
 						<View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-							<StyledText variant="medium" className="text-text-secondary text-base mr-2">
+							<StyledText
+								variant="medium"
+								className="text-text-secondary text-base mr-2"
+							>
 								₱
 							</StyledText>
-							<TextInput
-								placeholder="0.00"
-								value={price}
-								onChangeText={setPrice}
-								keyboardType="decimal-pad"
-								className="flex-1 font-stack-sans text-base text-text-primary"
-								placeholderTextColor="#9ca3af"
+							<Controller
+								control={control}
+								name="price"
+								render={({ field: { onChange, value } }) => (
+									<TextInput
+										placeholder="0.00"
+										value={value}
+										onChangeText={onChange}
+										keyboardType="decimal-pad"
+										className="flex-1 font-stack-sans text-base text-text-primary"
+										placeholderTextColor="#9ca3af"
+									/>
+								)}
 							/>
 						</View>
 					</View>
 
 					{/* Category (Optional - UI only for now) */}
 					<View className="mb-4">
-						<StyledText variant="semibold" className="text-text-primary text-sm mb-2">
+						<StyledText
+							variant="semibold"
+							className="text-text-primary text-sm mb-2"
+						>
 							Category (Optional)
 						</StyledText>
-						<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+						<ScrollView
+							horizontal
+							showsHorizontalScrollIndicator={false}
+						>
 							<View className="flex-row gap-2">
 								{CATEGORIES.map((category) => (
-									<Pressable
+									<Controller
 										key={category}
-										onPress={() =>
-											setSelectedCategory(selectedCategory === category ? '' : category)
-										}
-										className={`px-4 py-2 rounded-xl ${
-											selectedCategory === category
-												? 'bg-accent'
-												: 'bg-white border border-gray-200'
-										} active:opacity-70`}
-									>
-										<StyledText
-											variant="medium"
-											className={`text-sm ${
-												selectedCategory === category ? 'text-white' : 'text-text-secondary'
-											}`}
-										>
-											{category}
-										</StyledText>
-									</Pressable>
+										control={control}
+										name="category"
+										render={({
+											field: { onChange, value },
+										}) => (
+											<Pressable
+												onPress={() =>
+													onChange(
+														value === category
+															? ''
+															: category
+													)
+												}
+												className={`px-4 py-2 rounded-xl ${
+													value === category
+														? 'bg-accent'
+														: 'bg-white border border-gray-200'
+												} active:opacity-70`}
+											>
+												<StyledText
+													variant="medium"
+													className={`text-sm ${
+														value === category
+															? 'text-white'
+															: 'text-text-secondary'
+													}`}
+												>
+													{category}
+												</StyledText>
+											</Pressable>
+										)}
+									/>
 								))}
 							</View>
 						</ScrollView>
@@ -271,16 +408,36 @@ export default function EditProduct() {
 
 					{/* Product Info */}
 					<View className="bg-blue-50 rounded-xl p-4 flex-row mb-6">
-						<FontAwesome name="info-circle" size={20} color="#3b82f6" style={{ marginRight: 12 }} />
+						<FontAwesome
+							name="info-circle"
+							size={20}
+							color="#3b82f6"
+							style={{ marginRight: 12 }}
+						/>
 						<View className="flex-1">
-							<StyledText variant="semibold" className="text-blue-700 text-sm mb-1">
+							<StyledText
+								variant="semibold"
+								className="text-blue-700 text-sm mb-1"
+							>
 								Product Information
 							</StyledText>
-							<StyledText variant="regular" className="text-blue-600 text-xs leading-5 mb-2">
-								Created: {new Date(product.created_at).toLocaleDateString()}
+							<StyledText
+								variant="regular"
+								className="text-blue-600 text-xs leading-5 mb-2"
+							>
+								Created:{' '}
+								{new Date(
+									product.created_at
+								).toLocaleDateString()}
 							</StyledText>
-							<StyledText variant="regular" className="text-blue-600 text-xs leading-5">
-								Last Updated: {new Date(product.updated_at).toLocaleDateString()}
+							<StyledText
+								variant="regular"
+								className="text-blue-600 text-xs leading-5"
+							>
+								Last Updated:{' '}
+								{new Date(
+									product.updated_at
+								).toLocaleDateString()}
 							</StyledText>
 						</View>
 					</View>
@@ -289,7 +446,7 @@ export default function EditProduct() {
 					<View className="gap-3 mb-8">
 						{/* Save Changes */}
 						<Pressable
-							onPress={handleUpdate}
+							onPress={handleSubmit(onSubmit)}
 							disabled={updateMutation.isPending}
 							className={`bg-accent rounded-xl py-4 items-center shadow-md active:opacity-70 ${
 								updateMutation.isPending ? 'opacity-50' : ''
@@ -298,35 +455,34 @@ export default function EditProduct() {
 							{updateMutation.isPending ? (
 								<ActivityIndicator color="#fff" />
 							) : (
-								<StyledText variant="extrabold" className="text-white text-base">
+								<StyledText
+									variant="extrabold"
+									className="text-white text-base"
+								>
 									Save Changes
 								</StyledText>
 							)}
 						</Pressable>
 
-						{/* View in Inventory */}
-						<Pressable
-							onPress={() => router.push('/inventory')}
-							className="bg-secondary rounded-xl py-4 items-center active:opacity-70"
-						>
-							<StyledText variant="semibold" className="text-white text-base">
-								View Inventory History
-							</StyledText>
-						</Pressable>
-
 						{/* Cancel */}
 						<Pressable
-							onPress={() => router.back()}
-							className="bg-gray-200 rounded-xl py-4 items-center active:opacity-70"
+							onPress={handleBackPress}
+							className="bg-gray-100 rounded-xl py-4 items-center"
 						>
-							<StyledText variant="semibold" className="text-text-primary text-base">
+							<StyledText
+								variant="semibold"
+								className="text-text-primary text-base"
+							>
 								Cancel
 							</StyledText>
 						</Pressable>
 
 						{/* Delete Product (Danger Zone) */}
 						<View className="mt-4 border-t border-gray-200 pt-4">
-							<StyledText variant="semibold" className="text-text-secondary text-xs mb-2">
+							<StyledText
+								variant="semibold"
+								className="text-text-secondary text-xs mb-2"
+							>
 								DANGER ZONE
 							</StyledText>
 							<Pressable
@@ -334,8 +490,16 @@ export default function EditProduct() {
 								className="bg-red-600 rounded-xl py-4 items-center active:opacity-70"
 							>
 								<View className="flex-row items-center">
-									<FontAwesome name="trash" size={16} color="#fff" style={{ marginRight: 8 }} />
-									<StyledText variant="extrabold" className="text-white text-base">
+									<FontAwesome
+										name="trash"
+										size={16}
+										color="#fff"
+										style={{ marginRight: 8 }}
+									/>
+									<StyledText
+										variant="extrabold"
+										className="text-white text-base"
+									>
 										Delete Product
 									</StyledText>
 								</View>
@@ -348,52 +512,24 @@ export default function EditProduct() {
 			{/* Delete Confirmation Modal */}
 			<Modal
 				visible={showDeleteModal}
-				transparent
-				animationType="fade"
-				onRequestClose={() => setShowDeleteModal(false)}
-			>
-				<View className="flex-1 bg-black/40 justify-center items-center px-6">
-					<View className="bg-white rounded-2xl p-6 w-full max-w-sm">
-						<View className="items-center mb-4">
-							<View className="bg-red-100 rounded-full p-4 mb-3">
-								<FontAwesome name="exclamation-triangle" size={32} color="#dc2626" />
-							</View>
-							<StyledText variant="extrabold" className="text-text-primary text-xl mb-2 text-center">
-								Delete Product?
-							</StyledText>
-							<StyledText variant="regular" className="text-text-secondary text-sm text-center">
-								Are you sure you want to delete "{product.name}"?
-							</StyledText>
-							<StyledText variant="semibold" className="text-red-600 text-sm mt-2 text-center">
-								This action cannot be undone.
-							</StyledText>
-						</View>
-						<View className="gap-3">
-							<Pressable
-								onPress={confirmDelete}
-								disabled={deleteMutation.isPending}
-								className="bg-red-600 rounded-xl py-3 active:opacity-70"
-							>
-								{deleteMutation.isPending ? (
-									<ActivityIndicator color="#fff" />
-								) : (
-									<StyledText variant="extrabold" className="text-white text-center text-base">
-										Yes, Delete Product
-									</StyledText>
-								)}
-							</Pressable>
-							<Pressable
-								onPress={() => setShowDeleteModal(false)}
-								className="bg-gray-200 rounded-xl py-3 active:opacity-70"
-							>
-								<StyledText variant="semibold" className="text-text-primary text-center text-base">
-									Cancel
-								</StyledText>
-							</Pressable>
-						</View>
-					</View>
-				</View>
-			</Modal>
+				variant="danger"
+				title="Delete Product?"
+				description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
+				buttons={[
+					{
+						text: 'Yes, Delete Product',
+						style: 'destructive',
+						onPress: confirmDelete,
+					},
+					{
+						text: 'Cancel',
+						style: 'cancel',
+						onPress: () => setShowDeleteModal(false),
+					},
+				]}
+				onClose={() => setShowDeleteModal(false)}
+				loading={deleteMutation.isPending}
+			/>
 		</SafeAreaView>
 	);
 }

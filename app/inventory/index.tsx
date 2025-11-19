@@ -8,24 +8,17 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	ActivityIndicator,
 	BackHandler,
 	FlatList,
-	KeyboardAvoidingView,
 	Modal,
-	Platform,
 	TextInput,
 	TouchableOpacity,
-	View,
+	View
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -526,136 +519,138 @@ export default function Inventory() {
 				statusBarTranslucent
 				onRequestClose={closeAction}
 			>
-				<KeyboardAvoidingView
-					behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-					className="flex-1"
-				>
-					<View className="flex-1 justify-end bg-black/50">
-						<TouchableOpacity
-							className="flex-1"
-							activeOpacity={1}
-							onPress={closeAction}
-						/>
-						{pendingAction && (
+				<View className="flex-1 justify-end bg-black/50">
+					<TouchableOpacity
+						className="flex-1"
+						activeOpacity={1}
+						onPress={closeAction}
+					/>
+					{pendingAction && (
+						<KeyboardAwareScrollView
+							enableOnAndroid
+							enableAutomaticScroll
+							extraScrollHeight={280}
+							keyboardShouldPersistTaps="handled"
+							contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+						>
 							<View className="w-full bg-white rounded-t-2xl p-6 shadow-xl">
-							<View className="flex-row items-center justify-between mb-4">
-								<StyledText
-									variant="extrabold"
-									className="text-xl text-text-primary"
-								>
-									{pendingAction.type === 'restock'
-										? 'Restock Product'
-										: 'Record Sale'}
-								</StyledText>
-								<TouchableOpacity
-									onPress={closeAction}
-									className="p-1"
-								>
-									<FontAwesome
-										name="times"
-										size={20}
-										color="#9CA3AF"
-									/>
-								</TouchableOpacity>
-							</View>
-
-							<View className="bg-gray-50 rounded-xl p-4 mb-4">
-								<StyledText
-									variant="semibold"
-									className="text-text-primary text-base mb-1"
-								>
-									{pendingAction.product.name}
-								</StyledText>
-								<StyledText
-									variant="regular"
-									className="text-text-muted text-sm"
-								>
-									SKU: {pendingAction.product.sku}
-								</StyledText>
-								<View className="flex-row gap-6 mt-2">
-									<View>
-										<StyledText
-											variant="regular"
-											className="text-text-muted text-xs"
-										>
-											Current Stock
-										</StyledText>
-										<StyledText
-											variant="semibold"
-											className="text-text-primary text-lg"
-										>
-											{pendingAction.product.quantity}
-										</StyledText>
-									</View>
-									<View>
-										<StyledText
-											variant="regular"
-											className="text-text-muted text-xs"
-										>
-											Price
-										</StyledText>
-										<StyledText
-											variant="semibold"
-											className="text-text-primary text-lg"
-										>
-											₱
-											{pendingAction.product.price.toFixed(
-												2
-											)}
-										</StyledText>
-									</View>
-								</View>
-							</View>
-
-							<View className="mb-6">
-								<StyledText
-									variant="medium"
-									className="text-text-primary mb-2"
-								>
-									Quantity
-								</StyledText>
-								<TextInput
-									placeholder="Enter quantity"
-									keyboardType="number-pad"
-									value={quantityInput}
-									onChangeText={setQuantityInput}
-									className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-text-primary text-lg text-center"
-								/>
-							</View>
-
-							<View className="flex-row gap-3">
-								<TouchableOpacity
-									onPress={closeAction}
-									className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
-								>
+								<View className="flex-row items-center justify-between mb-4">
 									<StyledText
-										variant="medium"
-										className="text-text-muted"
+										variant="extrabold"
+										className="text-xl text-text-primary"
 									>
-										Cancel
+										{pendingAction.type === 'restock'
+											? 'Restock Product'
+											: 'Record Sale'}
 									</StyledText>
-								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={submitAction}
-									className={`flex-1 rounded-xl py-3 items-center ${
-										pendingAction.type === 'restock'
-											? 'bg-primary'
-											: 'bg-secondary'
-									}`}
-								>
+									<TouchableOpacity
+										onPress={closeAction}
+										className="p-1"
+									>
+										<FontAwesome
+											name="times"
+											size={20}
+											color="#9CA3AF"
+										/>
+									</TouchableOpacity>
+								</View>
+
+								<View className="bg-gray-50 rounded-xl p-4 mb-4">
 									<StyledText
 										variant="semibold"
-										className="text-white"
+										className="text-text-primary text-base mb-1"
 									>
-										Confirm
+										{pendingAction.product.name}
 									</StyledText>
-								</TouchableOpacity>
+									<StyledText
+										variant="regular"
+										className="text-text-muted text-sm"
+									>
+										SKU: {pendingAction.product.sku}
+									</StyledText>
+									<View className="flex-row gap-6 mt-2">
+										<View>
+											<StyledText
+												variant="regular"
+												className="text-text-muted text-xs"
+											>
+												Current Stock
+											</StyledText>
+											<StyledText
+												variant="semibold"
+												className="text-text-primary text-lg"
+											>
+												{pendingAction.product.quantity}
+											</StyledText>
+										</View>
+										<View>
+											<StyledText
+												variant="regular"
+												className="text-text-muted text-xs"
+											>
+												Price
+											</StyledText>
+											<StyledText
+												variant="semibold"
+												className="text-text-primary text-lg"
+											>
+												₱{pendingAction.product.price.toFixed(2)}
+											</StyledText>
+										</View>
+									</View>
+								</View>
+
+								<View className="mb-6">
+									<StyledText
+										variant="medium"
+										className="text-text-primary mb-2"
+									>
+										Quantity
+									</StyledText>
+									<TextInput
+										placeholder="Enter quantity"
+										keyboardType="number-pad"
+										value={quantityInput}
+										textAlign='left'
+										onChangeText={setQuantityInput}
+										className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-text-primary text-lg"
+									/>
+								</View>
+
+								<View className="flex-row gap-3">
+									<TouchableOpacity
+										onPress={closeAction}
+										className="flex-1 border border-gray-300 rounded-xl py-3 items-center"
+									>
+										<StyledText
+											variant="medium"
+											className="text-text-muted"
+										>
+											Cancel
+										</StyledText>
+									</TouchableOpacity>
+									<TouchableOpacity
+										onPress={submitAction}
+										className={`flex-1 rounded-xl py-3 items-center ${
+											pendingAction.type === 'restock'
+												? 'bg-primary'
+												: 'bg-secondary'
+										}`}
+									>
+										<StyledText
+											variant="semibold"
+											className="text-white"
+										>
+											Confirm
+										</StyledText>
+									</TouchableOpacity>
+								</View>
 							</View>
-						</View>
+						</KeyboardAwareScrollView>
 					)}
 				</View>
-			</KeyboardAvoidingView>
 			</Modal>
+
 			{/* Exit Confirmation Dialog */}
 			<Dialog
 				visible={dialogVisible}

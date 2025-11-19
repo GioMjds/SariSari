@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Sales history screen
 export default function Sales() {
     const [refreshing, setRefreshing] = useState<boolean>(false);
 

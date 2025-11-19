@@ -12,7 +12,7 @@ import {
 import { CreditFilter, CreditKPIs, CreditSort, Customer } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
