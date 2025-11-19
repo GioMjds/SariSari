@@ -1,3 +1,4 @@
+import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
 import { db } from '../configs/sqlite';
 
 export interface Sale {
@@ -57,19 +58,20 @@ export const insertSale = async (
   customer_credit_id?: number
 ) => {
   const total = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+  const timestamp = getCurrentLocalTimestamp();
   
   // Insert sale
   const saleResult = await db.runAsync(
-    'INSERT INTO sales (total, payment_type, customer_name, customer_credit_id) VALUES (?, ?, ?, ?)',
-    [total, payment_type, customer_name || null, customer_credit_id || null]
+    'INSERT INTO sales (total, payment_type, customer_name, customer_credit_id, timestamp) VALUES (?, ?, ?, ?, ?)',
+    [total, payment_type, customer_name || null, customer_credit_id || null, timestamp]
   );
   const saleId = saleResult.lastInsertRowId;
   
-  // If credit sale, update customer credit
+  // If credit sale, create credit transaction
   if (payment_type === 'credit' && customer_credit_id) {
     await db.runAsync(
-      'UPDATE customer_credits SET amount_owed = amount_owed + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [total, customer_credit_id]
+      'INSERT INTO credit_transactions (customer_id, amount, status) VALUES (?, ?, ?)',
+      [customer_credit_id, total, 'unpaid']
     );
   }
   
@@ -163,8 +165,8 @@ export const getSaleItems = async (sale_id: number): Promise<SaleItemWithProduct
 };
 
 export const getTodayStats = async () => {
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  // Get today's date in local timezone  (format: YYYY-MM-DD)
+  const todayString = getTodayDateString();
   
   const stats = await db.getFirstAsync<{ 
     total: number; 
@@ -176,8 +178,8 @@ export const getTodayStats = async () => {
       COALESCE(SUM((SELECT SUM(quantity) FROM sale_items WHERE sale_id = sales.id)), 0) as items_sold,
       COALESCE(SUM(CASE WHEN payment_type = 'credit' THEN 1 ELSE 0 END), 0) as credit_sales
      FROM sales 
-     WHERE timestamp >= ? AND timestamp < ?`,
-    [today, tomorrow]
+     WHERE date(timestamp) = ?`,
+    [todayString]
   );
   
   return stats || { total: 0, items_sold: 0, credit_sales: 0 };

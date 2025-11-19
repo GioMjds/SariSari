@@ -12,7 +12,8 @@ import StyledText from '../elements/StyledText';
 import { useModalStore } from '@/stores/ModalStore';
 import { ModalButton } from '@/types/ui/Modal.types';
 
-interface CustomModalProps extends Omit<RNModalProps, 'visible' | 'onRequestClose'> {
+interface CustomModalProps
+	extends Omit<RNModalProps, 'visible' | 'onRequestClose'> {
 	id?: string;
 	visible?: boolean;
 	title?: string;
@@ -50,35 +51,20 @@ const Modal: FC<CustomModalProps> = ({
 	...rest
 }) => {
 	const { modals, closeModal } = useModalStore();
-	
-	// Determine if we are using store or props
+
 	const storeModal = id ? modals.find((m) => m.id === id) : null;
-	
-	// Merge props: store takes precedence if id is present
+
 	const isVisible = id ? !!storeModal : !!visible;
 	const finalTitle = storeModal?.title ?? title;
 	const finalDescription = storeModal?.description ?? description;
 	const finalButtons = storeModal?.buttons ?? buttons;
 	const finalVariant = storeModal?.variant ?? variant;
-	const finalIcon = storeModal?.icon ? (storeModal.icon as keyof typeof FontAwesome.glyphMap) : icon;
+	const finalIcon = storeModal?.icon
+		? (storeModal.icon as keyof typeof FontAwesome.glyphMap)
+		: icon;
 	const finalChildren = storeModal?.children ?? children;
 	const finalCloseOnOverlay = storeModal?.closeOnOverlay ?? closeOnOverlay;
 	const finalShowCloseButton = storeModal?.showCloseButton ?? showCloseButton;
-
-	useEffect(() => {
-		if (!isVisible || !closeOnEscape) return;
-
-		const handleEscape = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') {
-				handleClose();
-			}
-		};
-
-		if (typeof document !== 'undefined') {
-			document.addEventListener('keydown', handleEscape);
-			return () => document.removeEventListener('keydown', handleEscape);
-		}
-	}, [isVisible, closeOnEscape]);
 
 	const handleClose = () => {
 		if (id) closeModal(id);
@@ -86,9 +72,7 @@ const Modal: FC<CustomModalProps> = ({
 	};
 
 	const handleOverlayPress = () => {
-		if (finalCloseOnOverlay) {
-			handleClose();
-		}
+		if (finalCloseOnOverlay) handleClose();
 	};
 
 	const handleContentPress = (event: any) => {
@@ -154,17 +138,28 @@ const Modal: FC<CustomModalProps> = ({
 			onRequestClose={handleClose}
 		>
 			<TouchableWithoutFeedback onPress={handleOverlayPress}>
-				<View className="flex-1 bg-black/40 justify-center items-center px-6">
+				<View
+					className="flex-1 justify-center items-center px-6"
+					style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+				>
 					<TouchableWithoutFeedback onPress={handleContentPress}>
-						<View className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}>
+						<View
+							className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
+						>
 							{/* Header / Icon */}
-							{(finalTitle || finalDescription || finalIcon || finalVariant !== 'default') && (
+							{(finalTitle ||
+								finalDescription ||
+								finalIcon ||
+								finalVariant !== 'default') && (
 								<View className="items-center mb-4">
-									{(finalIcon || finalVariant !== 'default') && (
-										<View className={`${variantStyles.iconBg} rounded-full p-4 mb-3`}>
+									{(finalIcon ||
+										finalVariant !== 'default') && (
+										<View
+											className={`${variantStyles.iconBg} rounded-full px-4 py-3 mb-3`}
+										>
 											<FontAwesome
 												name={displayIcon as any}
-												size={32}
+												size={36}
 												color={variantStyles.iconColor}
 											/>
 										</View>
@@ -189,64 +184,79 @@ const Modal: FC<CustomModalProps> = ({
 							)}
 
 							{/* Custom Content */}
-							{finalChildren && <View className="mb-4">{finalChildren}</View>}
+							{finalChildren && (
+								<View className="mb-4">{finalChildren}</View>
+							)}
 
 							{/* Buttons */}
 							{finalButtons && finalButtons.length > 0 && (
 								<View className="gap-3">
-									{finalButtons.map((button: ModalButton, index: number) => {
-										const isDestructive = button.style === 'destructive';
-										const isCancel = button.style === 'cancel';
-										
-										let bgClass = 'bg-primary';
-										let textClass = 'text-white';
+									{finalButtons.map(
+										(
+											button: ModalButton,
+											index: number
+										) => {
+											const isDestructive =
+												button.style === 'destructive';
+											const isCancel =
+												button.style === 'cancel';
 
-										if (isDestructive) {
-											bgClass = 'bg-red-600';
-										} else if (isCancel) {
-											bgClass = 'bg-gray-200';
-											textClass = 'text-text-primary';
+											let bgClass = 'bg-primary';
+											let textClass = 'text-white';
+
+											if (isDestructive) {
+												bgClass = 'bg-red-600';
+											} else if (isCancel) {
+												bgClass = 'bg-gray-200';
+												textClass = 'text-text-primary';
+											}
+
+											return (
+												<Pressable
+													key={index}
+													onPress={() => {
+														button.onPress?.();
+														// If it's a store modal, we might want to close it automatically?
+														// Usually Alert buttons close the alert.
+														if (id) closeModal(id);
+													}}
+													disabled={loading}
+													className={`${bgClass} rounded-xl py-3 active:opacity-70`}
+												>
+													{loading && index === 0 ? (
+														<ActivityIndicator color="#fff" />
+													) : (
+														<StyledText
+															variant={
+																isCancel
+																	? 'semibold'
+																	: 'extrabold'
+															}
+															className={`${textClass} text-center text-base`}
+														>
+															{button.text}
+														</StyledText>
+													)}
+												</Pressable>
+											);
 										}
-
-										return (
-											<Pressable
-												key={index}
-												onPress={() => {
-													button.onPress?.();
-													// If it's a store modal, we might want to close it automatically?
-													// Usually Alert buttons close the alert.
-													if (id) closeModal(id);
-												}}
-												disabled={loading}
-												className={`${bgClass} rounded-xl py-3 active:opacity-70`}
-											>
-												{loading && index === 0 ? (
-													<ActivityIndicator color="#fff" />
-												) : (
-													<StyledText
-														variant={isCancel ? 'semibold' : 'extrabold'}
-														className={`${textClass} text-center text-base`}
-													>
-														{button.text}
-													</StyledText>
-												)}
-											</Pressable>
-										);
-									})}
+									)}
 								</View>
 							)}
 
 							{/* Close Button (if no buttons and showCloseButton is true) */}
-							{finalShowCloseButton && (!finalButtons || finalButtons.length === 0) && (
-								<Pressable
-									onPress={handleClose}
-									className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100"
-								>
-									<StyledText className="text-gray-500 text-lg font-stack-sans-bold">
-										×
-									</StyledText>
-								</Pressable>
-							)}
+							{finalShowCloseButton &&
+								(!finalButtons ||
+									finalButtons.length === 0) && (
+									<Pressable
+										onPress={handleClose}
+										className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100"
+									>
+										<StyledText className="text-gray-500 text-lg font-stack-sans-bold">
+											×
+										</StyledText>
+									</Pressable>
+								)}
 						</View>
 					</TouchableWithoutFeedback>
 				</View>

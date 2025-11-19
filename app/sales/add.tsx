@@ -305,7 +305,7 @@ export default function AddSale() {
                             <StyledText variant="extrabold" className="text-primary text-xl">
                                 Review & Checkout
                             </StyledText>
-                            <Pressable hitSlop={20} onPress={() => setShowCheckout(false)} className="active:opacity-50 mr-2">
+                            <Pressable hitSlop={20} onPress={() => setShowCheckout(false)} className="mr-2">
                                 <FontAwesome name="times" size={24} color="#2E073F" />
                             </Pressable>
                         </View>

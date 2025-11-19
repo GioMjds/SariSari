@@ -1,6 +1,7 @@
 import StyledText from "@/components/elements/StyledText";
 import { getAllSales, getTodayStats, initSalesTables } from "@/db/sales";
 import { SaleWithItems } from "@/types/sales.types";
+import { parseStoredTimestamp } from "@/utils/timezone";
 import { FontAwesome } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -31,12 +32,13 @@ export default function Sales() {
         queryFn: getAllSales,
     });
 
+    
     const onRefresh = async () => {
         setRefreshing(true);
         await Promise.all([refetchStats(), refetchSales()]);
         setRefreshing(false);
     };
-
+    
     const handleNewSale = () => {
         router.push('/sales/add');
     };
@@ -47,7 +49,7 @@ export default function Sales() {
 
     const renderSaleItem = ({ item }: { item: SaleWithItems }) => {
         const isCredit = item.payment_type === 'credit';
-        const timestamp = new Date(item.timestamp);
+        const timestamp = parseStoredTimestamp(item.timestamp) || new Date();
 
         return (
             <Pressable

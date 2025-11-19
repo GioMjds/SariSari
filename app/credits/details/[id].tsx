@@ -13,6 +13,7 @@ import {
 	CreditTransaction,
 	CustomerWithDetails,
 } from '@/types/credits.types';
+import { parseStoredTimestamp } from '@/utils/timezone';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -418,11 +419,11 @@ export default function CustomerDetails() {
 												{credit.product_name || 'Credit'}
 											</StyledText>
 											<StyledText variant="regular" className="text-gray-500 text-xs">
-												{format(new Date(credit.date), 'MMM dd, yyyy h:mm a')}
+												{format(parseStoredTimestamp(credit.date) || new Date(), 'MMM dd, yyyy h:mm a')}
 											</StyledText>
 											{credit.due_date && (
 												<StyledText variant="regular" className="text-gray-500 text-xs">
-													Due: {format(new Date(credit.due_date), 'MMM dd, yyyy')}
+													Due: {format(parseStoredTimestamp(credit.due_date) || new Date(), 'MMM dd, yyyy')}
 												</StyledText>
 											)}
 										</View>
@@ -494,7 +495,7 @@ export default function CustomerDetails() {
 												</StyledText>
 											</View>
 											<StyledText variant="regular" className="text-gray-500 text-xs mb-1">
-												{format(new Date(payment.date), 'MMM dd, yyyy h:mm a')}
+												{format(parseStoredTimestamp(payment.date) || new Date(), 'MMM dd, yyyy h:mm a')}
 											</StyledText>
 											{payment.payment_method && (
 												<View className="flex-row items-center">
@@ -561,7 +562,7 @@ export default function CustomerDetails() {
 														{item.description}
 													</StyledText>
 													<StyledText variant="regular" className="text-gray-500 text-xs">
-														{format(new Date(item.date), 'MMM dd, yyyy h:mm a')}
+														{format(parseStoredTimestamp(item.date) || new Date(), 'MMM dd, yyyy h:mm a')}
 													</StyledText>
 												</View>
 

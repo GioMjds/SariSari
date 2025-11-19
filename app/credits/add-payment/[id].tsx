@@ -15,13 +15,11 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-	KeyboardAvoidingView,
-	Platform,
-	ScrollView,
 	TextInput,
 	TouchableOpacity,
-	View,
+	View
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface PaymentFormData {
@@ -31,13 +29,13 @@ interface PaymentFormData {
 }
 
 export default function AddPaymentTransaction() {
+	const [selectedCredit, setSelectedCredit] =
+		useState<CreditTransaction | null>(null);
+	const [showCreditList, setShowCreditList] = useState<boolean>(false);
+
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const queryClient = useQueryClient();
 	const addToast = useToastStore((state) => state.addToast);
-
-	const [selectedCredit, setSelectedCredit] =
-		useState<CreditTransaction | null>(null);
-	const [showCreditList, setShowCreditList] = useState(false);
 
 	// Initialize database
 	useEffect(() => {
@@ -178,10 +176,13 @@ export default function AddPaymentTransaction() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
-			<KeyboardAvoidingView
+			<KeyboardAwareScrollView
 				className="flex-1"
-				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-				keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+				showsVerticalScrollIndicator={false}
+				enableAutomaticScroll
+				enableOnAndroid
+				extraScrollHeight={100}
+				contentContainerStyle={{ paddingBottom: 32 }}
 			>
 				{/* Header */}
 				<View className="px-4 pt-4 pb-2 bg-background">
@@ -235,11 +236,8 @@ export default function AddPaymentTransaction() {
 					)}
 				</View>
 
-				<ScrollView
-					className="flex-1 px-4"
-					showsVerticalScrollIndicator={false}
-				>
-					<View className="pb-32 pt-4">
+				<View className="flex-1 px-4 pt-4">
+					<View className="pb-8">
 						{/* Payment Amount */}
 						<View className="mb-4">
 							<StyledText
@@ -576,8 +574,8 @@ export default function AddPaymentTransaction() {
 							</StyledText>
 						</TouchableOpacity>
 					</View>
-				</ScrollView>
-			</KeyboardAvoidingView>
+				</View>
+			</KeyboardAwareScrollView>
 		</SafeAreaView>
 	);
 }

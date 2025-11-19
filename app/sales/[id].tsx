@@ -1,6 +1,7 @@
 import StyledText from "@/components/elements/StyledText";
-import { Alert } from "@/utils/alert";
 import { deleteSale, getSale } from "@/db/sales";
+import { Alert } from "@/utils/alert";
+import { parseStoredTimestamp } from "@/utils/timezone";
 import { FontAwesome } from "@expo/vector-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -56,7 +57,7 @@ export default function SaleDetails() {
     }
 
     const isCredit = sale.payment_type === 'credit';
-    const timestamp = new Date(sale.timestamp);
+    const timestamp = parseStoredTimestamp(sale.timestamp) || new Date();
 
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top']}>

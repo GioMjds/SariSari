@@ -11,6 +11,7 @@ import {
 	NewPayment,
 	Payment,
 } from '@/types/credits.types';
+import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
 import { db } from '../configs/sqlite';
 
 // Initialize all credits-related tables
@@ -236,10 +237,11 @@ export const getCustomerWithDetails = async (
 export const insertCreditTransaction = async (
 	credit: NewCredit
 ): Promise<number> => {
+	const timestamp = getCurrentLocalTimestamp();
 	const result = await db.runAsync(
 		`INSERT INTO credit_transactions 
-     (customer_id, product_id, product_name, quantity, amount, due_date, notes, status) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid')`,
+     (customer_id, product_id, product_name, quantity, amount, due_date, notes, status, date) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)`,
 		[
 			credit.customer_id,
 			credit.product_id || null,
@@ -248,6 +250,7 @@ export const insertCreditTransaction = async (
 			credit.amount,
 			credit.due_date || null,
 			credit.notes || null,
+			timestamp,
 		]
 	);
 	return result.lastInsertRowId;
@@ -296,6 +299,7 @@ export const getCreditTransactionsByCustomer = async (
 // ==================== PAYMENT OPERATIONS ====================
 
 export const insertPayment = async (payment: NewPayment): Promise<number> => {
+	const timestamp = payment.date || getCurrentLocalTimestamp();
 	const result = await db.runAsync(
 		`INSERT INTO payments 
      (customer_id, credit_transaction_id, amount, payment_method, date, notes) 
@@ -305,7 +309,7 @@ export const insertPayment = async (payment: NewPayment): Promise<number> => {
 			payment.credit_transaction_id || null,
 			payment.amount,
 			payment.payment_method || null,
-			payment.date || new Date().toISOString(),
+			timestamp,
 			payment.notes || null,
 		]
 	);
@@ -367,7 +371,8 @@ export const getPaymentsByCustomer = async (
 // ==================== KPI & ANALYTICS ====================
 
 export const getCreditKPIs = async (): Promise<CreditKPIs> => {
-	const today = new Date().toISOString().split('T')[0];
+	// Get today's date in local timezone (format: YYYY-MM-DD)
+	const todayString = getTodayDateString();
 
 	const totalOutstanding = await db.getFirstAsync<{ total: number }>(
 		`SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
@@ -392,13 +397,13 @@ export const getCreditKPIs = async (): Promise<CreditKPIs> => {
 	const collectedToday = await db.getFirstAsync<{ total: number }>(
 		`SELECT COALESCE(SUM(amount), 0) as total 
      FROM payments WHERE date(date) = ?`,
-		[today]
+		[todayString]
 	);
 
 	const creditsToday = await db.getFirstAsync<{ total: number }>(
 		`SELECT COALESCE(SUM(amount), 0) as total 
      FROM credit_transactions WHERE date(date) = ?`,
-		[today]
+		[todayString]
 	);
 
 	const overdueCount = await db.getFirstAsync<{ count: number }>(

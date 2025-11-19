@@ -227,7 +227,7 @@ export default function Credits() {
 						</View>
 						<View className="flex-1">
 							<KPICard
-								title="Customers"
+								title="Customers w/ Balance"
 								value={kpis?.totalCustomersWithBalance || 0}
 								icon="users"
 								iconColor="#7A1CAC"

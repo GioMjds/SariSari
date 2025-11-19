@@ -275,7 +275,6 @@ export default function Inventory() {
 									{item.quantity}
 								</StyledText>
 							</View>
-							<View className="h-8 w-px bg-gray-200" />
 							<View>
 								<StyledText
 									variant="regular"
@@ -295,25 +294,11 @@ export default function Inventory() {
 						<View className="flex-row gap-2">
 							<TouchableOpacity
 								onPress={() => openAction(item, 'restock')}
-								className="w-10 h-10 rounded-full bg-primary items-center justify-center shadow-sm"
+								className="w-12 h-12 rounded-full bg-primary items-center justify-center shadow-sm"
 							>
 								<FontAwesome
 									name="plus"
-									size={16}
-									color="#ffffff"
-								/>
-							</TouchableOpacity>
-							<TouchableOpacity
-								onPress={() => openAction(item, 'sale')}
-								className="w-10 h-10 rounded-full bg-secondary items-center justify-center shadow-sm"
-								disabled={item.quantity === 0}
-								style={{
-									opacity: item.quantity === 0 ? 0.5 : 1,
-								}}
-							>
-								<FontAwesome
-									name="minus"
-									size={16}
+									size={20}
 									color="#ffffff"
 								/>
 							</TouchableOpacity>
@@ -451,6 +436,7 @@ export default function Inventory() {
 					</View>
 				</View>
 			</View>
+
 			{/* Inventory List */}
 			{isLoading || isRefetching ? (
 				<View className="flex-1 items-center justify-center">
