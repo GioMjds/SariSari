@@ -7,14 +7,16 @@ import StyledText from '../elements/StyledText';
 
 const StyledTab = () => {
 	const router = useRouter();
-	const pathname = usePathname() ?? '/inventory';
+	const pathname = usePathname();
 	const visibleRoutes = tabs.slice(0, 5);
 
 	const handlePress = useCallback(
 		(href: string) => {
-			if (pathname !== href) {
-				router.push(href as any);
-			}
+			const shouldNavigate = href === '/'
+				? pathname !== '/' && pathname !== ''
+				: pathname !== href && !pathname.startsWith(`${href}/`);
+
+			if (shouldNavigate) router.push(href as any);
 		},
 		[pathname, router]
 	);
@@ -23,7 +25,10 @@ const StyledTab = () => {
 		<View className="bg-white px-6 py-4 shadow-xl shadow-black" style={{ elevation: 6 }}>
 			<View className="flex-row justify-between items-center">
 				{visibleRoutes.map((tab) => {
-					const isFocused = pathname.startsWith(tab.href);
+					const isFocused =
+						tab.href === '/'
+							? pathname === '/' || pathname === ''
+							: pathname === tab.href || pathname.startsWith(`${tab.href}/`);
 
 					return (
 						<TouchableOpacity
@@ -42,7 +47,7 @@ const StyledTab = () => {
 							/>
 							<StyledText
 								variant={isFocused ? 'extrabold' : 'light'}
-								className={`text-md leading-10 mt-1 text-center ${isFocused ? 'text-secondary' : 'text-[#9ca3af]'}`}
+								className={`text-md leading-4 mt-1 text-center ${isFocused ? 'text-secondary' : 'text-[#9ca3af]'}`}
 							>
 								{tab.name}
 							</StyledText>

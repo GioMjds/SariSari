@@ -1,17 +1,16 @@
 import StyledText from '@/components/elements/StyledText';
 import {
-	deleteCustomer,
-	getCreditHistory,
-	getCustomerWithDetails,
-	initCreditsTable,
-	markAllCreditsAsPaid,
+    deleteCustomer,
+    getCreditHistory,
+    getCustomerWithDetails,
+    markAllCreditsAsPaid,
 } from '@/db/credits';
 import { useModalStore } from '@/stores/ModalStore';
 import { useToastStore } from '@/stores/ToastStore';
 import {
-	CreditHistory,
-	CreditTransaction,
-	CustomerWithDetails,
+    CreditHistory,
+    CreditTransaction,
+    CustomerWithDetails,
 } from '@/types/credits.types';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { FontAwesome } from '@expo/vector-icons';
@@ -19,13 +18,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-	ActivityIndicator,
-	RefreshControl,
-	ScrollView,
-	TouchableOpacity,
-	View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -41,22 +40,7 @@ export default function CustomerDetails() {
 	const addToast = useToastStore((state) => state.addToast);
 	const { openModal } = useModalStore();
 
-	// Initialize database
-	useEffect(() => {
-		(async () => {
-			try {
-				await initCreditsTable();
-			} catch (error) {
-				console.error('Error initializing credits table:', error);
-				addToast({
-					message: 'Failed to initialize database',
-					variant: 'error',
-					duration: 5000,
-					position: 'top-center',
-				});
-			}
-		})();
-	}, []);
+
 
 	// Query customer details
 	const {
@@ -209,7 +193,6 @@ export default function CustomerDetails() {
 
 	const handleAddPayment = () => {
 		if (!customer) return;
-		// Navigate to add payment with customer ID
 		router.push(`/credits/add-payment/${customer.id}` as any);
 	};
 
@@ -268,11 +251,11 @@ export default function CustomerDetails() {
 			{/* Header */}
 			<View className="px-4 pt-4 pb-2 bg-background">
 				<View className="flex-row items-center justify-between mb-4">
-					<TouchableOpacity activeOpacity={0.7} onPress={() => router.back()}>
+					<TouchableOpacity activeOpacity={0.7} hitSlop={20} onPress={() => router.back()}>
 						<FontAwesome name="arrow-left" size={24} color="#2E073F" />
 					</TouchableOpacity>
 
-					<TouchableOpacity activeOpacity={0.7} onPress={handleDeleteCustomer}>
+					<TouchableOpacity activeOpacity={0.7} hitSlop={20} onPress={handleDeleteCustomer}>
 						<FontAwesome name="trash" size={20} color="#ef4444" />
 					</TouchableOpacity>
 				</View>

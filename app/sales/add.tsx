@@ -1,11 +1,11 @@
 import StyledText from "@/components/elements/StyledText";
-import { Alert } from "@/utils/alert";
 import { getAllCustomers } from "@/db/credits";
-import { getAllProducts, Product } from "@/db/products";
-import { insertSale } from "@/db/sales";
+import { getAllProducts } from "@/db/products";
+import { useSalesMutation } from "@/hooks/useSalesMutation";
 import { NewSaleItem } from "@/types/sales.types";
+import { Alert } from "@/utils/alert";
 import { FontAwesome } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -15,8 +15,10 @@ import {
     Pressable,
     ScrollView,
     TextInput,
+    TouchableOpacity,
     View
 } from "react-native";
+import { Product } from "@/types/products.types";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddSale() {
@@ -29,7 +31,7 @@ export default function AddSale() {
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     
     const router = useRouter();
-    const queryClient = useQueryClient();
+    const { insertSaleMutation } = useSalesMutation();
 
     // Fetch products
     const { data: products = [], isLoading } = useQuery({
@@ -117,21 +119,16 @@ export default function AddSale() {
 
         setIsProcessing(true);
         try {
-            await insertSale(
-                selectedItems.map(item => ({
+            await insertSaleMutation.mutateAsync({
+                items: selectedItems.map(item => ({
                     product_id: item.product_id,
                     quantity: item.quantity,
                     price: item.price
                 })),
-                paymentType,
-                selectedCustomer?.name,
-                selectedCustomer?.id
-            );
-
-            // Refetch queries
-            await queryClient.invalidateQueries({ queryKey: ['sales'] });
-            await queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
-            await queryClient.invalidateQueries({ queryKey: ['products'] });
+                payment_type: paymentType,
+                customer_name: selectedCustomer?.name,
+                customer_credit_id: selectedCustomer?.id
+            });
             
             Alert.alert("Success", "Sale completed successfully", [
                 { text: "OK", onPress: () => router.back() }
@@ -214,14 +211,13 @@ export default function AddSale() {
 
             {/* Search Bar */}
             <View className="bg-white mx-4 mt-4 mb-2 rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-                <FontAwesome name="search" size={16} color="#AD49E1" />
+                <FontAwesome name="search" size={20} color="#AD49E1" />
                 <TextInput
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Search products..."
                     placeholderTextColor="#AD49E1"
                     className="flex-1 ml-3 text-primary font-stack-sans"
-                    autoFocus
                 />
                 {searchQuery.length > 0 && (
                     <Pressable onPress={() => setSearchQuery("")} className="active:opacity-50">
@@ -257,39 +253,26 @@ export default function AddSale() {
 
             {/* Floating Cart Bubble */}
             {selectedItems.length > 0 && (
-                <Pressable
+                <TouchableOpacity
+                    hitSlop={20}
                     onPress={handleCheckout}
-                    className="absolute bg-secondary rounded-2xl shadow-2xl active:opacity-90"
+                    className="absolute rounded-2xl"
                     style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 8,
-                        bottom: 140,
+                        bottom: 20,
                         right: 10
                     }}
                 >
                     <View className="px-5 py-4 flex-row items-center gap-3">
-                        <View className="bg-white/20 rounded-full w-10 h-10 items-center justify-center">
-                            <FontAwesome name="shopping-cart" size={18} color="#fff" />
-                            <View className="absolute -top-1 -right-1 bg-accent rounded-full w-5 h-5 items-center justify-center">
+                        <View className="bg-secondary rounded-full w-14 h-14 items-center justify-center">
+                            <FontAwesome name="shopping-cart" size={22} color="#fff" />
+                            <View className="absolute -top-1 -right-2 bg-accent rounded-full w-6 h-6 items-center justify-center">
                                 <StyledText variant="extrabold" className="text-white text-xs">
                                     {selectedItems.length}
                                 </StyledText>
                             </View>
                         </View>
-                        <View>
-                            <StyledText variant="medium" className="text-white/80 text-xs">
-                                {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'items'}
-                            </StyledText>
-                            <StyledText variant="extrabold" className="text-white text-lg">
-                                ₱{getTotalAmount().toFixed(2)}
-                            </StyledText>
-                        </View>
-                        <FontAwesome name="chevron-right" size={16} color="#fff" style={{ marginLeft: 8 }} />
                     </View>
-                </Pressable>
+                </TouchableOpacity>
             )}
 
             {/* Checkout Modal */}

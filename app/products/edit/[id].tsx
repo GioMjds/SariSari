@@ -1,10 +1,9 @@
 import StyledText from '@/components/elements/StyledText';
 import Modal from '@/components/ui/Modal';
-import { deleteProduct, getProduct, updateProduct } from '@/db/products';
+import { useProductsMutation } from '@/hooks/useProductsMutation';
 import { useToastStore } from '@/stores/ToastStore';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -15,8 +14,7 @@ import {
 	Platform,
 	Pressable,
 	ScrollView,
-	TextInput,
-	View,
+	TextInput, TouchableOpacity, View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -29,26 +27,28 @@ const CATEGORIES = [
 	'Other',
 ];
 
+interface EditProductForm {
+	name: string;
+	sku: string;
+	price: string;
+	category: string;
+}
+
 export default function EditProduct() {
+	const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+	
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const queryClient = useQueryClient();
 	const addToast = useToastStore((state) => state.addToast);
+	const { useGetProduct, updateProductMutation, deleteProductMutation } = useProductsMutation();
 
-	const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-
-	// Fetch product data
-	const { data: product, isLoading } = useQuery({
-		queryKey: ['product', id],
-		queryFn: () => getProduct(parseInt(id, 10)),
-		enabled: !!id,
-	});
+	const { data: product, isLoading } = useGetProduct(parseInt(id, 10));
 
 	const {
 		control,
 		handleSubmit,
 		formState: { isDirty },
-	} = useForm({
+	} = useForm<EditProductForm>({
 		defaultValues: {
 			name: '',
 			sku: '',
@@ -120,91 +120,46 @@ export default function EditProduct() {
 		return () => backHandler.remove();
 	}, [hasUnsavedChanges]);
 
-	// Update product mutation
-	const updateMutation = useMutation({
-		mutationFn: async (data: {
-			name: string;
-			sku: string;
-			price: string;
-		}) => {
-			const { name, sku, price } = data;
-
-			if (!name.trim()) {
+	const onSubmit = async (data: EditProductForm) => {
+		try {
+			if (!data.name.trim()) {
 				throw new Error('Product name is required');
 			}
-			if (!sku.trim()) {
+			if (!data.sku.trim()) {
 				throw new Error('SKU is required');
 			}
-			if (!price || parseFloat(price) <= 0) {
+			if (!data.price || parseFloat(data.price) <= 0) {
 				throw new Error('Valid price is required');
 			}
 
-			const priceValue = parseFloat(price);
+			const priceValue = parseFloat(data.price);
 
-			// Note: We don't update quantity here - that's handled via Inventory
-			await updateProduct(
-				parseInt(id, 10),
-				name.trim(),
-				sku.trim(),
-				priceValue,
-				product?.quantity || 0
-			);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['products'] });
-			queryClient.invalidateQueries({ queryKey: ['product', id] });
-			addToast({
-				message: `"${product?.name}" updated successfully!`,
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
+			await updateProductMutation.mutateAsync({
+				id: parseInt(id, 10),
+				name: data.name.trim(),
+				sku: data.sku.trim(),
+				price: priceValue,
+				quantity: product?.quantity || 0
 			});
+
 			router.back();
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to update product',
-				variant: 'error',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
-
-	// Delete product mutation
-	const deleteMutation = useMutation({
-		mutationFn: () => deleteProduct(parseInt(id, 10)),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['products'] });
-			addToast({
-				message: `"${product?.name}" deleted successfully`,
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
-			});
-			router.replace('/products');
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to delete product',
-				variant: 'error',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
-
-	const onSubmit = (data: { name: string; sku: string; price: string }) => {
-		updateMutation.mutate(data);
+		} catch (error) {
+			// Error already handled by mutation
+		}
 	};
 
 	const handleDelete = () => {
 		setShowDeleteModal(true);
 	};
 
-	const confirmDelete = () => {
+	const confirmDelete = async () => {
 		setShowDeleteModal(false);
-		deleteMutation.mutate();
+		try {
+			await deleteProductMutation.mutateAsync(parseInt(id, 10));
+			router.replace('/products');
+		} catch (error) {
+			// Error already handled by mutation
+		}
 	};
 
 	if (isLoading) {
@@ -445,14 +400,14 @@ export default function EditProduct() {
 					{/* Action Buttons */}
 					<View className="gap-3 mb-8">
 						{/* Save Changes */}
-						<Pressable
+						<TouchableOpacity
 							onPress={handleSubmit(onSubmit)}
-							disabled={updateMutation.isPending}
-							className={`bg-accent rounded-xl py-4 items-center shadow-md active:opacity-70 ${
-								updateMutation.isPending ? 'opacity-50' : ''
+							disabled={updateProductMutation.isPending}
+							className={`bg-accent rounded-xl py-4 items-center shadow-md ${
+								updateProductMutation.isPending ? 'opacity-50' : ''
 							}`}
 						>
-							{updateMutation.isPending ? (
+							{updateProductMutation.isPending ? (
 								<ActivityIndicator color="#fff" />
 							) : (
 								<StyledText
@@ -462,10 +417,10 @@ export default function EditProduct() {
 									Save Changes
 								</StyledText>
 							)}
-						</Pressable>
+						</TouchableOpacity>
 
 						{/* Cancel */}
-						<Pressable
+						<TouchableOpacity
 							onPress={handleBackPress}
 							className="bg-gray-100 rounded-xl py-4 items-center"
 						>
@@ -475,7 +430,7 @@ export default function EditProduct() {
 							>
 								Cancel
 							</StyledText>
-						</Pressable>
+						</TouchableOpacity>
 
 						{/* Delete Product (Danger Zone) */}
 						<View className="mt-4 border-t border-gray-200 pt-4">
@@ -485,9 +440,9 @@ export default function EditProduct() {
 							>
 								DANGER ZONE
 							</StyledText>
-							<Pressable
+							<TouchableOpacity
 								onPress={handleDelete}
-								className="bg-red-600 rounded-xl py-4 items-center active:opacity-70"
+								className="bg-red-600 rounded-xl py-4 items-center"
 							>
 								<View className="flex-row items-center">
 									<FontAwesome
@@ -503,7 +458,7 @@ export default function EditProduct() {
 										Delete Product
 									</StyledText>
 								</View>
-							</Pressable>
+							</TouchableOpacity>
 						</View>
 					</View>
 				</ScrollView>
@@ -528,7 +483,7 @@ export default function EditProduct() {
 					},
 				]}
 				onClose={() => setShowDeleteModal(false)}
-				loading={deleteMutation.isPending}
+				loading={deleteProductMutation.isPending}
 			/>
 		</SafeAreaView>
 	);

@@ -1,23 +1,12 @@
 import StyledText from '@/components/elements/StyledText';
 import ProductItem from '@/components/products/ProductItem';
+import Pagination from '@/components/ui/Pagination';
 import { SortOption, sortOption } from '@/constants/sort-option';
-import {
-	Product,
-	deleteProduct,
-	getAllProducts,
-	initProductsTable,
-} from '@/db/products';
-import { useToastStore } from '@/stores/ToastStore';
+import { useProductsMutation } from '@/hooks/useProductsMutation';
+import { Product } from '@/types/products.types';
 import { FontAwesome } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	ActivityIndicator,
 	FlatList,
@@ -33,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type SortDirection = 'asc' | 'desc';
 
 const LOW_STOCK_THRESHOLD = 5;
+const ITEMS_PER_PAGE = 5;
 
 export default function Products() {
 	const [search, setSearch] = useState<string>('');
@@ -46,17 +36,12 @@ export default function Products() {
 	);
 	const [showContextMenu, setShowContextMenu] = useState<number | null>(null);
 	const [refreshing, setRefreshing] = useState<boolean>(false);
+	const [currentPage, setCurrentPage] = useState<number>(1);
 
 	const router = useRouter();
-	const queryClient = useQueryClient();
-	const addToast = useToastStore((state) => state.addToast);
+	const { getAllProductsQuery, deleteProductMutation } = useProductsMutation();
 
 	const debounceRef = useRef<number | null>(null);
-
-	// Initialize database
-	useEffect(() => {
-		initProductsTable();
-	}, []);
 
 	// Debounce search
 	useEffect(() => {
@@ -67,39 +52,17 @@ export default function Products() {
 		) as unknown as number;
 	}, [search]);
 
+	// Reset to first page when search or sort changes
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [debouncedSearch, sortBy, sortDirection]);
+
 	// Fetch products
 	const {
 		data: products = [],
 		isLoading,
 		refetch,
-	} = useQuery<Product[]>({
-		queryKey: ['products'],
-		queryFn: getAllProducts,
-	});
-
-	// Delete mutation
-	const deleteMutation = useMutation({
-		mutationFn: deleteProduct,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['products'] });
-			setShowDeleteModal(false);
-			addToast({
-				message: `"${selectedProduct?.name}" deleted successfully`,
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
-			});
-			setSelectedProduct(null);
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to delete product',
-				variant: 'error',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
+	} = getAllProductsQuery;
 
 	// Filter and sort products
 	const filteredProducts = useMemo(() => {
@@ -135,6 +98,15 @@ export default function Products() {
 
 		return result;
 	}, [products, debouncedSearch, sortBy, sortDirection]);
+
+	// Paginated products
+	const paginatedProducts = useMemo(() => {
+		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+		const endIndex = startIndex + ITEMS_PER_PAGE;
+		return filteredProducts.slice(startIndex, endIndex);
+	}, [filteredProducts, currentPage]);
+
+	const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
 
 	// Stats
 	const stats = useMemo(() => {
@@ -173,7 +145,9 @@ export default function Products() {
 
 	const confirmDelete = () => {
 		if (selectedProduct) {
-			deleteMutation.mutate(selectedProduct.id);
+			deleteProductMutation.mutate(selectedProduct.id);
+			setShowDeleteModal(false);
+			setSelectedProduct(null);
 		}
 	};
 
@@ -305,7 +279,7 @@ export default function Products() {
 
 			{/* Products List */}
 			<FlatList
-				data={filteredProducts}
+				data={paginatedProducts}
 				keyExtractor={(item) => item.id.toString()}
 				renderItem={({ item }) => (
 					<ProductItem
@@ -365,6 +339,17 @@ export default function Products() {
 					</View>
 				}
 			/>
+
+			{/* Pagination */}
+			{filteredProducts.length > 0 && (
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={setCurrentPage}
+					totalItems={filteredProducts.length}
+					itemsPerPage={ITEMS_PER_PAGE}
+				/>
+			)}
 
 			{/* Sort Modal */}
 			<Modal
@@ -463,7 +448,8 @@ export default function Products() {
 								variant="regular"
 								className="text-text-secondary text-sm text-center"
 							>
-								Are you sure you want to delete "{selectedProduct?.name}
+								Are you sure you want to delete "
+								{selectedProduct?.name}
 								"?
 							</StyledText>
 							<StyledText
@@ -476,10 +462,10 @@ export default function Products() {
 						<View className="gap-3">
 							<Pressable
 								onPress={confirmDelete}
-								disabled={deleteMutation.isPending}
+								disabled={deleteProductMutation.isPending}
 								className="bg-red-600 rounded-xl py-3 active:opacity-70"
 							>
-								{deleteMutation.isPending ? (
+								{deleteProductMutation.isPending ? (
 									<ActivityIndicator color="#fff" />
 								) : (
 									<StyledText

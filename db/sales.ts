@@ -1,31 +1,6 @@
-import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
 import { db } from '../configs/sqlite';
-
-export interface Sale {
-  id: number;
-  total: number;
-  timestamp: string;
-  payment_type: 'cash' | 'credit';
-  customer_name?: string;
-  customer_credit_id?: number;
-}
-
-export interface SaleItem {
-  id: number;
-  sale_id: number;
-  product_id: number;
-  quantity: number;
-  price: number;
-}
-
-export interface SaleItemWithProduct extends SaleItem {
-  product_name: string;
-}
-
-export interface SaleWithItems extends Sale {
-  items: SaleItemWithProduct[];
-  items_count: number;
-}
+import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
+import { Sale, SaleItemWithProduct, SaleWithItems } from '@/types/sales.types';
 
 export const initSalesTables = async () => {
   await db.execAsync(`
@@ -165,7 +140,6 @@ export const getSaleItems = async (sale_id: number): Promise<SaleItemWithProduct
 };
 
 export const getTodayStats = async () => {
-  // Get today's date in local timezone  (format: YYYY-MM-DD)
   const todayString = getTodayDateString();
   
   const stats = await db.getFirstAsync<{ 
@@ -186,7 +160,6 @@ export const getTodayStats = async () => {
 };
 
 export const deleteSale = async (id: number) => {
-  // Get sale items first to restore inventory
   const items = await getSaleItems(id);
   
   // Restore product quantities

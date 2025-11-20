@@ -3,13 +3,12 @@ import FilterBar from '@/components/credits/FilterBar';
 import KPICard from '@/components/credits/KPICard';
 import SortDropdown from '@/components/credits/SortDropdown';
 import StyledText from '@/components/elements/StyledText';
+import Pagination from '@/components/ui/Pagination';
 import {
 	getAllCustomers,
 	getCreditKPIs,
-	initCreditsTable,
 	searchCustomers,
 } from '@/db/credits';
-import { useToastStore } from '@/stores/ToastStore';
 import {
 	CreditFilter,
 	CreditKPIs,
@@ -32,11 +31,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const ITEMS_PER_PAGE = 5;
+
 export default function Credits() {
 	const queryClient = useQueryClient();
 
 	const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
 	const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
+	const [currentPage, setCurrentPage] = useState<number>(1);
 
 	// React Hook Form for search
 	const { control, watch } = useForm({
@@ -82,6 +84,11 @@ export default function Credits() {
 		staleTime: 1000 * 60 * 2, // 2 minutes
 	});
 
+	// Reset to first page when filters change
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [activeFilter, activeSort, searchQuery]);
+
 	// Refetch on focus
 	useFocusEffect(
 		useCallback(() => {
@@ -97,6 +104,15 @@ export default function Credits() {
 		}
 		return customers;
 	}, [customers, searchResults, searchQuery]);
+
+	// Paginated customers
+	const paginatedCustomers = useMemo(() => {
+		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+		const endIndex = startIndex + ITEMS_PER_PAGE;
+		return filteredCustomers.slice(startIndex, endIndex);
+	}, [filteredCustomers, currentPage]);
+
+	const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
 
 	const handleRefresh = () => {
 		refetch();
@@ -337,7 +353,7 @@ export default function Credits() {
 							)}
 						</View>
 					) : (
-						filteredCustomers.map((customer) => (
+						paginatedCustomers.map((customer) => (
 							<CustomerListItem
 								key={customer.id}
 								customer={customer}
@@ -347,6 +363,16 @@ export default function Credits() {
 					)}
 				</View>
 			</ScrollView>
+			{/* Pagination */}
+			{filteredCustomers.length > 0 && (
+				<Pagination
+					currentPage={currentPage}
+					totalPages={totalPages}
+					onPageChange={setCurrentPage}
+					totalItems={filteredCustomers.length}
+					itemsPerPage={ITEMS_PER_PAGE}
+				/>
+			)}
 		</SafeAreaView>
 	);
 }

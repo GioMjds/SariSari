@@ -1,15 +1,5 @@
+import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
-
-export interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  price: number;
-  cost_price?: number;
-  quantity: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export const initProductsTable = async () => {
   await db.execAsync(`

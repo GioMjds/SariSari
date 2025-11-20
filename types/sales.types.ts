@@ -11,7 +11,6 @@ export interface SaleItem {
   id: number;
   sale_id: number;
   product_id: number;
-  product_name: string;
   quantity: number;
   price: number;
 }
@@ -58,4 +57,43 @@ export interface NewSale {
   customer_name?: string;
   customer_credit_id?: number;
   total: number;
+}
+
+export interface SaleItemWithProduct extends SaleItem {
+  product_name: string;
+}
+
+export interface SaleWithItems extends Sale {
+  items: SaleItemWithProduct[];
+  items_count: number;
+}
+
+export interface InsertSale {
+  items: {
+    product_id: number;
+    quantity: number;
+    price: number;
+  }[];
+  payment_type: 'cash' | 'credit';
+  customer_name?: string;
+  customer_credit_id?: number;
+  total: number;
+}
+
+// Parameters for insertSale function
+export interface InsertSaleParams {
+  items: {
+    product_id: number;
+    quantity: number;
+    price: number;
+  }[];
+  payment_type: 'cash' | 'credit';
+  customer_name?: string;
+  customer_credit_id?: number;
+}
+
+// Parameters for getSalesByDateRange function
+export interface GetSaleByDateRangeParams {
+  startDate: string;
+  endDate: string;
 }

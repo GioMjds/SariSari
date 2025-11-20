@@ -42,7 +42,6 @@ import {
 	ActivityIndicator,
 	RefreshControl,
 	ScrollView,
-	TouchableOpacity,
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

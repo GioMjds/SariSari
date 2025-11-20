@@ -1,9 +1,8 @@
 import StyledText from "@/components/elements/StyledText";
-import { deleteSale, getSale } from "@/db/sales";
+import { useSalesMutation } from "@/hooks/useSalesMutation";
 import { Alert } from "@/utils/alert";
 import { parseStoredTimestamp } from "@/utils/timezone";
 import { FontAwesome } from "@expo/vector-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
@@ -12,12 +11,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SaleDetails() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const queryClient = useQueryClient();
+    const { useGetSale, deleteSaleMutation } = useSalesMutation();
 
-    const { data: sale, isLoading } = useQuery({
-        queryKey: ['sale', id],
-        queryFn: () => getSale(Number(id)),
-    });
+    const { data: sale, isLoading } = useGetSale(Number(id));
 
     const handleDeleteSale = () => {
         Alert.alert(
@@ -30,10 +26,7 @@ export default function SaleDetails() {
                     style: "destructive",
                     onPress: async () => {
                         try {
-                            await deleteSale(Number(id));
-                            await queryClient.invalidateQueries({ queryKey: ['sales'] });
-                            await queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
-                            await queryClient.invalidateQueries({ queryKey: ['products'] });
+                            await deleteSaleMutation.mutateAsync(Number(id));
                             router.back();
                         } catch (error) {
                             Alert.alert("Error", "Failed to delete sale");

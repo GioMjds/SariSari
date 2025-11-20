@@ -7,7 +7,7 @@ interface Tab {
 }
 
 export const tabs: Tab[] = [
-    { name: 'Inventory', href: '/inventory', icon: 'archive' },
+    { name: 'Inventory', href: '/', icon: 'archive' },
     { name: 'Sales', href: '/sales', icon: 'shopping-cart' },
     { name: 'Products', href: '/products', icon: 'cube' },
     { name: 'Credits', href: '/credits', icon: 'credit-card' },

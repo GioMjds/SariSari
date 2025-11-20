@@ -1,19 +1,22 @@
 import StyledText from '@/components/elements/StyledText';
 import { insertInventoryTransaction } from '@/db/inventory';
-import { insertProduct } from '@/db/products';
+import { useProductsMutation } from '@/hooks/useProductsMutation';
 import { useToastStore } from '@/stores/ToastStore';
+import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
 	ActivityIndicator,
+	BackHandler,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
 	ScrollView,
 	TextInput,
-	View,
+	TouchableOpacity,
+	View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -26,17 +29,36 @@ const CATEGORIES = [
 	'Other',
 ];
 
+interface AddProductForm {
+	productName: string;
+	sku: string;
+	price: string;
+	initialStock: string;
+	category: string;
+}
+
 export default function AddProduct() {
 	const router = useRouter();
-	const queryClient = useQueryClient();
 	const addToast = useToastStore((state) => state.addToast);
+	const { insertProductMutation } = useProductsMutation();
 
-	const [productName, setProductName] = useState('');
-	const [sku, setSku] = useState('');
-	const [price, setPrice] = useState('');
-	const [initialStock, setInitialStock] = useState('');
-	const [selectedCategory, setSelectedCategory] = useState('');
-	const [autoGenerateSku, setAutoGenerateSku] = useState(true);
+	const [autoGenerateSku, setAutoGenerateSku] = useState<boolean>(true);
+
+	const {
+		handleSubmit,
+		control,
+		setValue,
+		formState: { isDirty },
+	} = useForm<AddProductForm>({
+		mode: 'onSubmit',
+		defaultValues: {
+			productName: '',
+			sku: '',
+			price: '',
+			initialStock: '',
+			category: '',
+		},
+	});
 
 	// Generate SKU from product name
 	const generateSku = (name: string) => {
@@ -52,36 +74,86 @@ export default function AddProduct() {
 
 	// Auto-generate SKU when product name changes
 	const handleNameChange = (text: string) => {
-		setProductName(text);
 		if (autoGenerateSku) {
-			setSku(generateSku(text));
+			setValue('sku', generateSku(text));
 		}
 	};
 
-	// Add product mutation
-	const addProductMutation = useMutation({
-		mutationFn: async () => {
-			// Validation
-			if (!productName.trim()) {
+	// Handle back navigation
+	const handleBackPress = () => {
+		if (isDirty) {
+			Alert.alert(
+				'Unsaved Changes',
+				'You have unsaved changes. Are you sure you want to discard them?',
+				[
+					{ text: "Don't Leave", style: 'cancel', onPress: () => {} },
+					{
+						text: 'Discard',
+						style: 'destructive',
+						onPress: () => router.back(),
+					},
+				]
+			);
+		} else {
+			router.back();
+		}
+	};
+
+	// Handle hardware back button
+	useEffect(() => {
+		const onBackPress = () => {
+			if (isDirty) {
+				Alert.alert(
+					'Unsaved Changes',
+					'You have unsaved changes. Are you sure you want to discard them?',
+					[
+						{
+							text: "Don't Leave",
+							style: 'cancel',
+							onPress: () => {},
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: () => router.back(),
+						},
+					]
+				);
+				return true;
+			}
+			return false;
+		};
+
+		const backHandler = BackHandler.addEventListener(
+			'hardwareBackPress',
+			onBackPress
+		);
+
+		return () => backHandler.remove();
+	}, [isDirty]);
+
+	const onSubmit = async (data: AddProductForm) => {
+		try {
+			if (!data.productName.trim()) {
 				throw new Error('Product name is required');
 			}
-			if (!sku.trim()) {
+			if (!data.sku.trim()) {
 				throw new Error('SKU is required');
 			}
-			if (!price || parseFloat(price) <= 0) {
+			if (!data.price || parseFloat(data.price) <= 0) {
 				throw new Error('Valid price is required');
 			}
 
-			const priceValue = parseFloat(price);
-			const stockValue = initialStock ? parseInt(initialStock, 10) : 0;
+			const priceValue = parseFloat(data.price);
+			const stockValue = data.initialStock ? parseInt(data.initialStock, 10) : 0;
 
 			// Insert product
-			const productId = await insertProduct(
-				productName.trim(),
-				sku.trim(),
-				priceValue,
-				stockValue
-			);
+			const productId = await insertProductMutation.mutateAsync({
+				name: data.productName.trim(),
+				sku: data.sku.trim(),
+				price: priceValue,
+				quantity: stockValue
+			});
 
 			// If initial stock > 0, create an inventory transaction
 			if (stockValue > 0) {
@@ -92,28 +164,10 @@ export default function AddProduct() {
 				);
 			}
 
-			return productId;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['products'] });
-			addToast({
-				message: 'Product added successfully!',
-				variant: 'success',
-				duration: 2000,
-			});
-			router.push('/inventory');
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to add product',
-				variant: 'error',
-				duration: 2000,
-			});
-		},
-	});
-
-	const handleSubmit = () => {
-		addProductMutation.mutate();
+			router.push('/');
+		} catch (error) {
+			// Error already handled by mutation
+		}
 	};
 
 	return (
@@ -124,12 +178,14 @@ export default function AddProduct() {
 			>
 				{/* Header */}
 				<View className="bg-primary px-4 py-6 flex-row items-center">
-					<Pressable
-						onPress={() => router.back()}
-						className="mr-3 active:opacity-50"
+					<TouchableOpacity
+						hitSlop={20}
+						activeOpacity={0.2}
+						onPress={handleBackPress}
+						className="mr-3"
 					>
 						<FontAwesome name="arrow-left" size={20} color="#fff" />
-					</Pressable>
+					</TouchableOpacity>
 					<StyledText
 						variant="extrabold"
 						className="text-white text-2xl"
@@ -150,13 +206,21 @@ export default function AddProduct() {
 						>
 							Product Name *
 						</StyledText>
-						<TextInput
-							placeholder="e.g., Lucky Me Pancit Canton"
-							value={productName}
-							onChangeText={handleNameChange}
-							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
-							placeholderTextColor="#9ca3af"
-							autoFocus
+						<Controller
+							control={control}
+							name="productName"
+							render={({ field: { value, onChange } }) => (
+								<TextInput
+									placeholder="e.g., Lucky Me Pancit Canton"
+									value={value}
+									onChangeText={(text) => {
+										onChange(text);
+										handleNameChange(text);
+									}}
+									className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+									placeholderTextColor="#9ca3af"
+								/>
+							)}
 						/>
 					</View>
 
@@ -198,16 +262,22 @@ export default function AddProduct() {
 								</StyledText>
 							</Pressable>
 						</View>
-						<TextInput
-							placeholder="e.g., PC-001"
-							value={sku}
-							onChangeText={setSku}
-							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
-							placeholderTextColor="#9ca3af"
-							editable={!autoGenerateSku}
-							style={{
-								opacity: autoGenerateSku ? 0.6 : 1,
-							}}
+						<Controller
+							control={control}
+							name="sku"
+							render={({ field: { value, onChange } }) => (
+								<TextInput
+									placeholder="e.g., PC-001"
+									value={value}
+									onChangeText={onChange}
+									className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+									placeholderTextColor="#9ca3af"
+									editable={!autoGenerateSku}
+									style={{
+										opacity: autoGenerateSku ? 0.6 : 1,
+									}}
+								/>
+							)}
 						/>
 						{autoGenerateSku && (
 							<StyledText
@@ -234,13 +304,19 @@ export default function AddProduct() {
 							>
 								₱
 							</StyledText>
-							<TextInput
-								placeholder="0.00"
-								value={price}
-								onChangeText={setPrice}
-								keyboardType="decimal-pad"
-								className="flex-1 font-stack-sans text-base text-text-primary"
-								placeholderTextColor="#9ca3af"
+							<Controller
+								control={control}
+								name="price"
+								render={({ field: { value, onChange } }) => (
+									<TextInput
+										placeholder="0.00"
+										value={value}
+										onChangeText={onChange}
+										keyboardType="decimal-pad"
+										className="flex-1 font-stack-sans text-base text-text-primary"
+										placeholderTextColor="#9ca3af"
+									/>
+								)}
 							/>
 						</View>
 					</View>
@@ -253,13 +329,19 @@ export default function AddProduct() {
 						>
 							Initial Stock Quantity
 						</StyledText>
-						<TextInput
-							placeholder="0"
-							value={initialStock}
-							onChangeText={setInitialStock}
-							keyboardType="number-pad"
-							className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
-							placeholderTextColor="#9ca3af"
+						<Controller
+							control={control}
+							name="initialStock"
+							render={({ field: { value, onChange } }) => (
+								<TextInput
+									placeholder="0"
+									value={value}
+									onChangeText={onChange}
+									keyboardType="number-pad"
+									className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+									placeholderTextColor="#9ca3af"
+								/>
+							)}
 						/>
 						<StyledText
 							variant="regular"
@@ -284,32 +366,38 @@ export default function AddProduct() {
 						>
 							<View className="flex-row gap-2">
 								{CATEGORIES.map((category) => (
-									<Pressable
+									<Controller
 										key={category}
-										onPress={() =>
-											setSelectedCategory(
-												selectedCategory === category
-													? ''
-													: category
-											)
-										}
-										className={`px-4 py-2 rounded-xl ${
-											selectedCategory === category
-												? 'bg-accent'
-												: 'bg-white border border-gray-200'
-										} active:opacity-70`}
-									>
-										<StyledText
-											variant="medium"
-											className={`text-sm ${
-												selectedCategory === category
-													? 'text-white'
-													: 'text-text-secondary'
-											}`}
-										>
-											{category}
-										</StyledText>
-									</Pressable>
+										control={control}
+										name="category"
+										render={({ field: { value, onChange } }) => (
+											<Pressable
+												onPress={() =>
+													onChange(
+														value === category
+															? ''
+															: category
+													)
+												}
+												className={`px-4 py-2 rounded-xl ${
+													value === category
+														? 'bg-accent'
+														: 'bg-white border border-gray-200'
+												} active:opacity-70`}
+											>
+												<StyledText
+													variant="medium"
+													className={`text-sm ${
+														value === category
+															? 'text-white'
+															: 'text-text-secondary'
+													}`}
+												>
+													{category}
+												</StyledText>
+											</Pressable>
+										)}
+									/>
 								))}
 							</View>
 						</ScrollView>
@@ -341,29 +429,29 @@ export default function AddProduct() {
 						</View>
 					</View>
 
-					{/* Submit Button */}
-					<Pressable
-						onPress={handleSubmit}
-						disabled={addProductMutation.isPending}
-						className={`bg-accent rounded-xl py-4 items-center shadow-md active:opacity-70 ${
-							addProductMutation.isPending ? 'opacity-50' : ''
-						}`}
-					>
-						{addProductMutation.isPending ? (
-							<ActivityIndicator color="#fff" />
-						) : (
-							<StyledText
-								variant="extrabold"
-								className="text-white text-base"
-							>
-								Add Product
-							</StyledText>
-						)}
-					</Pressable>
+				{/* Submit Button */}
+				<Pressable
+					onPress={handleSubmit(onSubmit)}
+					disabled={insertProductMutation.isPending}
+					className={`bg-accent rounded-xl py-4 items-center shadow-md active:opacity-70 ${
+						insertProductMutation.isPending ? 'opacity-50' : ''
+					}`}
+				>
+					{insertProductMutation.isPending ? (
+						<ActivityIndicator color="#fff" />
+					) : (
+						<StyledText
+							variant="extrabold"
+							className="text-white text-base"
+						>
+							Add Product
+						</StyledText>
+					)}
+				</Pressable>
 
-					{/* Cancel Button */}
-					<Pressable
-						onPress={() => router.back()}
+				{/* Cancel Button */}
+					<TouchableOpacity
+						onPress={handleBackPress}
 						className="bg-gray-200 rounded-xl py-4 items-center mt-3 active:opacity-70"
 					>
 						<StyledText
@@ -372,10 +460,7 @@ export default function AddProduct() {
 						>
 							Cancel
 						</StyledText>
-					</Pressable>
-
-					{/* Bottom Spacing */}
-					<View className="h-8" />
+					</TouchableOpacity>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</SafeAreaView>

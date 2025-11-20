@@ -1,9 +1,8 @@
 import StyledText from '@/components/elements/StyledText';
 import {
-	getCreditTransactionsByCustomer,
-	getCustomer,
-	initCreditsTable,
-	insertPayment,
+    getCreditTransactionsByCustomer,
+    getCustomer,
+    insertPayment,
 } from '@/db/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import { CreditTransaction, Customer, NewPayment } from '@/types/credits.types';
@@ -12,12 +11,12 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-	TextInput,
-	TouchableOpacity,
-	View
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,28 +36,10 @@ export default function AddPaymentTransaction() {
 	const queryClient = useQueryClient();
 	const addToast = useToastStore((state) => state.addToast);
 
-	// Initialize database
-	useEffect(() => {
-		(async () => {
-			try {
-				await initCreditsTable();
-			} catch (error) {
-				console.error('Error initializing credits table:', error);
-				addToast({
-					message: 'Failed to initialize database',
-					variant: 'error',
-					duration: 5000,
-					position: 'top-center',
-				});
-			}
-		})();
-	}, []);
-
 	// React Hook Form
 	const {
 		control,
 		handleSubmit,
-		formState: { errors },
 		setValue,
 		watch,
 	} = useForm<PaymentFormData>({
@@ -70,7 +51,6 @@ export default function AddPaymentTransaction() {
 	});
 
 	const amount = watch('amount');
-	const paymentMethod = watch('paymentMethod');
 
 	// Query customer
 	const { data: customer } = useQuery<Customer | null>({

@@ -1,26 +1,26 @@
 import StyledText from '@/components/elements/StyledText';
 import {
-	getCustomer,
-	initCreditsTable,
-	insertCreditTransaction,
+    getCustomer,
+    insertCreditTransaction,
 } from '@/db/credits';
-import { getAllProducts, Product } from '@/db/products';
+import { getAllProducts } from '@/db/products';
 import { useToastStore } from '@/stores/ToastStore';
 import { Customer, NewCredit } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-	KeyboardAvoidingView,
-	Platform,
-	ScrollView,
-	TextInput,
-	TouchableOpacity,
-	View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import { Product } from '@/types/products.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CreditFormData {
@@ -41,22 +41,7 @@ export default function AddCreditTransaction() {
 	);
 	const [useProductList, setUseProductList] = useState(false);
 
-	// Initialize database
-	useEffect(() => {
-		(async () => {
-			try {
-				await initCreditsTable();
-			} catch (error) {
-				console.error('Error initializing credits table:', error);
-				addToast({
-					message: 'Failed to initialize database',
-					variant: 'error',
-					duration: 5000,
-					position: 'top-center',
-				});
-			}
-		})();
-	}, []);
+
 
 	// React Hook Form
 	const {

@@ -1,12 +1,5 @@
+import { InventoryTransaction } from '@/types/inventory.types';
 import { db } from '../configs/sqlite';
-
-export interface InventoryTransaction {
-  id: number;
-  product_id: number;
-  type: 'restock' | 'sale';
-  quantity: number;
-  timestamp: string;
-}
 
 export const initInventoryTable = async () => {
   await db.execAsync(`
