@@ -1,7 +1,8 @@
 import StyledText from "@/components/elements/StyledText";
 import { getAllCustomers } from "@/db/credits";
 import { getAllProducts } from "@/db/products";
-import { useSalesMutation } from "@/hooks/useSalesMutation";
+import { useSales } from "@/hooks/useSales";
+import { Product } from "@/types/products.types";
 import { NewSaleItem } from "@/types/sales.types";
 import { Alert } from "@/utils/alert";
 import { FontAwesome } from "@expo/vector-icons";
@@ -9,16 +10,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    Pressable,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    View
+	ActivityIndicator,
+	FlatList,
+	Modal,
+	Pressable,
+	ScrollView,
+	TextInput,
+	TouchableOpacity,
+	View
 } from "react-native";
-import { Product } from "@/types/products.types";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddSale() {
@@ -31,7 +31,7 @@ export default function AddSale() {
     const [isProcessing, setIsProcessing] = useState<boolean>(false);
     
     const router = useRouter();
-    const { insertSaleMutation } = useSalesMutation();
+    const { insertSaleMutation } = useSales();
 
     // Fetch products
     const { data: products = [], isLoading } = useQuery({

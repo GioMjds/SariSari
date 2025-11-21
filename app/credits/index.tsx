@@ -5,20 +5,15 @@ import SortDropdown from '@/components/credits/SortDropdown';
 import StyledText from '@/components/elements/StyledText';
 import Pagination from '@/components/ui/Pagination';
 import {
-	getAllCustomers,
-	getCreditKPIs,
-	searchCustomers,
-} from '@/db/credits';
-import {
 	CreditFilter,
-	CreditKPIs,
 	CreditSort,
 	Customer,
 } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useCredits } from '@/hooks/useCredits';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -34,13 +29,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const ITEMS_PER_PAGE = 5;
 
 export default function Credits() {
-	const queryClient = useQueryClient();
-
 	const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
 	const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
 	const [currentPage, setCurrentPage] = useState<number>(1);
+	
+	const queryClient = useQueryClient();
 
-	// React Hook Form for search
+	const { useCustomers, useCreditKPIs, useSearchCustomers } = useCredits();
+
 	const { control, watch } = useForm({
 		defaultValues: {
 			searchQuery: '',
@@ -55,41 +51,19 @@ export default function Credits() {
 		isLoading,
 		isRefetching,
 		refetch,
-	} = useQuery<Customer[]>({
-		queryKey: ['customers', activeFilter, activeSort],
-		queryFn: () => getAllCustomers(activeFilter, activeSort),
-		staleTime: 1000 * 60 * 5
-	});
+	} = useCustomers(activeFilter, activeSort);
 
 	// Query KPIs
-	const { data: kpis } = useQuery<CreditKPIs>({
-		queryKey: ['credit-kpis'],
-		queryFn: getCreditKPIs,
-		staleTime: 1000 * 60 * 5,
-		initialData: {
-			totalOutstanding: 0,
-			totalCustomersWithBalance: 0,
-			mostOwedCustomer: null,
-			totalCollectedToday: 0,
-			totalCreditsToday: 0,
-			overdueCount: 0,
-		},
-	});
+	const { data: kpis } = useCreditKPIs();
 
 	// Search query with debouncing
-	const { data: searchResults = [] } = useQuery<Customer[]>({
-		queryKey: ['customers-search', searchQuery],
-		queryFn: () => searchCustomers(searchQuery),
-		enabled: !!searchQuery.trim(),
-		staleTime: 1000 * 60 * 2, // 2 minutes
-	});
+	const { data: searchResults = [] } = useSearchCustomers(searchQuery);
 
 	// Reset to first page when filters change
 	useEffect(() => {
 		setCurrentPage(1);
 	}, [activeFilter, activeSort, searchQuery]);
 
-	// Refetch on focus
 	useFocusEffect(
 		useCallback(() => {
 			refetch();

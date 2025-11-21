@@ -1,6 +1,6 @@
 import StyledText from '@/components/elements/StyledText';
 import { insertInventoryTransaction } from '@/db/inventory';
-import { useProductsMutation } from '@/hooks/useProductsMutation';
+import { useProducts } from '@/hooks/useProducts';
 import { useToastStore } from '@/stores/ToastStore';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
@@ -40,7 +40,7 @@ interface AddProductForm {
 export default function AddProduct() {
 	const router = useRouter();
 	const addToast = useToastStore((state) => state.addToast);
-	const { insertProductMutation } = useProductsMutation();
+	const { insertProductMutation } = useProducts();
 
 	const [autoGenerateSku, setAutoGenerateSku] = useState<boolean>(true);
 

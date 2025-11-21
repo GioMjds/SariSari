@@ -4,40 +4,11 @@ import InsightCard from '@/components/reports/InsightCard';
 import ReportKPICard from '@/components/reports/ReportKPICard';
 import SectionHeader from '@/components/reports/SectionHeader';
 import SimpleBarChart from '@/components/reports/SimpleBarChart';
-import {
-	getAgingBuckets,
-	getCreditsOverview,
-	getFastMovingProducts,
-	getInventoryMovement,
-	getInventoryValue,
-	getLowStockItems,
-	getOutOfStockItems,
-	getProfitabilityData,
-	getReportInsights,
-	getReportKPIs,
-	getSalesBreakdown,
-	getSalesOverTime,
-	getSlowMovingProducts,
-	getTopSellingProducts,
-} from '@/db/reports';
-import {
-	AgingBucket,
-	CreditsOverview,
-	DateRange,
-	DateRangeType,
-	InventoryMovement,
-	InventoryValue,
-	ProfitabilityData,
-	ReportInsight,
-	ReportKPIs,
-	SalesBreakdown,
-	SalesDataPoint,
-	StockItem,
-	TopSellingProduct,
-} from '@/types/reports.types';
+import { useReports } from '@/hooks/useReports';
+import { DateRange, DateRangeType } from '@/types/reports.types';
+import { getDateRangeFromType } from '@/utils/formatters';
 import { FontAwesome } from '@expo/vector-icons';
-import { endOfDay, startOfDay, startOfMonth, subDays } from 'date-fns';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
 	ActivityIndicator,
 	RefreshControl,
@@ -46,131 +17,128 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Daily / weekly / monthly reports screen
 export default function Reports() {
 	const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
 	const [dateRange, setDateRange] = useState<DateRange>(
 		getDateRangeFromType('today')
 	);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isRefreshing, setIsRefreshing] = useState(false);
 
-	// Data states
-	const [kpis, setKPIs] = useState<ReportKPIs>({
+	// Get all report hooks
+	const {
+		useReportKPIs,
+		useSalesOverTime,
+		useTopSellingProducts,
+		useSalesBreakdown,
+		useInventoryMovement,
+		useInventoryValue,
+		useLowStockItems,
+		useOutOfStockItems,
+		useFastMovingProducts,
+		useSlowMovingProducts,
+		useCreditsOverview,
+		useAgingBuckets,
+		useProfitability,
+		useReportInsights,
+		invalidateReports,
+	} = useReports();
+
+	// Fetch all data using TanStack Query
+	const kpisQuery = useReportKPIs(dateRange);
+	const salesOverTimeQuery = useSalesOverTime(dateRange);
+	const topProductsQuery = useTopSellingProducts(dateRange, 5);
+	const salesBreakdownQuery = useSalesBreakdown(dateRange);
+	const inventoryMovementQuery = useInventoryMovement(dateRange);
+	const inventoryValueQuery = useInventoryValue();
+	const lowStockItemsQuery = useLowStockItems(10);
+	const outOfStockItemsQuery = useOutOfStockItems();
+	const fastMovingProductsQuery = useFastMovingProducts(dateRange, 5);
+	const slowMovingProductsQuery = useSlowMovingProducts(dateRange, 5);
+	const creditsOverviewQuery = useCreditsOverview(dateRange);
+	const agingBucketsQuery = useAgingBuckets();
+	const profitabilityQuery = useProfitability(dateRange);
+	const insightsQuery = useReportInsights(dateRange);
+
+	// Determine loading states
+	const isLoading =
+		kpisQuery.isLoading ||
+		salesOverTimeQuery.isLoading ||
+		topProductsQuery.isLoading ||
+		salesBreakdownQuery.isLoading ||
+		inventoryMovementQuery.isLoading ||
+		inventoryValueQuery.isLoading ||
+		lowStockItemsQuery.isLoading ||
+		outOfStockItemsQuery.isLoading ||
+		fastMovingProductsQuery.isLoading ||
+		slowMovingProductsQuery.isLoading ||
+		creditsOverviewQuery.isLoading ||
+		agingBucketsQuery.isLoading ||
+		profitabilityQuery.isLoading ||
+		insightsQuery.isLoading;
+
+	const isRefreshing =
+		kpisQuery.isFetching ||
+		salesOverTimeQuery.isFetching ||
+		topProductsQuery.isFetching ||
+		salesBreakdownQuery.isFetching ||
+		inventoryMovementQuery.isFetching ||
+		inventoryValueQuery.isFetching ||
+		lowStockItemsQuery.isFetching ||
+		outOfStockItemsQuery.isFetching ||
+		fastMovingProductsQuery.isFetching ||
+		slowMovingProductsQuery.isFetching ||
+		creditsOverviewQuery.isFetching ||
+		agingBucketsQuery.isFetching ||
+		profitabilityQuery.isFetching ||
+		insightsQuery.isFetching;
+
+	const kpis = kpisQuery.data ?? {
 		totalSales: 0,
 		totalProfit: 0,
 		totalCreditsIssued: 0,
 		totalCreditsCollected: 0,
 		totalExpenses: 0,
 		inventoryCostOut: 0,
-	});
-	const [salesOverTime, setSalesOverTime] = useState<SalesDataPoint[]>([]);
-	const [topProducts, setTopProducts] = useState<TopSellingProduct[]>([]);
-	const [salesBreakdown, setSalesBreakdown] = useState<SalesBreakdown>({
+	};
+	const salesOverTime = salesOverTimeQuery.data ?? [];
+	const topProducts = topProductsQuery.data ?? [];
+	const salesBreakdown = salesBreakdownQuery.data ?? {
 		cashSales: 0,
 		creditSales: 0,
 		averageTransactionValue: 0,
 		totalTransactions: 0,
-	});
-	const [inventoryMovement, setInventoryMovement] =
-		useState<InventoryMovement>({
-			itemsSold: 0,
-			lowStockCount: 0,
-			outOfStockCount: 0,
-		});
-	const [inventoryValue, setInventoryValue] = useState<InventoryValue>({
+	};
+	const inventoryMovement = inventoryMovementQuery.data ?? {
+		itemsSold: 0,
+		lowStockCount: 0,
+		outOfStockCount: 0,
+	};
+	const inventoryValue = inventoryValueQuery.data ?? {
 		currentStockValue: 0,
 		potentialSalesValue: 0,
-	});
-	const [lowStockItems, setLowStockItems] = useState<StockItem[]>([]);
-	const [outOfStockItems, setOutOfStockItems] = useState<StockItem[]>([]);
-	const [fastMovingProducts, setFastMovingProducts] = useState<StockItem[]>(
-		[]
-	);
-	const [slowMovingProducts, setSlowMovingProducts] = useState<StockItem[]>(
-		[]
-	);
-	const [creditsOverview, setCreditsOverview] = useState<CreditsOverview>({
+	};
+	const lowStockItems = lowStockItemsQuery.data ?? [];
+	const fastMovingProducts = fastMovingProductsQuery.data ?? [];
+	const slowMovingProducts = slowMovingProductsQuery.data ?? [];
+	const creditsOverview = creditsOverviewQuery.data ?? {
 		issued: 0,
 		collected: 0,
 		outstanding: 0,
 		activeAccounts: 0,
-	});
-	const [agingBuckets, setAgingBuckets] = useState<AgingBucket[]>([]);
-	const [profitability, setProfitability] = useState<ProfitabilityData>({
+	};
+	const agingBuckets = agingBucketsQuery.data ?? [];
+	const profitability = profitabilityQuery.data ?? {
 		totalProfit: 0,
 		marginPercent: 0,
-	});
-	const [insights, setInsights] = useState<ReportInsight[]>([]);
-
-	const loadData = useCallback(async () => {
-		try {
-			const [
-				kpisData,
-				salesData,
-				topProductsData,
-				breakdownData,
-				inventoryMovementData,
-				inventoryValueData,
-				lowStockData,
-				outOfStockData,
-				fastMovingData,
-				slowMovingData,
-				creditsData,
-				agingData,
-				profitData,
-				insightsData,
-			] = await Promise.all([
-				getReportKPIs(dateRange),
-				getSalesOverTime(dateRange),
-				getTopSellingProducts(dateRange, 5),
-				getSalesBreakdown(dateRange),
-				getInventoryMovement(dateRange),
-				getInventoryValue(),
-				getLowStockItems(10),
-				getOutOfStockItems(),
-				getFastMovingProducts(dateRange, 5),
-				getSlowMovingProducts(dateRange, 5),
-				getCreditsOverview(dateRange),
-				getAgingBuckets(),
-				getProfitabilityData(dateRange),
-				getReportInsights(dateRange),
-			]);
-
-			setKPIs(kpisData);
-			setSalesOverTime(salesData);
-			setTopProducts(topProductsData);
-			setSalesBreakdown(breakdownData);
-			setInventoryMovement(inventoryMovementData);
-			setInventoryValue(inventoryValueData);
-			setLowStockItems(lowStockData);
-			setOutOfStockItems(outOfStockData);
-			setFastMovingProducts(fastMovingData);
-			setSlowMovingProducts(slowMovingData);
-			setCreditsOverview(creditsData);
-			setAgingBuckets(agingData);
-			setProfitability(profitData);
-			setInsights(insightsData);
-		} catch (error) {
-			console.error('Error loading reports data:', error);
-		} finally {
-			setIsLoading(false);
-			setIsRefreshing(false);
-		}
-	}, [dateRange]);
-
-	useEffect(() => {
-		loadData();
-	}, [loadData]);
+	};
+	const insights = insightsQuery.data ?? [];
 
 	const handleDateRangeChange = (type: DateRangeType) => {
 		setDateRangeType(type);
 		setDateRange(getDateRangeFromType(type));
 	};
 
-	const handleRefresh = () => {
-		setIsRefreshing(true);
-		loadData();
+	const handleRefresh = async () => {
+		await invalidateReports();
 	};
 
 	const formatCurrency = (amount: number) => {
@@ -817,43 +785,4 @@ export default function Reports() {
 			</ScrollView>
 		</SafeAreaView>
 	);
-}
-
-// Helper function to get date range from type
-function getDateRangeFromType(type: DateRangeType): DateRange {
-	const now = new Date();
-
-	switch (type) {
-		case 'today':
-			return {
-				startDate: startOfDay(now),
-				endDate: endOfDay(now),
-				label: 'Today',
-			};
-		case 'yesterday':
-			const yesterday = subDays(now, 1);
-			return {
-				startDate: startOfDay(yesterday),
-				endDate: endOfDay(yesterday),
-				label: 'Yesterday',
-			};
-		case 'last7days':
-			return {
-				startDate: startOfDay(subDays(now, 6)),
-				endDate: endOfDay(now),
-				label: 'Last 7 Days',
-			};
-		case 'thisMonth':
-			return {
-				startDate: startOfMonth(now),
-				endDate: endOfDay(now),
-				label: 'This Month',
-			};
-		case 'custom':
-			return {
-				startDate: startOfDay(now),
-				endDate: endOfDay(now),
-				label: 'Custom',
-			};
-	}
 }

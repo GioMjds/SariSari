@@ -1,16 +1,16 @@
 import {
-  AgingBucket,
-  CreditsOverview,
-  DateRange,
-  InventoryMovement,
-  InventoryValue,
-  ProfitabilityData,
-  ReportInsight,
-  ReportKPIs,
-  SalesBreakdown,
-  SalesDataPoint,
-  StockItem,
-  TopSellingProduct,
+	AgingBucket,
+	CreditsOverview,
+	DateRange,
+	InventoryMovement,
+	InventoryValue,
+	ProfitabilityData,
+	ReportInsight,
+	ReportKPIs,
+	SalesBreakdown,
+	SalesDataPoint,
+	StockItem,
+	TopSellingProduct,
 } from '@/types/reports.types';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { db } from '../configs/sqlite';
@@ -23,7 +23,9 @@ export const formatDateForSQL = (date: Date): string => {
 
 // ==================== KPI FUNCTIONS ====================
 
-export const getReportKPIs = async (dateRange: DateRange): Promise<ReportKPIs> => {
+export const getReportKPIs = async (
+	dateRange: DateRange
+): Promise<ReportKPIs> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -83,11 +85,17 @@ export const getReportKPIs = async (dateRange: DateRange): Promise<ReportKPIs> =
 
 // ==================== SALES REPORTS ====================
 
-export const getSalesOverTime = async (dateRange: DateRange): Promise<SalesDataPoint[]> => {
+export const getSalesOverTime = async (
+	dateRange: DateRange
+): Promise<SalesDataPoint[]> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<{ date: string; amount: number; profit: number }>(
+	const results = await db.getAllAsync<{
+		date: string;
+		amount: number;
+		profit: number;
+	}>(
 		`SELECT 
        date(timestamp) as date,
        COALESCE(SUM(total), 0) as amount,
@@ -107,7 +115,10 @@ export const getSalesOverTime = async (dateRange: DateRange): Promise<SalesDataP
 	return results;
 };
 
-export const getTopSellingProducts = async (dateRange: DateRange, limit: number = 10): Promise<TopSellingProduct[]> => {
+export const getTopSellingProducts = async (
+	dateRange: DateRange,
+	limit: number = 10
+): Promise<TopSellingProduct[]> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -131,7 +142,9 @@ export const getTopSellingProducts = async (dateRange: DateRange, limit: number 
 	return results;
 };
 
-export const getSalesBreakdown = async (dateRange: DateRange): Promise<SalesBreakdown> => {
+export const getSalesBreakdown = async (
+	dateRange: DateRange
+): Promise<SalesBreakdown> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -164,7 +177,9 @@ export const getSalesBreakdown = async (dateRange: DateRange): Promise<SalesBrea
 
 // ==================== INVENTORY REPORTS ====================
 
-export const getInventoryMovement = async (dateRange: DateRange): Promise<InventoryMovement> => {
+export const getInventoryMovement = async (
+	dateRange: DateRange
+): Promise<InventoryMovement> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -191,7 +206,9 @@ export const getInventoryMovement = async (dateRange: DateRange): Promise<Invent
 	};
 };
 
-export const getLowStockItems = async (threshold: number = 10): Promise<StockItem[]> => {
+export const getLowStockItems = async (
+	threshold: number = 10
+): Promise<StockItem[]> => {
 	const results = await db.getAllAsync<any>(
 		`SELECT 
        id, 
@@ -242,7 +259,10 @@ export const getInventoryValue = async (): Promise<InventoryValue> => {
 	};
 };
 
-export const getFastMovingProducts = async (dateRange: DateRange, limit: number = 10): Promise<StockItem[]> => {
+export const getFastMovingProducts = async (
+	dateRange: DateRange,
+	limit: number = 10
+): Promise<StockItem[]> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -267,7 +287,10 @@ export const getFastMovingProducts = async (dateRange: DateRange, limit: number 
 	return results;
 };
 
-export const getSlowMovingProducts = async (dateRange: DateRange, limit: number = 10): Promise<StockItem[]> => {
+export const getSlowMovingProducts = async (
+	dateRange: DateRange,
+	limit: number = 10
+): Promise<StockItem[]> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -294,7 +317,9 @@ export const getSlowMovingProducts = async (dateRange: DateRange, limit: number 
 
 // ==================== CREDITS REPORTS ====================
 
-export const getCreditsOverview = async (dateRange: DateRange): Promise<CreditsOverview> => {
+export const getCreditsOverview = async (
+	dateRange: DateRange
+): Promise<CreditsOverview> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -375,7 +400,9 @@ export const getAgingBuckets = async (): Promise<AgingBucket[]> => {
 
 // ==================== PROFITABILITY REPORTS ====================
 
-export const getProfitabilityData = async (dateRange: DateRange): Promise<ProfitabilityData> => {
+export const getProfitabilityData = async (
+	dateRange: DateRange
+): Promise<ProfitabilityData> => {
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
@@ -406,7 +433,9 @@ export const getProfitabilityData = async (dateRange: DateRange): Promise<Profit
 
 // ==================== INSIGHTS ====================
 
-export const getReportInsights = async (dateRange: DateRange): Promise<ReportInsight[]> => {
+export const getReportInsights = async (
+	dateRange: DateRange
+): Promise<ReportInsight[]> => {
 	const insights: ReportInsight[] = [];
 	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
 	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));

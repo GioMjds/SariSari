@@ -1,9 +1,7 @@
 import StyledText from '@/components/elements/StyledText';
-import { insertCustomer } from '@/db/credits';
 import { NewCustomer } from '@/types/credits.types';
-import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
-import { useMutation } from '@tanstack/react-query';
+import { useCredits } from '@/hooks/useCredits';
 import { router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
@@ -29,35 +27,27 @@ export default function AddCustomer() {
 		},
 	});
 
-	const { mutate, isPending } = useMutation({
-		mutationFn: async (data: AddCustomerFormData) => {
-			const newCustomer: NewCustomer = {
-				name: data.name.trim(),
-				phone: data.phone?.trim() || undefined,
-				address: data.address?.trim() || undefined,
-				notes: data.notes?.trim() || undefined,
-				credit_limit: data.credit_limit ? parseFloat(data.credit_limit) : undefined,
-			};
+	const { useInsertCustomer } = useCredits();	
 
-			return insertCustomer(newCustomer);
-		},
-		onSuccess: () => {
-			Alert.alert('Success', 'Customer added successfully', [
-				{
-					text: 'OK',
-					onPress: () => router.back(),
-				},
-			]);
-		},
-		onError: (error) => {
-			console.error('Error adding customer:', error);
-			Alert.alert('Error', 'Failed to add customer. Please try again.');
-		},
-	});
+	const insertCustomer = useInsertCustomer();
 
-	const handleFormSubmit = handleSubmit((data) => {
-		mutate(data);
-	});
+	const onSubmit = (data: AddCustomerFormData) => {
+		let creditLimit: number | undefined;
+		if (typeof data.credit_limit === 'string' && data.credit_limit.trim() !== '') {
+			const parsed = parseFloat(data.credit_limit);
+			creditLimit = Number.isFinite(parsed) ? parsed : undefined;
+		}
+
+		const payload: NewCustomer = {
+			name: data.name,
+			phone: data.phone,
+			address: data.address,
+			notes: data.notes,
+			credit_limit: creditLimit,
+		};
+
+		return insertCustomer.mutate(payload);
+	};
 
 	return (
 		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -227,14 +217,14 @@ export default function AddCustomer() {
 						{/* Submit Button */}
 						<TouchableOpacity
 							activeOpacity={0.7}
-							onPress={handleFormSubmit}
-							disabled={isPending || !isValid}
+							onPress={handleSubmit(onSubmit)}
+							disabled={insertCustomer.isPending || !isValid}
 							className={`rounded-xl py-4 ${
-								isPending || !isValid ? 'bg-gray-300' : 'bg-secondary'
+								insertCustomer.isPending || !isValid ? 'bg-gray-300' : 'bg-secondary'
 							}`}
 						>
 							<StyledText variant="semibold" className="text-white text-center text-base">
-								{isPending ? 'Adding Customer...' : 'Add Customer'}
+								{insertCustomer.isPending ? 'Adding Customer...' : 'Add Customer'}
 							</StyledText>
 						</TouchableOpacity>
 					</View>

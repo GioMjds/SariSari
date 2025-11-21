@@ -1,5 +1,5 @@
 import StyledText from "@/components/elements/StyledText";
-import { useSalesMutation } from "@/hooks/useSalesMutation";
+import { useSales } from "@/hooks/useSales";
 import { Alert } from "@/utils/alert";
 import { parseStoredTimestamp } from "@/utils/timezone";
 import { FontAwesome } from "@expo/vector-icons";
@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SaleDetails() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const { useGetSale, deleteSaleMutation } = useSalesMutation();
+    const { useGetSale, deleteSaleMutation } = useSales();
 
     const { data: sale, isLoading } = useGetSale(Number(id));
 

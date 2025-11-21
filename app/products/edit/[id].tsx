@@ -1,6 +1,6 @@
 import StyledText from '@/components/elements/StyledText';
 import Modal from '@/components/ui/Modal';
-import { useProductsMutation } from '@/hooks/useProductsMutation';
+import { useProducts } from '@/hooks/useProducts';
 import { useToastStore } from '@/stores/ToastStore';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
@@ -39,8 +39,8 @@ export default function EditProduct() {
 	
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const router = useRouter();
-	const addToast = useToastStore((state) => state.addToast);
-	const { useGetProduct, updateProductMutation, deleteProductMutation } = useProductsMutation();
+
+	const { useGetProduct, updateProductMutation, deleteProductMutation } = useProducts();
 
 	const { data: product, isLoading } = useGetProduct(parseInt(id, 10));
 
@@ -57,12 +57,11 @@ export default function EditProduct() {
 		},
 		values: product
 			? {
-					name: product.name,
-					sku: product.sku,
-					price: product.price.toString(),
-					category: '',
-				}
-			: undefined,
+				name: product.name,
+				sku: product.sku,
+				price: product.price.toString(),
+				category: '',
+			} : undefined,
 	});
 
 	// Check for unsaved changes

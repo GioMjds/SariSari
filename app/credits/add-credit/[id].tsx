@@ -1,17 +1,12 @@
 import StyledText from '@/components/elements/StyledText';
-import {
-    getCustomer,
-    insertCreditTransaction,
-} from '@/db/credits';
-import { getAllProducts } from '@/db/products';
-import { useToastStore } from '@/stores/ToastStore';
-import { Customer, NewCredit } from '@/types/credits.types';
+import { NewCredit } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useCredits } from '@/hooks/useCredits';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -22,6 +17,7 @@ import {
 } from 'react-native';
 import { Product } from '@/types/products.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useProducts } from '@/hooks/useProducts';
 
 interface CreditFormData {
 	productName: string;
@@ -32,25 +28,23 @@ interface CreditFormData {
 }
 
 export default function AddCreditTransaction() {
-	const { id } = useLocalSearchParams<{ id: string }>();
-	const queryClient = useQueryClient();
-	const addToast = useToastStore((state) => state.addToast);
-
 	const [selectedProduct, setSelectedProduct] = useState<Product | null>(
 		null
 	);
-	const [useProductList, setUseProductList] = useState(false);
+	const [useProductList, setUseProductList] = useState<boolean>(false);
+	
+	const { id } = useLocalSearchParams<{ id: string }>();
+	const queryClient = useQueryClient();
 
-
+	const { useCustomer, useInsertCredit } = useCredits();
+	const { getAllProductsQuery } = useProducts();
 
 	// React Hook Form
 	const {
 		control,
 		handleSubmit,
-		formState: { errors },
 		setValue,
 		watch,
-		reset,
 	} = useForm<CreditFormData>({
 		defaultValues: {
 			productName: '',
@@ -65,17 +59,10 @@ export default function AddCreditTransaction() {
 	const amount = watch('amount');
 
 	// Query customer
-	const { data: customer } = useQuery<Customer | null>({
-		queryKey: ['customer', id],
-		queryFn: () => getCustomer(parseInt(id)),
-		enabled: !!id,
-	});
+	const { data: customer } = useCustomer(Number(id));
 
 	// Query products
-	const { data: products = [] } = useQuery<Product[]>({
-		queryKey: ['products'],
-		queryFn: getAllProducts,
-	});
+	const { data: products = [] } = getAllProductsQuery;
 
 	// Refetch on focus
 	useFocusEffect(
@@ -86,56 +73,7 @@ export default function AddCreditTransaction() {
 	);
 
 	// Add credit mutation
-	const addCreditMutation = useMutation({
-		mutationFn: async (data: CreditFormData) => {
-			if (!customer) {
-				throw new Error('Customer not found');
-			}
-
-			if (!data.productName.trim() && !data.amount) {
-				throw new Error('Please enter product name or amount');
-			}
-
-			if (!data.amount || parseFloat(data.amount) <= 0) {
-				throw new Error('Please enter a valid amount');
-			}
-
-			const newCredit: NewCredit = {
-				customer_id: customer.id,
-				product_id: selectedProduct?.id,
-				product_name: data.productName.trim() || undefined,
-				quantity: data.quantity ? parseInt(data.quantity) : undefined,
-				amount: parseFloat(data.amount),
-				due_date: data.dueDate || undefined,
-				notes: data.notes.trim() || undefined,
-			};
-
-			await insertCreditTransaction(newCredit);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ['customer-details', id],
-			});
-			queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
-			queryClient.invalidateQueries({ queryKey: ['customers'] });
-			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-			addToast({
-				message: 'Credit added successfully',
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
-			});
-			router.back();
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to add credit',
-				variant: 'error',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
+	const addCreditMutation = useInsertCredit();
 
 	const handleProductSelect = (product: Product) => {
 		setSelectedProduct(product);
@@ -145,7 +83,17 @@ export default function AddCreditTransaction() {
 	};
 
 	const onSubmit = (data: CreditFormData) => {
-		addCreditMutation.mutate(data);
+		const payload: NewCredit = {
+			customer_id: Number(id),
+			product_id: selectedProduct?.id,
+			product_name: selectedProduct ? selectedProduct.name : data.productName?.trim() || undefined,
+			quantity: data.quantity ? parseInt(data.quantity, 10) : undefined,
+			amount: parseFloat(data.amount),
+			due_date: data.dueDate?.trim() || undefined,
+			notes: data.notes?.trim() || undefined,
+		};
+
+		addCreditMutation.mutate(payload);
 	};
 
 	const formatCurrency = (amount: number) => {

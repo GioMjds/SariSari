@@ -10,7 +10,7 @@ import {
 import { GetSaleByDateRangeParams, InsertSaleParams } from '@/types/sales.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useSalesMutation() {
+export function useSales() {
     const queryClient = useQueryClient();
 
     // Query: Get today's stats

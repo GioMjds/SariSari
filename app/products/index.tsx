@@ -2,7 +2,7 @@ import StyledText from '@/components/elements/StyledText';
 import ProductItem from '@/components/products/ProductItem';
 import Pagination from '@/components/ui/Pagination';
 import { SortOption, sortOption } from '@/constants/sort-option';
-import { useProductsMutation } from '@/hooks/useProductsMutation';
+import { useProducts } from '@/hooks/useProducts';
 import { Product } from '@/types/products.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -39,7 +39,7 @@ export default function Products() {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 
 	const router = useRouter();
-	const { getAllProductsQuery, deleteProductMutation } = useProductsMutation();
+	const { getAllProductsQuery, deleteProductMutation } = useProducts();
 
 	const debounceRef = useRef<number | null>(null);
 
@@ -302,7 +302,7 @@ export default function Products() {
 					/>
 				}
 				ListEmptyComponent={
-					<View className="flex-1 justify-center items-center px-8">
+					<View className="flex-1 justify-center items-center px-8 mt-56">
 						<FontAwesome
 							name="cube"
 							size={64}

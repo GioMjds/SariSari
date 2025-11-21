@@ -1,14 +1,13 @@
 import StyledText from '@/components/elements/StyledText';
 import CustomModal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
-import { insertInventoryTransaction } from '@/db/inventory';
-import { useProductsMutation } from '@/hooks/useProductsMutation';
+import { useProducts } from '@/hooks/useProducts';
+import { useInventory } from '@/hooks/useInventory';
 import { useDialogStore } from '@/stores/DialogStore';
 import { useToastStore } from '@/stores/ToastStore';
 import { Product } from '@/types/products.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -24,7 +23,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LOW_STOCK_THRESHOLD = 5;
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 4;
 
 interface PendingAction {
 	product: Product;
@@ -45,10 +44,11 @@ export default function Index() {
 	const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
 	
 	const debounceRef = useRef<number | null>(null);
-	
+
 	const router = useRouter();
-	const queryClient = useQueryClient();
-	const { getAllProductsQuery } = useProductsMutation();
+	const { getAllProductsQuery } = useProducts();
+
+	const { insertInventoryMutation } = useInventory();
 
 	// Debounce search input
 	useEffect(() => {
@@ -108,28 +108,7 @@ export default function Index() {
 	};
 
 	// Mutation for inventory transaction
-	const transactionMutation = useMutation({
-		mutationFn: async ({
-			product,
-			type,
-			quantity,
-		}: {
-			product: Product;
-			type: 'restock' | 'sale';
-			quantity: number;
-		}) => {
-			await insertInventoryTransaction(product.id, type, quantity);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['products'] });
-			addToast({
-				message: 'Stock updated successfully',
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
+	const transactionMutation = insertInventoryMutation();
 
 	const filtered = useMemo(() => {
 		if (!products) return [];
@@ -161,8 +140,7 @@ export default function Index() {
 			setPendingAction({ product, type });
 			setQuantityInput('');
 		},
-		[]
-	);
+	[]);
 
 	const closeAction = useCallback(() => {
 		setPendingAction(null);
@@ -181,7 +159,7 @@ export default function Index() {
 			});
 			return;
 		}
-		// Prevent selling more than current quantity
+
 		if (
 			pendingAction.type === 'sale' &&
 			qty > pendingAction.product.quantity
@@ -194,11 +172,13 @@ export default function Index() {
 			});
 			return;
 		}
+
 		transactionMutation.mutate({
-			product: pendingAction.product,
+			product_id: pendingAction.product.id,
 			type: pendingAction.type,
 			quantity: qty,
 		});
+
 		closeAction();
 	}, [
 		pendingAction,
@@ -350,6 +330,12 @@ export default function Index() {
 					>
 						<FontAwesome name="plus" size={18} color="#ffffff" />
 					</TouchableOpacity>
+					{/* <TouchableOpacity
+						onPress={() => router.push('/dev/reset')}
+						className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
+					>
+						<FontAwesome name="adjust" size={18} color="#ffffff" />
+					</TouchableOpacity> */}
 				</View>
 
 				{/* Search */}

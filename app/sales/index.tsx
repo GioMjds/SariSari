@@ -2,7 +2,7 @@ import StyledText from "@/components/elements/StyledText";
 import SalesFilterModal from "@/components/sales/SalesFilterModal";
 import Pagination from "@/components/ui/Pagination";
 import { SalesFilterState } from "@/constants/filters";
-import { useSalesMutation } from "@/hooks/useSalesMutation";
+import { useSales } from "@/hooks/useSales";
 import { SaleWithItems } from "@/types/sales.types";
 import { parseStoredTimestamp } from "@/utils/timezone";
 import { FontAwesome } from "@expo/vector-icons";
@@ -24,7 +24,7 @@ export default function Sales() {
     });
 
     const router = useRouter();
-    const { getTodayStatsQuery, getAllSalesQuery } = useSalesMutation();
+    const { getTodayStatsQuery, getAllSalesQuery } = useSales();
 
     // Fetch today's stats
     const { data: stats, refetch: refetchStats } = getTodayStatsQuery;

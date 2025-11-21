@@ -10,7 +10,7 @@ import { useToastStore } from '@/stores/ToastStore';
 import { InsertProductParams, UpdateProductParams } from '@/types/products.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-export function useProductsMutation() {
+export function useProducts() {
     const queryClient = useQueryClient();
     const addToast = useToastStore((state) => state.addToast);
 

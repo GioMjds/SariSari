@@ -1,14 +1,9 @@
 import StyledText from '@/components/elements/StyledText';
-import {
-    getCreditTransactionsByCustomer,
-    getCustomer,
-    insertPayment,
-} from '@/db/credits';
-import { useToastStore } from '@/stores/ToastStore';
-import { CreditTransaction, Customer, NewPayment } from '@/types/credits.types';
+import { CreditTransaction, NewPayment } from '@/types/credits.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCredits } from '@/hooks/useCredits';
+import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
@@ -34,7 +29,8 @@ export default function AddPaymentTransaction() {
 
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const queryClient = useQueryClient();
-	const addToast = useToastStore((state) => state.addToast);
+
+	const { useCustomer, useCustomerCredits, useInsertPayment } = useCredits();
 
 	// React Hook Form
 	const {
@@ -53,18 +49,10 @@ export default function AddPaymentTransaction() {
 	const amount = watch('amount');
 
 	// Query customer
-	const { data: customer } = useQuery<Customer | null>({
-		queryKey: ['customer', id],
-		queryFn: () => getCustomer(parseInt(id)),
-		enabled: !!id,
-	});
+	const { data: customer } = useCustomer(id);
 
 	// Query unpaid credits
-	const { data: allCredits = [] } = useQuery<CreditTransaction[]>({
-		queryKey: ['customer-credits', id],
-		queryFn: () => getCreditTransactionsByCustomer(parseInt(id)),
-		enabled: !!id,
-	});
+	const { data: allCredits = [] } = useCustomerCredits(id);
 
 	const unpaidCredits = useMemo(
 		() => allCredits.filter((c) => c.status !== 'paid'),
@@ -82,57 +70,7 @@ export default function AddPaymentTransaction() {
 	);
 
 	// Add payment mutation
-	const addPaymentMutation = useMutation({
-		mutationFn: async (data: PaymentFormData) => {
-			if (!customer) {
-				throw new Error('Customer not found');
-			}
-
-			if (!data.amount || parseFloat(data.amount) <= 0) {
-				throw new Error('Please enter a valid payment amount');
-			}
-
-			const paymentAmount = parseFloat(data.amount);
-			if (paymentAmount > customer.outstanding_balance) {
-				throw new Error(
-					`Payment amount (${formatCurrency(paymentAmount)}) exceeds outstanding balance (${formatCurrency(customer.outstanding_balance)})`
-				);
-			}
-
-			const newPayment: NewPayment = {
-				customer_id: customer.id,
-				credit_transaction_id: selectedCredit?.id,
-				amount: paymentAmount,
-				payment_method: data.paymentMethod,
-				notes: data.notes.trim() || undefined,
-			};
-
-			await insertPayment(newPayment);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ['customer-details', id],
-			});
-			queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
-			queryClient.invalidateQueries({ queryKey: ['customers'] });
-			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-			addToast({
-				message: 'Payment recorded successfully',
-				variant: 'success',
-				duration: 5000,
-				position: 'top-center',
-			});
-			router.back();
-		},
-		onError: (error: Error) => {
-			addToast({
-				message: error.message || 'Failed to record payment',
-				variant: 'error',
-				duration: 5000,
-				position: 'top-center',
-			});
-		},
-	});
+	const addPaymentMutation = useInsertPayment();
 
 	const handleCreditSelect = (credit: CreditTransaction) => {
 		setSelectedCredit(credit);
@@ -142,7 +80,15 @@ export default function AddPaymentTransaction() {
 	};
 
 	const onSubmit = (data: PaymentFormData) => {
-		addPaymentMutation.mutate(data);
+		const payload: NewPayment = {
+			customer_id: Number(id),
+			credit_transaction_id: selectedCredit?.id,
+			amount: parseFloat(data.amount),
+			payment_method: data.paymentMethod,
+			notes: data.notes,
+			date: format(new Date(), 'yyyy-MM-dd'),
+		};
+		addPaymentMutation.mutate(payload);
 	};
 
 	const formatCurrency = (amount: number) => {
