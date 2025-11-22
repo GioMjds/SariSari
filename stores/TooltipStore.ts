@@ -6,7 +6,7 @@ interface State {
 	showTooltip: (
 		id: string,
 		content: string,
-		config?: Partial<Tooltip>
+		config?: Partial<Tooltip>,
 	) => void;
 	hideTooltip: (id: string) => void;
 	updateTooltipPosition: (id: string, position: TooltipPosition) => void;

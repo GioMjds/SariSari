@@ -12,13 +12,15 @@ import {
 	StockItem,
 	TopSellingProduct,
 } from '@/types/reports.types';
-import { endOfDay, format, startOfDay } from 'date-fns';
+import { endOfDay, startOfDay } from 'date-fns';
 import { db } from '../configs/sqlite';
 
 // ==================== DATE HELPERS ====================
 
 export const formatDateForSQL = (date: Date): string => {
-	return format(date, 'yyyy-MM-dd HH:mm:ss');
+	// Use ISO string so it matches timestamps inserted with `toISOString()`
+	// This ensures string comparisons in SQLite are consistent.
+	return date.toISOString();
 };
 
 // ==================== KPI FUNCTIONS ====================
@@ -37,13 +39,13 @@ export const getReportKPIs = async (
 		[startDate, endDate]
 	);
 
-	// Total Profit (requires cost price in products table - we'll estimate)
+	// Total Profit (requires cost price in products table)
 	const profitResult = await db.getFirstAsync<{ profit: number }>(
-		`SELECT COALESCE(SUM(si.quantity * (si.price - COALESCE(p.cost_price, si.price * 0.6))), 0) as profit
+		`SELECT COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
-     WHERE s.timestamp BETWEEN ? AND ?`,
+     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
 		[startDate, endDate]
 	);
 
@@ -65,11 +67,11 @@ export const getReportKPIs = async (
 
 	// Inventory Cost Out (COGS)
 	const cogsResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(si.quantity * COALESCE(p.cost_price, si.price * 0.6)), 0) as total
+		`SELECT COALESCE(SUM(si.quantity * p.cost_price), 0) as total
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
-     WHERE s.timestamp BETWEEN ? AND ?`,
+     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
 		[startDate, endDate]
 	);
 
@@ -100,10 +102,10 @@ export const getSalesOverTime = async (
        date(timestamp) as date,
        COALESCE(SUM(total), 0) as amount,
        COALESCE(SUM(
-         (SELECT SUM(si.quantity * (si.price - COALESCE(p.cost_price, si.price * 0.6)))
+         (SELECT SUM(si.quantity * (si.price - p.cost_price))
           FROM sale_items si
           LEFT JOIN products p ON si.product_id = p.id
-          WHERE si.sale_id = s.id)
+          WHERE si.sale_id = s.id AND p.cost_price IS NOT NULL)
        ), 0) as profit
      FROM sales s
      WHERE timestamp BETWEEN ? AND ?
@@ -128,11 +130,11 @@ export const getTopSellingProducts = async (
        p.name,
        COALESCE(SUM(si.quantity), 0) as unitsSold,
        COALESCE(SUM(si.quantity * si.price), 0) as revenue,
-       COALESCE(SUM(si.quantity * (si.price - COALESCE(p.cost_price, si.price * 0.6))), 0) as profit
+       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
      FROM products p
      JOIN sale_items si ON p.id = si.product_id
      JOIN sales s ON si.sale_id = s.id
-     WHERE s.timestamp BETWEEN ? AND ?
+     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL
      GROUP BY p.id, p.name
      ORDER BY unitsSold DESC
      LIMIT ?`,
@@ -215,7 +217,7 @@ export const getLowStockItems = async (
        name, 
        quantity,
        price as sellingPrice,
-       COALESCE(cost_price, price * 0.6) as costPrice
+       cost_price as costPrice
      FROM products 
      WHERE quantity > 0 AND quantity <= ?
      ORDER BY quantity ASC`,
@@ -232,7 +234,7 @@ export const getOutOfStockItems = async (): Promise<StockItem[]> => {
        name, 
        quantity,
        price as sellingPrice,
-       COALESCE(cost_price, price * 0.6) as costPrice
+       cost_price as costPrice
      FROM products 
      WHERE quantity = 0
      ORDER BY name ASC`
@@ -247,9 +249,9 @@ export const getInventoryValue = async (): Promise<InventoryValue> => {
 		potentialSalesValue: number;
 	}>(
 		`SELECT 
-       COALESCE(SUM(quantity * COALESCE(cost_price, price * 0.6)), 0) as currentStockValue,
+       COALESCE(SUM(quantity * p.cost_price), 0) as currentStockValue,
        COALESCE(SUM(quantity * price), 0) as potentialSalesValue
-     FROM products
+     FROM products p
      WHERE quantity > 0`
 	);
 
@@ -272,7 +274,7 @@ export const getFastMovingProducts = async (
        p.name,
        p.quantity,
        p.price as sellingPrice,
-       COALESCE(p.cost_price, p.price * 0.6) as costPrice,
+       p.cost_price as costPrice,
        'fast' as velocity
      FROM products p
      JOIN sale_items si ON p.id = si.product_id
@@ -300,7 +302,7 @@ export const getSlowMovingProducts = async (
        p.name,
        p.quantity,
        p.price as sellingPrice,
-       COALESCE(p.cost_price, p.price * 0.6) as costPrice,
+       p.cost_price as costPrice,
        'slow' as velocity
      FROM products p
      LEFT JOIN sale_items si ON p.id = si.product_id
@@ -411,12 +413,12 @@ export const getProfitabilityData = async (
 		totalRevenue: number;
 	}>(
 		`SELECT 
-       COALESCE(SUM(si.quantity * (si.price - COALESCE(p.cost_price, si.price * 0.6))), 0) as totalProfit,
+       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
        COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
-     WHERE s.timestamp BETWEEN ? AND ?`,
+     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
 		[startDate, endDate]
 	);
 
@@ -429,6 +431,51 @@ export const getProfitabilityData = async (
 		totalProfit: profitResult?.totalProfit || 0,
 		marginPercent,
 	};
+};
+
+// ==================== PRODUCT PROFITABILITY ====================
+
+export interface ProductProfitability {
+	id: number;
+	name: string;
+	totalRevenue: number;
+	totalProfit: number;
+	unitsSold: number;
+	profitPerUnit: number;
+	marginPercent: number;
+}
+
+export const getProductProfitability = async (
+	dateRange: DateRange,
+	limit: number = 10
+): Promise<ProductProfitability[]> => {
+	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+
+	const results = await db.getAllAsync<ProductProfitability>(
+		`SELECT 
+       p.id,
+       p.name,
+       COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue,
+       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
+       COALESCE(SUM(si.quantity), 0) as unitsSold,
+       COALESCE(AVG(si.price - p.cost_price), 0) as profitPerUnit,
+       CASE 
+         WHEN SUM(si.quantity * si.price) > 0 
+         THEN (SUM(si.quantity * (si.price - p.cost_price)) / SUM(si.quantity * si.price)) * 100
+         ELSE 0
+       END as marginPercent
+     FROM products p
+     JOIN sale_items si ON p.id = si.product_id
+     JOIN sales s ON si.sale_id = s.id
+     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL
+     GROUP BY p.id, p.name
+     ORDER BY totalProfit DESC
+     LIMIT ?`,
+		[startDate, endDate, limit]
+	);
+
+	return results;
 };
 
 // ==================== INSIGHTS ====================

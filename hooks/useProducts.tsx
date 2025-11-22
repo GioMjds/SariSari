@@ -1,10 +1,10 @@
 import {
-    deleteProduct,
-    getAllProducts,
-    getProduct,
-    getProductBySku,
-    insertProduct,
-    updateProduct,
+	deleteProduct,
+	getAllProducts,
+	getProduct,
+	getProductBySku,
+	insertProduct,
+	updateProduct,
 } from '@/db/products';
 import { useToastStore } from '@/stores/ToastStore';
 import { InsertProductParams, UpdateProductParams } from '@/types/products.types';
@@ -15,10 +15,12 @@ export function useProducts() {
     const addToast = useToastStore((state) => state.addToast);
 
 	// Query: Get all products
-	const getAllProductsQuery = useQuery({
-		queryKey: ['products'],
-		queryFn: getAllProducts,
-	});
+	const getAllProductsQuery = () => {
+		return useQuery({
+			queryKey: ['products'],
+			queryFn: getAllProducts,
+		})
+	}
 
 	// Query: Get product by ID (accepts id parameter)
 	const useGetProduct = (id: number) => {
@@ -40,8 +42,8 @@ export function useProducts() {
 
 	// Mutation: Insert a new product
 	const insertProductMutation = useMutation({
-		mutationFn: ({ name, sku, price, quantity = 0 }: InsertProductParams) => 
-			insertProduct(name, sku, price, quantity),
+		mutationFn: ({ name, sku, price, quantity = 0, cost_price }: InsertProductParams) => 
+			insertProduct(name, sku, price, quantity, cost_price),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
 			addToast({
@@ -63,8 +65,8 @@ export function useProducts() {
 
 	// Mutation: Update a product
 	const updateProductMutation = useMutation({
-		mutationFn: ({ id, name, sku, price, quantity }: UpdateProductParams) => 
-			updateProduct(id, name, sku, price, quantity),
+		mutationFn: ({ id, name, sku, price, quantity, cost_price }: UpdateProductParams) => 
+			updateProduct(id, name, sku, price, quantity, cost_price),
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
 			queryClient.invalidateQueries({ queryKey: ['product', variables.id] });

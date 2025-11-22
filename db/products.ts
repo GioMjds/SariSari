@@ -16,18 +16,18 @@ export const initProductsTable = async () => {
   `);
 };
 
-export const insertProduct = async (name: string, sku: string, price: number, quantity: number = 0) => {
+export const insertProduct = async (name: string, sku: string, price: number, quantity: number = 0, cost_price?: number) => {
   const result = await db.runAsync(
-    'INSERT INTO products (name, sku, price, quantity) VALUES (?, ?, ?, ?)',
-    [name, sku, price, quantity]
+    'INSERT INTO products (name, sku, price, quantity, cost_price) VALUES (?, ?, ?, ?, ?)',
+    [name, sku, price, quantity, cost_price ?? null]
   );
   return result.lastInsertRowId;
 };
 
-export const updateProduct = async (id: number, name: string, sku: string, price: number, quantity: number) => {
+export const updateProduct = async (id: number, name: string, sku: string, price: number, quantity: number, cost_price?: number) => {
   await db.runAsync(
-    'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [name, sku, price, quantity, id]
+    'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [name, sku, price, quantity, cost_price ?? null, id]
   );
 };
 

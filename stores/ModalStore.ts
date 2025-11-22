@@ -32,13 +32,26 @@ export const useModalStore = create<State>((set) => ({
 	closeModal: (id) =>
 		set((state) => {
 			const modal = state.modals.find((m) => m.id === id);
-			if (modal?.onClose) modal.onClose();
+			if (modal?.onClose) {
+				// Prevent onClose from being called if it was already called
+				try {
+					modal.onClose();
+				} catch (error) {
+					console.error('Error in modal onClose:', error);
+				}
+			}
 			return { modals: state.modals.filter((m) => m.id !== id) };
 		}),
 
 	closeAllModals: () =>
 		set((state) => {
-			state.modals.forEach((modal) => modal.onClose?.());
+			state.modals.forEach((modal) => {
+				try {
+					modal.onClose?.();
+				} catch (error) {
+					console.error('Error in modal onClose:', error);
+				}
+			});
 			return { modals: [] };
 		}),
 

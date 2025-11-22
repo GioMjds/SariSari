@@ -1,4 +1,3 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     getAgingBuckets,
     getCreditsOverview,
@@ -7,6 +6,7 @@ import {
     getInventoryValue,
     getLowStockItems,
     getOutOfStockItems,
+    getProductProfitability,
     getProfitabilityData,
     getReportInsights,
     getReportKPIs,
@@ -14,6 +14,7 @@ import {
     getSalesOverTime,
     getSlowMovingProducts,
     getTopSellingProducts,
+    ProductProfitability,
 } from '@/db/reports';
 import type {
     AgingBucket,
@@ -29,6 +30,7 @@ import type {
     StockItem,
     TopSellingProduct,
 } from '@/types/reports.types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useReports() {
     const queryClient = useQueryClient();
@@ -125,6 +127,13 @@ export function useReports() {
             enabled: !!dateRange,
         });
 
+    const useProductProfitability = (dateRange: DateRange, limit = 10) =>
+        useQuery<ProductProfitability[]>({
+            queryKey: ['report-product-profitability', dateRange.startDate, dateRange.endDate, limit],
+            queryFn: () => getProductProfitability(dateRange, limit),
+            enabled: !!dateRange,
+        });
+
     const useReportInsights = (dateRange: DateRange) =>
         useQuery<ReportInsight[]>({
             queryKey: ['report-insights', dateRange.startDate, dateRange.endDate],
@@ -147,6 +156,7 @@ export function useReports() {
             queryClient.invalidateQueries({ queryKey: ['report-credits-overview'] }),
             queryClient.invalidateQueries({ queryKey: ['report-aging-buckets'] }),
             queryClient.invalidateQueries({ queryKey: ['report-profitability'] }),
+            queryClient.invalidateQueries({ queryKey: ['report-product-profitability'] }),
             queryClient.invalidateQueries({ queryKey: ['report-insights'] }),
         ]);
     };
@@ -165,6 +175,7 @@ export function useReports() {
         useCreditsOverview,
         useAgingBuckets,
         useProfitability,
+        useProductProfitability,
         useReportInsights,
         invalidateReports,
     };

@@ -1,5 +1,4 @@
 import '../global.css';
-import StyledTab from '@/components/layout/StyledTab';
 import GlobalModal from '@/components/ui/GlobalModal';
 import Sonner from '@/components/ui/Sonner';
 import ToastContainer from '@/components/ui/Toast';
@@ -13,8 +12,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -113,23 +112,8 @@ export default function RootLayout() {
 							animation: 'ios_from_right',
 							presentation: 'modal'
 						}}
-					>
-						<Stack.Screen name="index" />
-						<Stack.Screen name="sales/index" />
-						<Stack.Screen name="products/index" />
-						<Stack.Screen name="products/add" />
-						<Stack.Screen name="products/edit/[id]" />
-						<Stack.Screen name="credits/index" />
-						<Stack.Screen name="credits/add" />
-						<Stack.Screen name="credits/details/[id]" />
-						<Stack.Screen name="credits/add-credit/[id]" />
-						<Stack.Screen name="credits/add-payment/[id]" />
-						<Stack.Screen name="sales/add" />
-						<Stack.Screen name="sales/[id]" />
-						<Stack.Screen name="reports/index" />
-					</Stack>
-					<StyledTab />
-					<ToastContainer />
+					/>
+					<ToastContainer />	
 					<Sonner />
 					<GlobalModal />
 				</SafeAreaProvider>

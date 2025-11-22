@@ -15,6 +15,7 @@ export interface InsertProductParams {
   sku: string;
   price: number;
   quantity?: number;
+  cost_price?: number;
 }
 
 // Parameters for updateProduct function
@@ -24,4 +25,5 @@ export interface UpdateProductParams {
   sku: string;
   price: number;
   quantity: number;
+  cost_price?: number;
 }
