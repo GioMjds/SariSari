@@ -1,4 +1,5 @@
 import StyledText from '@/components/elements/StyledText';
+import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
@@ -18,15 +19,6 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const CATEGORIES = [
-    'Snacks',
-    'Drinks',
-    'Household',
-    'Frozen',
-    'Cigarettes',
-    'Other',
-];
-
 interface AddProductForm {
     productName: string;
     sku: string;
@@ -45,6 +37,8 @@ export default function AddProduct() {
     const router = useRouter();
 
     const { insertProductMutation } = useProducts();
+    const { getAllCategoriesQuery } = useCategories();
+    const { data: categories = [] } = getAllCategoriesQuery();
 
     const {
         handleSubmit,
@@ -194,6 +188,7 @@ export default function AddProduct() {
             price: priceValue,
             quantity: stockValue,
             cost_price: costPriceValue,
+            category: data.category || undefined,
         });
 
         router.push('/(tabs)');
@@ -633,49 +628,59 @@ export default function AddProduct() {
                     >
                         Category (Optional)
                     </StyledText>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                    >
-                        <View className="flex-row gap-2">
-                            {CATEGORIES.map((category) => (
-                                <Controller
-                                    key={category}
-                                    control={control}
-                                    name="category"
-                                    render={({
-                                        field: { value, onChange },
-                                    }) => (
-                                        <Pressable
-                                            onPress={() =>
-                                                onChange(
-                                                    value === category
-                                                        ? ''
-                                                        : category
-                                                )
-                                            }
-                                            className={`px-4 py-2 rounded-xl ${
-                                                value === category
-                                                    ? 'bg-accent'
-                                                    : 'bg-white border border-gray-200'
-                                            } active:opacity-70`}
-                                        >
-                                            <StyledText
-                                                variant="medium"
-                                                className={`text-sm ${
-                                                    value === category
-                                                        ? 'text-white'
-                                                        : 'text-text-secondary'
-                                                }`}
+                    {categories.length > 0 ? (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                        >
+                            <View className="flex-row gap-2">
+                                {categories.map((category) => (
+                                    <Controller
+                                        key={category.id}
+                                        control={control}
+                                        name="category"
+                                        render={({
+                                            field: { value, onChange },
+                                        }) => (
+                                            <Pressable
+                                                onPress={() =>
+                                                    onChange(
+                                                        value === category.name
+                                                            ? ''
+                                                            : category.name
+                                                    )
+                                                }
+                                                className="px-4 py-2 rounded-xl active:opacity-70"
+                                                style={{
+                                                    backgroundColor: value === category.name ? '#AD49E1' : '#fff',
+                                                    borderWidth: value === category.name ? 0 : 1,
+                                                    borderColor: '#e5e7eb',
+                                                }}
                                             >
-                                                {category}
-                                            </StyledText>
-                                        </Pressable>
-                                    )}
-                                />
-                            ))}
+                                                <StyledText
+                                                    variant="medium"
+                                                    className={`text-sm ${
+                                                        value === category.name
+                                                            ? 'text-white'
+                                                            : 'text-text-secondary'
+                                                    }`}
+                                                >
+                                                    {category.name}
+                                                </StyledText>
+                                            </Pressable>
+                                        )}
+                                    />
+                                ))}
+                            </View>
+                        </ScrollView>
+                    ) : (
+                        <View className="bg-gray-50 rounded-xl p-4 flex-row items-center">
+                            <FontAwesome name="info-circle" size={16} color="#6b7280" style={{ marginRight: 8 }} />
+                            <StyledText variant="regular" className="text-gray-600 text-xs flex-1">
+                                No categories yet. Go to Products → Categories tab to add one.
+                            </StyledText>
                         </View>
-                    </ScrollView>
+                    )}
                 </View>
 
                 {/* Submit Button */}

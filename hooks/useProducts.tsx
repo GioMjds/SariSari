@@ -1,10 +1,10 @@
 import {
-	deleteProduct,
-	getAllProducts,
-	getProduct,
-	getProductBySku,
-	insertProduct,
-	updateProduct,
+    deleteProduct,
+    getAllProducts,
+    getProduct,
+    getProductBySku,
+    insertProduct,
+    updateProduct,
 } from '@/db/products';
 import { useToastStore } from '@/stores/ToastStore';
 import { InsertProductParams, UpdateProductParams } from '@/types/products.types';
@@ -42,10 +42,11 @@ export function useProducts() {
 
 	// Mutation: Insert a new product
 	const insertProductMutation = useMutation({
-		mutationFn: ({ name, sku, price, quantity = 0, cost_price }: InsertProductParams) => 
-			insertProduct(name, sku, price, quantity, cost_price),
+		mutationFn: ({ name, sku, price, quantity = 0, cost_price, category }: InsertProductParams) => 
+			insertProduct(name, sku, price, quantity, cost_price, category),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
+			queryClient.invalidateQueries({ queryKey: ['categories'] });
 			addToast({
 				message: 'Product added successfully',
 				variant: 'success',
@@ -65,11 +66,12 @@ export function useProducts() {
 
 	// Mutation: Update a product
 	const updateProductMutation = useMutation({
-		mutationFn: ({ id, name, sku, price, quantity, cost_price }: UpdateProductParams) => 
-			updateProduct(id, name, sku, price, quantity, cost_price),
+		mutationFn: ({ id, name, sku, price, quantity, cost_price, category }: UpdateProductParams) => 
+			updateProduct(id, name, sku, price, quantity, cost_price, category),
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
 			queryClient.invalidateQueries({ queryKey: ['product', variables.id] });
+			queryClient.invalidateQueries({ queryKey: ['categories'] });
 			addToast({
 				message: 'Product updated successfully',
 				variant: 'success',
@@ -92,6 +94,7 @@ export function useProducts() {
 		mutationFn: (id: number) => deleteProduct(id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['products'] });
+			queryClient.invalidateQueries({ queryKey: ['categories'] });
 			addToast({
 				message: 'Product deleted successfully',
 				variant: 'success',

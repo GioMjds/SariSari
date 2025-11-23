@@ -10,24 +10,25 @@ export const initProductsTable = async () => {
       price REAL NOT NULL,
       cost_price REAL,
       quantity INTEGER NOT NULL DEFAULT 0,
+      category TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
 };
 
-export const insertProduct = async (name: string, sku: string, price: number, quantity: number = 0, cost_price?: number) => {
+export const insertProduct = async (name: string, sku: string, price: number, quantity: number = 0, cost_price?: number, category?: string) => {
   const result = await db.runAsync(
-    'INSERT INTO products (name, sku, price, quantity, cost_price) VALUES (?, ?, ?, ?, ?)',
-    [name, sku, price, quantity, cost_price ?? null]
+    'INSERT INTO products (name, sku, price, quantity, cost_price, category) VALUES (?, ?, ?, ?, ?, ?)',
+    [name, sku, price, quantity, cost_price ?? null, category ?? null]
   );
   return result.lastInsertRowId;
 };
 
-export const updateProduct = async (id: number, name: string, sku: string, price: number, quantity: number, cost_price?: number) => {
+export const updateProduct = async (id: number, name: string, sku: string, price: number, quantity: number, cost_price?: number, category?: string) => {
   await db.runAsync(
-    'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [name, sku, price, quantity, cost_price ?? null, id]
+    'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [name, sku, price, quantity, cost_price ?? null, category ?? null, id]
   );
 };
 

@@ -329,12 +329,12 @@ export default function InventoryScreen() {
 					>
 						<FontAwesome name="plus" size={18} color="#ffffff" />
 					</TouchableOpacity>
-					{/* <TouchableOpacity
+					<TouchableOpacity
 						onPress={() => router.push('/dev/reset')}
 						className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
 					>
 						<FontAwesome name="adjust" size={18} color="#ffffff" />
-					</TouchableOpacity> */}
+					</TouchableOpacity>
 				</View>
 
 				{/* Search */}
@@ -460,7 +460,7 @@ export default function InventoryScreen() {
 							/>
 							<StyledText
 								variant="semibold"
-								className="text-text-primary text-xl mt-4 mb-2"
+								className="text-text-secondary text-xl mt-4 mb-2"
 							>
 								No products found
 							</StyledText>

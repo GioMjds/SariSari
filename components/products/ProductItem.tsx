@@ -1,4 +1,4 @@
-import { Product } from '@/db/products';
+import { Product } from '@/types/products.types';
 import { calculateMarkup, calculateProfit } from '@/utils/formatters';
 import { FontAwesome } from '@expo/vector-icons';
 import { FC } from 'react';
@@ -94,7 +94,7 @@ const ProductItem: FC<Props> = ({
 									variant="regular"
 									className="text-green-700 text-xs"
 								>
-									Tubo/pc
+									Profit per pc(s)
 								</StyledText>
 								<StyledText
 									variant="extrabold"
