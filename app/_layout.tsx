@@ -1,7 +1,7 @@
-import '../global.css';
 import GlobalModal from '@/components/ui/GlobalModal';
 import Sonner from '@/components/ui/Sonner';
 import ToastContainer from '@/components/ui/Toast';
+import { initCategoriesTable } from '@/db/categories';
 import { initCreditsTable } from '@/db/credits';
 import { initInventoryTable } from '@/db/inventory';
 import { initProductsTable } from '@/db/products';
@@ -14,6 +14,7 @@ import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,6 +55,7 @@ const initializeDatabases = async () => {
 				initCreditsTable(),
 				initInventoryTable(),
 				initSalesTables(),
+				initCategoriesTable(),
 			]);
 		});
 

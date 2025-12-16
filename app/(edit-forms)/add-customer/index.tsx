@@ -3,8 +3,9 @@ import { useCredits } from '@/hooks/useCredits';
 import { NewCustomer } from '@/types/credits.types';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     BackHandler,
@@ -79,34 +80,35 @@ export default function AddCustomer() {
         return insertCustomer.mutate(payload);
     };
 
-    // Handle hardware back button similar to AddProduct
-    useEffect(() => {
-        const onBackPress = () => {
-            if (hasActualChanges) {
-                Alert.alert(
-                    'Unsaved Changes',
-                    'You have unsaved changes. Are you sure you want to discard them?',
-                    [
-                        { text: "Don't Leave", style: 'cancel', onPress: () => {} },
-                        {
-                            text: 'Discard',
-                            style: 'destructive',
-                            onPress: () => router.back(),
-                        },
-                    ]
-                );
-                return true; // prevent default
-            }
-            return false; // allow default behavior
-        };
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                if (hasActualChanges) {
+                    Alert.alert(
+                        'Unsaved Changes',
+                        'You have unsaved changes. Are you sure you want to discard them?',
+                        [
+                            { text: "Don't Leave", style: 'cancel', onPress: () => {} },
+                            {
+                                text: 'Discard',
+                                style: 'destructive',
+                                onPress: () => router.back(),
+                            },
+                        ]
+                    );
+                    return true;
+                }
+                return false;
+            };
 
-        const backHandler = BackHandler.addEventListener(
-            'hardwareBackPress',
-            onBackPress
-        );
+            const backHandler = BackHandler.addEventListener(
+                'hardwareBackPress',
+                onBackPress
+            );
 
-        return () => backHandler.remove();
-    }, [hasActualChanges, router]);
+            return () => backHandler.remove();
+        }, [hasActualChanges, router])
+    );
 
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top']}>

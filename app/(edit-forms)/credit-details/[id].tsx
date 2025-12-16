@@ -1,15 +1,15 @@
 import StyledText from '@/components/elements/StyledText';
+import { useCredits } from '@/hooks/useCredits';
 import { useModalStore } from '@/stores/ModalStore';
 import { CreditTransaction } from '@/types/credits.types';
+import { formatCurrency, getStatusColor } from '@/utils/formatters';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCredits } from '@/hooks/useCredits';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
     ActivityIndicator,
     RefreshControl,
@@ -17,7 +17,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { formatCurrency, getStatusColor } from '@/utils/formatters';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'credits' | 'payments' | 'history';
 
@@ -369,7 +369,7 @@ export default function CustomerDetails() {
             >
                 {/* Credits Tab */}
                 {activeTab === 'credits' && (
-                    <View className="pb-32 mt-48">
+                    <View className="pb-32 mt-4">
                         {customer.credits.length === 0 ? (
                             <View className="items-center justify-center py-12">
                                 <FontAwesome
@@ -490,7 +490,7 @@ export default function CustomerDetails() {
 
                 {/* Payments Tab */}
                 {activeTab === 'payments' && (
-                    <View className="pb-32 mt-48">
+                    <View className="pb-32 mt-4">
                         {customer.payments.length === 0 ? (
                             <View className="items-center justify-center py-12">
                                 <FontAwesome
@@ -589,7 +589,7 @@ export default function CustomerDetails() {
 
                 {/* History Tab */}
                 {activeTab === 'history' && (
-                    <View className="pb-32 mt-48">
+                    <View className="pb-32 mt-4">
                         {history.length === 0 ? (
                             <View className="items-center justify-center py-12">
                                 <FontAwesome

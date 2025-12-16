@@ -3,8 +3,9 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProducts } from '@/hooks/useProducts';
 import { Alert } from '@/utils/alert';
 import { FontAwesome } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
     ActivityIndicator,
@@ -130,38 +131,40 @@ export default function AddProduct() {
         }
     };
 
-    // Handle hardware back button
-    useEffect(() => {
-        const onBackPress = () => {
-            if (hasActualChanges) {
-                Alert.alert(
-                    'Unsaved Changes',
-                    'You have unsaved changes. Are you sure you want to discard them?',
-                    [
-                        {
-                            text: "Don't Leave",
-                            style: 'cancel',
-                            onPress: () => {},
-                        },
-                        {
-                            text: 'Discard',
-                            style: 'destructive',
-                            onPress: () => router.back(),
-                        },
-                    ]
-                );
-                return true;
-            }
-            return false;
-        };
+    // Handle hardware back button only while screen is focused
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                if (hasActualChanges) {
+                    Alert.alert(
+                        'Unsaved Changes',
+                        'You have unsaved changes. Are you sure you want to discard them?',
+                        [
+                            {
+                                text: "Don't Leave",
+                                style: 'cancel',
+                                onPress: () => {},
+                            },
+                            {
+                                text: 'Discard',
+                                style: 'destructive',
+                                onPress: () => router.back(),
+                            },
+                        ]
+                    );
+                    return true;
+                }
+                return false;
+            };
 
-        const backHandler = BackHandler.addEventListener(
-            'hardwareBackPress',
-            onBackPress
-        );
+            const backHandler = BackHandler.addEventListener(
+                'hardwareBackPress',
+                onBackPress
+            );
 
-        return () => backHandler.remove();
-    }, [hasActualChanges, router]);
+            return () => backHandler.remove();
+        }, [hasActualChanges, router])
+    );
 
     const onSubmit = async (data: AddProductForm) => {
         if (!data.productName.trim())
