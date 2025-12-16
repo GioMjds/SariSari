@@ -46,8 +46,9 @@
     },
     "extra": {
       "router": {},
+      "privacyPolicyUrl": "https://sarisari-app.vercel.app/privacy-policy",
       "eas": {
-        "projectId": "a54b09e7-e22d-4ccb-9788-8e0225482a30"
+        "projectId": "982c08c5-26c3-4edc-b8f3-64830767ef23"
       }
     }
   }

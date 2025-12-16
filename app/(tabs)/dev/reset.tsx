@@ -3,6 +3,7 @@ import * as SQLite from 'expo-sqlite';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { clearOnboardingState } from '@/lib/onboardingStorage';
 
 // Dev-only reset screen. Accessible at /dev/reset when running the app in development.
 export default function DevResetScreen() {
@@ -124,6 +125,36 @@ export default function DevResetScreen() {
         {message ? (
           <Text style={{ marginTop: 16, color: '#374151' }}>{message}</Text>
         ) : null}
+
+        <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 10 }}>Onboarding helpers</Text>
+          <Text style={{ marginBottom: 12 }}>
+            Clear the onboarding flag/profile stored in AsyncStorage to replay the first-run flow.
+          </Text>
+          <Pressable
+            onPress={async () => {
+              setRunning(true);
+              setMessage('Clearing onboarding state...');
+              try {
+                await clearOnboardingState();
+                setMessage('Onboarding state cleared. Launch will show onboarding again.');
+              } catch (err: any) {
+                setMessage(`Clear failed: ${err?.message || String(err)}`);
+              } finally {
+                setRunning(false);
+              }
+            }}
+            style={({ pressed }) => ({
+              backgroundColor: '#f59e0b',
+              padding: 12,
+              borderRadius: 8,
+              opacity: pressed ? 0.85 : 1,
+              alignItems: 'center',
+            })}
+          >
+            <Text style={{ color: '#111827', fontWeight: '700' }}>Clear Onboarding Flag</Text>
+          </Pressable>
+        </View>
       </View>
     </SafeAreaView>
   );

@@ -1,6 +1,7 @@
 import StyledText from '@/components/elements/StyledText';
 import CustomModal from '@/components/ui/Modal';
 import Pagination from '@/components/ui/Pagination';
+import { GUIDE_TIPS } from '@/constants/guide';
 import { useProducts } from '@/hooks/useProducts';
 import { useInventory } from '@/hooks/useInventory';
 import { useDialogStore } from '@/stores/DialogStore';
@@ -37,6 +38,7 @@ export default function InventoryScreen() {
 	const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 	const [quantityInput, setQuantityInput] = useState<string>('');
 	const [currentPage, setCurrentPage] = useState<number>(1);
+	const [showGuide, setShowGuide] = useState<boolean>(false);
 
 	const router = useRouter();
 
@@ -52,10 +54,9 @@ export default function InventoryScreen() {
 	// Debounce search input
 	useEffect(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current);
-		debounceRef.current = setTimeout(
-			() => setDebouncedSearch(search.trim()),
-			300
-		) as unknown as number;
+		debounceRef.current = setTimeout(() => {
+			setDebouncedSearch(search.trim())
+		}, 300);
 	}, [search]);
 
 	// Reset to first page when search or sort changes
@@ -323,18 +324,26 @@ export default function InventoryScreen() {
 					>
 						Inventory
 					</StyledText>
-					<TouchableOpacity
-						onPress={() => router.push('/(edit-forms)/add-product' as any)}
-						className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
-					>
-						<FontAwesome name="plus" size={18} color="#ffffff" />
-					</TouchableOpacity>
-					<TouchableOpacity
-						onPress={() => router.push('/dev/reset')}
-						className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
-					>
-						<FontAwesome name="adjust" size={18} color="#ffffff" />
-					</TouchableOpacity>
+					<View className="flex-row gap-2 items-center">
+						<TouchableOpacity
+							onPress={() => setShowGuide(true)}
+							className="w-10 h-10 rounded-full bg-white border border-gray-200 items-center justify-center shadow-sm"
+						>
+							<FontAwesome name="question-circle" size={18} color="#7A1CAC" />
+						</TouchableOpacity>
+						<TouchableOpacity
+							onPress={() => router.push('/(edit-forms)/add-product' as any)}
+							className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
+						>
+							<FontAwesome name="plus" size={18} color="#ffffff" />
+						</TouchableOpacity>
+						{/* <TouchableOpacity
+							onPress={() => router.push('/dev/reset')}
+							className="w-10 h-10 rounded-full bg-accent items-center justify-center shadow-sm"
+						>
+							<FontAwesome name="adjust" size={18} color="#ffffff" />
+						</TouchableOpacity> */}
+					</View>
 				</View>
 
 				{/* Search */}
@@ -489,6 +498,54 @@ export default function InventoryScreen() {
 					}
 				/>
 			)}
+
+			{/* Guide Modal */}
+			<Modal
+				visible={showGuide}
+				transparent
+				animationType="fade"
+				onRequestClose={() => setShowGuide(false)}
+			>
+				<View className="flex-1 bg-black/50 justify-center px-6">
+					<View className="bg-white rounded-2xl p-6 shadow-xl">
+						<View className="flex-row justify-between items-center mb-4">
+							<StyledText variant="extrabold" className="text-xl text-text-primary">
+								Quick guide
+							</StyledText>
+							<TouchableOpacity onPress={() => setShowGuide(false)}>
+								<FontAwesome name="times" size={20} color="#9CA3AF" />
+							</TouchableOpacity>
+						</View>
+
+						<View className="space-y-3 mb-4">
+							{GUIDE_TIPS.map((tip) => (
+								<View key={tip.title} className="bg-background rounded-xl p-3 flex-row gap-3">
+									<View className="w-10 h-10 rounded-full bg-white items-center justify-center">
+										<FontAwesome name={tip.icon as any} size={18} color="#7A1CAC" />
+									</View>
+									<View className="flex-1">
+										<StyledText variant="semibold" className="text-text-primary text-base">
+											{tip.title}
+										</StyledText>
+										<StyledText variant="regular" className="text-text-secondary text-sm leading-5">
+											{tip.description}
+										</StyledText>
+									</View>
+								</View>
+							))}
+						</View>
+
+						<TouchableOpacity
+							onPress={() => setShowGuide(false)}
+							className="bg-secondary rounded-xl py-3 items-center"
+						>
+							<StyledText variant="semibold" className="text-white">
+								Got it
+							</StyledText>
+						</TouchableOpacity>
+					</View>
+				</View>
+			</Modal>
 
 			{/* Pagination */}
 			{filtered.length > 0 && (
