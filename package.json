@@ -73,6 +73,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
+    "baseline-browser-mapping": "^2.10.38",
     "better-sqlite3": "^12.4.5",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",

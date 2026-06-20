@@ -36,18 +36,18 @@ const StyledTab = () => {
 							accessibilityRole="button"
 							accessibilityState={{ selected: isFocused, disabled: isFocused }}
 							onPress={() => handlePress(tab.href)}
-							className={`flex-1 items-center py-2 ${isFocused ? 'rounded-xl bg-[#F3E4FF]' : ''}`}
+							className={`flex-1 items-center py-2 ${isFocused ? 'rounded-xl bg-secondary-50' : ''}`}
 							activeOpacity={0.2}
 							disabled={isFocused}
 						>
 							<FontAwesome
 								name={tab.icon}
 								size={20}
-								color={isFocused ? '#7A1CAC' : '#9ca3af'}
+								color={isFocused ? '#B45309' : '#A8A29E'}
 							/>
 							<StyledText
 								variant={isFocused ? 'extrabold' : 'light'}
-								className={`text-md leading-4 mt-1 text-center ${isFocused ? 'text-secondary' : 'text-[#9ca3af]'}`}
+								className={`text-md leading-4 mt-1 text-center ${isFocused ? 'text-primary-500' : 'text-warm-500'}`}
 							>
 								{tab.name}
 							</StyledText>

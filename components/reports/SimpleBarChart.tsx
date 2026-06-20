@@ -8,11 +8,11 @@ interface SimpleBarChartProps {
 	barColor?: string;
 }
 
-export default function SimpleBarChart({ data, height = 200, barColor = '#7A1CAC' }: SimpleBarChartProps) {
+export default function SimpleBarChart({ data, height = 200, barColor = '#B45309' }: SimpleBarChartProps) {
 	if (data.length === 0) {
 		return (
 			<View className="items-center justify-center" style={{ height }}>
-				<StyledText variant="medium" className="text-gray-400">
+				<StyledText variant="medium" className="text-warm-500">
 					No data available
 				</StyledText>
 			</View>
@@ -32,11 +32,11 @@ export default function SimpleBarChart({ data, height = 200, barColor = '#7A1CAC
 					return (
 						<View key={index} className="items-center flex-1 mx-1">
 							<View className="flex-1 justify-end mb-1">
-								<StyledText variant="medium" className="text-gray-600 text-xs mb-1 text-center">
+								<StyledText variant="medium" className="text-warm-700 text-xs mb-1 text-center">
 									₱{point.amount >= 1000 ? (point.amount / 1000).toFixed(1) + 'k' : point.amount.toFixed(0)}
 								</StyledText>
 								<View
-									className="rounded-t-lg"
+									className="rounded-t-xl"
 									style={{
 										height: Math.max(barHeight, 4),
 										backgroundColor: barColor,
@@ -44,7 +44,7 @@ export default function SimpleBarChart({ data, height = 200, barColor = '#7A1CAC
 									}}
 								/>
 							</View>
-							<StyledText variant="regular" className="text-gray-500 text-xs mt-1 text-center" numberOfLines={1}>
+							<StyledText variant="regular" className="text-warm-600 text-xs mt-1 text-center" numberOfLines={1}>
 								{new Date(point.date).getDate()}
 							</StyledText>
 						</View>

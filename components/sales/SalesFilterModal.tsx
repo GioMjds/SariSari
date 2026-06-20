@@ -53,18 +53,18 @@ export default function SalesFilterModal({
 					<View className="flex-row justify-between items-center mb-4">
 						<StyledText
 							variant="extrabold"
-							className="text-primary text-2xl"
+							className="text-primary-500 text-2xl"
 						>
 							Filter Sales
 						</StyledText>
 						<TouchableOpacity
 							onPress={onClose}
-							className="w-8 h-8 justify-center items-center rounded-full bg-gray-100"
+							className="w-8 h-8 justify-center items-center rounded-full bg-warm-100"
 						>
 							<FontAwesome
 								name="times"
 								size={16}
-								color="#2E073F"
+								color="#B45309"
 							/>
 						</TouchableOpacity>
 					</View>
@@ -77,7 +77,7 @@ export default function SalesFilterModal({
 						<View className="mb-6">
 							<StyledText
 								variant="semibold"
-								className="text-primary text-base mb-3"
+								className="text-primary-500 text-base mb-3"
 							>
 								Payment Type
 							</StyledText>
@@ -97,15 +97,15 @@ export default function SalesFilterModal({
 											}
 											className={`flex-row items-center p-4 rounded-xl border-2 ${
 												isSelected
-													? 'bg-secondary/10 border-secondary'
-													: 'bg-white border-gray-200'
+													? 'bg-secondary-50 border-secondary-600'
+													: 'bg-white border-warm-200'
 											}`}
 										>
 											<View
 												className={`w-10 h-10 rounded-full items-center justify-center ${
 													isSelected
-														? 'bg-secondary'
-														: 'bg-gray-100'
+														? 'bg-secondary-500'
+														: 'bg-warm-100'
 												}`}
 											>
 												<FontAwesome
@@ -114,7 +114,7 @@ export default function SalesFilterModal({
 													color={
 														isSelected
 															? '#fff'
-															: '#7A1CAC'
+															: '#B45309'
 													}
 												/>
 											</View>
@@ -126,8 +126,8 @@ export default function SalesFilterModal({
 												}
 												className={`ml-3 flex-1 ${
 													isSelected
-														? 'text-secondary'
-														: 'text-text-primary'
+														? 'text-secondary-600'
+														: 'text-warm-900'
 												}`}
 											>
 												{option.label}
@@ -136,7 +136,7 @@ export default function SalesFilterModal({
 												<FontAwesome
 													name="check-circle"
 													size={20}
-													color="#7A1CAC"
+													color="#B45309"
 												/>
 											)}
 										</TouchableOpacity>
@@ -149,7 +149,7 @@ export default function SalesFilterModal({
 						<View className="mb-4">
 							<StyledText
 								variant="semibold"
-								className="text-primary text-base mb-3"
+								className="text-primary-500 text-base mb-3"
 							>
 								Date Range
 							</StyledText>
@@ -168,8 +168,8 @@ export default function SalesFilterModal({
 											}
 											className={`flex-row items-center justify-between p-4 rounded-xl border-2 ${
 												isSelected
-													? 'bg-secondary/10 border-secondary'
-													: 'bg-white border-gray-200'
+													? 'bg-secondary-50 border-secondary-600'
+													: 'bg-white border-warm-200'
 											}`}
 										>
 											<StyledText
@@ -180,8 +180,8 @@ export default function SalesFilterModal({
 												}
 												className={
 													isSelected
-														? 'text-secondary'
-														: 'text-text-primary'
+														? 'text-secondary-600'
+														: 'text-warm-900'
 												}
 											>
 												{option.label}
@@ -190,7 +190,7 @@ export default function SalesFilterModal({
 												<FontAwesome
 													name="check-circle"
 													size={20}
-													color="#7A1CAC"
+													color="#B45309"
 												/>
 											)}
 										</TouchableOpacity>
@@ -201,21 +201,21 @@ export default function SalesFilterModal({
 					</ScrollView>
 
 					{/* Action Buttons */}
-					<View className="flex-row gap-3 mt-4 pt-4 border-t border-gray-200">
+					<View className="flex-row gap-3 mt-4 pt-4 border-t border-warm-100">
 						<TouchableOpacity
 							onPress={handleReset}
-							className="flex-1 bg-gray-200 rounded-xl py-3 active:opacity-70"
+							className="flex-1 bg-warm-200 rounded-xl py-3 active:opacity-70"
 						>
 							<StyledText
 								variant="semibold"
-								className="text-text-primary text-center text-base"
+								className="text-warm-900 text-center text-base"
 							>
 								Reset
 							</StyledText>
 						</TouchableOpacity>
 						<TouchableOpacity
 							onPress={handleApply}
-							className="flex-1 bg-secondary rounded-xl py-3 active:opacity-70"
+							className="flex-1 bg-primary-500 rounded-xl py-3 active:opacity-70"
 						>
 							<StyledText
 								variant="extrabold"

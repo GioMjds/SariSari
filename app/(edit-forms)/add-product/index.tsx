@@ -200,7 +200,7 @@ export default function AddProduct() {
     return (
         <SafeAreaView className="flex-1 bg-background" edges={['top']}>
             {/* Header */}
-            <View className="bg-primary px-4 py-6 flex-row items-center">
+            <View className="bg-primary-500 px-4 py-6 flex-row items-center">
                 <TouchableOpacity
                     hitSlop={20}
                     activeOpacity={0.2}
@@ -229,7 +229,7 @@ export default function AddProduct() {
                 <View className="mb-4">
                     <StyledText
                         variant="semibold"
-                        className="text-text-primary text-sm mb-2"
+                        className="text-warm-900 text-sm mb-2"
                     >
                         Product Name *
                     </StyledText>
@@ -244,7 +244,7 @@ export default function AddProduct() {
                                     onChange(text);
                                     handleNameChange(text);
                                 }}
-                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
                                 placeholderTextColor="#9ca3af"
                             />
                         )}
@@ -256,7 +256,7 @@ export default function AddProduct() {
                     <View className="flex-row justify-between items-center mb-2">
                         <StyledText
                             variant="semibold"
-                            className="text-text-primary text-sm"
+                            className="text-warm-900 text-sm"
                         >
                             SKU (Stock Keeping Unit) *
                         </StyledText>
@@ -267,8 +267,8 @@ export default function AddProduct() {
                             <View
                                 className={`w-5 h-5 rounded border-2 mr-2 items-center justify-center ${
                                     autoGenerateSku
-                                        ? 'bg-accent border-accent'
-                                        : 'border-gray-300'
+                                        ? 'bg-secondary-500 border-accent'
+                                        : 'border-warm-200'
                                 }`}
                             >
                                 {autoGenerateSku && (
@@ -281,7 +281,7 @@ export default function AddProduct() {
                             </View>
                             <StyledText
                                 variant="regular"
-                                className="text-text-secondary text-xs"
+                                className="text-warm-600 text-xs"
                             >
                                 Auto-generate
                             </StyledText>
@@ -295,7 +295,7 @@ export default function AddProduct() {
                                 placeholder="e.g., PC-001"
                                 value={value}
                                 onChangeText={onChange}
-                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
                                 placeholderTextColor="#9ca3af"
                                 editable={!autoGenerateSku}
                                 style={{
@@ -307,7 +307,7 @@ export default function AddProduct() {
                     {autoGenerateSku && (
                         <StyledText
                             variant="regular"
-                            className="text-text-muted text-xs mt-1"
+                            className="text-warm-500 text-xs mt-1"
                         >
                             SKU will be auto-generated based on product name
                         </StyledText>
@@ -315,7 +315,7 @@ export default function AddProduct() {
                 </View>
 
                 {/* Cost Price Section */}
-                <View className="bg-blue-50 rounded-xl p-4 mb-4">
+                <View className="bg-warm-50 rounded-xl p-4 mb-4">
                     <View className="flex-row items-center justify-between mb-3">
                         <View className="flex-row items-center">
                             <FontAwesome
@@ -326,7 +326,7 @@ export default function AddProduct() {
                             />
                             <StyledText
                                 variant="semibold"
-                                className="text-blue-700 text-sm"
+                                className="text-warm-700 text-sm"
                             >
                                 Cost Price (for Profit Tracking)
                             </StyledText>
@@ -340,8 +340,8 @@ export default function AddProduct() {
                             <View
                                 className={`w-5 h-5 rounded border-2 mr-2 items-center justify-center ${
                                     useBundlePricing
-                                        ? 'bg-accent border-accent'
-                                        : 'border-gray-300'
+                                        ? 'bg-secondary-500 border-accent'
+                                        : 'border-warm-200'
                                 }`}
                             >
                                 {useBundlePricing && (
@@ -354,7 +354,7 @@ export default function AddProduct() {
                             </View>
                             <StyledText
                                 variant="regular"
-                                className="text-blue-700 text-xs"
+                                className="text-warm-700 text-xs"
                             >
                                 Bundle
                             </StyledText>
@@ -367,14 +367,14 @@ export default function AddProduct() {
                             <View className="mb-3">
                                 <StyledText
                                     variant="medium"
-                                    className="text-blue-700 text-xs mb-2"
+                                    className="text-warm-700 text-xs mb-2"
                                 >
                                     Total Bundle Cost (₱)
                                 </StyledText>
                                 <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
                                     <StyledText
                                         variant="medium"
-                                        className="text-text-secondary text-base mr-2"
+                                        className="text-warm-600 text-base mr-2"
                                     >
                                         ₱
                                     </StyledText>
@@ -389,7 +389,7 @@ export default function AddProduct() {
                                                 value={value}
                                                 onChangeText={onChange}
                                                 keyboardType="decimal-pad"
-                                                className="flex-1 font-stack-sans text-base text-text-primary"
+                                                className="flex-1 font-stack-sans text-base text-warm-900"
                                                 placeholderTextColor="#9ca3af"
                                             />
                                         )}
@@ -401,7 +401,7 @@ export default function AddProduct() {
                             <View className="mb-3">
                                 <StyledText
                                     variant="medium"
-                                    className="text-blue-700 text-xs mb-2"
+                                    className="text-warm-700 text-xs mb-2"
                                 >
                                     Pieces per Bundle
                                 </StyledText>
@@ -416,7 +416,7 @@ export default function AddProduct() {
                                             value={value}
                                             onChangeText={onChange}
                                             keyboardType="number-pad"
-                                            className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+                                            className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
                                             placeholderTextColor="#9ca3af"
                                         />
                                     )}
@@ -427,14 +427,14 @@ export default function AddProduct() {
                             <View>
                                 <StyledText
                                     variant="medium"
-                                    className="text-blue-700 text-xs mb-2"
+                                    className="text-warm-700 text-xs mb-2"
                                 >
                                     Cost per Piece (Auto-calculated)
                                 </StyledText>
                                 <View className="bg-white/60 rounded-xl px-4 py-3 flex-row items-center shadow-sm">
                                     <StyledText
                                         variant="medium"
-                                        className="text-text-secondary text-base mr-2"
+                                        className="text-warm-600 text-base mr-2"
                                     >
                                         ₱
                                     </StyledText>
@@ -446,7 +446,7 @@ export default function AddProduct() {
                                                 placeholder="0.00"
                                                 value={value}
                                                 editable={false}
-                                                className="flex-1 font-stack-sans text-base text-text-primary"
+                                                className="flex-1 font-stack-sans text-base text-warm-900"
                                                 placeholderTextColor="#9ca3af"
                                             />
                                         )}
@@ -460,14 +460,14 @@ export default function AddProduct() {
                             <View>
                                 <StyledText
                                     variant="medium"
-                                    className="text-blue-700 text-xs mb-2"
+                                    className="text-warm-700 text-xs mb-2"
                                 >
                                     Cost per Piece (₱)
                                 </StyledText>
                                 <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
                                     <StyledText
                                         variant="medium"
-                                        className="text-text-secondary text-base mr-2"
+                                        className="text-warm-600 text-base mr-2"
                                     >
                                         ₱
                                     </StyledText>
@@ -482,7 +482,7 @@ export default function AddProduct() {
                                                 value={value}
                                                 onChangeText={onChange}
                                                 keyboardType="decimal-pad"
-                                                className="flex-1 font-stack-sans text-base text-text-primary"
+                                                className="flex-1 font-stack-sans text-base text-warm-900"
                                                 placeholderTextColor="#9ca3af"
                                             />
                                         )}
@@ -505,14 +505,14 @@ export default function AddProduct() {
                 <View className="mb-4">
                     <StyledText
                         variant="semibold"
-                        className="text-text-primary text-sm mb-2"
+                        className="text-warm-900 text-sm mb-2"
                     >
                         Selling Price (₱) *
                     </StyledText>
                     <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
                         <StyledText
                             variant="medium"
-                            className="text-text-secondary text-base mr-2"
+                            className="text-warm-600 text-base mr-2"
                         >
                             ₱
                         </StyledText>
@@ -525,7 +525,7 @@ export default function AddProduct() {
                                     value={value}
                                     onChangeText={onChange}
                                     keyboardType="decimal-pad"
-                                    className="flex-1 font-stack-sans text-base text-text-primary"
+                                    className="flex-1 font-stack-sans text-base text-warm-900"
                                     placeholderTextColor="#9ca3af"
                                 />
                             )}
@@ -537,17 +537,17 @@ export default function AddProduct() {
                         formValues.price &&
                         parseFloat(formValues.costPerPiece) > 0 &&
                         parseFloat(formValues.price) > 0 && (
-                            <View className="bg-green-50 rounded-lg p-3 mt-2 flex-row items-center justify-between">
+                            <View className="bg-secondary-50 rounded-lg p-3 mt-2 flex-row items-center justify-between">
                                 <View>
                                     <StyledText
                                         variant="regular"
-                                        className="text-green-700 text-xs mb-1"
+                                        className="text-secondary-700 text-xs mb-1"
                                     >
                                         Profit per pcs:
                                     </StyledText>
                                     <StyledText
                                         variant="extrabold"
-                                        className="text-green-700 text-lg"
+                                        className="text-secondary-700 text-lg"
                                     >
                                         ₱
                                         {(
@@ -557,23 +557,23 @@ export default function AddProduct() {
                                     </StyledText>
                                 </View>
                                 {/* <View>
-                                    <StyledText variant="regular" className="text-green-700 text-xs mb-1">
+                                    <StyledText variant="regular" className="text-secondary-700 text-xs mb-1">
                                         Overall Profit:
                                     </StyledText>
-                                    <StyledText variant="extrabold" className="text-green-700 text-lg">
+                                    <StyledText variant="extrabold" className="text-secondary-700 text-lg">
                                         ₱{(parseFloat(formValues.price) - parseFloat(formValues.costPerPiece)).toFixed(2)}
                                     </StyledText>
                                 </View> */}
                                 <View className="items-end">
                                     <StyledText
                                         variant="regular"
-                                        className="text-green-700 text-xs mb-1"
+                                        className="text-secondary-700 text-xs mb-1"
                                     >
                                         Markup
                                     </StyledText>
                                     <StyledText
                                         variant="extrabold"
-                                        className="text-green-700 text-lg"
+                                        className="text-secondary-700 text-lg"
                                     >
                                         {(
                                             ((parseFloat(formValues.price) -
@@ -596,7 +596,7 @@ export default function AddProduct() {
                 <View className="mb-4">
                     <StyledText
                         variant="semibold"
-                        className="text-text-primary text-sm mb-2"
+                        className="text-warm-900 text-sm mb-2"
                     >
                         Initial Stock Quantity
                     </StyledText>
@@ -609,14 +609,14 @@ export default function AddProduct() {
                                 value={value}
                                 onChangeText={onChange}
                                 keyboardType="number-pad"
-                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-text-primary shadow-sm"
+                                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
                                 placeholderTextColor="#9ca3af"
                             />
                         )}
                     />
                     <StyledText
                         variant="regular"
-                        className="text-text-muted text-xs mt-1"
+                        className="text-warm-500 text-xs mt-1"
                     >
                         You can leave this as 0 and add stock later via
                         Inventory
@@ -627,7 +627,7 @@ export default function AddProduct() {
                 <View className="mb-4">
                     <StyledText
                         variant="semibold"
-                        className="text-text-primary text-sm mb-2"
+                        className="text-warm-900 text-sm mb-2"
                     >
                         Category (Optional)
                     </StyledText>
@@ -665,7 +665,7 @@ export default function AddProduct() {
                                                     className={`text-sm ${
                                                         value === category.name
                                                             ? 'text-white'
-                                                            : 'text-text-secondary'
+                                                            : 'text-warm-600'
                                                     }`}
                                                 >
                                                     {category.name}
@@ -690,7 +690,7 @@ export default function AddProduct() {
                 <Pressable
                     onPress={handleSubmit(onSubmit)}
                     disabled={insertProductMutation.isPending}
-                    className={`bg-accent rounded-xl py-4 items-center shadow-md active:opacity-70 ${
+                    className={`bg-secondary-500 rounded-xl py-4 items-center shadow-md active:opacity-70 ${
                         insertProductMutation.isPending ? 'opacity-50' : ''
                     }`}
                 >
@@ -709,11 +709,11 @@ export default function AddProduct() {
                 {/* Cancel Button */}
                 <TouchableOpacity
                     onPress={handleBackPress}
-                    className="bg-gray-200 rounded-xl py-4 items-center mt-3 active:opacity-70"
+                    className="bg-warm-100 rounded-xl py-4 items-center mt-3 active:opacity-70"
                 >
                     <StyledText
                         variant="semibold"
-                        className="text-text-primary text-base"
+                        className="text-warm-900 text-base"
                     >
                         Cancel
                     </StyledText>

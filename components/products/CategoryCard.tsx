@@ -19,18 +19,18 @@ export default function CategoryCard({
 	return (
 		<Pressable
 			onPress={() => onPress(category)}
-			className="bg-white rounded-xl p-4 mb-3 mx-4 shadow-sm active:opacity-70"
+			className="bg-white rounded-2xl p-4 mb-3 mx-4 shadow-sm border border-warm-100 active:opacity-70"
 		>
 			<View className="flex-row items-center justify-between">
 				<View className="flex-row items-center flex-1">
 					{/* Simple folder icon */}
 					<View
-						className="w-12 h-12 rounded-full items-center justify-center mr-3 bg-gray-100"
+						className="w-12 h-12 rounded-full items-center justify-center mr-3 bg-warm-100"
 					>
 						<FontAwesome
 							name={'folder' as any}
 							size={20}
-							color={'#AD49E1'}
+							color={'#B45309'}
 						/>
 					</View>
 
@@ -38,13 +38,13 @@ export default function CategoryCard({
 					<View className="flex-1">
 						<StyledText
 							variant="semibold"
-							className="text-text-primary text-base mb-1"
+							className="text-warm-900 text-base mb-1"
 						>
 							{category.name}
 						</StyledText>
 						<StyledText
 							variant="regular"
-							className="text-text-secondary text-sm"
+							className="text-warm-600 text-sm"
 						>
 							{category.product_count}{' '}
 							{category.product_count === 1 ? 'product' : 'products'}
@@ -59,9 +59,9 @@ export default function CategoryCard({
 							e.stopPropagation();
 							onEdit(category);
 						}}
-						className="w-10 h-10 rounded-lg bg-blue-50 items-center justify-center active:opacity-50"
+						className="w-10 h-10 rounded-lg bg-secondary-50 items-center justify-center active:opacity-50"
 					>
-						<FontAwesome name="edit" size={16} color="#3b82f6" />
+						<FontAwesome name="edit" size={16} color="#65A30D" />
 					</Pressable>
 					<Pressable
 						onPress={(e) => {
@@ -70,7 +70,7 @@ export default function CategoryCard({
 						}}
 						className="w-10 h-10 rounded-lg bg-red-50 items-center justify-center active:opacity-50"
 					>
-						<FontAwesome name="trash" size={16} color="#ef4444" />
+						<FontAwesome name="trash" size={16} color="#DC2626" />
 					</Pressable>
 				</View>
 			</View>

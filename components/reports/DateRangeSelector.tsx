@@ -34,12 +34,12 @@ export default function DateRangeSelector({ activeRange, onRangeChange }: DateRa
 						activeOpacity={0.7}
 						onPress={() => handlePress(range.type)}
 						className={`px-4 py-2 rounded-full mr-2 ${
-							isActive ? 'bg-secondary' : 'bg-white border border-gray-200'
+							isActive ? 'bg-secondary-500' : 'bg-white border border-warm-200'
 						}`}
 					>
 						<StyledText
 							variant={isActive ? 'semibold' : 'medium'}
-							className={`text-sm ${isActive ? 'text-white' : 'text-gray-600'}`}
+							className={`text-sm ${isActive ? 'text-white' : 'text-warm-700'}`}
 						>
 							{range.label}
 						</StyledText>

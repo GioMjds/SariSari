@@ -1,29 +1,29 @@
 import {
-	CreditFilter,
-	CreditHistory,
-	CreditKPIs,
-	CreditSort,
-	CreditTransaction,
-	Customer,
-	CustomerWithDetails,
-	NewCredit,
-	NewCustomer,
-	NewPayment,
-	Payment,
+  CreditFilter,
+  CreditHistory,
+  CreditKPIs,
+  CreditSort,
+  CreditTransaction,
+  Customer,
+  CustomerWithDetails,
+  NewCredit,
+  NewCustomer,
+  NewPayment,
+  Payment,
 } from '@/types/credits.types';
 import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
 import { db } from '../configs/sqlite';
 
 // Initialize all credits-related tables
 export const initCreditsTable = async () => {
-	await db.execAsync(`
+  await db.execAsync(`
 		CREATE TABLE IF NOT EXISTS customers (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
 			phone TEXT,
 			address TEXT,
 			notes TEXT,
-			credit_limit REAL,
+			credit_limit INTEGER,
 			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 			updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 		);
@@ -34,9 +34,9 @@ export const initCreditsTable = async () => {
 			product_id INTEGER,
 			product_name TEXT,
 			quantity INTEGER,
-			amount REAL NOT NULL,
+			amount INTEGER NOT NULL,
 			status TEXT NOT NULL DEFAULT 'unpaid',
-			amount_paid REAL NOT NULL DEFAULT 0,
+			amount_paid INTEGER NOT NULL DEFAULT 0,
 			date TEXT DEFAULT CURRENT_TIMESTAMP,
 			due_date TEXT,
 			notes TEXT,
@@ -49,7 +49,7 @@ export const initCreditsTable = async () => {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			customer_id INTEGER NOT NULL,
 			credit_transaction_id INTEGER,
-			amount REAL NOT NULL,
+			amount INTEGER NOT NULL,
 			payment_method TEXT,
 			date TEXT DEFAULT CURRENT_TIMESTAMP,
 			notes TEXT,
@@ -68,48 +68,48 @@ export const initCreditsTable = async () => {
 // ==================== CUSTOMER OPERATIONS ====================
 
 export const insertCustomer = async (
-	customer: NewCustomer
+  customer: NewCustomer,
 ): Promise<number> => {
-	const result = await db.runAsync(
-		`INSERT INTO customers (name, phone, address, notes, credit_limit) 
+  const result = await db.runAsync(
+    `INSERT INTO customers (name, phone, address, notes, credit_limit) 
      VALUES (?, ?, ?, ?, ?)`,
-		[
-			customer.name,
-			customer.phone || null,
-			customer.address || null,
-			customer.notes || null,
-			customer.credit_limit || null,
-		]
-	);
-	return result.lastInsertRowId;
+    [
+      customer.name,
+      customer.phone || null,
+      customer.address || null,
+      customer.notes || null,
+      customer.credit_limit || null,
+    ],
+  );
+  return result.lastInsertRowId;
 };
 
 export const updateCustomer = async (
-	id: number,
-	customer: NewCustomer
+  id: number,
+  customer: NewCustomer,
 ): Promise<void> => {
-	await db.runAsync(
-		`UPDATE customers 
+  await db.runAsync(
+    `UPDATE customers 
      SET name = ?, phone = ?, address = ?, notes = ?, credit_limit = ?, updated_at = CURRENT_TIMESTAMP 
      WHERE id = ?`,
-		[
-			customer.name,
-			customer.phone || null,
-			customer.address || null,
-			customer.notes || null,
-			customer.credit_limit || null,
-			id,
-		]
-	);
+    [
+      customer.name,
+      customer.phone || null,
+      customer.address || null,
+      customer.notes || null,
+      customer.credit_limit || null,
+      id,
+    ],
+  );
 };
 
 export const deleteCustomer = async (id: number): Promise<void> => {
-	await db.runAsync('DELETE FROM customers WHERE id = ?', [id]);
+  await db.runAsync('DELETE FROM customers WHERE id = ?', [id]);
 };
 
 export const getCustomer = async (id: number): Promise<Customer | null> => {
-	const result = await db.getFirstAsync<any>(
-		`SELECT 
+  const result = await db.getFirstAsync<any>(
+    `SELECT 
 			c.*,
 			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
 			COALESCE(SUM(p.amount), 0) as total_payments,
@@ -120,63 +120,63 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
 		LEFT JOIN payments p ON c.id = p.customer_id
 		WHERE c.id = ?
 		GROUP BY c.id`,
-		[id]
-	);
+    [id],
+  );
 
-	if (!result) return null;
+  if (!result) return null;
 
-	return {
-		...result,
-		tag: calculateCustomerTag(
-			result.outstanding_balance,
-			result.last_transaction_date
-		),
-	};
+  return {
+    ...result,
+    tag: calculateCustomerTag(
+      result.outstanding_balance,
+      result.last_transaction_date,
+    ),
+  };
 };
 
 export const getAllCustomers = async (
-	filter: CreditFilter = 'all',
-	sort: CreditSort = 'name_asc'
+  filter: CreditFilter = 'all',
+  sort: CreditSort = 'name_asc',
 ): Promise<Customer[]> => {
-	let whereClause = '';
-	let orderByClause = 'c.name ASC';
+  let whereClause = '';
+  let orderByClause = 'c.name ASC';
 
-	// Apply filters
-	switch (filter) {
-		case 'with_balance':
-			whereClause = 'HAVING outstanding_balance > 0';
-			break;
-		case 'paid':
-			whereClause = 'HAVING outstanding_balance = 0';
-			break;
-		case 'overdue':
-			whereClause = `HAVING outstanding_balance > 0 AND EXISTS (
+  // Apply filters
+  switch (filter) {
+    case 'with_balance':
+      whereClause = 'HAVING outstanding_balance > 0';
+      break;
+    case 'paid':
+      whereClause = 'HAVING outstanding_balance = 0';
+      break;
+    case 'overdue':
+      whereClause = `HAVING outstanding_balance > 0 AND EXISTS (
 				SELECT 1 FROM credit_transactions 
 				WHERE customer_id = c.id 
 				AND status != 'paid' 
 				AND due_date < date('now')
 			)`;
-			break;
-	}
+      break;
+  }
 
-	// Apply sorting
-	switch (sort) {
-		case 'balance_desc':
-			orderByClause = 'outstanding_balance DESC';
-			break;
-		case 'balance_asc':
-			orderByClause = 'outstanding_balance ASC';
-			break;
-		case 'recent':
-			orderByClause = 'last_transaction_date DESC';
-			break;
-		case 'name_desc':
-			orderByClause = 'c.name DESC';
-			break;
-	}
+  // Apply sorting
+  switch (sort) {
+    case 'balance_desc':
+      orderByClause = 'outstanding_balance DESC';
+      break;
+    case 'balance_asc':
+      orderByClause = 'outstanding_balance ASC';
+      break;
+    case 'recent':
+      orderByClause = 'last_transaction_date DESC';
+      break;
+    case 'name_desc':
+      orderByClause = 'c.name DESC';
+      break;
+  }
 
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
 			c.*,
 			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
 			COALESCE(SUM(p.amount), 0) as total_payments,
@@ -187,338 +187,332 @@ export const getAllCustomers = async (
 		LEFT JOIN payments p ON c.id = p.customer_id
 		GROUP BY c.id
 		${whereClause}
-		ORDER BY ${orderByClause}`
-	);
+		ORDER BY ${orderByClause}`,
+  );
 
-	return results.map((r) => ({
-		...r,
-		tag: calculateCustomerTag(
-			r.outstanding_balance,
-			r.last_transaction_date
-		),
-	}));
+  return results.map((r) => ({
+    ...r,
+    tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
+  }));
 };
 
 export const getCustomerWithDetails = async (
-	id: number
+  id: number,
 ): Promise<CustomerWithDetails | null> => {
-	const customer = await getCustomer(id);
-	if (!customer) return null;
+  const customer = await getCustomer(id);
+  if (!customer) return null;
 
-	const credits = await db.getAllAsync<CreditTransaction>(
-		`SELECT * FROM credit_transactions WHERE customer_id = ? ORDER BY date DESC`,
-		[id]
-	);
+  const credits = await db.getAllAsync<CreditTransaction>(
+    `SELECT * FROM credit_transactions WHERE customer_id = ? ORDER BY date DESC`,
+    [id],
+  );
 
-	const payments = await db.getAllAsync<Payment>(
-		`SELECT * FROM payments WHERE customer_id = ? ORDER BY date DESC`,
-		[id]
-	);
+  const payments = await db.getAllAsync<Payment>(
+    `SELECT * FROM payments WHERE customer_id = ? ORDER BY date DESC`,
+    [id],
+  );
 
-	const overdueCredit = await db.getFirstAsync<any>(
-		`SELECT MIN(julianday('now') - julianday(due_date)) as days_overdue
+  const overdueCredit = await db.getFirstAsync<any>(
+    `SELECT MIN(julianday('now') - julianday(due_date)) as days_overdue
 		 FROM credit_transactions
 		 WHERE customer_id = ? AND status != 'paid' AND due_date < date('now')`,
-		[id]
-	);
+    [id],
+  );
 
-	return {
-		...customer,
-		credits,
-		payments,
-		days_overdue: overdueCredit?.days_overdue
-			? Math.floor(overdueCredit.days_overdue)
-			: undefined,
-	};
+  return {
+    ...customer,
+    credits,
+    payments,
+    days_overdue: overdueCredit?.days_overdue
+      ? Math.floor(overdueCredit.days_overdue)
+      : undefined,
+  };
 };
 
 // ==================== CREDIT TRANSACTION OPERATIONS ====================
 
 export const insertCreditTransaction = async (
-	credit: NewCredit
+  credit: NewCredit,
 ): Promise<number> => {
-	const timestamp = getCurrentLocalTimestamp();
-	const result = await db.runAsync(
-		`INSERT INTO credit_transactions 
+  const timestamp = getCurrentLocalTimestamp();
+  const result = await db.runAsync(
+    `INSERT INTO credit_transactions 
      (customer_id, product_id, product_name, quantity, amount, due_date, notes, status, date) 
      VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)`,
-		[
-			credit.customer_id,
-			credit.product_id || null,
-			credit.product_name || null,
-			credit.quantity || null,
-			credit.amount,
-			credit.due_date || null,
-			credit.notes || null,
-			timestamp,
-		]
-	);
-	return result.lastInsertRowId;
+    [
+      credit.customer_id,
+      credit.product_id || null,
+      credit.product_name || null,
+      credit.quantity || null,
+      credit.amount,
+      credit.due_date || null,
+      credit.notes || null,
+      timestamp,
+    ],
+  );
+  return result.lastInsertRowId;
 };
 
 export const updateCreditStatus = async (
-	id: number,
-	amountPaid: number
+  id: number,
+  amountPaid: number,
 ): Promise<void> => {
-	const credit = await db.getFirstAsync<CreditTransaction>(
-		`SELECT * FROM credit_transactions WHERE id = ?`,
-		[id]
-	);
+  const credit = await db.getFirstAsync<CreditTransaction>(
+    `SELECT * FROM credit_transactions WHERE id = ?`,
+    [id],
+  );
 
-	if (!credit) return;
+  if (!credit) return;
 
-	const newAmountPaid = credit.amount_paid + amountPaid;
-	const newStatus =
-		newAmountPaid >= credit.amount
-			? 'paid'
-			: newAmountPaid > 0
-				? 'partial'
-				: 'unpaid';
+  const newAmountPaid = credit.amount_paid + amountPaid;
+  const newStatus =
+    newAmountPaid >= credit.amount
+      ? 'paid'
+      : newAmountPaid > 0
+        ? 'partial'
+        : 'unpaid';
 
-	await db.runAsync(
-		`UPDATE credit_transactions 
+  await db.runAsync(
+    `UPDATE credit_transactions 
      SET amount_paid = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
      WHERE id = ?`,
-		[newAmountPaid, newStatus, id]
-	);
+    [newAmountPaid, newStatus, id],
+  );
 };
 
 export const deleteCreditTransaction = async (id: number): Promise<void> => {
-	await db.runAsync('DELETE FROM credit_transactions WHERE id = ?', [id]);
+  await db.runAsync('DELETE FROM credit_transactions WHERE id = ?', [id]);
 };
 
 export const getCreditTransactionsByCustomer = async (
-	customerId: number
+  customerId: number,
 ): Promise<CreditTransaction[]> => {
-	return await db.getAllAsync<CreditTransaction>(
-		`SELECT * FROM credit_transactions WHERE customer_id = ? ORDER BY date DESC`,
-		[customerId]
-	);
+  return await db.getAllAsync<CreditTransaction>(
+    `SELECT * FROM credit_transactions WHERE customer_id = ? ORDER BY date DESC`,
+    [customerId],
+  );
 };
 
 // ==================== PAYMENT OPERATIONS ====================
 
 export const insertPayment = async (payment: NewPayment): Promise<number> => {
-	const timestamp = payment.date || getCurrentLocalTimestamp();
-	const result = await db.runAsync(
-		`INSERT INTO payments 
+  const timestamp = payment.date || getCurrentLocalTimestamp();
+  const result = await db.runAsync(
+    `INSERT INTO payments 
      (customer_id, credit_transaction_id, amount, payment_method, date, notes) 
      VALUES (?, ?, ?, ?, ?, ?)`,
-		[
-			payment.customer_id,
-			payment.credit_transaction_id || null,
-			payment.amount,
-			payment.payment_method || null,
-			timestamp,
-			payment.notes || null,
-		]
-	);
+    [
+      payment.customer_id,
+      payment.credit_transaction_id || null,
+      payment.amount,
+      payment.payment_method || null,
+      timestamp,
+      payment.notes || null,
+    ],
+  );
 
-	// Update credit transaction if specified
-	if (payment.credit_transaction_id) {
-		await updateCreditStatus(payment.credit_transaction_id, payment.amount);
-	} else {
-		// Distribute payment across unpaid credits (FIFO)
-		let remainingAmount = payment.amount;
-		const unpaidCredits = await db.getAllAsync<CreditTransaction>(
-			`SELECT * FROM credit_transactions 
+  // Update credit transaction if specified
+  if (payment.credit_transaction_id) {
+    await updateCreditStatus(payment.credit_transaction_id, payment.amount);
+  } else {
+    // Distribute payment across unpaid credits (FIFO)
+    let remainingAmount = payment.amount;
+    const unpaidCredits = await db.getAllAsync<CreditTransaction>(
+      `SELECT * FROM credit_transactions 
        WHERE customer_id = ? AND status != 'paid' 
        ORDER BY date ASC`,
-			[payment.customer_id]
-		);
+      [payment.customer_id],
+    );
 
-		for (const credit of unpaidCredits) {
-			if (remainingAmount <= 0) break;
+    for (const credit of unpaidCredits) {
+      if (remainingAmount <= 0) break;
 
-			const amountOwed = credit.amount - credit.amount_paid;
-			const paymentAmount = Math.min(remainingAmount, amountOwed);
+      const amountOwed = credit.amount - credit.amount_paid;
+      const paymentAmount = Math.min(remainingAmount, amountOwed);
 
-			await updateCreditStatus(credit.id, paymentAmount);
-			remainingAmount -= paymentAmount;
-		}
-	}
+      await updateCreditStatus(credit.id, paymentAmount);
+      remainingAmount -= paymentAmount;
+    }
+  }
 
-	return result.lastInsertRowId;
+  return result.lastInsertRowId;
 };
 
 export const deletePayment = async (id: number): Promise<void> => {
-	const payment = await db.getFirstAsync<Payment>(
-		`SELECT * FROM payments WHERE id = ?`,
-		[id]
-	);
-	if (!payment) return;
+  const payment = await db.getFirstAsync<Payment>(
+    `SELECT * FROM payments WHERE id = ?`,
+    [id],
+  );
+  if (!payment) return;
 
-	// Reverse the payment from credit transaction
-	if (payment.credit_transaction_id) {
-		await updateCreditStatus(
-			payment.credit_transaction_id,
-			-payment.amount
-		);
-	}
+  // Reverse the payment from credit transaction
+  if (payment.credit_transaction_id) {
+    await updateCreditStatus(payment.credit_transaction_id, -payment.amount);
+  }
 
-	await db.runAsync('DELETE FROM payments WHERE id = ?', [id]);
+  await db.runAsync('DELETE FROM payments WHERE id = ?', [id]);
 };
 
 export const getPaymentsByCustomer = async (
-	customerId: number
+  customerId: number,
 ): Promise<Payment[]> => {
-	return await db.getAllAsync<Payment>(
-		`SELECT * FROM payments WHERE customer_id = ? ORDER BY date DESC`,
-		[customerId]
-	);
+  return await db.getAllAsync<Payment>(
+    `SELECT * FROM payments WHERE customer_id = ? ORDER BY date DESC`,
+    [customerId],
+  );
 };
 
 // ==================== KPI & ANALYTICS ====================
 
 export const getCreditKPIs = async (): Promise<CreditKPIs> => {
-	// Get today's date in local timezone (format: YYYY-MM-DD)
-	const todayString = getTodayDateString();
+  // Get today's date in local timezone (format: YYYY-MM-DD)
+  const todayString = getTodayDateString();
 
-	const totalOutstanding = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
-     FROM credit_transactions WHERE status != 'paid'`
-	);
+  const totalOutstanding = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
+     FROM credit_transactions WHERE status != 'paid'`,
+  );
 
-	const customersWithBalance = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(DISTINCT customer_id) as count 
-     FROM credit_transactions WHERE status != 'paid'`
-	);
+  const customersWithBalance = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(DISTINCT customer_id) as count 
+     FROM credit_transactions WHERE status != 'paid'`,
+  );
 
-	const mostOwed = await db.getFirstAsync<{ name: string; amount: number }>(
-		`SELECT c.name, SUM(ct.amount - ct.amount_paid) as amount
+  const mostOwed = await db.getFirstAsync<{ name: string; amount: number }>(
+    `SELECT c.name, SUM(ct.amount - ct.amount_paid) as amount
      FROM customers c
      JOIN credit_transactions ct ON c.id = ct.customer_id
      WHERE ct.status != 'paid'
      GROUP BY c.id
      ORDER BY amount DESC
-     LIMIT 1`
-	);
+     LIMIT 1`,
+  );
 
-	const collectedToday = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  const collectedToday = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM payments WHERE date(date) = ?`,
-		[todayString]
-	);
+    [todayString],
+  );
 
-	const creditsToday = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  const creditsToday = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM credit_transactions WHERE date(date) = ?`,
-		[todayString]
-	);
+    [todayString],
+  );
 
-	const overdueCount = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(DISTINCT customer_id) as count 
+  const overdueCount = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(DISTINCT customer_id) as count 
      FROM credit_transactions 
-     WHERE status != 'paid' AND due_date < date('now')`
-	);
+     WHERE status != 'paid' AND due_date < date('now')`,
+  );
 
-	return {
-		totalOutstanding: totalOutstanding?.total || 0,
-		totalCustomersWithBalance: customersWithBalance?.count || 0,
-		mostOwedCustomer: mostOwed || null,
-		totalCollectedToday: collectedToday?.total || 0,
-		totalCreditsToday: creditsToday?.total || 0,
-		overdueCount: overdueCount?.count || 0,
-	};
+  return {
+    totalOutstanding: totalOutstanding?.total || 0,
+    totalCustomersWithBalance: customersWithBalance?.count || 0,
+    mostOwedCustomer: mostOwed || null,
+    totalCollectedToday: collectedToday?.total || 0,
+    totalCreditsToday: creditsToday?.total || 0,
+    overdueCount: overdueCount?.count || 0,
+  };
 };
 
 export const getCreditHistory = async (
-	customerId: number
+  customerId: number,
 ): Promise<CreditHistory[]> => {
-	const history: CreditHistory[] = [];
+  const history: CreditHistory[] = [];
 
-	// Get all credits and payments
-	const credits = await db.getAllAsync<any>(
-		`SELECT id, amount, date, product_name, notes, 'credit' as type 
+  // Get all credits and payments
+  const credits = await db.getAllAsync<any>(
+    `SELECT id, amount, date, product_name, notes, 'credit' as type 
      FROM credit_transactions WHERE customer_id = ?`,
-		[customerId]
-	);
+    [customerId],
+  );
 
-	const payments = await db.getAllAsync<any>(
-		`SELECT id, amount, date, notes, 'payment' as type 
+  const payments = await db.getAllAsync<any>(
+    `SELECT id, amount, date, notes, 'payment' as type 
      FROM payments WHERE customer_id = ?`,
-		[customerId]
-	);
+    [customerId],
+  );
 
-	// Combine and sort by date
-	const combined = [...credits, ...payments].sort(
-		(a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-	);
+  // Combine and sort by date
+  const combined = [...credits, ...payments].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
 
-	let runningBalance = 0;
-	for (const item of combined) {
-		if (item.type === 'credit') {
-			runningBalance += item.amount;
-			history.push({
-				id: item.id,
-				customer_id: customerId,
-				type: 'credit',
-				amount: item.amount,
-				running_balance: runningBalance,
-				date: item.date,
-				description: item.product_name || item.notes || 'Credit',
-				created_at: item.date,
-			});
-		} else {
-			runningBalance -= item.amount;
-			history.push({
-				id: item.id,
-				customer_id: customerId,
-				type: 'payment',
-				amount: item.amount,
-				running_balance: runningBalance,
-				date: item.date,
-				description: item.notes || 'Payment',
-				created_at: item.date,
-			});
-		}
-	}
+  let runningBalance = 0;
+  for (const item of combined) {
+    if (item.type === 'credit') {
+      runningBalance += item.amount;
+      history.push({
+        id: item.id,
+        customer_id: customerId,
+        type: 'credit',
+        amount: item.amount,
+        running_balance: runningBalance,
+        date: item.date,
+        description: item.product_name || item.notes || 'Credit',
+        created_at: item.date,
+      });
+    } else {
+      runningBalance -= item.amount;
+      history.push({
+        id: item.id,
+        customer_id: customerId,
+        type: 'payment',
+        amount: item.amount,
+        running_balance: runningBalance,
+        date: item.date,
+        description: item.notes || 'Payment',
+        created_at: item.date,
+      });
+    }
+  }
 
-	return history;
+  return history;
 };
 
 export const markAllCreditsAsPaid = async (
-	customerId: number
+  customerId: number,
 ): Promise<void> => {
-	await db.runAsync(
-		`UPDATE credit_transactions 
+  await db.runAsync(
+    `UPDATE credit_transactions 
      SET status = 'paid', amount_paid = amount, updated_at = CURRENT_TIMESTAMP 
      WHERE customer_id = ? AND status != 'paid'`,
-		[customerId]
-	);
+    [customerId],
+  );
 };
 
 // ==================== UTILITY FUNCTIONS ====================
 
 function calculateCustomerTag(
-	outstandingBalance: number,
-	lastTransactionDate: string | null
+  outstandingBalance: number,
+  lastTransactionDate: string | null,
 ): 'good_payer' | 'frequent_borrower' | 'overdue' | null {
-	if (!lastTransactionDate || outstandingBalance === 0) return null;
+  if (!lastTransactionDate || outstandingBalance === 0) return null;
 
-	const daysSinceLastTransaction = Math.floor(
-		(Date.now() - new Date(lastTransactionDate).getTime()) /
-			(1000 * 60 * 60 * 24)
-	);
+  const daysSinceLastTransaction = Math.floor(
+    (Date.now() - new Date(lastTransactionDate).getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
 
-	if (outstandingBalance > 0 && daysSinceLastTransaction > 30) {
-		return 'overdue';
-	}
+  if (outstandingBalance > 0 && daysSinceLastTransaction > 30) {
+    return 'overdue';
+  }
 
-	if (outstandingBalance > 5000) {
-		return 'frequent_borrower';
-	}
+  if (outstandingBalance > 5000) {
+    return 'frequent_borrower';
+  }
 
-	if (daysSinceLastTransaction < 7) {
-		return 'good_payer';
-	}
+  if (daysSinceLastTransaction < 7) {
+    return 'good_payer';
+  }
 
-	return null;
+  return null;
 }
 
 export const searchCustomers = async (query: string): Promise<Customer[]> => {
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
 			c.*,
 			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
 			COALESCE(SUM(p.amount), 0) as total_payments,
@@ -530,14 +524,11 @@ export const searchCustomers = async (query: string): Promise<Customer[]> => {
 		WHERE c.name LIKE ? OR c.phone LIKE ?
 		GROUP BY c.id
 		ORDER BY c.name ASC`,
-		[`%${query}%`, `%${query}%`]
-	);
+    [`%${query}%`, `%${query}%`],
+  );
 
-	return results.map((r) => ({
-		...r,
-		tag: calculateCustomerTag(
-			r.outstanding_balance,
-			r.last_transaction_date
-		),
-	}));
+  return results.map((r) => ({
+    ...r,
+    tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
+  }));
 };

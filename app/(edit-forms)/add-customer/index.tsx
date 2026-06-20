@@ -148,13 +148,13 @@ export default function AddCustomer() {
                             <FontAwesome
                                 name="arrow-left"
                                 size={24}
-                                color="#2E073F"
+                                color="#B45309"
                             />
                         </TouchableOpacity>
 
                         <StyledText
                             variant="extrabold"
-                            className="text-primary text-xl"
+                            className="text-warm-900 text-xl"
                         >
                             Add Customer
                         </StyledText>
@@ -172,11 +172,11 @@ export default function AddCustomer() {
                         <View className="mb-4">
                             <StyledText
                                 variant="semibold"
-                                className="text-primary text-sm mb-2"
+                                className="text-warm-900 text-sm mb-2"
                             >
                                 Customer Name *
                             </StyledText>
-                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200">
+                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-warm-100">
                                 <Controller
                                     control={control}
                                     name="name"
@@ -191,7 +191,7 @@ export default function AddCustomer() {
                                             onChangeText={onChange}
                                             placeholder="Enter customer name"
                                             placeholderTextColor="#9ca3af"
-                                            className="text-primary font-stack-sans text-base"
+                                            className="text-warm-900 font-stack-sans text-base"
                                         />
                                     )}
                                 />
@@ -202,15 +202,15 @@ export default function AddCustomer() {
                         <View className="mb-4">
                             <StyledText
                                 variant="semibold"
-                                className="text-primary text-sm mb-2"
+                                className="text-warm-900 text-sm mb-2"
                             >
                                 Phone Number
                             </StyledText>
-                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200 flex-row items-center">
+                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-warm-100 flex-row items-center">
                                 <FontAwesome
                                     name="phone"
                                     size={16}
-                                    color="#7A1CAC"
+                                    color="#B45309"
                                 />
                                 <Controller
                                     control={control}
@@ -224,7 +224,7 @@ export default function AddCustomer() {
                                             placeholder="09XX XXX XXXX"
                                             placeholderTextColor="#9ca3af"
                                             keyboardType="phone-pad"
-                                            className="flex-1 ml-3 text-primary font-stack-sans text-base"
+                                            className="flex-1 ml-3 text-warm-900 font-stack-sans text-base"
                                         />
                                     )}
                                 />
@@ -235,15 +235,15 @@ export default function AddCustomer() {
                         <View className="mb-4">
                             <StyledText
                                 variant="semibold"
-                                className="text-primary text-sm mb-2"
+                                className="text-warm-900 text-sm mb-2"
                             >
                                 Address
                             </StyledText>
-                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200 flex-row items-start">
+                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-warm-100 flex-row items-start">
                                 <FontAwesome
                                     name="map-marker"
                                     size={16}
-                                    color="#7A1CAC"
+                                    color="#B45309"
                                     className="mt-1"
                                 />
                                 <Controller
@@ -259,7 +259,7 @@ export default function AddCustomer() {
                                             placeholderTextColor="#9ca3af"
                                             multiline
                                             numberOfLines={2}
-                                            className="flex-1 ml-3 text-primary font-stack-sans text-base"
+                                            className="flex-1 ml-3 text-warm-900 font-stack-sans text-base"
                                         />
                                     )}
                                 />
@@ -270,14 +270,14 @@ export default function AddCustomer() {
                         <View className="mb-4">
                             <StyledText
                                 variant="semibold"
-                                className="text-primary text-sm mb-2"
+                                className="text-warm-900 text-sm mb-2"
                             >
                                 Credit Limit (Optional)
                             </StyledText>
-                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200 flex-row items-center">
+                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-warm-100 flex-row items-center">
                                 <StyledText
                                     variant="medium"
-                                    className="text-secondary"
+                                    className="text-secondary-600"
                                 >
                                     ₱
                                 </StyledText>
@@ -293,14 +293,14 @@ export default function AddCustomer() {
                                             placeholder="0.00"
                                             placeholderTextColor="#9ca3af"
                                             keyboardType="decimal-pad"
-                                            className="flex-1 ml-2 text-primary font-stack-sans text-base"
+                                            className="flex-1 ml-2 text-warm-900 font-stack-sans text-base"
                                         />
                                     )}
                                 />
                             </View>
                             <StyledText
                                 variant="regular"
-                                className="text-gray-500 text-xs mt-1"
+                                className="text-warm-500 text-xs mt-1"
                             >
                                 Set a maximum credit limit for this customer
                             </StyledText>
@@ -310,11 +310,11 @@ export default function AddCustomer() {
                         <View className="mb-6">
                             <StyledText
                                 variant="semibold"
-                                className="text-primary text-sm mb-2"
+                                className="text-warm-900 text-sm mb-2"
                             >
                                 Notes
                             </StyledText>
-                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-200">
+                            <View className="bg-white rounded-xl px-4 py-3 shadow-sm border border-warm-100">
                                 <Controller
                                     control={control}
                                     name="notes"
@@ -329,7 +329,7 @@ export default function AddCustomer() {
                                             multiline
                                             numberOfLines={4}
                                             textAlignVertical="top"
-                                            className="text-primary font-stack-sans text-base"
+                                            className="text-warm-900 font-stack-sans text-base"
                                         />
                                     )}
                                 />
@@ -337,24 +337,24 @@ export default function AddCustomer() {
                         </View>
 
                         {/* Info Card */}
-                        <View className="bg-accent/10 border border-accent rounded-xl p-4 mb-6">
+                        <View className="bg-secondary-500/10 border border-secondary-500 rounded-xl p-4 mb-6">
                             <View className="flex-row items-start">
                                 <FontAwesome
                                     name="info-circle"
                                     size={16}
-                                    color="#7A1CAC"
+                                    color="#B45309"
                                     className="mt-0.5"
                                 />
                                 <View className="flex-1 ml-3">
                                     <StyledText
                                         variant="semibold"
-                                        className="text-secondary mb-1"
+                                        className="text-secondary-600 mb-1"
                                     >
                                         Customer Information
                                     </StyledText>
                                     <StyledText
                                         variant="regular"
-                                        className="text-gray-600 text-xs"
+                                        className="text-warm-600 text-xs"
                                     >
                                         Add customer details to track credits
                                         and payments. Only the name is required
@@ -372,7 +372,7 @@ export default function AddCustomer() {
                             className={`rounded-xl py-4 ${
                                 insertCustomer.isPending || !isValid
                                     ? 'bg-gray-300'
-                                    : 'bg-secondary'
+                                    : 'bg-secondary-500'
                             }`}
                         >
                             <StyledText

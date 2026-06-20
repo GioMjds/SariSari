@@ -98,26 +98,26 @@ const Modal: FC<CustomModalProps> = ({
 		switch (finalVariant) {
 			case 'danger':
 				return {
-					iconBg: 'bg-red-100',
-					iconColor: '#dc2626',
+					iconBg: 'bg-red-50',
+					iconColor: '#DC2626',
 					defaultIcon: 'exclamation-triangle',
 				};
 			case 'success':
 				return {
-					iconBg: 'bg-green-100',
-					iconColor: '#16a34a',
+					iconBg: 'bg-secondary-50',
+					iconColor: '#65A30D',
 					defaultIcon: 'check-circle',
 				};
 			case 'warning':
 				return {
-					iconBg: 'bg-yellow-100',
-					iconColor: '#ca8a04',
+					iconBg: 'bg-amber-50',
+					iconColor: '#D97706',
 					defaultIcon: 'exclamation-circle',
 				};
 			default:
 				return {
-					iconBg: 'bg-primary/10',
-					iconColor: '#2E073F',
+					iconBg: 'bg-surface-warm',
+					iconColor: '#B45309',
 					defaultIcon: 'info-circle',
 				};
 		}
@@ -167,7 +167,7 @@ const Modal: FC<CustomModalProps> = ({
 									{finalTitle && (
 										<StyledText
 											variant="extrabold"
-											className="text-text-primary text-xl mb-2 text-center"
+											className="text-warm-900 text-xl mb-2 text-center"
 										>
 											{finalTitle}
 										</StyledText>
@@ -175,7 +175,7 @@ const Modal: FC<CustomModalProps> = ({
 									{finalDescription && (
 										<StyledText
 											variant="regular"
-											className="text-text-secondary text-sm text-center"
+											className="text-warm-700 text-sm text-center"
 										>
 											{finalDescription}
 										</StyledText>
@@ -201,14 +201,14 @@ const Modal: FC<CustomModalProps> = ({
 											const isCancel =
 												button.style === 'cancel';
 
-											let bgClass = 'bg-primary';
+											let bgClass = 'bg-primary-500';
 											let textClass = 'text-white';
 
 											if (isDestructive) {
-												bgClass = 'bg-red-600';
+												bgClass = 'bg-semantic-danger';
 											} else if (isCancel) {
-												bgClass = 'bg-gray-200';
-												textClass = 'text-text-primary';
+												bgClass = 'bg-warm-200';
+												textClass = 'text-warm-900';
 											}
 
 											return (
@@ -252,7 +252,7 @@ const Modal: FC<CustomModalProps> = ({
 										onPress={handleClose}
 										className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100"
 									>
-										<StyledText className="text-gray-500 text-lg font-stack-sans-bold">
+										<StyledText className="text-warm-500 text-lg font-stack-sans-bold">
 											×
 										</StyledText>
 									</Pressable>

@@ -6,6 +6,7 @@ import { initCreditsTable } from '@/db/credits';
 import { initInventoryTable } from '@/db/inventory';
 import { initProductsTable } from '@/db/products';
 import { initSalesTables } from '@/db/sales';
+import { seedDatabase } from '@/db/seed';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
@@ -49,6 +50,7 @@ const initializeDatabases = async () => {
 	}
 
 	try {
+		await seedDatabase();
 		await executeWithRetry(async () => {
 			await Promise.all([
 				initProductsTable(),
@@ -115,7 +117,7 @@ export default function RootLayout() {
 							presentation: 'modal'
 						}}
 					/>
-					<ToastContainer />	
+					<ToastContainer />
 					<Sonner />
 					<GlobalModal />
 				</SafeAreaProvider>

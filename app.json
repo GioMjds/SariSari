@@ -6,14 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "sarisari",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#EBD3F8",
+        "backgroundColor": "#FEF3C7",
         "foregroundImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
@@ -32,9 +32,9 @@
           "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#EBD3F8",
+          "backgroundColor": "#FEF3C7",
           "dark": {
-            "backgroundColor": "#2E073F"
+            "backgroundColor": "#C2410C"
           }
         }
       ],

@@ -41,3 +41,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# brainstorming artifacts (mockup HTML, server state)
+/.superpowers/

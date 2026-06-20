@@ -14,7 +14,12 @@ interface FilterBarProps {
 	};
 }
 
-const filters: { key: CreditFilter; label: string }[] = [
+interface Filters {
+	key: CreditFilter;
+	label: 'All' | 'With Balance' | 'Paid' | 'Overdue';
+}
+
+const filters: Filters[] = [
 	{ key: 'all', label: 'All' },
 	{ key: 'with_balance', label: 'With Balance' },
 	{ key: 'paid', label: 'Paid' },
@@ -44,22 +49,22 @@ export default function FilterBar({
 						onPress={() => onFilterChange(filter.key)}
 						className={`px-4 py-2 rounded-full mr-2 ${
 							isActive
-								? 'bg-secondary'
-								: 'bg-white border border-gray-200'
+								? 'bg-secondary-500'
+								: 'bg-white border border-warm-200'
 						}`}
 					>
 						<View className="flex-row items-center">
 							<StyledText
 								variant={isActive ? 'semibold' : 'medium'}
 								className={
-									isActive ? 'text-white' : 'text-gray-700'
+									isActive ? 'text-white' : 'text-warm-700'
 								}
 							>
 								{filter.label}
 							</StyledText>
 							<StyledText
 								variant="semibold"
-								className={`ml-1.5 text-xs ${isActive ? 'text-white/80' : 'text-gray-500'}`}
+								className={`ml-1.5 text-xs ${isActive ? 'text-white/80' : 'text-warm-500'}`}
 							>
 								{" "}({count})
 							</StyledText>

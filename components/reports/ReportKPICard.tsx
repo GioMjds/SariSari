@@ -19,7 +19,7 @@ export default function ReportKPICard({
 	title,
 	value,
 	icon,
-	color = '#7A1CAC',
+	color = '#B45309',
 	onPress,
 	subtitle,
 	trend,
@@ -30,7 +30,7 @@ export default function ReportKPICard({
 		<CardWrapper
 			activeOpacity={onPress ? 0.7 : 1}
 			onPress={onPress}
-			className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex-1"
+			className="bg-white rounded-2xl p-4 shadow-sm border border-warm-100 flex-1"
 		>
 			<View className="flex-row items-center justify-between mb-2">
 				<View
@@ -44,11 +44,11 @@ export default function ReportKPICard({
 						<FontAwesome
 							name={trend.isPositive ? 'arrow-up' : 'arrow-down'}
 							size={12}
-							color={trend.isPositive ? '#10b981' : '#ef4444'}
+							color={trend.isPositive ? '#65A30D' : '#DC2626'}
 						/>
 						<StyledText
 							variant="semibold"
-							style={{ color: trend.isPositive ? '#10b981' : '#ef4444', fontSize: 12, marginLeft: 4 }}
+							style={{ color: trend.isPositive ? '#65A30D' : '#DC2626', fontSize: 12, marginLeft: 4 }}
 						>
 							{trend.value}
 						</StyledText>
@@ -56,16 +56,16 @@ export default function ReportKPICard({
 				)}
 			</View>
 
-			<StyledText variant="semibold" className="text-gray-600 text-xs mb-1">
+			<StyledText variant="semibold" className="text-warm-700 text-xs mb-1">
 				{title}
 			</StyledText>
 
-			<StyledText variant="extrabold" className="text-primary text-2xl mb-1">
+			<StyledText variant="extrabold" className="text-primary-500 text-2xl mb-1">
 				{value}
 			</StyledText>
 
 			{subtitle && (
-				<StyledText variant="regular" className="text-gray-500 text-xs">
+				<StyledText variant="regular" className="text-warm-600 text-xs">
 					{subtitle}
 				</StyledText>
 			)}

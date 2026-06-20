@@ -4,6 +4,7 @@ import KPICard from '@/components/credits/KPICard';
 import SortDropdown from '@/components/credits/SortDropdown';
 import StyledText from '@/components/elements/StyledText';
 import Pagination from '@/components/ui/Pagination';
+import MoneyText from '@/components/ui/MoneyText';
 import {
 	CreditFilter,
 	CreditSort,
@@ -26,7 +27,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ITEMS_PER_PAGE } from '@/constants/stocks';
-import { formatCurrency } from '@/utils/formatters';
 
 export default function Credits() {
 	const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
@@ -120,8 +120,8 @@ export default function Credits() {
 		return (
 			<SafeAreaView className="flex-1 bg-background">
 				<View className="flex-1 items-center justify-center">
-					<ActivityIndicator size="large" color="#7A1CAC" />
-					<StyledText variant="medium" className="text-secondary mt-4">
+					<ActivityIndicator size="large" color="#B45309" />
+					<StyledText variant="medium" className="text-warm-600 mt-4">
 						Loading credits...
 					</StyledText>
 				</View>
@@ -135,12 +135,12 @@ export default function Credits() {
 			<View className="px-4 pt-4 pb-2 bg-background">
 				<View className="flex-row items-center justify-between mb-4">
 					<View>
-						<StyledText variant="extrabold" className="text-primary text-3xl">
+						<StyledText variant="extrabold" className="text-warm-900 text-3xl">
 							Credits
 						</StyledText>
 						<StyledText
 							variant="regular"
-							className="text-gray-500 text-sm mt-0.5"
+							className="text-warm-600 text-sm mt-0.5"
 						>
 							Manage customer utang
 						</StyledText>
@@ -149,7 +149,7 @@ export default function Credits() {
 					<TouchableOpacity
 						activeOpacity={0.7}
 						onPress={handleAddCustomer}
-						className="bg-secondary rounded-full w-12 h-12 items-center justify-center shadow-md"
+						className="bg-primary-500 rounded-full w-12 h-12 items-center justify-center shadow-md"
 					>
 						<FontAwesome name="user-plus" size={20} color="white" />
 					</TouchableOpacity>
@@ -160,21 +160,21 @@ export default function Credits() {
 					control={control}
 					name="searchQuery"
 					render={({ field: { onChange, value } }) => (
-						<View className="bg-white rounded-xl px-4 py-3 mb-4 flex-row items-center shadow-sm border border-gray-100">
-							<FontAwesome name="search" size={16} color="#9ca3af" />
+						<View className="bg-white rounded-2xl px-4 py-3 mb-4 flex-row items-center shadow-sm border border-warm-100">
+							<FontAwesome name="search" size={16} color="#A8A29E" />
 							<TextInput
 								value={value}
 								onChangeText={onChange}
 								placeholder="Search customers..."
-								placeholderTextColor="#9ca3af"
-								className="flex-1 ml-3 text-primary font-stack-sans text-sm"
+								placeholderTextColor="#A8A29E"
+								className="flex-1 ml-3 text-warm-900 font-stack-sans text-sm"
 							/>
 							{value.length > 0 && (
 								<TouchableOpacity onPress={() => onChange('')}>
 									<FontAwesome
 										name="times-circle"
 										size={16}
-										color="#9ca3af"
+										color="#A8A29E"
 									/>
 								</TouchableOpacity>
 							)}
@@ -200,9 +200,9 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Total Outstanding"
-								value={formatCurrency(kpis?.totalOutstanding || 0)}
+								value={<MoneyText value={(kpis?.totalOutstanding || 0) * 100} variant="danger" />}
 								icon="credit-card"
-								iconColor="#ef4444"
+								iconColor="#DC2626"
 							/>
 						</View>
 						<View className="flex-1">
@@ -219,9 +219,9 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Collected Today"
-								value={formatCurrency(kpis?.totalCollectedToday || 0)}
+								value={<MoneyText value={(kpis?.totalCollectedToday || 0) * 100} variant="success" />}
 								icon="money"
-								iconColor="#10b981"
+								iconColor="#65A30D"
 								trend={
 									(kpis?.totalCollectedToday || 0) > 0 ? 'up' : 'neutral'
 								}
@@ -230,9 +230,9 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Credits Today"
-								value={formatCurrency(kpis?.totalCreditsToday || 0)}
+								value={<MoneyText value={(kpis?.totalCreditsToday || 0) * 100} />}
 								icon="plus-circle"
-								iconColor="#f59e0b"
+								iconColor="#D97706"
 							/>
 						</View>
 					</View>
@@ -241,25 +241,25 @@ export default function Credits() {
 						<View className="mt-3">
 							<KPICard
 								title="Most Owed Customer"
-								value={formatCurrency(kpis.mostOwedCustomer.amount)}
+								value={<MoneyText value={kpis.mostOwedCustomer.amount * 100} variant="warning" />}
 								subtitle={kpis.mostOwedCustomer.name}
 								icon="exclamation-triangle"
-								iconColor="#f59e0b"
+								iconColor="#D97706"
 							/>
 						</View>
 					)}
 
 					{(kpis?.overdueCount || 0) > 0 && (
-						<View className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 flex-row items-center">
-							<FontAwesome name="warning" size={20} color="#ef4444" />
+						<View className="mt-3 bg-red-50 border border-red-100 rounded-2xl p-3 flex-row items-center">
+							<FontAwesome name="warning" size={20} color="#DC2626" />
 							<View className="ml-3 flex-1">
-								<StyledText variant="semibold" className="text-red-700">
+								<StyledText variant="semibold" className="text-semantic-danger">
 									{kpis?.overdueCount} Overdue{' '}
 									{(kpis?.overdueCount || 0) === 1
 										? 'Customer'
 										: 'Customers'}
 								</StyledText>
-								<StyledText variant="regular" className="text-red-600 text-xs">
+								<StyledText variant="regular" className="text-semantic-danger text-xs">
 									Requires immediate attention
 								</StyledText>
 							</View>
@@ -275,7 +275,7 @@ export default function Credits() {
 				/>
 
 				<View className="px-4 mb-4 flex-row items-center justify-between">
-					<StyledText variant="medium" className="text-gray-600">
+					<StyledText variant="medium" className="text-warm-600">
 						{filteredCustomers.length}{' '}
 						{filteredCustomers.length === 1 ? 'customer' : 'customers'}
 					</StyledText>
@@ -289,7 +289,7 @@ export default function Credits() {
 				<View className="px-4 pb-32">
 					{filteredCustomers.length === 0 ? (
 						<View className="items-center justify-center py-12">
-							<FontAwesome name="users" size={48} color="#7A1CAC" />
+							<FontAwesome name="users" size={48} color="#B45309" />
 							<StyledText
 								variant="semibold"
 								className="text-gray-700 text-lg mt-4"

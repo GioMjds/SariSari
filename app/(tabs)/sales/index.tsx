@@ -1,6 +1,7 @@
 import StyledText from "@/components/elements/StyledText";
 import SalesFilterModal from "@/components/sales/SalesFilterModal";
 import Pagination from "@/components/ui/Pagination";
+import MoneyText from "@/components/ui/MoneyText";
 import { SalesFilterState } from "@/constants/filters";
 import { ITEMS_PER_PAGE } from "@/constants/stocks";
 import { useSales } from "@/hooks/useSales";
@@ -134,38 +135,39 @@ export default function Sales() {
         return (
             <Pressable
                 onPress={() => handleSalePress(item.id)}
-                className="bg-white mx-4 mb-3 rounded-2xl p-4 shadow-sm active:opacity-70"
+                className="bg-white mx-4 mb-3 rounded-2xl p-4 shadow-sm active:opacity-70 border border-warm-100"
             >
                 <View className="flex-row justify-between items-start mb-2">
                     <View className="flex-1">
-                        <StyledText variant="medium" className="text-text-primary text-base mb-1">
+                        <StyledText variant="medium" className="text-warm-900 text-base mb-1">
                             #{item.id} • {format(timestamp, 'MMM dd, yyyy')}
                         </StyledText>
-                        <StyledText variant="regular" className="text-text-secondary text-xs">
+                        <StyledText variant="regular" className="text-warm-600 text-xs">
                             {format(timestamp, 'hh:mm a')}
                         </StyledText>
                     </View>
-                    <View className={`px-3 py-1 rounded-full ${isCredit ? 'bg-accent/20' : 'bg-secondary/20'}`}>
-                        <StyledText variant="semibold" className={`text-xs ${isCredit ? 'text-accent' : 'text-secondary'}`}>
+                    <View className={`px-3 py-1 rounded-full ${isCredit ? 'bg-primary-50' : 'bg-secondary-50'}`}>
+                        <StyledText variant="semibold" className={`text-xs ${isCredit ? 'text-primary-500' : 'text-secondary-500'}`}>
                             {isCredit ? 'Credit' : 'Cash'}
                         </StyledText>
                     </View>
                 </View>
 
-                <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-background">
+                <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-warm-50">
                     <View>
-                        <StyledText variant="extrabold" className="text-primary text-xl">
-                            ₱{item.total.toFixed(2)}
-                        </StyledText>
-                        <StyledText variant="regular" className="text-text-secondary text-xs mt-1">
+                        <MoneyText
+                            value={item.total * 100}
+                            className="text-xl font-extrabold text-warm-900"
+                        />
+                        <StyledText variant="regular" className="text-warm-600 text-xs mt-1">
                             {item.items_count} {item.items_count === 1 ? 'item' : 'items'}
                         </StyledText>
                     </View>
 
                     {isCredit && item.customer_name && (
                         <View className="flex-row items-center">
-                            <FontAwesome name="user" size={14} color="#AD49E1" />
-                            <StyledText variant="medium" className="text-accent text-sm ml-2">
+                            <FontAwesome name="user" size={14} color="#B45309" />
+                            <StyledText variant="medium" className="text-primary-500 text-sm ml-2">
                                 {item.customer_name}
                             </StyledText>
                         </View>
@@ -180,7 +182,7 @@ export default function Sales() {
             {/* Header */}
             <View className="px-4 py-4 pb-6">
                 <View className="flex-row justify-between items-center">
-                    <StyledText variant="extrabold" className="text-primary text-3xl">
+                    <StyledText variant="extrabold" className="text-warm-900 text-3xl">
                         My Sales
                     </StyledText>
                     <View className="flex-row gap-2">
@@ -188,11 +190,11 @@ export default function Sales() {
                             hitSlop={20}
                             activeOpacity={0.2}
                             onPress={() => setFilterModalVisible(true)}
-                            className="bg-secondary rounded-xl px-4 py-2 active:opacity-70 flex-row items-center gap-2"
+                            className="bg-secondary-500 rounded-xl px-4 py-2 active:opacity-70 flex-row items-center gap-2"
                         >
                             <FontAwesome name="filter" size={18} color="#fff" />
                             {activeFilterCount > 0 && (
-                                <View className="bg-accent rounded-full w-5 h-5 items-center justify-center">
+                                <View className="bg-primary-500 rounded-full w-5 h-5 items-center justify-center">
                                     <StyledText variant="extrabold" className="text-white text-xs">
                                         {activeFilterCount}
                                     </StyledText>
@@ -203,7 +205,7 @@ export default function Sales() {
                             hitSlop={20}
                             activeOpacity={0.2}
                             onPress={handleNewSale}
-                            className="bg-secondary rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
+                            className="bg-primary-500 rounded-xl px-4 py-2 flex-row items-center gap-2 active:opacity-70"
                         >
                             <FontAwesome name="plus" size={18} color="#fff" />
                             <StyledText variant="semibold" className="text-white text-sm">
@@ -216,27 +218,28 @@ export default function Sales() {
                 {/* Summary Stats */}
                 {stats && (
                     <View className="flex-row justify-between mt-4 gap-3">
-                        <View className="flex-1 bg-white rounded-xl p-3">
-                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
+                        <View className="flex-1 bg-white rounded-2xl p-3 border border-warm-100">
+                            <StyledText variant="regular" className="text-warm-600 text-sm mb-1">
                                 Today's Total
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-secondary text-xl">
-                                ₱{stats.total.toFixed(2)}
-                            </StyledText>
+                            <MoneyText
+                                value={stats.total * 100}
+                                className="text-secondary-600 text-xl font-extrabold"
+                            />
                         </View>
-                        <View className="flex-1 bg-white rounded-xl p-3">
-                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
+                        <View className="flex-1 bg-white rounded-2xl p-3 border border-warm-100">
+                            <StyledText variant="regular" className="text-warm-600 text-sm mb-1">
                                 Items Sold
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-secondary text-xl">
+                            <StyledText variant="extrabold" className="text-warm-900 text-xl">
                                 {stats.items_sold}
                             </StyledText>
                         </View>
-                        <View className="flex-1 bg-white rounded-xl p-3">
-                            <StyledText variant="regular" className="text-secondary text-sm mb-1">
+                        <View className="flex-1 bg-white rounded-2xl p-3 border border-warm-100">
+                            <StyledText variant="regular" className="text-warm-600 text-sm mb-1">
                                 Credit Sales
                             </StyledText>
-                            <StyledText variant="extrabold" className="text-secondary text-xl">
+                            <StyledText variant="extrabold" className="text-warm-900 text-xl">
                                 {stats.credit_sales}
                             </StyledText>
                         </View>
@@ -247,15 +250,15 @@ export default function Sales() {
             {/* Sales List */}
             {isLoading ? (
                 <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#7A1CAC" />
+                    <ActivityIndicator size="large" color="#B45309" />
                 </View>
             ) : filteredSales.length === 0 ? (
                 <View className="flex-1 justify-center items-center px-8">
-                    <FontAwesome name="shopping-cart" size={64} color="#AD49E1" style={{ opacity: 0.3 }} />
-                    <StyledText variant="semibold" className="text-text-secondary text-lg mt-4 text-center">
+                    <FontAwesome name="shopping-cart" size={64} color="#B45309" style={{ opacity: 0.3 }} />
+                    <StyledText variant="semibold" className="text-warm-900 text-lg mt-4 text-center">
                         {sales.length === 0 ? 'No sales yet' : 'No sales match your filters'}
                     </StyledText>
-                    <StyledText variant="regular" className="text-text-muted text-sm mt-2 text-center">
+                    <StyledText variant="regular" className="text-warm-600 text-sm mt-2 text-center">
                         {sales.length === 0 ? 'Start by creating your first sale' : 'Try adjusting your filter criteria'}
                     </StyledText>
                 </View>
@@ -269,8 +272,8 @@ export default function Sales() {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            tintColor="#7A1CAC"
-                            colors={['#7A1CAC']}
+                            tintColor="#B45309"
+                            colors={['#B45309']}
                         />
                     }
                 />

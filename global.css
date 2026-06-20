@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --color-primary-500: #B45309;
+  --color-primary-600: #C2410C;
+  --color-secondary-50: #ECFCCB;
+  --color-secondary-600: #65A30D;
+  --color-surface-warm: #FED7AA;
+  --color-background: #FEF3C7;
+  --color-surface-subtle: #FFFBEB;
+  --color-warm-900: #1C1917;
+  --color-warm-700: #57534E;
+  --color-warm-500: #A8A29E;
+  --color-success: #16A34A;
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+  --color-info: #0284C7;
+}

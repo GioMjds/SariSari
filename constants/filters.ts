@@ -6,6 +6,7 @@ export interface SalesFilterState {
 }
 
 export type PaymentTypeFilter = 'all' | 'cash' | 'credit';
+
 export type DateRangeFilter =
 	| 'all'
 	| 'today'

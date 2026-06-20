@@ -7,8 +7,8 @@ export const initProductsTable = async () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       sku TEXT UNIQUE NOT NULL,
-      price REAL NOT NULL,
-      cost_price REAL,
+      price INTEGER NOT NULL,
+      cost_price INTEGER,
       quantity INTEGER NOT NULL DEFAULT 0,
       category TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -17,18 +17,33 @@ export const initProductsTable = async () => {
   `);
 };
 
-export const insertProduct = async (name: string, sku: string, price: number, quantity: number = 0, cost_price?: number, category?: string) => {
+export const insertProduct = async (
+  name: string,
+  sku: string,
+  price: number,
+  quantity: number = 0,
+  cost_price?: number,
+  category?: string,
+) => {
   const result = await db.runAsync(
     'INSERT INTO products (name, sku, price, quantity, cost_price, category) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, sku, price, quantity, cost_price ?? null, category ?? null]
+    [name, sku, price, quantity, cost_price ?? null, category ?? null],
   );
   return result.lastInsertRowId;
 };
 
-export const updateProduct = async (id: number, name: string, sku: string, price: number, quantity: number, cost_price?: number, category?: string) => {
+export const updateProduct = async (
+  id: number,
+  name: string,
+  sku: string,
+  price: number,
+  quantity: number,
+  cost_price?: number,
+  category?: string,
+) => {
   await db.runAsync(
     'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [name, sku, price, quantity, cost_price ?? null, category ?? null, id]
+    [name, sku, price, quantity, cost_price ?? null, category ?? null, id],
   );
 };
 
@@ -37,7 +52,10 @@ export const deleteProduct = async (id: number) => {
 };
 
 export const getProduct = async (id: number): Promise<Product | null> => {
-  const result = await db.getFirstAsync<Product>('SELECT * FROM products WHERE id = ?', [id]);
+  const result = await db.getFirstAsync<Product>(
+    'SELECT * FROM products WHERE id = ?',
+    [id],
+  );
   return result || null;
 };
 
@@ -46,6 +64,9 @@ export const getAllProducts = async (): Promise<Product[]> => {
 };
 
 export const getProductBySku = async (sku: string): Promise<Product | null> => {
-  const result = await db.getFirstAsync<Product>('SELECT * FROM products WHERE sku = ?', [sku]);
+  const result = await db.getFirstAsync<Product>(
+    'SELECT * FROM products WHERE sku = ?',
+    [sku],
+  );
   return result || null;
 };

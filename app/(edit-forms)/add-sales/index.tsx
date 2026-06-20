@@ -19,6 +19,7 @@ import {
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import MoneyText from "@/components/ui/MoneyText";
 
 export default function AddSale() {
     const [selectedItems, setSelectedItems] = useState<NewSaleItem[]>([]);
@@ -149,15 +150,15 @@ export default function AddSale() {
             >
                 <View className="flex-row justify-between items-start">
                     <View className="flex-1">
-                        <StyledText variant="semibold" className="text-primary text-base mb-1">
+                        <StyledText variant="semibold" className="text-warm-900 text-base mb-1">
                             {item.name}
                         </StyledText>
-                        <StyledText variant="regular" className="text-text-secondary text-xs mb-2">
+                        <StyledText variant="regular" className="text-warm-600 text-xs mb-2">
                             SKU: {item.sku}
                         </StyledText>
                         <View className="flex-row items-center gap-2">
-                            <StyledText variant="extrabold" className="text-secondary text-lg">
-                                ₱{item.price.toFixed(2)}
+                            <StyledText variant="extrabold" className="text-secondary-600 text-lg">
+                                <MoneyText value={item.price * 100} className="text-secondary-600 text-lg" />
                             </StyledText>
                             <View className={`px-2 py-1 rounded-full ${isOutOfStock ? 'bg-red-100' : isLowStock ? 'bg-orange-100' : 'bg-green-100'}`}>
                                 <StyledText variant="medium" className={`text-xs ${isOutOfStock ? 'text-red-600' : isLowStock ? 'text-orange-600' : 'text-green-600'}`}>
@@ -168,21 +169,21 @@ export default function AddSale() {
                     </View>
 
                     {selectedItem && (
-                        <View className="flex-row items-center bg-accent/20 rounded-xl px-2 py-1">
+                        <View className="flex-row items-center bg-secondary-500/20 rounded-xl px-2 py-1">
                             <Pressable
                                 onPress={() => handleUpdateQuantity(item.id, -1)}
                                 className="w-8 h-8 items-center justify-center active:opacity-50"
                             >
-                                <FontAwesome name="minus" size={14} color="#7A1CAC" />
+                                <FontAwesome name="minus" size={14} color="#B45309" />
                             </Pressable>
-                            <StyledText variant="extrabold" className="text-secondary text-base mx-3">
+                            <StyledText variant="extrabold" className="text-secondary-600 text-base mx-3">
                                 {selectedItem.quantity}
                             </StyledText>
                             <Pressable
                                 onPress={() => handleUpdateQuantity(item.id, 1)}
                                 className="w-8 h-8 items-center justify-center active:opacity-50"
                             >
-                                <FontAwesome name="plus" size={14} color="#7A1CAC" />
+                                <FontAwesome name="plus" size={14} color="#B45309" />
                             </Pressable>
                         </View>
                     )}
@@ -197,9 +198,9 @@ export default function AddSale() {
             <View className="px-4 py-4">
                 <View className="flex-row items-center gap-3">
                     <Pressable hitSlop={20} onPress={() => router.back()} className="active:opacity-50">
-                        <FontAwesome name="arrow-left" size={20} color="#2E073F" />
+                        <FontAwesome name="arrow-left" size={20} color="#B45309" />
                     </Pressable>
-                    <StyledText variant="extrabold" className="text-primary text-2xl">
+                    <StyledText variant="extrabold" className="text-warm-900 text-2xl">
                         New Sale
                     </StyledText>
                 </View>
@@ -207,17 +208,17 @@ export default function AddSale() {
 
             {/* Search Bar */}
             <View className="bg-white mx-4 mt-4 mb-2 rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-                <FontAwesome name="search" size={20} color="#AD49E1" />
+                <FontAwesome name="search" size={20} color="#B45309" />
                 <TextInput
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Search products..."
-                    placeholderTextColor="#AD49E1"
-                    className="flex-1 ml-3 text-primary font-stack-sans"
+                    placeholderTextColor="#B45309"
+                    className="flex-1 ml-3 text-warm-900 font-stack-sans"
                 />
                 {searchQuery.length > 0 && (
                     <Pressable onPress={() => setSearchQuery("")} className="active:opacity-50">
-                        <FontAwesome name="times-circle" size={18} color="#AD49E1" />
+                        <FontAwesome name="times-circle" size={18} color="#B45309" />
                     </Pressable>
                 )}
             </View>
@@ -225,7 +226,7 @@ export default function AddSale() {
             {/* Products List */}
             {isLoading ? (
                 <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#7A1CAC" />
+                    <ActivityIndicator size="large" color="#B45309" />
                 </View>
             ) : (
                 <FlatList
@@ -238,8 +239,8 @@ export default function AddSale() {
                     }}
                     ListEmptyComponent={
                         <View className="flex-1 justify-center items-center py-12">
-                            <FontAwesome name="inbox" size={64} color="#AD49E1" style={{ opacity: 0.3 }} />
-                            <StyledText variant="semibold" className="text-text-secondary text-lg mt-4">
+                            <FontAwesome name="inbox" size={64} color="#B45309" style={{ opacity: 0.3 }} />
+                            <StyledText variant="semibold" className="text-warm-600 text-lg mt-4">
                                 No products found
                             </StyledText>
                         </View>
@@ -259,9 +260,9 @@ export default function AddSale() {
                     }}
                 >
                     <View className="px-5 py-4 flex-row items-center gap-3">
-                        <View className="bg-secondary rounded-full w-14 h-14 items-center justify-center">
+                        <View className="bg-secondary-500 rounded-full w-14 h-14 items-center justify-center">
                             <FontAwesome name="shopping-cart" size={22} color="#fff" />
-                            <View className="absolute -top-1 -right-2 bg-accent rounded-full w-6 h-6 items-center justify-center">
+                            <View className="absolute -top-1 -right-2 bg-secondary-500 rounded-full w-6 h-6 items-center justify-center">
                                 <StyledText variant="extrabold" className="text-white text-xs">
                                     {selectedItems.length}
                                 </StyledText>
@@ -281,27 +282,27 @@ export default function AddSale() {
                 <View className="flex-1 bg-black/50 justify-end">
                     <View className="bg-white rounded-t-3xl px-4 pt-6 pb-8">
                         <View className="flex-row justify-between items-center mb-4">
-                            <StyledText variant="extrabold" className="text-primary text-xl">
+                            <StyledText variant="extrabold" className="text-warm-900 text-xl">
                                 Review & Checkout
                             </StyledText>
                             <Pressable hitSlop={20} onPress={() => setShowCheckout(false)} className="mr-2">
-                                <FontAwesome name="times" size={24} color="#2E073F" />
+                                <FontAwesome name="times" size={24} color="#B45309" />
                             </Pressable>
                         </View>
 
                         <ScrollView className="max-h-64 mb-4">
                             {selectedItems.map(item => (
-                                <View key={item.product_id} className="flex-row justify-between py-3 border-b border-background">
+                                <View key={item.product_id} className="flex-row justify-between py-3 border-b border-warm-100">
                                     <View className="flex-1">
-                                        <StyledText variant="medium" className="text-primary text-sm">
+                                        <StyledText variant="medium" className="text-warm-900 text-sm">
                                             {item.product_name}
                                         </StyledText>
-                                        <StyledText variant="regular" className="text-text-secondary text-xs">
-                                            {item.quantity} × ₱{item.price.toFixed(2)}
+                                        <StyledText variant="regular" className="text-warm-600 text-xs">
+                                            {item.quantity} × <MoneyText value={item.price * 100} className="text-secondary-600 text-lg" />
                                         </StyledText>
                                     </View>
-                                    <StyledText variant="semibold" className="text-secondary text-base">
-                                        ₱{(item.quantity * item.price).toFixed(2)}
+                                    <StyledText variant="semibold" className="text-secondary-600 text-base">
+                                        <MoneyText value={(item.quantity * item.price) * 100} className="text-secondary-600 text-base" />
                                     </StyledText>
                                 </View>
                             ))}
@@ -309,23 +310,23 @@ export default function AddSale() {
 
                         {/* Payment Type */}
                         <View className="mb-4">
-                            <StyledText variant="semibold" className="text-primary text-sm mb-2">
+                            <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
                                 Payment Type
                             </StyledText>
                             <View className="flex-row gap-3">
                                 <Pressable
                                     onPress={() => setPaymentType('cash')}
-                                    className={`flex-1 rounded-xl p-3 border-2 ${paymentType === 'cash' ? 'border-secondary bg-secondary/10' : 'border-background'}`}
+                                    className={`flex-1 rounded-xl p-3 border-2 ${paymentType === 'cash' ? 'border-secondary bg-secondary-500/10' : 'border-warm-100'}`}
                                 >
-                                    <StyledText variant={paymentType === 'cash' ? 'extrabold' : 'medium'} className={`text-center ${paymentType === 'cash' ? 'text-secondary' : 'text-text-secondary'}`}>
+                                    <StyledText variant={paymentType === 'cash' ? 'extrabold' : 'medium'} className={`text-center ${paymentType === 'cash' ? 'text-secondary-600' : 'text-warm-600'}`}>
                                         Cash
                                     </StyledText>
                                 </Pressable>
                                 <Pressable
                                     onPress={() => setPaymentType('credit')}
-                                    className={`flex-1 rounded-xl p-3 border-2 ${paymentType === 'credit' ? 'border-accent bg-accent/10' : 'border-background'}`}
+                                    className={`flex-1 rounded-xl p-3 border-2 ${paymentType === 'credit' ? 'border-accent bg-secondary-500/10' : 'border-warm-100'}`}
                                 >
-                                    <StyledText variant={paymentType === 'credit' ? 'extrabold' : 'medium'} className={`text-center ${paymentType === 'credit' ? 'text-accent' : 'text-text-secondary'}`}>
+                                    <StyledText variant={paymentType === 'credit' ? 'extrabold' : 'medium'} className={`text-center ${paymentType === 'credit' ? 'text-secondary-600' : 'text-warm-600'}`}>
                                         Credit
                                     </StyledText>
                                 </Pressable>
@@ -335,29 +336,29 @@ export default function AddSale() {
                         {/* Customer Picker for Credit */}
                         {paymentType === 'credit' && (
                             <View className="mb-4">
-                                <StyledText variant="semibold" className="text-primary text-sm mb-2">
+                                <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
                                     Customer
                                 </StyledText>
                                 <Pressable
                                     onPress={() => setShowCustomerPicker(true)}
                                     className="bg-background rounded-xl p-3 flex-row justify-between items-center"
                                 >
-                                    <StyledText variant="medium" className={selectedCustomer ? 'text-primary' : 'text-text-secondary'}>
+                                    <StyledText variant="medium" className={selectedCustomer ? 'text-warm-900' : 'text-warm-600'}>
                                         {selectedCustomer ? selectedCustomer.name : 'Select customer'}
                                     </StyledText>
-                                    <FontAwesome name="chevron-down" size={14} color="#7A1CAC" />
+                                    <FontAwesome name="chevron-down" size={14} color="#B45309" />
                                 </Pressable>
                             </View>
                         )}
 
                         {/* Total */}
-                        <View className="bg-primary/5 rounded-xl p-4 mb-4">
+                        <View className="bg-warm-50 rounded-xl p-4 mb-4">
                             <View className="flex-row justify-between items-center">
-                                <StyledText variant="semibold" className="text-primary text-lg">
+                                <StyledText variant="semibold" className="text-warm-900 text-lg">
                                     Total Amount
                                 </StyledText>
-                                <StyledText variant="extrabold" className="text-primary text-2xl">
-                                    ₱{getTotalAmount().toFixed(2)}
+                                <StyledText variant="extrabold" className="text-warm-900 text-2xl">
+                                    <MoneyText value={getTotalAmount() * 100} className="text-warm-900 text-2xl" />
                                 </StyledText>
                             </View>
                         </View>
@@ -366,7 +367,7 @@ export default function AddSale() {
                         <Pressable
                             onPress={handleCompleteSale}
                             disabled={isProcessing || (paymentType === 'credit' && !selectedCustomer)}
-                            className={`bg-secondary rounded-xl p-4 ${(isProcessing || (paymentType === 'credit' && !selectedCustomer)) ? 'opacity-50' : 'active:opacity-70'}`}
+                            className={`bg-secondary-500 rounded-xl p-4 ${(isProcessing || (paymentType === 'credit' && !selectedCustomer)) ? 'opacity-50' : 'active:opacity-70'}`}
                         >
                             {isProcessing ? (
                                 <ActivityIndicator color="#fff" />
@@ -390,11 +391,11 @@ export default function AddSale() {
                 <View className="flex-1 bg-black/50 justify-end">
                     <View className="bg-white rounded-t-3xl px-4 pt-6 pb-8">
                         <View className="flex-row justify-between items-center mb-4">
-                            <StyledText variant="extrabold" className="text-primary text-xl">
+                            <StyledText variant="extrabold" className="text-warm-900 text-xl">
                                 Select Customer
                             </StyledText>
                             <Pressable onPress={() => setShowCustomerPicker(false)} className="active:opacity-50">
-                                <FontAwesome name="times" size={24} color="#2E073F" />
+                                <FontAwesome name="times" size={24} color="#B45309" />
                             </Pressable>
                         </View>
 
@@ -408,11 +409,11 @@ export default function AddSale() {
                                     }}
                                     className="py-3 px-4 rounded-xl mb-2 active:bg-background"
                                 >
-                                    <StyledText variant="medium" className="text-primary text-base">
+                                    <StyledText variant="medium" className="text-warm-900 text-base">
                                         {customer.name}
                                     </StyledText>
-                                    <StyledText variant="regular" className="text-text-secondary text-xs mt-1">
-                                        Balance: ₱{customer.outstanding_balance.toFixed(2)}
+                                    <StyledText variant="regular" className="text-warm-600 text-xs mt-1">
+                                        Balance: <MoneyText value={customer.outstanding_balance * 100} className="text-warm-600 text-xs" />
                                     </StyledText>
                                 </Pressable>
                             ))}

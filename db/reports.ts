@@ -1,16 +1,16 @@
 import {
-	AgingBucket,
-	CreditsOverview,
-	DateRange,
-	InventoryMovement,
-	InventoryValue,
-	ProfitabilityData,
-	ReportInsight,
-	ReportKPIs,
-	SalesBreakdown,
-	SalesDataPoint,
-	StockItem,
-	TopSellingProduct,
+  AgingBucket,
+  CreditsOverview,
+  DateRange,
+  InventoryMovement,
+  InventoryValue,
+  ProfitabilityData,
+  ReportInsight,
+  ReportKPIs,
+  SalesBreakdown,
+  SalesDataPoint,
+  StockItem,
+  TopSellingProduct,
 } from '@/types/reports.types';
 import { endOfDay, startOfDay } from 'date-fns';
 import { db } from '../configs/sqlite';
@@ -18,87 +18,87 @@ import { db } from '../configs/sqlite';
 // ==================== DATE HELPERS ====================
 
 export const formatDateForSQL = (date: Date): string => {
-	// Use ISO string so it matches timestamps inserted with `toISOString()`
-	// This ensures string comparisons in SQLite are consistent.
-	return date.toISOString();
+  // Use ISO string so it matches timestamps inserted with `toISOString()`
+  // This ensures string comparisons in SQLite are consistent.
+  return date.toISOString();
 };
 
 // ==================== KPI FUNCTIONS ====================
 
 export const getReportKPIs = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<ReportKPIs> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	// Total Sales
-	const salesResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(total), 0) as total 
+  // Total Sales
+  const salesResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(total), 0) as total 
      FROM sales 
      WHERE timestamp BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	// Total Profit (requires cost price in products table)
-	const profitResult = await db.getFirstAsync<{ profit: number }>(
-		`SELECT COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
+  // Total Profit (requires cost price in products table)
+  const profitResult = await db.getFirstAsync<{ profit: number }>(
+    `SELECT COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
      WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	// Credits Issued
-	const creditsIssuedResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  // Credits Issued
+  const creditsIssuedResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM credit_transactions 
      WHERE date BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	// Credits Collected
-	const creditsCollectedResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  // Credits Collected
+  const creditsCollectedResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM payments 
      WHERE date BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	// Inventory Cost Out (COGS)
-	const cogsResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(si.quantity * p.cost_price), 0) as total
+  // Inventory Cost Out (COGS)
+  const cogsResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(si.quantity * p.cost_price), 0) as total
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
      WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	return {
-		totalSales: salesResult?.total || 0,
-		totalProfit: profitResult?.profit || 0,
-		totalCreditsIssued: creditsIssuedResult?.total || 0,
-		totalCreditsCollected: creditsCollectedResult?.total || 0,
-		totalExpenses: 0, // Can be extended later
-		inventoryCostOut: cogsResult?.total || 0,
-	};
+  return {
+    totalSales: salesResult?.total || 0,
+    totalProfit: profitResult?.profit || 0,
+    totalCreditsIssued: creditsIssuedResult?.total || 0,
+    totalCreditsCollected: creditsCollectedResult?.total || 0,
+    totalExpenses: 0, // Can be extended later
+    inventoryCostOut: cogsResult?.total || 0,
+  };
 };
 
 // ==================== SALES REPORTS ====================
 
 export const getSalesOverTime = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<SalesDataPoint[]> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<{
-		date: string;
-		amount: number;
-		profit: number;
-	}>(
-		`SELECT 
+  const results = await db.getAllAsync<{
+    date: string;
+    amount: number;
+    profit: number;
+  }>(
+    `SELECT 
        date(timestamp) as date,
        COALESCE(SUM(total), 0) as amount,
        COALESCE(SUM(
@@ -111,21 +111,21 @@ export const getSalesOverTime = async (
      WHERE timestamp BETWEEN ? AND ?
      GROUP BY date(timestamp)
      ORDER BY date ASC`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	return results;
+  return results;
 };
 
 export const getTopSellingProducts = async (
-	dateRange: DateRange,
-	limit: number = 10
+  dateRange: DateRange,
+  limit: number = 10,
 ): Promise<TopSellingProduct[]> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<TopSellingProduct>(
-		`SELECT 
+  const results = await db.getAllAsync<TopSellingProduct>(
+    `SELECT 
        p.id,
        p.name,
        COALESCE(SUM(si.quantity), 0) as unitsSold,
@@ -138,81 +138,81 @@ export const getTopSellingProducts = async (
      GROUP BY p.id, p.name
      ORDER BY unitsSold DESC
      LIMIT ?`,
-		[startDate, endDate, limit]
-	);
+    [startDate, endDate, limit],
+  );
 
-	return results;
+  return results;
 };
 
 export const getSalesBreakdown = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<SalesBreakdown> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const breakdown = await db.getFirstAsync<{
-		cashSales: number;
-		creditSales: number;
-		totalTransactions: number;
-		totalAmount: number;
-	}>(
-		`SELECT 
+  const breakdown = await db.getFirstAsync<{
+    cashSales: number;
+    creditSales: number;
+    totalTransactions: number;
+    totalAmount: number;
+  }>(
+    `SELECT 
        COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN total ELSE 0 END), 0) as cashSales,
        COALESCE(SUM(CASE WHEN payment_type = 'credit' THEN total ELSE 0 END), 0) as creditSales,
        COUNT(*) as totalTransactions,
        COALESCE(SUM(total), 0) as totalAmount
      FROM sales
      WHERE timestamp BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	return {
-		cashSales: breakdown?.cashSales || 0,
-		creditSales: breakdown?.creditSales || 0,
-		totalTransactions: breakdown?.totalTransactions || 0,
-		averageTransactionValue:
-			breakdown?.totalTransactions && breakdown.totalTransactions > 0
-				? breakdown.totalAmount / breakdown.totalTransactions
-				: 0,
-	};
+  return {
+    cashSales: breakdown?.cashSales || 0,
+    creditSales: breakdown?.creditSales || 0,
+    totalTransactions: breakdown?.totalTransactions || 0,
+    averageTransactionValue:
+      breakdown?.totalTransactions && breakdown.totalTransactions > 0
+        ? breakdown.totalAmount / breakdown.totalTransactions
+        : 0,
+  };
 };
 
 // ==================== INVENTORY REPORTS ====================
 
 export const getInventoryMovement = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<InventoryMovement> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const itemsSoldResult = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(si.quantity), 0) as total
+  const itemsSoldResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(si.quantity), 0) as total
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      WHERE s.timestamp BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	const lowStockResult = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 10`
-	);
+  const lowStockResult = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 10`,
+  );
 
-	const outOfStockResult = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(*) as count FROM products WHERE quantity = 0`
-	);
+  const outOfStockResult = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM products WHERE quantity = 0`,
+  );
 
-	return {
-		itemsSold: itemsSoldResult?.total || 0,
-		lowStockCount: lowStockResult?.count || 0,
-		outOfStockCount: outOfStockResult?.count || 0,
-	};
+  return {
+    itemsSold: itemsSoldResult?.total || 0,
+    lowStockCount: lowStockResult?.count || 0,
+    outOfStockCount: outOfStockResult?.count || 0,
+  };
 };
 
 export const getLowStockItems = async (
-	threshold: number = 10
+  threshold: number = 10,
 ): Promise<StockItem[]> => {
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
        id, 
        name, 
        quantity,
@@ -221,15 +221,15 @@ export const getLowStockItems = async (
      FROM products 
      WHERE quantity > 0 AND quantity <= ?
      ORDER BY quantity ASC`,
-		[threshold]
-	);
+    [threshold],
+  );
 
-	return results;
+  return results;
 };
 
 export const getOutOfStockItems = async (): Promise<StockItem[]> => {
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
        id, 
        name, 
        quantity,
@@ -237,39 +237,39 @@ export const getOutOfStockItems = async (): Promise<StockItem[]> => {
        cost_price as costPrice
      FROM products 
      WHERE quantity = 0
-     ORDER BY name ASC`
-	);
+     ORDER BY name ASC`,
+  );
 
-	return results;
+  return results;
 };
 
 export const getInventoryValue = async (): Promise<InventoryValue> => {
-	const result = await db.getFirstAsync<{
-		currentStockValue: number;
-		potentialSalesValue: number;
-	}>(
-		`SELECT 
+  const result = await db.getFirstAsync<{
+    currentStockValue: number;
+    potentialSalesValue: number;
+  }>(
+    `SELECT 
        COALESCE(SUM(quantity * p.cost_price), 0) as currentStockValue,
        COALESCE(SUM(quantity * price), 0) as potentialSalesValue
      FROM products p
-     WHERE quantity > 0`
-	);
+     WHERE quantity > 0`,
+  );
 
-	return {
-		currentStockValue: result?.currentStockValue || 0,
-		potentialSalesValue: result?.potentialSalesValue || 0,
-	};
+  return {
+    currentStockValue: result?.currentStockValue || 0,
+    potentialSalesValue: result?.potentialSalesValue || 0,
+  };
 };
 
 export const getFastMovingProducts = async (
-	dateRange: DateRange,
-	limit: number = 10
+  dateRange: DateRange,
+  limit: number = 10,
 ): Promise<StockItem[]> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
        p.id,
        p.name,
        p.quantity,
@@ -283,21 +283,21 @@ export const getFastMovingProducts = async (
      GROUP BY p.id
      ORDER BY SUM(si.quantity) DESC
      LIMIT ?`,
-		[startDate, endDate, limit]
-	);
+    [startDate, endDate, limit],
+  );
 
-	return results;
+  return results;
 };
 
 export const getSlowMovingProducts = async (
-	dateRange: DateRange,
-	limit: number = 10
+  dateRange: DateRange,
+  limit: number = 10,
 ): Promise<StockItem[]> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<any>(
-		`SELECT 
+  const results = await db.getAllAsync<any>(
+    `SELECT 
        p.id,
        p.name,
        p.quantity,
@@ -311,149 +311,149 @@ export const getSlowMovingProducts = async (
      GROUP BY p.id
      ORDER BY COALESCE(SUM(si.quantity), 0) ASC
      LIMIT ?`,
-		[startDate, endDate, limit]
-	);
+    [startDate, endDate, limit],
+  );
 
-	return results;
+  return results;
 };
 
 // ==================== CREDITS REPORTS ====================
 
 export const getCreditsOverview = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<CreditsOverview> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const issued = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  const issued = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM credit_transactions 
      WHERE date BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	const collected = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount), 0) as total 
+  const collected = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount), 0) as total 
      FROM payments 
      WHERE date BETWEEN ? AND ?`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	const outstanding = await db.getFirstAsync<{ total: number }>(
-		`SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
+  const outstanding = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
      FROM credit_transactions 
-     WHERE status != 'paid'`
-	);
+     WHERE status != 'paid'`,
+  );
 
-	const activeAccounts = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(DISTINCT customer_id) as count 
+  const activeAccounts = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(DISTINCT customer_id) as count 
      FROM credit_transactions 
-     WHERE status != 'paid'`
-	);
+     WHERE status != 'paid'`,
+  );
 
-	return {
-		issued: issued?.total || 0,
-		collected: collected?.total || 0,
-		outstanding: outstanding?.total || 0,
-		activeAccounts: activeAccounts?.count || 0,
-	};
+  return {
+    issued: issued?.total || 0,
+    collected: collected?.total || 0,
+    outstanding: outstanding?.total || 0,
+    activeAccounts: activeAccounts?.count || 0,
+  };
 };
 
 export const getAgingBuckets = async (): Promise<AgingBucket[]> => {
-	const buckets: AgingBucket[] = [
-		{ range: '0-7 days', amount: 0, count: 0 },
-		{ range: '8-15 days', amount: 0, count: 0 },
-		{ range: '16-30 days', amount: 0, count: 0 },
-		{ range: 'Over 30 days', amount: 0, count: 0 },
-	];
+  const buckets: AgingBucket[] = [
+    { range: '0-7 days', amount: 0, count: 0 },
+    { range: '8-15 days', amount: 0, count: 0 },
+    { range: '16-30 days', amount: 0, count: 0 },
+    { range: 'Over 30 days', amount: 0, count: 0 },
+  ];
 
-	const results = await db.getAllAsync<{
-		days_old: number;
-		amount: number;
-		count: number;
-	}>(
-		`SELECT 
+  const results = await db.getAllAsync<{
+    days_old: number;
+    amount: number;
+    count: number;
+  }>(
+    `SELECT 
        CAST(julianday('now') - julianday(date) AS INTEGER) as days_old,
        SUM(amount - amount_paid) as amount,
        COUNT(*) as count
      FROM credit_transactions
      WHERE status != 'paid'
-     GROUP BY CAST(julianday('now') - julianday(date) AS INTEGER)`
-	);
+     GROUP BY CAST(julianday('now') - julianday(date) AS INTEGER)`,
+  );
 
-	for (const result of results) {
-		if (result.days_old <= 7) {
-			buckets[0].amount += result.amount;
-			buckets[0].count += result.count;
-		} else if (result.days_old <= 15) {
-			buckets[1].amount += result.amount;
-			buckets[1].count += result.count;
-		} else if (result.days_old <= 30) {
-			buckets[2].amount += result.amount;
-			buckets[2].count += result.count;
-		} else {
-			buckets[3].amount += result.amount;
-			buckets[3].count += result.count;
-		}
-	}
+  for (const result of results) {
+    if (result.days_old <= 7) {
+      buckets[0].amount += result.amount;
+      buckets[0].count += result.count;
+    } else if (result.days_old <= 15) {
+      buckets[1].amount += result.amount;
+      buckets[1].count += result.count;
+    } else if (result.days_old <= 30) {
+      buckets[2].amount += result.amount;
+      buckets[2].count += result.count;
+    } else {
+      buckets[3].amount += result.amount;
+      buckets[3].count += result.count;
+    }
+  }
 
-	return buckets;
+  return buckets;
 };
 
 // ==================== PROFITABILITY REPORTS ====================
 
 export const getProfitabilityData = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<ProfitabilityData> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const profitResult = await db.getFirstAsync<{
-		totalProfit: number;
-		totalRevenue: number;
-	}>(
-		`SELECT 
+  const profitResult = await db.getFirstAsync<{
+    totalProfit: number;
+    totalRevenue: number;
+  }>(
+    `SELECT 
        COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
        COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
      WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	const marginPercent =
-		profitResult && profitResult.totalRevenue > 0
-			? (profitResult.totalProfit / profitResult.totalRevenue) * 100
-			: 0;
+  const marginPercent =
+    profitResult && profitResult.totalRevenue > 0
+      ? (profitResult.totalProfit / profitResult.totalRevenue) * 100
+      : 0;
 
-	return {
-		totalProfit: profitResult?.totalProfit || 0,
-		marginPercent,
-	};
+  return {
+    totalProfit: profitResult?.totalProfit || 0,
+    marginPercent,
+  };
 };
 
 // ==================== PRODUCT PROFITABILITY ====================
 
 export interface ProductProfitability {
-	id: number;
-	name: string;
-	totalRevenue: number;
-	totalProfit: number;
-	unitsSold: number;
-	profitPerUnit: number;
-	marginPercent: number;
+  id: number;
+  name: string;
+  totalRevenue: number;
+  totalProfit: number;
+  unitsSold: number;
+  profitPerUnit: number;
+  marginPercent: number;
 }
 
 export const getProductProfitability = async (
-	dateRange: DateRange,
-	limit: number = 10
+  dateRange: DateRange,
+  limit: number = 10,
 ): Promise<ProductProfitability[]> => {
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	const results = await db.getAllAsync<ProductProfitability>(
-		`SELECT 
+  const results = await db.getAllAsync<ProductProfitability>(
+    `SELECT 
        p.id,
        p.name,
        COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue,
@@ -472,27 +472,27 @@ export const getProductProfitability = async (
      GROUP BY p.id, p.name
      ORDER BY totalProfit DESC
      LIMIT ?`,
-		[startDate, endDate, limit]
-	);
+    [startDate, endDate, limit],
+  );
 
-	return results;
+  return results;
 };
 
 // ==================== INSIGHTS ====================
 
 export const getReportInsights = async (
-	dateRange: DateRange
+  dateRange: DateRange,
 ): Promise<ReportInsight[]> => {
-	const insights: ReportInsight[] = [];
-	const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-	const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  const insights: ReportInsight[] = [];
+  const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
+  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-	// Best selling item
-	const bestSeller = await db.getFirstAsync<{
-		name: string;
-		quantity: number;
-	}>(
-		`SELECT p.name, SUM(si.quantity) as quantity
+  // Best selling item
+  const bestSeller = await db.getFirstAsync<{
+    name: string;
+    quantity: number;
+  }>(
+    `SELECT p.name, SUM(si.quantity) as quantity
      FROM products p
      JOIN sale_items si ON p.id = si.product_id
      JOIN sales s ON si.sale_id = s.id
@@ -500,77 +500,77 @@ export const getReportInsights = async (
      GROUP BY p.id
      ORDER BY quantity DESC
      LIMIT 1`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	if (bestSeller) {
-		insights.push({
-			type: 'success',
-			title: 'Top Performer',
-			message: `${bestSeller.name} sold ${bestSeller.quantity} units`,
-			icon: 'trophy',
-		});
-	}
+  if (bestSeller) {
+    insights.push({
+      type: 'success',
+      title: 'Top Performer',
+      message: `${bestSeller.name} sold ${bestSeller.quantity} units`,
+      icon: 'trophy',
+    });
+  }
 
-	// Low stock warning
-	const lowStockCount = await db.getFirstAsync<{ count: number }>(
-		`SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 5`
-	);
+  // Low stock warning
+  const lowStockCount = await db.getFirstAsync<{ count: number }>(
+    `SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 5`,
+  );
 
-	if (lowStockCount && lowStockCount.count > 0) {
-		insights.push({
-			type: 'warning',
-			title: 'Stock Alert',
-			message: `${lowStockCount.count} item${lowStockCount.count > 1 ? 's' : ''} need urgent restock`,
-			icon: 'exclamation-triangle',
-		});
-	}
+  if (lowStockCount && lowStockCount.count > 0) {
+    insights.push({
+      type: 'warning',
+      title: 'Stock Alert',
+      message: `${lowStockCount.count} item${lowStockCount.count > 1 ? 's' : ''} need urgent restock`,
+      icon: 'exclamation-triangle',
+    });
+  }
 
-	// Highest credit customer
-	const highestCredit = await db.getFirstAsync<{
-		name: string;
-		amount: number;
-	}>(
-		`SELECT c.name, SUM(ct.amount - ct.amount_paid) as amount
+  // Highest credit customer
+  const highestCredit = await db.getFirstAsync<{
+    name: string;
+    amount: number;
+  }>(
+    `SELECT c.name, SUM(ct.amount - ct.amount_paid) as amount
      FROM customers c
      JOIN credit_transactions ct ON c.id = ct.customer_id
      WHERE ct.status != 'paid'
      GROUP BY c.id
      ORDER BY amount DESC
-     LIMIT 1`
-	);
+     LIMIT 1`,
+  );
 
-	if (highestCredit && highestCredit.amount > 0) {
-		insights.push({
-			type: 'info',
-			title: 'Top Credit Account',
-			message: `${highestCredit.name} owes ₱${highestCredit.amount.toFixed(2)}`,
-			icon: 'user',
-		});
-	}
+  if (highestCredit && highestCredit.amount > 0) {
+    insights.push({
+      type: 'info',
+      title: 'Top Credit Account',
+      message: `${highestCredit.name} owes ₱${highestCredit.amount.toFixed(2)}`,
+      icon: 'user',
+    });
+  }
 
-	// Day with lowest sales
-	const lowestSalesDay = await db.getFirstAsync<{
-		date: string;
-		amount: number;
-	}>(
-		`SELECT date(timestamp) as date, SUM(total) as amount
+  // Day with lowest sales
+  const lowestSalesDay = await db.getFirstAsync<{
+    date: string;
+    amount: number;
+  }>(
+    `SELECT date(timestamp) as date, SUM(total) as amount
      FROM sales
      WHERE timestamp BETWEEN ? AND ?
      GROUP BY date(timestamp)
      ORDER BY amount ASC
      LIMIT 1`,
-		[startDate, endDate]
-	);
+    [startDate, endDate],
+  );
 
-	if (lowestSalesDay && lowestSalesDay.amount < 1000) {
-		insights.push({
-			type: 'warning',
-			title: 'Slow Day',
-			message: `${lowestSalesDay.date} had only ₱${lowestSalesDay.amount.toFixed(2)} in sales`,
-			icon: 'arrow-down',
-		});
-	}
+  if (lowestSalesDay && lowestSalesDay.amount < 1000) {
+    insights.push({
+      type: 'warning',
+      title: 'Slow Day',
+      message: `${lowestSalesDay.date} had only ₱${lowestSalesDay.amount.toFixed(2)} in sales`,
+      icon: 'arrow-down',
+    });
+  }
 
-	return insights;
+  return insights;
 };
