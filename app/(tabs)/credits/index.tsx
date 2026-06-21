@@ -200,7 +200,7 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Total Outstanding"
-								value={<MoneyText value={(kpis?.totalOutstanding || 0) * 100} variant="danger" />}
+								value={<MoneyText value={kpis?.totalOutstanding || 0} fromPesos variant="danger" />}
 								icon="credit-card"
 								iconColor="#DC2626"
 							/>
@@ -219,7 +219,7 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Collected Today"
-								value={<MoneyText value={(kpis?.totalCollectedToday || 0) * 100} variant="success" />}
+								value={<MoneyText value={kpis?.totalCollectedToday || 0} fromPesos variant="success" />}
 								icon="money"
 								iconColor="#65A30D"
 								trend={
@@ -230,7 +230,7 @@ export default function Credits() {
 						<View className="flex-1">
 							<KPICard
 								title="Credits Today"
-								value={<MoneyText value={(kpis?.totalCreditsToday || 0) * 100} />}
+								value={<MoneyText value={kpis?.totalCreditsToday || 0} fromPesos />}
 								icon="plus-circle"
 								iconColor="#D97706"
 							/>
@@ -241,7 +241,7 @@ export default function Credits() {
 						<View className="mt-3">
 							<KPICard
 								title="Most Owed Customer"
-								value={<MoneyText value={kpis.mostOwedCustomer.amount * 100} variant="warning" />}
+								value={<MoneyText value={kpis.mostOwedCustomer.amount} fromPesos variant="danger" />}
 								subtitle={kpis.mostOwedCustomer.name}
 								icon="exclamation-triangle"
 								iconColor="#D97706"

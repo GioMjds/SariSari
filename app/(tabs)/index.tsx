@@ -245,7 +245,8 @@ export default function InventoryScreen() {
                   Price
                 </StyledText>
                 <MoneyText
-                  value={item.price * 100}
+                  value={item.price}
+                  fromPesos
                   className="text-lg text-warm-900 font-semibold"
                 />
               </View>
@@ -594,7 +595,8 @@ export default function InventoryScreen() {
                         Price
                       </StyledText>
                       <MoneyText
-                        value={pendingAction.product.price * 100}
+                        value={pendingAction.product.price}
+                        fromPesos
                         className="text-lg text-warm-900 font-semibold"
                       />
                     </View>

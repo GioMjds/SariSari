@@ -50,7 +50,7 @@ const initializeDatabases = async () => {
 	}
 
 	try {
-		await seedDatabase();
+		await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
 		await executeWithRetry(async () => {
 			await Promise.all([
 				initProductsTable(),

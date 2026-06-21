@@ -31,42 +31,14 @@ const Pagination: FC<PaginationProps> = ({
   if (totalPages <= 1) return null;
 
   return (
-    <View
-      style={{
-        position: 'absolute',
-        bottom: 20,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 16,
-          backgroundColor: '#2E073F',
-          paddingVertical: 10,
-          paddingHorizontal: 20,
-          borderRadius: 30,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 8,
-        }}
-      >
+    <View className="absolute bottom-5 inset-x-0 items-center justify-center z-[999]">
+      <View className="flex-row items-center gap-4 bg-primary-500 py-2.5 px-5 rounded-pill shadow-raised">
         {/* Previous Button */}
         <TouchableOpacity
           hitSlop={10}
           onPress={handlePrevious}
           disabled={currentPage === 1}
-          style={{
-            padding: 6,
-            opacity: currentPage === 1 ? 0.4 : 1,
-          }}
+          className={`p-1.5 ${currentPage === 1 ? 'opacity-40' : 'opacity-100'}`}
         >
           <FontAwesome name="chevron-left" size={16} color="#fff" />
         </TouchableOpacity>
@@ -74,8 +46,7 @@ const Pagination: FC<PaginationProps> = ({
         {/* Page Info */}
         <StyledText
           variant="semibold"
-          className="text-white text-md"
-          style={{ minWidth: 50, textAlign: 'center' }}
+          className="text-white text-md min-w-[50px] text-center"
         >
           {currentPage} / {totalPages}
         </StyledText>
@@ -85,10 +56,7 @@ const Pagination: FC<PaginationProps> = ({
           hitSlop={10}
           onPress={handleNext}
           disabled={currentPage === totalPages}
-          style={{
-            padding: 6,
-            opacity: currentPage === totalPages ? 0.4 : 1,
-          }}
+          className={`p-1.5 ${currentPage === totalPages ? 'opacity-40' : 'opacity-100'}`}
         >
           <FontAwesome name="chevron-right" size={16} color="#fff" />
         </TouchableOpacity>

@@ -3,18 +3,91 @@
 @tailwind utilities;
 
 :root {
-  --color-primary-500: #B45309;
-  --color-primary-600: #C2410C;
-  --color-secondary-50: #ECFCCB;
-  --color-secondary-600: #65A30D;
-  --color-surface-warm: #FED7AA;
-  --color-background: #FEF3C7;
-  --color-surface-subtle: #FFFBEB;
-  --color-warm-900: #1C1917;
-  --color-warm-700: #57534E;
-  --color-warm-500: #A8A29E;
-  --color-success: #16A34A;
-  --color-danger: #DC2626;
-  --color-warning: #D97706;
-  --color-info: #0284C7;
+	/* Brand — Persimmon */
+	--color-persimmon-50: #FFF1EA;
+	--color-persimmon-100: #FFE0D1;
+	--color-persimmon-300: #FF9E76;
+	--color-persimmon-500: #E85A1F;
+	--color-persimmon-600: #C8460F;
+	--color-persimmon-700: #A1370C;
+
+	/* Brand — Cinnamon (ink-strong) */
+	--color-cinnamon-500: #623418;
+	--color-cinnamon-700: #391C0A;
+
+	/* Sage (secondary) */
+	--color-sage-50: #EEF4E5;
+	--color-sage-100: #D7E5BF;
+	--color-sage-500: #4F7A24;
+	--color-sage-600: #3D5E1B;
+
+	/* Paper surfaces */
+	--color-paper-50: #FBF7EE;
+	--color-paper-100: #F6F0E2;
+	--color-paper-200: #EFE6D2;
+	--color-paper-300: #E5D8BC;
+
+	/* Ink (text) */
+	--color-ink-500: #564E45;
+	--color-ink-700: #28231D;
+	--color-ink-900: #0E0C0A;
+
+	/* Compatibility aliases (mapped to the new system) */
+	--color-primary-500: #E85A1F;
+	--color-primary-600: #C8460F;
+	--color-secondary-50: #EEF4E5;
+	--color-secondary-600: #3D5E1B;
+	--color-surface-warm: #FFE0D1;
+	--color-background: #EFE6D2;
+	--color-surface-subtle: #FBF7EE;
+	--color-warm-900: #0E0C0A;
+	--color-warm-700: #28231D;
+	--color-warm-500: #564E45;
+	--color-success: #4F7A24;
+	--color-danger: #C13030;
+	--color-warning: #C77B0E;
+	--color-info: #2E6FA8;
+}
+
+/* ─── Receipt paper texture ─────────────────────────────────────
+   A subtle radial gradient gives the cream paper a soft vignette
+   rather than reading as a flat fill. Applied to receipt surfaces. */
+.paper-texture {
+	background-color: var(--color-paper-50);
+	background-image: radial-gradient(
+		ellipse at top,
+		rgba(255, 255, 255, 0.6) 0%,
+		transparent 60%
+	);
+}
+
+.paper-texture-warm {
+	background-color: var(--color-paper-100);
+	background-image: radial-gradient(
+		ellipse at top,
+		rgba(255, 241, 234, 0.5) 0%,
+		transparent 60%
+	);
+}
+
+/* ─── Dotted / dashed dividers (receipt style) ───────────────── */
+.divider-dotted {
+	border-top-width: 1px;
+	border-top-style: dashed;
+	border-top-color: var(--color-ink-300);
+}
+
+.divider-dotted-thin {
+	border-top-width: 1px;
+	border-top-style: dotted;
+	border-top-color: var(--color-ink-200);
+}
+
+/* ─── Editorial uppercase label ───────────────────────────────── */
+.label-caps {
+	font-size: 10px;
+	line-height: 1.3;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 }

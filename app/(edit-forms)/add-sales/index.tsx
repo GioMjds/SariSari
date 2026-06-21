@@ -158,7 +158,7 @@ export default function AddSale() {
                         </StyledText>
                         <View className="flex-row items-center gap-2">
                             <StyledText variant="extrabold" className="text-secondary-600 text-lg">
-                                <MoneyText value={item.price * 100} className="text-secondary-600 text-lg" />
+                                <MoneyText value={item.price} fromPesos className="text-secondary-600 text-lg" />
                             </StyledText>
                             <View className={`px-2 py-1 rounded-full ${isOutOfStock ? 'bg-red-100' : isLowStock ? 'bg-orange-100' : 'bg-green-100'}`}>
                                 <StyledText variant="medium" className={`text-xs ${isOutOfStock ? 'text-red-600' : isLowStock ? 'text-orange-600' : 'text-green-600'}`}>
@@ -298,11 +298,11 @@ export default function AddSale() {
                                             {item.product_name}
                                         </StyledText>
                                         <StyledText variant="regular" className="text-warm-600 text-xs">
-                                            {item.quantity} × <MoneyText value={item.price * 100} className="text-secondary-600 text-lg" />
+                                            {item.quantity} × <MoneyText value={item.price} fromPesos className="text-secondary-600 text-lg" />
                                         </StyledText>
                                     </View>
                                     <StyledText variant="semibold" className="text-secondary-600 text-base">
-                                        <MoneyText value={(item.quantity * item.price) * 100} className="text-secondary-600 text-base" />
+                                        <MoneyText value={item.quantity * item.price} fromPesos className="text-secondary-600 text-base" />
                                     </StyledText>
                                 </View>
                             ))}
@@ -358,7 +358,7 @@ export default function AddSale() {
                                     Total Amount
                                 </StyledText>
                                 <StyledText variant="extrabold" className="text-warm-900 text-2xl">
-                                    <MoneyText value={getTotalAmount() * 100} className="text-warm-900 text-2xl" />
+                                    <MoneyText value={getTotalAmount()} fromPesos className="text-warm-900 text-2xl" />
                                 </StyledText>
                             </View>
                         </View>
@@ -413,7 +413,7 @@ export default function AddSale() {
                                         {customer.name}
                                     </StyledText>
                                     <StyledText variant="regular" className="text-warm-600 text-xs mt-1">
-                                        Balance: <MoneyText value={customer.outstanding_balance * 100} className="text-warm-600 text-xs" />
+                                        Balance: <MoneyText value={customer.outstanding_balance} fromPesos className="text-warm-600 text-xs" />
                                     </StyledText>
                                 </Pressable>
                             ))}

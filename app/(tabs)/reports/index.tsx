@@ -243,13 +243,13 @@ export default function Reports() {
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Cash Sales
 								</StyledText>
-								<MoneyText value={salesBreakdown.cashSales * 100} className="text-warm-900 text-sm" />
+								<MoneyText value={salesBreakdown.cashSales} fromPesos className="text-warm-900 text-sm" />
 							</View>
 							<View className="flex-row justify-between mb-2">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Credit Sales
 								</StyledText>
-								<MoneyText value={salesBreakdown.creditSales * 100} className="text-warm-900 text-sm" />
+								<MoneyText value={salesBreakdown.creditSales} fromPesos className="text-warm-900 text-sm" />
 							</View>
 							<View className="border-t border-gray-200 my-2" />
 							<View className="flex-row justify-between mb-2">
@@ -264,7 +264,7 @@ export default function Reports() {
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Average Transaction
 								</StyledText>
-								<MoneyText value={salesBreakdown.averageTransactionValue * 100} className="text-warm-900 text-sm" />
+								<MoneyText value={salesBreakdown.averageTransactionValue} fromPesos className="text-warm-900 text-sm" />
 							</View>
 						</View>
 
@@ -289,7 +289,7 @@ export default function Reports() {
 													{product.name}
 												</StyledText>
 											</View>
-											<MoneyText value={product.revenue * 100} className="text-secondary-600 text-sm" />
+											<MoneyText value={product.revenue} fromPesos className="text-secondary-600 text-sm" />
 										</View>
 										<StyledText variant="regular" className="text-gray-500 text-xs ml-8">
 											{product.unitsSold} units sold
@@ -345,13 +345,13 @@ export default function Reports() {
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Current Stock Value
 								</StyledText>
-								<MoneyText value={inventoryValue.currentStockValue * 100} className="text-warm-900 text-sm" />
+								<MoneyText value={inventoryValue.currentStockValue} fromPesos className="text-warm-900 text-sm" />
 							</View>
 							<View className="flex-row justify-between">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Potential Sales Value
 								</StyledText>
-								<MoneyText value={inventoryValue.potentialSalesValue * 100} className="text-green-600 text-sm" />
+								<MoneyText value={inventoryValue.potentialSalesValue} fromPesos className="text-green-600 text-sm" />
 							</View>
 						</View>
 
@@ -415,20 +415,20 @@ export default function Reports() {
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Credits Issued
 								</StyledText>
-								<MoneyText value={creditsOverview.issued * 100} className="text-red-600 text-sm" />
+								<MoneyText value={creditsOverview.issued} fromPesos className="text-red-600 text-sm" />
 							</View>
 							<View className="flex-row justify-between mb-2">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Credits Collected
 								</StyledText>
-								<MoneyText value={creditsOverview.collected * 100} className="text-green-600 text-sm" />
+								<MoneyText value={creditsOverview.collected} fromPesos className="text-green-600 text-sm" />
 							</View>
 							<View className="border-t border-gray-200 my-2" />
 							<View className="flex-row justify-between mb-2">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Outstanding Balance
 								</StyledText>
-								<MoneyText value={creditsOverview.outstanding * 100} className="text-warm-900 text-sm" />
+								<MoneyText value={creditsOverview.outstanding} fromPesos className="text-warm-900 text-sm" />
 							</View>
 							<View className="flex-row justify-between">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
@@ -450,7 +450,7 @@ export default function Reports() {
 										<StyledText variant="medium" className="text-warm-600 text-sm">
 											{bucket.range}
 										</StyledText>
-										<MoneyText value={bucket.amount * 100} className="text-warm-900 text-sm" />
+										<MoneyText value={bucket.amount} fromPesos className="text-warm-900 text-sm" />
 									</View>
 									<View className="flex-row items-center">
 										<View className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -491,7 +491,7 @@ export default function Reports() {
 									<StyledText variant="medium" className="text-warm-600 text-sm mb-1">
 										Total Profit
 									</StyledText>
-									<MoneyText value={profitability.totalProfit * 100} className="text-warm-900 text-2xl" />
+									<MoneyText value={profitability.totalProfit} fromPesos className="text-warm-900 text-2xl" />
 								</View>
 								<View className="items-end">
 									<StyledText variant="medium" className="text-warm-600 text-sm mb-1">
@@ -535,13 +535,13 @@ export default function Reports() {
 															{product.unitsSold} units
 														</StyledText>
 														<StyledText variant="regular" className="text-gray-500 text-xs">•</StyledText>
-														<MoneyText value={product.profitPerUnit * 100} className="text-green-600 text-xs" />
+														<MoneyText value={product.profitPerUnit} fromPesos className="text-green-600 text-xs" />
 														<StyledText variant="regular" className="text-green-600 text-xs">/pc</StyledText>
 													</View>
 												</View>
 											</View>
 											<View className="items-end ml-2">
-												<MoneyText value={product.totalProfit * 100} className="text-green-600 text-base" />
+												<MoneyText value={product.totalProfit} fromPesos className="text-green-600 text-base" />
 												<StyledText variant="regular" className="text-gray-500 text-xs">
 													{product.marginPercent.toFixed(1)}% margin
 												</StyledText>
