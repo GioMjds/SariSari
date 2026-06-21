@@ -26,7 +26,7 @@ const filters: Filters[] = [
 	{ key: 'overdue', label: 'Overdue' },
 ];
 
-export default function FilterBar({
+export function FilterBar({
 	activeFilter,
 	onFilterChange,
 	counts,

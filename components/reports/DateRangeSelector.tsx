@@ -14,7 +14,7 @@ const ranges: { type: DateRangeType; label: string }[] = [
 	{ type: 'thisMonth', label: 'This Month' },
 ];
 
-export default function DateRangeSelector({ activeRange, onRangeChange }: DateRangeSelectorProps) {
+export function DateRangeSelector({ activeRange, onRangeChange }: DateRangeSelectorProps) {
 	const handlePress = (range: DateRangeType) => {
 		onRangeChange(range);
 	};

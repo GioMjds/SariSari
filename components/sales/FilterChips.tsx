@@ -86,7 +86,7 @@ const CHIP_SHADOW = {
 	elevation: 2,
 };
 
-export default function FilterChips({
+export function FilterChips({
 	filters,
 	onChange,
 	onOpenMore,

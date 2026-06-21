@@ -11,7 +11,7 @@ interface CustomerListItemProps {
 	onPress: (customer: Customer) => void;
 }
 
-export default function CustomerListItem({ customer, onPress }: CustomerListItemProps) {
+export function CustomerListItem({ customer, onPress }: CustomerListItemProps) {
 	const getTagColor = (tag: Customer['tag']) => {
 		switch (tag) {
 			case 'good_payer':

@@ -15,7 +15,7 @@ interface ReportKPICardProps {
 	};
 }
 
-export default function ReportKPICard({
+export function ReportKPICard({
 	title,
 	value,
 	icon,

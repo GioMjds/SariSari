@@ -1,6 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
 /**
@@ -17,7 +17,7 @@ interface SalesEmptyStateProps {
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#EFE6D2';
 
-export default function SalesEmptyState({
+export function SalesEmptyState({
 	onNewSale,
 	hasSales,
 }: SalesEmptyStateProps) {

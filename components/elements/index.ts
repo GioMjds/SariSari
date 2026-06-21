@@ -1,1 +1,1 @@
-export { StyledText } from './StyledText';
+export * from './StyledText';

@@ -1,1 +1,1 @@
-export { default as StyledTab } from './StyledTab';
+export * from './StyledTab';

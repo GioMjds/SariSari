@@ -123,7 +123,7 @@ const ToastItem = ({ toast, onDismiss }: ToastItemProps) => {
  * Displays toasts at the top of the screen with smooth animations
  * Used for user feedback on actions (restocking, sales, etc.)
  */
-const Sonner = () => {
+export const Sonner = () => {
 	const toasts = useToastStore((state) => state.toasts);
 	const removeToast = useToastStore((state) => state.removeToast);
 	const { top } = useSafeAreaInsets();
@@ -154,5 +154,3 @@ const Sonner = () => {
 		</View>
 	);
 };
-
-export default Sonner;

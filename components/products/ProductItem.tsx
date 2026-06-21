@@ -13,7 +13,7 @@ interface Props {
 	lowStockThreshold: number;
 }
 
-const ProductItem: FC<Props> = ({
+export const ProductItem: FC<Props> = ({
 	item,
 	onEdit,
 	onDelete,
@@ -164,4 +164,3 @@ const ProductItem: FC<Props> = ({
 	);
 };
 
-export default ProductItem;

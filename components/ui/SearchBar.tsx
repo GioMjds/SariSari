@@ -1,14 +1,13 @@
-import React from 'react';
-import { View, TextInput, TouchableOpacity, Text } from 'react-native';
+import { View, TextInput, TouchableOpacity, TextInputProps } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 type SearchBarProps = {
 	value: string;
 	onChange: (s: string) => void;
 	placeholder?: string;
-} & TextInput.Props;
+} & Omit<TextInputProps, 'onChange'>;
 
-export default function SearchBar({
+export function SearchBar({
 	value,
 	onChange,
 	placeholder = 'Search...',
@@ -39,5 +38,3 @@ export default function SearchBar({
 		</View>
 	);
 }
-
-export { SearchBar };

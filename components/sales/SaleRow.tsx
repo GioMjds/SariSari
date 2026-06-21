@@ -44,7 +44,7 @@ function padRef(id: number): string {
 	return `№ ${String(id).padStart(5, '0')}`;
 }
 
-export default function SaleRow({ sale, onPress }: SaleRowProps) {
+export function SaleRow({ sale, onPress }: SaleRowProps) {
 	const isCredit = sale.payment_type === 'credit';
 	const stampTone: 'persimmon' | 'sage' = isCredit ? 'persimmon' : 'sage';
 	const stampLabel = isCredit ? 'UTANG' : 'CASH';

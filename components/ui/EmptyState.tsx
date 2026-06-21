@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 type EmptyStateProps = {
-	icon: string; // FontAwesome name
+	icon: keyof typeof FontAwesome.glyphMap; // FontAwesome name
 	title: string;
 	subtitle?: string;
 	action?: {

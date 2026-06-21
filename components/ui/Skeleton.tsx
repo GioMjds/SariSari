@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, View, ViewStyle } from 'react-native';
+import { Animated, ViewStyle } from 'react-native';
 
 /**
  * Skeleton — a pulsing greyed bar used as a loading placeholder.
@@ -20,7 +20,7 @@ interface SkeletonProps {
 	style?: ViewStyle | ViewStyle[];
 }
 
-export default function Skeleton({
+export function Skeleton({
 	width = '100%',
 	height = 12,
 	borderRadius = 4,

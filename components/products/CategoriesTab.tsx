@@ -22,7 +22,7 @@ interface CategoryFormData {
   name: string;
 }
 
-export default function CategoriesTab() {
+export function CategoriesTab() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
@@ -438,7 +438,7 @@ export default function CategoriesTab() {
                 variant="regular"
                 className="text-warm-600 text-sm text-center"
               >
-                Are you sure you want to delete "{selectedCategory?.name}"?
+                {`Are you sure you want to delete "${selectedCategory?.name || ''}"?`}
               </StyledText>
               {selectedCategory && selectedCategory.product_count > 0 && (
                 <StyledText

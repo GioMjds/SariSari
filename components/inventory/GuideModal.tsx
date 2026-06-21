@@ -9,7 +9,7 @@ interface GuideModalProps {
   onClose: () => void;
 }
 
-export default function GuideModal({ visible, onClose }: GuideModalProps) {
+export function GuideModal({ visible, onClose }: GuideModalProps) {
   return (
     <Modal
       visible={visible}

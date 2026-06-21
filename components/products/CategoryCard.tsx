@@ -10,7 +10,7 @@ interface CategoryCardProps {
 	onDelete: (category: CategoryWithCount) => void;
 }
 
-export default function CategoryCard({
+export function CategoryCard({
 	category,
 	onPress,
 	onEdit,

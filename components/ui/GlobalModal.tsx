@@ -1,7 +1,7 @@
 import { useModalStore } from '@/stores';
 import { Modal } from '@/components/ui';
 
-export default function GlobalModal() {
+export function GlobalModal() {
 	const { modals } = useModalStore();
 
 	return (

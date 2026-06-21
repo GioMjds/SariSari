@@ -39,7 +39,7 @@ type Props = {
 	icon?: React.ReactNode;
 };
 
-export default function StatusStamp({
+export function StatusStamp({
 	label,
 	tone = 'persimmon',
 	rotate = -6,

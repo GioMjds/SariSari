@@ -23,7 +23,7 @@ const PERFORATION_BG = '#EFE6D2'; // page bg = paper-200, so circles look bitten
  * torn from the resibo book — cream surface, paper-200 perforations on
  * the bottom edge, persimmon "Apply" with brand-tinted glow.
  */
-export default function SalesFilterModal({
+export function SalesFilterModal({
   visible,
   onClose,
   currentFilters,

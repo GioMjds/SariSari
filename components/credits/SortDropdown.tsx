@@ -23,7 +23,7 @@ const sortOptions: SortOption[] = [
   { key: 'name_desc', label: 'Name Z-A', icon: 'sort-alpha-desc' },
 ];
 
-export default function SortDropdown({
+export function SortDropdown({
   activeSort,
   onSortChange,
 }: SortDropdownProps) {

@@ -13,7 +13,7 @@ interface InventoryHeroProps {
   };
 }
 
-const InventoryHero = React.memo(function InventoryHero({ stats }: InventoryHeroProps) {
+export const InventoryHero = React.memo(function InventoryHero({ stats }: InventoryHeroProps) {
   return (
     <MotiView
       from={{ opacity: 0, translateY: 18 }}
@@ -60,4 +60,3 @@ const InventoryHero = React.memo(function InventoryHero({ stats }: InventoryHero
   );
 });
 
-export default InventoryHero;

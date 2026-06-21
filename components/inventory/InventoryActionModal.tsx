@@ -20,7 +20,7 @@ interface InventoryActionModalProps {
   isSubmitting?: boolean;
 }
 
-export default function InventoryActionModal({
+export function InventoryActionModal({
   pendingAction,
   quantityInput,
   onChangeQuantity,

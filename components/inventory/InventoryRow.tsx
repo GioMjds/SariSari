@@ -13,7 +13,7 @@ interface InventoryRowProps {
   onRestock: (product: Product) => void;
 }
 
-const InventoryRow = React.memo(function InventoryRow({
+export const InventoryRow = React.memo(function InventoryRow({
   item,
   index,
   onRestock,
@@ -114,4 +114,3 @@ const InventoryRow = React.memo(function InventoryRow({
   );
 });
 
-export default InventoryRow;

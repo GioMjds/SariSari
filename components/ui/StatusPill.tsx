@@ -40,7 +40,7 @@ const sizeMap = {
   md: 'px-3 py-1 text-sm',
 };
 
-export default function StatusPill({
+export function StatusPill({
   variant,
   size = 'md',
   children,
@@ -55,5 +55,3 @@ export default function StatusPill({
     </View>
   );
 }
-
-export { StatusPill };

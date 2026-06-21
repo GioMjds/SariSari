@@ -7,7 +7,7 @@ interface InventoryEmptyStateProps {
   onAddProduct: () => void;
 }
 
-export default function InventoryEmptyState({ onAddProduct }: InventoryEmptyStateProps) {
+export function InventoryEmptyState({ onAddProduct }: InventoryEmptyStateProps) {
   return (
     <View className="items-center justify-center px-6 pt-24">
       <FontAwesome name="inbox" size={78} color="#E85A1F" />

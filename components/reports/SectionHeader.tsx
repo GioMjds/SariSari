@@ -8,7 +8,7 @@ interface SectionHeaderProps {
 	onViewAll?: () => void;
 }
 
-export default function SectionHeader({ title, icon, onViewAll }: SectionHeaderProps) {
+export function SectionHeader({ title, icon, onViewAll }: SectionHeaderProps) {
 	return (
 		<View className="flex-row items-center justify-between mb-3">
 			<View className="flex-row items-center">

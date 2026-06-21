@@ -79,7 +79,7 @@ function SkeletonRow() {
 	);
 }
 
-export default function SalesSkeleton() {
+export function SalesSkeleton() {
 	return (
 		<View className="pt-2">
 			<SkeletonRow />

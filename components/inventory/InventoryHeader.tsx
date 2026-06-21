@@ -12,7 +12,7 @@ interface InventoryHeaderProps {
   activeFilterCount: number;
 }
 
-const InventoryHeader = memo(function InventoryHeader({
+export const InventoryHeader = memo(function InventoryHeader({
   subtitle,
   onOpenGuide,
   onOpenFilter,
@@ -117,4 +117,3 @@ const InventoryHeader = memo(function InventoryHeader({
   );
 });
 
-export default InventoryHeader;

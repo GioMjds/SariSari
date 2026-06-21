@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import Skeleton from '../ui/Skeleton';
+import { Skeleton } from '@/components/ui';
 
-export default function InventorySkeleton() {
+export function InventorySkeleton() {
   return (
     <View className="py-2">
       {Array.from({ length: 4 }).map((_, i) => (

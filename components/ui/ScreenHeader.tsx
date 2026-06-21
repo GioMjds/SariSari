@@ -1,5 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { View, Text } from 'react-native';
 
 type ScreenHeaderProps = {
 	title: string;
@@ -8,7 +7,7 @@ type ScreenHeaderProps = {
 	variant?: 'default' | 'dark';
 };
 
-export default function ScreenHeader({
+export function ScreenHeader({
 	title,
 	subtitle,
 	right,
@@ -41,18 +40,3 @@ export default function ScreenHeader({
 	);
 }
 
-ScreenHeader.Back = ({ onPress, title }: { onPress: () => void; title?: string }) => (
-	<View className="flex-row items-center gap-3 mb-2">
-		<TouchableOpacity
-			onPress={onPress}
-			className="w-10 h-10 rounded-full bg-white border border-warm-100 items-center justify-center shadow-card"
-		>
-			<FontAwesome name="arrow-left" size={16} className="text-primary-500" />
-		</TouchableOpacity>
-		{title && (
-			<Text className="text-body font-medium text-warm-700">{title}</Text>
-		)}
-	</View>
-);
-
-export { ScreenHeader };

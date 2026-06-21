@@ -9,7 +9,7 @@ interface InsightCardProps {
 	icon: keyof typeof FontAwesome.glyphMap;
 }
 
-export default function InsightCard({ type, title, message, icon }: InsightCardProps) {
+export function InsightCard({ type, title, message, icon }: InsightCardProps) {
 	const colors = {
 		success: { bg: '#65A30D20', border: '#65A30D', text: '#65A30D' },
 		warning: { bg: '#D9770620', border: '#D97706', text: '#D97706' },

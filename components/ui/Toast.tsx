@@ -3,7 +3,7 @@ import { Animated, TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { useToastStore } from '@/stores';
 
-const ToastContainer = () => {
+export const ToastContainer = () => {
 	const toasts = useToastStore((state) => state.toasts);
 	const removeToast = useToastStore((state) => state.removeToast);
 
@@ -92,5 +92,3 @@ const ToastContainer = () => {
 		</View>
 	);
 };
-
-export default ToastContainer;

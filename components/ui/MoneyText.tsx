@@ -14,6 +14,7 @@ type MoneyTextProps = {
    */
   fromPesos?: boolean;
   className?: string;
+  style?: any;
 };
 
 const sizeMap = {
@@ -37,6 +38,7 @@ export function MoneyText({
   compact = false,
   fromPesos = false,
   className,
+  style,
 }: MoneyTextProps) {
   const centavos = fromPesos ? value * 100 : value;
   const pesos = centavos / 100;
@@ -47,6 +49,7 @@ export function MoneyText({
 
   return (
     <StyledText
+      style={style}
       className={`${sizeMap[size]} ${variantMap[variant]} font-extrabold${className ? ` ${className}` : ''}`}
     >
       {formatted}

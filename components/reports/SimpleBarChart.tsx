@@ -8,7 +8,7 @@ interface SimpleBarChartProps {
 	barColor?: string;
 }
 
-export default function SimpleBarChart({ data, height = 200, barColor = '#B45309' }: SimpleBarChartProps) {
+export function SimpleBarChart({ data, height = 200, barColor = '#B45309' }: SimpleBarChartProps) {
 	if (data.length === 0) {
 		return (
 			<View className="items-center justify-center" style={{ height }}>

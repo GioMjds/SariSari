@@ -21,7 +21,7 @@ const CHIP_SHADOW = {
   elevation: 2,
 };
 
-const FilterChips = React.memo(function FilterChips({
+export const FilterChips = React.memo(function FilterChips({
   filters,
   onChange,
   onOpenMore,
@@ -118,4 +118,3 @@ const FilterChips = React.memo(function FilterChips({
   );
 });
 
-export default FilterChips;

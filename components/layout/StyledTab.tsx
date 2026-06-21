@@ -5,7 +5,7 @@ import { memo, useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
-const StyledTab = () => {
+export const StyledTab = memo(() => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const visibleRoutes = tabs.slice(0, 5);
@@ -57,6 +57,6 @@ const StyledTab = () => {
 			</View>
 		</View>
 	);
-};
+});
 
-export default memo(StyledTab);
+StyledTab.displayName = 'StyledTab';

@@ -5,7 +5,7 @@ import { StyledText } from '@/components/elements';
 
 interface KPICardProps {
   title: string;
-  value: string | number;
+  value: React.ReactNode;
   icon?: keyof typeof FontAwesome.glyphMap;
   iconColor?: string;
   trend?: 'up' | 'down' | 'neutral';
@@ -13,7 +13,7 @@ interface KPICardProps {
   onPress?: () => void;
 }
 
-export default function KPICard({
+export function KPICard({
   title,
   value,
   icon,

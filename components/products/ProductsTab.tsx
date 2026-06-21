@@ -27,7 +27,7 @@ interface ProductsTabProps {
   setShowSortModal?: (show: boolean) => void;
 }
 
-export default function ProductsTab({
+export function ProductsTab({
   filterCategory,
   showSortModal: externalShowSortModal,
   setShowSortModal: externalSetShowSortModal,
@@ -410,7 +410,7 @@ export default function ProductsTab({
                 variant="regular"
                 className="text-text-secondary text-sm text-center"
               >
-                Are you sure you want to delete "{selectedProduct?.name}"?
+                {`Are you sure you want to delete "${selectedProduct?.name || ''}"?`}
               </StyledText>
               <StyledText
                 variant="semibold"
