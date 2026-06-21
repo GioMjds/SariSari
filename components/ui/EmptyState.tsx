@@ -12,7 +12,7 @@ type EmptyStateProps = {
 	};
 };
 
-export default function EmptyState({
+export function EmptyState({
 	icon,
 	title,
 	subtitle,
@@ -44,5 +44,3 @@ export default function EmptyState({
 		</View>
 	);
 }
-
-export { EmptyState };

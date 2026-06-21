@@ -1,5 +1,5 @@
-import StyledText from '@/components/elements/StyledText';
-import { SalesDataPoint } from '@/types/reports.types';
+import { StyledText } from '@/components/elements';
+import { SalesDataPoint } from '@/types';
 import { View } from 'react-native';
 
 interface SimpleBarChartProps {

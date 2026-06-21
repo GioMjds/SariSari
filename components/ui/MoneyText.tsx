@@ -1,6 +1,5 @@
-import React from 'react';
-import { formatCompactCurrency, formatCurrency } from '@/utils/formatters';
-import StyledText from '../elements/StyledText';
+import { formatCompactCurrency, formatCurrency } from '@/utils';
+import { StyledText } from '@/components/elements';
 
 type MoneyTextProps = {
   value: number; // integer centavos OR pesos (see fromPesos)
@@ -31,7 +30,7 @@ const variantMap = {
   danger: 'text-semantic-danger',
 };
 
-export default function MoneyText({
+export function MoneyText({
   value,
   size = 'md',
   variant = 'default',

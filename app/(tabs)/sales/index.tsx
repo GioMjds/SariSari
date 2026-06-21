@@ -1,20 +1,10 @@
-import StyledText from '@/components/elements/StyledText';
-import FilterChips from '@/components/sales/FilterChips';
-import SaleRow from '@/components/sales/SaleRow';
-import SalesEmptyState from '@/components/sales/SalesEmptyState';
-import SalesFilterModal from '@/components/sales/SalesFilterModal';
-import SalesSkeleton from '@/components/sales/SalesSkeleton';
-import MoneyText from '@/components/ui/MoneyText';
-import Pagination from '@/components/ui/Pagination';
-import ReceiptHero, {
-  ReceiptHeroDivider,
-  ReceiptHeroMeta,
-} from '@/components/ui/ReceiptHero';
-import { SalesFilterState } from '@/constants/filters';
-import { ITEMS_PER_PAGE } from '@/constants/stocks';
-import { useSales } from '@/hooks/useSales';
-import { SaleWithItems } from '@/types/sales.types';
-import { parseStoredTimestamp } from '@/utils/timezone';
+import { StyledText } from '@/components/elements';
+import { FilterChips, SaleRow, SalesEmptyState, SalesFilterModal, SalesSkeleton } from '@/components/sales';
+import { MoneyText, Pagination, ReceiptHero, ReceiptHeroDivider, ReceiptHeroMeta } from '@/components/ui';
+import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
+import { useSales } from '@/hooks';
+import { SaleWithItems } from '@/types';
+import { parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   endOfDay,
@@ -285,7 +275,7 @@ export default function Sales() {
                 <View className="px-4 -mt-2 mb-4">
                   <ReceiptHero tone="persimmon">
                     {/* eyebrow */}
-                    <View className="px-5 pt-5 pb-3 flex-row items-center justify-between">
+                    <View className="px-5 pt-5 pb-1 flex-row items-center justify-between">
                       <View className="flex-row items-center">
                         <FontAwesome
                           name="calendar"

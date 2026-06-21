@@ -1,8 +1,8 @@
-import { CreditSort } from '@/types/credits.types';
+import { CreditSort } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Modal, Pressable, TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 interface SortDropdownProps {
   activeSort: CreditSort;

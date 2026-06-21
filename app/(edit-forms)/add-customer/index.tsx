@@ -1,7 +1,7 @@
-import StyledText from '@/components/elements/StyledText';
-import { useCredits } from '@/hooks/useCredits';
-import { NewCustomer } from '@/types/credits.types';
-import { Alert } from '@/utils/alert';
+import { StyledText } from '@/components/elements';
+import { useCredits } from '@/hooks';
+import { NewCustomer } from '@/types';
+import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';

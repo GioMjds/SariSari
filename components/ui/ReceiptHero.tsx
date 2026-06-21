@@ -1,6 +1,5 @@
-import React from 'react';
 import { View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 /**
  * ReceiptHero
@@ -32,6 +31,8 @@ type Props = {
   children: React.ReactNode;
   tone?: Tone;
   className?: string;
+  headerLabel?: string;
+  headerCode?: string;
   /** Number of perforation circles on each side. 22 looks good on phone widths. */
   perforations?: number;
 };
@@ -91,10 +92,12 @@ function Header({
   );
 }
 
-export default function ReceiptHero({
+export function ReceiptHero({
   children,
   tone = 'persimmon',
   className = '',
+  headerLabel,
+  headerCode,
   perforations = 22,
 }: Props) {
   return (
@@ -102,7 +105,7 @@ export default function ReceiptHero({
       className={`mx-4 rounded-3xl overflow-hidden bg-paper-50 shadow-paper-lift border border-ink-100 ${className}`}
     >
       {/* Top header strip */}
-      <Header tone={tone} label="OFFICIAL RESIBO" />
+      <Header tone={tone} label={headerLabel || 'OFFICIAL RESIBO'} code={headerCode} />
 
       {/* Top perforation — circles sit just above the body, biting
 			    into the header so the paper looks torn along this line. */}

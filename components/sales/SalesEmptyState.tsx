@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Image, TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 /**
  * SalesEmptyState — Sari mascot on a torn paper card. Lives where the
@@ -21,7 +21,7 @@ export default function SalesEmptyState({
 	onNewSale,
 	hasSales,
 }: SalesEmptyStateProps) {
-	const title = hasSales ? 'Walang tugma' : 'Walang resibo pa';
+	const title = hasSales ? 'Walang tugma' : 'Wala pang resibo';
 	const subtitle = hasSales
 		? 'Try adjusting your filters to see more sales.'
 		: 'Start by recording your first transaction.';
@@ -63,7 +63,7 @@ export default function SalesEmptyState({
 					{eyebrow}
 				</StyledText>
 
-				{/* Sari mascot image */}
+				{/* Sari error state image */}
 				{/* <Image
 					source={sariImage}
 					style={{ width: 180, height: 180 }}

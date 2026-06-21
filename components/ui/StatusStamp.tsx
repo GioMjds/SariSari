@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 /**
  * StatusStamp — a rotated, double-stroked badge that reads like an

@@ -1,9 +1,9 @@
-import { Product } from '@/types/products.types';
-import { calculateMarkup, calculateProfit } from '@/utils/formatters';
+import { Product } from '@/types';
+import { calculateMarkup, calculateProfit } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { FC } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 interface Props {
 	item: Product;

@@ -1,13 +1,7 @@
-import StyledText from '@/components/elements/StyledText';
-import ReceiptHero, {
-  ReceiptHeroDivider,
-  ReceiptHeroMeta,
-  ReceiptHeroTotal,
-} from '@/components/ui/ReceiptHero';
-import StatusStamp from '@/components/ui/StatusStamp';
-import { useSales } from '@/hooks/useSales';
-import { Alert } from '@/utils/alert';
-import { parseStoredTimestamp } from '@/utils/timezone';
+import { StyledText } from '@/components/elements';
+import { ReceiptHero, ReceiptHeroDivider, ReceiptHeroMeta, ReceiptHeroTotal, StatusStamp } from '@/components/ui';
+import { useSales } from '@/hooks';
+import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';

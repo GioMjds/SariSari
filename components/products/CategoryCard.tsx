@@ -1,5 +1,5 @@
-import StyledText from '@/components/elements/StyledText';
-import { CategoryWithCount } from '@/types/categories.types';
+import { StyledText } from '@/components/elements';
+import { CategoryWithCount } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Customer } from '@/types/credits.types';
+import { Customer } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils';
+import { StyledText } from '@/components/elements';
 
 interface CustomerListItemProps {
 	customer: Customer;

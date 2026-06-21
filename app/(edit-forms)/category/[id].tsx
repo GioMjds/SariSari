@@ -1,6 +1,5 @@
-import StyledText from '@/components/elements/StyledText';
-import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
+import { StyledText } from '@/components/elements';
+import { useCategories, useProducts } from '@/hooks';
 import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';

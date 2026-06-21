@@ -1,13 +1,10 @@
-import StyledText from "@/components/elements/StyledText";
-import { useCredits } from "@/hooks/useCredits";
-import { useProducts } from "@/hooks/useProducts";
-import { useSales } from "@/hooks/useSales";
-import { Product } from "@/types/products.types";
-import { NewSaleItem } from "@/types/sales.types";
-import { Alert } from "@/utils/alert";
-import { FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { StyledText } from '@/components/elements';
+import { useCredits, useProducts, useSales } from '@/hooks';
+import { Product, NewSaleItem } from '@/types';
+import { Alert } from '@/utils';
+import { FontAwesome } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -17,9 +14,9 @@ import {
     TextInput,
     TouchableOpacity,
     View
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import MoneyText from "@/components/ui/MoneyText";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MoneyText } from '@/components/ui';
 
 export default function AddSale() {
     const [selectedItems, setSelectedItems] = useState<NewSaleItem[]>([]);

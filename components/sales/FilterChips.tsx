@@ -2,11 +2,11 @@ import {
 	DateRangeFilter,
 	PaymentTypeFilter,
 	SalesFilterState,
-} from '@/constants/filters';
+} from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 /**
  * FilterChips — inline chip strip that lives directly above the receipt

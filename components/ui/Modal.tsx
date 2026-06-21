@@ -1,4 +1,3 @@
-import React, { FC, useEffect } from 'react';
 import {
 	View,
 	TouchableWithoutFeedback,
@@ -8,9 +7,9 @@ import {
 	type ModalProps as RNModalProps,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import StyledText from '../elements/StyledText';
-import { useModalStore } from '@/stores/ModalStore';
-import { ModalButton } from '@/types/ui/Modal.types';
+import { StyledText } from '@/components/elements';
+import { useModalStore } from '@/stores';
+import { ModalButton } from '@/types';
 
 interface CustomModalProps
 	extends Omit<RNModalProps, 'visible' | 'onRequestClose'> {
@@ -30,7 +29,7 @@ interface CustomModalProps
 	loading?: boolean;
 }
 
-const Modal: FC<CustomModalProps> = ({
+export function Modal ({
 	id,
 	visible,
 	title,
@@ -49,7 +48,7 @@ const Modal: FC<CustomModalProps> = ({
 	transparent = true,
 	presentationStyle,
 	...rest
-}) => {
+}: CustomModalProps) {
 	const { modals, closeModal } = useModalStore();
 
 	const storeModal = id ? modals.find((m) => m.id === id) : null;
@@ -264,5 +263,3 @@ const Modal: FC<CustomModalProps> = ({
 		</RNModal>
 	);
 };
-
-export default Modal;

@@ -1,20 +1,16 @@
-import CustomerListItem from '@/components/credits/CustomerListItem';
-import FilterBar from '@/components/credits/FilterBar';
-import KPICard from '@/components/credits/KPICard';
-import SortDropdown from '@/components/credits/SortDropdown';
-import StyledText from '@/components/elements/StyledText';
-import Pagination from '@/components/ui/Pagination';
-import MoneyText from '@/components/ui/MoneyText';
+import { CustomerListItem, FilterBar, KPICard, SortDropdown } from '@/components/credits';
+import { StyledText } from '@/components/elements';
+import { Pagination, MoneyText } from '@/components/ui';
 import {
 	CreditFilter,
 	CreditSort,
 	Customer,
-} from '@/types/credits.types';
+} from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCredits } from '@/hooks/useCredits';
+import { useCredits } from '@/hooks';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {

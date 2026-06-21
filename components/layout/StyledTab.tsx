@@ -1,9 +1,9 @@
-import { tabs } from '@/constants/tabs';
+import { tabs } from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { usePathname, useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 const StyledTab = () => {
 	const router = useRouter();

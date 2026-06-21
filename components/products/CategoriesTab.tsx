@@ -1,8 +1,8 @@
-import StyledText from '@/components/elements/StyledText';
-import CategoryCard from '@/components/products/CategoryCard';
-import { useCategories } from '@/hooks/useCategories';
-import { CategoryWithCount } from '@/types/categories.types';
-import { Alert } from '@/utils/alert';
+import { StyledText } from '@/components/elements';
+import { CategoryCard } from '@/components/products';
+import { useCategories } from '@/hooks';
+import { CategoryWithCount } from '@/types';
+import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';

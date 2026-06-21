@@ -1,11 +1,10 @@
-import StyledText from '@/components/elements/StyledText';
-import ProductItem from '@/components/products/ProductItem';
-import Pagination from '@/components/ui/Pagination';
-import { SortOption, sortOption } from '@/constants/sort-option';
-import { ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-import { useProducts } from '@/hooks/useProducts';
-import { Product } from '@/types/products.types';
-import { getStockColor } from '@/utils/formatters';
+import { StyledText } from '@/components/elements';
+import { ProductItem } from '@/components/products';
+import { Pagination } from '@/components/ui';
+import { SortOption, sortOption, ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD } from '@/constants';
+import { useProducts } from '@/hooks';
+import { Product } from '@/types';
+import { getStockColor } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

@@ -1,8 +1,8 @@
-import StyledText from '@/components/elements/StyledText';
-import { markOnboardingComplete } from '@/lib/onboardingStorage';
-import { GUIDE_TIPS } from '@/constants/guide';
-import { useToastStore } from '@/stores/ToastStore';
-import { OnboardingProfile } from '@/types/onboarding.types';
+import { StyledText } from '@/components/elements';
+import { markOnboardingComplete } from '@/lib';
+import { GUIDE_TIPS } from '@/constants';
+import { useToastStore } from '@/stores';
+import { OnboardingProfile } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';

@@ -1,4 +1,4 @@
-import StyledText from '@/components/elements/StyledText';
+import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import { View } from 'react-native';
 

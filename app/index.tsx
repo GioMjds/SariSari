@@ -1,5 +1,5 @@
-import StyledText from '@/components/elements/StyledText';
-import { loadOnboardingState } from '@/lib/onboardingStorage';
+import { StyledText } from '@/components/elements';
+import { loadOnboardingState } from '@/lib';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';

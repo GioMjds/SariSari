@@ -1,6 +1,5 @@
-import React from 'react';
-import { useModalStore } from '@/stores/ModalStore';
-import Modal from './Modal';
+import { useModalStore } from '@/stores';
+import { Modal } from '@/components/ui';
 
 export default function GlobalModal() {
 	const { modals } = useModalStore();

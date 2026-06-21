@@ -1,4 +1,4 @@
-import StyledTab from '@/components/layout/StyledTab';
+import { StyledTab } from '@/components/layout';
 import { Stack } from 'expo-router';
 
 export default function ScreensLayout() {

@@ -3,9 +3,8 @@ import { useState } from 'react';
 import { Pressable, TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import StyledText from '@/components/elements/StyledText';
-import CategoriesTab from '@/components/products/CategoriesTab';
-import ProductsTab from '@/components/products/ProductsTab';
+import { StyledText } from '@/components/elements';
+import { CategoriesTab, ProductsTab } from '@/components/products';
 
 type TabType = 'products' | 'categories';
 

@@ -1,13 +1,9 @@
-import StyledText from '@/components/elements/StyledText';
-import DateRangeSelector from '@/components/reports/DateRangeSelector';
-import InsightCard from '@/components/reports/InsightCard';
-import ReportKPICard from '@/components/reports/ReportKPICard';
-import SectionHeader from '@/components/reports/SectionHeader';
-import SimpleBarChart from '@/components/reports/SimpleBarChart';
-import MoneyText from '@/components/ui/MoneyText';
-import { useReports } from '@/hooks/useReports';
-import { DateRange, DateRangeType } from '@/types/reports.types';
-import { formatCompactCurrency, getDateRangeFromType } from '@/utils/formatters';
+import { StyledText } from '@/components/elements';
+import { DateRangeSelector, InsightCard, ReportKPICard, SectionHeader, SimpleBarChart } from '@/components/reports';
+import { MoneyText } from '@/components/ui';
+import { useReports } from '@/hooks';
+import { DateRange, DateRangeType } from '@/types';
+import { formatCompactCurrency, getDateRangeFromType } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import {

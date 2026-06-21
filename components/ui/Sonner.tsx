@@ -1,5 +1,5 @@
-import { useToastStore } from '@/stores/ToastStore';
-import { Toast } from '@/types/ui/Toast.types';
+import { useToastStore } from '@/stores';
+import { Toast } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import {
@@ -9,7 +9,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 interface ToastItemProps {
 	toast: Toast;

@@ -1,7 +1,6 @@
-import StyledText from '@/components/elements/StyledText';
-import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
-import { Alert } from '@/utils/alert';
+import { StyledText } from '@/components/elements';
+import { useCategories, useProducts } from '@/hooks';
+import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';

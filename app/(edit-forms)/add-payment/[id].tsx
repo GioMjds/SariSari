@@ -1,8 +1,8 @@
-import StyledText from '@/components/elements/StyledText';
-import { CreditTransaction, NewPayment } from '@/types/credits.types';
+import { StyledText } from '@/components/elements';
+import { CreditTransaction, NewPayment } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCredits } from '@/hooks/useCredits';
+import { useCredits } from '@/hooks';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils';
 
 interface PaymentFormData {
 	amount: string;

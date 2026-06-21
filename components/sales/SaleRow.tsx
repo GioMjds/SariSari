@@ -1,12 +1,11 @@
-import { SaleWithItems } from '@/types/sales.types';
-import { parseStoredTimestamp } from '@/utils/timezone';
+import { SaleWithItems } from '@/types';
+import { parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
-import MoneyText from '../ui/MoneyText';
-import StatusStamp from '../ui/StatusStamp';
+import { StyledText } from '@/components/elements';
+import { MoneyText, StatusStamp } from '@/components/ui';
 
 /**
  * SaleRow — a perforated paper-receipt row in the resibo book.

@@ -1,7 +1,7 @@
-import { CreditFilter } from '@/types/credits.types';
+import { CreditFilter } from '@/types';
 import React from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 interface FilterBarProps {
 	activeFilter: CreditFilter;

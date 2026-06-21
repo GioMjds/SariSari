@@ -1,12 +1,12 @@
-import StyledText from '@/components/elements/StyledText';
-import { NewCredit } from '@/types/credits.types';
+import { StyledText } from '@/components/elements';
+import { NewCredit, Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useCredits } from '@/hooks/useCredits';
+import { useCredits, useProducts } from '@/hooks';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -15,9 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { Product } from '@/types/products.types';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useProducts } from '@/hooks/useProducts';
 
 interface CreditFormData {
 	productName: string;

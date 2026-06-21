@@ -1,5 +1,5 @@
-import StyledText from '@/components/elements/StyledText';
-import { DateRangeType } from '@/types/reports.types';
+import { StyledText } from '@/components/elements';
+import { DateRangeType } from '@/types';
 import { ScrollView, TouchableOpacity } from 'react-native';
 
 interface DateRangeSelectorProps {

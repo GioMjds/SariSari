@@ -1,11 +1,5 @@
-import GlobalModal from '@/components/ui/GlobalModal';
-import Sonner from '@/components/ui/Sonner';
-import ToastContainer from '@/components/ui/Toast';
-import { initCategoriesTable } from '@/db/categories';
-import { initCreditsTable } from '@/db/credits';
-import { initInventoryTable } from '@/db/inventory';
-import { initProductsTable } from '@/db/products';
-import { initSalesTables } from '@/db/sales';
+import { GlobalModal, Sonner, ToastContainer } from '@/components/ui';
+import { initCategoriesTable, initCreditsTable, initInventoryTable, initProductsTable, initSalesTables } from '@/db';
 import { seedDatabase } from '@/db/seed';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';

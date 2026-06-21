@@ -1,7 +1,7 @@
 import React from 'react';
 import { Animated, TouchableOpacity, View } from 'react-native';
-import StyledText from '@/components/elements/StyledText';
-import { useToastStore } from '@/stores/ToastStore';
+import { StyledText } from '@/components/elements';
+import { useToastStore } from '@/stores';
 
 const ToastContainer = () => {
 	const toasts = useToastStore((state) => state.toasts);

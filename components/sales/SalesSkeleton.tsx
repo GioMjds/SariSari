@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import Skeleton from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui';
 
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#EFE6D2';

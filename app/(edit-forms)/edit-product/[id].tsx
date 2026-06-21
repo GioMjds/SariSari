@@ -1,8 +1,7 @@
-import StyledText from '@/components/elements/StyledText';
-import Modal from '@/components/ui/Modal';
-import { useCategories } from '@/hooks/useCategories';
-import { useProducts } from '@/hooks/useProducts';
-import { Alert } from '@/utils/alert';
+import { StyledText } from '@/components/elements';
+import { Modal } from '@/components/ui';
+import { useCategories, useProducts } from '@/hooks';
+import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';

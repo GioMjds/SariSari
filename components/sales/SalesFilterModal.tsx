@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, ScrollView, Modal } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   dateRangeOptions,
   paymentTypeOptions,
   SalesFilterState,
-} from '@/constants/filters';
+} from '@/constants';
 
 interface SalesFilterModalProps {
   visible: boolean;

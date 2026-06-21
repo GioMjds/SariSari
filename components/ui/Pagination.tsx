@@ -1,7 +1,6 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { FC } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import StyledText from '../elements/StyledText';
+import { StyledText } from '@/components/elements';
 
 interface PaginationProps {
   currentPage: number;
@@ -11,11 +10,11 @@ interface PaginationProps {
   itemsPerPage?: number;
 }
 
-const Pagination: FC<PaginationProps> = ({
+export function Pagination ({
   currentPage,
   totalPages,
   onPageChange,
-}) => {
+}: PaginationProps) {
   const handlePrevious = () => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
@@ -64,5 +63,3 @@ const Pagination: FC<PaginationProps> = ({
     </View>
   );
 };
-
-export default Pagination;
