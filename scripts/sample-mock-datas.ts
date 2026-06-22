@@ -15,14 +15,14 @@ export const MOCK_CATEGORIES = [
 ];
 
 export const MOCK_PRODUCTS = [
-  { id: 1, name: 'Sardines', sku: 'CAN-001', price: 2500, cost_price: 2000, quantity: 50, category: 'Canned Goods', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 2, name: 'Corned Beef', sku: 'CAN-002', price: 4500, cost_price: 3800, quantity: 30, category: 'Canned Goods', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+  { id: 1, name: 'Sardines', sku: 'CAN-001', price: 2500, cost_price: 2000, quantity: 2, category: 'Canned Goods', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }, // Low Stock
+  { id: 2, name: 'Corned Beef', sku: 'CAN-002', price: 4500, cost_price: 3800, quantity: 0, category: 'Canned Goods', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }, // Out of Stock
   { id: 3, name: 'Potato Chips', sku: 'SNA-001', price: 1500, cost_price: 1200, quantity: 100, category: 'Snacks', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   { id: 4, name: 'Chocolate Bar', sku: 'SNA-002', price: 2000, cost_price: 1500, quantity: 60, category: 'Snacks', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   { id: 5, name: 'Coke 1.5L', sku: 'BEV-001', price: 6500, cost_price: 5800, quantity: 24, category: 'Beverages', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   { id: 6, name: 'Water 500ml', sku: 'BEV-002', price: 1500, cost_price: 1000, quantity: 120, category: 'Beverages', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 7, name: 'Soap', sku: 'TOI-001', price: 3000, cost_price: 2500, quantity: 40, category: 'Toiletries', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 8, name: 'Toothpaste', sku: 'TOI-002', price: 5000, cost_price: 4200, quantity: 20, category: 'Toiletries', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+  { id: 7, name: 'Soap', sku: 'TOI-001', price: 3000, cost_price: 2500, quantity: 3, category: 'Toiletries', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }, // Low Stock
+  { id: 8, name: 'Toothpaste', sku: 'TOI-002', price: 5000, cost_price: 4200, quantity: 0, category: 'Toiletries', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }, // Out of Stock
   { id: 9, name: 'Eggs', sku: 'OTH-001', price: 700, cost_price: 600, quantity: 300, category: 'Others', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
   { id: 10, name: 'Rice 1kg', sku: 'OTH-002', price: 5500, cost_price: 5000, quantity: 100, category: 'Others', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
 ];

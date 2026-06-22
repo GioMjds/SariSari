@@ -9,17 +9,30 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, FlatList, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LOW_STOCK_THRESHOLD, ITEMS_PER_PAGE } from '@/constants';
-import { InventoryHeader, InventoryHero, FilterChips, InventoryRow, InventorySkeleton, InventoryEmptyState, InventoryActionModal, GuideModal } from '@/components/inventory';
+import {
+  InventoryHeader,
+  InventoryHero,
+  FilterChips,
+  InventoryRow,
+  InventorySkeleton,
+  InventoryEmptyState,
+  InventoryActionModal,
+  GuideModal,
+  StockAlertBanner,
+} from '@/components/inventory';
+import { FontAwesome } from '@expo/vector-icons';
 
 interface PendingAction {
   product: Product;
   type: 'restock';
 }
 
+type FilterMode = 'all' | 'low' | 'out';
+
 export default function InventoryScreen() {
   const [search, setSearch] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
-  const [showLowOnly, setShowLowOnly] = useState<boolean>(false);
+  const [filter, setFilter] = useState<FilterMode>('all');
   const [showFilter, setShowFilter] = useState<boolean>(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
     null,
@@ -37,6 +50,9 @@ export default function InventoryScreen() {
   const { getAllProductsQuery } = useProducts();
   const { insertInventoryMutation } = useInventory();
 
+  // Query products
+  const { data: products, isLoading, refetch } = getAllProductsQuery;
+
   // Debounce search input
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -48,10 +64,7 @@ export default function InventoryScreen() {
   // Reset to first page when search or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, showLowOnly]);
-
-  // Query products
-  const { data: products, isLoading, refetch } = getAllProductsQuery();
+  }, [debouncedSearch, filter]);
 
   useFocusEffect(
     useCallback(() => {
@@ -98,7 +111,7 @@ export default function InventoryScreen() {
   }, [refetch]);
 
   // Mutation for inventory transaction
-  const transactionMutation = insertInventoryMutation();
+  const transactionMutation = insertInventoryMutation;
 
   const filtered = useMemo(() => {
     if (!products) return [];
@@ -111,10 +124,15 @@ export default function InventoryScreen() {
           p.sku.toLowerCase().includes(term),
       );
     }
-    if (showLowOnly)
-      list = list.filter((p) => p.quantity < LOW_STOCK_THRESHOLD);
+    if (filter === 'low') {
+      list = list.filter(
+        (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
+      );
+    } else if (filter === 'out') {
+      list = list.filter((p) => p.quantity === 0);
+    }
     return list;
-  }, [products, debouncedSearch, showLowOnly]);
+  }, [products, debouncedSearch, filter]);
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -175,7 +193,7 @@ export default function InventoryScreen() {
       };
     }
     const lowStockCount = products.filter(
-      (p) => p.quantity < LOW_STOCK_THRESHOLD,
+      (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
     ).length;
     const outOfStockCount = products.filter((p) => p.quantity === 0).length;
     const totalItems = products.reduce((acc, p) => acc + p.quantity, 0);
@@ -195,8 +213,14 @@ export default function InventoryScreen() {
 
   const subtitle = useMemo(() => {
     if (!products || products.length === 0) return 'Track your stock';
-    return `${products.length} ${products.length === 1 ? 'product' : 'products'} • ${summary.lowStockCount} low stock`;
-  }, [products, summary.lowStockCount]);
+    const low = summary.lowStockCount;
+    const out = summary.outOfStockCount;
+    const base = `${products.length} ${products.length === 1 ? 'product' : 'products'}`;
+    if (low === 0 && out === 0) return base;
+    if (out === 0) return `${base} · ${low} low stock`;
+    if (low === 0) return `${base} · ${out} out of stock`;
+    return `${base} · ${low} low · ${out} out`;
+  }, [products, summary.lowStockCount, summary.outOfStockCount]);
 
   const handleOpenGuide = useCallback(() => {
     setShowGuide(true);
@@ -212,7 +236,9 @@ export default function InventoryScreen() {
 
   const handleFilterChange = useCallback(
     (nextFilters: { lowStock: boolean; outOfStock: boolean }) => {
-      setShowLowOnly(nextFilters.lowStock);
+      if (nextFilters.lowStock) setFilter('low');
+      else if (nextFilters.outOfStock) setFilter('out');
+      else setFilter('all');
     },
     [],
   );
@@ -232,7 +258,15 @@ export default function InventoryScreen() {
         onOpenGuide={handleOpenGuide}
         onOpenFilter={handleOpenFilter}
         onAddProduct={handleAddProduct}
-        activeFilterCount={showLowOnly ? 1 : 0}
+        activeFilterCount={filter !== 'all' ? 1 : 0}
+      />
+
+      <StockAlertBanner
+        lowStockCount={summary.lowStockCount}
+        outOfStockCount={summary.outOfStockCount}
+        onTap={() => setFilter(filter === 'all' ? 'low' : filter)}
+        activeFilter={filter}
+        onClearFilter={() => setFilter('all')}
       />
 
       {/* SearchBar wrapper in cinnamon */}
@@ -270,7 +304,10 @@ export default function InventoryScreen() {
 
             {showFilter && (
               <FilterChips
-                filters={{ lowStock: showLowOnly, outOfStock: false }}
+                filters={{
+                  lowStock: filter === 'low',
+                  outOfStock: filter === 'out',
+                }}
                 onChange={handleFilterChange}
                 onOpenMore={() => {}}
               />
@@ -294,6 +331,29 @@ export default function InventoryScreen() {
             <InventorySkeleton />
           ) : products && products.length === 0 ? (
             <InventoryEmptyState onAddProduct={handleAddProduct} />
+          ) : products && products.length > 0 && filtered.length === 0 ? (
+            <View className="items-center justify-center py-12 px-4">
+              <FontAwesome
+                name="search"
+                size={32}
+                color="#A89F90"
+                style={{ marginBottom: 12 }}
+              />
+              <StyledText
+                variant="semibold"
+                className="text-base text-ink-700 text-center"
+              >
+                No products found
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-sm text-ink-500 text-center mt-1"
+              >
+                {filter !== 'all'
+                  ? 'Try clearing the active filter or changing your search.'
+                  : 'Try searching for something else.'}
+              </StyledText>
+            </View>
           ) : null
         }
       />

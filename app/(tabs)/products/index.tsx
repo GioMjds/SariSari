@@ -1,7 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, TouchableOpacity, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { CategoriesTab, ProductsTab } from '@/components/products';
@@ -10,47 +9,23 @@ type TabType = 'products' | 'categories';
 
 export default function Products() {
   const [activeTab, setActiveTab] = useState<TabType>('products');
-  const [showSortModal, setShowSortModal] = useState<boolean>(false);
-
   const params = useLocalSearchParams<{ filterCategory?: string }>();
-
-  const router = useRouter();
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Header */}
-      <View className="p-4 pb-2">
-        <View className="flex-row justify-between items-center mb-3">
-          <StyledText variant="extrabold" className="text-black text-3xl">
-            Your Products
-          </StyledText>
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => router.push('/(edit-forms)/add-product')}
-              hitSlop={20}
-              activeOpacity={0.2}
-              className="bg-secondary-500 rounded-xl px-4 py-2 flex-row items-center gap-2"
-            >
-              <FontAwesome name="plus" size={18} color="#fff" />
-              <StyledText variant="semibold" className="text-white text-sm">
-                Add Product
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Tab Switcher */}
-        <View className="flex-row bg-white rounded-xl p-3 shadow-sm">
+      {/* Cinnamon-styled Tab Switcher */}
+      <View className="bg-cinnamon-500 px-5 pt-3 pb-2">
+        <View className="flex-row bg-cinnamon-700/50 rounded-xl p-1 border border-cinnamon-600">
           <Pressable
             onPress={() => setActiveTab('products')}
-            className={`flex-1 py-3 rounded-lg items-center ${
-              activeTab === 'products' ? 'bg-secondary-500' : ''
+            className={`flex-1 py-2 rounded-lg items-center ${
+              activeTab === 'products' ? 'bg-persimmon-500' : ''
             }`}
           >
             <StyledText
               variant="semibold"
               className={`text-sm ${
-                activeTab === 'products' ? 'text-white' : 'text-warm-600'
+                activeTab === 'products' ? 'text-white' : 'text-paper-300'
               }`}
             >
               Products
@@ -58,14 +33,14 @@ export default function Products() {
           </Pressable>
           <Pressable
             onPress={() => setActiveTab('categories')}
-            className={`flex-1 py-3 rounded-lg items-center ${
-              activeTab === 'categories' ? 'bg-secondary-500' : ''
+            className={`flex-1 py-2 rounded-lg items-center ${
+              activeTab === 'categories' ? 'bg-persimmon-500' : ''
             }`}
           >
             <StyledText
               variant="semibold"
               className={`text-sm ${
-                activeTab === 'categories' ? 'text-white' : 'text-warm-600'
+                activeTab === 'categories' ? 'text-white' : 'text-paper-300'
               }`}
             >
               Categories
@@ -76,11 +51,7 @@ export default function Products() {
 
       {/* Tab Content */}
       {activeTab === 'products' ? (
-        <ProductsTab
-          filterCategory={params.filterCategory}
-          showSortModal={showSortModal}
-          setShowSortModal={setShowSortModal}
-        />
+        <ProductsTab filterCategory={params.filterCategory} />
       ) : (
         <CategoriesTab />
       )}

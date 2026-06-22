@@ -26,7 +26,7 @@ export const FilterChips = React.memo(function FilterChips({
   onChange,
   onOpenMore,
 }: FilterChipsProps) {
-  const hasActive = filters.lowStock;
+  const hasActive = filters.lowStock || filters.outOfStock;
 
   return (
     <MotiView
@@ -47,7 +47,7 @@ export const FilterChips = React.memo(function FilterChips({
           {/* Low Stock Chip */}
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={() => onChange({ ...filters, lowStock: !filters.lowStock })}
+            onPress={() => onChange({ lowStock: !filters.lowStock, outOfStock: false })}
             className={`${CHIP_BASE} ${
               filters.lowStock
                 ? 'bg-persimmon-500 border-persimmon-500'
@@ -71,20 +71,28 @@ export const FilterChips = React.memo(function FilterChips({
             </StyledText>
           </TouchableOpacity>
 
-          {/* Out of Stock Chip (no-op visual placeholder) */}
+          {/* Out of Stock Chip */}
           <TouchableOpacity
             activeOpacity={0.85}
-            className={`${CHIP_BASE} ${CHIP_INACTIVE}`}
+            onPress={() => onChange({ lowStock: false, outOfStock: !filters.outOfStock })}
+            className={`${CHIP_BASE} ${
+              filters.outOfStock
+                ? 'bg-persimmon-500 border-persimmon-500'
+                : CHIP_INACTIVE
+            }`}
+            style={filters.outOfStock ? CHIP_SHADOW : undefined}
           >
             <FontAwesome
               name="times-circle"
               size={12}
-              color="#A89F90"
+              color={filters.outOfStock ? '#FBF7EE' : '#A89F90'}
               style={{ marginRight: 6 }}
             />
             <StyledText
-              variant="medium"
-              className="text-sm text-ink-700"
+              variant={filters.outOfStock ? 'extrabold' : 'medium'}
+              className={`text-sm ${
+                filters.outOfStock ? 'text-paper-50' : 'text-ink-700'
+              }`}
             >
               Out of Stock
             </StyledText>

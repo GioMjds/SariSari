@@ -1,7 +1,13 @@
-import React from 'react';
-import { Modal, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import {
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { Product } from '@/types';
@@ -38,24 +44,18 @@ export function InventoryActionModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-end bg-black/50">
-        <TouchableOpacity
-          className="flex-1"
-          activeOpacity={1}
-          onPress={onClose}
-          disabled={isSubmitting}
-        />
-        {pendingAction && (
-          <KeyboardAwareScrollView
-            enableOnAndroid
-            enableAutomaticScroll
-            extraScrollHeight={280}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-            }}
-          >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1"
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <TouchableOpacity
+            className="flex-1"
+            activeOpacity={1}
+            onPress={onClose}
+            disabled={isSubmitting}
+          />
+          {pendingAction && (
             <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100 pb-10">
               {/* Header */}
               <View className="flex-row items-center justify-between mb-4">
@@ -65,7 +65,11 @@ export function InventoryActionModal({
                 >
                   Restock Product
                 </StyledText>
-                <TouchableOpacity onPress={onClose} disabled={isSubmitting} className="p-1">
+                <TouchableOpacity
+                  onPress={onClose}
+                  disabled={isSubmitting}
+                  className="p-1"
+                >
                   <FontAwesome name="times" size={20} color="#7A7165" />
                 </TouchableOpacity>
               </View>
@@ -161,9 +165,9 @@ export function InventoryActionModal({
                 </TouchableOpacity>
               </View>
             </View>
-          </KeyboardAwareScrollView>
-        )}
-      </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

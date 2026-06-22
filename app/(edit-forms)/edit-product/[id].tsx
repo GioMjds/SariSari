@@ -37,7 +37,7 @@ export default function EditProduct() {
   const { useGetProduct, updateProductMutation, deleteProductMutation } =
     useProducts();
   const { getAllCategoriesQuery } = useCategories();
-  const { data: categories = [] } = getAllCategoriesQuery();
+  const { data: categories = [] } = getAllCategoriesQuery;
 
   const { data: product, isLoading } = useGetProduct(parseInt(id, 10));
 

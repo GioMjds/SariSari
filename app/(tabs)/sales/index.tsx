@@ -1,6 +1,18 @@
 import { StyledText } from '@/components/elements';
-import { FilterChips, SaleRow, SalesEmptyState, SalesFilterModal, SalesSkeleton } from '@/components/sales';
-import { MoneyText, Pagination, ReceiptHero, ReceiptHeroDivider, ReceiptHeroMeta } from '@/components/ui';
+import {
+  FilterChips,
+  SaleRow,
+  SalesEmptyState,
+  SalesFilterModal,
+  SalesSkeleton,
+} from '@/components/sales';
+import {
+  MoneyText,
+  Pagination,
+  ReceiptHero,
+  ReceiptHeroDivider,
+  ReceiptHeroMeta,
+} from '@/components/ui';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
 import { SaleWithItems } from '@/types';

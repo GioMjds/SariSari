@@ -274,7 +274,7 @@ export function useCreateSupplier() {
 ### Step 6 — verify
 
 - `npx expo start` and exercise the flow on the simulator.
-- `npm test` for any new tests.
+- `pnpm test` for any new tests.
 - Confirm the screen works with airplane mode on (offline rule).
 
 ## Daily-driver cheatsheet
@@ -285,7 +285,7 @@ export function useCreateSupplier() {
 - `npx expo run:ios` / `run:android` — native builds (needed for `expo-sqlite` and
   other modules that don't run in Expo Go)
 - `npx expo lint` — ESLint
-- `npm test` — Jest (uses `better-sqlite3` for DB tests)
+- `pnpm test` — Jest (uses `better-sqlite3` for DB tests)
 - `eas build --platform android` — production build
 
 ### File-naming conventions

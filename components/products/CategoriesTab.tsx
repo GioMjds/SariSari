@@ -1,5 +1,7 @@
 import { StyledText } from '@/components/elements';
-import { CategoryCard } from '@/components/products';
+// Import directly from the sibling to avoid a require cycle through the barrel
+// (`components/products/index.ts` re-exports this file alongside `./CategoryCard`).
+import { CategoryCard } from './CategoryCard';
 import { useCategories } from '@/hooks';
 import { CategoryWithCount } from '@/types';
 import { Alert } from '@/utils';
@@ -15,8 +17,9 @@ import {
   RefreshControl,
   TextInput,
   View,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface CategoryFormData {
   name: string;
@@ -231,23 +234,17 @@ export function CategoriesTab() {
         animationType="fade"
         onRequestClose={() => setShowAddModal(false)}
       >
-        <Pressable
-          className="flex-1 justify-end"
-          onPress={() => setShowAddModal(false)}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1"
         >
-          <KeyboardAwareScrollView
-            enableOnAndroid
-            enableAutomaticScroll
-            extraScrollHeight={280}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-            }}
+          <Pressable
+            className="flex-1 justify-end"
+            onPress={() => setShowAddModal(false)}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%]"
+              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText
@@ -312,8 +309,8 @@ export function CategoriesTab() {
                 </Pressable>
               </View>
             </Pressable>
-          </KeyboardAwareScrollView>
-        </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Category Modal */}
@@ -323,23 +320,17 @@ export function CategoriesTab() {
         animationType="fade"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <Pressable
-          className="flex-1 justify-end"
-          onPress={() => setShowEditModal(false)}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1"
         >
-          <KeyboardAwareScrollView
-            enableOnAndroid
-            enableAutomaticScroll
-            extraScrollHeight={280}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-            }}
+          <Pressable
+            className="flex-1 justify-end"
+            onPress={() => setShowEditModal(false)}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%]"
+              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText
@@ -404,8 +395,8 @@ export function CategoriesTab() {
                 </Pressable>
               </View>
             </Pressable>
-          </KeyboardAwareScrollView>
-        </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Delete Confirmation Modal */}

@@ -15,7 +15,7 @@ interface SalesFilterModalProps {
   onApplyFilters: (filters: SalesFilterState) => void;
 }
 
-const PERFORATION_COUNT = 22;
+const PERFORATION_COUNT = 24;
 const PERFORATION_BG = '#EFE6D2'; // page bg = paper-200, so circles look bitten out
 
 /**

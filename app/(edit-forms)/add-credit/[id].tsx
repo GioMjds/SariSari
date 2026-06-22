@@ -58,7 +58,7 @@ export default function AddCreditTransaction() {
 	const { data: customer } = useCustomer(Number(id));
 
 	// Query products
-	const { data: products = [] } = getAllProductsQuery();
+	const { data: products = [] } = getAllProductsQuery;
 
 	// Refetch on focus
 	useFocusEffect(

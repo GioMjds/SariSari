@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EntryGate() {
 	const router = useRouter();
-	const [checking, setChecking] = useState(true);
+	const [checking, setChecking] = useState<boolean>(true);
 
 	useEffect(() => {
 		const run = async () => {

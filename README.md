@@ -127,7 +127,7 @@ utils/                # Date/Time formatting and mathematical utilities
 Navigate into the project directory and install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Run the App
@@ -167,7 +167,7 @@ npx expo lint
 Execute the Jest test runner:
 
 ```bash
-npm test
+pnpm test
 ```
 
 _Note: Jest utilizes `better-sqlite3` internally to mock database instances and run schema/migration tests locally._
