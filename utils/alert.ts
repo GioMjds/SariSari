@@ -2,6 +2,10 @@ import { useModalStore } from '@/stores/ModalStore';
 import { AlertButton, AlertOptions } from 'react-native';
 import { ModalButton } from '@/types/ui/Modal.types';
 
+/**
+ * This is to replace the default React Native Alert with our custom modal implementation.
+ * It uses the same API as the default Alert, but shows a custom modal instead.
+ */
 const alert = (
   title: string,
   message?: string,

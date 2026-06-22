@@ -1,12 +1,14 @@
+import React, { useEffect, useState } from 'react';
 import {
 	View,
-	TouchableWithoutFeedback,
-	Modal as RNModal,
 	Pressable,
+	Modal as RNModal,
 	ActivityIndicator,
+	AccessibilityInfo,
 	type ModalProps as RNModalProps,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { useModalStore } from '@/stores';
 import { ModalButton } from '@/types';
@@ -18,7 +20,7 @@ interface CustomModalProps
 	title?: string;
 	description?: string;
 	buttons?: ModalButton[];
-	variant?: 'default' | 'success' | 'warning' | 'danger';
+	variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
 	icon?: keyof typeof FontAwesome.glyphMap;
 	size?: 'sm' | 'md' | 'lg' | 'xl';
 	closeOnOverlay?: boolean;
@@ -27,8 +29,15 @@ interface CustomModalProps
 	onClose?: () => void;
 	children?: React.ReactNode;
 	loading?: boolean;
+	/** Per-button loading override. Falls back to the top-level `loading` prop for the first button. */
+	buttonLoading?: boolean[];
 }
 
+/**
+ * Modal — a tone-aware confirmation dialog. Backed by a Zustand store
+ * (id-based open) or a controlled prop (visible). Mounts with a Moti
+ * scale-in entrance; honors Reduce Motion by collapsing to opacity-only.
+ */
 export function Modal ({
 	id,
 	visible,
@@ -44,12 +53,31 @@ export function Modal ({
 	onClose,
 	children,
 	loading = false,
-	animationType = 'fade',
+	buttonLoading,
+	animationType = 'none',
 	transparent = true,
 	presentationStyle,
 	...rest
 }: CustomModalProps) {
 	const { modals, closeModal } = useModalStore();
+	const [reducedMotion, setReducedMotion] = useState(false);
+
+	useEffect(() => {
+		let active = true;
+		AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+			if (active) setReducedMotion(enabled);
+		});
+		const sub = AccessibilityInfo.addEventListener(
+			'reduceMotionChanged',
+			(enabled) => {
+				if (active) setReducedMotion(enabled);
+			},
+		);
+		return () => {
+			active = false;
+			sub.remove();
+		};
+	}, []);
 
 	const storeModal = id ? modals.find((m) => m.id === id) : null;
 
@@ -74,10 +102,6 @@ export function Modal ({
 		if (finalCloseOnOverlay) handleClose();
 	};
 
-	const handleContentPress = (event: any) => {
-		event.stopPropagation();
-	};
-
 	const getSizeClasses = () => {
 		switch (size) {
 			case 'sm':
@@ -93,25 +117,33 @@ export function Modal ({
 		}
 	};
 
+	// Tone palette: bg is the chip background; color is the icon hex
+	// (FontAwesome requires a string, not a class).
 	const getVariantStyles = () => {
 		switch (finalVariant) {
 			case 'danger':
 				return {
-					iconBg: 'bg-red-50',
-					iconColor: '#DC2626',
+					iconBg: 'bg-semantic-danger-50',
+					iconColor: '#C13030',
 					defaultIcon: 'exclamation-triangle',
 				};
 			case 'success':
 				return {
-					iconBg: 'bg-secondary-50',
-					iconColor: '#65A30D',
+					iconBg: 'bg-sage-50',
+					iconColor: '#3D5E1B',
 					defaultIcon: 'check-circle',
 				};
 			case 'warning':
 				return {
-					iconBg: 'bg-amber-50',
-					iconColor: '#D97706',
+					iconBg: 'bg-semantic-warning-50',
+					iconColor: '#C77B0E',
 					defaultIcon: 'exclamation-circle',
+				};
+			case 'info':
+				return {
+					iconBg: 'bg-semantic-info-50',
+					iconColor: '#2E6FA8',
+					defaultIcon: 'info-circle',
 				};
 			default:
 				return {
@@ -135,131 +167,146 @@ export function Modal ({
 			animationType={animationType}
 			presentationStyle={presentationStyle}
 			onRequestClose={handleClose}
+			accessibilityViewIsModal
 		>
-			<TouchableWithoutFeedback onPress={handleOverlayPress}>
-				<View
-					className="flex-1 justify-center items-center px-6"
-					style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+			<View
+				className="flex-1 justify-center items-center px-6"
+				style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+			>
+				<Pressable
+					accessibilityLabel="Dismiss"
+					accessibilityRole="button"
+					onPress={handleOverlayPress}
+					className="absolute inset-0"
+				/>
+				<MotiView
+					from={
+						reducedMotion
+							? { opacity: 0 }
+							: { opacity: 0, scale: 0.95 }
+					}
+					animate={
+						reducedMotion
+							? { opacity: 1 }
+							: { opacity: 1, scale: 1 }
+					}
+					transition={
+						reducedMotion
+							? { type: 'timing', duration: 160 }
+							: { type: 'spring', damping: 18, stiffness: 220 }
+					}
+					className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
+					style={{ zIndex: 1 }}
+					accessibilityLabel={finalTitle || 'Dialog'}
 				>
-					<TouchableWithoutFeedback onPress={handleContentPress}>
-						<View
-							className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
-						>
-							{/* Header / Icon */}
-							{(finalTitle ||
-								finalDescription ||
-								finalIcon ||
-								finalVariant !== 'default') && (
-								<View className="items-center mb-4">
-									{(finalIcon ||
-										finalVariant !== 'default') && (
-										<View
-											className={`${variantStyles.iconBg} rounded-full px-4 py-3 mb-3`}
-										>
-											<FontAwesome
-												name={displayIcon as any}
-												size={36}
-												color={variantStyles.iconColor}
-											/>
-										</View>
-									)}
-									{finalTitle && (
-										<StyledText
-											variant="extrabold"
-											className="text-warm-900 text-xl mb-2 text-center"
-										>
-											{finalTitle}
-										</StyledText>
-									)}
-									{finalDescription && (
-										<StyledText
-											variant="regular"
-											className="text-warm-700 text-sm text-center"
-										>
-											{finalDescription}
-										</StyledText>
-									)}
+					{/* Header / Icon */}
+					{(finalTitle ||
+						finalDescription ||
+						finalIcon ||
+						finalVariant !== 'default') && (
+						<View className="items-center mb-4">
+							{(finalIcon || finalVariant !== 'default') && (
+								<View
+									className={`${variantStyles.iconBg} rounded-full px-4 py-3 mb-3`}
+								>
+									<FontAwesome
+										name={displayIcon as any}
+										size={36}
+										color={variantStyles.iconColor}
+									/>
 								</View>
 							)}
-
-							{/* Custom Content */}
-							{finalChildren && (
-								<View className="mb-4">{finalChildren}</View>
+							{finalTitle && (
+								<StyledText
+									variant="extrabold"
+									className="text-warm-900 text-xl mb-2 text-center"
+								>
+									{finalTitle}
+								</StyledText>
 							)}
-
-							{/* Buttons */}
-							{finalButtons && finalButtons.length > 0 && (
-								<View className="gap-3">
-									{finalButtons.map(
-										(
-											button: ModalButton,
-											index: number
-										) => {
-											const isDestructive =
-												button.style === 'destructive';
-											const isCancel =
-												button.style === 'cancel';
-
-											let bgClass = 'bg-primary-500';
-											let textClass = 'text-white';
-
-											if (isDestructive) {
-												bgClass = 'bg-semantic-danger';
-											} else if (isCancel) {
-												bgClass = 'bg-warm-200';
-												textClass = 'text-warm-900';
-											}
-
-											return (
-												<Pressable
-													key={index}
-													onPress={() => {
-														button.onPress?.();
-														// If it's a store modal, we might want to close it automatically?
-														// Usually Alert buttons close the alert.
-														if (id) closeModal(id);
-													}}
-													disabled={loading}
-													className={`${bgClass} rounded-xl py-3 active:opacity-70`}
-												>
-													{loading && index === 0 ? (
-														<ActivityIndicator color="#fff" />
-													) : (
-														<StyledText
-															variant={
-																isCancel
-																	? 'semibold'
-																	: 'extrabold'
-															}
-															className={`${textClass} text-center text-base`}
-														>
-															{button.text}
-														</StyledText>
-													)}
-												</Pressable>
-											);
-										}
-									)}
-								</View>
+							{finalDescription && (
+								<StyledText
+									variant="regular"
+									className="text-warm-700 text-sm text-center"
+								>
+									{finalDescription}
+								</StyledText>
 							)}
-
-							{/* Close Button (if no buttons and showCloseButton is true) */}
-							{finalShowCloseButton &&
-								(!finalButtons ||
-									finalButtons.length === 0) && (
-									<Pressable
-										onPress={handleClose}
-										className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100"
-									>
-										<StyledText className="text-warm-500 text-lg font-stack-sans-bold">
-											×
-										</StyledText>
-									</Pressable>
-								)}
 						</View>
-					</TouchableWithoutFeedback>
-				</View>
-			</TouchableWithoutFeedback>
+					)}
+
+					{/* Custom Content */}
+					{finalChildren && <View className="mb-4">{finalChildren}</View>}
+
+					{/* Buttons */}
+					{finalButtons && finalButtons.length > 0 && (
+						<View className="gap-3">
+							{finalButtons.map(
+								(button: ModalButton, index: number) => {
+									const isDestructive = button.style === 'destructive';
+									const isCancel = button.style === 'cancel';
+									const isLoading = buttonLoading?.[index] ?? (loading && index === 0);
+
+									let bgClass = 'bg-primary-500';
+									let textClass = 'text-white';
+									let borderClass = '';
+
+									if (isDestructive) {
+										bgClass = 'bg-semantic-danger';
+									} else if (isCancel) {
+										bgClass = 'bg-warm-200';
+										textClass = 'text-warm-900';
+									}
+
+									if (isLoading) {
+										borderClass = 'border border-persimmon-300';
+									}
+
+									return (
+										<Pressable
+											key={index}
+											onPress={() => {
+												button.onPress?.();
+												if (id) closeModal(id);
+											}}
+											disabled={isLoading}
+											accessibilityRole="button"
+											accessibilityLabel={button.text}
+											className={`${bgClass} ${borderClass} rounded-xl py-3 press-scale active:opacity-70`}
+										>
+											{isLoading ? (
+												<ActivityIndicator color="#fff" />
+											) : (
+												<StyledText
+													variant={
+														isCancel ? 'semibold' : 'extrabold'
+													}
+													className={`${textClass} text-center text-base`}
+												>
+													{button.text}
+												</StyledText>
+											)}
+										</Pressable>
+									);
+								}
+							)}
+						</View>
+					)}
+
+					{/* Close Button (if no buttons and showCloseButton is true) */}
+					{finalShowCloseButton &&
+						(!finalButtons || finalButtons.length === 0) && (
+							<Pressable
+								onPress={handleClose}
+								accessibilityRole="button"
+								accessibilityLabel="Close"
+								className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
+							>
+								<FontAwesome name="times" size={18} color="#A89F90" />
+							</Pressable>
+						)}
+				</MotiView>
+			</View>
 		</RNModal>
 	);
 };

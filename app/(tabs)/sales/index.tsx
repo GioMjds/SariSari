@@ -221,7 +221,7 @@ export default function Sales() {
                   >
                     <StyledText
                       variant="black"
-                      className="text-paper-50 text-sm"
+                      className="text-paper-50 text-xl"
                     >
                       ₱
                     </StyledText>

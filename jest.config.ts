@@ -1,5 +1,5 @@
 module.exports = {
-	testEnvironment: 'node',
+	preset: 'react-native',
 	testMatch: [
 		'<rootDir>/tests/**/*.test.ts',
 		'<rootDir>/utils/__tests__/**/*.test.ts',

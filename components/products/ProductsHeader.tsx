@@ -1,7 +1,6 @@
 import { memo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { MotiView } from 'moti';
-import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
 interface ProductsHeaderProps {
@@ -71,15 +70,6 @@ export const ProductsHeader = memo(function ProductsHeader({
               {subtitle}
             </StyledText>
           </View>
-
-          {/* Settings button on the right */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={onSettingsPress}
-            className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15"
-          >
-            <FontAwesome name="cog" size={18} color="#FBF7EE" />
-          </TouchableOpacity>
         </View>
       </View>
     </MotiView>
