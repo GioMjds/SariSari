@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
 import { View } from 'react-native';
@@ -53,22 +54,24 @@ export default function RootLayout() {
   }, [fontsLoaded, dbInitError]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SQLiteProvider databaseName="sarisari.db">
-        <SafeAreaProvider>
-          <StatusBar style="inverted" backgroundColor="#623418" />
-          <View style={{ flex: 1 }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: 'ios_from_right',
-              }}
-            />
-          </View>
-          <Toast />
-          <GlobalModal />
-        </SafeAreaProvider>
-      </SQLiteProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <SQLiteProvider databaseName="sarisari.db">
+          <SafeAreaProvider>
+            <StatusBar style="inverted" />
+            <View style={{ flex: 1 }}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: 'ios_from_right',
+                }}
+              />
+            </View>
+            <Toast />
+            <GlobalModal />
+          </SafeAreaProvider>
+        </SQLiteProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

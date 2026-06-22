@@ -64,7 +64,7 @@ export function useProducts() {
     onError: (error: Error) => {
       addToast({
         message: error.message || 'Failed to add product',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },
@@ -95,7 +95,7 @@ export function useProducts() {
     onError: (error: Error) => {
       addToast({
         message: error.message || 'Failed to update product',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },
@@ -116,7 +116,7 @@ export function useProducts() {
     onError: (error: Error) => {
       addToast({
         message: error.message || 'Failed to delete product',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },

@@ -159,7 +159,7 @@ export default function InventoryScreen() {
     if (isNaN(qty) || qty <= 0) {
       addToast({
         message: 'Please enter a valid quantity',
-        variant: 'error',
+        variant: 'danger',
         duration: 1800,
       });
       return;

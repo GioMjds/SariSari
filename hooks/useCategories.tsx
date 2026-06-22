@@ -63,7 +63,7 @@ export function useCategories() {
     onError: () => {
       addToast({
         message: 'Your category doesn\'t add. Please try again.',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },
@@ -87,7 +87,7 @@ export function useCategories() {
     onError: () => {
       addToast({
         message: 'Your category doesn\'t update. Please try again.',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },
@@ -109,7 +109,7 @@ export function useCategories() {
     onError: () => {
       addToast({
         message: 'Something went wrong. Please try again.',
-        variant: 'error',
+        variant: 'danger',
         duration: 5000,
       });
     },

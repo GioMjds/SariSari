@@ -4,6 +4,8 @@ import { useToastStore } from '@/stores';
 import { Toast } from '@/components/ui/Toast';
 import { AccessibilityInfo } from 'react-native';
 
+
+
 const mockNotificationAsync = jest.fn();
 jest.mock('expo-haptics', () => ({
   notificationAsync: (type: any) => {
@@ -59,7 +61,7 @@ describe('Toast Component & Store', () => {
   // 2. Renders each variant with correct styling
   test.each([
     ['success', 'SUCCESS', 'text-secondary-500', 'bg-secondary-50', '#3D5E1B', 'check-circle'],
-    ['error', 'ERROR', 'text-semantic-danger', 'bg-red-50', '#C13030', 'exclamation-circle'],
+    ['danger', 'ERROR', 'text-semantic-danger', 'bg-red-50', '#C13030', 'exclamation-circle'],
     ['info', 'INFO', 'text-semantic-info', 'bg-blue-50', '#2E6FA8', 'info-circle'],
     ['warning', 'WARNING', 'text-semantic-warning', 'bg-amber-50', '#A35F00', 'warning'],
     ['default', 'NOTICE', 'text-cinnamon-400', 'bg-paper-200', '#623418', 'bell'],
@@ -73,16 +75,17 @@ describe('Toast Component & Store', () => {
         });
       });
 
-      const { getByText, getByLabelText } = await render(<Toast />);
+
+      const { findByText, findByLabelText } = await render(<Toast />);
       
       // Assert eyebrow text is visible
-      expect(getByText(eyebrowText)).toBeTruthy();
+      expect(await findByText(eyebrowText)).toBeTruthy();
       
       // Assert message text is visible
-      expect(getByText('Test message')).toBeTruthy();
+      expect(await findByText('Test message')).toBeTruthy();
 
       // Assert a11y label is correct on the item
-      expect(getByLabelText(`${eyebrowText}: Test message`)).toBeTruthy();
+      expect(await findByLabelText(`${eyebrowText}: Test message`)).toBeTruthy();
     }
   );
 
@@ -176,8 +179,8 @@ describe('Toast Component & Store', () => {
       });
     });
 
-    const { getByText } = await render(<Toast />);
-    const actionBtn = getByText('UNDO');
+    const { findByText } = await render(<Toast />);
+    const actionBtn = await findByText('UNDO');
     expect(actionBtn).toBeTruthy();
 
     act(() => {
@@ -205,8 +208,8 @@ describe('Toast Component & Store', () => {
       });
     });
 
-    const { getByText } = await render(<Toast />);
-    const actionBtn = getByText('RETRY');
+    const { findByText } = await render(<Toast />);
+    const actionBtn = await findByText('RETRY');
 
     act(() => {
       fireEvent.press(actionBtn);
@@ -225,7 +228,7 @@ describe('Toast Component & Store', () => {
     expect(mockNotificationAsync).toHaveBeenLastCalledWith('success');
 
     act(() => {
-      useToastStore.getState().addToast({ message: 'Error', variant: 'error' });
+      useToastStore.getState().addToast({ message: 'Error', variant: 'danger' });
     });
     expect(mockNotificationAsync).toHaveBeenLastCalledWith('error');
 
@@ -254,7 +257,8 @@ describe('Toast Component & Store', () => {
       useToastStore.getState().addToast({ message: 'Reduced motion test' });
     });
 
-    await render(<Toast />);
+    const { findByText } = await render(<Toast />);
+    await findByText('Reduced motion test');
     
     // We wait for useEffect to trigger the isReduceMotionEnabled check
     await act(async () => {
@@ -279,7 +283,10 @@ describe('Toast Component & Store', () => {
       useToastStore.getState().addToast({ message: 'Toast 3' });
     });
 
-    await render(<Toast />);
+    const { findByText } = await render(<Toast />);
+    await findByText('Toast 1');
+    await findByText('Toast 2');
+    await findByText('Toast 3');
     expect(mockMotiView).toHaveBeenCalledTimes(3);
 
     // Verify index-based stacking position translateY
@@ -298,14 +305,14 @@ describe('Toast Component & Store', () => {
       });
     });
 
-    const { getByLabelText } = await render(<Toast />);
+    const { findByLabelText } = await render(<Toast />);
     
     // ToastItem container label
-    expect(getByLabelText('SUCCESS: A11y test')).toBeTruthy();
+    expect(await findByLabelText('SUCCESS: A11y test')).toBeTruthy();
     // Dismiss button label
-    expect(getByLabelText('Dismiss notification')).toBeTruthy();
+    expect(await findByLabelText('Dismiss notification')).toBeTruthy();
     // Action button label
-    expect(getByLabelText('UNDO')).toBeTruthy();
+    expect(await findByLabelText('UNDO')).toBeTruthy();
   });
 
   // 13. clearToasts cancels all active timers

@@ -42,7 +42,7 @@ export default function OnboardingPage() {
         if (!profile.ownerName.trim() || !profile.storeName.trim()) {
             addToast({
                 message: 'Please add your name and store name',
-                variant: 'error',
+                variant: 'danger',
                 duration: 1800,
             });
             return;
@@ -63,7 +63,7 @@ export default function OnboardingPage() {
         } catch (_error) {
             addToast({
                 message: 'Could not save onboarding data',
-                variant: 'error',
+                variant: 'danger',
                 duration: 2000,
             });
         } finally {

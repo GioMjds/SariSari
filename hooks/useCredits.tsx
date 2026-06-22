@@ -185,7 +185,7 @@ export function useCredits() {
       onError: () => {
         addToast({
           message: 'Failed to delete customer',
-          variant: 'error',
+          variant: 'danger',
           duration: 5000,
         });
       },
@@ -214,7 +214,7 @@ export function useCredits() {
       onError: () => {
         addToast({
           message: 'Failed to add credit transaction',
-          variant: 'error',
+          variant: 'danger',
           duration: 5000,
         });
       },
@@ -273,7 +273,7 @@ export function useCredits() {
       onError: () => {
         addToast({
           message: 'Failed to add payment',
-          variant: 'error',
+          variant: 'danger',
           duration: 5000,
         });
       },
@@ -325,7 +325,7 @@ export function useCredits() {
       onError: (error) => {
         addToast({
           message: error.message || 'Failed to delete customer',
-          variant: 'error',
+          variant: 'danger',
           duration: 5000,
         });
       },

@@ -1,4 +1,4 @@
-export type ToastVariant = 'default' | 'success' | 'error' | 'info' | 'warning';
+export type ToastVariant = 'default' | 'success' | 'danger' | 'info' | 'warning';
 
 export interface ToastAction {
   label: string; // e.g. "UNDO", "RETRY"

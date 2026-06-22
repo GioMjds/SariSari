@@ -24,7 +24,7 @@ const getVariantColors = (variant: ToastVariant) => {
         accentColor: 'rgba(79, 122, 36, 0.35)',
         actionTextColor: 'text-secondary-500',
       };
-    case 'error':
+    case 'danger':
       return {
         iconName: 'exclamation-circle',
         chipBg: 'bg-red-50',
@@ -216,9 +216,7 @@ export const Toast = () => {
   const removeToast = useToastStore((s) => s.removeToast);
   const insets = useSafeAreaInsets();
 
-  if (toasts.length === 0) return null;
-
-  return (
+  const output = (
     <View
       pointerEvents="box-none"
       accessibilityLiveRegion="polite"
@@ -241,6 +239,8 @@ export const Toast = () => {
       </AnimatePresence>
     </View>
   );
+
+  return output;
 };
 
 export const ToastContainer = Toast;

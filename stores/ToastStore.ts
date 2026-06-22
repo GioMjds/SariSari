@@ -10,7 +10,7 @@ const hapticFor = (variant: ToastVariant) => {
       return Haptics.notificationAsync(
         Haptics.NotificationFeedbackType.Success,
       );
-    case 'error':
+    case 'danger':
       return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     case 'warning':
       return Haptics.notificationAsync(
