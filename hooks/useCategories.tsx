@@ -58,15 +58,13 @@ export function useCategories() {
         message: 'Category added successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       addToast({
-        message: error.message || 'Failed to add category',
+        message: 'Your category doesn\'t add. Please try again.',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });
@@ -84,15 +82,13 @@ export function useCategories() {
         message: 'Category updated successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       addToast({
-        message: error.message || 'Failed to update category',
+        message: 'Your category doesn\'t update. Please try again.',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });
@@ -108,15 +104,13 @@ export function useCategories() {
         message: 'Category deleted successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
-    onError: (error: Error) => {
+    onError: () => {
       addToast({
-        message: error.message || 'Failed to delete category',
+        message: 'Something went wrong. Please try again.',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });

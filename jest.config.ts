@@ -9,7 +9,7 @@ module.exports = {
 		'^@/(.*)$': '<rootDir>/$1',
 	},
 	transform: {
-		'^.+\\.(ts|tsx)$': 'ts-jest',
+		'^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
 	},
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 	collectCoverageFrom: [

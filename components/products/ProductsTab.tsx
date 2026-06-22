@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { Pagination } from '@/components/ui';
-import { SortOption, sortOption, ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD } from '@/constants';
+import { SortOption, ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD } from '@/constants';
 import { useProducts, useCategories } from '@/hooks';
 import { Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
@@ -18,36 +18,31 @@ import {
 } from 'react-native';
 import { MotiView } from 'moti';
 
-import { ProductsHeader } from './ProductsHeader';
 import { ProductsHero } from './ProductsHero';
 import { ProductCard } from './ProductCard';
 import { ProductsEmptyState } from './ProductsEmptyState';
 import { ProductsSkeleton } from './ProductsSkeleton';
 import { FilterChips } from '../inventory/FilterChips';
-import { SearchBar } from '../ui/SearchBar';
 
 type SortDirection = 'asc' | 'desc';
 
 interface ProductsTabProps {
   filterCategory?: string;
-  showSortModal?: boolean;
-  setShowSortModal?: (show: boolean) => void;
+  search: string;
+  sortBy: SortOption;
+  sortDirection: SortDirection;
+  onClearSearch?: () => void;
 }
 
 export function ProductsTab({
   filterCategory,
-  showSortModal: externalShowSortModal,
-  setShowSortModal: externalSetShowSortModal,
+  search,
+  sortBy,
+  sortDirection,
+  onClearSearch,
 }: ProductsTabProps) {
-  const [search, setSearch] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
-  const [sortBy, setSortBy] = useState<SortOption>('stock'); // default stock sort
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   
-  const [internalShowSortModal, setInternalShowSortModal] = useState<boolean>(false);
-  const showSortModal = externalShowSortModal ?? internalShowSortModal;
-  const setShowSortModal = externalSetShowSortModal ?? setInternalShowSortModal;
-
   const [showCategorySheet, setShowCategorySheet] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -203,16 +198,6 @@ export function ProductsTab({
     setRefreshing(false);
   };
 
-  const handleSort = (option: SortOption) => {
-    if (sortBy === option) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(option);
-      setSortDirection('asc');
-    }
-    setShowSortModal(false);
-  };
-
   const handleProductPress = useCallback((product: Product) => {
     router.push(`/(edit-forms)/edit-product/${product.id}` as any);
   }, [router]);
@@ -255,8 +240,10 @@ export function ProductsTab({
   }, []);
 
   const handleClearSearch = useCallback(() => {
-    setSearch('');
-  }, []);
+    if (onClearSearch) {
+      onClearSearch();
+    }
+  }, [onClearSearch]);
 
   if (isLoading) {
     return <ProductsSkeleton />;
@@ -273,57 +260,23 @@ export function ProductsTab({
 
   return (
     <View className="flex-1">
-      {/* Products Header (Z1) */}
-      <ProductsHeader
-        productCount={stats.total}
-        lowCount={stats.lowStock}
-        outCount={stats.outStock}
-      />
-
-      {/* Products Hero (Z2) */}
+      {/* Products Hero (Z2) - now sits at the top of the body page */}
       {hasProductsInDb && (
-        <ProductsHero
-          total={stats.total}
-          lowStock={stats.lowStock + stats.outStock}
-          totalValueCentavos={stats.totalValueCentavos}
-        />
+        <View className="mt-3">
+          <ProductsHero
+            total={stats.total}
+            lowStock={stats.lowStock + stats.outStock}
+            totalValueCentavos={stats.totalValueCentavos}
+          />
+        </View>
       )}
 
-      {/* Search & Sort Row (Z3a) */}
-      <MotiView
-        from={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ type: 'timing', duration: 320, delay: 80 }}
-      >
-        <View className="px-5 pb-4 bg-cinnamon-500 flex-row items-center gap-3">
-          <View className="flex-1">
-            <SearchBar
-              value={search}
-              onChange={setSearch}
-              placeholder="Search products or SKU..."
-            />
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setShowSortModal(true)}
-            className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 relative"
-          >
-            <FontAwesome name="sort" size={18} color="#FBF7EE" />
-            {(sortBy !== 'stock' || sortDirection !== 'asc') && (
-              <View className="absolute top-2 right-2 w-2 h-2 rounded-full bg-persimmon-500 animate-pulse" />
-            )}
-          </TouchableOpacity>
-        </View>
-      </MotiView>
-
       {/* Filter Chips Strip (Z3b) */}
-      <View className="mt-3">
-        <FilterChips
-          filters={mappedFiltersForChips}
-          onChange={handleChipsChange}
-          onOpenMore={() => setShowCategorySheet(true)}
-        />
-      </View>
+      <FilterChips
+        filters={mappedFiltersForChips}
+        onChange={handleChipsChange}
+        onOpenMore={() => setShowCategorySheet(true)}
+      />
 
       {/* Main Content Area */}
       {showEmptyState ? (
@@ -405,73 +358,6 @@ export function ProductsTab({
         </TouchableOpacity>
       </MotiView>
 
-      {/* Sort Modal */}
-      <Modal
-        visible={showSortModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSortModal(false)}
-      >
-        <Pressable
-          className="flex-1 justify-end"
-          onPress={() => setShowSortModal(false)}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-        >
-          <Pressable
-            className="bg-white rounded-t-3xl p-6"
-            onPress={(e) => e.stopPropagation()}
-          >
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-xl mb-4"
-            >
-              Sort By
-            </StyledText>
-            {sortOption.map((option) => (
-              <TouchableOpacity
-                key={option.key}
-                hitSlop={20}
-                onPress={() => handleSort(option.key)}
-                activeOpacity={0.2}
-                className="flex-row items-center justify-between py-4 border-b border-ink-100"
-              >
-                <View className="flex-row items-center">
-                  <FontAwesome
-                    name={option.icon as any}
-                    size={18}
-                    color="#E85A1F"
-                  />
-                  <StyledText
-                    variant="medium"
-                    className="text-ink-800 ml-3 text-base"
-                  >
-                    {option.label}
-                  </StyledText>
-                </View>
-                {sortBy === option.key && (
-                  <FontAwesome
-                    name={sortDirection === 'asc' ? 'sort-asc' : 'sort-desc'}
-                    size={18}
-                    color="#E85A1F"
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              onPress={() => setShowSortModal(false)}
-              className="bg-ink-100 rounded-xl py-3 mt-4 active:opacity-70"
-            >
-              <StyledText
-                variant="semibold"
-                className="text-ink-700 text-center text-base"
-              >
-                Close
-              </StyledText>
-            </TouchableOpacity>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
       {/* Category Bottom Sheet / Filter Picker */}
       <Modal
         visible={showCategorySheet}
@@ -489,10 +375,7 @@ export function ProductsTab({
             onPress={(e) => e.stopPropagation()}
           >
             <View className="flex-row justify-between items-center mb-4">
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-xl"
-              >
+              <StyledText variant="extrabold" className="text-ink-900 text-xl">
                 Filter by Category
               </StyledText>
               {(filters.category !== null || filters.uncategorized) && (
@@ -527,7 +410,7 @@ export function ProductsTab({
                 className="flex-row items-center justify-between py-4 border-b border-ink-100"
               >
                 <StyledText
-                  variant={filters.uncategorized ? 'bold' : 'medium'}
+                  variant={filters.uncategorized ? 'extrabold' : 'medium'}
                   className="text-ink-700 text-base"
                 >
                   No Category (Uncategorized)
@@ -555,7 +438,7 @@ export function ProductsTab({
                   >
                     <View className="flex-row items-center">
                       <StyledText
-                        variant={isSelected ? 'bold' : 'medium'}
+                        variant={isSelected ? 'extrabold' : 'medium'}
                         className="text-ink-700 text-base"
                       >
                         {cat.name}

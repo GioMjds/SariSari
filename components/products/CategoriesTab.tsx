@@ -1,6 +1,4 @@
 import { StyledText } from '@/components/elements';
-// Import directly from the sibling to avoid a require cycle through the barrel
-// (`components/products/index.ts` re-exports this file alongside `./CategoryCard`).
 import { CategoryCard } from './CategoryCard';
 import { useCategories } from '@/hooks';
 import { CategoryWithCount } from '@/types';
@@ -19,7 +17,9 @@ import {
   View,
   Platform,
   KeyboardAvoidingView,
+  TouchableOpacity,
 } from 'react-native';
+import { MotiView } from 'moti';
 
 interface CategoryFormData {
   name: string;
@@ -53,7 +53,7 @@ export function CategoriesTab() {
     data: categories = [],
     isLoading,
     refetch,
-  } = getCategoriesWithCountQuery();
+  } = getCategoriesWithCountQuery;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -93,7 +93,6 @@ export function CategoriesTab() {
   };
 
   const handleCategoryPress = (category: CategoryWithCount) => {
-    // Navigate to category detail screen using the category id
     router.push(`/(edit-forms)/category/${category.id}` as any);
   };
 
@@ -114,116 +113,128 @@ export function CategoriesTab() {
       return;
     }
 
-    try {
-      await updateCategoryMutation.mutateAsync({
-        id: selectedCategory.id,
-        name: data.name.trim(),
-      });
-      setShowEditModal(false);
-    } catch (error) {
-      // Error handled by mutation
-    }
+    await updateCategoryMutation.mutateAsync({
+      id: selectedCategory.id,
+      name: data.name.trim(),
+    });
+    setShowEditModal(false);
   };
 
   const confirmDelete = async () => {
     if (!selectedCategory) return;
 
-    try {
-      await deleteCategoryMutation.mutateAsync(selectedCategory.id);
-      setShowDeleteModal(false);
-    } catch (error) {
-      // Error handled by mutation
-    }
+    await deleteCategoryMutation.mutateAsync(selectedCategory.id);
+    setShowDeleteModal(false);
   };
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" color="#B45309" />
+      <View className="flex-1 justify-center items-center py-12">
+        <ActivityIndicator size="large" color="#E85A1F" />
       </View>
     );
   }
 
   return (
     <View className="flex-1">
-      {/* Stats Card */}
-      <View className="px-4 pt-3 pb-2">
-        <View className="bg-white rounded-2xl p-4 flex-row items-center justify-between border border-warm-100">
+      {/* Redesigned Categories Stats Card */}
+      <MotiView
+        from={{ opacity: 0, translateY: 10 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 320 }}
+        className="px-4 pt-3 pb-2"
+      >
+        <View className="bg-white rounded-2xl p-4 flex-row items-center justify-between border border-ink-100 shadow-sm">
           <View>
             <StyledText
-              variant="regular"
-              className="text-warm-600 text-sm mb-1"
+              variant="semibold"
+              className="text-ink-400 text-xs uppercase tracking-wider mb-1"
             >
               Total Categories
             </StyledText>
-            <StyledText variant="extrabold" className="text-primary-500 text-2xl">
+            <StyledText variant="extrabold" className="text-ink-900 text-2xl">
               {categories.length}
             </StyledText>
           </View>
-          <Pressable
+          <TouchableOpacity
+            activeOpacity={0.8}
             onPress={handleAddCategory}
-            className="bg-primary-500 rounded-2xl px-4 py-3 flex-row items-center gap-2 active:opacity-70"
+            className="bg-persimmon-500 rounded-pill px-5 py-3 flex-row items-center gap-2 shadow-persimmon-glow"
           >
-            <FontAwesome name="plus" size={16} color="#fff" />
-            <StyledText variant="semibold" className="text-white text-sm">
+            <FontAwesome name="plus" size={14} color="#FBF7EE" />
+            <StyledText variant="extrabold" className="text-paper-50 text-sm">
               Add Category
             </StyledText>
-          </Pressable>
+          </TouchableOpacity>
         </View>
-      </View>
+      </MotiView>
 
-      {/* Categories List */}
+      {/* Categories List with stagger animation */}
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <CategoryCard
-            category={item}
-            onPress={handleCategoryPress}
-            onEdit={handleEditCategory}
-            onDelete={handleDeleteCategory}
-          />
+        renderItem={({ item, index }) => (
+          <MotiView
+            from={{ opacity: 0, translateY: 10 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{
+              type: 'timing',
+              duration: 320,
+              delay: 100 + (index % 5) * 50,
+            }}
+          >
+            <CategoryCard
+              category={item}
+              onPress={handleCategoryPress}
+              onEdit={handleEditCategory}
+              onDelete={handleDeleteCategory}
+            />
+          </MotiView>
         )}
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#7A1CAC"
+            tintColor="#E85A1F"
+            colors={['#E85A1F']}
           />
         }
         ListEmptyComponent={
-          <View
-            className="flex-1 justify-center items-center px-8"
-            style={{ marginTop: 230 }}
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ type: 'timing', duration: 400 }}
+            className="flex-1 justify-center items-center px-8 mt-24"
           >
             <FontAwesome
               name="folder-open"
               size={64}
-              color="#B45309"
+              color="#E85A1F"
               style={{ opacity: 0.3 }}
             />
             <StyledText
               variant="semibold"
-              className="text-warm-700 text-lg mt-4 text-center"
+              className="text-ink-700 text-lg mt-4 text-center"
             >
               No categories yet
             </StyledText>
             <StyledText
               variant="regular"
-              className="text-warm-500 text-sm mt-2 text-center"
+              className="text-ink-500 text-sm mt-2 text-center"
             >
               Create categories to organize your products
             </StyledText>
-            <Pressable
+            <TouchableOpacity
+              activeOpacity={0.8}
               onPress={handleAddCategory}
-              className="bg-primary-500 rounded-2xl px-6 py-3 mt-6 active:opacity-70"
+              className="bg-persimmon-500 rounded-pill px-6 py-3 mt-6 shadow-persimmon-glow"
             >
-              <StyledText variant="semibold" className="text-white text-base">
+              <StyledText variant="extrabold" className="text-white text-base">
                 Add Category
               </StyledText>
-            </Pressable>
-          </View>
+            </TouchableOpacity>
+          </MotiView>
         }
       />
 
@@ -241,24 +252,24 @@ export function CategoriesTab() {
           <Pressable
             className="flex-1 justify-end"
             onPress={() => setShowAddModal(false)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full"
+              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText
                 variant="extrabold"
-                className="text-warm-900 text-xl mb-4"
+                className="text-ink-900 text-xl mb-4"
               >
                 Add Category
               </StyledText>
 
               {/* Name Input */}
-              <View className="mb-4">
+              <View className="mb-6">
                 <StyledText
                   variant="semibold"
-                  className="text-warm-900 text-sm mb-2"
+                  className="text-ink-700 text-sm mb-2"
                 >
                   Category Name *
                 </StyledText>
@@ -271,8 +282,8 @@ export function CategoriesTab() {
                       placeholder="e.g., Beverages"
                       value={value}
                       onChangeText={onChange}
-                      className="bg-warm-50 rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900"
-                      placeholderTextColor="#A8A29E"
+                      className="bg-ink-50 border border-ink-100 rounded-xl px-4 py-3 font-stack-sans text-base text-ink-900"
+                      placeholderTextColor="#A89F90"
                     />
                   )}
                 />
@@ -280,10 +291,11 @@ export function CategoriesTab() {
 
               {/* Buttons */}
               <View className="gap-3 mt-2">
-                <Pressable
+                <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={handleSubmit(submitAddCategory)}
                   disabled={insertCategoryMutation.isPending}
-                  className="bg-primary-500 rounded-2xl py-3 active:opacity-70"
+                  className="bg-persimmon-500 rounded-xl py-3.5 shadow-persimmon-glow"
                 >
                   {insertCategoryMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
@@ -295,18 +307,19 @@ export function CategoriesTab() {
                       Add Category
                     </StyledText>
                   )}
-                </Pressable>
-                <Pressable
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={() => setShowAddModal(false)}
-                  className="bg-warm-200 rounded-2xl py-3 active:opacity-70"
+                  className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
                 >
                   <StyledText
                     variant="semibold"
-                    className="text-text-primary text-center text-base"
+                    className="text-ink-700 text-center text-base"
                   >
                     Cancel
                   </StyledText>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             </Pressable>
           </Pressable>
@@ -327,24 +340,24 @@ export function CategoriesTab() {
           <Pressable
             className="flex-1 justify-end"
             onPress={() => setShowEditModal(false)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full"
+              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText
                 variant="extrabold"
-                className="text-warm-900 text-xl mb-4"
+                className="text-ink-900 text-xl mb-4"
               >
                 Edit Category
               </StyledText>
 
               {/* Name Input */}
-              <View className="mb-4">
+              <View className="mb-6">
                 <StyledText
                   variant="semibold"
-                  className="text-warm-900 text-sm mb-2"
+                  className="text-ink-700 text-sm mb-2"
                 >
                   Category Name *
                 </StyledText>
@@ -357,8 +370,8 @@ export function CategoriesTab() {
                       placeholder="e.g., Beverages"
                       value={value}
                       onChangeText={onChange}
-                      className="bg-warm-50 rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900"
-                      placeholderTextColor="#A8A29E"
+                      className="bg-ink-50 border border-ink-100 rounded-xl px-4 py-3 font-stack-sans text-base text-ink-900"
+                      placeholderTextColor="#A89F90"
                     />
                   )}
                 />
@@ -366,10 +379,11 @@ export function CategoriesTab() {
 
               {/* Buttons */}
               <View className="gap-3 mt-2">
-                <Pressable
+                <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={handleSubmit(submitEditCategory)}
                   disabled={updateCategoryMutation.isPending}
-                  className="bg-primary-500 rounded-2xl py-3 active:opacity-70"
+                  className="bg-persimmon-500 rounded-xl py-3.5 shadow-persimmon-glow"
                 >
                   {updateCategoryMutation.isPending ? (
                     <ActivityIndicator color="#fff" />
@@ -381,18 +395,19 @@ export function CategoriesTab() {
                       Save Changes
                     </StyledText>
                   )}
-                </Pressable>
-                <Pressable
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.8}
                   onPress={() => setShowEditModal(false)}
-                  className="bg-warm-200 rounded-2xl py-3 active:opacity-70"
+                  className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
                 >
                   <StyledText
                     variant="semibold"
-                    className="text-text-primary text-center text-base"
+                    className="text-ink-700 text-center text-base"
                   >
                     Cancel
                   </StyledText>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             </Pressable>
           </Pressable>
@@ -408,26 +423,26 @@ export function CategoriesTab() {
       >
         <View
           className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
         >
-          <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
             <View className="items-center mb-4">
               <View className="bg-red-50 rounded-full p-4 mb-3">
                 <FontAwesome
                   name="exclamation-triangle"
                   size={32}
-                  color="#DC2626"
+                  color="#C13030"
                 />
               </View>
               <StyledText
                 variant="extrabold"
-                className="text-warm-900 text-xl mb-2 text-center"
+                className="text-ink-900 text-xl mb-2 text-center"
               >
                 Delete Category?
               </StyledText>
               <StyledText
                 variant="regular"
-                className="text-warm-600 text-sm text-center"
+                className="text-ink-500 text-sm text-center"
               >
                 {`Are you sure you want to delete "${selectedCategory?.name || ''}"?`}
               </StyledText>
@@ -442,10 +457,11 @@ export function CategoriesTab() {
               )}
             </View>
             <View className="gap-3">
-              <Pressable
+              <TouchableOpacity
+                activeOpacity={0.8}
                 onPress={confirmDelete}
                 disabled={deleteCategoryMutation.isPending}
-                className="bg-semantic-danger rounded-xl py-3 active:opacity-70"
+                className="bg-semantic-danger rounded-xl py-3.5 active:opacity-70"
               >
                 {deleteCategoryMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
@@ -457,18 +473,19 @@ export function CategoriesTab() {
                     Yes, Delete Category
                   </StyledText>
                 )}
-              </Pressable>
-              <Pressable
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
                 onPress={() => setShowDeleteModal(false)}
-                className="bg-warm-200 rounded-2xl py-3 active:opacity-70"
+                className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
               >
                 <StyledText
                   variant="semibold"
-                  className="text-text-primary text-center text-base"
+                  className="text-ink-700 text-center text-base"
                 >
                   Cancel
                 </StyledText>
-              </Pressable>
+              </TouchableOpacity>
             </View>
           </View>
         </View>

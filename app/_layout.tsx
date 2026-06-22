@@ -1,4 +1,4 @@
-import { GlobalModal, Sonner, ToastContainer } from '@/components/ui';
+import { GlobalModal, Toast } from '@/components/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeDatabases } from '@/configs';
 import { useFonts } from 'expo-font';
@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
+import { View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,16 +56,16 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SQLiteProvider databaseName="sarisari.db">
         <SafeAreaProvider>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'ios_from_right',
-              presentation: 'modal',
-            }}
-          />
-          <ToastContainer />
-          <Sonner />
+          <StatusBar style="inverted" backgroundColor="#623418" />
+          <View style={{ flex: 1 }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'ios_from_right',
+              }}
+            />
+          </View>
+          <Toast />
           <GlobalModal />
         </SafeAreaProvider>
       </SQLiteProvider>

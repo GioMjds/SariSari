@@ -1,45 +1,75 @@
-import { Toast } from '@/types/ui/Toast.types';
+import { Toast, ToastVariant } from '@/types/ui/Toast.types';
 import { create } from 'zustand';
+import * as Haptics from 'expo-haptics';
+
+const timerFor = new WeakMap<Toast, ReturnType<typeof setTimeout>>();
+
+const hapticFor = (variant: ToastVariant) => {
+  switch (variant) {
+    case 'success':
+      return Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success,
+      );
+    case 'error':
+      return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    case 'warning':
+      return Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Warning,
+      );
+    default:
+      return Promise.resolve();
+  }
+};
 
 interface State {
-	toasts: Toast[];
-	addToast: (toast: Omit<Toast, 'id'>) => string;
-	removeToast: (id: string) => void;
-	clearToasts: () => void;
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, 'id'>) => string;
+  removeToast: (id: string) => void;
+  clearToasts: () => void;
 }
 
-export const useToastStore = create<State>((set) => ({
-	toasts: [],
+export const useToastStore = create<State>((set, get) => ({
+  toasts: [],
 
-	addToast: (toast) => {
-        const id = `toast-${Date.now()}-${Math.random()
-            .toString(36)
-            .substring(2, 11)}`;
-		const newToast: Toast = {
-			...toast,
-			id,
-			variant: toast.variant || 'default',
-			duration: toast.duration || 3000,
-			position: toast.position || 'bottom-right',
-		};
+  addToast: (toast) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+    const variant = toast.variant || 'default';
+    const duration = toast.duration ?? 4000;
+    const newToast: Toast = { id, variant, duration, ...toast };
 
-		set((state) => ({ toasts: [...state.toasts, newToast] }));
+    set((s) => ({ toasts: [...s.toasts, newToast] }));
+    hapticFor(variant);
 
-		if (newToast.duration && newToast.duration > 0) {
-			setTimeout(() => {
-				set((state) => ({
-					toasts: state.toasts.filter((t) => t.id !== id),
-				}));
-			}, newToast.duration);
-		}
+    if (duration > 0) {
+      const t = setTimeout(() => get().removeToast(id), duration);
+      timerFor.set(newToast, t);
+    }
 
-		return id;
-	},
+    return id;
+  },
 
-	removeToast: (id) =>
-		set((state) => ({
-			toasts: state.toasts.filter((toast) => toast.id !== id),
-		})),
+  removeToast: (id) => {
+    set((s) => {
+      const t = s.toasts.find((x) => x.id === id);
+      if (t) {
+        const pending = timerFor.get(t);
+        if (pending) {
+          clearTimeout(pending);
+          timerFor.delete(t);
+        }
+      }
+      return { toasts: s.toasts.filter((x) => x.id !== id) };
+    });
+  },
 
-	clearToasts: () => set({ toasts: [] }),
+  clearToasts: () => {
+    for (const t of get().toasts) {
+      const pending = timerFor.get(t);
+      if (pending) {
+        clearTimeout(pending);
+        timerFor.delete(t);
+      }
+    }
+    set({ toasts: [] });
+  },
 }));

@@ -179,7 +179,6 @@ export function useCredits() {
           message: 'Customer deleted successfully',
           variant: 'success',
           duration: 5000,
-          position: 'top-center',
         });
         router.back();
       },
@@ -188,7 +187,6 @@ export function useCredits() {
           message: 'Failed to delete customer',
           variant: 'error',
           duration: 5000,
-          position: 'top-center',
         });
       },
     });
@@ -210,7 +208,6 @@ export function useCredits() {
           message: 'Credit transaction added successfully',
           variant: 'success',
           duration: 5000,
-          position: 'top-center',
         });
         router.back();
       },
@@ -219,7 +216,6 @@ export function useCredits() {
           message: 'Failed to add credit transaction',
           variant: 'error',
           duration: 5000,
-          position: 'top-center',
         });
       },
     });
@@ -271,7 +267,6 @@ export function useCredits() {
           message: 'Payment added successfully',
           variant: 'success',
           duration: 5000,
-          position: 'top-center',
         });
         router.back();
       },
@@ -280,7 +275,6 @@ export function useCredits() {
           message: 'Failed to add payment',
           variant: 'error',
           duration: 5000,
-          position: 'top-center',
         });
       },
     });
@@ -325,7 +319,6 @@ export function useCredits() {
           message: 'Customer deleted successfully',
           variant: 'success',
           duration: 5000,
-          position: 'top-center',
         });
         router.back();
       },
@@ -334,7 +327,6 @@ export function useCredits() {
           message: error.message || 'Failed to delete customer',
           variant: 'error',
           duration: 5000,
-          position: 'top-center',
         });
       },
     });

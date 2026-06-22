@@ -161,7 +161,6 @@ export default function InventoryScreen() {
         message: 'Please enter a valid quantity',
         variant: 'error',
         duration: 1800,
-        position: 'top-center',
       });
       return;
     }

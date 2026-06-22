@@ -59,7 +59,6 @@ export function useProducts() {
         message: 'Product added successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
     onError: (error: Error) => {
@@ -67,7 +66,6 @@ export function useProducts() {
         message: error.message || 'Failed to add product',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });
@@ -92,7 +90,6 @@ export function useProducts() {
         message: 'Product updated successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
     onError: (error: Error) => {
@@ -100,7 +97,6 @@ export function useProducts() {
         message: error.message || 'Failed to update product',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });
@@ -115,7 +111,6 @@ export function useProducts() {
         message: 'Product deleted successfully',
         variant: 'success',
         duration: 5000,
-        position: 'top-center',
       });
     },
     onError: (error: Error) => {
@@ -123,7 +118,6 @@ export function useProducts() {
         message: error.message || 'Failed to delete product',
         variant: 'error',
         duration: 5000,
-        position: 'top-center',
       });
     },
   });

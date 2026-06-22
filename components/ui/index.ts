@@ -9,7 +9,6 @@ export * from './ReceiptHero';
 export * from './ScreenHeader';
 export * from './SearchBar';
 export * from './Skeleton';
-export * from './Sonner';
 export * from './StatusPill';
 export * from './StatusStamp';
 export * from './Toast';

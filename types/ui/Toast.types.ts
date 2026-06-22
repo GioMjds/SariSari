@@ -1,7 +1,14 @@
+export type ToastVariant = 'default' | 'success' | 'error' | 'info' | 'warning';
+
+export interface ToastAction {
+  label: string; // e.g. "UNDO", "RETRY"
+  onPress: () => void; // called when the action button is tapped
+}
+
 export interface Toast {
-	id: string;
-	message: string;
-	variant?: 'default' | 'success' | 'error' | 'info' | 'warning';
-	duration?: number;
-	position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  id: string;
+  message: string;
+  variant?: ToastVariant; // defaults to 'default'
+  duration?: number; // ms; 0 = sticky; default 4000
+  action?: ToastAction; // optional right-side action button
 }

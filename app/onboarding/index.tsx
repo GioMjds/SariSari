@@ -44,7 +44,6 @@ export default function OnboardingPage() {
                 message: 'Please add your name and store name',
                 variant: 'error',
                 duration: 1800,
-                position: 'top-center',
             });
             return;
         }
@@ -59,7 +58,6 @@ export default function OnboardingPage() {
                 message: 'Welcome! Your store is ready.',
                 variant: 'success',
                 duration: 1800,
-                position: 'top-center',
             });
             router.replace('/(tabs)');
         } catch (_error) {
@@ -67,7 +65,6 @@ export default function OnboardingPage() {
                 message: 'Could not save onboarding data',
                 variant: 'error',
                 duration: 2000,
-                position: 'top-center',
             });
         } finally {
             setSaving(false);

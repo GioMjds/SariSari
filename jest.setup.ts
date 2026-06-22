@@ -1,4 +1,8 @@
 import 'react-native-gesture-handler/jestSetup';
+import 'react-native/jest/setup';
+
+// Define __DEV__ for React Native environment inside Jest
+global.__DEV__ = true;
 
 // Set environment variables for tests
 if (!process.env.NODE_ENV) {

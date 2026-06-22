@@ -59,7 +59,6 @@ export function useInventory() {
         message: 'Stock updated successfully',
         variant: 'success',
         duration: 4000,
-        position: 'top-center',
       });
     },
     onError: () => {
@@ -67,7 +66,6 @@ export function useInventory() {
         message: 'Failed to update stock',
         variant: 'error',
         duration: 4000,
-        position: 'top-center',
       });
     },
   });
