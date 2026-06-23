@@ -64,7 +64,7 @@ export function useInventory() {
     onError: () => {
       addToast({
         message: 'Failed to update stock',
-        variant: 'error',
+        variant: 'danger',
         duration: 4000,
       });
     },

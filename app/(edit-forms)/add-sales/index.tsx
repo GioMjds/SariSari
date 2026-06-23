@@ -332,7 +332,7 @@ export default function AddSale() {
       <Modal
         visible={showCheckout}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowCheckout(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
@@ -500,7 +500,7 @@ export default function AddSale() {
       <Modal
         visible={showCustomerPicker}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowCustomerPicker(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">

@@ -40,7 +40,7 @@ export const InventoryHeader = memo(function InventoryHeader({
           >
             <StyledText
               variant="black"
-              className="text-paper-50 text-sm font-extrabold"
+              className="text-paper-50 text-xl font-extrabold"
             >
               ₱
             </StyledText>

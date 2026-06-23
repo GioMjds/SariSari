@@ -19,7 +19,7 @@ export default function Products() {
 
   // Hoisted state for search & sort
   const [search, setSearch] = useState<string>('');
-  const [sortBy, setSortBy] = useState<SortOption>('stock'); // default stock sort
+  const [sortBy, setSortBy] = useState<SortOption>('stock');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showSortModal, setShowSortModal] = useState<boolean>(false);
 
@@ -153,11 +153,6 @@ export default function Products() {
             >
               {subtitle}
             </StyledText>
-          </View>
-
-          {/* Settings button on the right */}
-          <View className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15">
-            <FontAwesome name="cog" size={18} color="#FBF7EE" />
           </View>
         </MotiView>
 

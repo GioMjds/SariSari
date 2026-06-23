@@ -91,3 +91,52 @@
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
 }
+
+/* ─── Press scale ──────────────────────────────────────────────
+   Subtle tactile press affordance. Apply on Pressable wrappers
+   for buttons, pagination chips, and pills. 120ms feels
+   responsive without being twitchy. */
+.press-scale {
+	transition: transform 120ms ease;
+}
+.press-scale:active {
+	transform: scale(0.97);
+}
+
+/* ─── Focus ring ───────────────────────────────────────────────
+   Visible focus indicator on text inputs and search surfaces.
+   Uses the persimmon-300 token so it reads on cream paper. */
+.focus-ring:focus {
+	outline: 2px solid var(--color-persimmon-300);
+	outline-offset: 2px;
+}
+
+/* ─── Dark mode token reservation ─────────────────────────────
+   Tokens are defined here so a future dark mode flip is a CSS
+   change, not a config change. The app currently stays light —
+   this block matches the darkPersimmon/darkSage/darkPaper/darkInk
+   ramps in tailwind.config.js. */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-persimmon-50: #3A1A0C;
+		--color-persimmon-100: #4F200E;
+		--color-persimmon-300: #A03D17;
+		--color-persimmon-500: #FF8B5A;
+		--color-persimmon-600: #FFA679;
+		--color-persimmon-700: #FFC3A0;
+
+		--color-sage-50: #1B2A0A;
+		--color-sage-100: #263A10;
+		--color-sage-500: #92B662;
+		--color-sage-600: #B0CC85;
+
+		--color-paper-50: #28231D;
+		--color-paper-100: #322C24;
+		--color-paper-200: #3D362C;
+		--color-paper-300: #4A4238;
+
+		--color-ink-500: #A89F90;
+		--color-ink-700: #E0D9CD;
+		--color-ink-900: #FBF7EE;
+	}
+}

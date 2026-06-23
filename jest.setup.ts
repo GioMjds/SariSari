@@ -1,6 +1,27 @@
 import 'react-native-gesture-handler/jestSetup';
 import 'react-native/jest/setup';
 
+const RN = require('react-native');
+const React = require('react');
+
+const overrideComponent = (name: string) => {
+	const comp = ({ children, ...props }: any) => {
+		return React.createElement(name, props, children);
+	};
+	comp.displayName = name;
+	Object.defineProperty(RN, name, {
+		value: comp,
+		configurable: true,
+		enumerable: true,
+		writable: true,
+	});
+};
+
+overrideComponent('View');
+overrideComponent('Text');
+overrideComponent('TouchableOpacity');
+overrideComponent('Pressable');
+
 // Define __DEV__ for React Native environment inside Jest
 global.__DEV__ = true;
 
@@ -41,10 +62,4 @@ try {
 	// Module not found in this environment; ignore
 }
 
-// Silence console warnings in tests
-global.console = {
-	...console,
-	error: jest.fn(),
-	warn: jest.fn(),
-	log: console.log, // Keep log for debugging
-};
+

@@ -76,8 +76,53 @@ module.exports = {
         // ─── Semantic ──────────────────────────────────────────────
         'semantic-success': '#4F7A24', // aligned with sage-500
         'semantic-danger': '#C13030',
+        'semantic-danger-50': '#FDECEC',
+        'semantic-danger-100': '#FAD8D8',
         'semantic-warning': '#C77B0E',
+        'semantic-warning-50': '#FCF1DE',
+        'semantic-warning-100': '#F8E2BC',
         'semantic-info': '#2E6FA8',
+        'semantic-info-50': '#E6F0F9',
+        'semantic-info-100': '#D0E2F0',
+
+        // ─── Dark mode tokens (reserved for future use) ────────────
+        // App stays light (no darkMode flip in this config). These
+        // ramps are defined so screens can opt in later without
+        // touching tailwind.config.js. The companion CSS variables
+        // live in global.css.
+        'dark-persimmon-50': '#3A1A0C',
+        'dark-persimmon-100': '#4F200E',
+        'dark-persimmon-200': '#6E2C12',
+        'dark-persimmon-300': '#A03D17',
+        'dark-persimmon-400': '#D55A26',
+        'dark-persimmon-500': '#FF8B5A', // ★ Brighter persimmon for dark surfaces
+        'dark-persimmon-600': '#FFA679',
+        'dark-persimmon-700': '#FFC3A0',
+        'dark-persimmon-800': '#FFD8C0',
+        'dark-persimmon-900': '#FFE8D8',
+        'dark-sage-50': '#1B2A0A',
+        'dark-sage-100': '#263A10',
+        'dark-sage-200': '#36511A',
+        'dark-sage-300': '#4F7027',
+        'dark-sage-400': '#6E9240',
+        'dark-sage-500': '#92B662',
+        'dark-sage-600': '#B0CC85',
+        'dark-sage-700': '#CFE0A8',
+        'dark-paper-50': '#28231D',
+        'dark-paper-100': '#322C24',
+        'dark-paper-200': '#3D362C',
+        'dark-paper-300': '#4A4238',
+        'dark-paper-400': '#5A5044',
+        'dark-ink-50': '#1A1714',
+        'dark-ink-100': '#25211C',
+        'dark-ink-200': '#332E27',
+        'dark-ink-300': '#524A40',
+        'dark-ink-400': '#7A7165',
+        'dark-ink-500': '#A89F90',
+        'dark-ink-600': '#C9C0B2',
+        'dark-ink-700': '#E0D9CD',
+        'dark-ink-800': '#F0EBE1',
+        'dark-ink-900': '#FBF7EE',
 
         // ─── Compatibility aliases ────────────────────────────────
         // Keep these so existing screens don't break while we migrate.
@@ -154,6 +199,8 @@ module.exports = {
         modal: '0 6px 20px rgba(86, 78, 69, 0.16)',
         // Brand-tinted shadow for the hero receipt card
         'persimmon-glow': '0 8px 24px rgba(232, 90, 31, 0.18)',
+        // Brand-tinted shadow for sage surfaces (success states)
+        'glow-sage': '0 8px 24px rgba(79, 122, 36, 0.18)',
       },
       fontSize: {
         display: [
