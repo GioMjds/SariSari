@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated as RNAnimated, type ViewStyle } from 'react-native';
+import React, { useEffect } from 'react';
+import { type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Reanimated, {
   Easing,
@@ -62,26 +62,25 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const radius = resolveBorderRadius(width, height, borderRadius, circle);
-  const opacity = useRef(new RNAnimated.Value(0.55)).current;
+  // Pulse is driven by a Reanimated shared value so the opacity
+  // arriving on the UI thread is a plain `double`. Mixing the legacy
+  // `Animated.Value` into a `Reanimated.View`'s style crashed the
+  // new arch with "ReadableNativeMap cannot be cast to Double" on
+  // Android — the legacy value serialized as a map, not a number.
+  const opacity = useSharedValue(0.55);
 
   useEffect(() => {
-    const loop = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(opacity, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        RNAnimated.timing(opacity, {
-          toValue: 0.55,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ]),
+    opacity.value = withRepeat(
+      withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
     );
-    loop.start();
-    return () => loop.stop();
+    return () => {
+      opacity.value = 0.55;
+    };
   }, [opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
     <Reanimated.View
@@ -92,13 +91,13 @@ export function Skeleton({
           width,
           height,
           borderRadius: radius,
-          opacity,
           backgroundColor: INK_200,
           // Ink-200 sits between paper-50 and paper-100; the pulse
           // plus (optional) shimmer reads as a paper-craft loading
           // state rather than a flat grey bar.
           overflow: 'hidden',
         },
+        animatedStyle,
         style,
       ]}
     >
