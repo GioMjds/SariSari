@@ -55,9 +55,14 @@ const variantMap: Record<
   },
 };
 
-const sizeMap: Record<StatusSize, string> = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-3 py-1 text-sm',
+const containerSizeMap: Record<StatusSize, string> = {
+  sm: 'px-2 py-0.5',
+  md: 'px-3 py-1',
+};
+
+const textSizeMap: Record<StatusSize, string> = {
+  sm: 'text-xs',
+  md: 'text-sm',
 };
 
 /**
@@ -75,7 +80,8 @@ export function StatusPill({
   accessibilityLabel,
 }: StatusPillProps) {
   const styles = variantMap[variant];
-  const a11yLabel = accessibilityLabel ?? (typeof children === 'string' ? children : undefined);
+  const a11yLabel =
+    accessibilityLabel ?? (typeof children === 'string' ? children : undefined);
 
   const content = (
     <>
@@ -87,7 +93,7 @@ export function StatusPill({
       )}
       <StyledText
         variant="semibold"
-        className={`${styles.text} ${sizeMap[size]}`}
+        className={`${styles.text} ${textSizeMap[size]}`}
       >
         {children}
       </StyledText>
@@ -100,7 +106,7 @@ export function StatusPill({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={a11yLabel}
-        className={`${styles.bg} ${styles.border} border ${sizeMap[size]} rounded-full press-scale active:opacity-70 self-start flex-row items-center`}
+        className={`${styles.bg} ${styles.border} border ${containerSizeMap[size]} rounded-full press-scale active:opacity-70 self-start flex-row items-center`}
       >
         {content}
       </Pressable>
@@ -109,7 +115,7 @@ export function StatusPill({
 
   return (
     <View
-      className={`${styles.bg} ${styles.border} border ${sizeMap[size]} rounded-full self-start flex-row items-center`}
+      className={`${styles.bg} ${styles.border} border ${containerSizeMap[size]} rounded-full self-start flex-row items-center`}
     >
       {content}
     </View>

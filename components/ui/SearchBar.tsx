@@ -20,7 +20,7 @@ type SearchBarProps = {
    * after this many ms of quiet. Default 0 = no debounce.
    */
   debounceMs?: number;
-} & Omit<TextInputProps, 'onChange'>;
+} & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
 /**
  * SearchBar — a focusable, debounceable text input framed by a search

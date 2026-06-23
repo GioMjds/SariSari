@@ -54,6 +54,7 @@ export function MoneyText({
   const centavos = fromPesos ? value * 100 : value;
   const pesos = centavos / 100;
   const formatted = formatCurrency(pesos);
+  const formattedWithoutPeso = formatted.replace(/^₱/, '');
   // Display tier gets a fade transition keyed off the formatted
   // string. Smaller sizes don't animate — keeps lists snappy.
   const animateValue = size === 'display' || size === 'hero';
@@ -71,7 +72,7 @@ export function MoneyText({
           {currency}
         </StyledText>
       )}
-      {formatted}
+      {currency === '₱' ? formatted : formattedWithoutPeso}
     </StyledText>
   );
 

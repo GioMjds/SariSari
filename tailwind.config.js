@@ -202,11 +202,6 @@ module.exports = {
         // Brand-tinted shadow for sage surfaces (success states)
         'glow-sage': '0 8px 24px rgba(79, 122, 36, 0.18)',
       },
-      fontVariantNumeric: {
-        // Tabular figures — money numbers don't jitter on value update.
-        // Apply via className="tabular-nums" or style.fontVariant.
-        tabular: 'tabular-nums',
-      },
       fontSize: {
         display: [
           '40px',

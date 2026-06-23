@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, type ViewStyle } from 'react-native';
+import { Animated as RNAnimated, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
+import Reanimated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
@@ -84,7 +84,7 @@ export function Skeleton({
   }, [opacity]);
 
   return (
-    <Animated.View
+    <Reanimated.View
       accessibilityRole="progressbar"
       accessibilityLabel="Loading"
       style={[
@@ -103,7 +103,7 @@ export function Skeleton({
       ]}
     >
       {shimmer && <ShimmerOverlay height={height} />}
-    </Animated.View>
+    </Reanimated.View>
   );
 }
 
@@ -130,7 +130,7 @@ function ShimmerOverlay({ height }: ShimmerOverlayProps) {
   }));
 
   return (
-    <Animated.View
+    <Reanimated.View
       style={[
         {
           position: 'absolute',
@@ -150,6 +150,6 @@ function ShimmerOverlay({ height }: ShimmerOverlayProps) {
         end={{ x: 1, y: 0.5 }}
         style={{ flex: 1, height }}
       />
-    </Animated.View>
+    </Reanimated.View>
   );
 }
