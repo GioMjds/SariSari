@@ -62,17 +62,17 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const radius = resolveBorderRadius(width, height, borderRadius, circle);
-  const opacity = useRef(new Animated.Value(0.55)).current;
+  const opacity = useRef(new RNAnimated.Value(0.55)).current;
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, {
+    const loop = RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(opacity, {
           toValue: 1,
           duration: 700,
           useNativeDriver: true,
         }),
-        Animated.timing(opacity, {
+        RNAnimated.timing(opacity, {
           toValue: 0.55,
           duration: 700,
           useNativeDriver: true,
