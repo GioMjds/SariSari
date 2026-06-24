@@ -7,7 +7,7 @@ import {
   FilterBar,
   PriorityCustomerHero,
   SortDropdown,
-} from '@/components/credits';
+} from '@/components/utang';
 import { StyledText } from '@/components/elements';
 import { Pagination, SearchBar } from '@/components/ui';
 import { ITEMS_PER_PAGE } from '@/constants/stocks';
@@ -20,24 +20,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-/**
- * Credits — Follow-up Ledger.
- *
- * The screen answers one question for a sari-sari store owner:
- * "Who do I need to follow up with right now?"
- *
- * Hierarchy (top → bottom):
- *   1. Cinnamon ledger header (eyebrow, title, dynamic subtitle,
- *      add-customer action).
- *   2. Priority receipt hero — features the single most urgent
- *      customer (overdue first, then highest balance) with two
- *      quick actions, OR a "all cleared" affirmation.
- *   3. Compact ledger metrics — 4 cells, paper-totals style.
- *   4. Search + filter chips + sort control.
- *   5. Action-ready customer list — paper cards with quick
- *      Add Payment / Add Credit pills.
- *   6. Floating pagination pill (existing component).
- */
 export default function Credits() {
   const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
   const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
@@ -98,9 +80,7 @@ export default function Credits() {
   // Priority customer (only considers customers that actually
   // owe money; otherwise the hero shows the cleared state).
   const priorityCustomer = useMemo<Customer | null>(() => {
-    const owing = filteredCustomers.filter(
-      (c) => c.outstanding_balance > 0,
-    );
+    const owing = filteredCustomers.filter((c) => c.outstanding_balance > 0);
     if (owing.length === 0) return null;
     const overdue = owing.find((c) => c.tag === 'overdue');
     if (overdue) return overdue;
@@ -117,7 +97,8 @@ export default function Credits() {
       return `${overdue} overdue ${overdue === 1 ? 'customer needs' : 'customers need'} follow-up`;
     }
     const totalCustomers = filteredCustomers.length;
-    if (totalCustomers === 0) return 'Add your first suki to start tracking utang';
+    if (totalCustomers === 0)
+      return 'Add your first suki to start tracking utang';
     if (priorityCustomer) {
       return `${priorityCustomer.name} top of the list`;
     }
@@ -204,7 +185,9 @@ export default function Credits() {
         {!noCustomersAtAll && (
           <PriorityCustomerHero
             customer={priorityCustomer}
-            hasOverdue={!!priorityCustomer && priorityCustomer.tag === 'overdue'}
+            hasOverdue={
+              !!priorityCustomer && priorityCustomer.tag === 'overdue'
+            }
             onAddPayment={() =>
               priorityCustomer && handleAddPayment(priorityCustomer)
             }

@@ -217,7 +217,7 @@ export default function Reports() {
         {/* ─── Smart Alerts / Insights ────────────────────────── */}
         {insights.length > 0 && (
           <View className="px-4 mt-2">
-            <EditorialEyebrow number="P" label="Dispatch from the counter" />
+            <EditorialEyebrow number="I" label="Dispatch from the counter" />
             <View className="mt-3">
               {insights.map((insight, index) => (
                 <InsightCard
@@ -232,7 +232,7 @@ export default function Reports() {
 
         {/* ─── Bento KPI grid ─────────────────────────────────── */}
         <View className="px-4 mt-6">
-          <EditorialEyebrow number="I" label="The four pillars" />
+          <EditorialEyebrow number="II" label="The four pillars" />
           <View className="mt-3">
             <BentoGrid>
               <BentoHero
@@ -319,7 +319,7 @@ export default function Reports() {
 
         {/* ─── Sales Trend & Payments ─────────────────────────── */}
         <View className="px-4 mt-8">
-          <EditorialEyebrow number="II" label="Sales trend & payment split" />
+          <EditorialEyebrow number="III" label="Sales trend & payment split" />
           <View className="mt-3">
             <CollapsibleSection
               number="01"

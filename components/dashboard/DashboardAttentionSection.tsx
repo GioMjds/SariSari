@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { Href, Link } from 'expo-router';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { Customer, Product, SaleWithItems } from '@/types';
@@ -64,7 +65,7 @@ export const DashboardAttentionSection = memo(
             tone="warning"
             count={stockAttention.length}
             onViewAll={onViewAllStock}
-            viewAllHref="/products"
+            viewAllHref="/inventory"
           >
             {stockAttention.map((item, idx) => (
               <StockRow
@@ -83,7 +84,7 @@ export const DashboardAttentionSection = memo(
             tone="danger"
             count={sukis.length}
             onViewAll={onViewAllUtang}
-            viewAllHref="/credits"
+            viewAllHref="/utang"
           >
             {sukis.map((item, idx) => (
               <SukiRow
@@ -102,7 +103,7 @@ export const DashboardAttentionSection = memo(
             tone="ink"
             count={recentSales.length}
             onViewAll={onViewAllSales}
-            viewAllHref="/sales"
+            viewAllHref="/sell"
           >
             {recentSales.map((item, idx) => (
               <SaleRowMini
@@ -145,7 +146,7 @@ function AttentionBlock({
   tone: Tone;
   count: number;
   onViewAll: () => void;
-  viewAllHref: string;
+  viewAllHref: Href;
   children: React.ReactNode;
 }) {
   return (
@@ -215,52 +216,54 @@ function StockRow({
   isLast: boolean;
 }) {
   const qty = item.product.quantity;
-  const status = item.isOut ? 'OUT' : qty < LOW_STOCK_THRESHOLD ? 'LOW' : '·';
   const pillVariant: 'danger' | 'warning' | 'neutral' = item.isOut
     ? 'danger'
     : 'warning';
   const pillLabel = item.isOut ? `${qty} left` : `${qty} left`;
   return (
-    <View
-      className={`flex-row items-center justify-between py-2.5 ${
-        !isLast ? 'border-b border-dashed border-ink-200' : ''
-      }`}
-    >
-      <View className="flex-1 mr-3">
-        <StyledText
-          variant="semibold"
-          className="text-ink-900 text-sm"
-          numberOfLines={1}
-        >
-          {item.product.name}
-        </StyledText>
-        <StyledText
-          variant="regular"
-          className="text-ink-500 text-xs mt-0.5"
-          numberOfLines={1}
-        >
-          {item.product.sku}
-        </StyledText>
-      </View>
-      <View
-        className={`px-2 py-0.5 rounded-full ${
-          pillVariant === 'danger'
-            ? 'bg-semantic-danger-50'
-            : 'bg-semantic-warning-50'
+    <Link href={`/inventory?restock=${item.product.id}`} asChild>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        className={`flex-row items-center justify-between py-2.5 ${
+          !isLast ? 'border-b border-dashed border-ink-200' : ''
         }`}
       >
-        <StyledText
-          variant="extrabold"
-          className={`text-[11px] ${
+        <View className="flex-1 mr-3">
+          <StyledText
+            variant="semibold"
+            className="text-ink-900 text-sm"
+            numberOfLines={1}
+          >
+            {item.product.name}
+          </StyledText>
+          <StyledText
+            variant="regular"
+            className="text-ink-500 text-xs mt-0.5"
+            numberOfLines={1}
+          >
+            {item.product.sku}
+          </StyledText>
+        </View>
+        <View
+          className={`px-2 py-0.5 rounded-full ${
             pillVariant === 'danger'
-              ? 'text-semantic-danger'
-              : 'text-semantic-warning'
+              ? 'bg-semantic-danger-50'
+              : 'bg-semantic-warning-50'
           }`}
         >
-          {pillLabel}
-        </StyledText>
-      </View>
-    </View>
+          <StyledText
+            variant="extrabold"
+            className={`text-[11px] ${
+              pillVariant === 'danger'
+                ? 'text-semantic-danger'
+                : 'text-semantic-warning'
+            }`}
+          >
+            {pillLabel}
+          </StyledText>
+        </View>
+      </TouchableOpacity>
+    </Link>
   );
 }
 

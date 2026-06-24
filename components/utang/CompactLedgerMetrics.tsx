@@ -46,11 +46,7 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
         >
           {/* Row of 4 tiles, divided by dotted rules */}
           <View className="flex-row items-stretch">
-            <Tile
-              label="Outstanding"
-              tone="danger"
-              icon="credit-card"
-            >
+            <Tile label="Outstanding" tone="danger" icon="credit-card">
               <MoneyText
                 value={totalOutstandingCentavos}
                 size="md"
@@ -61,11 +57,7 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
 
             <Divider />
 
-            <Tile
-              label="Collected"
-              tone="success"
-              icon="money"
-            >
+            <Tile label="Collected" tone="success" icon="money">
               <MoneyText
                 value={collectedTodayCentavos}
                 size="md"
@@ -76,15 +68,8 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
 
             <Divider />
 
-            <Tile
-              label="Suki w/ Bal."
-              tone="ink"
-              icon="users"
-            >
-              <StyledText
-                variant="black"
-                className="text-ink-900 text-base"
-              >
+            <Tile label="With Balance" tone="ink" icon="users">
+              <StyledText variant="black" className="text-ink-900 text-base">
                 {customersWithBalance}
               </StyledText>
             </Tile>
@@ -99,9 +84,7 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
               <StyledText
                 variant="black"
                 className={`text-base ${
-                  overdueCount > 0
-                    ? 'text-semantic-warning'
-                    : 'text-ink-900'
+                  overdueCount > 0 ? 'text-semantic-warning' : 'text-ink-900'
                 }`}
               >
                 {overdueCount}

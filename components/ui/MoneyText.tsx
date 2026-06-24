@@ -55,8 +55,6 @@ export function MoneyText({
   const pesos = centavos / 100;
   const formatted = formatCurrency(pesos);
   const formattedWithoutPeso = formatted.replace(/^₱/, '');
-  // Display tier gets a fade transition keyed off the formatted
-  // string. Smaller sizes don't animate — keeps lists snappy.
   const animateValue = size === 'display' || size === 'hero';
 
   const text = (

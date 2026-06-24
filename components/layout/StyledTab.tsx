@@ -1,6 +1,6 @@
-import { tabs } from '@/constants';
+import { Tab, tabs } from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
-import { usePathname, useRouter } from 'expo-router';
+import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
@@ -11,12 +11,12 @@ export const StyledTab = memo(() => {
 	const visibleRoutes = tabs.slice(0, 5);
 
 	const handlePress = useCallback(
-		(href: string) => {
+		(href: Href) => {
 			const shouldNavigate = href === '/'
 				? pathname !== '/' && pathname !== ''
 				: pathname !== href && !pathname.startsWith(`${href}/`);
 
-			if (shouldNavigate) router.push(href as any);
+			if (shouldNavigate) router.push(href);
 		},
 		[pathname, router]
 	);
@@ -24,7 +24,7 @@ export const StyledTab = memo(() => {
 	return (
 		<View className="bg-white px-6 py-4 shadow-xl shadow-black" style={{ elevation: 6 }}>
 			<View className="flex-row justify-between items-center">
-				{visibleRoutes.map((tab) => {
+				{visibleRoutes.map((tab: Tab) => {
 					const isFocused =
 						tab.href === '/'
 							? pathname === '/' || pathname === ''

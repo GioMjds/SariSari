@@ -1,39 +1,39 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  insertCustomer,
-  updateCustomer,
-  deleteCustomer,
-  getAllCustomers,
-  getCustomer,
-  getCustomerWithDetails,
-  getCreditTransactionsByCustomer,
-  getPaymentsByCustomer,
-  getCreditKPIs,
-  getCreditHistory,
-  insertCreditTransaction,
-  deleteCreditTransaction,
-  insertPayment,
-  deletePayment,
-  markAllCreditsAsPaid,
-  searchCustomers,
-  updateCreditStatus,
-} from '@/db/credits';
-import type {
-  CreditFilter,
-  CreditSort,
-  Customer,
-  CustomerWithDetails,
-  CreditTransaction,
-  Payment,
-  CreditKPIs,
-  CreditHistory,
-  NewCustomer,
-  NewCredit,
-  NewPayment,
-} from '@/types/credits.types';
+    deleteCreditTransaction,
+    deleteCustomer,
+    deletePayment,
+    getAllCustomers,
+    getCreditHistory,
+    getCreditKPIs,
+    getCreditTransactionsByCustomer,
+    getCustomer,
+    getCustomerWithDetails,
+    getPaymentsByCustomer,
+    insertCreditTransaction,
+    insertCustomer,
+    insertPayment,
+    markAllCreditsAsPaid,
+    searchCustomers,
+    updateCreditStatus,
+    updateCustomer,
+} from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
-import { useRouter } from 'expo-router';
+import type {
+    CreditFilter,
+    CreditHistory,
+    CreditKPIs,
+    CreditSort,
+    CreditTransaction,
+    Customer,
+    CustomerWithDetails,
+    NewCredit,
+    NewCustomer,
+    NewPayment,
+    Payment,
+} from '@/types/credits.types';
 import { Alert } from '@/utils/alert';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 
 export function useCredits() {
   const queryClient = useQueryClient();

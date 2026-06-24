@@ -1,11 +1,12 @@
 import {
-  initCategoriesTable,
-  initCreditsTable,
-  initInventoryTable,
-  initProductsTable,
-  initSalesTables,
-} from '@/db';
-import { seedDatabase } from '@/db/seed';
+    initCategoriesTable,
+    initCreditsTable,
+    initInventoryTable,
+    initProductsTable,
+    initSalesTables,
+    runMigrations,
+} from '@/database';
+import { seedDatabase } from '@/database/seed';
 
 let databaseInitialized = false;
 
@@ -45,6 +46,7 @@ export const initializeDatabases = async () => {
         initSalesTables(),
         initCategoriesTable(),
       ]);
+      await runMigrations();
     });
 
     databaseInitialized = true;

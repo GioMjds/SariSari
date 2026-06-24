@@ -56,13 +56,18 @@ We will place a segmented controller directly underneath the header title area i
   <View className="flex-row items-center justify-between mb-4">
     <View className="flex-row items-center">
       <View className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2">
-        <StyledText variant="black" className="text-paper-50 text-xl">₱</StyledText>
+        <StyledText variant="black" className="text-paper-50 text-xl">
+          ₱
+        </StyledText>
       </View>
-      <StyledText variant="extrabold" className="label-caps text-paper-200 opacity-80">
+      <StyledText
+        variant="extrabold"
+        className="label-caps text-paper-200 opacity-80"
+      >
         Resibo Book
       </StyledText>
     </View>
-    
+
     {/* Filter trigger button is only displayed in History view */}
     {activeTab === 'history' && (
       <Pressable
@@ -81,13 +86,17 @@ We will place a segmented controller directly underneath the header title area i
       onPress={() => setActiveTab('new-sale')}
       className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'new-sale' ? 'bg-persimmon-500' : ''}`}
     >
-      <StyledText variant="bold" className="text-paper-50 text-sm">New Sale</StyledText>
+      <StyledText variant="bold" className="text-paper-50 text-sm">
+        New Sale
+      </StyledText>
     </TouchableOpacity>
     <TouchableOpacity
       onPress={() => setActiveTab('history')}
       className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'history' ? 'bg-persimmon-500' : ''}`}
     >
-      <StyledText variant="bold" className="text-paper-50 text-sm">History</StyledText>
+      <StyledText variant="bold" className="text-paper-50 text-sm">
+        History
+      </StyledText>
     </TouchableOpacity>
   </View>
 </View>

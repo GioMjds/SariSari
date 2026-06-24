@@ -19,7 +19,7 @@ import {
 import { MotiView } from 'moti';
 
 import { ProductsHero } from './ProductsHero';
-import { ProductCard } from './ProductCard';
+import { InventoryRow } from '../inventory/InventoryRow';
 import { ProductsEmptyState } from './ProductsEmptyState';
 import { ProductsSkeleton } from './ProductsSkeleton';
 import { FilterChips } from '../inventory/FilterChips';
@@ -32,6 +32,8 @@ interface ProductsTabProps {
   sortBy: SortOption;
   sortDirection: SortDirection;
   onClearSearch?: () => void;
+  onRestock: (product: Product) => void;
+  onMore: (product: Product) => void;
 }
 
 export function ProductsTab({
@@ -40,6 +42,8 @@ export function ProductsTab({
   sortBy,
   sortDirection,
   onClearSearch,
+  onRestock,
+  onMore,
 }: ProductsTabProps) {
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   
@@ -292,22 +296,12 @@ export function ProductsTab({
           data={paginatedProducts}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item, index }) => (
-            <MotiView
-              from={{ opacity: 0, translateY: 10 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{
-                type: 'timing',
-                duration: 320,
-                delay: 200 + (index % 5) * 50,
-              }}
-            >
-              <ProductCard
-                product={item}
-                index={index}
-                onPress={handleProductPress}
-                onLongPress={handleProductLongPress}
-              />
-            </MotiView>
+            <InventoryRow
+              item={item}
+              index={index}
+              onRestock={onRestock}
+              onMore={onMore}
+            />
           )}
           contentContainerStyle={{
             paddingTop: 8,

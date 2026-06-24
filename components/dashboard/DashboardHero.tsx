@@ -31,7 +31,7 @@ export const DashboardHero = memo(function DashboardHero({
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 480, delay: 80 }}
     >
-      <View className="px-4 -mt-2 mb-4">
+      <View className="px-4 mt-2 mb-4">
         <ReceiptHero tone="cinnamon" headerLabel="COUNTER" headerCode="TODAY">
           {/* Eyebrow + supporting metrics strip */}
           <View className="px-5 pt-4 pb-1 flex-row items-center justify-between">

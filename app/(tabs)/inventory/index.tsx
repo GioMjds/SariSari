@@ -1,6 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useState, useMemo } from 'react';
-import { Pressable, View, TouchableOpacity, Modal } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState, useMemo, useEffect } from 'react';
+import { Pressable, View, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { CategoriesTab, ProductsTab } from '@/components/products';
@@ -9,13 +9,20 @@ import { MotiView } from 'moti';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { useProducts, useCategories } from '@/hooks';
 import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
+import { Product } from '@/types';
+import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
+import { InventoryEventType } from '@/types/inventory.types';
 
 type TabType = 'products' | 'categories';
 type SortDirection = 'asc' | 'desc';
 
+type PendingAction =
+  | { product: Product; type: InventoryEventType };
+
 export default function Products() {
   const [activeTab, setActiveTab] = useState<TabType>('products');
-  const params = useLocalSearchParams<{ filterCategory?: string }>();
+  const params = useLocalSearchParams<{ filterCategory?: string; restock?: string }>();
+  const router = useRouter();
 
   // Hoisted state for search & sort
   const [search, setSearch] = useState<string>('');
@@ -24,11 +31,32 @@ export default function Products() {
   const [showSortModal, setShowSortModal] = useState<boolean>(false);
 
   // Queries for live counts in header subtitle
-  const { getAllProductsQuery } = useProducts();
+  const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
 
   const products = getAllProductsQuery.data;
   const categories = getCategoriesWithCountQuery.data;
+
+  // Local state for restocking and actions
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [initialQuantity, setInitialQuantity] = useState(1);
+  const [selectedProductForSheet, setSelectedProductForSheet] = useState<Product | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  // Deep-link restock effect
+  useEffect(() => {
+    if (params.restock && products && products.length > 0) {
+      const productId = parseInt(params.restock, 10);
+      const product = products.find((p) => p.id === productId);
+      if (product) {
+        setPendingAction({ product, type: 'restock' });
+        const qtyDiff = LOW_STOCK_THRESHOLD - product.quantity;
+        setInitialQuantity(Math.max(1, qtyDiff));
+        router.setParams({ restock: undefined });
+      }
+    }
+  }, [params.restock, products, router]);
 
   // Compute live product stock counts for header
   const productsStats = useMemo(() => {
@@ -57,6 +85,17 @@ export default function Products() {
       setSortDirection('asc');
     }
     setShowSortModal(false);
+  };
+
+  const confirmDelete = () => {
+    if (productToDelete) {
+      deleteProductMutation.mutate(productToDelete.id, {
+        onSuccess: () => {
+          setShowDeleteModal(false);
+          setProductToDelete(null);
+        },
+      });
+    }
   };
 
   return (
@@ -194,6 +233,8 @@ export default function Products() {
           sortBy={sortBy}
           sortDirection={sortDirection}
           onClearSearch={() => setSearch('')}
+          onRestock={(product) => setPendingAction({ product, type: 'restock' })}
+          onMore={(product) => setSelectedProductForSheet(product)}
         />
       ) : (
         <CategoriesTab />
@@ -251,6 +292,180 @@ export default function Products() {
             </TouchableOpacity>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Inventory Action Modal */}
+      <InventoryActionModal
+        pendingAction={pendingAction}
+        initialQuantity={initialQuantity}
+        onClose={() => setPendingAction(null)}
+      />
+
+      {/* Action Sheet Modal (Overflow menu) */}
+      <Modal
+        visible={!!selectedProductForSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedProductForSheet(null)}
+      >
+        <Pressable
+          className="flex-1 justify-end"
+          onPress={() => setSelectedProductForSheet(null)}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl p-6 pb-10"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="items-center mb-4">
+              <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
+              <StyledText variant="extrabold" className="text-ink-900 text-lg text-center">
+                {selectedProductForSheet?.name}
+              </StyledText>
+              <StyledText variant="regular" className="text-ink-500 text-xs text-center mt-1">
+                Select action to perform
+              </StyledText>
+            </View>
+
+            <View className="gap-2">
+              {/* Action: Damage */}
+              <TouchableOpacity
+                onPress={() => {
+                  const product = selectedProductForSheet!;
+                  setSelectedProductForSheet(null);
+                  setPendingAction({ product, type: 'damaged' });
+                }}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+              >
+                <FontAwesome name="ban" size={18} color="#C22D2D" className="mr-3 w-6 text-center" />
+                <StyledText variant="semibold" className="text-ink-800 text-base">
+                  Mark Damaged
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: Adjust */}
+              <TouchableOpacity
+                onPress={() => {
+                  const product = selectedProductForSheet!;
+                  setSelectedProductForSheet(null);
+                  setPendingAction({ product, type: 'adjustment' });
+                }}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+              >
+                <FontAwesome name="sliders" size={18} color="#4A2610" className="mr-3 w-6 text-center" />
+                <StyledText variant="semibold" className="text-ink-800 text-base">
+                  Adjust Stock
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: View Ledger */}
+              <TouchableOpacity
+                onPress={() => {
+                  const product = selectedProductForSheet!;
+                  setSelectedProductForSheet(null);
+                  router.push(`/(edit-forms)/inventory-ledger/${product.id}` as any);
+                }}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+              >
+                <FontAwesome name="list-alt" size={18} color="#E85A1F" className="mr-3 w-6 text-center" />
+                <StyledText variant="semibold" className="text-ink-800 text-base">
+                  View Ledger
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View className="h-[1px] bg-ink-100 my-2" />
+
+              {/* Action: Delete */}
+              <TouchableOpacity
+                onPress={() => {
+                  const product = selectedProductForSheet!;
+                  setSelectedProductForSheet(null);
+                  setProductToDelete(product);
+                  setShowDeleteModal(true);
+                }}
+                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200"
+              >
+                <FontAwesome name="trash" size={18} color="#C22D2D" className="mr-3 w-6 text-center" />
+                <StyledText variant="extrabold" className="text-semantic-danger text-base">
+                  Delete Product
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center px-6"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        >
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
+            <View className="items-center mb-4">
+              <View className="bg-red-50 rounded-full p-4 mb-3">
+                <FontAwesome
+                  name="exclamation-triangle"
+                  size={32}
+                  color="#C22D2D"
+                />
+              </View>
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-xl mb-2 text-center"
+              >
+                Delete Product?
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-sm text-center"
+              >
+                {`Are you sure you want to delete "${productToDelete?.name || ''}"?`}
+              </StyledText>
+              <StyledText
+                variant="semibold"
+                className="text-semantic-danger text-sm mt-2 text-center"
+              >
+                This action cannot be undone.
+              </StyledText>
+            </View>
+            <View className="gap-3">
+              <TouchableOpacity
+                onPress={confirmDelete}
+                disabled={deleteProductMutation.isPending}
+                className="bg-semantic-danger rounded-xl py-3 active:opacity-70"
+              >
+                {deleteProductMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <StyledText
+                    variant="extrabold"
+                    className="text-white text-center text-base"
+                  >
+                    Yes, Delete Product
+                  </StyledText>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowDeleteModal(false)}
+                className="bg-ink-100 rounded-xl py-3 active:opacity-70"
+              >
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-700 text-center text-base"
+                >
+                  Cancel
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );

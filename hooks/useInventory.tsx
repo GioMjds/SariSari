@@ -1,25 +1,74 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  insertInventoryTransaction,
   getInventoryTransactions,
   getInventoryTransactionsByDateRange,
-} from '@/db/inventory';
-import { InventoryTransaction } from '@/types/inventory.types';
+  getInventoryTransactionsByProductAndDateRange,
+  insertInventoryTransaction,
+} from '@/database/inventory';
 import { useToastStore } from '@/stores/ToastStore';
+import { InsertInventoryV2, InventoryTransaction } from '@/types/inventory.types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+export const inventoryKeys = {
+  all: ['inventory'] as const,
+  transactions: () => [...inventoryKeys.all, 'transactions'] as const,
+  byProduct: (productId: number) =>
+    [...inventoryKeys.all, 'transactions', productId] as const,
+  byDateRange: (startDate: string, endDate: string) =>
+    [...inventoryKeys.all, 'transactions-by-date', startDate, endDate] as const,
+};
+
+export function useInsertInventory() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
+
+  return useMutation({
+    mutationFn: async (tx: InsertInventoryV2) => {
+      return await insertInventoryTransaction(tx);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      addToast({
+        message: 'Stock updated',
+        variant: 'success',
+        duration: 4000,
+      });
+    },
+    onError: () => {
+      addToast({
+        message: "Couldn't update stock",
+        variant: 'danger',
+        duration: 4000,
+      });
+    },
+  });
+}
+
+export function useInventoryTransactionsByProduct(productId: number) {
+  return useQuery<InventoryTransaction[]>({
+    queryKey: inventoryKeys.byProduct(productId),
+    queryFn: () => {
+      const endDate = new Date().toISOString();
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      return getInventoryTransactionsByProductAndDateRange(productId, startDate, endDate);
+    },
+    enabled: typeof productId === 'number' && !Number.isNaN(productId),
+  });
+}
+
+// Keep the useInventory hook with updated queries/mutations for backwards compatibility
 export function useInventory() {
   const queryClient = useQueryClient();
   const { addToast } = useToastStore();
 
   const getInventoryTransactionsQuery = useQuery<InventoryTransaction[]>({
-    queryKey: ['inventory-transactions'],
+    queryKey: inventoryKeys.transactions(),
     queryFn: () => getInventoryTransactions(),
   });
 
-  // Get transactions for a single product (enabled only when productId provided)
   const useGetInventoryTransactions = (productId?: number) => {
     return useQuery<InventoryTransaction[]>({
-      queryKey: ['inventory-transactions', productId],
+      queryKey: typeof productId === 'number' ? inventoryKeys.byProduct(productId) : inventoryKeys.transactions(),
       queryFn: () => getInventoryTransactions(productId),
       enabled: typeof productId === 'number' && !Number.isNaN(productId),
     });
@@ -30,39 +79,28 @@ export function useInventory() {
     endDate?: string,
   ) => {
     return useQuery<InventoryTransaction[]>({
-      queryKey: ['inventory-transactions-by-date', startDate, endDate],
+      queryKey: inventoryKeys.byDateRange(startDate || '', endDate || ''),
       queryFn: () => getInventoryTransactionsByDateRange(startDate!, endDate!),
       enabled: !!startDate && !!endDate,
     });
   };
 
   const insertInventoryMutation = useMutation({
-    mutationFn: async ({
-      product_id,
-      type,
-      quantity,
-    }: {
-      product_id: number;
-      type: 'restock' | 'sale';
-      quantity: number;
-    }) => {
-      return await insertInventoryTransaction(product_id, type, quantity);
+    mutationFn: async (tx: InsertInventoryV2) => {
+      return await insertInventoryTransaction(tx);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
-      queryClient.invalidateQueries({
-        queryKey: ['inventory-transactions-by-date'],
-      });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       addToast({
-        message: 'Stock updated successfully',
+        message: 'Stock updated',
         variant: 'success',
         duration: 4000,
       });
     },
     onError: () => {
       addToast({
-        message: 'Failed to update stock',
+        message: "Couldn't update stock",
         variant: 'danger',
         duration: 4000,
       });
@@ -70,12 +108,9 @@ export function useInventory() {
   });
 
   return {
-    // Queries
     getInventoryTransactionsQuery,
     useGetInventoryTransactions,
     useGetInventoryTransactionsByDateRange,
-
-    // Mutation
     insertInventoryMutation,
   };
 }

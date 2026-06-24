@@ -572,7 +572,7 @@ export default function AddProduct() {
             )}
           />
           <StyledText variant="regular" className="text-warm-500 text-xs mt-1">
-            You can leave this as 0 and add stock later via Inventory
+            You can leave this as 0 and add stock later via the Catalog
           </StyledText>
         </View>
 

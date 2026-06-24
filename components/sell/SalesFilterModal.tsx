@@ -73,7 +73,7 @@ export function SalesFilterModal({
           }}
         >
           {/* Header */}
-          <View className="flex-row justify-between items-center px-6 pt-6 pb-4">
+          <View className="flex-row justify-between items-center px-6 pt-4 pb-6">
             <View className="flex-1">
               <StyledText
                 variant="extrabold"
@@ -98,7 +98,7 @@ export function SalesFilterModal({
           </View>
 
           <ScrollView
-            className="max-h-[26rem]"
+            className="max-h-[28rem]"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 12 }}
           >

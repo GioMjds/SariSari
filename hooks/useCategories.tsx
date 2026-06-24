@@ -1,16 +1,16 @@
 import {
-  deleteCategory,
-  getAllCategories,
-  getCategoriesWithCount,
-  getCategory,
-  getCategoryByName,
-  insertCategory,
-  updateCategory,
-} from '@/db/categories';
+    deleteCategory,
+    getAllCategories,
+    getCategoriesWithCount,
+    getCategory,
+    getCategoryByName,
+    insertCategory,
+    updateCategory,
+} from '@/database/categories';
 import { useToastStore } from '@/stores/ToastStore';
 import {
-  InsertCategoryParams,
-  UpdateCategoryParams,
+    InsertCategoryParams,
+    UpdateCategoryParams,
 } from '@/types/categories.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -62,7 +62,7 @@ export function useCategories() {
     },
     onError: () => {
       addToast({
-        message: 'Your category doesn\'t add. Please try again.',
+        message: "Your category doesn't add. Please try again.",
         variant: 'danger',
         duration: 5000,
       });
@@ -86,7 +86,7 @@ export function useCategories() {
     },
     onError: () => {
       addToast({
-        message: 'Your category doesn\'t update. Please try again.',
+        message: "Your category doesn't update. Please try again.",
         variant: 'danger',
         duration: 5000,
       });

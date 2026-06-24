@@ -1,17 +1,18 @@
 import {
-  deleteSale,
-  getAllSales,
-  getSale,
-  getSaleItems,
-  getSalesByDateRange,
-  getTodayStats,
-  insertSale,
-} from '@/db/sales';
+    deleteSale,
+    getAllSales,
+    getSale,
+    getSaleItems,
+    getSalesByDateRange,
+    getTodayStats,
+    insertSale,
+} from '@/database/sales';
 import {
-  GetSaleByDateRangeParams,
-  InsertSaleParams,
+    GetSaleByDateRangeParams,
+    InsertSaleParams,
 } from '@/types/sales.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { inventoryKeys } from './useInventory';
 
 export function useSales() {
   const queryClient = useQueryClient();
@@ -19,13 +20,13 @@ export function useSales() {
   // Query: Get today's stats
   const getTodayStatsQuery = useQuery({
     queryKey: ['sales-stats'],
-    queryFn: getTodayStats,
+    queryFn: () => getTodayStats(),
   });
 
   // Query: Get all sales
   const getAllSalesQuery = useQuery({
     queryKey: ['sales'],
-    queryFn: getAllSales,
+    queryFn: () => getAllSales(),
   });
 
   // Query: Get sale by ID (accepts id parameter)
@@ -33,7 +34,6 @@ export function useSales() {
     return useQuery({
       queryKey: ['sale', id],
       queryFn: () => getSale(id),
-      enabled: !!id,
     });
   };
 
@@ -42,7 +42,6 @@ export function useSales() {
     return useQuery({
       queryKey: ['sale-items', saleId],
       queryFn: () => getSaleItems(saleId),
-      enabled: !!saleId,
     });
   };
 
@@ -50,7 +49,7 @@ export function useSales() {
   const useGetSalesByDateRange = (params: GetSaleByDateRangeParams) => {
     return useQuery({
       queryKey: ['sales-by-date', params.startDate, params.endDate],
-      queryFn: () => getSalesByDateRange(params.startDate, params.endDate),
+      queryFn: () => getSalesByDateRange(params),
       enabled: !!params.startDate && !!params.endDate,
     });
   };
@@ -73,7 +72,7 @@ export function useSales() {
       queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
       queryClient.invalidateQueries({ queryKey: ['sales-by-date'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       queryClient.invalidateQueries({ queryKey: ['credit-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });

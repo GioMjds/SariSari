@@ -1,5 +1,12 @@
 import { StyledText } from '@/components/elements';
-import { ReceiptHero, ReceiptHeroDivider, ReceiptHeroMeta, ReceiptHeroTotal, StatusStamp } from '@/components/ui';
+import {
+  MoneyText,
+  ReceiptHero,
+  ReceiptHeroDivider,
+  ReceiptHeroMeta,
+  ReceiptHeroTotal,
+  StatusStamp,
+} from '@/components/ui';
 import { useSales } from '@/hooks';
 import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
@@ -9,21 +16,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-/**
- * SaleDetails — "Resibo" (Receipt) view.
- *
- * Reimagined as an editorial paper receipt:
- *   - Hero = perforated ReceiptHero with ink-stamped status
- *   - Items list = a ledger of monospaced rows separated by
- *     dashed dividers (like an itemised receipt)
- *   - Footer = grand-total plate in deep cinnamon, anchored to
- *     the bottom of the scroll
- *
- * Color palette: see tailwind.config.js — persimmon / cinnamon /
- * sage / ink / paper. The screen does NOT use the old "primary" /
- * "secondary" token names so the design intent is explicit.
- */
 
 export default function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -105,9 +97,6 @@ export default function SaleDetails() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* ─── Top bar — minimal, no title bar ─────────────────────
-					Title sits on the receipt itself; the top bar only carries
-			    the back button + a small actions row (delete). */}
       <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
         <Pressable
           onPress={handleBack}
@@ -170,8 +159,6 @@ export default function SaleDetails() {
               />
             </View>
 
-            {/* Customer block (credit sales only) — printed like
-						    a "bill to" line on a real invoice */}
             {isCredit && sale.customer_name && (
               <View className="mx-5 mt-1 mb-2 bg-paper-100 rounded-xl px-4 py-3 border border-dashed border-ink-200">
                 <StyledText className="label-caps text-ink-400 mb-1">
@@ -214,7 +201,7 @@ export default function SaleDetails() {
             {/* Grand total — printed plate */}
             <ReceiptHeroTotal
               label={isCredit ? 'BALANCE OUTSTANDING' : 'TOTAL PAID'}
-              amount={sale.total / 100}
+              amount={sale.total}
             />
           </ReceiptHero>
         </MotiView>
@@ -276,33 +263,18 @@ export default function SaleDetails() {
                                 {item.quantity}×
                               </StyledText>
                             </View>
-                            <StyledText
-                              variant="regular"
-                              className="text-ink-500 text-xs ml-2"
-                            >
-                              @
-                              <StyledText
-                                variant="medium"
-                                className="text-ink-700"
-                              >
-                                {item.price.toLocaleString('en-PH', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </StyledText>
-                            </StyledText>
+                            <MoneyText
+                              value={item.price}
+                              fromPesos
+                              className="text-mono text-ink-700 text-sm ml-3"
+                            />
                           </View>
                         </View>
-                        <StyledText
-                          variant="extrabold"
+                        <MoneyText
+                          value={lineTotal}
+                          fromPesos
                           className="text-ink-900 text-base"
-                          style={{ letterSpacing: -0.2 }}
-                        >
-                          {lineTotal.toLocaleString('en-PH', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </StyledText>
+                        />
                       </View>
                     </View>
                   </MotiView>
@@ -317,15 +289,11 @@ export default function SaleDetails() {
                 >
                   Subtotal
                 </StyledText>
-                <StyledText
-                  variant="extrabold"
-                  className="text-mono text-ink-900"
-                >
-                  {sale.total.toLocaleString('en-PH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </StyledText>
+                <MoneyText
+                  value={sale.total}
+                  fromPesos
+                  className="text-base text-ink-900"
+                />
               </View>
             </View>
           </View>
@@ -360,16 +328,6 @@ export default function SaleDetails() {
       >
         <View className="px-4 pb-5 pt-3">
           <View className="bg-cinnamon-500 rounded-3xl shadow-paper-deep px-5 py-4 flex-row items-center justify-between overflow-hidden">
-            {/* Decorative dot pattern on the right */}
-            <View
-              className="absolute -right-2 -top-2 w-24 h-24 rounded-full opacity-20"
-              style={{ backgroundColor: '#FFC4A8' }}
-            />
-            <View
-              className="absolute right-12 top-4 w-8 h-8 rounded-full opacity-15"
-              style={{ backgroundColor: '#FFC4A8' }}
-            />
-
             <View className="flex-1">
               <StyledText
                 variant="medium"
@@ -401,7 +359,7 @@ export default function SaleDetails() {
             <Pressable
               onPress={handleDeleteSale}
               hitSlop={12}
-              className="w-12 h-12 rounded-full bg-persimmon-500 items-center justify-center shadow-paper active:opacity-80"
+              className="w-12 h-12 rounded-full bg-semantic-danger items-center justify-center shadow-paper active:opacity-80"
               style={{ marginLeft: 12 }}
             >
               <FontAwesome name="trash" size={16} color="#FFF1EA" />

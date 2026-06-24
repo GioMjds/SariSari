@@ -44,7 +44,7 @@ export const PriorityCustomerHero = memo(function PriorityCustomerHero({
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 480, delay: 80 }}
     >
-      <View className="px-4 -mt-2 mb-4">
+      <View className="px-4 mt-2 mb-4">
         {customer ? (
           <ReceiptHero
             tone={hasOverdue ? 'cinnamon' : 'persimmon'}
@@ -91,12 +91,6 @@ export const PriorityCustomerHero = memo(function PriorityCustomerHero({
             {/* Hero money — featured */}
             <View className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200">
               <View className="flex-row items-baseline">
-                <StyledText
-                  variant="medium"
-                  className="text-mono text-ink-500 mr-2 text-base"
-                >
-                  ₱
-                </StyledText>
                 <MoneyText
                   value={customer.outstanding_balance}
                   size="hero"

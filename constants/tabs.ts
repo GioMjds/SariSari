@@ -1,19 +1,19 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { Href } from 'expo-router';
 
-interface Tab {
+export interface Tab {
   name: string;
-  href: string;
+  href: Href;
   icon: keyof typeof FontAwesome.glyphMap;
 }
 
-// Bottom-tab order matters: the home tab (/) is the operational stock
-// view — products with their current quantities, restock, low/out filters.
-// "Products" is master data only (catalog, SKU, price, cost). They are two
-// different jobs and should never collapse into one route.
+
+// Bottom-tab definitions: Dashboard is home base, Sell is POS,
+// Inventory is product catalog + restock, Utang tracks loans, and Reports handles metrics.
 export const tabs: Tab[] = [
   { name: 'Dashboard', href: '/', icon: 'area-chart' },
-  { name: 'Sell', href: '/sales', icon: 'shopping-cart' },
-  { name: 'Inventory', href: '/products', icon: 'cube' },
-  { name: 'Utang', href: '/credits', icon: 'credit-card' },
+  { name: 'Sell', href: '/sell', icon: 'shopping-cart' },
+  { name: 'Inventory', href: '/inventory', icon: 'cube' },
+  { name: 'Utang', href: '/utang', icon: 'credit-card' },
   { name: 'Reports', href: '/reports', icon: 'bar-chart' },
 ];

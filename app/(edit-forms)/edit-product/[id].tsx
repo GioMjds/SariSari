@@ -176,7 +176,7 @@ export default function EditProduct() {
   const confirmDelete = async () => {
     setShowDeleteModal(false);
     await deleteProductMutation.mutateAsync(parseInt(id, 10));
-    router.replace('/products');
+    router.replace('/inventory');
   };
 
   if (isLoading) {

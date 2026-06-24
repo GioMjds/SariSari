@@ -1,30 +1,6 @@
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
-/**
- * ReceiptHero
- *
- * A perforated-edge "receipt" surface used as a hero card on detail
- * screens (sale-details, credit-details). Composed entirely of RN
- * primitives — no SVG — so it renders cleanly inside a scroll view
- * and re-uses the same flat-list recycling pipeline.
- *
- * Two layers of horizontal scalloped perforations (top + bottom) sit
- * on either side of a paper-textured body. The body wraps arbitrary
- * children so the screen can place its title, totals, customer stamp
- * and itemised list inside.
- *
- * NOTE on text rendering: every text node is wrapped in <StyledText>.
- * React Native will throw "Text strings must be rendered within a
- * <Text> component" if a raw string lands inside a <View>.
- *
- * @example
- *   <ReceiptHero tone="persimmon">
- *     <ReceiptHeroHeader label="OFFICIAL RESIBO" code="№ 00482" />
- *     <ReceiptHeroTotal value={1250.5} currency />
- *   </ReceiptHero>
- */
-
 type Tone = 'persimmon' | 'cinnamon' | 'sage';
 
 type Props = {
@@ -53,19 +29,7 @@ const TONE_ACCENT: Record<Tone, string> = {
   sage: 'text-sage-600',
 };
 
-/**
- * Header strip at the top of the receipt. Renders above the
- * perforation so the eyebrow / label reads like a printed banner.
- */
-function Header({
-  tone,
-  label,
-  code,
-}: {
-  tone: Tone;
-  label: string;
-  code?: string;
-}) {
+function Header({ tone, label }: { tone: Tone; label: string }) {
   return (
     <View
       className={`${TONE_HEADER_BG[tone]} px-5 pt-5 pb-4 flex-row items-center justify-between`}
@@ -80,14 +44,6 @@ function Header({
           {label}
         </StyledText>
       </View>
-      {code && (
-        <StyledText
-          variant="medium"
-          className={`text-mono ${TONE_HEADER_TEXT[tone]} opacity-80`}
-        >
-          {code}
-        </StyledText>
-      )}
     </View>
   );
 }
@@ -105,10 +61,10 @@ export function ReceiptHero({
       className={`mx-4 rounded-3xl overflow-hidden bg-paper-50 shadow-paper-lift border border-ink-100 ${className}`}
     >
       {/* Top header strip */}
-      <Header tone={tone} label={headerLabel || 'OFFICIAL RESIBO'} code={headerCode} />
-
-      {/* Top perforation — circles sit just above the body, biting
-			    into the header so the paper looks torn along this line. */}
+      <Header
+        tone={tone}
+        label={headerLabel || 'OFFICIAL RESIBO'}
+      />
       <View className="relative h-0">
         <View
           className="absolute left-0 right-0 h-3 flex-row justify-between"

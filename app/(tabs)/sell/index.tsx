@@ -45,7 +45,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Sales() {
   const { tab: initialTabParam } = useLocalSearchParams<{ tab?: string }>();
-  const [activeTab, setActiveTab] = useState<'new-sale' | 'history'>('new-sale');
+  const [activeTab, setActiveTab] = useState<'new-sale' | 'history'>('history');
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -509,26 +509,26 @@ export default function Sales() {
           <View className="flex-row bg-cinnamon-600/30 p-1 rounded-xl mt-4">
             <TouchableOpacity
               activeOpacity={0.8}
-              onPress={() => setActiveTab('new-sale')}
-              className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'new-sale' ? 'bg-persimmon-500' : ''}`}
-            >
-              <StyledText
-                variant="bold"
-                className={`text-sm ${activeTab === 'new-sale' ? 'text-paper-50' : 'text-paper-200'}`}
-              >
-                New Sale
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.8}
               onPress={() => setActiveTab('history')}
               className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'history' ? 'bg-persimmon-500' : ''}`}
             >
               <StyledText
-                variant="bold"
+                variant="extrabold"
                 className={`text-sm ${activeTab === 'history' ? 'text-paper-50' : 'text-paper-200'}`}
               >
                 History
+              </StyledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setActiveTab('new-sale')}
+              className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'new-sale' ? 'bg-persimmon-500' : ''}`}
+            >
+              <StyledText
+                variant="extrabold"
+                className={`text-sm ${activeTab === 'new-sale' ? 'text-paper-50' : 'text-paper-200'}`}
+              >
+                Record Sale
               </StyledText>
             </TouchableOpacity>
           </View>
