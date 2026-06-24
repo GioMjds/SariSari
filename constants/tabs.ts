@@ -11,9 +11,9 @@ interface Tab {
 // "Products" is master data only (catalog, SKU, price, cost). They are two
 // different jobs and should never collapse into one route.
 export const tabs: Tab[] = [
-  { name: 'Inventory', href: '/', icon: 'archive' },
-  { name: 'Sales', href: '/sales', icon: 'shopping-cart' },
-  { name: 'Catalog', href: '/products', icon: 'cube' },
+  { name: 'Dashboard', href: '/', icon: 'area-chart' },
+  { name: 'Sell', href: '/sales', icon: 'shopping-cart' },
+  { name: 'Inventory', href: '/products', icon: 'cube' },
   { name: 'Utang', href: '/credits', icon: 'credit-card' },
   { name: 'Reports', href: '/reports', icon: 'bar-chart' },
 ];
