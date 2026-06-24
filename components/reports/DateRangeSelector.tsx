@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { DateRangeType } from '@/types';
-import { ScrollView, TouchableOpacity } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 
 interface DateRangeSelectorProps {
 	activeRange: DateRangeType;
@@ -10,42 +10,67 @@ interface DateRangeSelectorProps {
 const ranges: { type: DateRangeType; label: string }[] = [
 	{ type: 'today', label: 'Today' },
 	{ type: 'yesterday', label: 'Yesterday' },
-	{ type: 'last7days', label: 'Last 7 Days' },
+	{ type: 'last7days', label: '7 Days' },
 	{ type: 'thisMonth', label: 'This Month' },
 ];
 
-export function DateRangeSelector({ activeRange, onRangeChange }: DateRangeSelectorProps) {
-	const handlePress = (range: DateRangeType) => {
-		onRangeChange(range);
-	};
-
+/**
+ * DateRangeSelector — Capsule date chips styled to match the
+ * almanac aesthetic. Active chip uses a flat dark fill with a
+ * small paper-color kicker; inactive chips are flat paper.
+ */
+export function DateRangeSelector({
+	activeRange,
+	onRangeChange,
+}: DateRangeSelectorProps) {
 	return (
-		<ScrollView
-			horizontal
-			showsHorizontalScrollIndicator={false}
-			className="mb-4"
-			contentContainerStyle={{ paddingHorizontal: 4 }}
-		>
-			{ranges.map((range) => {
-				const isActive = activeRange === range.type;
-				return (
-					<TouchableOpacity
-						key={range.type}
-						activeOpacity={0.7}
-						onPress={() => handlePress(range.type)}
-						className={`px-4 py-2 rounded-full mr-2 ${
-							isActive ? 'bg-secondary-500' : 'bg-white border border-warm-200'
-						}`}
-					>
-						<StyledText
-							variant={isActive ? 'semibold' : 'medium'}
-							className={`text-sm ${isActive ? 'text-white' : 'text-warm-700'}`}
+		<View>
+			<View className="flex-row items-center mb-2">
+				<StyledText
+					variant="extrabold"
+					className="text-label text-ink-500"
+					style={{ letterSpacing: 1.4 }}
+				>
+					ISSUE SCOPE
+				</StyledText>
+				<View className="h-px bg-ink-200 flex-1 ml-2" />
+			</View>
+			<ScrollView
+				horizontal
+				showsHorizontalScrollIndicator={false}
+				contentContainerStyle={{ paddingRight: 12 }}
+			>
+				{ranges.map((range) => {
+					const isActive = activeRange === range.type;
+					return (
+						<TouchableOpacity
+							key={range.type}
+							activeOpacity={0.7}
+							onPress={() => onRangeChange(range.type)}
+							className={`mr-2 rounded-pill overflow-hidden border ${
+								isActive
+									? 'bg-ink-900 border-ink-900'
+									: 'bg-paper-50 border-ink-200'
+							}`}
 						>
-							{range.label}
-						</StyledText>
-					</TouchableOpacity>
-				);
-			})}
-		</ScrollView>
+							<View className="px-4 py-2 flex-row items-center">
+								{isActive && (
+									<View className="w-1.5 h-1.5 rounded-full bg-persimmon-500 mr-1.5" />
+								)}
+								<StyledText
+									variant={isActive ? 'extrabold' : 'semibold'}
+									className={`text-xs ${
+										isActive ? 'text-paper-50' : 'text-ink-700'
+									}`}
+									style={{ letterSpacing: 0.4 }}
+								>
+									{range.label}
+								</StyledText>
+							</View>
+						</TouchableOpacity>
+					);
+				})}
+			</ScrollView>
+		</View>
 	);
 }
