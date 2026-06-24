@@ -1,76 +1,170 @@
-import { StyledText } from '@/components/elements';
-import { Modal as CustomModal, Pagination, SearchBar } from '@/components/ui';
-import { useProducts, useInventory } from '@/hooks';
-import { useDialogStore, useToastStore } from '@/stores';
-import { Product } from '@/types';
-import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, FlatList, RefreshControl, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LOW_STOCK_THRESHOLD, ITEMS_PER_PAGE } from '@/constants';
-import {
-  InventoryHeader,
-  InventoryHero,
-  FilterChips,
-  InventoryRow,
-  InventorySkeleton,
-  InventoryEmptyState,
-  InventoryActionModal,
-  GuideModal,
-  StockAlertBanner,
-} from '@/components/inventory';
 import { FontAwesome } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect, useRouter, Href } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  BackHandler,
+  Image,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  DashboardAlertCards,
+  DashboardAttentionSection,
+  DashboardEmptyState,
+  DashboardHero,
+  DashboardQuickActions,
+  DashboardSkeleton,
+} from '@/components/dashboard';
+import { StyledText } from '@/components/elements';
+import { Modal as CustomModal } from '@/components/ui';
+import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
+import { useCredits, useProducts, useSales } from '@/hooks';
+import { useDialogStore } from '@/stores';
 
-interface PendingAction {
-  product: Product;
-  type: 'restock';
-}
+/**
+ * Dashboard — Counter Command Center.
+ *
+ * The store owner's home base. One screen, four zones:
+ *   1. Hero: today's sales total + supporting metrics.
+ *   2. Quick actions: New Sale, Add Stock, Record Payment.
+ *   3. Compact alerts: stock attention, outstanding utang.
+ *   4. Attention queue: top 3 stock, suki, and recent sales.
+ *
+ * Routing:
+ *   - New Sale -> /add-sales
+ *   - Add Stock -> /products (existing restock flow requires a product)
+ *   - Record Payment -> /credits (existing payment form needs a suki)
+ *   - View All stock -> /products
+ *   - View All utang -> /credits
+ *   - View All sales -> /sales
+ *
+ * Money handling: every centavo flow is integer — we never multiply
+ * or divide before formatting. `MoneyText` handles the render edge.
+ */
+import sariExitImage from '@/assets/images/sari-emotions/sari-exit-state.png';
 
-type FilterMode = 'all' | 'low' | 'out';
+const Routes = {
+  newSale: '/(edit-forms)/add-sales',
+  products: '/products',
+  credits: '/credits',
+  sales: '/sales',
+} satisfies Record<string, Href>;
 
-export default function InventoryScreen() {
-  const [search, setSearch] = useState<string>('');
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
-  const [filter, setFilter] = useState<FilterMode>('all');
-  const [showFilter, setShowFilter] = useState<boolean>(false);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
-    null,
-  );
-  const [quantityInput, setQuantityInput] = useState<string>('');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [showGuide, setShowGuide] = useState<boolean>(false);
+export default function Dashboard() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
+
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const router = useRouter();
-  const addToast = useToastStore((state) => state.addToast);
-  const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
-  const debounceRef = useRef<number | null>(null);
-
+  // ─── Data sources ─────────────────────────────────────────────
+  const { getTodayStatsQuery, getAllSalesQuery } = useSales();
   const { getAllProductsQuery } = useProducts();
-  const { insertInventoryMutation } = useInventory();
+  const { useCustomers, useCreditKPIs } = useCredits();
 
-  // Query products
-  const { data: products, isLoading, refetch } = getAllProductsQuery;
+  const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
+  const { data: sales = [] } = getAllSalesQuery;
+  const { data: products, isLoading: productsLoading } = getAllProductsQuery;
+  const { data: kpis } = useCreditKPIs();
+  const { data: priorityCustomers = [] } = useCustomers(
+    'with_balance',
+    'balance_desc',
+  );
 
-  // Debounce search input
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 300);
-  }, [search]);
+  const isLoading = statsLoading || productsLoading;
 
-  // Reset to first page when search or sort changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, filter]);
+  // ─── Derived data ─────────────────────────────────────────────
+
+  /**
+   * Top 3 stock attention rows — out-of-stock first, then lowest
+   * quantity. Threshold comes from the existing `LOW_STOCK_THRESHOLD`
+   * constant so this stays in lockstep with the Inventory tab.
+   */
+  const stockAttention = useMemo(() => {
+    if (!products) return [];
+    const needing = products.filter(
+      (p) => p.quantity === 0 || p.quantity < LOW_STOCK_THRESHOLD,
+    );
+    needing.sort((a, b) => {
+      // Out-of-stock first
+      if (a.quantity === 0 && b.quantity !== 0) return -1;
+      if (b.quantity === 0 && a.quantity !== 0) return 1;
+      return a.quantity - b.quantity;
+    });
+    return needing.slice(0, 3).map((product) => ({
+      product,
+      isOut: product.quantity === 0,
+    }));
+  }, [products]);
+
+  /**
+   * Top 3 suki — overdue first, then highest balance. Reuses the
+   * customer list already returned in `balance_desc` order and
+   * surfaces the overdue row if it surfaces in the list.
+   */
+  const sukiAttention = useMemo(() => {
+    const list = priorityCustomers.filter((c) => c.outstanding_balance > 0);
+    const overdue = list.filter((c) => c.tag === 'overdue');
+    const remaining = list.filter((c) => c.tag !== 'overdue');
+    return [...overdue, ...remaining].slice(0, 3).map((customer) => ({
+      customer,
+    }));
+  }, [priorityCustomers]);
+
+  /**
+   * Top 3 newest sales. The store hook already returns timestamp-desc
+   * ordering, so we just take the first three.
+   */
+  const recentSales = useMemo(() => {
+    return sales.slice(0, 3).map((sale) => ({ sale }));
+  }, [sales]);
+
+  const stockCounts = useMemo(() => {
+    if (!products) return { lowStockCount: 0, outOfStockCount: 0 };
+    return {
+      lowStockCount: products.filter(
+        (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
+      ).length,
+      outOfStockCount: products.filter((p) => p.quantity === 0).length,
+    };
+  }, [products]);
+
+  const hasAnyProducts = !!products && products.length > 0;
+  const hasAnySales = sales.length > 0;
+  const isFreshStore = !hasAnyProducts && !hasAnySales;
+
+  // ─── Refresh ──────────────────────────────────────────────────
+
+  const refetchAll = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sales-stats'] }),
+      queryClient.invalidateQueries({ queryKey: ['sales'] }),
+      queryClient.invalidateQueries({ queryKey: ['products'] }),
+      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] }),
+      queryClient.invalidateQueries({ queryKey: ['customers'] }),
+    ]);
+  }, [queryClient]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetchAll();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchAll]);
 
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, [refetch]),
+      refetchAll();
+    }, [refetchAll]),
   );
+
+  // ─── Android back: confirm exit from the home screen ──────────
 
   useFocusEffect(
     useCallback(() => {
@@ -101,192 +195,27 @@ export default function InventoryScreen() {
     hideDialog();
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
+  // ─── Quick action handlers ───────────────────────────────────
 
-  // Mutation for inventory transaction
-  const transactionMutation = insertInventoryMutation;
-
-  const filtered = useMemo(() => {
-    if (!products) return [];
-    let list = products;
-    if (debouncedSearch) {
-      const term = debouncedSearch.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(term) ||
-          p.sku.toLowerCase().includes(term),
-      );
-    }
-    if (filter === 'low') {
-      list = list.filter(
-        (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
-      );
-    } else if (filter === 'out') {
-      list = list.filter((p) => p.quantity === 0);
-    }
-    return list;
-  }, [products, debouncedSearch, filter]);
-
-  // Paginated products
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filtered.slice(startIndex, endIndex);
-  }, [filtered, currentPage]);
-
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-
-  const openAction = useCallback((product: Product) => {
-    setPendingAction({ product, type: 'restock' });
-    setQuantityInput('');
-  }, []);
-
-  const closeAction = useCallback(() => {
-    setPendingAction(null);
-    setQuantityInput('');
-  }, []);
-
-  const submitAction = useCallback(() => {
-    if (!pendingAction) return;
-    const qty = parseInt(quantityInput, 10);
-    if (isNaN(qty) || qty <= 0) {
-      addToast({
-        message: 'Please enter a valid quantity',
-        variant: 'danger',
-        duration: 1800,
-      });
-      return;
-    }
-
-    transactionMutation.mutate({
-      product_id: pendingAction.product.id,
-      type: 'restock',
-      quantity: qty,
-    });
-
-    closeAction();
-  }, [
-    pendingAction,
-    quantityInput,
-    transactionMutation,
-    closeAction,
-    addToast,
-  ]);
-
-  // Summary stats
-  const summary = useMemo(() => {
-    if (!products) {
-      return {
-        totalProducts: 0,
-        totalItems: 0,
-        lowStockCount: 0,
-        outOfStockCount: 0,
-        totalValueCentavos: 0,
-      };
-    }
-    const lowStockCount = products.filter(
-      (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
-    ).length;
-    const outOfStockCount = products.filter((p) => p.quantity === 0).length;
-    const totalItems = products.reduce((acc, p) => acc + p.quantity, 0);
-    const totalValueCentavos = products.reduce(
-      (acc, p) => acc + p.price * p.quantity,
-      0,
-    );
-
-    return {
-      totalProducts: products.length,
-      totalItems,
-      lowStockCount,
-      outOfStockCount,
-      totalValueCentavos,
-    };
-  }, [products]);
-
-  const subtitle = useMemo(() => {
-    if (!products || products.length === 0) return 'Track your stock';
-    const low = summary.lowStockCount;
-    const out = summary.outOfStockCount;
-    const base = `${products.length} ${products.length === 1 ? 'product' : 'products'}`;
-    if (low === 0 && out === 0) return base;
-    if (out === 0) return `${base} · ${low} low stock`;
-    if (low === 0) return `${base} · ${out} out of stock`;
-    return `${base} · ${low} low · ${out} out`;
-  }, [products, summary.lowStockCount, summary.outOfStockCount]);
-
-  const handleOpenGuide = useCallback(() => {
-    setShowGuide(true);
-  }, []);
-
-  const handleOpenFilter = useCallback(() => {
-    setShowFilter((prev) => !prev);
-  }, []);
-
-  const handleAddProduct = useCallback(() => {
-    router.push('/(edit-forms)/add-product' as any);
+  const handleNewSale = useCallback(() => {
+    router.push(Routes.newSale);
   }, [router]);
 
-  const handleFilterChange = useCallback(
-    (nextFilters: { lowStock: boolean; outOfStock: boolean }) => {
-      if (nextFilters.lowStock) setFilter('low');
-      else if (nextFilters.outOfStock) setFilter('out');
-      else setFilter('all');
-    },
-    [],
-  );
+  const handleAddStock = useCallback(() => {
+    router.push(Routes.products);
+  }, [router]);
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: Product; index: number }) => (
-      <InventoryRow item={item} index={index} onRestock={openAction} />
-    ),
-    [openAction],
-  );
+  const handleRecordPayment = useCallback(() => {
+    router.push(Routes.credits);
+  }, [router]);
+
+  // ─── Render ──────────────────────────────────────────────────
 
   return (
     <SafeAreaView className="flex-1 bg-paper-200">
-      {/* Sticky cinnamon header band */}
-      <InventoryHeader
-        subtitle={subtitle}
-        onOpenGuide={handleOpenGuide}
-        onOpenFilter={handleOpenFilter}
-        onAddProduct={handleAddProduct}
-        activeFilterCount={filter !== 'all' ? 1 : 0}
-      />
-
-      <StockAlertBanner
-        lowStockCount={summary.lowStockCount}
-        outOfStockCount={summary.outOfStockCount}
-        onTap={() => setFilter(filter === 'all' ? 'low' : filter)}
-        activeFilter={filter}
-        onClearFilter={() => setFilter('all')}
-      />
-
-      {/* SearchBar wrapper in cinnamon */}
-      <View className="bg-cinnamon-500 px-5 pb-5">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search products or SKU..."
-        />
-      </View>
-
-      {/* Main product list */}
-      <FlatList
-        data={isLoading ? [] : paginatedProducts}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={{
-          paddingBottom: 100,
-          paddingTop: 8,
-        }}
+      <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -295,93 +224,54 @@ export default function InventoryScreen() {
             colors={['#E85A1F']}
           />
         }
-        ListHeaderComponent={
+      >
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : (
           <>
-            {products && products.length > 0 && (
-              <InventoryHero stats={summary} />
-            )}
+            <DashboardHeader />
 
-            {showFilter && (
-              <FilterChips
-                filters={{
-                  lowStock: filter === 'low',
-                  outOfStock: filter === 'out',
-                }}
-                onChange={handleFilterChange}
-                onOpenMore={() => {}}
+            <DashboardHero
+              totalCentavos={stats?.total ?? 0}
+              transactionCount={stats?.transaction_count ?? 0}
+              itemsSold={stats?.items_sold ?? 0}
+              creditSales={stats?.credit_sales ?? 0}
+            />
+
+            <DashboardQuickActions
+              onNewSale={handleNewSale}
+              onAddStock={handleAddStock}
+              onRecordPayment={handleRecordPayment}
+            />
+
+            <DashboardAlertCards
+              lowStockCount={stockCounts.lowStockCount}
+              outOfStockCount={stockCounts.outOfStockCount}
+              outstandingCentavos={kpis?.totalOutstanding ?? 0}
+              customersWithBalance={kpis?.totalCustomersWithBalance ?? 0}
+              onTapStock={handleAddStock}
+              onTapUtang={handleRecordPayment}
+            />
+
+            {isFreshStore ? (
+              <DashboardEmptyState
+                onAddProduct={handleAddStock}
+                onStartFirstSale={handleNewSale}
               />
-            )}
-
-            {products && products.length > 0 && (
-              <View className="px-4 pb-2 flex-row justify-between items-center">
-                <StyledText
-                  variant="semibold"
-                  className="text-label text-ink-400"
-                >
-                  {filtered.length}{' '}
-                  {filtered.length === 1 ? 'PRODUCT' : 'PRODUCTS'}
-                </StyledText>
-              </View>
+            ) : (
+              <DashboardAttentionSection
+                stockAttention={stockAttention}
+                sukis={sukiAttention}
+                recentSales={recentSales}
+                onViewAllStock={handleAddStock}
+                onViewAllUtang={handleRecordPayment}
+                onViewAllSales={() => router.push(Routes.sales)}
+              />
             )}
           </>
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <InventorySkeleton />
-          ) : products && products.length === 0 ? (
-            <InventoryEmptyState onAddProduct={handleAddProduct} />
-          ) : products && products.length > 0 && filtered.length === 0 ? (
-            <View className="items-center justify-center py-12 px-4">
-              <FontAwesome
-                name="search"
-                size={32}
-                color="#A89F90"
-                style={{ marginBottom: 12 }}
-              />
-              <StyledText
-                variant="semibold"
-                className="text-base text-ink-700 text-center"
-              >
-                No products found
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-sm text-ink-500 text-center mt-1"
-              >
-                {filter !== 'all'
-                  ? 'Try clearing the active filter or changing your search.'
-                  : 'Try searching for something else.'}
-              </StyledText>
-            </View>
-          ) : null
-        }
-      />
+        )}
+      </ScrollView>
 
-      {/* Pagination */}
-      {filtered.length > 0 && !isLoading && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          totalItems={filtered.length}
-          itemsPerPage={ITEMS_PER_PAGE}
-        />
-      )}
-
-      {/* Action modal for restock */}
-      <InventoryActionModal
-        pendingAction={pendingAction}
-        quantityInput={quantityInput}
-        onChangeQuantity={setQuantityInput}
-        onSubmit={submitAction}
-        onClose={closeAction}
-        isSubmitting={transactionMutation.isPending}
-      />
-
-      {/* Guide modal */}
-      <GuideModal visible={showGuide} onClose={() => setShowGuide(false)} />
-
-      {/* Exit confirmation dialog */}
       <CustomModal
         visible={dialogVisible}
         onClose={handleCancelExit}
@@ -400,7 +290,70 @@ export default function InventoryScreen() {
             onPress: handleExitApp,
           },
         ]}
-      />
+      >
+        <View className="items-center mt-2 mb-1">
+          <Image
+            source={sariExitImage}
+            style={{ width: 140, height: 140 }}
+            resizeMode="contain"
+          />
+        </View>
+      </CustomModal>
     </SafeAreaView>
+  );
+}
+
+function DashboardHeader() {
+  return (
+    <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
+      <View className="flex-row items-center mb-3">
+        <View
+          className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2"
+          style={{
+            shadowColor: '#564E45',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 6,
+            elevation: 2,
+          }}
+        >
+          <StyledText
+            variant="black"
+            className="text-paper-50 text-xl font-extrabold"
+          >
+            ₱
+          </StyledText>
+        </View>
+        <StyledText
+          variant="extrabold"
+          className="text-label text-paper-200 opacity-80"
+          style={{ letterSpacing: 1.4 }}
+        >
+          COUNTER COMMAND CENTER
+        </StyledText>
+      </View>
+
+      <View className="flex-row items-start justify-between">
+        <View className="flex-1 mr-3">
+          <StyledText
+            variant="extrabold"
+            className="text-h1 text-paper-50 text-3xl"
+            style={{ letterSpacing: -0.28 }}
+          >
+            Dashboard
+          </StyledText>
+          <StyledText
+            variant="regular"
+            className="text-sm text-paper-200 opacity-90 mt-1"
+          >
+            Your counter at a glance
+          </StyledText>
+        </View>
+
+        <View className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15">
+          <FontAwesome name="area-chart" size={18} color="#FBF7EE" />
+        </View>
+      </View>
+    </View>
   );
 }
