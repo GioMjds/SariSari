@@ -34,7 +34,7 @@ import { useDialogStore } from '@/stores';
  *   4. Attention queue: top 3 stock, suki, and recent sales.
  *
  * Routing:
- *   - New Sale -> /add-sales
+ *   - New Sale -> /sell?tab=new-sale
  *   - Add Stock -> /products (existing restock flow requires a product)
  *   - Record Payment -> /credits (existing payment form needs a suki)
  *   - View All stock -> /products
@@ -44,13 +44,13 @@ import { useDialogStore } from '@/stores';
  * Money handling: every centavo flow is integer — we never multiply
  * or divide before formatting. `MoneyText` handles the render edge.
  */
-import sariExitImage from '@/assets/images/sari-emotions/sari-exit-state.png';
+const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
 
 const Routes = {
-  newSale: '/(edit-forms)/add-sales',
-  products: '/products',
-  credits: '/credits',
-  sales: '/sales',
+  newSale: '/sell?tab=new-sale',
+  products: '/inventory',
+  credits: '/utang',
+  sales: '/sell',
 } satisfies Record<string, Href>;
 
 export default function Dashboard() {
@@ -164,8 +164,6 @@ export default function Dashboard() {
     }, [refetchAll]),
   );
 
-  // ─── Android back: confirm exit from the home screen ──────────
-
   useFocusEffect(
     useCallback(() => {
       const backAction = () => {
@@ -195,8 +193,6 @@ export default function Dashboard() {
     hideDialog();
   };
 
-  // ─── Quick action handlers ───────────────────────────────────
-
   const handleNewSale = useCallback(() => {
     router.push(Routes.newSale);
   }, [router]);
@@ -208,8 +204,6 @@ export default function Dashboard() {
   const handleRecordPayment = useCallback(() => {
     router.push(Routes.credits);
   }, [router]);
-
-  // ─── Render ──────────────────────────────────────────────────
 
   return (
     <SafeAreaView className="flex-1 bg-paper-200">
