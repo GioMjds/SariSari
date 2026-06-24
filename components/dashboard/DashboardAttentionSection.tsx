@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
@@ -41,81 +40,83 @@ interface AttentionSale {
  * keeping the dashboard itself shallow while letting the owner dive
  * deeper when something grabs their attention.
  */
-export const DashboardAttentionSection = memo(function DashboardAttentionSection({
-  stockAttention,
-  sukis,
-  recentSales,
-  onViewAllStock,
-  onViewAllUtang,
-  onViewAllSales,
-}: DashboardAttentionSectionProps) {
-  const showStock = stockAttention.length > 0;
-  const showUtang = sukis.length > 0;
-  const showSales = recentSales.length > 0;
+export const DashboardAttentionSection = memo(
+  function DashboardAttentionSection({
+    stockAttention,
+    sukis,
+    recentSales,
+    onViewAllStock,
+    onViewAllUtang,
+    onViewAllSales,
+  }: DashboardAttentionSectionProps) {
+    const showStock = stockAttention.length > 0;
+    const showUtang = sukis.length > 0;
+    const showSales = recentSales.length > 0;
 
-  if (!showStock && !showUtang && !showSales) return null;
+    if (!showStock && !showUtang && !showSales) return null;
 
-  return (
-    <View className="px-4 mb-4">
-      {showStock && (
-        <AttentionBlock
-          icon="cube"
-          label="Stock"
-          tone="warning"
-          count={stockAttention.length}
-          onViewAll={onViewAllStock}
-          viewAllHref="/products"
-        >
-          {stockAttention.map((item, idx) => (
-            <StockRow
-              key={`stock-${item.product.id}`}
-              item={item}
-              isLast={idx === stockAttention.length - 1}
-            />
-          ))}
-        </AttentionBlock>
-      )}
+    return (
+      <View className="px-4 mb-4">
+        {showStock && (
+          <AttentionBlock
+            icon="cube"
+            label="Stock"
+            tone="warning"
+            count={stockAttention.length}
+            onViewAll={onViewAllStock}
+            viewAllHref="/products"
+          >
+            {stockAttention.map((item, idx) => (
+              <StockRow
+                key={`stock-${item.product.id}`}
+                item={item}
+                isLast={idx === stockAttention.length - 1}
+              />
+            ))}
+          </AttentionBlock>
+        )}
 
-      {showUtang && (
-        <AttentionBlock
-          icon="credit-card"
-          label="Utang"
-          tone="danger"
-          count={sukis.length}
-          onViewAll={onViewAllUtang}
-          viewAllHref="/credits"
-        >
-          {sukis.map((item, idx) => (
-            <SukiRow
-              key={`suki-${item.customer.id}`}
-              item={item}
-              isLast={idx === sukis.length - 1}
-            />
-          ))}
-        </AttentionBlock>
-      )}
+        {showUtang && (
+          <AttentionBlock
+            icon="credit-card"
+            label="Utang"
+            tone="danger"
+            count={sukis.length}
+            onViewAll={onViewAllUtang}
+            viewAllHref="/credits"
+          >
+            {sukis.map((item, idx) => (
+              <SukiRow
+                key={`suki-${item.customer.id}`}
+                item={item}
+                isLast={idx === sukis.length - 1}
+              />
+            ))}
+          </AttentionBlock>
+        )}
 
-      {showSales && (
-        <AttentionBlock
-          icon="shopping-cart"
-          label="Recent sales"
-          tone="ink"
-          count={recentSales.length}
-          onViewAll={onViewAllSales}
-          viewAllHref="/sales"
-        >
-          {recentSales.map((item, idx) => (
-            <SaleRowMini
-              key={`sale-${item.sale.id}`}
-              item={item}
-              isLast={idx === recentSales.length - 1}
-            />
-          ))}
-        </AttentionBlock>
-      )}
-    </View>
-  );
-});
+        {showSales && (
+          <AttentionBlock
+            icon="shopping-cart"
+            label="Recent sales"
+            tone="ink"
+            count={recentSales.length}
+            onViewAll={onViewAllSales}
+            viewAllHref="/sales"
+          >
+            {recentSales.map((item, idx) => (
+              <SaleRowMini
+                key={`sale-${item.sale.id}`}
+                item={item}
+                isLast={idx === recentSales.length - 1}
+              />
+            ))}
+          </AttentionBlock>
+        )}
+      </View>
+    );
+  },
+);
 
 type Tone = 'warning' | 'danger' | 'ink';
 
@@ -214,17 +215,11 @@ function StockRow({
   isLast: boolean;
 }) {
   const qty = item.product.quantity;
-  const status = item.isOut
-    ? 'OUT'
-    : qty < LOW_STOCK_THRESHOLD
-      ? 'LOW'
-      : '·';
+  const status = item.isOut ? 'OUT' : qty < LOW_STOCK_THRESHOLD ? 'LOW' : '·';
   const pillVariant: 'danger' | 'warning' | 'neutral' = item.isOut
     ? 'danger'
     : 'warning';
-  const pillLabel = item.isOut
-    ? `${qty} left`
-    : `${qty} left`;
+  const pillLabel = item.isOut ? `${qty} left` : `${qty} left`;
   return (
     <View
       className={`flex-row items-center justify-between py-2.5 ${
@@ -278,6 +273,7 @@ function SukiRow({
 }) {
   const { customer } = item;
   const isOverdue = customer.tag === 'overdue';
+  const lastActivity = parseStoredTimestamp(customer.last_transaction_date);
   return (
     <View
       className={`flex-row items-center justify-between py-2.5 ${
@@ -304,8 +300,8 @@ function SukiRow({
         >
           {isOverdue
             ? 'Overdue'
-            : customer.last_transaction_date
-              ? `Last activity ${formatDistanceToNow(new Date(customer.last_transaction_date), { addSuffix: true })}`
+            : lastActivity
+              ? `Last activity ${formatDistanceToNow(lastActivity, { addSuffix: true })}`
               : 'No activity yet'}
         </StyledText>
       </View>
@@ -328,7 +324,7 @@ function SaleRowMini({
 }) {
   const { sale } = item;
   const isCredit = sale.payment_type === 'credit';
-  const timestamp = parseStoredTimestamp(sale.timestamp) || new Date();
+  const timestamp = parseStoredTimestamp(sale.timestamp);
   const itemsLabel = `${sale.items_count} ${sale.items_count === 1 ? 'item' : 'items'}`;
   return (
     <View
@@ -344,7 +340,9 @@ function SaleRowMini({
             numberOfLines={1}
           >
             {sale.customer_name ||
-              (isCredit ? 'Utang sale' : `Sale #${String(sale.id).padStart(4, '0')}`)}
+              (isCredit
+                ? 'Utang sale'
+                : `Sale #${String(sale.id).padStart(4, '0')}`)}
           </StyledText>
           <View
             className={`ml-2 px-2 py-0.5 rounded-full ${
@@ -366,7 +364,10 @@ function SaleRowMini({
           className="text-ink-500 text-xs mt-0.5"
           numberOfLines={1}
         >
-          {formatDistanceToNow(timestamp, { addSuffix: true })} · {itemsLabel}
+          {timestamp
+            ? formatDistanceToNow(timestamp, { addSuffix: true })
+            : 'Time unavailable'}{' '}
+          · {itemsLabel}
         </StyledText>
       </View>
       <MoneyText value={sale.total} size="sm" className="text-sm" />

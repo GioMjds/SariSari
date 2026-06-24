@@ -1,10 +1,15 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { BackHandler, Image, RefreshControl, ScrollView, View } from 'react-native';
+import {
+  BackHandler,
+  Image,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import {
   DashboardAlertCards,
   DashboardAttentionSection,
@@ -39,7 +44,14 @@ import { useDialogStore } from '@/stores';
  * Money handling: every centavo flow is integer — we never multiply
  * or divide before formatting. `MoneyText` handles the render edge.
  */
-const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
+import sariExitImage from '@/assets/images/sari-emotions/sari-exit-state.png';
+
+const Routes = {
+  newSale: '/(edit-forms)/add-sales',
+  products: '/products',
+  credits: '/credits',
+  sales: '/sales',
+} satisfies Record<string, Href>;
 
 export default function Dashboard() {
   const router = useRouter();
@@ -186,15 +198,15 @@ export default function Dashboard() {
   // ─── Quick action handlers ───────────────────────────────────
 
   const handleNewSale = useCallback(() => {
-    router.push('/(edit-forms)/add-sales' as any);
+    router.push(Routes.newSale);
   }, [router]);
 
   const handleAddStock = useCallback(() => {
-    router.push('/products' as any);
+    router.push(Routes.products);
   }, [router]);
 
   const handleRecordPayment = useCallback(() => {
-    router.push('/credits' as any);
+    router.push(Routes.credits);
   }, [router]);
 
   // ─── Render ──────────────────────────────────────────────────
@@ -253,7 +265,7 @@ export default function Dashboard() {
                 recentSales={recentSales}
                 onViewAllStock={handleAddStock}
                 onViewAllUtang={handleRecordPayment}
-                onViewAllSales={() => router.push('/sales' as any)}
+                onViewAllSales={() => router.push(Routes.sales)}
               />
             )}
           </>
