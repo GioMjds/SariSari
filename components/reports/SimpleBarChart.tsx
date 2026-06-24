@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { formatCompactCurrency } from '@/utils';
 
 interface SimpleBarChartProps {
 	data: { date: string; amount: number }[];
@@ -56,9 +57,7 @@ export function AlmanacBarChart({
 	const todayIndex = data.length - 1;
 
 	const formatLabel = (v: number) => {
-		if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-		if (v >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
-		return v.toFixed(0);
+		return formatCompactCurrency(v / 100);
 	};
 
 	return (
@@ -76,7 +75,7 @@ export function AlmanacBarChart({
 					variant="medium"
 					className="text-mono text-ink-500"
 				>
-					PEAK ₱{formatLabel(maxValue)}
+					PEAK {formatLabel(maxValue)}
 				</StyledText>
 			</View>
 
@@ -114,7 +113,7 @@ export function AlmanacBarChart({
 									className="text-[10px] text-ink-900"
 									style={{ letterSpacing: 0.4 }}
 								>
-									₱{formatLabel(point.amount)}
+									{formatLabel(point.amount)}
 								</StyledText>
 							</MotiView>
 

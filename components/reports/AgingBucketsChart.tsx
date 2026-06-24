@@ -76,7 +76,6 @@ export function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChart
 							<View className="mt-2">
 								<MoneyText
 									value={bucket.amount}
-									fromPesos
 									size="md"
 									variant="default"
 									className={`${stamp.text} text-base`}

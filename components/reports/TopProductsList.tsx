@@ -32,12 +32,13 @@ export function TopProductsList({ products, maxValue }: TopProductsListProps) {
 		);
 	}
 
-	const max = maxValue ?? Math.max(...products.map((p) => p.revenue), 1);
+	const candidateMax = maxValue ?? Math.max(...products.map((p) => p.revenue), 1);
+	const max = candidateMax > 0 ? candidateMax : 1;
 
 	return (
 		<View>
 			{products.map((product, index) => {
-				const widthPct = (product.revenue / max) * 100;
+				const widthPct = Math.max(0, Math.min((product.revenue / max) * 100, 100));
 				const isLead = index === 0;
 
 				return (
@@ -75,7 +76,6 @@ export function TopProductsList({ products, maxValue }: TopProductsListProps) {
 							</View>
 							<MoneyText
 								value={product.revenue}
-								fromPesos
 								size="md"
 								variant="default"
 								className="text-ink-900 text-sm"

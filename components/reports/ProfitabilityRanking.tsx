@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
+import { formatCurrency } from '@/utils';
 import { View } from 'react-native';
 
 /**
@@ -64,12 +65,13 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 					variant="medium"
 					className="text-mono text-ink-500 text-[10px]"
 				>
-					TOTAL ₱{products.reduce((s, p) => s + p.totalProfit, 0).toFixed(0)}
+					TOTAL {formatCurrency(products.reduce((s, p) => s + p.totalProfit, 0) / 100)}
 				</StyledText>
 			</View>
 
 			{products.map((product, index) => {
-				const widthPct = ((product.profitPerUnit ?? 0) / maxPerUnit) * 100;
+				const rawWidthPct = ((product.profitPerUnit ?? 0) / maxPerUnit) * 100;
+				const widthPct = Math.max(0, Math.min(rawWidthPct, 100));
 				const isLead = index === 0;
 
 				return (
@@ -113,7 +115,6 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 							<View className="items-end">
 								<MoneyText
 									value={product.totalProfit}
-									fromPesos
 									size="md"
 									variant="success"
 									className="text-sm"
@@ -122,7 +123,7 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 									variant="medium"
 									className="text-sage-600 text-[10px] mt-0.5"
 								>
-									+₱{(product.profitPerUnit ?? 0).toFixed(0)}/pc
+									+{formatCurrency((product.profitPerUnit ?? 0) / 100)}/pc
 								</StyledText>
 							</View>
 						</View>

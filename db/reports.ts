@@ -14,6 +14,7 @@ import {
 } from '@/types/reports.types';
 import { endOfDay, startOfDay } from 'date-fns';
 import { db } from '../configs/sqlite';
+import { formatCurrency } from '@/utils';
 
 // ==================== DATE HELPERS ====================
 
@@ -609,7 +610,7 @@ export const getReportInsights = async (
     insights.push({
       type: 'info',
       title: 'Top Credit Account',
-      message: `${highestCredit.name} owes ₱${highestCredit.amount.toFixed(2)}`,
+      message: `${highestCredit.name} owes ${formatCurrency(highestCredit.amount)}`,
       icon: 'user',
     });
   }

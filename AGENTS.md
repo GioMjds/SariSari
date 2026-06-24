@@ -75,13 +75,13 @@ Each domain has the same shape — `products.ts`, `sales.ts`, `credits.ts`, `inv
 ```ts
 export async function listProducts(db: SQLiteDatabase): Promise<Product[]>;
 export async function createProduct(
-	db: SQLiteDatabase,
-	input: NewProduct
+  db: SQLiteDatabase,
+  input: NewProduct,
 ): Promise<Product>;
 export async function updateProduct(
-	db: SQLiteDatabase,
-	id: string,
-	patch: Partial<Product>
+  db: SQLiteDatabase,
+  id: string,
+  patch: Partial<Product>,
 ): Promise<void>;
 ```
 
@@ -93,21 +93,21 @@ export async function updateProduct(
 
 ```ts
 export const productKeys = {
-	all: ['products'] as const,
-	list: () => [...productKeys.all, 'list'] as const,
+  all: ['products'] as const,
+  list: () => [...productKeys.all, 'list'] as const,
 };
 export function useProducts() {
-	return useQuery({
-		queryKey: productKeys.list(),
-		queryFn: () => listProducts(db),
-	});
+  return useQuery({
+    queryKey: productKeys.list(),
+    queryFn: () => listProducts(db),
+  });
 }
 export function useCreateProduct() {
-	const qc = useQueryClient();
-	return useMutation({
-		mutationFn: (input: NewProduct) => createProduct(db, input),
-		onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
-	});
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewProduct) => createProduct(db, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: productKeys.all }),
+  });
 }
 ```
 
@@ -116,11 +116,10 @@ export function useCreateProduct() {
 
 ## Guardrails — the non-negotiables
 
-### 1. Money is integer centavos. Always
+### 1. Money is integer pesos. Always
 
 - All monetary columns in SQLite: `INTEGER` (centavos). `₱12.50` is stored as `1250`.
 - All money in app state and props: integer centavos. Never `number` with decimals for money.
-- Format only at the render edge via a `formatPHP()` helper in `lib/currency.ts`.
 - **Why:** `0.1 + 0.2 !== 0.3`. Floating-point money loses pennies over thousands of
   sales and silently corrupts utang balances. This is a financial app — be paranoid.
 - **Failure mode this prevents:** drift in `customer.balance` after a year of transactions.
@@ -181,11 +180,11 @@ Create `types/suppliers.ts`:
 
 ```ts
 export type Supplier = {
-	id: string;
-	name: string;
-	contact: string | null;
-	notes: string | null;
-	createdAt: number;
+  id: string;
+  name: string;
+  contact: string | null;
+  notes: string | null;
+  createdAt: number;
 };
 export type NewSupplier = Omit<Supplier, 'id' | 'createdAt'>;
 ```
@@ -197,7 +196,7 @@ export type NewSupplier = Omit<Supplier, 'id' | 'createdAt'>;
 
 ```ts
 export async function ensureSuppliersTable(db: SQLiteDatabase) {
-	await db.execAsync(`
+  await db.execAsync(`
     CREATE TABLE IF NOT EXISTS suppliers (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -218,22 +217,22 @@ export async function ensureSuppliersTable(db: SQLiteDatabase) {
 
 ```ts
 export async function listSuppliers(db: SQLiteDatabase): Promise<Supplier[]> {
-	const rows = await db.getAllAsync<SupplierRow>(
-		'SELECT * FROM suppliers ORDER BY name'
-	);
-	return rows.map(rowToSupplier);
+  const rows = await db.getAllAsync<SupplierRow>(
+    'SELECT * FROM suppliers ORDER BY name',
+  );
+  return rows.map(rowToSupplier);
 }
 
 export async function createSupplier(
-	db: SQLiteDatabase,
-	input: NewSupplier
+  db: SQLiteDatabase,
+  input: NewSupplier,
 ): Promise<Supplier> {
-	const id = crypto.randomUUID();
-	await db.runAsync(
-		'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
-		[id, input.name, input.contact, input.notes, Date.now()]
-	);
-	return { id, createdAt: Date.now(), ...input };
+  const id = crypto.randomUUID();
+  await db.runAsync(
+    'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
+    [id, input.name, input.contact, input.notes, Date.now()],
+  );
+  return { id, createdAt: Date.now(), ...input };
 }
 ```
 
@@ -245,21 +244,21 @@ export async function createSupplier(
 ```ts
 // hooks/useSuppliers.tsx
 export const supplierKeys = {
-	all: ['suppliers'] as const,
-	list: () => [...supplierKeys.all, 'list'] as const,
+  all: ['suppliers'] as const,
+  list: () => [...supplierKeys.all, 'list'] as const,
 };
 export function useSuppliers() {
-	return useQuery({
-		queryKey: supplierKeys.list(),
-		queryFn: () => listSuppliers(db),
-	});
+  return useQuery({
+    queryKey: supplierKeys.list(),
+    queryFn: () => listSuppliers(db),
+  });
 }
 export function useCreateSupplier() {
-	const qc = useQueryClient();
-	return useMutation({
-		mutationFn: (input: NewSupplier) => createSupplier(db, input),
-		onSuccess: () => qc.invalidateQueries({ queryKey: supplierKeys.all }),
-	});
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewSupplier) => createSupplier(db, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: supplierKeys.all }),
+  });
 }
 ```
 

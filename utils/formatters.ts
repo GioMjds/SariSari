@@ -147,3 +147,16 @@ export const getStockStatus = (quantity: number) => {
     bg: 'bg-green-50',
   };
 };
+
+/** Issue number = day of year. Gives a stable, per-day serial. */
+export function dateIssueNumber(d: Date): string {
+	const startUtc = Date.UTC(d.getFullYear(), 0, 0);
+	const currentUtc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+	const day = Math.floor((currentUtc - startUtc) / 86_400_000);
+	return String(day).padStart(4, '0');
+}
+
+export function profitSubline(margin: number | null | undefined): string {
+	if (margin === null || margin === undefined) return '';
+	return `${margin.toFixed(1)}% margin`;
+}
