@@ -58,7 +58,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <SQLiteProvider databaseName="sarisari.db">
           <SafeAreaProvider>
-            <StatusBar style="inverted" />
+            <StatusBar style="inverted" backgroundColor="#623418" />
             <View style={{ flex: 1 }}>
               <Stack
                 screenOptions={{

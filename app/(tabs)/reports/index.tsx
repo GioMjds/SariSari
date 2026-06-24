@@ -89,11 +89,12 @@ export default function Reports() {
 
 	const kpis = kpisQuery.data ?? {
 		totalSales: 0,
-		totalProfit: 0,
+		totalProfit: null,
 		totalCreditsIssued: 0,
 		totalCreditsCollected: 0,
 		totalExpenses: 0,
 		inventoryCostOut: 0,
+		profitCoverage: null,
 	};
 	const salesOverTime = salesOverTimeQuery.data ?? [];
 	const topProducts = topProductsQuery.data ?? [];
@@ -111,6 +112,7 @@ export default function Reports() {
 	const inventoryValue = inventoryValueQuery.data ?? {
 		currentStockValue: 0,
 		potentialSalesValue: 0,
+		costCoverage: null,
 	};
 	const lowStockItems = lowStockItemsQuery.data ?? [];
 	const fastMovingProducts = fastMovingProductsQuery.data ?? [];
@@ -123,8 +125,9 @@ export default function Reports() {
 	};
 	const agingBuckets = agingBucketsQuery.data ?? [];
 	const profitability = profitabilityQuery.data ?? {
-		totalProfit: 0,
-		marginPercent: 0,
+		totalProfit: null,
+		marginPercent: null,
+		coverage: null,
 	};
 	const productProfitability = productProfitabilityQuery.data ?? [];
 	const insights = insightsQuery.data ?? [];
@@ -201,7 +204,19 @@ export default function Reports() {
 							/>
 							<ReportKPICard
 								title="Total Profit"
-								value={formatCompactCurrency(kpis.totalProfit)}
+								value={
+									kpis.totalProfit === null
+										? '—'
+										: formatCompactCurrency(kpis.totalProfit)
+								}
+								subtitle={
+									kpis.totalProfit === null
+										? 'Add cost prices to see profit'
+										: kpis.profitCoverage !== null &&
+											  kpis.profitCoverage < 1
+											? `${Math.round(kpis.profitCoverage * 100)}% of units had cost data`
+											: undefined
+								}
 								icon="line-chart"
 								color="#B45309"
 							/>
@@ -343,6 +358,17 @@ export default function Reports() {
 								</StyledText>
 								<MoneyText value={inventoryValue.currentStockValue} fromPesos className="text-warm-900 text-sm" />
 							</View>
+							{inventoryValue.costCoverage !== null &&
+								inventoryValue.costCoverage < 1 && (
+									<StyledText
+										variant="regular"
+										className="text-warm-500 text-xs mb-2"
+									>
+										Only {Math.round(inventoryValue.costCoverage * 100)}% of
+										stock has a recorded cost price — this number is
+										partial.
+									</StyledText>
+								)}
 							<View className="flex-row justify-between">
 								<StyledText variant="medium" className="text-warm-600 text-sm">
 									Potential Sales Value
@@ -487,20 +513,46 @@ export default function Reports() {
 									<StyledText variant="medium" className="text-warm-600 text-sm mb-1">
 										Total Profit
 									</StyledText>
-									<MoneyText value={profitability.totalProfit} fromPesos className="text-warm-900 text-2xl" />
+									{profitability.totalProfit === null ? (
+										<StyledText
+											variant="extrabold"
+											className="text-warm-400 text-2xl"
+										>
+											—
+										</StyledText>
+									) : (
+										<MoneyText
+											value={profitability.totalProfit}
+											fromPesos
+											className="text-warm-900 text-2xl"
+										/>
+									)}
 								</View>
 								<View className="items-end">
 									<StyledText variant="medium" className="text-warm-600 text-sm mb-1">
 										Margin
 									</StyledText>
-									<StyledText variant="extrabold" className="text-green-600 text-2xl">
-										{profitability.marginPercent.toFixed(1)}%
+									<StyledText
+										variant="extrabold"
+										className={
+											profitability.marginPercent === null
+												? 'text-warm-400 text-2xl'
+												: 'text-green-600 text-2xl'
+										}
+									>
+										{profitability.marginPercent === null
+											? '—'
+											: `${profitability.marginPercent.toFixed(1)}%`}
 									</StyledText>
 								</View>
 							</View>
 							<View className="bg-blue-50 rounded-xl p-3">
 								<StyledText variant="regular" className="text-blue-800 text-xs">
-									💡 Profit margins are calculated using actual cost prices. Products without cost prices are not included.
+									{profitability.totalProfit === null
+										? '💡 Add a cost price to your products to start tracking profit (tubo). Until then, this section stays blank — not zero.'
+										: profitability.coverage !== null && profitability.coverage < 1
+											? `💡 Profit is computed from ${Math.round(profitability.coverage * 100)}% of units sold (those with a recorded cost price). The number is partial.`
+											: '💡 Profit margins are calculated using actual cost prices. Products without cost prices are not included.'}
 								</StyledText>
 							</View>
 						</View>

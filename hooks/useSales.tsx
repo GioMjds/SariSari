@@ -65,9 +65,18 @@ export function useSales() {
     }: InsertSaleParams) =>
       insertSale(items, payment_type, customer_name, customer_credit_id),
     onSuccess: () => {
+      // Sales mutate product.quantity and the inventory ledger, so all the
+      // related caches need a refresh — products for stock state, sales
+      // lists/today's stats for the resibo book, and reports so the
+      // dashboard reflects the new totals.
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
       queryClient.invalidateQueries({ queryKey: ['sales-by-date'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
     },
   });
 

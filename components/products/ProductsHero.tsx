@@ -22,7 +22,7 @@ export const ProductsHero = React.memo(function ProductsHero({
       transition={{ type: 'timing', duration: 480, delay: 80 }}
     >
       <View className="px-4 -mt-2 mb-4">
-        <ReceiptHero tone="persimmon" headerLabel="STOCK OVERVIEW" headerCode="№ 00482">
+        <ReceiptHero tone="persimmon" headerLabel="STOCK OVERVIEW">
           <View className="px-5 py-4 flex-row justify-between items-center gap-3">
             {/* Total Tile */}
             <View className="flex-1 items-center bg-paper-100/50 rounded-xl p-3 border border-ink-100">

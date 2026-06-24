@@ -1,338 +1,324 @@
-import { CustomerListItem, FilterBar, KPICard, SortDropdown } from '@/components/credits';
-import { StyledText } from '@/components/elements';
-import { Pagination, MoneyText } from '@/components/ui';
 import {
-	CreditFilter,
-	CreditSort,
-	Customer,
-} from '@/types';
-import { FontAwesome } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+  CompactLedgerMetrics,
+  CreditsCustomerCard,
+  CreditsEmptyState,
+  CreditsHeader,
+  CreditsSkeleton,
+  FilterBar,
+  PriorityCustomerHero,
+  SortDropdown,
+} from '@/components/credits';
+import { StyledText } from '@/components/elements';
+import { Pagination, SearchBar } from '@/components/ui';
+import { ITEMS_PER_PAGE } from '@/constants/stocks';
 import { useCredits } from '@/hooks';
+import { CreditFilter, CreditSort, Customer } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-	ActivityIndicator,
-	RefreshControl,
-	ScrollView,
-	TextInput,
-	TouchableOpacity,
-	View,
-} from 'react-native';
+import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ITEMS_PER_PAGE } from '@/constants/stocks';
 
+/**
+ * Credits — Follow-up Ledger.
+ *
+ * The screen answers one question for a sari-sari store owner:
+ * "Who do I need to follow up with right now?"
+ *
+ * Hierarchy (top → bottom):
+ *   1. Cinnamon ledger header (eyebrow, title, dynamic subtitle,
+ *      add-customer action).
+ *   2. Priority receipt hero — features the single most urgent
+ *      customer (overdue first, then highest balance) with two
+ *      quick actions, OR a "all cleared" affirmation.
+ *   3. Compact ledger metrics — 4 cells, paper-totals style.
+ *   4. Search + filter chips + sort control.
+ *   5. Action-ready customer list — paper cards with quick
+ *      Add Payment / Add Credit pills.
+ *   6. Floating pagination pill (existing component).
+ */
 export default function Credits() {
-	const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
-	const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
-	const [currentPage, setCurrentPage] = useState<number>(1);
+  const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
+  const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-	const queryClient = useQueryClient();
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-	const { useCustomers, useCreditKPIs, useSearchCustomers } = useCredits();
+  const { useCustomers, useCreditKPIs, useSearchCustomers } = useCredits();
 
-	const { control, watch } = useForm({
-		defaultValues: {
-			searchQuery: '',
-		},
-	});
+  const { control, watch, reset } = useForm({
+    defaultValues: {
+      searchQuery: '',
+    },
+  });
 
-	const searchQuery = watch('searchQuery');
+  const searchQuery = watch('searchQuery');
 
-	const {
-		data: customers = [],
-		isLoading,
-		isRefetching,
-		refetch,
-	} = useCustomers(activeFilter, activeSort);
+  const {
+    data: customers = [],
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useCustomers(activeFilter, activeSort);
 
-	// Query KPIs
-	const { data: kpis } = useCreditKPIs();
+  const { data: kpis } = useCreditKPIs();
 
-	// Search query with debouncing
-	const { data: searchResults = [] } = useSearchCustomers(searchQuery);
+  const { data: searchResults = [] } = useSearchCustomers(searchQuery);
 
-	// Reset to first page when filters change
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [activeFilter, activeSort, searchQuery]);
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, activeSort, searchQuery]);
 
-	useFocusEffect(
-		useCallback(() => {
-			refetch();
-			queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-		}, [refetch, queryClient])
-	);
+  // Refresh on tab focus (expo-router compatible)
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+    }, [refetch, queryClient]),
+  );
 
-	// Filtered customers based on search
-	const filteredCustomers = useMemo(() => {
-		if (searchQuery.trim()) return searchResults;
-		return customers;
-	}, [customers, searchResults, searchQuery]);
+  // Filtered customers based on search
+  const filteredCustomers = useMemo(() => {
+    if (searchQuery.trim()) return searchResults;
+    return customers;
+  }, [customers, searchResults, searchQuery]);
 
-	// Paginated customers
-	const paginatedCustomers = useMemo(() => {
-		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-		const endIndex = startIndex + ITEMS_PER_PAGE;
-		return filteredCustomers.slice(startIndex, endIndex);
-	}, [filteredCustomers, currentPage]);
+  // Paginated customers
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredCustomers.slice(startIndex, endIndex);
+  }, [filteredCustomers, currentPage]);
 
-	const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
 
-	const handleRefresh = () => {
-		refetch();
-		queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-	};
+  // Priority customer (only considers customers that actually
+  // owe money; otherwise the hero shows the cleared state).
+  const priorityCustomer = useMemo<Customer | null>(() => {
+    const owing = filteredCustomers.filter(
+      (c) => c.outstanding_balance > 0,
+    );
+    if (owing.length === 0) return null;
+    const overdue = owing.find((c) => c.tag === 'overdue');
+    if (overdue) return overdue;
+    return [...owing].sort(
+      (a, b) => b.outstanding_balance - a.outstanding_balance,
+    )[0];
+  }, [filteredCustomers]);
 
-	const handleFilterChange = (filter: CreditFilter) => {
-		setActiveFilter(filter);
-	};
+  // Dynamic subtitle: surfaces urgency first, falls back to a
+  // neutral count.
+  const headerSubtitle = useMemo(() => {
+    const overdue = kpis?.overdueCount ?? 0;
+    if (overdue > 0) {
+      return `${overdue} overdue ${overdue === 1 ? 'customer needs' : 'customers need'} follow-up`;
+    }
+    const totalCustomers = filteredCustomers.length;
+    if (totalCustomers === 0) return 'Add your first suki to start tracking utang';
+    if (priorityCustomer) {
+      return `${priorityCustomer.name} top of the list`;
+    }
+    return 'Ledger is clear — all balances settled';
+  }, [kpis?.overdueCount, filteredCustomers.length, priorityCustomer]);
 
-	const handleSortChange = (sort: CreditSort) => {
-		setActiveSort(sort);
-	};
+  const handleRefresh = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+  };
 
-	const handleCustomerPress = async (customer: Customer) => {
-		router.push(`/(edit-forms)/credit-details/${customer.id}` as any);
-	};
+  const handleFilterChange = (filter: CreditFilter) => {
+    setActiveFilter(filter);
+  };
 
-	const handleAddCustomer = () => {
-		router.push('/(edit-forms)/add-customer' as any);
-	};
+  const handleSortChange = (sort: CreditSort) => {
+    setActiveSort(sort);
+  };
 
-	const getFilterCounts = () => {
-		return {
-			all: customers.length,
-			with_balance: customers.filter((c) => c.outstanding_balance > 0)
-				.length,
-			paid: customers.filter((c) => c.outstanding_balance === 0).length,
-			overdue: kpis?.overdueCount || 0,
-		};
-	};
+  const handleOpenDetails = (customer: Customer) => {
+    router.push(`/(edit-forms)/credit-details/${customer.id}` as any);
+  };
 
-	if (isLoading) {
-		return (
-			<SafeAreaView className="flex-1 bg-background">
-				<View className="flex-1 items-center justify-center">
-					<ActivityIndicator size="large" color="#B45309" />
-					<StyledText variant="medium" className="text-warm-600 mt-4">
-						Loading credits...
-					</StyledText>
-				</View>
-			</SafeAreaView>
-		);
-	}
+  const handleAddPayment = (customer: Customer) => {
+    router.push(`/(edit-forms)/add-payment/${customer.id}` as any);
+  };
 
-	return (
-		<SafeAreaView className="flex-1 bg-background" edges={['top']}>
-			{/* Header */}
-			<View className="px-4 pt-4 pb-2 bg-background">
-				<View className="flex-row items-center justify-between mb-4">
-					<View>
-						<StyledText variant="extrabold" className="text-warm-900 text-3xl">
-							Credits
-						</StyledText>
-						<StyledText
-							variant="regular"
-							className="text-warm-600 text-sm mt-0.5"
-						>
-							Manage customer utang
-						</StyledText>
-					</View>
+  const handleAddCredit = (customer: Customer) => {
+    router.push(`/(edit-forms)/add-credit/${customer.id}` as any);
+  };
 
-					<TouchableOpacity
-						activeOpacity={0.7}
-						onPress={handleAddCustomer}
-						className="bg-primary-500 rounded-full w-12 h-12 items-center justify-center shadow-md"
-					>
-						<FontAwesome name="user-plus" size={20} color="white" />
-					</TouchableOpacity>
-				</View>
+  const handleAddCustomer = () => {
+    router.push('/(edit-forms)/add-customer' as any);
+  };
 
-				{/* Search Bar with React Hook Form */}
-				<Controller
-					control={control}
-					name="searchQuery"
-					render={({ field: { onChange, value } }) => (
-						<View className="bg-white rounded-2xl px-4 py-3 mb-4 flex-row items-center shadow-sm border border-warm-100">
-							<FontAwesome name="search" size={16} color="#A8A29E" />
-							<TextInput
-								value={value}
-								onChangeText={onChange}
-								placeholder="Search customers..."
-								placeholderTextColor="#A8A29E"
-								className="flex-1 ml-3 text-warm-900 font-stack-sans text-sm"
-							/>
-							{value.length > 0 && (
-								<TouchableOpacity onPress={() => onChange('')}>
-									<FontAwesome
-										name="times-circle"
-										size={16}
-										color="#A8A29E"
-									/>
-								</TouchableOpacity>
-							)}
-						</View>
-					)}
-				/>
-			</View>
+  const handleClearSearch = () => {
+    reset({ searchQuery: '' });
+  };
 
-			<ScrollView
-				className="flex-1"
-				showsVerticalScrollIndicator={false}
-				refreshControl={
-					<RefreshControl
-						refreshing={isRefetching}
-						onRefresh={handleRefresh}
-						tintColor="#7A1CAC"
-					/>
-				}
-			>
-				{/* KPI Cards */}
-				<View className="px-4 mb-4">
-					<View className="flex-row mb-3 gap-3">
-						<View className="flex-1">
-							<KPICard
-								title="Total Outstanding"
-								value={<MoneyText value={kpis?.totalOutstanding || 0} fromPesos variant="danger" />}
-								icon="credit-card"
-								iconColor="#DC2626"
-							/>
-						</View>
-						<View className="flex-1">
-							<KPICard
-								title="Customers w/ Balance"
-								value={kpis?.totalCustomersWithBalance || 0}
-								icon="users"
-								iconColor="#7A1CAC"
-							/>
-						</View>
-					</View>
+  const getFilterCounts = () => ({
+    all: customers.length,
+    with_balance: customers.filter((c) => c.outstanding_balance > 0).length,
+    paid: customers.filter((c) => c.outstanding_balance === 0).length,
+    overdue: kpis?.overdueCount || 0,
+  });
 
-					<View className="flex-row gap-3">
-						<View className="flex-1">
-							<KPICard
-								title="Collected Today"
-								value={<MoneyText value={kpis?.totalCollectedToday || 0} fromPesos variant="success" />}
-								icon="money"
-								iconColor="#65A30D"
-								trend={
-									(kpis?.totalCollectedToday || 0) > 0 ? 'up' : 'neutral'
-								}
-							/>
-						</View>
-						<View className="flex-1">
-							<KPICard
-								title="Credits Today"
-								value={<MoneyText value={kpis?.totalCreditsToday || 0} fromPesos />}
-								icon="plus-circle"
-								iconColor="#D97706"
-							/>
-						</View>
-					</View>
+  // ── Render: loading skeleton ────────────────────────────────
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+        <CreditsHeader
+          subtitle="Loading your ledger…"
+          onAddCustomer={handleAddCustomer}
+        />
+        <CreditsSkeleton />
+      </SafeAreaView>
+    );
+  }
 
-					{kpis?.mostOwedCustomer && (
-						<View className="mt-3">
-							<KPICard
-								title="Most Owed Customer"
-								value={<MoneyText value={kpis.mostOwedCustomer.amount} fromPesos variant="danger" />}
-								subtitle={kpis.mostOwedCustomer.name}
-								icon="exclamation-triangle"
-								iconColor="#D97706"
-							/>
-						</View>
-					)}
+  // ── Render: no customers at all ─────────────────────────────
+  const noCustomersAtAll = customers.length === 0 && !searchQuery.trim();
 
-					{(kpis?.overdueCount || 0) > 0 && (
-						<View className="mt-3 bg-red-50 border border-red-100 rounded-2xl p-3 flex-row items-center">
-							<FontAwesome name="warning" size={20} color="#DC2626" />
-							<View className="ml-3 flex-1">
-								<StyledText variant="semibold" className="text-semantic-danger">
-									{kpis?.overdueCount} Overdue{' '}
-									{(kpis?.overdueCount || 0) === 1
-										? 'Customer'
-										: 'Customers'}
-								</StyledText>
-								<StyledText variant="regular" className="text-semantic-danger text-xs">
-									Requires immediate attention
-								</StyledText>
-							</View>
-						</View>
-					)}
-				</View>
+  return (
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <CreditsHeader
+        subtitle={headerSubtitle}
+        onAddCustomer={handleAddCustomer}
+      />
 
-				{/* Filter & Sort */}
-				<FilterBar
-					activeFilter={activeFilter}
-					onFilterChange={handleFilterChange}
-					counts={getFilterCounts()}
-				/>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 96 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
+            tintColor="#623418"
+            colors={['#E85A1F']}
+          />
+        }
+      >
+        {/* Priority hero — only when we have at least one customer */}
+        {!noCustomersAtAll && (
+          <PriorityCustomerHero
+            customer={priorityCustomer}
+            hasOverdue={!!priorityCustomer && priorityCustomer.tag === 'overdue'}
+            onAddPayment={() =>
+              priorityCustomer && handleAddPayment(priorityCustomer)
+            }
+            onAddCredit={() =>
+              priorityCustomer && handleAddCredit(priorityCustomer)
+            }
+            onViewDetails={() =>
+              priorityCustomer && handleOpenDetails(priorityCustomer)
+            }
+          />
+        )}
 
-				<View className="px-4 mb-4 flex-row items-center justify-between">
-					<StyledText variant="medium" className="text-warm-600">
-						{filteredCustomers.length}{' '}
-						{filteredCustomers.length === 1 ? 'customer' : 'customers'}
-					</StyledText>
-					<SortDropdown
-						activeSort={activeSort}
-						onSortChange={handleSortChange}
-					/>
-				</View>
+        {/* Compact metrics — only when we have customers */}
+        {!noCustomersAtAll && (
+          <CompactLedgerMetrics
+            totalOutstandingCentavos={kpis?.totalOutstanding || 0}
+            collectedTodayCentavos={kpis?.totalCollectedToday || 0}
+            customersWithBalance={kpis?.totalCustomersWithBalance || 0}
+            overdueCount={kpis?.overdueCount || 0}
+          />
+        )}
 
-				{/* Customer List */}
-				<View className="px-4 pb-32">
-					{filteredCustomers.length === 0 ? (
-						<View className="items-center justify-center py-12">
-							<FontAwesome name="users" size={48} color="#B45309" />
-							<StyledText
-								variant="semibold"
-								className="text-gray-700 text-lg mt-4"
-							>
-								No customers found
-							</StyledText>
-							<StyledText
-								variant="regular"
-								className="text-gray-600 text-sm mt-2 text-center"
-							>
-								{searchQuery
-									? 'Try a different search term'
-									: 'Add your first customer to get started'}
-							</StyledText>
-							{!searchQuery && (
-								<TouchableOpacity
-									activeOpacity={0.7}
-									onPress={handleAddCustomer}
-									className="bg-secondary rounded-xl px-6 py-3 mt-6"
-								>
-									<StyledText variant="semibold" className="text-white">
-										Add Customer
-									</StyledText>
-								</TouchableOpacity>
-							)}
-						</View>
-					) : (
-						paginatedCustomers.map((customer) => (
-							<CustomerListItem
-								key={customer.id}
-								customer={customer}
-								onPress={handleCustomerPress}
-							/>
-						))
-					)}
-				</View>
-			</ScrollView>
-			{/* Pagination */}
-			{filteredCustomers.length > 0 && (
-				<Pagination
-					currentPage={currentPage}
-					totalPages={totalPages}
-					onPageChange={setCurrentPage}
-					totalItems={filteredCustomers.length}
-					itemsPerPage={ITEMS_PER_PAGE}
-				/>
-			)}
-		</SafeAreaView>
-	);
+        {/* Search — only when we have customers */}
+        {!noCustomersAtAll && (
+          <View className="px-4 mb-3">
+            <Controller
+              control={control}
+              name="searchQuery"
+              render={({ field: { onChange, value } }) => (
+                <SearchBar
+                  value={value}
+                  onChange={onChange}
+                  placeholder="Search customers…"
+                  debounceMs={250}
+                />
+              )}
+            />
+          </View>
+        )}
+
+        {/* Filter + sort row */}
+        {!noCustomersAtAll && (
+          <FilterBar
+            activeFilter={activeFilter}
+            onFilterChange={handleFilterChange}
+            counts={getFilterCounts()}
+          />
+        )}
+
+        {!noCustomersAtAll && (
+          <View className="px-4 mb-3 flex-row items-center justify-between">
+            <View>
+              <StyledText variant="medium" className="text-ink-500 text-sm">
+                {filteredCustomers.length}{' '}
+                {filteredCustomers.length === 1 ? 'suki' : 'sukis'}
+              </StyledText>
+              {activeFilter !== 'all' && (
+                <StyledText
+                  variant="regular"
+                  className="text-ink-400 text-[10px] mt-0.5"
+                >
+                  {activeFilter === 'with_balance'
+                    ? 'with outstanding balance'
+                    : activeFilter === 'paid'
+                      ? 'all paid up'
+                      : 'past due date'}
+                </StyledText>
+              )}
+            </View>
+            <SortDropdown
+              activeSort={activeSort}
+              onSortChange={handleSortChange}
+            />
+          </View>
+        )}
+
+        {/* List / empty / cleared state */}
+        <View className="pb-8">
+          {noCustomersAtAll ? (
+            <CreditsEmptyState
+              variant="no-customers"
+              onAddPress={handleAddCustomer}
+            />
+          ) : filteredCustomers.length === 0 ? (
+            <CreditsEmptyState
+              variant={searchQuery.trim() ? 'no-search' : 'all-cleared'}
+              searchTerm={searchQuery}
+              onClearSearch={handleClearSearch}
+            />
+          ) : (
+            paginatedCustomers.map((customer, index) => (
+              <CreditsCustomerCard
+                key={customer.id}
+                customer={customer}
+                index={index}
+                onOpenDetails={handleOpenDetails}
+                onAddPayment={handleAddPayment}
+                onAddCredit={handleAddCredit}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Floating pagination pill */}
+      {filteredCustomers.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredCustomers.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+        />
+      )}
+    </SafeAreaView>
+  );
 }

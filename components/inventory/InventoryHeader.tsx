@@ -50,7 +50,7 @@ export const InventoryHeader = memo(function InventoryHeader({
             className="text-label text-paper-200 opacity-80"
             style={{ letterSpacing: 1.4 }}
           >
-            STOCK LEDGER
+            STOCK HOME
           </StyledText>
         </View>
 
@@ -62,7 +62,7 @@ export const InventoryHeader = memo(function InventoryHeader({
               className="text-h1 text-paper-50"
               style={{ letterSpacing: -0.28 }}
             >
-              Inventory
+              Stock
             </StyledText>
             <StyledText
               variant="regular"

@@ -25,47 +25,60 @@ export const formatDateForSQL = (date: Date): string => {
 
 // ==================== KPI FUNCTIONS ====================
 
+/**
+ * Reports are scoped to factual local data:
+ *  - Total sales, cash/credit split, collections, low/out counts, and stock
+ *    value are always derivable from the local DB.
+ *  - Profit and COGS are returned with a `coverage` field that says how many
+ *    sold items had a recorded cost_price. When coverage is 0 we render the
+ *    metric as "unavailable" instead of zero — the plan is explicit that
+ *    missing cost data must NOT show up as zero profit.
+ */
 export const getReportKPIs = async (
   dateRange: DateRange,
 ): Promise<ReportKPIs> => {
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-  // Total Sales
   const salesResult = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(total), 0) as total 
-     FROM sales 
+    `SELECT COALESCE(SUM(total), 0) as total
+     FROM sales
      WHERE timestamp BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
-  // Total Profit (requires cost price in products table)
-  const profitResult = await db.getFirstAsync<{ profit: number }>(
-    `SELECT COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
+  // Profit + COGS only count sold items where the product HAS a cost_price.
+  // `coverage_units` is how many units in the range had a usable cost basis.
+  const profitResult = await db.getFirstAsync<{
+    profit: number;
+    coverage_units: number;
+    total_units: number;
+  }>(
+    `SELECT
+       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit,
+       COALESCE(SUM(CASE WHEN p.cost_price IS NOT NULL THEN si.quantity ELSE 0 END), 0) as coverage_units,
+       COALESCE(SUM(si.quantity), 0) as total_units
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
-     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
+     WHERE s.timestamp BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
-  // Credits Issued
   const creditsIssuedResult = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM credit_transactions 
+    `SELECT COALESCE(SUM(amount), 0) as total
+     FROM credit_transactions
      WHERE date BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
-  // Credits Collected
   const creditsCollectedResult = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM payments 
+    `SELECT COALESCE(SUM(amount), 0) as total
+     FROM payments
      WHERE date BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
-  // Inventory Cost Out (COGS)
   const cogsResult = await db.getFirstAsync<{ total: number }>(
     `SELECT COALESCE(SUM(si.quantity * p.cost_price), 0) as total
      FROM sale_items si
@@ -75,13 +88,21 @@ export const getReportKPIs = async (
     [startDate, endDate],
   );
 
+  const coverageUnits = profitResult?.coverage_units ?? 0;
+  const totalUnits = profitResult?.total_units ?? 0;
+  const profitCoverage =
+    totalUnits > 0 ? coverageUnits / totalUnits : null;
+
   return {
     totalSales: salesResult?.total || 0,
-    totalProfit: profitResult?.profit || 0,
+    // Profit is `null` when no sold items had cost data so the UI can show
+    // "unavailable" rather than 0.0.
+    totalProfit: profitCoverage === 0 ? null : profitResult?.profit ?? 0,
     totalCreditsIssued: creditsIssuedResult?.total || 0,
     totalCreditsCollected: creditsCollectedResult?.total || 0,
-    totalExpenses: 0, // Can be extended later
+    totalExpenses: 0, // Future scope — not in this stabilization pass.
     inventoryCostOut: cogsResult?.total || 0,
+    profitCoverage,
   };
 };
 
@@ -93,12 +114,15 @@ export const getSalesOverTime = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
+  // Amount is always factual. Profit on the per-day trend is computed only
+  // from items with a cost_price, so empty cost coverage simply leaves the
+  // profit column at 0 — the dashboard renders those days as "no cost data".
   const results = await db.getAllAsync<{
     date: string;
     amount: number;
     profit: number;
   }>(
-    `SELECT 
+    `SELECT
        date(timestamp) as date,
        COALESCE(SUM(total), 0) as amount,
        COALESCE(SUM(
@@ -124,8 +148,11 @@ export const getTopSellingProducts = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
+  // We always want factual sales volume (units sold, revenue). Profit is
+  // only meaningful when cost_price is recorded, so we surface it as 0 with
+  // the understanding the UI labels it "estimated" or hides it.
   const results = await db.getAllAsync<TopSellingProduct>(
-    `SELECT 
+    `SELECT
        p.id,
        p.name,
        COALESCE(SUM(si.quantity), 0) as unitsSold,
@@ -134,7 +161,7 @@ export const getTopSellingProducts = async (
      FROM products p
      JOIN sale_items si ON p.id = si.product_id
      JOIN sales s ON si.sale_id = s.id
-     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL
+     WHERE s.timestamp BETWEEN ? AND ?
      GROUP BY p.id, p.name
      ORDER BY unitsSold DESC
      LIMIT ?`,
@@ -156,7 +183,7 @@ export const getSalesBreakdown = async (
     totalTransactions: number;
     totalAmount: number;
   }>(
-    `SELECT 
+    `SELECT
        COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN total ELSE 0 END), 0) as cashSales,
        COALESCE(SUM(CASE WHEN payment_type = 'credit' THEN total ELSE 0 END), 0) as creditSales,
        COUNT(*) as totalTransactions,
@@ -193,6 +220,7 @@ export const getInventoryMovement = async (
     [startDate, endDate],
   );
 
+  // Factual low/out counts — these are unconditional and don't need cost data.
   const lowStockResult = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 10`,
   );
@@ -212,13 +240,13 @@ export const getLowStockItems = async (
   threshold: number = 10,
 ): Promise<StockItem[]> => {
   const results = await db.getAllAsync<any>(
-    `SELECT 
-       id, 
-       name, 
+    `SELECT
+       id,
+       name,
        quantity,
        price as sellingPrice,
        cost_price as costPrice
-     FROM products 
+     FROM products
      WHERE quantity > 0 AND quantity <= ?
      ORDER BY quantity ASC`,
     [threshold],
@@ -229,13 +257,13 @@ export const getLowStockItems = async (
 
 export const getOutOfStockItems = async (): Promise<StockItem[]> => {
   const results = await db.getAllAsync<any>(
-    `SELECT 
-       id, 
-       name, 
+    `SELECT
+       id,
+       name,
        quantity,
        price as sellingPrice,
        cost_price as costPrice
-     FROM products 
+     FROM products
      WHERE quantity = 0
      ORDER BY name ASC`,
   );
@@ -244,20 +272,31 @@ export const getOutOfStockItems = async (): Promise<StockItem[]> => {
 };
 
 export const getInventoryValue = async (): Promise<InventoryValue> => {
+  // Factual: potential sales value is always computable. Current stock cost
+  // is only available where cost_price is set; we report a `coverage` so
+  // the UI can warn the owner that the cost-side number is partial.
   const result = await db.getFirstAsync<{
     currentStockValue: number;
     potentialSalesValue: number;
+    costCoverageCount: number;
+    totalStockCount: number;
   }>(
-    `SELECT 
-       COALESCE(SUM(quantity * p.cost_price), 0) as currentStockValue,
-       COALESCE(SUM(quantity * price), 0) as potentialSalesValue
+    `SELECT
+       COALESCE(SUM(CASE WHEN cost_price IS NOT NULL THEN quantity * cost_price ELSE 0 END), 0) as currentStockValue,
+       COALESCE(SUM(quantity * price), 0) as potentialSalesValue,
+       COALESCE(SUM(CASE WHEN cost_price IS NOT NULL THEN 1 ELSE 0 END), 0) as costCoverageCount,
+       COUNT(*) as totalStockCount
      FROM products p
      WHERE quantity > 0`,
   );
 
+  const costCoverageCount = result?.costCoverageCount ?? 0;
+  const totalStockCount = result?.totalStockCount ?? 0;
   return {
     currentStockValue: result?.currentStockValue || 0,
     potentialSalesValue: result?.potentialSalesValue || 0,
+    costCoverage:
+      totalStockCount > 0 ? costCoverageCount / totalStockCount : null,
   };
 };
 
@@ -269,7 +308,7 @@ export const getFastMovingProducts = async (
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
   const results = await db.getAllAsync<any>(
-    `SELECT 
+    `SELECT
        p.id,
        p.name,
        p.quantity,
@@ -297,7 +336,7 @@ export const getSlowMovingProducts = async (
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
   const results = await db.getAllAsync<any>(
-    `SELECT 
+    `SELECT
        p.id,
        p.name,
        p.quantity,
@@ -326,28 +365,30 @@ export const getCreditsOverview = async (
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
   const issued = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM credit_transactions 
+    `SELECT COALESCE(SUM(amount), 0) as total
+     FROM credit_transactions
      WHERE date BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
   const collected = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM payments 
+    `SELECT COALESCE(SUM(amount), 0) as total
+     FROM payments
      WHERE date BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
+  // Outstanding is across all unpaid credit_transactions, regardless of date
+  // range — that's the customer's actual balance, which must always be shown.
   const outstanding = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
-     FROM credit_transactions 
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total
+     FROM credit_transactions
      WHERE status != 'paid'`,
   );
 
   const activeAccounts = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(DISTINCT customer_id) as count 
-     FROM credit_transactions 
+    `SELECT COUNT(DISTINCT customer_id) as count
+     FROM credit_transactions
      WHERE status != 'paid'`,
   );
 
@@ -372,7 +413,7 @@ export const getAgingBuckets = async (): Promise<AgingBucket[]> => {
     amount: number;
     count: number;
   }>(
-    `SELECT 
+    `SELECT
        CAST(julianday('now') - julianday(date) AS INTEGER) as days_old,
        SUM(amount - amount_paid) as amount,
        COUNT(*) as count
@@ -402,6 +443,11 @@ export const getAgingBuckets = async (): Promise<AgingBucket[]> => {
 
 // ==================== PROFITABILITY REPORTS ====================
 
+/**
+ * Profitability data is conditional. We return `null` for `totalProfit` and
+ * `marginPercent` when no sold units in the range had cost_price — the UI
+ * must render that as "add cost prices to see profit" rather than 0.
+ */
 export const getProfitabilityData = async (
   dateRange: DateRange,
 ): Promise<ProfitabilityData> => {
@@ -411,25 +457,41 @@ export const getProfitabilityData = async (
   const profitResult = await db.getFirstAsync<{
     totalProfit: number;
     totalRevenue: number;
+    coverageUnits: number;
+    totalUnits: number;
   }>(
-    `SELECT 
+    `SELECT
        COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
-       COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue
+       COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue,
+       COALESCE(SUM(CASE WHEN p.cost_price IS NOT NULL THEN si.quantity ELSE 0 END), 0) as coverageUnits,
+       COALESCE(SUM(si.quantity), 0) as totalUnits
      FROM sale_items si
      JOIN sales s ON si.sale_id = s.id
      LEFT JOIN products p ON si.product_id = p.id
-     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL`,
+     WHERE s.timestamp BETWEEN ? AND ?`,
     [startDate, endDate],
   );
 
+  const coverageUnits = profitResult?.coverageUnits ?? 0;
+  const totalUnits = profitResult?.totalUnits ?? 0;
+  const totalRevenue = profitResult?.totalRevenue ?? 0;
+  const totalProfit = profitResult?.totalProfit ?? 0;
+
+  if (coverageUnits === 0) {
+    return {
+      totalProfit: null,
+      marginPercent: null,
+      coverage: null,
+    };
+  }
+
   const marginPercent =
-    profitResult && profitResult.totalRevenue > 0
-      ? (profitResult.totalProfit / profitResult.totalRevenue) * 100
-      : 0;
+    totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
   return {
-    totalProfit: profitResult?.totalProfit || 0,
+    totalProfit,
     marginPercent,
+    coverage: totalUnits > 0 ? coverageUnits / totalUnits : null,
   };
 };
 
@@ -452,16 +514,19 @@ export const getProductProfitability = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
+  // Only products whose cost_price is recorded make it into the leaderboard.
+  // That's the only honest way to rank "most profitable" — partial cost data
+  // would mislead the owner.
   const results = await db.getAllAsync<ProductProfitability>(
-    `SELECT 
+    `SELECT
        p.id,
        p.name,
        COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue,
        COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
        COALESCE(SUM(si.quantity), 0) as unitsSold,
        COALESCE(AVG(si.price - p.cost_price), 0) as profitPerUnit,
-       CASE 
-         WHEN SUM(si.quantity * si.price) > 0 
+       CASE
+         WHEN SUM(si.quantity * si.price) > 0
          THEN (SUM(si.quantity * (si.price - p.cost_price)) / SUM(si.quantity * si.price)) * 100
          ELSE 0
        END as marginPercent
@@ -487,7 +552,7 @@ export const getReportInsights = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-  // Best selling item
+  // Best selling item (factual, no cost data required)
   const bestSeller = await db.getFirstAsync<{
     name: string;
     quantity: number;
@@ -512,7 +577,7 @@ export const getReportInsights = async (
     });
   }
 
-  // Low stock warning
+  // Low stock warning (factual)
   const lowStockCount = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity <= 5`,
   );
@@ -526,7 +591,7 @@ export const getReportInsights = async (
     });
   }
 
-  // Highest credit customer
+  // Highest credit customer (factual — outstanding balance only)
   const highestCredit = await db.getFirstAsync<{
     name: string;
     amount: number;
@@ -549,7 +614,7 @@ export const getReportInsights = async (
     });
   }
 
-  // Day with lowest sales
+  // Day with lowest sales (factual)
   const lowestSalesDay = await db.getFirstAsync<{
     date: string;
     amount: number;

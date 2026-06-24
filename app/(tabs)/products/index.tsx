@@ -46,8 +46,8 @@ export default function Products() {
       ? `${productsStats.total} products · ${productsStats.lowStock} low · ${productsStats.outStock} out`
       : `${(categories || []).length} categories total`;
 
-  const title = activeTab === 'products' ? 'Your Products' : 'Your Categories';
-  const eyebrow = activeTab === 'products' ? 'CATALOG' : 'SECTIONS';
+  const title = activeTab === 'products' ? 'Catalog' : 'Your Categories';
+  const eyebrow = activeTab === 'products' ? 'MASTER DATA' : 'SECTIONS';
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {

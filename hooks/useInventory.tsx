@@ -54,7 +54,6 @@ export function useInventory() {
       queryClient.invalidateQueries({
         queryKey: ['inventory-transactions-by-date'],
       });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
       addToast({
         message: 'Stock updated successfully',
         variant: 'success',

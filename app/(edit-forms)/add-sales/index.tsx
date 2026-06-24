@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { InsufficientStockError } from '@/db/sales';
 import { useCredits, useProducts, useSales } from '@/hooks';
 import { Product, NewSaleItem } from '@/types';
 import { Alert } from '@/utils';
@@ -150,7 +151,18 @@ export default function AddSale() {
       Alert.alert('Success', 'Sale completed successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);
-    } catch {
+    } catch (err) {
+      // Race-condition safety: even though the UI caps quantity to stock,
+      // another tab can move stock between the user opening the form and
+      // tapping checkout. Surface that explicitly so the user trusts the
+      // "you can't oversell" guarantee.
+      if (err instanceof InsufficientStockError) {
+        Alert.alert(
+          'Stock changed',
+          `Only ${err.available} of ${err.requested} available now. Please refresh.`,
+        );
+        return;
+      }
       Alert.alert('Error', 'Failed to complete sale. Please try again.');
     } finally {
       setIsProcessing(false);
