@@ -156,6 +156,7 @@ export function dateIssueNumber(d: Date): string {
 	return String(day).padStart(4, '0');
 }
 
+/** Returns a formatted margin subline string (e.g. "12.5% margin") if present. */
 export function profitSubline(margin: number | null | undefined): string {
 	if (margin === null || margin === undefined) return '';
 	return `${margin.toFixed(1)}% margin`;

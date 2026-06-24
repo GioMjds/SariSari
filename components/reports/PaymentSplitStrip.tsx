@@ -66,7 +66,6 @@ export function PaymentSplitStrip({
           </StyledText>
           <MoneyText
             value={cash}
-            fromPesos
             size="sm"
             variant="default"
             className="text-ink-900 ml-2 text-xs"
@@ -83,7 +82,6 @@ export function PaymentSplitStrip({
           </StyledText>
           <MoneyText
             value={credit}
-            fromPesos
             size="sm"
             variant="default"
             className="text-ink-900 ml-2 text-xs"
@@ -103,7 +101,6 @@ export function PaymentSplitStrip({
           </StyledText>
           <MoneyText
             value={avgTicket}
-            fromPesos
             size="sm"
             variant="default"
             className="text-ink-900 text-sm"
@@ -119,7 +116,6 @@ export function PaymentSplitStrip({
           </StyledText>
           <MoneyText
             value={total}
-            fromPesos
             size="sm"
             variant="default"
             className="text-ink-900 text-sm"
