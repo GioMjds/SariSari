@@ -178,20 +178,37 @@ export const getAllSales = async (): Promise<SaleWithItems[]> => {
     'SELECT * FROM sales ORDER BY timestamp DESC',
   );
 
-  const salesWithItems = await Promise.all(
-    sales.map(async (sale) => {
-      const items = await db.getAllAsync<SaleItemWithProduct>(
-        `SELECT si.*, p.name as product_name
-         FROM sale_items si
-         JOIN products p ON si.product_id = p.id
-         WHERE si.sale_id = ?`,
-        [sale.id],
-      );
-      return { ...sale, items, items_count: items.length };
-    }),
+  if (sales.length === 0) return [];
+
+  // Fetch all sale items in a single query
+  const allItems = await db.getAllAsync<
+    SaleItemWithProduct & { sale_id: number }
+  >(
+    `SELECT si.*, p.name as product_name
+     FROM sale_items si
+     JOIN products p ON si.product_id = p.id`,
   );
 
-  return salesWithItems;
+  // Group items by sale_id in memory
+  const itemsBySaleId: Record<number, SaleItemWithProduct[]> = {};
+  for (const item of allItems) {
+    if (!itemsBySaleId[item.sale_id]) {
+      itemsBySaleId[item.sale_id] = [];
+    }
+    itemsBySaleId[item.sale_id].push({
+      id: item.id,
+      sale_id: item.sale_id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+      product_name: item.product_name,
+    });
+  }
+
+  return sales.map((sale) => {
+    const items = itemsBySaleId[sale.id] || [];
+    return { ...sale, items, items_count: items.length };
+  });
 };
 
 export const getSalesByDateRange = async (
@@ -203,20 +220,46 @@ export const getSalesByDateRange = async (
     [startDate, endDate],
   );
 
-  const salesWithItems = await Promise.all(
-    sales.map(async (sale) => {
-      const items = await db.getAllAsync<SaleItemWithProduct>(
-        `SELECT si.*, p.name as product_name
-         FROM sale_items si
-         JOIN products p ON si.product_id = p.id
-         WHERE si.sale_id = ?`,
-        [sale.id],
-      );
-      return { ...sale, items, items_count: items.length };
-    }),
-  );
+  if (sales.length === 0) return [];
 
-  return salesWithItems;
+  const allItems: (SaleItemWithProduct & { sale_id: number })[] = [];
+  const MAX_VARS = 900;
+  const saleIds = sales.map((s) => s.id);
+  for (let i = 0; i < saleIds.length; i += MAX_VARS) {
+    const chunk = saleIds.slice(i, i + MAX_VARS);
+    const placeholders = chunk.map(() => '?').join(',');
+    const rows = await db.getAllAsync<
+      SaleItemWithProduct & { sale_id: number }
+    >(
+      `SELECT si.*, p.name as product_name
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id IN (${placeholders})`,
+      chunk,
+    );
+    allItems.push(...rows);
+  }
+
+  // Group items by sale_id in memory
+  const itemsBySaleId: Record<number, SaleItemWithProduct[]> = {};
+  for (const item of allItems) {
+    if (!itemsBySaleId[item.sale_id]) {
+      itemsBySaleId[item.sale_id] = [];
+    }
+    itemsBySaleId[item.sale_id].push({
+      id: item.id,
+      sale_id: item.sale_id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+      product_name: item.product_name,
+    });
+  }
+
+  return sales.map((sale) => {
+    const items = itemsBySaleId[sale.id] || [];
+    return { ...sale, items, items_count: items.length };
+  });
 };
 
 export const getSaleItems = async (

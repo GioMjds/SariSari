@@ -1,10 +1,10 @@
 import {
-    initCategoriesTable,
-    initCreditsTable,
-    initInventoryTable,
-    initProductsTable,
-    initSalesTables,
-    runMigrations,
+  initCategoriesTable,
+  initCreditsTable,
+  initInventoryTable,
+  initProductsTable,
+  initSalesTables,
+  runMigrations,
 } from '@/database';
 import { seedDatabase } from '@/database/seed';
 
@@ -37,7 +37,6 @@ export const initializeDatabases = async () => {
   }
 
   try {
-    await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
     await executeWithRetry(async () => {
       await Promise.all([
         initProductsTable(),
@@ -48,6 +47,10 @@ export const initializeDatabases = async () => {
       ]);
       await runMigrations();
     });
+
+    if (__DEV__) {
+      await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
+    }
 
     databaseInitialized = true;
   } catch (error) {
