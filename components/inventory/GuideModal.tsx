@@ -2,12 +2,34 @@ import React from 'react';
 import { Modal, TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
-import { GUIDE_TIPS } from '@/constants';
 
 interface GuideModalProps {
   visible: boolean;
   onClose: () => void;
 }
+
+// Inlined from the old constants/guide.ts — these are the short, generic
+// tips shown when an owner opens the help modal mid-flow. They are NOT
+// the same copy as the 5-tab tour in onboarding (those are tab-flavoured
+// and live in constants/onboardingTour.ts).
+const GUIDE_TIPS = [
+  {
+    title: 'Track inventory',
+    description: 'Add items, set prices, and keep an eye on low stock.',
+    icon: 'archive',
+  },
+  {
+    title: 'Record sales offline',
+    description:
+      'Every sale is stored locally so you stay productive without internet.',
+    icon: 'shopping-cart',
+  },
+  {
+    title: 'Manage credits',
+    description: 'Log utang and payments to keep balances clear.',
+    icon: 'book',
+  },
+];
 
 export function GuideModal({ visible, onClose }: GuideModalProps) {
   return (

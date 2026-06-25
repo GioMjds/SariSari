@@ -1,229 +1,214 @@
 import { StyledText } from '@/components/elements';
+import { OnboardingPagination } from '@/components/onboarding/OnboardingPagination';
+import { ProfileStep } from '@/components/onboarding/ProfileStep';
+import { ReadyStep } from '@/components/onboarding/ReadyStep';
+import { TourCard } from '@/components/onboarding/TourCard';
+import { ONBOARDING_TOUR_STEPS, TOUR_ORDER } from '@/constants/onboardingTour';
 import { markOnboardingComplete } from '@/lib';
-import { GUIDE_TIPS } from '@/constants';
+import {
+	PROFILE_INDEX,
+	Step,
+	back,
+	indexOf,
+	jumpTo,
+	next,
+	skipToReady,
+} from '@/lib/onboardingStepMachine';
 import { useToastStore } from '@/stores';
 import { OnboardingProfile } from '@/types';
-import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, TextInput, TouchableOpacity, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
+import { TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type Step = 'welcome' | 'info' | 'tips';
-
+/**
+ * OnboardingPage — 7-step first-run flow:
+ *
+ *   profile → tour (dashboard → sell → inventory → utang → reports) → ready
+ *
+ * Step state is a discriminated union held in `useState`; ordinal
+ * conversion lives in `lib/onboardingStepMachine.ts`. Profile state
+ * is local until the user taps "Open my store" on the ready screen —
+ * nothing is persisted mid-tour, so a kill-and-reopen returns the user
+ * to the start. The `maxReachableIndex` tracks the furthest step
+ * reached so the dot pagination can offer a back-step shortcut.
+ */
 export default function OnboardingPage() {
-    const [step, setStep] = useState<Step>('welcome');
-    const [profile, setProfile] = useState<OnboardingProfile>({
-        ownerName: '',
-        storeName: '',
-    });
-    const [saving, setSaving] = useState<boolean>(false);
+	const [step, setStep] = useState<Step>({ kind: 'profile' });
+	const [maxIndex, setMaxIndex] = useState<number>(0);
+	const [profile, setProfile] = useState<OnboardingProfile>({
+		ownerName: '',
+		storeName: '',
+	});
+	const [saving, setSaving] = useState<boolean>(false);
 
-    const router = useRouter();
-    const addToast = useToastStore((state) => state.addToast);
+	const router = useRouter();
+	const addToast = useToastStore((state) => state.addToast);
 
-    const progress = useMemo(() => {
-        if (step === 'welcome') return 0.33;
-        if (step === 'info') return 0.66;
-        return 1;
-    }, [step]);
+	const currentIndex = indexOf(step);
 
-    const goNext = () => {
-        if (step === 'welcome') setStep('info');
-        else if (step === 'info') setStep('tips');
-    };
+	const advance = (nextStep: Step) => {
+		const nextIndex = indexOf(nextStep);
+		setStep(nextStep);
+		setMaxIndex((prev) => (nextIndex > prev ? nextIndex : prev));
+	};
 
-    const goBack = () => {
-        if (step === 'tips') setStep('info');
-        else if (step === 'info') setStep('welcome');
-    };
+	const handleBack = () => setStep(back(step));
 
-    const handleSave = async () => {
-        if (!profile.ownerName.trim() || !profile.storeName.trim()) {
-            addToast({
-                message: 'Please add your name and store name',
-                variant: 'danger',
-                duration: 1800,
-            });
-            return;
-        }
+	const handleOpenStore = async () => {
+		const ownerName = profile.ownerName.trim();
+		const storeName = profile.storeName.trim();
+		if (!ownerName || !storeName) {
+			addToast({
+				message: 'Please add your name and store name',
+				variant: 'danger',
+				duration: 1800,
+			});
+			return;
+		}
 
-        try {
-            setSaving(true);
-            await markOnboardingComplete({
-                ownerName: profile.ownerName.trim(),
-                storeName: profile.storeName.trim(),
-            });
-            addToast({
-                message: 'Welcome! Your store is ready.',
-                variant: 'success',
-                duration: 1800,
-            });
-            router.replace('/(tabs)');
-        } catch (_error) {
-            addToast({
-                message: 'Could not save onboarding data',
-                variant: 'danger',
-                duration: 2000,
-            });
-        } finally {
-            setSaving(false);
-        }
-    };
+		try {
+			setSaving(true);
+			await markOnboardingComplete({ ownerName, storeName });
+			addToast({
+				message: 'Welcome! Your store is ready.',
+				variant: 'success',
+				duration: 1800,
+			});
+			router.replace('/(tabs)');
+		} catch (_error) {
+			addToast({
+				message: 'Could not save onboarding data',
+				variant: 'danger',
+				duration: 2000,
+			});
+		} finally {
+			setSaving(false);
+		}
+	};
 
-    return (
-        <SafeAreaView className="flex-1 bg-background">
-            <View className="flex-1 px-6 pt-10 pb-8">
-                <View className="flex-row justify-between items-center mb-6">
-                    <StyledText variant="extrabold" className="text-3xl text-primary">
-                        Sari-Sari Setup
-                    </StyledText>
-                    <View className="flex-row items-center gap-2">
-                        <View className="w-32 h-2 bg-white/70 rounded-full overflow-hidden">
-                            <View
-                                className="h-2 bg-secondary"
-                                style={{ width: `${progress * 100}%` }}
-                            />
-                        </View>
-                        <StyledText variant="medium" className="text-text-secondary text-sm">
-                            {step === 'welcome' ? '1/3' : step === 'info' ? '2/3' : '3/3'}
-                        </StyledText>
-                    </View>
-                </View>
+	const isProfile = step.kind === 'profile';
+	const isReady = step.kind === 'ready';
+	const isFirstTour = step.kind === 'tour' && step.tab === TOUR_ORDER[0];
+	const isLastTour = step.kind === 'tour' && step.tab === TOUR_ORDER[TOUR_ORDER.length - 1];
 
-                {step === 'welcome' && (
-                    <View className="flex-1 justify-center">
-                        <View className="bg-white rounded-3xl p-6 shadow-sm border border-white/60">
-                            <StyledText variant="extrabold" className="text-2xl text-primary mb-3">
-                                Welcome!
-                            </StyledText>
-                            <StyledText variant="medium" className="text-base text-text-secondary mb-4">
-                                Let us set up your sari-sari store so you can track stocks and sales even without internet.
-                            </StyledText>
-                            <View className="bg-background rounded-2xl p-4">
-                                <View className="flex-row items-center mb-3">
-                                    <FontAwesome name="cloud-download" size={18} color="#7A1CAC" />
-                                    <StyledText variant="medium" className="ml-3 text-text-primary">
-                                        Offline-first, stored locally
-                                    </StyledText>
-                                </View>
-                                <View className="flex-row items-center">
-                                    <FontAwesome name="lock" size={18} color="#7A1CAC" />
-                                    <StyledText variant="medium" className="ml-3 text-text-primary">
-                                        Your data stays on your device
-                                    </StyledText>
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                )}
+	// Names are required before the user can leave the profile step.
+	const isProfileComplete =
+		profile.ownerName.trim().length > 0 &&
+		profile.storeName.trim().length > 0;
 
-                {step === 'info' && (
-                    <View className="flex-1">
-                        <StyledText variant="extrabold" className="text-2xl text-primary mb-2">
-                            Tell us about you
-                        </StyledText>
-                        <StyledText variant="regular" className="text-text-secondary mb-6">
-                            We will personalize summaries using your name and store.
-                        </StyledText>
+	const handleNext = () => {
+		if (isProfile && !isProfileComplete) return;
+		advance(next(step));
+	};
+	const handleSkip = () => {
+		// Skip tour can never bypass the profile gate.
+		if (!isProfileComplete) return;
+		advance(skipToReady());
+	};
+	const handleJump = (target: number) => {
+		// Until names are filled, only the profile dot is reachable.
+		const effectiveMax = isProfileComplete ? maxIndex : PROFILE_INDEX;
+		setStep(jumpTo(target, effectiveMax));
+	};
 
-                        <View className="space-y-4">
-                            <View>
-                                <StyledText variant="medium" className="text-text-primary mb-2">
-                                    Your name
-                                </StyledText>
-                                <TextInput
-                                    value={profile.ownerName}
-                                    onChangeText={(text) => setProfile((p) => ({ ...p, ownerName: text }))}
-                                    placeholder="e.g. Aling Nena"
-                                    className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-text-primary"
-                                    placeholderTextColor="#9CA3AF"
-                                />
-                            </View>
-                            <View>
-                                <StyledText variant="medium" className="text-text-primary mb-2">
-                                    Store name
-                                </StyledText>
-                                <TextInput
-                                    value={profile.storeName}
-                                    onChangeText={(text) => setProfile((p) => ({ ...p, storeName: text }))}
-                                    placeholder="e.g. Nena Sari-Sari"
-                                    className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-text-primary"
-                                    placeholderTextColor="#9CA3AF"
-                                />
-                            </View>
-                        </View>
-                    </View>
-                )}
+	const tourStep =
+		step.kind === 'tour'
+			? ONBOARDING_TOUR_STEPS.find((s) => s.tab === step.tab)
+			: undefined;
 
-                {step === 'tips' && (
-                    <View className="flex-1">
-                        <StyledText variant="extrabold" className="text-2xl text-primary mb-2">
-                            Quick guide
-                        </StyledText>
-                        <StyledText variant="regular" className="text-text-secondary mb-4">
-                            Here is how to get the most out of your app.
-                        </StyledText>
-                        <View className="space-y-3">
-                            {GUIDE_TIPS.map((tip) => (
-                                <View key={tip.title} className="bg-white border border-gray-200 rounded-2xl p-4 flex-row items-start gap-3">
-                                    <View className="w-10 h-10 rounded-full bg-background items-center justify-center">
-                                        <FontAwesome name={tip.icon as any} size={18} color="#7A1CAC" />
-                                    </View>
-                                    <View className="flex-1">
-                                        <StyledText variant="semibold" className="text-text-primary text-base mb-1">
-                                            {tip.title}
-                                        </StyledText>
-                                        <StyledText variant="regular" className="text-text-secondary text-sm leading-5">
-                                            {tip.description}
-                                        </StyledText>
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                )}
+	return (
+		<SafeAreaView className="flex-1 bg-background">
+			{/*
+			 * Route-scoped StatusBar — overrides the cinnamon default from
+			 * `_layout.tsx` while onboarding is mounted, so the system bar
+			 * matches the cream paper background (`background` / paper-200,
+			 * #EFE6D2) and reads dark glyphs (`style="dark"`) instead of
+			 * the inverted light glyphs used on dark surfaces elsewhere.
+			 */}
+			<StatusBar style="dark" backgroundColor="#EFE6D2" />
+			<View className="px-6 pt-4">
+				<View className="flex-row justify-between items-center">
+					<StyledText variant="extrabold" className="text-2xl text-primary">
+						Sari-Sari Setup
+					</StyledText>
+					<OnboardingPagination
+						currentIndex={currentIndex}
+						maxReachableIndex={
+							isProfileComplete ? maxIndex : PROFILE_INDEX
+						}
+						onJump={handleJump}
+					/>
+				</View>
+			</View>
 
-                <View className="mt-8 flex-row gap-3">
-                    {step !== 'welcome' ? (
-                        <TouchableOpacity
-                            onPress={goBack}
-                            className="flex-1 border border-gray-300 rounded-2xl py-3 items-center"
-                        >
-                            <StyledText variant="medium" className="text-text-primary">
-                                Back
-                            </StyledText>
-                        </TouchableOpacity>
-                    ) : (
-                        <View className="flex-1" />
-                    )}
+			<View className="flex-1 px-6 pt-6 pb-4">
+				{isProfile && (
+					<ProfileStep profile={profile} onChange={setProfile} />
+				)}
 
-                    {step !== 'tips' ? (
-                        <TouchableOpacity
-                            onPress={goNext}
-                            className="flex-1 bg-primary rounded-2xl py-3 items-center"
-                        >
-                            <StyledText variant="semibold" className="text-white">
-                                Next
-                            </StyledText>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity
-                            onPress={handleSave}
-                            disabled={saving}
-                            className="flex-1 bg-secondary rounded-2xl py-3 items-center"
-                        >
-                            {saving ? (
-                                <ActivityIndicator color="#ffffff" />
-                            ) : (
-                                <StyledText variant="semibold" className="text-white">
-                                    Save & Start
-                                </StyledText>
-                            )}
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </View>
-        </SafeAreaView>
-    );
+				{tourStep && (
+					<TourCard step={tourStep} stepKey={currentIndex} />
+				)}
+
+				{isReady && (
+					<ReadyStep
+						profile={profile}
+						saving={saving}
+						onOpenStore={handleOpenStore}
+					/>
+				)}
+			</View>
+
+			{!isReady && (
+				<View className="px-6 pb-6 pt-2 flex-row gap-3 items-center">
+					{isProfile || isFirstTour ? (
+						<View className="flex-1" />
+					) : (
+						<TouchableOpacity
+							onPress={handleBack}
+							accessibilityRole="button"
+							accessibilityLabel="Go back"
+							className="flex-1 border border-persimmon-500 rounded-2xl py-3 items-center press-scale active:opacity-70"
+						>
+							<StyledText variant="semibold" className="text-persimmon-600">
+								Back
+							</StyledText>
+						</TouchableOpacity>
+					)}
+
+					{!isLastTour && !isProfile && isProfileComplete && (
+						<TouchableOpacity
+							onPress={handleSkip}
+							accessibilityRole="button"
+							accessibilityLabel="Skip the rest of the tour"
+							className="px-4 py-3 press-scale active:opacity-70"
+						>
+							<StyledText variant="medium" className="text-persimmon-600">
+								Skip tour
+							</StyledText>
+						</TouchableOpacity>
+					)}
+
+					<TouchableOpacity
+						onPress={handleNext}
+						disabled={isProfile && !isProfileComplete}
+						accessibilityRole="button"
+						accessibilityLabel="Continue"
+						accessibilityState={{
+							disabled: isProfile && !isProfileComplete,
+						}}
+						className={`flex-1 bg-persimmon-500 rounded-2xl py-3 items-center shadow-persimmon-glow press-scale active:opacity-80 ${
+							isProfile && !isProfileComplete ? 'opacity-50' : ''
+						}`}
+					>
+						<StyledText variant="semibold" className="text-white">
+							{isProfile ? "Let's go →" : isLastTour ? 'Finish tour →' : 'Next →'}
+						</StyledText>
+					</TouchableOpacity>
+				</View>
+			)}
+		</SafeAreaView>
+	);
 }

@@ -14,6 +14,9 @@ export const seedDatabase = async () => {
   console.log('🌱 Starting database seeding...');
 
   try {
+    // Wrap all deletes and inserts in a single transaction for maximum performance
+    await db.execAsync('BEGIN TRANSACTION;');
+
     // 1. Cleanup existing data to avoid duplicates and conflicts
     // Order is important due to foreign key constraints
     await db.execAsync(`
@@ -96,7 +99,7 @@ export const seedDatabase = async () => {
       );
     }
     console.log(
-      `✅ Seeded ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions.`,
+      `✅ Seeded ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions.`
     );
 
     // 6. Seed Payments
@@ -150,11 +153,18 @@ export const seedDatabase = async () => {
       );
     }
     console.log(
-      `✅ Seeded ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions.`,
+      `✅ Seeded ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions.`
     );
 
+    await db.execAsync('COMMIT;');
     console.log('🚀 Database seeding completed successfully!');
   } catch (error) {
+    try {
+      await db.execAsync('ROLLBACK;');
+      console.log('↩️ Database seeding rolled back due to error.');
+    } catch (rollbackError) {
+      console.error('❌ Failed to rollback seeding transaction:', rollbackError);
+    }
     console.error('❌ Database seeding failed:', error);
     throw error;
   }
