@@ -17,17 +17,6 @@ type DatabaseErrorScreenProps = {
 	onRetry: () => void | Promise<void>;
 };
 
-/**
- * DatabaseErrorScreen — what we render when `initializeDatabases()` fails.
- *
- * AGENTS.md §2 promises hard offline-first resilience. The right way to
- * honor that promise when the local DB itself can't start is to fail loud
- * with a clear "we couldn't start" message, never a silent splash that
- * pretends everything is fine. The user gets one action: try again.
- * The technical error is shown on-screen so a store owner can describe
- * it to support without needing copy-to-clipboard (we don't depend on
- * `expo-clipboard` here on purpose).
- */
 export const DatabaseErrorScreen = ({
 	message,
 	onRetry,

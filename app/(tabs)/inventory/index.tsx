@@ -307,6 +307,7 @@ export default function Products() {
         transparent
         animationType="fade"
         onRequestClose={() => setSelectedProductForSheet(null)}
+        statusBarTranslucent
       >
         <Pressable
           className="flex-1 justify-end"

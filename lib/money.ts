@@ -1,7 +1,7 @@
 /**
  * Money layer — the single source of truth for peso arithmetic.
  *
- * Convention (AGENTS.md §1):
+ * Convention:
  *   • All money in DB columns: integer pesos (`INTEGER`).
  *   • All money in app state and props: integer pesos.
  *   • User input is parsed with `parsePesosInput` (rounded to 2 decimals).
@@ -85,4 +85,4 @@ export function formatPesosCompact(value: number | Pesos): string {
   return `₱${v.toFixed(0)}`;
 }
 
-export const MONEY_UNIT_DOC = 'integer pesos — see AGENTS.md §1';
+export const MONEY_UNIT_DOC = 'integer pesos';

@@ -42,7 +42,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  *   - View All utang -> /credits
  *   - View All sales -> /sales
  *
- * Money handling: integer pesos end-to-end (see AGENTS.md §1) — we never multiply
+ * Money handling: integer pesos end-to-end (see AGENTS.md) — we never multiply
  * or divide before formatting. `MoneyText` handles the render edge.
  */
 const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');

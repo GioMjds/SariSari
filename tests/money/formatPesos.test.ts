@@ -1,4 +1,4 @@
-// Money formatting. AGENTS.md §1 — display shows ₱ with 2 decimals.
+// Money formatting — display shows ₱ with 2 decimals.
 import { formatPesos, formatPesosCompact } from '../../lib/money';
 
 describe('formatPesos', () => {

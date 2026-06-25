@@ -31,9 +31,9 @@ const variantMap = {
 
 /**
  * MoneyText — renders integer-peso values via `formatPesos()`,
- * keeping the integer-pesos invariant intact end-to-end (see
- * AGENTS.md §1). The display tier fades between value changes so
- * the receipt total feels alive without distracting the eye.
+ * keeping the integer-pesos invariant intact end-to-end. 
+ * The display tier fades between value changes so the receipt
+ * total feels alive without distracting the eye.
  */
 export function MoneyText({
   value,

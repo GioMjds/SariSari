@@ -66,6 +66,7 @@ export function Modal({
   animationType = 'none',
   transparent = true,
   presentationStyle,
+  statusBarTranslucent = true,
   ...rest
 }: CustomModalProps) {
   const { modals, closeModal } = useModalStore();
@@ -217,11 +218,6 @@ export function Modal({
           opacity: 0,
           scale: reducedMotion ? 1 : 0.95,
         }}
-        transition={
-          reducedMotion
-            ? { type: 'timing', duration: 160 }
-            : { type: 'spring', damping: 18, stiffness: 220 }
-        }
         className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
         style={{ zIndex: 1 }}
         accessibilityLabel={finalTitle || 'Dialog'}
@@ -342,6 +338,7 @@ export function Modal({
         animationType={animationType}
         presentationStyle={presentationStyle}
         onRequestClose={handleClose}
+        statusBarTranslucent={statusBarTranslucent}
         accessibilityViewIsModal
       >
         {ModalContent}

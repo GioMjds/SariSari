@@ -1,16 +1,7 @@
 import 'react-native-gesture-handler/jestSetup';
 import 'react-native/jest/setup';
 
-// Mock the single SQLite handle. See AGENTS.md §4 and the test in
-// `tests/sqlite/single-handle.test.ts` — `configs/sqlite.ts` is the only
-// place in the app that opens the database. The factory loads our
-// better-sqlite3-backed mock and exposes it under `db`, which is what
-// every `database/*` module imports.
 jest.mock('@/configs/sqlite', () => {
-	// Lazy require: jest.mock factories run before the test file imports,
-	// but the test file's babel transform hasn't finished at this point.
-	// `jest.setup.ts` lives at the project root, so the setup helpers are
-	// under `tests/__setup__/`.
 	const setup = require('./tests/__setup__/expo-sqlite-mock');
 	return { db: setup.mockDb };
 });

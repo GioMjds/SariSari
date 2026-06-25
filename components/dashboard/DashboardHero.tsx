@@ -17,7 +17,7 @@ interface DashboardHeroProps {
  * Mirrors the rest of the app's receipt-ledger language: a perforated
  * receipt card with the total in display weight, a small divider, and
  * a row of supporting metrics. The number is fed integer-pesos to
- * keep the financial invariant intact end-to-end (see AGENTS.md §1).
+ * keep the financial invariant intact end-to-end.
  */
 export const DashboardHero = memo(function DashboardHero({
   totalpesos,

@@ -1,4 +1,4 @@
-// Money parsing invariants. AGENTS.md §1 — money is integer pesos end-to-end.
+// Money parsing invariants — money is integer pesos end-to-end.
 // `parsePesosInput` accepts user-typed strings with optional currency symbols
 // or thousands separators, and rounds to at most two decimal places so the
 // integer-pesos invariant is preserved.

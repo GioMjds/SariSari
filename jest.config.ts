@@ -1,6 +1,3 @@
-// jest.config.ts — ESM default export
-// See AGENTS.md §4 — single SQLite handle; tests mock `configs/sqlite` so
-// every test file uses the same in-memory better-sqlite3 DB.
 export default {
 	preset: 'react-native',
 	testMatch: [
