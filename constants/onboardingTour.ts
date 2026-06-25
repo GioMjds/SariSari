@@ -67,7 +67,7 @@ export const ONBOARDING_TOUR_STEPS: TourStepContent[] = [
 		label: 'UTANG',
 		headline: 'Track suki balances',
 		whatItDoes:
-			'Log credit sales and payments. Balances are always live and add up to the peso.',
+			'Log credit sales and payments. Balances are computed from each suki’s transactions and always add up.',
 		whenToUseIt: 'When a suki says "tabi muna" or comes in to pay.',
 	},
 	{

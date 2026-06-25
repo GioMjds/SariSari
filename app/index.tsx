@@ -183,7 +183,7 @@ export default function EntryGate() {
 					variant="medium"
 					className="text-cinnamon-400/60 text-caption tracking-wider text-center"
 				>
-					Mabilis • Ligtas • Offline-First
+					Mabilis • Offline • Para sa Tindahan
 				</StyledText>
 			</MotiView>
 		</SafeAreaView>

@@ -1,6 +1,6 @@
 # SariSari 🏪
 
-> **SariSari** is an offline-first mobile assistant and management application designed specifically for Filipino sari-sari store owners. Built on the core principle of offline reliability, it empowers store owners to seamlessly track inventory, execute sales (POS), and maintain customer credit (_utang_) records without requiring internet connectivity.
+> **SariSari** is an offline-by-default mobile assistant and management application designed specifically for Filipino sari-sari store owners. Built as a working prototype, it helps store owners track inventory, execute sales (POS), and maintain customer credit (_utang_) records without requiring internet connectivity. It is currently a working prototype — not a finished product.
 
 ---
 
@@ -21,9 +21,9 @@
 
 - **⚡ Fast Point of Sale (POS)**: Quick counter sales registering cash or credit (_utang_) transactions. Updates inventory automatically and logs movement records in real time.
 - **📦 Inventory & Category Tracker**: Complete catalog of products, categories, stock counts, selling prices, and purchase costs (calculating margin/markup). Supports low-stock thresholds and alerts.
-- **📓 Suki Credit Ledger (Utang)**: Customer registry tracking outstanding suki loans. Features automatic credit allocation using FIFO (First-in, First-out) matching for payments, custom credit limits, overdue tracking, and automated risk/payer profiles.
+- **📓 Suki Credit Ledger (Utang)**: Customer registry tracking outstanding suki loans. **Built today:** FIFO allocation of payments against the oldest unpaid credit per suki, with reversible payment deletions; per-suki credit limits; overdue tracking. **Planned:** automated risk/payer profiles and credit-limit enforcement at sale time.
 - **📊 Business Analytics & Reports**: Dashboard view tracking daily revenue, profitability, inventory valuation, cash vs. credit breakdowns, fast/slow-moving goods, credit aging buckets, and actionable store tips.
-- **✈️ Hard Offline-First Resilience**: Zero server or API connection requirements. Fully local data storage, ensuring 100% operation even in airplane mode.
+- **✈️ Offline-First by Default**: Inventory CRUD, sales recording, utang tracking, and reports all work end-to-end with airplane mode on. There is no automatic backup yet — keep your device backed up to the cloud through your phone's normal channels.
 
 ---
 
@@ -85,10 +85,10 @@ Screen (app/) ──reads/writes──▶ Hook (hooks/) ──calls──▶ DB 
 
 To ensure financial accuracy and protect data integrity on-device:
 
-1. **Money is Stored in Integer pesos**: To prevent floating-point decimal drift, all cash values are stored as integers in pesos (e.g., `₱12.50` is stored in SQLite as `1250`). Conversion to pesos is processed solely at the UI edge using the `formatCurrency` utility.
-2. **Hard Offline-First Design**: Zero dependency on external APIs or network calls. All core functions operate smoothly with airplane mode turned on.
-3. **Transactional Credit Integrity**: A suki's outstanding balance is a denormalized cache field. It is updated inside the exact same SQL transaction that writes a transaction or payment to the ledger, guaranteeing the running balance matches individual logs.
-4. **Single SQLite Handle**: The application opens a single SQLite database handle via `openDatabaseSync` to prevent file-level lock contention and `SQLITE_BUSY` errors on Android devices.
+1. **Money is Stored in Integer pesos**: All monetary columns are SQLite `INTEGER`. The user-facing value `₱12.50` is stored as `1250`. Parsing on form input and formatting on display both go through `lib/money.ts` (`parsePesosInput`, `formatPesos`); no other code path should parse or format money. This prevents floating-point drift over thousands of sales.
+2. **Offline-First Design**: No `fetch()`, no auth gating on network, no remote-loading spinners. Every core flow works with airplane mode on. If a feature ever genuinely needs the network, it lives behind a clearly named `onlineOnly/` folder and is documented as such.
+3. **Transactional Ledger Integrity**: A suki's outstanding balance is computed live from their transactions (`SUM(amount) - SUM(amount_paid)` per customer, restricted to unpaid credits). Every multi-statement write that touches the ledger is wrapped in `db.withTransactionAsync` so a partial failure can never leave a balance out of sync. Payment allocations are recorded FIFO in `payment_allocations` and are reversible when the payment is deleted.
+4. **Single SQLite Handle**: The app opens one SQLite database handle (in `configs/sqlite.ts`) and passes it through every layer. Multiple connections from the same app cause `SQLITE_BUSY` on Android, especially during busy sales hours, so this is enforced by `tests/sqlite/single-handle.test.ts`.
 
 ---
 

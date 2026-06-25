@@ -118,11 +118,18 @@ export function useCreateProduct() {
 
 ### 1. Money is integer pesos. Always
 
-- All monetary columns in SQLite: `INTEGER` (pesos). `₱12.50` is stored as `1250`.
+- All monetary columns in SQLite: `INTEGER` (pesos). The user-facing value
+  `₱12.50` is stored as `1250`.
 - All money in app state and props: integer pesos. Never `number` with decimals for money.
+- **Parse and format in one place.** Use `parsePesosInput` from `lib/money.ts`
+  on user input (form fields) and `formatPesos` for display. **Do not call
+  `parseFloat` on a money field** — it accepts `"12.5e1"`, `"1,234.56"` (with
+  the comma treated as junk in some locales), and similar. The single-source
+  parser exists; use it.
 - **Why:** `0.1 + 0.2 !== 0.3`. Floating-point money loses pennies over thousands of
   sales and silently corrupts utang balances. This is a financial app — be paranoid.
-- **Failure mode this prevents:** drift in `customer.balance` after a year of transactions.
+- **Failure mode this prevents:** drift in a suki's running balance after a year of
+  transactions, and reports that don't sum because of accumulated float error.
 
 ### 2. Hard offline-first. Zero network calls in core flows
 
@@ -134,11 +141,19 @@ export function useCreateProduct() {
 
 ### 3. Utang invariant: a customer's balance is the sum of their entries
 
-- `customers.balance` is a **denormalized cache** of `SELECT SUM(amount) FROM ledger
-WHERE customer_id = ?`.
-- It is **always** updated inside the same SQL transaction that inserts the ledger row.
-- A screen showing a customer detail page reads `balance`; a hook that writes a payment
-  recomputes it transactionally. Never trust a stale `balance` after a write.
+- A suki's outstanding balance is **computed** from their credit and payment
+  transactions (`SUM(amount) - SUM(amount_paid)` per customer, restricted to
+  transactions that are not yet `paid` in full). There is no denormalized
+  `balance` column on `customers` to keep in sync — the value is always live
+  by construction.
+- Every multi-statement write that touches the ledger **must** be wrapped in
+  `db.withTransactionAsync` so a partial write can never leave a balance
+  out of sync. The audit-safety work in `database/credits.ts` and
+  `database/sales.ts` enforces this for `insertPayment`, `deletePayment`,
+  `insertSale`, and `deleteSale`.
+- Payments are allocated FIFO against the oldest unpaid credit for that
+  suki; the allocation is recorded in `payment_allocations` so it can be
+  reversed when the payment is deleted.
 - **Why:** sari-sari store owners check customer balances at the counter between sales.
   A balance that's off by ₱5 destroys trust in the app permanently.
 
