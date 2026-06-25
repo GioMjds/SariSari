@@ -85,7 +85,7 @@ Screen (app/) ──reads/writes──▶ Hook (hooks/) ──calls──▶ DB 
 
 To ensure financial accuracy and protect data integrity on-device:
 
-1. **Money is Stored in Integer Centavos**: To prevent floating-point decimal drift, all cash values are stored as integers in centavos (e.g., `₱12.50` is stored in SQLite as `1250`). Conversion to pesos is processed solely at the UI edge using the `formatCurrency` utility.
+1. **Money is Stored in Integer pesos**: To prevent floating-point decimal drift, all cash values are stored as integers in pesos (e.g., `₱12.50` is stored in SQLite as `1250`). Conversion to pesos is processed solely at the UI edge using the `formatCurrency` utility.
 2. **Hard Offline-First Design**: Zero dependency on external APIs or network calls. All core functions operate smoothly with airplane mode turned on.
 3. **Transactional Credit Integrity**: A suki's outstanding balance is a denormalized cache field. It is updated inside the exact same SQL transaction that writes a transaction or payment to the ledger, guaranteeing the running balance matches individual logs.
 4. **Single SQLite Handle**: The application opens a single SQLite database handle via `openDatabaseSync` to prevent file-level lock contention and `SQLITE_BUSY` errors on Android devices.

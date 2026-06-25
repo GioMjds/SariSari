@@ -6,3 +6,5 @@ export * from './CreditsSkeleton';
 export * from './FilterBar';
 export * from './PriorityCustomerHero';
 export * from './SortDropdown';
+export * from './Tile';
+export * from './Divider';

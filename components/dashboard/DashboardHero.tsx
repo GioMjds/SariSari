@@ -1,11 +1,11 @@
+import { StyledText } from '@/components/elements';
+import { MoneyText, ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
+import { MotiView } from 'moti';
 import { memo } from 'react';
 import { View } from 'react-native';
-import { MotiView } from 'moti';
-import { MoneyText, ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
-import { StyledText } from '@/components/elements';
 
 interface DashboardHeroProps {
-  totalCentavos: number;
+  totalpesos: number;
   transactionCount: number;
   itemsSold: number;
   creditSales: number;
@@ -16,11 +16,11 @@ interface DashboardHeroProps {
  *
  * Mirrors the rest of the app's receipt-ledger language: a perforated
  * receipt card with the total in display weight, a small divider, and
- * a row of supporting metrics. The number is fed integer-centavos to
+ * a row of supporting metrics. The number is fed integer-pesos to
  * keep the financial invariant intact end-to-end (see AGENTS.md §1).
  */
 export const DashboardHero = memo(function DashboardHero({
-  totalCentavos,
+  totalpesos,
   transactionCount,
   itemsSold,
   creditSales,
@@ -35,16 +35,10 @@ export const DashboardHero = memo(function DashboardHero({
         <ReceiptHero tone="cinnamon" headerLabel="COUNTER" headerCode="TODAY">
           {/* Eyebrow + supporting metrics strip */}
           <View className="px-5 pt-4 pb-1 flex-row items-center justify-between">
-            <StyledText
-              variant="extrabold"
-              className="label-caps text-ink-400"
-            >
+            <StyledText variant="extrabold" className="label-caps text-ink-400">
               Today
             </StyledText>
-            <StyledText
-              variant="medium"
-              className="text-mono text-ink-500"
-            >
+            <StyledText variant="medium" className="text-mono text-ink-500">
               {transactionCount} txn
             </StyledText>
           </View>
@@ -53,7 +47,7 @@ export const DashboardHero = memo(function DashboardHero({
           <View className="px-5 py-4 bg-paper-100 border-y border-dashed border-ink-200">
             <View className="flex-row items-baseline">
               <MoneyText
-                value={totalCentavos}
+                value={totalpesos}
                 size="display"
                 className="text-ink-900 font-extrabold"
                 style={{ fontSize: 44, letterSpacing: -1 }}
@@ -65,10 +59,7 @@ export const DashboardHero = memo(function DashboardHero({
 
           {/* Supporting metrics — three small rows */}
           <View className="px-5 pt-3 pb-4">
-            <MetricRow
-              label="ITEMS SOLD"
-              value={String(itemsSold)}
-            />
+            <MetricRow label="ITEMS SOLD" value={String(itemsSold)} />
             <View className="h-px border-t border-dashed border-ink-200 my-1.5" />
             <MetricRow
               label="CREDIT (UTANG) SALES"

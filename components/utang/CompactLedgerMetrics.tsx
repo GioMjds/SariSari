@@ -1,13 +1,14 @@
+import { StyledText } from '@/components/elements';
+import { MoneyText } from '@/components/ui';
+import { MotiView } from 'moti';
 import { memo } from 'react';
 import { View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { MotiView } from 'moti';
-import { MoneyText } from '@/components/ui';
-import { StyledText } from '@/components/elements';
+import { Tile } from './Tile';
+import { Divider } from './Divider';
 
 interface CompactLedgerMetricsProps {
-  totalOutstandingCentavos: number;
-  collectedTodayCentavos: number;
+  totalOutstandingPesos: number;
+  collectedTodayPesos: number;
   customersWithBalance: number;
   overdueCount: number;
 }
@@ -22,8 +23,8 @@ interface CompactLedgerMetricsProps {
  * can latch onto urgency without parsing text.
  */
 export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
-  totalOutstandingCentavos,
-  collectedTodayCentavos,
+  totalOutstandingPesos,
+  collectedTodayPesos,
   customersWithBalance,
   overdueCount,
 }: CompactLedgerMetricsProps) {
@@ -48,7 +49,7 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
           <View className="flex-row items-stretch">
             <Tile label="Outstanding" tone="danger" icon="credit-card">
               <MoneyText
-                value={totalOutstandingCentavos}
+                value={totalOutstandingPesos}
                 size="md"
                 variant="danger"
                 className="text-base"
@@ -59,7 +60,7 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
 
             <Tile label="Collected" tone="success" icon="money">
               <MoneyText
-                value={collectedTodayCentavos}
+                value={collectedTodayPesos}
                 size="md"
                 variant="success"
                 className="text-base"
@@ -96,56 +97,3 @@ export const CompactLedgerMetrics = memo(function CompactLedgerMetrics({
     </MotiView>
   );
 });
-
-type Tone = 'danger' | 'success' | 'warning' | 'ink';
-
-const TONE_TEXT: Record<Tone, string> = {
-  danger: '#C13030',
-  success: '#4F7A24',
-  warning: '#C77B0E',
-  ink: '#564E45',
-};
-
-function Tile({
-  label,
-  tone,
-  icon,
-  children,
-}: {
-  label: string;
-  tone: Tone;
-  icon: keyof typeof FontAwesome.glyphMap;
-  children: React.ReactNode;
-}) {
-  return (
-    <View className="flex-1 px-2 py-2 items-center">
-      <View className="flex-row items-center mb-1">
-        <FontAwesome name={icon} size={9} color={TONE_TEXT[tone]} />
-        <StyledText
-          variant="extrabold"
-          className="label-caps ml-1 text-ink-400"
-          style={{ fontSize: 9 }}
-        >
-          {label}
-        </StyledText>
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function Divider() {
-  return (
-    <View
-      className="w-px self-stretch"
-      style={{
-        backgroundColor: '#D2CCC1',
-        opacity: 0.55,
-        // Dashed vertical line approximated via dots
-        borderLeftWidth: 1,
-        borderLeftColor: '#D2CCC1',
-        borderStyle: 'dashed',
-      }}
-    />
-  );
-}

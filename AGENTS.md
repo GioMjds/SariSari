@@ -118,8 +118,8 @@ export function useCreateProduct() {
 
 ### 1. Money is integer pesos. Always
 
-- All monetary columns in SQLite: `INTEGER` (centavos). `₱12.50` is stored as `1250`.
-- All money in app state and props: integer centavos. Never `number` with decimals for money.
+- All monetary columns in SQLite: `INTEGER` (pesos). `₱12.50` is stored as `1250`.
+- All money in app state and props: integer pesos. Never `number` with decimals for money.
 - **Why:** `0.1 + 0.2 !== 0.3`. Floating-point money loses pennies over thousands of
   sales and silently corrupts utang balances. This is a financial app — be paranoid.
 - **Failure mode this prevents:** drift in `customer.balance` after a year of transactions.
@@ -127,8 +127,6 @@ export function useCreateProduct() {
 ### 2. Hard offline-first. Zero network calls in core flows
 
 - Inventory CRUD, sales recording, utang tracking, reports — **all must work with airplane mode on.**
-- `axios` is in `package.json` only because a future sync feature may use it. Do not
-  import it from `app/`, `db/`, `hooks/`, or `components/`.
 - No `fetch()` to a server in core flows. No auth gating on network. No "loading…" spinners
   that wait for a remote response.
 - If a feature genuinely needs the network, it lives behind a clearly named
@@ -304,6 +302,6 @@ export function useCreateSupplier() {
 
 ## One last rule
 
-When in doubt: **the smallest change that keeps the offline-first, integer-centavos,
+When in doubt: **the smallest change that keeps the offline-first, integer-pesos,
 layered architecture intact.** Don't add abstractions, don't add state, don't add
 network. Solve the user's actual problem with the least surface area.

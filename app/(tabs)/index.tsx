@@ -1,15 +1,3 @@
-import { FontAwesome } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect, useRouter, Href } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
-import {
-  BackHandler,
-  Image,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   DashboardAlertCards,
   DashboardAttentionSection,
@@ -23,6 +11,18 @@ import { Modal as CustomModal } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 import { useCredits, useProducts, useSales } from '@/hooks';
 import { useDialogStore } from '@/stores';
+import { FontAwesome } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { Href, useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  BackHandler,
+  Image,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**
  * Dashboard — Counter Command Center.
@@ -46,7 +46,7 @@ import { useDialogStore } from '@/stores';
  */
 const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
 
-const Routes = {
+const routes = {
   newSale: '/sell?tab=new-sale',
   products: '/inventory',
   credits: '/utang',
@@ -194,15 +194,15 @@ export default function Dashboard() {
   };
 
   const handleNewSale = useCallback(() => {
-    router.push(Routes.newSale);
+    router.push(routes.newSale);
   }, [router]);
 
   const handleAddStock = useCallback(() => {
-    router.push(Routes.products);
+    router.push(routes.products);
   }, [router]);
 
   const handleRecordPayment = useCallback(() => {
-    router.push(Routes.credits);
+    router.push(routes.credits);
   }, [router]);
 
   return (
@@ -226,7 +226,7 @@ export default function Dashboard() {
             <DashboardHeader />
 
             <DashboardHero
-              totalCentavos={stats?.total ?? 0}
+              totalpesos={stats?.total ?? 0}
               transactionCount={stats?.transaction_count ?? 0}
               itemsSold={stats?.items_sold ?? 0}
               creditSales={stats?.credit_sales ?? 0}
@@ -241,7 +241,7 @@ export default function Dashboard() {
             <DashboardAlertCards
               lowStockCount={stockCounts.lowStockCount}
               outOfStockCount={stockCounts.outOfStockCount}
-              outstandingCentavos={kpis?.totalOutstanding ?? 0}
+              outstandingPesos={kpis?.totalOutstanding ?? 0}
               customersWithBalance={kpis?.totalCustomersWithBalance ?? 0}
               onTapStock={handleAddStock}
               onTapUtang={handleRecordPayment}
@@ -259,7 +259,7 @@ export default function Dashboard() {
                 recentSales={recentSales}
                 onViewAllStock={handleAddStock}
                 onViewAllUtang={handleRecordPayment}
-                onViewAllSales={() => router.push(Routes.sales)}
+                onViewAllSales={() => router.push(routes.sales)}
               />
             )}
           </>

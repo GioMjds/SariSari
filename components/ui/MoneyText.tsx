@@ -1,18 +1,18 @@
-import { type TextStyle } from 'react-native';
-import { MotiView } from 'moti';
-import { formatCurrency } from '@/utils';
 import { StyledText } from '@/components/elements';
+import { formatCurrency } from '@/utils';
+import { MotiView } from 'moti';
+import { type TextStyle } from 'react-native';
 
 type MoneyTextProps = {
-  /** Integer centavos. With `fromPesos`, a peso amount that gets ×100. */
+  /** Integer pesos. With `fromPesos`, a peso amount that gets ×100. */
   value: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'display' | 'hero';
   variant?: 'default' | 'success' | 'danger';
   /**
    * When true, `value` is interpreted as a peso amount (e.g. 12.50) and is
-   * multiplied by 100 internally to produce centavos before formatting.
+   * multiplied by 100 internally to produce pesos before formatting.
    * Use this at the render edge when the upstream data is in pesos.
-   * Default is false — `value` is treated as integer centavos.
+   * Default is false — `value` is treated as integer pesos.
    */
   fromPesos?: boolean;
   /** Currency symbol prefix. Defaults to the Philippine peso sign. */
@@ -38,7 +38,7 @@ const variantMap = {
 
 /**
  * MoneyText — renders integer-centavo values via `formatCurrency()`,
- * keeping the integer-centavos invariant intact end-to-end (see
+ * keeping the integer-pesos invariant intact end-to-end (see
  * AGENTS.md §1). The display tier fades between value changes so
  * the receipt total feels alive without distracting the eye.
  */
@@ -63,10 +63,7 @@ export function MoneyText({
       className={`${sizeMap[size]} ${variantMap[variant]} font-extrabold${className ? ` ${className}` : ''}`}
     >
       {currency !== '₱' && (
-        <StyledText
-          variant="medium"
-          className="text-ink-500 text-sm mr-1.5"
-        >
+        <StyledText variant="medium" className="text-ink-500 text-sm mr-1.5">
           {currency}
         </StyledText>
       )}

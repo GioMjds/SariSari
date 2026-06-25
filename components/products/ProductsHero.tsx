@@ -1,19 +1,19 @@
-import React from 'react';
-import { View } from 'react-native';
-import { MotiView } from 'moti';
-import { ReceiptHero, MoneyText } from '@/components/ui';
+import { memo } from 'react';
 import { StyledText } from '@/components/elements';
+import { MoneyText, ReceiptHero } from '@/components/ui';
+import { MotiView } from 'moti';
+import { View } from 'react-native';
 
 interface ProductsHeroProps {
   total: number;
   lowStock: number;
-  totalValueCentavos: number;
+  totalValuePesos: number;
 }
 
-export const ProductsHero = React.memo(function ProductsHero({
+export const ProductsHero = memo(function ProductsHero({
   total,
   lowStock,
-  totalValueCentavos,
+  totalValuePesos,
 }: ProductsHeroProps) {
   return (
     <MotiView
@@ -62,7 +62,7 @@ export const ProductsHero = React.memo(function ProductsHero({
                 Value
               </StyledText>
               <MoneyText
-                value={totalValueCentavos / 100}
+                value={totalValuePesos / 100}
                 fromPesos
                 size="xl"
                 className="text-ink-900"

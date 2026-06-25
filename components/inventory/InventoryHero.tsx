@@ -1,7 +1,12 @@
-import React from 'react';
+import { memo } from 'react';
 import { View } from 'react-native';
+import {
+  MoneyText,
+  ReceiptHero,
+  ReceiptHeroDivider,
+  ReceiptHeroMeta,
+} from '@/components/ui';
 import { MotiView } from 'moti';
-import { ReceiptHero, ReceiptHeroDivider, ReceiptHeroMeta, MoneyText } from '@/components/ui';
 
 interface InventoryHeroProps {
   stats: {
@@ -9,11 +14,13 @@ interface InventoryHeroProps {
     totalItems: number;
     lowStockCount: number;
     outOfStockCount: number;
-    totalValueCentavos: number;
+    totalValuePesos: number;
   };
 }
 
-export const InventoryHero = React.memo(function InventoryHero({ stats }: InventoryHeroProps) {
+export const InventoryHero = memo(function InventoryHero({
+  stats,
+}: InventoryHeroProps) {
   return (
     <MotiView
       from={{ opacity: 0, translateY: 18 }}
@@ -28,7 +35,7 @@ export const InventoryHero = React.memo(function InventoryHero({ stats }: Invent
           <View className="px-5 py-4 bg-paper-100 border-y border-dashed border-ink-200">
             <View className="flex-row items-baseline justify-between mb-2">
               <MoneyText
-                value={stats.totalValueCentavos / 100}
+                value={stats.totalValuePesos / 100}
                 fromPesos
                 size="display"
                 className="text-ink-900 font-extrabold"
@@ -59,4 +66,3 @@ export const InventoryHero = React.memo(function InventoryHero({ stats }: Invent
     </MotiView>
   );
 });
-

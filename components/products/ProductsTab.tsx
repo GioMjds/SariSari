@@ -1,28 +1,28 @@
 import { StyledText } from '@/components/elements';
 import { Pagination } from '@/components/ui';
-import { SortOption, ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD } from '@/constants';
-import { useProducts, useCategories } from '@/hooks';
+import { ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
+import { useCategories, useProducts } from '@/hooks';
 import { Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { MotiView } from 'moti';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  FlatList,
-  Modal,
-  Pressable,
-  RefreshControl,
-  TouchableOpacity,
-  View,
-  ScrollView,
-  ActivityIndicator,
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { MotiView } from 'moti';
 
-import { ProductsHero } from './ProductsHero';
+import { FilterChips } from '../inventory/FilterChips';
 import { InventoryRow } from '../inventory/InventoryRow';
 import { ProductsEmptyState } from './ProductsEmptyState';
+import { ProductsHero } from './ProductsHero';
 import { ProductsSkeleton } from './ProductsSkeleton';
-import { FilterChips } from '../inventory/FilterChips';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -46,7 +46,7 @@ export function ProductsTab({
   onMore,
 }: ProductsTabProps) {
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
-  
+
   const [showCategorySheet, setShowCategorySheet] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -175,24 +175,22 @@ export function ProductsTab({
         ? products.filter((p) => !p.category)
         : products;
 
-    const totalValueCentavos = relevantProducts.reduce(
+    const totalValuepesos = relevantProducts.reduce(
       (sum, p) => sum + p.price * p.quantity,
       0,
     );
 
     const lowStock = relevantProducts.filter(
-      (p) => p.quantity < LOW_STOCK_THRESHOLD && p.quantity > 0
+      (p) => p.quantity < LOW_STOCK_THRESHOLD && p.quantity > 0,
     ).length;
 
-    const outStock = relevantProducts.filter(
-      (p) => p.quantity === 0
-    ).length;
+    const outStock = relevantProducts.filter((p) => p.quantity === 0).length;
 
     return {
       total: relevantProducts.length,
       lowStock,
       outStock,
-      totalValueCentavos,
+      totalValuepesos,
     };
   }, [products, filters.category, filters.uncategorized]);
 
@@ -202,9 +200,12 @@ export function ProductsTab({
     setRefreshing(false);
   };
 
-  const handleProductPress = useCallback((product: Product) => {
-    router.push(`/(edit-forms)/edit-product/${product.id}` as any);
-  }, [router]);
+  const handleProductPress = useCallback(
+    (product: Product) => {
+      router.push(`/(edit-forms)/edit-product/${product.id}` as any);
+    },
+    [router],
+  );
 
   const handleProductLongPress = useCallback((product: Product) => {
     setSelectedProduct(product);
@@ -219,20 +220,29 @@ export function ProductsTab({
     }
   };
 
-  const handleChipsChange = useCallback((next: { lowStock: boolean; outOfStock: boolean }) => {
-    setFilters((prev) => ({
-      ...prev,
-      lowStock: next.lowStock,
-      outOfStock: next.outOfStock,
-    }));
-  }, []);
+  const handleChipsChange = useCallback(
+    (next: { lowStock: boolean; outOfStock: boolean }) => {
+      setFilters((prev) => ({
+        ...prev,
+        lowStock: next.lowStock,
+        outOfStock: next.outOfStock,
+      }));
+    },
+    [],
+  );
 
   // Map state to FilterChips expectations.
   // We want to show a dot on the "More" chip if any category filter is active.
-  const mappedFiltersForChips = useMemo(() => ({
-    lowStock: filters.lowStock,
-    outOfStock: filters.outOfStock || filters.uncategorized || filters.category !== null,
-  }), [filters]);
+  const mappedFiltersForChips = useMemo(
+    () => ({
+      lowStock: filters.lowStock,
+      outOfStock:
+        filters.outOfStock ||
+        filters.uncategorized ||
+        filters.category !== null,
+    }),
+    [filters],
+  );
 
   const handleClearFilters = useCallback(() => {
     setFilters({
@@ -270,7 +280,7 @@ export function ProductsTab({
           <ProductsHero
             total={stats.total}
             lowStock={stats.lowStock + stats.outStock}
-            totalValueCentavos={stats.totalValueCentavos}
+            totalValuePesos={stats.totalValuepesos}
           />
         </View>
       )}
@@ -383,7 +393,10 @@ export function ProductsTab({
                     setShowCategorySheet(false);
                   }}
                 >
-                  <StyledText variant="semibold" className="text-persimmon-500 text-sm">
+                  <StyledText
+                    variant="semibold"
+                    className="text-persimmon-500 text-sm"
+                  >
                     Clear Category
                   </StyledText>
                 </TouchableOpacity>
@@ -438,7 +451,10 @@ export function ProductsTab({
                         {cat.name}
                       </StyledText>
                       <View className="bg-ink-100 rounded-full px-2 py-0.5 ml-2">
-                        <StyledText variant="regular" className="text-ink-500 text-[10px]">
+                        <StyledText
+                          variant="regular"
+                          className="text-ink-500 text-[10px]"
+                        >
                           {cat.product_count}
                         </StyledText>
                       </View>

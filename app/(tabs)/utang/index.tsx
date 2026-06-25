@@ -1,3 +1,5 @@
+import { StyledText } from '@/components/elements';
+import { Pagination, SearchBar } from '@/components/ui';
 import {
   CompactLedgerMetrics,
   CreditsCustomerCard,
@@ -8,8 +10,6 @@ import {
   PriorityCustomerHero,
   SortDropdown,
 } from '@/components/utang';
-import { StyledText } from '@/components/elements';
-import { Pagination, SearchBar } from '@/components/ui';
 import { ITEMS_PER_PAGE } from '@/constants/stocks';
 import { useCredits } from '@/hooks';
 import { CreditFilter, CreditSort, Customer } from '@/types';
@@ -203,8 +203,8 @@ export default function Credits() {
         {/* Compact metrics — only when we have customers */}
         {!noCustomersAtAll && (
           <CompactLedgerMetrics
-            totalOutstandingCentavos={kpis?.totalOutstanding || 0}
-            collectedTodayCentavos={kpis?.totalCollectedToday || 0}
+            totalOutstandingPesos={kpis?.totalOutstanding || 0}
+            collectedTodayPesos={kpis?.totalCollectedToday || 0}
             customersWithBalance={kpis?.totalCustomersWithBalance || 0}
             overdueCount={kpis?.overdueCount || 0}
           />

@@ -4,3 +4,4 @@ export * from './DashboardAlertCards';
 export * from './DashboardAttentionSection';
 export * from './DashboardEmptyState';
 export * from './DashboardSkeleton';
+export * from './AlertCard';
