@@ -38,13 +38,16 @@ export const initializeDatabases = async () => {
 
   try {
     await executeWithRetry(async () => {
-      await Promise.all([
-        initProductsTable(),
-        initCreditsTable(),
-        initInventoryTable(),
-        initSalesTables(),
-        initCategoriesTable(),
-      ]);
+      // Init each table sequentially. SQLite serializes writes per
+      // connection, so running these in parallel races for the writer
+      // lock and at least one of them gets a "database is locked" error
+      // on cold start. The cost of doing them serially is one round-trip
+      // per table, which is dominated by the migration that follows.
+      await initProductsTable();
+      await initCreditsTable();
+      await initInventoryTable();
+      await initSalesTables();
+      await initCategoriesTable();
       await runMigrations();
     });
 
