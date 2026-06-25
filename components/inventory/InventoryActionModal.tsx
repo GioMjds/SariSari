@@ -324,7 +324,7 @@ export function InventoryActionModal({
 
               <View className="items-center mt-2 mb-2" accessibilityLiveRegion="polite">
                 <StyledText variant="medium" className="text-ink-500 text-xs">
-                  CURRENT: <StyledText variant="bold" className="text-ink-700">{currentQuantity}</StyledText> → NEW: <StyledText variant="extrabold" className={isNegative ? 'text-semantic-danger' : 'text-persimmon-600'}>{projectedQuantity}</StyledText>
+                  CURRENT: <StyledText variant="extrabold" className="text-ink-700">{currentQuantity}</StyledText> → NEW: <StyledText variant="extrabold" className={isNegative ? 'text-semantic-danger' : 'text-persimmon-600'}>{projectedQuantity}</StyledText>
                 </StyledText>
                 {isNegative && (
                   <StyledText variant="semibold" className="text-semantic-danger text-xs mt-1">

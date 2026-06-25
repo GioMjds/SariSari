@@ -5,6 +5,12 @@ export interface Sale {
   payment_type: 'cash' | 'credit';
   customer_name?: string;
   customer_credit_id?: number;
+  /**
+   * Back-pointer to the credit_transactions row created for credit sales.
+   * Used by `deleteSale` to reverse the ledger entry transactionally.
+   * Null for cash sales or for legacy rows written before migration v3.
+   */
+  credit_transaction_id?: number | null;
 }
 
 export interface SaleItem {
@@ -20,14 +26,11 @@ export interface SaleWithDetails extends Sale {
   items_count: number;
 }
 
-export interface SaleWithItems extends Sale {
-  items_count: number;
-}
-
 export interface SaleStats {
-  todayTotal: number;
-  itemsSold: number;
-  creditSales: number;
+  total: number;
+  items_sold: number;
+  credit_sales: number;
+  transaction_count: number;
 }
 
 export interface DateFilter {
@@ -93,7 +96,7 @@ export interface InsertSaleParams {
 }
 
 // Parameters for getSalesByDateRange function
-export interface GetSaleByDateRangeParams {
+export interface GetSalesByDateRangeParams {
   startDate: string;
   endDate: string;
 }

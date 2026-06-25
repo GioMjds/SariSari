@@ -1,6 +1,11 @@
 import { db } from '../configs/sqlite';
 import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
-import { Sale, SaleItemWithProduct, SaleWithItems } from '@/types/sales.types';
+import {
+  Sale,
+  SaleItemWithProduct,
+  SaleWithItems,
+  SaleStats,
+} from '@/types/sales.types';
 
 export const initSalesTables = async () => {
   await db.execAsync(`
@@ -281,7 +286,7 @@ export const getSaleItems = async (
   );
 };
 
-export const getTodayStats = async () => {
+export const getTodayStats = async (): Promise<SaleStats> => {
   const todayString = getTodayDateString();
 
   const stats = await db.getFirstAsync<{
@@ -316,10 +321,9 @@ export const deleteSale = async (id: number) => {
   // an orphan credit_transaction that keeps the customer paying for a
   // sale that no longer exists.
   const items = await getSaleItems(id);
-  const sale = await db.getFirstAsync<Sale & { credit_transaction_id: number | null }>(
-    'SELECT id, credit_transaction_id FROM sales WHERE id = ?',
-    [id],
-  );
+  const sale = await db.getFirstAsync<
+    Sale & { credit_transaction_id: number | null }
+  >('SELECT id, credit_transaction_id FROM sales WHERE id = ?', [id]);
 
   try {
     await db.execAsync('BEGIN TRANSACTION;');
@@ -331,10 +335,9 @@ export const deleteSale = async (id: number) => {
     //    nulls the back-pointer on payment rows (we don't want to delete
     //    them — payment history is independent of sale history).
     if (sale?.credit_transaction_id) {
-      await db.runAsync(
-        'DELETE FROM credit_transactions WHERE id = ?',
-        [sale.credit_transaction_id],
-      );
+      await db.runAsync('DELETE FROM credit_transactions WHERE id = ?', [
+        sale.credit_transaction_id,
+      ]);
     }
 
     // 2. Restore stock for each item and record the reversal in the

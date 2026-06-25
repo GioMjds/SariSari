@@ -8,7 +8,7 @@ import {
     insertSale,
 } from '@/database/sales';
 import {
-    GetSaleByDateRangeParams,
+    GetSalesByDateRangeParams,
     InsertSaleParams,
 } from '@/types/sales.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,10 +46,10 @@ export function useSales() {
   };
 
   // Query: Get sales by date range
-  const useGetSalesByDateRange = (params: GetSaleByDateRangeParams) => {
+  const useGetSalesByDateRange = (params: GetSalesByDateRangeParams) => {
     return useQuery({
       queryKey: ['sales-by-date', params.startDate, params.endDate],
-      queryFn: () => getSalesByDateRange(params),
+      queryFn: () => getSalesByDateRange(params.startDate, params.endDate),
       enabled: !!params.startDate && !!params.endDate,
     });
   };

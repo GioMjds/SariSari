@@ -33,7 +33,8 @@ export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
     throw new Error('Non-adjustment transactions must not specify adjustment_sign');
   }
 
-  return await db.withTransactionAsync(async () => {
+  let insertedId = 0;
+  await db.withTransactionAsync(async () => {
     // 1. Check product existence and current quantity
     const product = await db.getFirstAsync<{ quantity: number }>(
       'SELECT quantity FROM products WHERE id = ?',
@@ -71,8 +72,10 @@ export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
       [newQuantity, product_id],
     );
 
-    return result.lastInsertRowId;
+    insertedId = result.lastInsertRowId;
   });
+
+  return insertedId;
 };
 
 export const getInventoryTransactions = async (

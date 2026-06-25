@@ -61,9 +61,8 @@ export async function runMigrations() {
 
       if (!hasCreditTxnCol) {
         await db.execAsync('PRAGMA foreign_keys=OFF;');
-        await db.execAsync('ALTER TABLE sales RENAME TO sales_old;');
         await db.execAsync(`
-          CREATE TABLE sales (
+          CREATE TABLE sales_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             total INTEGER NOT NULL,
             payment_type TEXT NOT NULL DEFAULT 'cash' CHECK(payment_type IN ('cash', 'credit')),
@@ -74,10 +73,11 @@ export async function runMigrations() {
           );
         `);
         await db.execAsync(`
-          INSERT INTO sales (id, total, payment_type, customer_name, customer_credit_id, timestamp)
-          SELECT id, total, payment_type, customer_name, customer_credit_id, timestamp FROM sales_old;
+          INSERT INTO sales_new (id, total, payment_type, customer_name, customer_credit_id, timestamp)
+          SELECT id, total, payment_type, customer_name, customer_credit_id, timestamp FROM sales;
         `);
-        await db.execAsync('DROP TABLE sales_old;');
+        await db.execAsync('DROP TABLE sales;');
+        await db.execAsync('ALTER TABLE sales_new RENAME TO sales;');
         await db.execAsync(
           'CREATE INDEX IF NOT EXISTS idx_sales_credit_txn ON sales(credit_transaction_id);',
         );
