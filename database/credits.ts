@@ -67,6 +67,25 @@ export const initCreditsTable = async () => {
 
 // ==================== CUSTOMER OPERATIONS ====================
 
+/**
+ * The canonical balance query. Returns a customer's outstanding utang
+ * balance: the sum of remaining amounts across all non-paid credit
+ * transactions. Every screen that needs a balance should call this
+ * (or the SQL it generates) rather than inlining its own `SUM` —
+ * so that the answer always matches the underlying ledger.
+ */
+export const getOutstandingBalance = async (
+  customerId: number,
+): Promise<number> => {
+  const result = await db.getFirstAsync<{ balance: number | null }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) AS balance
+       FROM credit_transactions
+      WHERE customer_id = ? AND status != 'paid'`,
+    [customerId],
+  );
+  return result?.balance ?? 0;
+};
+
 export const insertCustomer = async (
   customer: NewCustomer,
 ): Promise<number> => {
@@ -295,62 +314,127 @@ export const getCreditTransactionsByCustomer = async (
 
 // ==================== PAYMENT OPERATIONS ====================
 
+/**
+ * Apply a payment allocation to one credit transaction: bump amount_paid
+ * by `allocationAmount` (which may be negative for a reversal) and recompute
+ * status. Used inside `insertPayment` and `deletePayment`. Caller is
+ * responsible for being inside a `db.withTransactionAsync` block.
+ */
+const applyPaymentAllocation = async (
+  creditTransactionId: number,
+  allocationAmount: number,
+): Promise<void> => {
+  const credit = await db.getFirstAsync<CreditTransaction>(
+    'SELECT * FROM credit_transactions WHERE id = ?',
+    [creditTransactionId],
+  );
+  if (!credit) return;
+
+  const newAmountPaid = credit.amount_paid + allocationAmount;
+  const newStatus =
+    newAmountPaid >= credit.amount
+      ? 'paid'
+      : newAmountPaid > 0
+        ? 'partial'
+        : 'unpaid';
+
+  await db.runAsync(
+    'UPDATE credit_transactions SET amount_paid = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [newAmountPaid, newStatus, creditTransactionId],
+  );
+};
+
 export const insertPayment = async (payment: NewPayment): Promise<number> => {
   const timestamp = payment.date || getCurrentLocalTimestamp();
-  const result = await db.runAsync(
-    `INSERT INTO payments 
-     (customer_id, credit_transaction_id, amount, payment_method, date, notes) 
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      payment.customer_id,
-      payment.credit_transaction_id || null,
-      payment.amount,
-      payment.payment_method || null,
-      timestamp,
-      payment.notes || null,
-    ],
-  );
+  let paymentId = 0;
 
-  // Update credit transaction if specified
-  if (payment.credit_transaction_id) {
-    await updateCreditStatus(payment.credit_transaction_id, payment.amount);
-  } else {
-    // Distribute payment across unpaid credits (FIFO)
-    let remainingAmount = payment.amount;
-    const unpaidCredits = await db.getAllAsync<CreditTransaction>(
-      `SELECT * FROM credit_transactions 
-       WHERE customer_id = ? AND status != 'paid' 
-       ORDER BY date ASC`,
-      [payment.customer_id],
+  await db.withTransactionAsync(async () => {
+    // 1. Insert the payment row.
+    const result = await db.runAsync(
+      `INSERT INTO payments
+       (customer_id, credit_transaction_id, amount, payment_method, date, notes)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        payment.customer_id,
+        payment.credit_transaction_id || null,
+        payment.amount,
+        payment.payment_method || null,
+        timestamp,
+        payment.notes || null,
+      ],
     );
+    paymentId = result.lastInsertRowId;
 
-    for (const credit of unpaidCredits) {
-      if (remainingAmount <= 0) break;
+    // 2. Allocate the payment. Either a single targeted credit, or FIFO
+    //    across the customer's oldest unpaid credits. Each allocation is
+    //    recorded in payment_allocations so `deletePayment` can reverse it.
+    if (payment.credit_transaction_id) {
+      await applyPaymentAllocation(
+        payment.credit_transaction_id,
+        payment.amount,
+      );
+      await db.runAsync(
+        'INSERT INTO payment_allocations (payment_id, credit_transaction_id, amount) VALUES (?, ?, ?)',
+        [paymentId, payment.credit_transaction_id, payment.amount],
+      );
+    } else {
+      // FIFO across all unpaid credits for this customer.
+      let remaining = payment.amount;
+      const unpaidCredits = await db.getAllAsync<CreditTransaction>(
+        `SELECT * FROM credit_transactions
+         WHERE customer_id = ? AND status != 'paid'
+         ORDER BY date ASC`,
+        [payment.customer_id],
+      );
 
-      const amountOwed = credit.amount - credit.amount_paid;
-      const paymentAmount = Math.min(remainingAmount, amountOwed);
+      for (const credit of unpaidCredits) {
+        if (remaining <= 0) break;
 
-      await updateCreditStatus(credit.id, paymentAmount);
-      remainingAmount -= paymentAmount;
+        const owed = credit.amount - credit.amount_paid;
+        const allocation = Math.min(remaining, owed);
+        if (allocation <= 0) continue;
+
+        await applyPaymentAllocation(credit.id, allocation);
+        await db.runAsync(
+          'INSERT INTO payment_allocations (payment_id, credit_transaction_id, amount) VALUES (?, ?, ?)',
+          [paymentId, credit.id, allocation],
+        );
+        remaining -= allocation;
+      }
     }
-  }
+  });
 
-  return result.lastInsertRowId;
+  return paymentId;
 };
 
 export const deletePayment = async (id: number): Promise<void> => {
-  const payment = await db.getFirstAsync<Payment>(
-    `SELECT * FROM payments WHERE id = ?`,
-    [id],
-  );
-  if (!payment) return;
+  await db.withTransactionAsync(async () => {
+    const payment = await db.getFirstAsync<Payment>(
+      'SELECT * FROM payments WHERE id = ?',
+      [id],
+    );
+    if (!payment) return;
 
-  // Reverse the payment from credit transaction
-  if (payment.credit_transaction_id) {
-    await updateCreditStatus(payment.credit_transaction_id, -payment.amount);
-  }
+    // Reverse every allocation recorded for this payment. If there are no
+    // payment_allocations rows (legacy payment inserted before v3), fall
+    // back to the original single-credit reversal behavior.
+    const allocations = await db.getAllAsync<{
+      credit_transaction_id: number;
+      amount: number;
+    }>('SELECT credit_transaction_id, amount FROM payment_allocations WHERE payment_id = ?', [id]);
 
-  await db.runAsync('DELETE FROM payments WHERE id = ?', [id]);
+    if (allocations.length > 0) {
+      for (const alloc of allocations) {
+        await applyPaymentAllocation(alloc.credit_transaction_id, -alloc.amount);
+      }
+    } else if (payment.credit_transaction_id) {
+      await applyPaymentAllocation(payment.credit_transaction_id, -payment.amount);
+    }
+
+    // Cascade on payment_allocations cleans up the slice rows when we
+    // delete the parent payment.
+    await db.runAsync('DELETE FROM payments WHERE id = ?', [id]);
+  });
 };
 
 export const getPaymentsByCustomer = async (

@@ -49,6 +49,7 @@ export default function DevResetScreen() {
         'customers',
         'credit_transactions',
         'payments',
+        'payment_allocations',
       ];
 
       for (const t of tables) {

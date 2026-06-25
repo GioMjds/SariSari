@@ -24,12 +24,29 @@ export const insertProduct = async (
   quantity: number = 0,
   cost_price?: number,
   category?: string,
-) => {
-  const result = await db.runAsync(
-    'INSERT INTO products (name, sku, price, quantity, cost_price, category) VALUES (?, ?, ?, ?, ?, ?)',
-    [name, sku, price, quantity, cost_price ?? null, category ?? null],
-  );
-  return result.lastInsertRowId;
+): Promise<number> => {
+  // The products table owns `quantity` as the source of truth, but the
+  // inventory_transactions table is the audit log. Every stock change —
+  // including initial stock at product creation — must land in both
+  // tables inside the same transaction, so the column and the ledger
+  // never disagree.
+  let productId = 0;
+  await db.withTransactionAsync(async () => {
+    const result = await db.runAsync(
+      'INSERT INTO products (name, sku, price, quantity, cost_price, category) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, sku, price, quantity, cost_price ?? null, category ?? null],
+    );
+    productId = result.lastInsertRowId;
+
+    if (quantity > 0) {
+      await db.runAsync(
+        'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
+        [productId, 'restock', quantity],
+      );
+    }
+  });
+
+  return productId;
 };
 
 export const updateProduct = async (
@@ -41,10 +58,28 @@ export const updateProduct = async (
   cost_price?: number,
   category?: string,
 ) => {
-  await db.runAsync(
-    'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [name, sku, price, quantity, cost_price ?? null, category ?? null, id],
-  );
+  // Same pattern as insert: read the current quantity inside the
+  // transaction, compute the delta, write the column update and the
+  // inventory movement together. If the caller is changing quantity,
+  // the audit log gets a row; if they only changed name/price/etc.,
+  // no movement row is written.
+  await db.withTransactionAsync(async () => {
+    const current = await db.getFirstAsync<{ quantity: number }>(
+      'SELECT quantity FROM products WHERE id = ?',
+      [id],
+    );
+    await db.runAsync(
+      'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name, sku, price, quantity, cost_price ?? null, category ?? null, id],
+    );
+    if (current && current.quantity !== quantity) {
+      const delta = quantity - current.quantity;
+      await db.runAsync(
+        'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
+        [id, 'restock', delta],
+      );
+    }
+  });
 };
 
 export const deleteProduct = async (id: number) => {

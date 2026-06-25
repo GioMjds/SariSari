@@ -129,16 +129,23 @@ export const insertSale = async (
 
     // 4. For credit sales, write a linked ledger entry. This is what the
     //    customer detail screen reads to compute the running balance, so it
-    //    must land in the same transaction as the sale header.
+    //    must land in the same transaction as the sale header. We capture
+    //    the new credit_transactions.id and store it on the sales row so
+    //    `deleteSale` can reverse the credit entry.
     if (payment_type === 'credit') {
       if (!customer_credit_id) {
         throw new Error(
           'Credit sale requires a customer_credit_id to link the utang entry',
         );
       }
-      await db.runAsync(
+      const creditResult = await db.runAsync(
         'INSERT INTO credit_transactions (customer_id, amount, status, date) VALUES (?, ?, ?, ?)',
         [customer_credit_id, total, 'unpaid', timestamp],
+      );
+      const creditTxnId = creditResult.lastInsertRowId;
+      await db.runAsync(
+        'UPDATE sales SET credit_transaction_id = ? WHERE id = ?',
+        [creditTxnId, saleId],
       );
     }
 
@@ -304,20 +311,46 @@ export const getTodayStats = async () => {
 };
 
 export const deleteSale = async (id: number) => {
-  // Wrap restore + delete in a transaction so we don't end up with stock
-  // restored for a sale that's still in the table (or vice-versa).
+  // Wrap restore + delete + credit reversal in a transaction so we don't
+  // end up with stock restored for a sale that's still in the table, or
+  // an orphan credit_transaction that keeps the customer paying for a
+  // sale that no longer exists.
   const items = await getSaleItems(id);
+  const sale = await db.getFirstAsync<Sale & { credit_transaction_id: number | null }>(
+    'SELECT id, credit_transaction_id FROM sales WHERE id = ?',
+    [id],
+  );
 
   try {
     await db.execAsync('BEGIN TRANSACTION;');
 
+    // 1. Reverse the credit transaction (if this was a credit sale) before
+    //    we lose the sales.credit_transaction_id back-pointer. The CASCADE
+    //    on payment_allocations.credit_transaction_id cleans up the FIFO
+    //    slice rows; the SET NULL on payments.credit_transaction_id just
+    //    nulls the back-pointer on payment rows (we don't want to delete
+    //    them — payment history is independent of sale history).
+    if (sale?.credit_transaction_id) {
+      await db.runAsync(
+        'DELETE FROM credit_transactions WHERE id = ?',
+        [sale.credit_transaction_id],
+      );
+    }
+
+    // 2. Restore stock for each item and record the reversal in the
+    //    inventory movement history so the ledger agrees with the column.
     for (const item of items) {
       await db.runAsync(
         'UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [item.quantity, item.product_id],
       );
+      await db.runAsync(
+        'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
+        [item.product_id, 'restock', item.quantity],
+      );
     }
 
+    // 3. Drop the sale header and its items.
     await db.runAsync('DELETE FROM sale_items WHERE sale_id = ?', [id]);
     await db.runAsync('DELETE FROM sales WHERE id = ?', [id]);
 
