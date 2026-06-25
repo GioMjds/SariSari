@@ -181,7 +181,9 @@ export const getAllSales = async (): Promise<SaleWithItems[]> => {
   if (sales.length === 0) return [];
 
   // Fetch all sale items in a single query
-  const allItems = await db.getAllAsync<SaleItemWithProduct & { sale_id: number }>(
+  const allItems = await db.getAllAsync<
+    SaleItemWithProduct & { sale_id: number }
+  >(
     `SELECT si.*, p.name as product_name
      FROM sale_items si
      JOIN products p ON si.product_id = p.id`,
@@ -220,17 +222,23 @@ export const getSalesByDateRange = async (
 
   if (sales.length === 0) return [];
 
+  const allItems: (SaleItemWithProduct & { sale_id: number })[] = [];
+  const MAX_VARS = 900;
   const saleIds = sales.map((s) => s.id);
-  const placeholders = saleIds.map(() => '?').join(',');
-
-  // Fetch all items for the specific date range sales in a single query
-  const allItems = await db.getAllAsync<SaleItemWithProduct & { sale_id: number }>(
-    `SELECT si.*, p.name as product_name
-     FROM sale_items si
-     JOIN products p ON si.product_id = p.id
-     WHERE si.sale_id IN (${placeholders})`,
-    saleIds,
-  );
+  for (let i = 0; i < saleIds.length; i += MAX_VARS) {
+    const chunk = saleIds.slice(i, i + MAX_VARS);
+    const placeholders = chunk.map(() => '?').join(',');
+    const rows = await db.getAllAsync<
+      SaleItemWithProduct & { sale_id: number }
+    >(
+      `SELECT si.*, p.name as product_name
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        WHERE si.sale_id IN (${placeholders})`,
+      chunk,
+    );
+    allItems.push(...rows);
+  }
 
   // Group items by sale_id in memory
   const itemsBySaleId: Record<number, SaleItemWithProduct[]> = {};

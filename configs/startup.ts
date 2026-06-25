@@ -48,7 +48,9 @@ export const initializeDatabases = async () => {
       await runMigrations();
     });
 
-    await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
+    if (__DEV__) {
+      await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
+    }
 
     databaseInitialized = true;
   } catch (error) {

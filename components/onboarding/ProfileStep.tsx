@@ -46,7 +46,7 @@ export function ProfileStep({ profile, onChange }: Props) {
 				</StyledText>
 			</View>
 
-			<View className="space-y-4">
+			<View className="gap-4">
 				<View>
 					<StyledText
 						variant="medium"
