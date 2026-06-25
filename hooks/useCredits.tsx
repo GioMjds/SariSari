@@ -1,35 +1,35 @@
 import {
-    deleteCreditTransaction,
-    deleteCustomer,
-    deletePayment,
-    getAllCustomers,
-    getCreditHistory,
-    getCreditKPIs,
-    getCreditTransactionsByCustomer,
-    getCustomer,
-    getCustomerWithDetails,
-    getPaymentsByCustomer,
-    insertCreditTransaction,
-    insertCustomer,
-    insertPayment,
-    markAllCreditsAsPaid,
-    searchCustomers,
-    updateCreditStatus,
-    updateCustomer,
+  deleteCreditTransaction,
+  deleteCustomer,
+  deletePayment,
+  getAllCustomers,
+  getCreditHistory,
+  getCreditKPIs,
+  getCreditTransactionsByCustomer,
+  getCustomer,
+  getCustomerWithDetails,
+  getPaymentsByCustomer,
+  insertCreditTransaction,
+  insertCustomer,
+  insertPayment,
+  markAllCreditsAsPaid,
+  searchCustomers,
+  updateCreditStatus,
+  updateCustomer,
 } from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import type {
-    CreditFilter,
-    CreditHistory,
-    CreditKPIs,
-    CreditSort,
-    CreditTransaction,
-    Customer,
-    CustomerWithDetails,
-    NewCredit,
-    NewCustomer,
-    NewPayment,
-    Payment,
+  CreditFilter,
+  CreditHistory,
+  CreditKPIs,
+  CreditSort,
+  CreditTransaction,
+  Customer,
+  CustomerWithDetails,
+  NewCredit,
+  NewCustomer,
+  NewPayment,
+  Payment,
 } from '@/types/credits.types';
 import { Alert } from '@/utils/alert';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -194,18 +194,31 @@ export function useCredits() {
 
   const useInsertCredit = () => {
     return useMutation({
-      mutationFn: (data: NewCredit) => insertCreditTransaction(data),
+      mutationFn: async (data: NewCredit | NewCredit[]) => {
+        const credits = Array.isArray(data) ? data : [data];
+        const { db } = await import('@/configs/sqlite');
+        await db.withTransactionAsync(async () => {
+          for (const credit of credits) {
+            await insertCreditTransaction(credit);
+          }
+        });
+      },
       onSuccess: (_res, vars) => {
+        const customerId = Array.isArray(vars)
+          ? vars[0]?.customer_id
+          : vars?.customer_id;
         queryClient.invalidateQueries({ queryKey: ['customers'] });
-        queryClient.invalidateQueries({
-          queryKey: ['customer', vars.customer_id],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['customer-details', vars.customer_id],
-        });
+        if (customerId) {
+          queryClient.invalidateQueries({
+            queryKey: ['customer', customerId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['customer-details', customerId],
+          });
+        }
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
         addToast({
-          message: 'Credit transaction added successfully',
+          message: 'Credit transaction(s) added successfully',
           variant: 'success',
           duration: 5000,
         });
@@ -213,7 +226,7 @@ export function useCredits() {
       },
       onError: () => {
         addToast({
-          message: 'Failed to add credit transaction',
+          message: 'Failed to add credit transaction(s)',
           variant: 'danger',
           duration: 5000,
         });
