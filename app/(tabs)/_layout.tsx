@@ -8,8 +8,7 @@ export default function ScreensLayout() {
         screenOptions={{
           headerShown: false,
           presentation: 'card',
-          animation: 'ios_from_right',
-          animationDuration: 250,
+          contentStyle: { backgroundColor: '#EFE6D2' },
         }}
       />
       <StyledTab />

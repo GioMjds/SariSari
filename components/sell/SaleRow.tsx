@@ -2,47 +2,21 @@ import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { MoneyText, StatusStamp } from '@/components/ui';
-
-/**
- * SaleRow — a perforated paper-receipt row in the resibo book.
- * No business logic, no animation — kept pure so the parent FlatList
- * can wrap it in MotiView with a per-row stagger.
- */
+import { PerforationRow } from './PerforationRow';
 
 interface SaleRowProps {
 	sale: SaleWithItems;
 	onPress: (id: number) => void;
 }
 
-const PERFORATION_COUNT = 22;
-const PERFORATION_BG = '#EFE6D2'; // page bg = paper-200, so circles look bitten out
-
-function PerforationRow({ side }: { side: 'top' | 'bottom' }) {
-	return (
-		<View className="relative h-0">
-			<View
-				className="absolute left-0 right-0 h-3 flex-row justify-between"
-				style={side === 'top' ? { bottom: -6 } : { top: -6 }}
-			>
-				{Array.from({ length: PERFORATION_COUNT }).map((_, i) => (
-					<View
-						key={`${side}-${i}`}
-						className="w-3 h-3 rounded-full"
-						style={{ backgroundColor: PERFORATION_BG }}
-					/>
-				))}
-			</View>
-		</View>
-	);
-}
-
-function padRef(id: number): string {
-	return `№ ${String(id).padStart(5, '0')}`;
-}
+/**
+ * SaleRow — a perforated paper-receipt row in the resibo book.
+ * No business logic, no animation — kept pure so the parent FlatList
+ * can wrap it in MotiView with a per-row stagger.
+ */
 
 export function SaleRow({ sale, onPress }: SaleRowProps) {
 	const isCredit = sale.payment_type === 'credit';
@@ -53,9 +27,8 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
 	const itemsLabel = `${sale.items_count} ${sale.items_count === 1 ? 'item' : 'items'}`;
 
 	return (
-		<TouchableOpacity
+		<Pressable
 			onPress={() => onPress(sale.id)}
-			activeOpacity={0.85}
 			className="mx-4 mb-4 rounded-3xl overflow-hidden bg-paper-50 border border-ink-100"
 			style={{
 				shadowColor: '#564E45',
@@ -68,15 +41,9 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
 			<PerforationRow side="top" />
 
 			<View className="paper-texture px-5 pt-4 pb-5">
-				{/* Top row — ref + stamp */}
+				{/* Top row — date & stamp */}
 				<View className="flex-row items-start justify-between mb-1">
 					<View className="flex-1 mr-3">
-						<StyledText
-							variant="medium"
-							className="text-mono text-ink-400"
-						>
-							{padRef(sale.id)}
-						</StyledText>
 						<StyledText
 							variant="semibold"
 							className="text-ink-900 text-base mt-0.5"
@@ -118,12 +85,6 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
 				{/* Total + items */}
 				<View className="flex-row items-end justify-between">
 					<View className="flex-row items-baseline">
-						<StyledText
-							variant="medium"
-							className="text-mono text-ink-500 mr-1.5 text-sm"
-						>
-							₱
-						</StyledText>
 						<MoneyText
 							value={sale.total}
 							size="xl"
@@ -150,6 +111,6 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
 
 			<PerforationRow side="bottom" />
 			<View className="h-3" />
-		</TouchableOpacity>
+		</Pressable>
 	);
 }

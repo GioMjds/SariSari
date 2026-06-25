@@ -61,10 +61,7 @@ export function ReceiptHero({
       className={`mx-4 rounded-3xl overflow-hidden bg-paper-50 shadow-paper-lift border border-ink-100 ${className}`}
     >
       {/* Top header strip */}
-      <Header
-        tone={tone}
-        label={headerLabel || 'OFFICIAL RESIBO'}
-      />
+      <Header tone={tone} label={headerLabel || 'OFFICIAL RESIBO'} />
       <View className="relative h-0">
         <View
           className="absolute left-0 right-0 h-3 flex-row justify-between"

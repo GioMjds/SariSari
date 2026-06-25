@@ -12,6 +12,8 @@ type MoneyTextProps = {
   currency?: string;
   className?: string;
   style?: TextStyle;
+  /** Cap the line count so big totals don't wrap and break the layout. */
+  numberOfLines?: number;
 };
 
 const sizeMap: Record<NonNullable<MoneyTextProps['size']>, string> = {
@@ -42,6 +44,7 @@ export function MoneyText({
   currency = '₱',
   className,
   style,
+  numberOfLines,
 }: MoneyTextProps) {
   const formatted = formatPesos(value);
   const formattedWithoutPeso = formatted.replace(/^₱/, '');
@@ -49,6 +52,7 @@ export function MoneyText({
 
   const text = (
     <StyledText
+      numberOfLines={numberOfLines}
       style={[style, { fontVariant: ['tabular-nums'] }]}
       className={`${sizeMap[size]} ${variantMap[variant]} font-extrabold${className ? ` ${className}` : ''}`}
     >

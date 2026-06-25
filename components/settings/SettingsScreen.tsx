@@ -1,23 +1,21 @@
 import { StyledText } from '@/components/elements';
-import { useAppInfo } from '@/hooks/useAppInfo';
 import { useProfile } from '@/hooks/useProfile';
 import { FontAwesome } from '@expo/vector-icons';
 import { useCallback } from 'react';
-import { Linking, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**
- * SettingsScreen — what the app actually does today, not what it might do later.
+ * SettingsScreen — what the app actually does today, plus the shape of
+ * features coming next.
  *
- * Three sections, each reflecting a real, currently-wired capability:
- *   1. Store      — store name + owner name, read-only labels from onboarding.
- *   2. App        — version + the local-only SQLite guarantee.
- *   3. About      — link to the public privacy policy.
- *
- * There is intentionally no Theme toggle, Language picker, Backup, Import,
- * or Export. Those are real features that need design before they ship; a
- * placeholder comment that lists them would make the app claim capabilities
- * it doesn't have.
+ * Sections:
+ *   1. Store           — store name + owner name (live, from onboarding profile).
+ *   2. Coming soon     — Backup / Restore / Export / Language. These are real
+ *                        features that need design and a privacy review before
+ *                        they ship, so they render as interactive rows that
+ *                        explain what they will do and acknowledge the user
+ *                        with a friendly alert. No fake success state.
  *
  * This component is rendered by both `/settings` (the regular route) and
  * `/(edit-forms)/settings` (the modal route), so the visual layer lives
@@ -25,16 +23,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  */
 export const SettingsScreen = () => {
 	const { profile, loading: profileLoading } = useProfile();
-	const { version, privacyPolicyUrl } = useAppInfo();
 
-	const openPrivacyPolicy = useCallback(async () => {
-		if (!privacyPolicyUrl) return;
-		try {
-			await Linking.openURL(privacyPolicyUrl);
-		} catch (err) {
-			console.warn('Could not open privacy policy URL', err);
-		}
-	}, [privacyPolicyUrl]);
+	const stub = useCallback((label: string) => {
+		Alert.alert(
+			`${label} — coming soon`,
+			"This feature isn't wired up yet. It's on the roadmap and will ship once the data flow and privacy story are settled.",
+		);
+	}, []);
 
 	return (
 		<SafeAreaView className="flex-1 bg-paper-200">
@@ -67,7 +62,7 @@ export const SettingsScreen = () => {
 							variant="regular"
 							className="text-sm text-paper-200 opacity-90 mt-1"
 						>
-							Store, app, and about
+							Store and upcoming features
 						</StyledText>
 					</View>
 				</View>
@@ -88,29 +83,45 @@ export const SettingsScreen = () => {
 					/>
 				</SettingsSection>
 
-				{/* Section 2 — App */}
-				<SettingsSection title="App" subtitle="Built and shipped today">
+				{/* Section 2 — Coming soon */}
+				<SettingsSection
+					title="Coming soon"
+					subtitle="On the roadmap — taps acknowledge the feature isn't wired up yet"
+				>
 					<SettingsRow
-						label="App version"
-						value={version}
-						icon="info-circle"
+						label="Backup Data"
+						value="Not yet available"
+						icon="cloud-upload"
+						interactive
+						onPress={() => stub('Backup Data')}
 					/>
 					<SettingsRow
-						label="Database"
-						value="Local SQLite, on this device"
-						icon="database"
-						subtitle="Offline by default. No automatic backup yet — keep your device backed up through your phone's normal channels."
+						label="Restore Data"
+						value="Not yet available"
+						icon="cloud-download"
+						interactive
+						onPress={() => stub('Restore Data')}
 					/>
-				</SettingsSection>
-
-				{/* Section 3 — About */}
-				<SettingsSection title="About" subtitle="Project & policies">
 					<SettingsRow
-						label="Privacy policy"
-						value={privacyPolicyUrl ? 'Open' : 'Not configured'}
-						icon="lock"
-						interactive={!!privacyPolicyUrl}
-						onPress={openPrivacyPolicy}
+						label="Export Store Data"
+						value="Not yet available"
+						icon="share-square-o"
+						interactive
+						onPress={() => stub('Export Store Data')}
+					/>
+					<SettingsRow
+						label="Language"
+						value="English (more coming)"
+						icon="globe"
+						interactive
+						onPress={() => stub('Language')}
+					/>
+					<SettingsRow
+						label="Export Backup"
+						value="Not yet available"
+						icon="archive"
+						interactive
+						onPress={() => stub('Export Backup')}
 					/>
 				</SettingsSection>
 

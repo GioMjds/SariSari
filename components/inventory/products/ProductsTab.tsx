@@ -5,7 +5,7 @@ import { useCategories, useProducts } from '@/hooks';
 import { Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { MotiView } from 'moti';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -18,8 +18,8 @@ import {
     View,
 } from 'react-native';
 
-import { FilterChips } from '../inventory/FilterChips';
-import { InventoryRow } from '../inventory/InventoryRow';
+import { FilterChips } from '../FilterChips';
+import { InventoryRow } from '../InventoryRow';
 import { ProductsEmptyState } from './ProductsEmptyState';
 import { ProductsHero } from './ProductsHero';
 import { ProductsSkeleton } from './ProductsSkeleton';
@@ -339,28 +339,6 @@ export function ProductsTab({
         />
       )}
 
-      {/* Floating Add Product FAB (Z5) */}
-      <MotiView
-        from={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', damping: 15, delay: 240 }}
-        className="absolute bottom-6 right-6 z-[1000]"
-      >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => router.push('/(edit-forms)/add-product')}
-          className="w-[60px] h-[60px] rounded-full bg-persimmon-500 justify-center items-center shadow-persimmon-glow"
-          style={{
-            shadowColor: '#E85A1F',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 6,
-          }}
-        >
-          <FontAwesome name="plus" size={24} color="#FBF7EE" />
-        </TouchableOpacity>
-      </MotiView>
 
       {/* Category Bottom Sheet / Filter Picker */}
       <Modal

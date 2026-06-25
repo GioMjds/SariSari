@@ -5,12 +5,13 @@ import { initializeDatabases } from '@/configs';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,33 +52,36 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, dbInitError]);
 
+  useEffect(() => {
+    NavigationBar.setBackgroundColorAsync('#EFE6D2');
+  }, []);
+
   // When the DB fails to initialize, fail loud. Don't render the Stack —
   // a partially-mounted navigator on top of a broken DB would render
   // empty screens that look "fine" until the user tries an action.
   if (dbInitError) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
         <SafeAreaProvider>
           <StatusBar style="inverted" backgroundColor="#623418" />
-          <DatabaseErrorScreen
-            message={dbInitError}
-            onRetry={runDbInit}
-          />
+          <DatabaseErrorScreen message={dbInitError} onRetry={runDbInit} />
         </SafeAreaProvider>
       </GestureHandlerRootView>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
           <StatusBar style="inverted" backgroundColor="#623418" />
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
             <Stack
               screenOptions={{
                 headerShown: false,
-                animation: 'ios_from_right',
+                animation:
+                  Platform.OS === 'ios' ? 'ios_from_right' : 'slide_from_right',
+                contentStyle: { backgroundColor: '#EFE6D2' },
               }}
             />
           </View>

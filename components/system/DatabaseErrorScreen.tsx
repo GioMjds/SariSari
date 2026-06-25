@@ -64,7 +64,7 @@ export const DatabaseErrorScreen = ({
 						variant="extrabold"
 						className="text-2xl text-ink-700 text-center mb-2"
 					>
-						We couldn't start the database
+						We couldn&apos;t start the database
 					</StyledText>
 
 					<StyledText
@@ -72,7 +72,7 @@ export const DatabaseErrorScreen = ({
 						className="text-sm text-ink-500 text-center mb-8 px-2"
 					>
 						SariSari keeps your data on this device. If the local database
-						can't open, none of the screens will work — but no data has been
+						can&apos;t open, none of the screens will work — but no data has been
 						uploaded anywhere. Try again.
 					</StyledText>
 

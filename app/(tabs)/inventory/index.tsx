@@ -1,27 +1,36 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState, useMemo, useEffect } from 'react';
-import { Pressable, View, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
-import { CategoriesTab, ProductsTab } from '@/components/products';
-import { FontAwesome } from '@expo/vector-icons';
-import { MotiView } from 'moti';
-import { SearchBar } from '@/components/ui/SearchBar';
-import { useProducts, useCategories } from '@/hooks';
-import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
-import { Product } from '@/types';
 import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
+import { ProductsTab } from '@/components/inventory/products';
+import { CategoriesTab } from '@/components/inventory/category';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
+import { useCategories, useProducts } from '@/hooks';
+import { Product } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
+import { FontAwesome } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MotiView } from 'moti';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'products' | 'categories';
 type SortDirection = 'asc' | 'desc';
 
-type PendingAction =
-  | { product: Product; type: InventoryEventType };
+type PendingAction = { product: Product; type: InventoryEventType };
 
 export default function Products() {
   const [activeTab, setActiveTab] = useState<TabType>('products');
-  const params = useLocalSearchParams<{ filterCategory?: string; restock?: string }>();
+  const params = useLocalSearchParams<{
+    filterCategory?: string;
+    restock?: string;
+  }>();
   const router = useRouter();
 
   // Hoisted state for search & sort
@@ -38,9 +47,12 @@ export default function Products() {
   const categories = getCategoriesWithCountQuery.data;
 
   // Local state for restocking and actions
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null,
+  );
   const [initialQuantity, setInitialQuantity] = useState(1);
-  const [selectedProductForSheet, setSelectedProductForSheet] = useState<Product | null>(null);
+  const [selectedProductForSheet, setSelectedProductForSheet] =
+    useState<Product | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -63,7 +75,7 @@ export default function Products() {
     const list = products || [];
     const total = list.length;
     const lowStock = list.filter(
-      (p) => p.quantity < LOW_STOCK_THRESHOLD && p.quantity > 0
+      (p) => p.quantity < LOW_STOCK_THRESHOLD && p.quantity > 0,
     ).length;
     const outStock = list.filter((p) => p.quantity === 0).length;
     return { total, lowStock, outStock };
@@ -193,6 +205,18 @@ export default function Products() {
               {subtitle}
             </StyledText>
           </View>
+
+          {activeTab === 'products' && (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(edit-forms)/add-product')}
+              accessibilityRole="button"
+              accessibilityLabel="Add product"
+              className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
+            >
+              <FontAwesome name="plus" size={18} color="#FBF7EE" />
+            </TouchableOpacity>
+          )}
         </MotiView>
 
         {/* Search & Sort Row (Z3a) — ONLY for products tab */}
@@ -233,7 +257,9 @@ export default function Products() {
           sortBy={sortBy}
           sortDirection={sortDirection}
           onClearSearch={() => setSearch('')}
-          onRestock={(product) => setPendingAction({ product, type: 'restock' })}
+          onRestock={(product) =>
+            setPendingAction({ product, type: 'restock' })
+          }
           onMore={(product) => setSelectedProductForSheet(product)}
         />
       ) : (
@@ -256,7 +282,10 @@ export default function Products() {
             className="bg-white rounded-t-3xl p-6"
             onPress={(e) => e.stopPropagation()}
           >
-            <StyledText variant="extrabold" className="text-ink-900 text-xl mb-4">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-xl mb-4"
+            >
               Sort By
             </StyledText>
             {sortOption.map((option) => (
@@ -268,8 +297,15 @@ export default function Products() {
                 className="flex-row items-center justify-between py-4 border-b border-ink-100"
               >
                 <View className="flex-row items-center">
-                  <FontAwesome name={option.icon as any} size={18} color="#E85A1F" />
-                  <StyledText variant="medium" className="text-ink-800 ml-3 text-base">
+                  <FontAwesome
+                    name={option.icon as any}
+                    size={18}
+                    color="#E85A1F"
+                  />
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-800 ml-3 text-base"
+                  >
                     {option.label}
                   </StyledText>
                 </View>
@@ -286,7 +322,10 @@ export default function Products() {
               onPress={() => setShowSortModal(false)}
               className="bg-ink-100 rounded-xl py-3 mt-4 active:opacity-70"
             >
-              <StyledText variant="semibold" className="text-ink-700 text-center text-base">
+              <StyledText
+                variant="semibold"
+                className="text-ink-700 text-center text-base"
+              >
                 Close
               </StyledText>
             </TouchableOpacity>
@@ -320,10 +359,16 @@ export default function Products() {
           >
             <View className="items-center mb-4">
               <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
-              <StyledText variant="extrabold" className="text-ink-900 text-lg text-center">
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-lg text-center"
+              >
                 {selectedProductForSheet?.name}
               </StyledText>
-              <StyledText variant="regular" className="text-ink-500 text-xs text-center mt-1">
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-xs text-center mt-1"
+              >
                 Select action to perform
               </StyledText>
             </View>
@@ -338,8 +383,16 @@ export default function Products() {
                 }}
                 className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
               >
-                <FontAwesome name="ban" size={18} color="#C22D2D" className="mr-3 w-6 text-center" />
-                <StyledText variant="semibold" className="text-ink-800 text-base">
+                <FontAwesome
+                  name="ban"
+                  size={18}
+                  color="#C22D2D"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-800 text-base"
+                >
                   Mark Damaged
                 </StyledText>
               </TouchableOpacity>
@@ -353,8 +406,16 @@ export default function Products() {
                 }}
                 className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
               >
-                <FontAwesome name="sliders" size={18} color="#4A2610" className="mr-3 w-6 text-center" />
-                <StyledText variant="semibold" className="text-ink-800 text-base">
+                <FontAwesome
+                  name="sliders"
+                  size={18}
+                  color="#4A2610"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-800 text-base"
+                >
                   Adjust Stock
                 </StyledText>
               </TouchableOpacity>
@@ -364,12 +425,22 @@ export default function Products() {
                 onPress={() => {
                   const product = selectedProductForSheet!;
                   setSelectedProductForSheet(null);
-                  router.push(`/(edit-forms)/inventory-ledger/${product.id}` as any);
+                  router.push(
+                    `/(edit-forms)/inventory-ledger/${product.id}` as any,
+                  );
                 }}
                 className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
               >
-                <FontAwesome name="list-alt" size={18} color="#E85A1F" className="mr-3 w-6 text-center" />
-                <StyledText variant="semibold" className="text-ink-800 text-base">
+                <FontAwesome
+                  name="list-alt"
+                  size={18}
+                  color="#E85A1F"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-800 text-base"
+                >
                   View Ledger
                 </StyledText>
               </TouchableOpacity>
@@ -387,8 +458,16 @@ export default function Products() {
                 }}
                 className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200"
               >
-                <FontAwesome name="trash" size={18} color="#C22D2D" className="mr-3 w-6 text-center" />
-                <StyledText variant="extrabold" className="text-semantic-danger text-base">
+                <FontAwesome
+                  name="trash"
+                  size={18}
+                  color="#C22D2D"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-semantic-danger text-base"
+                >
                   Delete Product
                 </StyledText>
               </TouchableOpacity>
