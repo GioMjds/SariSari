@@ -1,5 +1,5 @@
 // `/(edit-forms)/settings` — the modal route for the Settings screen.
-// Other forms can open this with `router.push('/settings')` and get the
-// slide-up modal presentation while reusing the same component as the
-// regular `/settings` route.
+// Reuses the same component as the regular `/settings` route, opened via
+// `router.push('/(edit-forms)/settings')`. The slide-up sheet presentation is
+// provided by `app/(edit-forms)/_layout.tsx`.
 export { SettingsScreen as default } from '@/components/settings/SettingsScreen';

@@ -5,7 +5,12 @@ export default function ScreensLayout() {
   return (
     <>
       <Stack
-        screenOptions={{ headerShown: false, animation: 'ios_from_right' }}
+        screenOptions={{
+          headerShown: false,
+          presentation: 'card',
+          animation: 'ios_from_right',
+          animationDuration: 250,
+        }}
       />
       <StyledTab />
     </>
