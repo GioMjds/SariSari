@@ -4,7 +4,6 @@ import { initializeDatabases } from '@/configs';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -56,21 +55,19 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <SQLiteProvider databaseName="sarisari.db">
-          <SafeAreaProvider>
-            <StatusBar style="inverted" backgroundColor="#623418" />
-            <View style={{ flex: 1 }}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation: 'ios_from_right',
-                }}
-              />
-            </View>
-            <Toast />
-            <GlobalModal />
-          </SafeAreaProvider>
-        </SQLiteProvider>
+        <SafeAreaProvider>
+          <StatusBar style="inverted" backgroundColor="#623418" />
+          <View style={{ flex: 1 }}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'ios_from_right',
+              }}
+            />
+          </View>
+          <Toast />
+          <GlobalModal />
+        </SafeAreaProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

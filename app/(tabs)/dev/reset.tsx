@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
-import * as SQLite from 'expo-sqlite';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { clearOnboardingState } from '@/lib/onboardingStorage';
+import { db } from '@/configs/sqlite';
 
 // Dev-only reset screen. Accessible at /dev/reset when running the app in development.
 export default function DevResetScreen() {
@@ -19,7 +19,7 @@ export default function DevResetScreen() {
     );
   }
 
-  const db = SQLite.openDatabaseSync('sarisari.db');
+
 
   const runReset = async () => {
     const ok = await new Promise<boolean>((res) =>
