@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { NewCredit, Product } from '@/types';
+import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
@@ -84,7 +85,7 @@ export default function AddCreditTransaction() {
 			product_id: selectedProduct?.id,
 			product_name: selectedProduct ? selectedProduct.name : data.productName?.trim() || undefined,
 			quantity: data.quantity ? parseInt(data.quantity, 10) : undefined,
-			amount: parseFloat(data.amount),
+			amount: parsePesosInput(data.amount),
 			due_date: data.dueDate?.trim() || undefined,
 			notes: data.notes?.trim() || undefined,
 		};
@@ -98,7 +99,7 @@ export default function AddCreditTransaction() {
 
 	const calculateTotal = () => {
 		const qty = quantity ? parseInt(quantity) : 1;
-		const amt = amount ? parseFloat(amount) : 0;
+		const amt = amount ? tryParsePesosInput(amount) : 0;
 		return qty * amt;
 	};
 
@@ -331,7 +332,7 @@ export default function AddCreditTransaction() {
 									className="text-gray-600 text-xs mt-1"
 								>
 									{quantity} ×{' '}
-									{formatCurrency(parseFloat(amount))}
+									{formatCurrency(tryParsePesosInput(amount))}
 								</StyledText>
 							</View>
 						)}

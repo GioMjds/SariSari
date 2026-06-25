@@ -35,8 +35,7 @@ export const InventoryHero = memo(function InventoryHero({
           <View className="px-5 py-4 bg-paper-100 border-y border-dashed border-ink-200">
             <View className="flex-row items-baseline justify-between mb-2">
               <MoneyText
-                value={stats.totalValuePesos / 100}
-                fromPesos
+                value={stats.totalValuePesos}
                 size="display"
                 className="text-ink-900 font-extrabold"
                 style={{ fontSize: 40, letterSpacing: -0.8 }}

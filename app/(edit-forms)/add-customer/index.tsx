@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { useCredits } from '@/hooks';
+import { tryParsePesosInput } from '@/lib/money';
 import { NewCustomer } from '@/types';
 import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
@@ -65,8 +66,10 @@ export default function AddCustomer() {
       typeof data.credit_limit === 'string' &&
       data.credit_limit.trim() !== ''
     ) {
-      const parsed = parseFloat(data.credit_limit);
-      creditLimit = Number.isFinite(parsed) ? parsed : undefined;
+      // Optional field — tryParsePesosInput returns 0 on empty input,
+      // which the form treats as "no credit limit set" (undefined).
+      const parsed = tryParsePesosInput(data.credit_limit);
+      creditLimit = parsed > 0 ? parsed : undefined;
     }
 
     const payload: NewCustomer = {

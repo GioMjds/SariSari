@@ -6,6 +6,7 @@ import { StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { Product } from '@/types';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
+import { formatPesos } from '@/lib/money';
 
 interface InventoryRowProps {
   item: Product;
@@ -33,8 +34,7 @@ export const InventoryRow = React.memo(function InventoryRow({
     ? 'Out'
     : `${item.quantity} left`;
 
-  const formattedPrice = (item.price / 100).toFixed(2);
-  const subtitle = `SKU: ${item.sku}${item.category ? ' · ' + item.category : ''} · ₱${formattedPrice}`;
+  const subtitle = `SKU: ${item.sku}${item.category ? ' · ' + item.category : ''} · ${formatPesos(item.price)}`;
 
   return (
     <MotiView

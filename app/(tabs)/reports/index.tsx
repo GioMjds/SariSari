@@ -439,7 +439,6 @@ export default function Reports() {
                   </StyledText>
                   <MoneyText
                     value={inventoryValue.currentStockValue}
-                    fromPesos
                     size="md"
                     variant="default"
                     className="text-ink-900 text-sm"
@@ -465,7 +464,6 @@ export default function Reports() {
                   </StyledText>
                   <MoneyText
                     value={inventoryValue.potentialSalesValue}
-                    fromPesos
                     size="md"
                     variant="success"
                     className="text-sm"
@@ -557,7 +555,6 @@ export default function Reports() {
                   </StyledText>
                   <MoneyText
                     value={creditsOverview.issued}
-                    fromPesos
                     size="md"
                     variant="danger"
                     className="text-sm"
@@ -573,7 +570,6 @@ export default function Reports() {
                   </StyledText>
                   <MoneyText
                     value={creditsOverview.collected}
-                    fromPesos
                     size="md"
                     variant="success"
                     className="text-sm"

@@ -1,20 +1,13 @@
 import { StyledText } from '@/components/elements';
-import { formatCurrency } from '@/utils';
+import { formatPesos } from '@/lib/money';
 import { MotiView } from 'moti';
 import { type TextStyle } from 'react-native';
 
 type MoneyTextProps = {
-  /** Integer pesos. With `fromPesos`, a peso amount that gets ×100. */
+  /** Integer pesos. */
   value: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'display' | 'hero';
   variant?: 'default' | 'success' | 'danger';
-  /**
-   * When true, `value` is interpreted as a peso amount (e.g. 12.50) and is
-   * multiplied by 100 internally to produce pesos before formatting.
-   * Use this at the render edge when the upstream data is in pesos.
-   * Default is false — `value` is treated as integer pesos.
-   */
-  fromPesos?: boolean;
   /** Currency symbol prefix. Defaults to the Philippine peso sign. */
   currency?: string;
   className?: string;
@@ -37,7 +30,7 @@ const variantMap = {
 };
 
 /**
- * MoneyText — renders integer-centavo values via `formatCurrency()`,
+ * MoneyText — renders integer-peso values via `formatPesos()`,
  * keeping the integer-pesos invariant intact end-to-end (see
  * AGENTS.md §1). The display tier fades between value changes so
  * the receipt total feels alive without distracting the eye.
@@ -46,14 +39,11 @@ export function MoneyText({
   value,
   size = 'md',
   variant = 'default',
-  fromPesos = false,
   currency = '₱',
   className,
   style,
 }: MoneyTextProps) {
-  const centavos = fromPesos ? value * 100 : value;
-  const pesos = centavos / 100;
-  const formatted = formatCurrency(pesos);
+  const formatted = formatPesos(value);
   const formattedWithoutPeso = formatted.replace(/^₱/, '');
   const animateValue = size === 'display' || size === 'hero';
 

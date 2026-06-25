@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui';
 import { useCategories, useProducts } from '@/hooks';
 import { Alert } from '@/utils';
+import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -139,13 +140,13 @@ export default function EditProduct() {
       if (!data.sku.trim()) {
         throw new Error('SKU is required');
       }
-      if (!data.price || parseFloat(data.price) <= 0) {
+      if (!data.price || tryParsePesosInput(data.price) <= 0) {
         throw new Error('Valid price is required');
       }
 
-      const priceValue = parseFloat(data.price);
+      const priceValue = parsePesosInput(data.price);
       const costPriceValue = data.costPerPiece
-        ? parseFloat(data.costPerPiece)
+        ? parsePesosInput(data.costPerPiece)
         : undefined;
 
       // Validate that cost price is less than selling price
@@ -353,8 +354,8 @@ export default function EditProduct() {
             {/* Profit Preview */}
             {formValues.costPerPiece &&
               formValues.price &&
-              parseFloat(formValues.costPerPiece) > 0 &&
-              parseFloat(formValues.price) > 0 && (
+              tryParsePesosInput(formValues.costPerPiece) > 0 &&
+              tryParsePesosInput(formValues.price) > 0 && (
                 <View className="bg-secondary-50 rounded-lg p-3 mt-2 flex-row items-center justify-between">
                   <View>
                     <StyledText
@@ -369,8 +370,8 @@ export default function EditProduct() {
                     >
                       ₱
                       {(
-                        parseFloat(formValues.price) -
-                        parseFloat(formValues.costPerPiece)
+                        tryParsePesosInput(formValues.price) -
+                        tryParsePesosInput(formValues.costPerPiece)
                       ).toFixed(2)}
                     </StyledText>
                   </View>
@@ -386,9 +387,9 @@ export default function EditProduct() {
                       className="text-secondary-700 text-lg"
                     >
                       {(
-                        ((parseFloat(formValues.price) -
-                          parseFloat(formValues.costPerPiece)) /
-                          parseFloat(formValues.costPerPiece)) *
+                        ((tryParsePesosInput(formValues.price) -
+                          tryParsePesosInput(formValues.costPerPiece)) /
+                          tryParsePesosInput(formValues.costPerPiece)) *
                         100
                       ).toFixed(1)}
                       %

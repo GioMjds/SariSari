@@ -182,7 +182,6 @@ export function InventoryActionModal({
                   </StyledText>
                   <MoneyText
                     value={pendingAction.product.price}
-                    fromPesos
                     className="text-lg text-ink-900 font-semibold mt-0.5"
                   />
                 </View>

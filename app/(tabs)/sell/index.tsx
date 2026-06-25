@@ -380,7 +380,6 @@ export default function Sales() {
               >
                 <MoneyText
                   value={item.price}
-                  fromPesos
                   className="text-secondary-600 text-lg"
                 />
               </StyledText>
@@ -673,7 +672,6 @@ export default function Sales() {
                         <View className="px-5">
                           <MoneyText
                             value={stats.total}
-                            fromPesos
                             size="display"
                             className="text-ink-900"
                           />
@@ -776,7 +774,6 @@ export default function Sales() {
                       {item.quantity} ×{' '}
                       <MoneyText
                         value={item.price}
-                        fromPesos
                         className="text-secondary-600 text-lg"
                       />
                     </StyledText>
@@ -787,7 +784,6 @@ export default function Sales() {
                   >
                     <MoneyText
                       value={item.quantity * item.price}
-                      fromPesos
                       className="text-secondary-600 text-base"
                     />
                   </StyledText>
@@ -872,7 +868,6 @@ export default function Sales() {
                 >
                   <MoneyText
                     value={getTotalAmount()}
-                    fromPesos
                     className="text-warm-900 text-2xl"
                   />
                 </StyledText>
@@ -949,7 +944,6 @@ export default function Sales() {
                     Balance:{' '}
                     <MoneyText
                       value={customer.outstanding_balance}
-                      fromPesos
                       className="text-warm-600 text-xs"
                     />
                   </StyledText>

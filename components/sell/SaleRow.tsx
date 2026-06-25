@@ -126,7 +126,6 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
 						</StyledText>
 						<MoneyText
 							value={sale.total}
-							fromPesos
 							size="xl"
 							className="text-ink-900"
 						/>

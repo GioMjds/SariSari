@@ -62,8 +62,7 @@ export const ProductsHero = memo(function ProductsHero({
                 Value
               </StyledText>
               <MoneyText
-                value={totalValuePesos / 100}
-                fromPesos
+                value={totalValuePesos}
                 size="xl"
                 className="text-ink-900"
               />

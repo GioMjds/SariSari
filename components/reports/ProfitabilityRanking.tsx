@@ -65,7 +65,7 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 					variant="medium"
 					className="text-mono text-ink-500 text-[10px]"
 				>
-					TOTAL {formatCurrency(products.reduce((s, p) => s + p.totalProfit, 0) / 100)}
+					TOTAL {formatCurrency(products.reduce((s, p) => s + p.totalProfit, 0))}
 				</StyledText>
 			</View>
 
@@ -123,7 +123,7 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 									variant="medium"
 									className="text-sage-600 text-[10px] mt-0.5"
 								>
-									+{formatCurrency((product.profitPerUnit ?? 0) / 100)}/pc
+									+{formatCurrency(product.profitPerUnit ?? 0)}/pc
 								</StyledText>
 							</View>
 						</View>

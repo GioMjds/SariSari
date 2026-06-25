@@ -1,4 +1,5 @@
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
+import { formatPesos, formatPesosCompact } from '@/lib/money';
 import { CreditTransaction } from '@/types/credits.types';
 import { DateRange, DateRangeType } from '@/types/reports.types';
 import { endOfDay, startOfDay, startOfMonth, subDays } from 'date-fns';
@@ -41,21 +42,9 @@ export const getDateRangeFromType = (type: DateRangeType): DateRange => {
   }
 };
 
-export const formatCurrency = (amount: number) => {
-  return `₱${amount.toLocaleString('en-PH', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
+export const formatCurrency = (amount: number) => formatPesos(amount);
 
-export const formatCompactCurrency = (amount: number) => {
-  if (amount >= 1000000) {
-    return `₱${(amount / 1000000).toFixed(1)}M`;
-  } else if (amount >= 1000) {
-    return `₱${(amount / 1000).toFixed(1)}k`;
-  }
-  return `₱${amount.toFixed(0)}`;
-};
+export const formatCompactCurrency = (amount: number) => formatPesosCompact(amount);
 
 export const getStockColor = (quantity: number) => {
   if (quantity === 0) return 'text-red-600';

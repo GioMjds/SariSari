@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { CreditTransaction, NewPayment } from '@/types';
+import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCredits } from '@/hooks';
@@ -81,7 +82,7 @@ export default function AddPaymentTransaction() {
 		const payload: NewPayment = {
 			customer_id: Number(id),
 			credit_transaction_id: selectedCredit?.id,
-			amount: parseFloat(data.amount),
+			amount: parsePesosInput(data.amount),
 			payment_method: data.paymentMethod,
 			notes: data.notes,
 			date: format(new Date(), 'yyyy-MM-dd'),
@@ -91,7 +92,7 @@ export default function AddPaymentTransaction() {
 
 	const getRemainingBalance = () => {
 		if (!customer || !amount) return customer?.outstanding_balance || 0;
-		return customer.outstanding_balance - parseFloat(amount);
+		return customer.outstanding_balance - tryParsePesosInput(amount);
 	};
 
 	return (

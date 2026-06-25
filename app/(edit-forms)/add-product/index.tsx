@@ -1,6 +1,7 @@
 import { StyledText } from '@/components/elements';
 import { useCategories, useProducts } from '@/hooks';
 import { Alert } from '@/utils';
+import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -79,9 +80,9 @@ export default function AddProduct() {
       formValues.bundleCost &&
       formValues.piecesPerBundle
     ) {
-      const bundleCost = parseFloat(formValues.bundleCost);
+      const bundleCost = tryParsePesosInput(formValues.bundleCost);
       const pieces = parseInt(formValues.piecesPerBundle);
-      if (!isNaN(bundleCost) && !isNaN(pieces) && pieces > 0) {
+      if (bundleCost > 0 && !isNaN(pieces) && pieces > 0) {
         const costPerPiece = bundleCost / pieces;
         setValue('costPerPiece', costPerPiece.toFixed(2));
       }
@@ -168,13 +169,13 @@ export default function AddProduct() {
   const onSubmit = async (data: AddProductForm) => {
     if (!data.productName.trim()) throw new Error('Product name is required');
     if (!data.sku.trim()) throw new Error('SKU is required');
-    if (!data.price || parseFloat(data.price) <= 0)
+    if (!data.price || tryParsePesosInput(data.price) <= 0)
       throw new Error('Valid price is required');
 
-    const priceValue = parseFloat(data.price);
+    const priceValue = parsePesosInput(data.price);
     const stockValue = data.initialStock ? parseInt(data.initialStock) : 0;
     const costPriceValue = data.costPerPiece
-      ? parseFloat(data.costPerPiece)
+      ? parsePesosInput(data.costPerPiece)
       : undefined;
 
     // Validate that cost price is less than selling price
@@ -499,8 +500,8 @@ export default function AddProduct() {
           {/* Profit Preview */}
           {formValues.costPerPiece &&
             formValues.price &&
-            parseFloat(formValues.costPerPiece) > 0 &&
-            parseFloat(formValues.price) > 0 && (
+            tryParsePesosInput(formValues.costPerPiece) > 0 &&
+            tryParsePesosInput(formValues.price) > 0 && (
               <View className="bg-secondary-50 rounded-lg p-3 mt-2 flex-row items-center justify-between">
                 <View>
                   <StyledText
@@ -515,8 +516,8 @@ export default function AddProduct() {
                   >
                     ₱
                     {(
-                      parseFloat(formValues.price) -
-                      parseFloat(formValues.costPerPiece)
+                      tryParsePesosInput(formValues.price) -
+                      tryParsePesosInput(formValues.costPerPiece)
                     ).toFixed(2)}
                   </StyledText>
                 </View>
@@ -525,7 +526,7 @@ export default function AddProduct() {
                                         Overall Profit:
                                     </StyledText>
                                     <StyledText variant="extrabold" className="text-secondary-700 text-lg">
-                                        ₱{(parseFloat(formValues.price) - parseFloat(formValues.costPerPiece)).toFixed(2)}
+                                        ₱{(tryParsePesosInput(formValues.price) - tryParsePesosInput(formValues.costPerPiece)).toFixed(2)}
                                     </StyledText>
                                 </View> */}
                 <View className="items-end">
@@ -540,9 +541,9 @@ export default function AddProduct() {
                     className="text-secondary-700 text-lg"
                   >
                     {(
-                      ((parseFloat(formValues.price) -
-                        parseFloat(formValues.costPerPiece)) /
-                        parseFloat(formValues.costPerPiece)) *
+                      ((tryParsePesosInput(formValues.price) -
+                        tryParsePesosInput(formValues.costPerPiece)) /
+                        tryParsePesosInput(formValues.costPerPiece)) *
                       100
                     ).toFixed(1)}
                     %

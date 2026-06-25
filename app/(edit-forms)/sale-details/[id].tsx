@@ -265,14 +265,12 @@ export default function SaleDetails() {
                             </View>
                             <MoneyText
                               value={item.price}
-                              fromPesos
                               className="text-mono text-ink-700 text-sm ml-3"
                             />
                           </View>
                         </View>
                         <MoneyText
                           value={lineTotal}
-                          fromPesos
                           className="text-ink-900 text-base"
                         />
                       </View>
@@ -291,7 +289,6 @@ export default function SaleDetails() {
                 </StyledText>
                 <MoneyText
                   value={sale.total}
-                  fromPesos
                   className="text-base text-ink-900"
                 />
               </View>

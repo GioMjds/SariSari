@@ -57,7 +57,7 @@ export function AlmanacBarChart({
 	const todayIndex = data.length - 1;
 
 	const formatLabel = (v: number) => {
-		return formatCompactCurrency(v / 100);
+		return formatCompactCurrency(v);
 	};
 
 	return (
