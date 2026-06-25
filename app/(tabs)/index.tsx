@@ -18,6 +18,7 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   BackHandler,
   Image,
+  Pressable,
   RefreshControl,
   ScrollView,
   View,
@@ -205,6 +206,10 @@ export default function Dashboard() {
     router.push(routes.credits);
   }, [router]);
 
+  const handleOpenSettings = useCallback(() => {
+    router.push('/settings');
+  }, [router]);
+
   return (
     <SafeAreaView className="flex-1 bg-paper-200">
       <ScrollView
@@ -223,7 +228,7 @@ export default function Dashboard() {
           <DashboardSkeleton />
         ) : (
           <>
-            <DashboardHeader />
+            <DashboardHeader onOpenSettings={handleOpenSettings} />
 
             <DashboardHero
               totalpesos={stats?.total ?? 0}
@@ -297,7 +302,7 @@ export default function Dashboard() {
   );
 }
 
-function DashboardHeader() {
+function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
       <View className="flex-row items-center mb-3">
@@ -344,9 +349,14 @@ function DashboardHeader() {
           </StyledText>
         </View>
 
-        <View className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15">
-          <FontAwesome name="area-chart" size={18} color="#FBF7EE" />
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open settings"
+          onPress={onOpenSettings}
+          className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:opacity-70"
+        >
+          <FontAwesome name="cog" size={18} color="#FBF7EE" />
+        </Pressable>
       </View>
     </View>
   );
