@@ -1,20 +1,18 @@
 import { StyledText } from '@/components/elements';
 import { CategoryWithCount } from '@/types';
-import { FontAwesome } from '@expo/vector-icons';
-import { Pressable, View, TouchableOpacity } from 'react-native';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Pressable, View } from 'react-native';
 
 interface CategoryCardProps {
   category: CategoryWithCount;
   onPress: (category: CategoryWithCount) => void;
-  onEdit: (category: CategoryWithCount) => void;
-  onDelete: (category: CategoryWithCount) => void;
+  onMore: (category: CategoryWithCount) => void;
 }
 
 export function CategoryCard({
   category,
   onPress,
-  onEdit,
-  onDelete,
+  onMore,
 }: CategoryCardProps) {
   return (
     <Pressable
@@ -47,32 +45,19 @@ export function CategoryCard({
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View className="flex-row gap-2">
-          {/* Edit Button */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={(e) => {
-              e.stopPropagation();
-              onEdit(category);
-            }}
-            className="w-10 h-10 rounded-lg bg-ink-50 border border-ink-100 items-center justify-center"
-          >
-            <FontAwesome name="edit" size={16} color="#E85A1F" />
-          </TouchableOpacity>
-
-          {/* Delete Button */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={(e) => {
-              e.stopPropagation();
-              onDelete(category);
-            }}
-            className="w-10 h-10 rounded-lg bg-red-50 border border-red-100 items-center justify-center"
-          >
-            <FontAwesome name="trash" size={16} color="#C13030" />
-          </TouchableOpacity>
-        </View>
+        {/* Overflow (⋮) options button */}
+        <Pressable
+          onPress={(e) => {
+            e.stopPropagation();
+            onMore(category);
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`More actions for ${category.name}`}
+          className="w-10 h-10 rounded-full bg-ink-50 border border-ink-100 items-center justify-center active:opacity-70"
+        >
+          <Ionicons name="ellipsis-horizontal" size={18} color="#4A2610" />
+        </Pressable>
       </View>
     </Pressable>
   );

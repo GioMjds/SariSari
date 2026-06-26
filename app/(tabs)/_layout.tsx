@@ -46,7 +46,7 @@ export default function ScreensLayout() {
 
   return (
     <>
-      <StatusBar style="inverted" backgroundColor="#623418" />
+      <StatusBar style="light" backgroundColor="#623418" />
       <Stack
         screenOptions={{
           headerShown: false,

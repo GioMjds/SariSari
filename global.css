@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+a[target="_blank"]::after {
+	content: " ↗";
+}
+
 :root {
 	/* Brand — Persimmon */
 	--color-persimmon-50: #FFF1EA;

@@ -174,65 +174,67 @@ export default function Dashboard() {
   }, [router]);
 
   return (
-    <SafeAreaView className="flex-1 bg-paper-200">
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 96 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#E85A1F"
-            colors={['#E85A1F']}
-          />
-        }
-      >
-        {isLoading ? (
-          <DashboardSkeleton />
-        ) : (
-          <>
-            <DashboardHeader onOpenSettings={handleOpenSettings} />
-
-            <DashboardHero
-              totalpesos={stats?.total ?? 0}
-              transactionCount={stats?.transaction_count ?? 0}
-              itemsSold={stats?.items_sold ?? 0}
-              creditSales={stats?.credit_sales ?? 0}
+    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-paper-200">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 96 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#E85A1F"
+              colors={['#E85A1F']}
             />
+          }
+        >
+          {isLoading ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              <DashboardHeader onOpenSettings={handleOpenSettings} />
 
-            <DashboardQuickActions
-              onNewSale={handleNewSale}
-              onAddStock={handleAddStock}
-              onRecordPayment={handleRecordPayment}
-            />
-
-            <DashboardAlertCards
-              lowStockCount={stockCounts.lowStockCount}
-              outOfStockCount={stockCounts.outOfStockCount}
-              outstandingPesos={kpis?.totalOutstanding ?? 0}
-              customersWithBalance={kpis?.totalCustomersWithBalance ?? 0}
-              onTapStock={handleAddStock}
-              onTapUtang={handleRecordPayment}
-            />
-
-            {isFreshStore ? (
-              <DashboardEmptyState
-                onAddProduct={handleAddStock}
-                onStartFirstSale={handleNewSale}
+              <DashboardHero
+                totalpesos={stats?.total ?? 0}
+                transactionCount={stats?.transaction_count ?? 0}
+                itemsSold={stats?.items_sold ?? 0}
+                creditSales={stats?.credit_sales ?? 0}
               />
-            ) : (
-              <DashboardAttentionSection
-                stockAttention={stockAttention}
-                sukis={sukiAttention}
-                recentSales={recentSales}
-                onViewAllStock={handleAddStock}
-                onViewAllUtang={handleRecordPayment}
-                onViewAllSales={() => router.replace(routes.sales)}
+
+              <DashboardQuickActions
+                onNewSale={handleNewSale}
+                onAddStock={handleAddStock}
+                onRecordPayment={handleRecordPayment}
               />
-            )}
-          </>
-        )}
-      </ScrollView>
+
+              <DashboardAlertCards
+                lowStockCount={stockCounts.lowStockCount}
+                outOfStockCount={stockCounts.outOfStockCount}
+                outstandingPesos={kpis?.totalOutstanding ?? 0}
+                customersWithBalance={kpis?.totalCustomersWithBalance ?? 0}
+                onTapStock={handleAddStock}
+                onTapUtang={handleRecordPayment}
+              />
+
+              {isFreshStore ? (
+                <DashboardEmptyState
+                  onAddProduct={handleAddStock}
+                  onStartFirstSale={handleNewSale}
+                />
+              ) : (
+                <DashboardAttentionSection
+                  stockAttention={stockAttention}
+                  sukis={sukiAttention}
+                  recentSales={recentSales}
+                  onViewAllStock={handleAddStock}
+                  onViewAllUtang={handleRecordPayment}
+                  onViewAllSales={() => router.replace(routes.sales)}
+                />
+              )}
+            </>
+          )}
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
@@ -60,9 +60,19 @@ export interface AllocationRow {
  *
  * The screen and its components stay presentational; this hook is the
  * single place where business logic lives.
+ *
+ * Quick Settle: when the route is opened with `?creditId=<id>` (from
+ * the ⚡ button on a UtangCard), the hook pins the payment to that
+ * one credit transaction, pre-fills the amount to its outstanding
+ * balance, and surfaces a `pinnedCredit` flag so the UI can call out
+ * the focused row.
  */
 export function useAddPaymentForm() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, creditId } = useLocalSearchParams<{
+    id: string;
+    /** Optional — present only when entered via Quick Settle. */
+    creditId?: string;
+  }>();
   const queryClient = useQueryClient();
 
   const { useCustomer, useCustomerCredits, useInsertPayment } = useCredits();
@@ -77,6 +87,7 @@ export function useAddPaymentForm() {
     });
 
   const amount = watch('amount');
+  const amountTouchedRef = useRef(false);
 
   // Customer + unpaid credits from the query cache.
   const { data: customer } = useCustomer(id);
@@ -88,6 +99,18 @@ export function useAddPaymentForm() {
     () => allCredits.filter((c) => c.status !== 'paid'),
     [allCredits],
   );
+
+  // Resolve the pinned credit (if any) from the URL param. When a
+  // Quick Settle link is present we override the FIFO allocation
+  // walk below to apply the entire payment to this single credit,
+  // mirroring the behavior of the original targeted-payment code path
+  // in `database/credits.ts:insertPayment`.
+  const pinnedCredit = useMemo(() => {
+    if (!creditId) return null;
+    const parsedId = Number(creditId);
+    if (!Number.isFinite(parsedId)) return null;
+    return unpaidCredits.find((c) => c.id === parsedId) ?? null;
+  }, [creditId, unpaidCredits]);
 
   // Refetch on focus so balances reflect the freshest ledger.
   useFocusEffect(
@@ -104,6 +127,7 @@ export function useAddPaymentForm() {
   /** Add a quick-pay amount to the running payment total. */
   const addAmount = useCallback(
     (increment: number) => {
+      amountTouchedRef.current = true;
       const current = tryParsePesosInput(amount);
       const next = current + increment;
       setValue('amount', next.toString());
@@ -113,31 +137,70 @@ export function useAddPaymentForm() {
 
   /** Set the payment to exactly the suki's outstanding balance. */
   const payFullBalance = useCallback(() => {
+    amountTouchedRef.current = true;
     if (!customer) return;
     setValue('amount', customer.outstanding_balance.toString());
   }, [customer, setValue]);
 
   const payHalfBalance = useCallback(() => {
+    amountTouchedRef.current = true;
     if (!customer) return;
     setValue('amount', Math.floor(customer.outstanding_balance / 2).toString());
   }, [customer, setValue]);
 
   /** Reset the payment amount to empty. */
   const clearAmount = useCallback(() => {
+    amountTouchedRef.current = true;
     setValue('amount', '');
   }, [setValue]);
+
+  // When Quick Settle brings us in with a pinned credit, pre-fill
+  // the amount to that credit's exact outstanding balance — once the
+  // credits query has loaded. We only do this if the user hasn't
+  // started editing the amount themselves.
+  useEffect(() => {
+    if (!pinnedCredit) return;
+    if (amountTouchedRef.current) return;
+    if (amount && amount !== '') return;
+    const outstanding = pinnedCredit.amount - pinnedCredit.amount_paid;
+    if (outstanding > 0) {
+      setValue('amount', outstanding.toString());
+    }
+  }, [pinnedCredit, amount, setValue]);
 
   // ─── Live FIFO allocation simulator ────────────────────────────
 
   /**
-   * Mirror of `database/credits.ts:insertPayment`'s FIFO walk.
-   * Walks the unpaid credits oldest-to-newest and applies the
-   * payment in integer-peso chunks. The DB will execute the same
-   * walk transactionally on submit, so the receipt must agree.
+   * Mirror of `database/credits.ts:insertPayment`'s allocation walk.
+   * When a `pinnedCredit` is present (Quick Settle), the entire
+   * payment goes against that single credit. Otherwise we walk the
+   * unpaid credits oldest-to-newest (FIFO). The DB will execute the
+   * same allocation transactionally on submit, so the receipt must
+   * agree.
    */
   const allocation = useMemo(() => {
     let remaining: number = tryParsePesosInput(amount) as number;
     const rows: AllocationRow[] = [];
+
+    if (pinnedCredit) {
+      // Single-credit allocation. Show the row even when amount is 0
+      // so the cashier sees the focus.
+      const owedBefore = pinnedCredit.amount - pinnedCredit.amount_paid;
+      const applied = Math.max(0, Math.min(remaining, owedBefore));
+      const remainingAfter = Math.max(0, owedBefore - applied);
+
+      rows.push({
+        credit: pinnedCredit,
+        applied,
+        owedBefore,
+        remainingAfter,
+        fullyCovered: applied > 0 && remainingAfter === 0,
+        partiallyCovered: applied > 0 && remainingAfter > 0,
+      });
+
+      remaining = Math.max(0, remaining - applied);
+      return { rows, unallocated: remaining };
+    }
 
     // `allCredits` is ordered date DESC; FIFO means oldest first.
     const fifo = [...unpaidCredits].sort(
@@ -165,7 +228,7 @@ export function useAddPaymentForm() {
     }
 
     return { rows, unallocated: Math.max(0, remaining) };
-  }, [amount, unpaidCredits]);
+  }, [amount, unpaidCredits, pinnedCredit]);
 
   // ─── Derived display values ────────────────────────────────────
 
@@ -187,9 +250,9 @@ export function useAddPaymentForm() {
   const submit = handleSubmit((data) => {
     const payload: NewPayment = {
       customer_id: Number(id),
-      // FIFO is the system — never pin a single credit. The DB does
-      // the same allocation walk inside the transaction.
-      credit_transaction_id: undefined,
+      // When Quick Settle pinned a credit, send the targeted
+      // allocation; otherwise let the DB do FIFO.
+      credit_transaction_id: pinnedCredit?.id,
       amount: parsePesosInput(data.amount),
       payment_method: data.paymentMethod,
       notes: data.notes?.trim() || undefined,
@@ -219,6 +282,7 @@ export function useAddPaymentForm() {
     // Domain data
     customer,
     unpaidCredits,
+    pinnedCredit,
     allocation,
 
     // Derived

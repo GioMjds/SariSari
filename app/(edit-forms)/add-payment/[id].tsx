@@ -1,6 +1,7 @@
 import { Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { formatPesos } from '@/lib/money';
 import {
   AddPaymentHeader,
   PaymentAmountCard,
@@ -27,6 +28,7 @@ export default function AddPaymentTransaction() {
       >
         <AddPaymentHeader
           customer={form.customer}
+          quickSettle={!!form.pinnedCredit}
           onBack={() => form.router.back()}
         />
 
@@ -51,6 +53,13 @@ export default function AddPaymentTransaction() {
             rows={form.allocation.rows}
             unallocated={form.allocation.unallocated}
             hasAmount={form.parsedAmount > 0}
+            pinnedCreditLabel={
+              form.pinnedCredit
+                ? `${form.pinnedCredit.product_name || 'Credit'} · ${formatPesos(
+                    form.pinnedCredit.amount - form.pinnedCredit.amount_paid,
+                  )}`
+                : undefined
+            }
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />

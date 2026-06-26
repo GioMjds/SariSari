@@ -111,8 +111,9 @@ export default function Products() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Dynamic Redesigned Header Block (Cinnamon bg) */}
+    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-background">
+        {/* Dynamic Redesigned Header Block (Cinnamon bg) */}
       <View className="bg-cinnamon-500 pt-3">
         {/* Cinnamon-styled Tab Switcher */}
         <View className="px-5 pb-4">
@@ -570,6 +571,7 @@ export default function Products() {
           </View>
         </View>
       </Modal>
+      </View>
     </SafeAreaView>
   );
 }

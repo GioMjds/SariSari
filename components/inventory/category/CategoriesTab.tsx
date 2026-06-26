@@ -96,6 +96,35 @@ export function CategoriesTab() {
     router.push(`/(edit-forms)/category/${category.id}` as any);
   };
 
+  const handleOpenActionSheet = (category: CategoryWithCount) => {
+    setSelectedCategory(category);
+  };
+
+  const handleCloseActionSheet = () => {
+    setSelectedCategory(null);
+  };
+
+  const handleSheetViewProducts = () => {
+    if (!selectedCategory) return;
+    const id = selectedCategory.id;
+    setSelectedCategory(null);
+    router.push(`/(edit-forms)/category/${id}` as any);
+  };
+
+  const handleSheetEdit = () => {
+    if (!selectedCategory) return;
+    const cat = selectedCategory;
+    setSelectedCategory(null);
+    handleEditCategory(cat);
+  };
+
+  const handleSheetDelete = () => {
+    if (!selectedCategory) return;
+    const cat = selectedCategory;
+    setSelectedCategory(null);
+    handleDeleteCategory(cat);
+  };
+
   const submitAddCategory = async (data: CategoryFormData) => {
     if (!data.name.trim()) {
       Alert.alert('Error', 'Please enter a category name');
@@ -186,8 +215,7 @@ export function CategoriesTab() {
             <CategoryCard
               category={item}
               onPress={handleCategoryPress}
-              onEdit={handleEditCategory}
-              onDelete={handleDeleteCategory}
+              onMore={handleOpenActionSheet}
             />
           </MotiView>
         )}
@@ -237,6 +265,127 @@ export function CategoriesTab() {
           </MotiView>
         }
       />
+
+      {/* Action Sheet Modal (Overflow menu) */}
+      <Modal
+        visible={!!selectedCategory && !showAddModal && !showEditModal && !showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseActionSheet}
+        statusBarTranslucent
+      >
+        <Pressable
+          className="flex-1 justify-end"
+          onPress={handleCloseActionSheet}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl p-6 pb-10"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="items-center mb-4">
+              <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-lg text-center"
+              >
+                {selectedCategory?.name}
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-xs text-center mt-1"
+              >
+                Select action to perform
+              </StyledText>
+            </View>
+
+            <View className="gap-2">
+              {/* Action: View Products */}
+              <TouchableOpacity
+                onPress={handleSheetViewProducts}
+                activeOpacity={0.7}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+              >
+                <FontAwesome
+                  name="list-alt"
+                  size={18}
+                  color="#E85A1F"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-800 text-base"
+                >
+                  View Products
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: Edit Category Name */}
+              <TouchableOpacity
+                onPress={handleSheetEdit}
+                activeOpacity={0.7}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+              >
+                <FontAwesome
+                  name="pencil"
+                  size={18}
+                  color="#4A2610"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-cinnamon-500 text-base"
+                >
+                  Edit Category Name
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: Delete Category */}
+              <TouchableOpacity
+                onPress={handleSheetDelete}
+                activeOpacity={0.7}
+                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200"
+              >
+                <FontAwesome
+                  name="trash"
+                  size={18}
+                  color="#C22D2D"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-semantic-danger text-base"
+                >
+                  Delete Category
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View className="h-[1px] bg-ink-100 my-2" />
+
+              {/* Action: Cancel */}
+              <TouchableOpacity
+                onPress={handleCloseActionSheet}
+                activeOpacity={0.7}
+                className="flex-row items-center py-4 px-4 bg-ink-100 rounded-xl border border-ink-200"
+              >
+                <FontAwesome
+                  name="times"
+                  size={18}
+                  color="#564E45"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-700 text-base"
+                >
+                  Cancel
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Add Category Modal */}
       <Modal

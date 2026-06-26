@@ -148,12 +148,14 @@ export default function Credits() {
   // ── Render: loading skeleton ────────────────────────────────
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <CreditsHeader
-          subtitle="Loading your ledger…"
-          onAddCustomer={handleAddCustomer}
-        />
-        <CreditsSkeleton />
+      <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+        <View className="flex-1 bg-background">
+          <CreditsHeader
+            subtitle="Loading your ledger…"
+            onAddCustomer={handleAddCustomer}
+          />
+          <CreditsSkeleton />
+        </View>
       </SafeAreaView>
     );
   }
@@ -162,11 +164,12 @@ export default function Credits() {
   const noCustomersAtAll = customers.length === 0 && !searchQuery.trim();
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <CreditsHeader
-        subtitle={headerSubtitle}
-        onAddCustomer={handleAddCustomer}
-      />
+    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-background">
+        <CreditsHeader
+          subtitle={headerSubtitle}
+          onAddCustomer={handleAddCustomer}
+        />
 
       <ScrollView
         className="flex-1"
@@ -302,6 +305,7 @@ export default function Credits() {
           itemsPerPage={ITEMS_PER_PAGE}
         />
       )}
+      </View>
     </SafeAreaView>
   );
 }

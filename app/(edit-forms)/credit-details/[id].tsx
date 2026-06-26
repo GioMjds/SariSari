@@ -1,32 +1,48 @@
-import { StyledText } from '@/components/elements';
-import { useCredits } from '@/hooks';
-import { useModalStore } from '@/stores';
-import { CreditTransaction } from '@/types';
-import { formatCurrency, getStatusColor, parseStoredTimestamp } from '@/utils';
-import { FontAwesome } from '@expo/vector-icons';
+import { useCallback, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCredits, useProfile } from '@/hooks';
+import { useModalStore } from '@/stores';
+import { matchesSearch } from '@/lib/creditDetails';
+import { CreditTransaction } from '@/types/credits.types';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  CreditDetailsHeader,
+  CreditDetailsSkeleton,
+  CustomerHeroCard,
+  CustomerNotFound,
+  CreditsTabContent,
+  HistoryTabContent,
+  PaymentsTabContent,
+  TabNavigation,
+  type CreditDetailTab,
+} from '@/components/utang/credit-details';
 
-type TabType = 'credits' | 'payments' | 'history';
-
+/**
+ * Credit-details screen — the suki profile view.
+ *
+ * Layout (top → bottom):
+ *   1. `CreditDetailsHeader` — slim top bar (back + delete).
+ *   2. `CustomerHeroCard` — receipt-style hero with the customer's
+ *      outstanding balance, contact shortcuts, trust tags, and
+ *      debt-to-limit warning.
+ *   3. `TabNavigation` — animated 3-segment control with sliding
+ *      underbar.
+ *   4. Active tab content — Credits / Payments / History, with a
+ *      local search filter at the top of Credits and Payments.
+ *
+ * The screen is the orchestrator: it owns data fetching via hooks,
+ * the page-level refresh control, the modals (delete, mark all paid),
+ * and routes to add-credit / add-payment. All visual rendering of
+ * list rows, headers, skeleton, and per-tab states is delegated to
+ * the presentation sub-components under `components/utang/credit-details/`.
+ */
 export default function CustomerDetails() {
-  const [activeTab, setActiveTab] = useState<TabType>('credits');
-
   const { id } = useLocalSearchParams<{ id: string }>();
-
   const queryClient = useQueryClient();
-
   const { openModal } = useModalStore();
 
   const {
@@ -44,8 +60,24 @@ export default function CustomerDetails() {
   } = useCustomerDetails(id);
 
   const { data: history = [] } = useCreditHistory(id);
+  const { profile } = useProfile();
 
-  // Refetch on focus
+  const markAllPaidMutation = useMarkAllCreditsAsPaid();
+  const deleteCustomerMutation = useDeleteCustomer();
+
+  const [activeTab, setActiveTab] = useState<CreditDetailTab>('credits');
+
+  // Local search state per-tab. Switching tabs preserves the queries.
+  const [searchByTab, setSearchByTab] = useState<
+    Record<CreditDetailTab, string>
+  >({
+    credits: '',
+    payments: '',
+    history: '',
+  });
+
+  // Refetch on focus so the suki's data reflects writes made on
+  // sibling screens.
   useFocusEffect(
     useCallback(() => {
       refetch();
@@ -55,30 +87,27 @@ export default function CustomerDetails() {
     }, [refetch, queryClient, id]),
   );
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refetch();
     queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
-  };
+  }, [refetch, queryClient, id]);
 
-  // Mark all as paid mutation
-  const markAllPaidMutation = useMarkAllCreditsAsPaid();
+  const handleBack = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    router.back();
+  }, []);
 
-  // Delete customer mutation
-  const deleteCustomerMutation = useDeleteCustomer();
+  // ─── Modal handlers ─────────────────────────────────────────────
 
-  const handleMarkAllPaid = () => {
+  const handleMarkAllPaid = useCallback(() => {
     if (!customer) return;
-
     openModal({
       title: 'Mark All as Paid',
       description: `Mark all credits for ${customer.name} as paid?`,
       variant: 'warning',
       icon: 'check-circle',
       buttons: [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Confirm',
           style: 'default',
@@ -86,21 +115,17 @@ export default function CustomerDetails() {
         },
       ],
     });
-  };
+  }, [customer, openModal, markAllPaidMutation]);
 
-  const handleDeleteCustomer = () => {
+  const handleDeleteCustomer = useCallback(() => {
     if (!customer) return;
-
     openModal({
       title: 'Delete Customer',
       description: `Are you sure you want to delete ${customer.name}? This will delete all credits and payments.`,
       variant: 'danger',
       icon: 'trash',
       buttons: [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
@@ -110,499 +135,156 @@ export default function CustomerDetails() {
         },
       ],
     });
-  };
+  }, [customer, openModal, deleteCustomerMutation]);
 
-  const paymentMethod = (payment: string) => {
-    switch (payment) {
-      case 'cash':
-        return 'Cash';
-      case 'bank_transfer':
-        return 'Bank Transfer';
-      default:
-        return 'Other';
-    }
-  };
+  // ─── Navigation handlers ────────────────────────────────────────
 
-  const handleAddCredit = () => {
+  const handleAddCredit = useCallback(() => {
     if (!customer) return;
+    Haptics.selectionAsync().catch(() => {});
     router.push(`/(edit-forms)/add-credit/${customer.id}` as any);
-  };
+  }, [customer]);
 
-  const handleAddPayment = () => {
+  const handleAddPayment = useCallback(() => {
     if (!customer) return;
+    Haptics.selectionAsync().catch(() => {});
     router.push(`/(edit-forms)/add-payment/${customer.id}` as any);
-  };
+  }, [customer]);
 
-  const getStatusLabel = (status: CreditTransaction['status']) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
+  const handleQuickSettle = useCallback(
+    (credit: CreditTransaction) => {
+      if (!customer) return;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      router.push(
+        `/(edit-forms)/add-payment/${customer.id}?creditId=${credit.id}` as any,
+      );
+    },
+    [customer],
+  );
+
+  const handleTabChange = useCallback((next: CreditDetailTab) => {
+    setActiveTab(next);
+  }, []);
+
+  // ─── Derived lists (search-filtered) ────────────────────────────
+
+  const filteredCredits = useMemo(() => {
+    if (!customer) return [];
+    const term = searchByTab.credits;
+    return customer.credits.filter((c) =>
+      matchesSearch(term, [c.product_name, c.notes]),
+    );
+  }, [customer, searchByTab.credits]);
+
+  const filteredPayments = useMemo(() => {
+    if (!customer) return [];
+    const term = searchByTab.payments;
+    return customer.payments.filter((p) => matchesSearch(term, [p.notes]));
+  }, [customer, searchByTab.payments]);
+
+  const filteredHistory = useMemo(() => {
+    const term = searchByTab.history;
+    return history.filter((h) => matchesSearch(term, [h.description]));
+  }, [history, searchByTab.history]);
+
+  // ─── Loading state ──────────────────────────────────────────────
 
   if (isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#7A1CAC" />
-          <StyledText variant="medium" className="text-secondary mt-4">
-            Loading customer details...
-          </StyledText>
-        </View>
-      </SafeAreaView>
-    );
+    return <CreditDetailsSkeleton />;
   }
+
+  // ─── Not found state ────────────────────────────────────────────
 
   if (!customer) {
-    return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 items-center justify-center">
-          <FontAwesome name="user-times" size={64} color="#d1d5db" />
-          <StyledText variant="semibold" className="text-gray-500 text-lg mt-4">
-            Customer not found
-          </StyledText>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.back()}
-            className="bg-secondary rounded-xl px-6 py-3 mt-6"
-          >
-            <StyledText variant="semibold" className="text-white">
-              Go Back
-            </StyledText>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
+    return <CustomerNotFound onBack={handleBack} />;
   }
 
+  const activeCreditCount = customer.credits.filter(
+    (c) => c.status !== 'paid',
+  ).length;
+  const storeName = profile?.storeName?.trim() || 'your sari-sari store';
+
   return (
-    <SafeAreaView className="flex-1 bg-background">
-      {/* Header */}
-      <View className="px-4 pt-4 pb-2 bg-background">
-        <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            hitSlop={20}
-            onPress={() => router.back()}
-          >
-            <FontAwesome name="arrow-left" size={24} color="#2E073F" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            hitSlop={20}
-            onPress={handleDeleteCustomer}
-          >
-            <FontAwesome name="trash" size={20} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Customer Header */}
-        <View className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
-          <View className="flex-row items-start justify-between mb-4">
-            <View className="flex-1">
-              <StyledText
-                variant="extrabold"
-                className="text-primary text-2xl mb-2"
-              >
-                {customer.name}
-              </StyledText>
-
-              {customer.phone && (
-                <View className="flex-row items-center mb-1">
-                  <FontAwesome name="phone" size={14} color="#7A1CAC" />
-                  <StyledText variant="regular" className="text-gray-600 ml-2">
-                    {customer.phone}
-                  </StyledText>
-                </View>
-              )}
-
-              {customer.address && (
-                <View className="flex-row items-center">
-                  <FontAwesome name="map-marker" size={14} color="#7A1CAC" />
-                  <StyledText variant="regular" className="text-gray-600 ml-2">
-                    {customer.address}
-                  </StyledText>
-                </View>
-              )}
-            </View>
-
-            <View className="items-end">
-              <StyledText
-                variant="medium"
-                className="text-gray-500 text-xs mb-1"
-              >
-                Outstanding
-              </StyledText>
-              <StyledText
-                variant="extrabold"
-                className={`text-2xl ${customer.outstanding_balance > 0 ? 'text-red-600' : 'text-green-600'}`}
-              >
-                {formatCurrency(customer.outstanding_balance)}
-              </StyledText>
-            </View>
-          </View>
-
-          {customer.days_overdue && customer.days_overdue > 0 && (
-            <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <View className="flex-row items-center">
-                <FontAwesome name="clock-o" size={16} color="#ef4444" />
-                <StyledText variant="semibold" className="text-red-700 ml-2">
-                  {customer.days_overdue} days overdue
-                </StyledText>
-              </View>
-            </View>
-          )}
-
-          {/* Action Buttons */}
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleAddPayment}
-              className="flex-1 bg-green-600 rounded-xl py-3 flex-row items-center justify-center"
-            >
-              <FontAwesome name="money" size={16} color="white" />
-              <StyledText variant="semibold" className="text-white ml-2">
-                Add Payment
-              </StyledText>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleAddCredit}
-              className="flex-1 bg-secondary rounded-xl py-3 flex-row items-center justify-center"
-            >
-              <FontAwesome name="plus" size={16} color="white" />
-              <StyledText variant="semibold" className="text-white ml-2">
-                Add Credit
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-
-          {customer.outstanding_balance > 0 && (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={handleMarkAllPaid}
-              className="bg-accent/10 border border-accent rounded-xl py-3 mt-3"
-            >
-              <StyledText
-                variant="semibold"
-                className="text-secondary text-center"
-              >
-                Mark All as Paid
-              </StyledText>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Tabs */}
-        <View className="flex-row bg-white rounded-xl p-1 shadow-sm border border-gray-100">
-          {(['credits', 'payments', 'history'] as TabType[]).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              activeOpacity={0.7}
-              onPress={() => setActiveTab(tab)}
-              className={`flex-1 py-2 rounded-lg ${activeTab === tab ? 'bg-secondary' : 'bg-transparent'}`}
-            >
-              <StyledText
-                variant={activeTab === tab ? 'semibold' : 'medium'}
-                className={`text-center ${activeTab === tab ? 'text-white' : 'text-gray-600'}`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </StyledText>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <CreditDetailsHeader
+        onBack={handleBack}
+        onDelete={handleDeleteCustomer}
+      />
 
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 140 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor="#7A1CAC"
+            tintColor="#623418"
+            colors={['#E85A1F']}
           />
         }
       >
-        {/* Credits Tab */}
-        {activeTab === 'credits' && (
-          <View className="pb-32 mt-4">
-            {customer.credits.length === 0 ? (
-              <View className="items-center justify-center py-12">
-                <FontAwesome name="credit-card" size={48} color="#7A1CAC" />
-                <StyledText
-                  variant="semibold"
-                  className="text-gray-700 text-xl mt-4"
-                >
-                  No credits yet
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-gray-600 text-smd mt-2 text-center"
-                >
-                  Add the first credit transaction
-                </StyledText>
-              </View>
-            ) : (
-              customer.credits.map((credit) => (
-                <View
-                  key={credit.id}
-                  className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-                >
-                  <View className="flex-row items-start justify-between mb-3">
-                    <View className="flex-1">
-                      <StyledText
-                        variant="semibold"
-                        className="text-primary text-base mb-1"
-                      >
-                        {credit.product_name || 'Credit'}
-                      </StyledText>
-                      <StyledText
-                        variant="regular"
-                        className="text-gray-500 text-xs"
-                      >
-                        {format(
-                          parseStoredTimestamp(credit.date) || new Date(),
-                          'MMM dd, yyyy h:mm a',
-                        )}
-                      </StyledText>
-                      {credit.due_date && (
-                        <StyledText
-                          variant="regular"
-                          className="text-gray-500 text-xs"
-                        >
-                          Due:{' '}
-                          {format(
-                            parseStoredTimestamp(credit.due_date) || new Date(),
-                            'MMM dd, yyyy',
-                          )}
-                        </StyledText>
-                      )}
-                    </View>
+        {/* ─── Hero card ───────────────────────────────────────── */}
+        <View className="px-4">
+          <CustomerHeroCard
+            customer={customer}
+            credits={customer.credits}
+            payments={customer.payments}
+            storeName={storeName}
+            activeCreditCount={activeCreditCount}
+            onAddPayment={handleAddPayment}
+            onAddCredit={handleAddCredit}
+            onMarkAllPaid={handleMarkAllPaid}
+          />
+        </View>
 
-                    <View className="items-end">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-primary text-lg mb-1"
-                      >
-                        {formatCurrency(credit.amount)}
-                      </StyledText>
-                      <View
-                        className={`px-2 py-1 rounded-full ${getStatusColor(credit.status)}`}
-                      >
-                        <StyledText
-                          variant="semibold"
-                          className={`text-xs ${getStatusColor(credit.status).split(' ')[0]}`}
-                        >
-                          {getStatusLabel(credit.status)}
-                        </StyledText>
-                      </View>
-                    </View>
-                  </View>
+        {/* ─── Tab navigation ──────────────────────────────────── */}
+        <View className="px-4 mt-4">
+          <TabNavigation
+            activeTab={activeTab}
+            onChange={handleTabChange}
+            counts={{
+              credits: customer.credits.length,
+              payments: customer.payments.length,
+              history: history.length,
+            }}
+          />
+        </View>
 
-                  {credit.status !== 'unpaid' && (
-                    <View className="pt-3 border-t border-gray-100">
-                      <StyledText
-                        variant="regular"
-                        className="text-gray-600 text-xs"
-                      >
-                        Paid: {formatCurrency(credit.amount_paid)} of{' '}
-                        {formatCurrency(credit.amount)}
-                      </StyledText>
-                      <View className="bg-gray-200 rounded-full h-2 mt-2">
-                        <View
-                          className="bg-green-500 rounded-full h-2"
-                          style={{
-                            width: `${(credit.amount_paid / credit.amount) * 100}%`,
-                          }}
-                        />
-                      </View>
-                    </View>
-                  )}
-
-                  {credit.notes && (
-                    <View className="mt-3 pt-3 border-t border-gray-100">
-                      <StyledText
-                        variant="regular"
-                        className="text-gray-600 text-xs"
-                      >
-                        {credit.notes}
-                      </StyledText>
-                    </View>
-                  )}
-                </View>
-              ))
-            )}
-          </View>
-        )}
-
-        {/* Payments Tab */}
-        {activeTab === 'payments' && (
-          <View className="pb-32 mt-4">
-            {customer.payments.length === 0 ? (
-              <View className="items-center justify-center py-12">
-                <FontAwesome name="money" size={48} color="#7A1CAC" />
-                <StyledText
-                  variant="semibold"
-                  className="text-gray-700 text-xl mt-4"
-                >
-                  No payments yet
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-gray-600 text-md mt-2 text-center"
-                >
-                  Record the first payment
-                </StyledText>
-              </View>
-            ) : (
-              customer.payments.map((payment) => (
-                <View
-                  key={payment.id}
-                  className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100"
-                >
-                  <View className="flex-row items-start justify-between">
-                    <View className="flex-1">
-                      <View className="flex-row items-center mb-2">
-                        <FontAwesome
-                          name="check-circle"
-                          size={16}
-                          color="#10b981"
-                        />
-                        <StyledText
-                          variant="semibold"
-                          className="text-primary text-base ml-2"
-                        >
-                          Payment Received
-                        </StyledText>
-                      </View>
-                      <StyledText
-                        variant="regular"
-                        className="text-gray-500 text-xs mb-1"
-                      >
-                        {format(
-                          parseStoredTimestamp(payment.date) || new Date(),
-                          'MMM dd, yyyy h:mm a',
-                        )}
-                      </StyledText>
-                      {payment.payment_method && (
-                        <View className="flex-row items-center">
-                          <FontAwesome
-                            name="credit-card"
-                            size={12}
-                            color="#7A1CAC"
-                          />
-                          <StyledText
-                            variant="regular"
-                            className="text-gray-500 text-sm ml-1"
-                          >
-                            Method: {paymentMethod(payment.payment_method)}
-                          </StyledText>
-                        </View>
-                      )}
-                    </View>
-
-                    <StyledText
-                      variant="extrabold"
-                      className="text-green-600 text-lg"
-                    >
-                      {formatCurrency(payment.amount)}
-                    </StyledText>
-                  </View>
-
-                  {payment.notes && (
-                    <View className="mt-3 pt-3 border-t border-gray-100">
-                      <StyledText
-                        variant="regular"
-                        className="text-gray-600 text-xs"
-                      >
-                        {payment.notes}
-                      </StyledText>
-                    </View>
-                  )}
-                </View>
-              ))
-            )}
-          </View>
-        )}
-
-        {/* History Tab */}
-        {activeTab === 'history' && (
-          <View className="pb-32 mt-4">
-            {history.length === 0 ? (
-              <View className="items-center justify-center py-12">
-                <FontAwesome name="history" size={48} color="#7A1CAC" />
-                <StyledText
-                  variant="semibold"
-                  className="text-gray-700 text-xl mt-4"
-                >
-                  No transaction history
-                </StyledText>
-              </View>
-            ) : (
-              history.map((item) => (
-                <View key={`${item.type}-${item.id}`} className="mb-3">
-                  <View className="flex-row">
-                    {/* Timeline */}
-                    <View className="items-center mr-4">
-                      <View
-                        className={`w-8 h-8 rounded-full items-center justify-center ${
-                          item.type === 'credit' ? 'bg-red-100' : 'bg-green-100'
-                        }`}
-                      >
-                        <FontAwesome
-                          name={item.type === 'credit' ? 'plus' : 'check'}
-                          size={14}
-                          color={item.type === 'credit' ? '#ef4444' : '#10b981'}
-                        />
-                      </View>
-                    </View>
-
-                    {/* Content */}
-                    <View className="flex-1 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                      <View className="flex-row items-start justify-between mb-2">
-                        <View className="flex-1">
-                          <StyledText
-                            variant="semibold"
-                            className="text-primary text-base mb-1"
-                          >
-                            {item.description}
-                          </StyledText>
-                          <StyledText
-                            variant="regular"
-                            className="text-gray-500 text-xs"
-                          >
-                            {format(
-                              parseStoredTimestamp(item.date) || new Date(),
-                              'MMM dd, yyyy h:mm a',
-                            )}
-                          </StyledText>
-                        </View>
-
-                        <StyledText
-                          variant="extrabold"
-                          className={`text-lg ${item.type === 'credit' ? 'text-red-600' : 'text-green-600'}`}
-                        >
-                          {item.type === 'credit' ? '+' : '-'}
-                          {formatCurrency(item.amount)}
-                        </StyledText>
-                      </View>
-
-                      <View className="pt-2 border-t border-gray-100">
-                        <StyledText
-                          variant="medium"
-                          className="text-gray-600 text-xs"
-                        >
-                          Running Balance:{' '}
-                          {formatCurrency(item.running_balance)}
-                        </StyledText>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              ))
-            )}
-          </View>
-        )}
+        {/* ─── Active tab content ──────────────────────────────── */}
+        <View className="px-4 mt-4">
+          {activeTab === 'credits' && (
+            <CreditsTabContent
+              credits={filteredCredits}
+              totalCount={customer.credits.length}
+              searchValue={searchByTab.credits}
+              onSearchChange={(v) =>
+                setSearchByTab((s) => ({ ...s, credits: v }))
+              }
+              onQuickSettle={handleQuickSettle}
+            />
+          )}
+          {activeTab === 'payments' && (
+            <PaymentsTabContent
+              payments={filteredPayments}
+              totalCount={customer.payments.length}
+              searchValue={searchByTab.payments}
+              onSearchChange={(v) =>
+                setSearchByTab((s) => ({ ...s, payments: v }))
+              }
+            />
+          )}
+          {activeTab === 'history' && (
+            <HistoryTabContent
+              history={filteredHistory}
+              totalCount={history.length}
+              searchValue={searchByTab.history}
+              onSearchChange={(v) =>
+                setSearchByTab((s) => ({ ...s, history: v }))
+              }
+            />
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

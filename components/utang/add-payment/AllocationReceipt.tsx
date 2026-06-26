@@ -10,6 +10,12 @@ interface AllocationReceiptProps {
   unallocated: number;
   /** True when the form has an amount entered (drives visibility). */
   hasAmount: boolean;
+  /**
+   * Set when the form is in "Quick Settle" mode (entered from a
+   * single UtangCard). Surfaces a focused header so the cashier
+   * knows which credit they're paying down.
+   */
+  pinnedCreditLabel?: string;
 }
 
 /**
@@ -28,6 +34,7 @@ export function AllocationReceipt({
   rows,
   unallocated,
   hasAmount,
+  pinnedCreditLabel,
 }: AllocationReceiptProps) {
   if (rows.length === 0) {
     return (
@@ -54,12 +61,25 @@ export function AllocationReceipt({
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 overflow-hidden">
       <View className="mb-2 flex-row items-center justify-between">
         <StyledText variant="black" className="label-caps text-cinnamon-500">
-          Allocation Receipt
+          {pinnedCreditLabel ? 'Quick Settle' : 'Allocation Receipt'}
         </StyledText>
         <StyledText variant="medium" className="text-ink-400 text-xs">
-          FIFO · oldest first
+          {pinnedCreditLabel ? 'Targeted credit' : 'FIFO · oldest first'}
         </StyledText>
       </View>
+
+      {pinnedCreditLabel && (
+        <View className="bg-persimmon-50 border border-persimmon-300 rounded-xl px-3 py-2 mb-2 flex-row items-center">
+          <FontAwesome name="bolt" size={12} color="#C8460F" />
+          <StyledText
+            variant="medium"
+            className="text-persimmon-700 text-xs ml-1.5 flex-1"
+            numberOfLines={1}
+          >
+            {pinnedCreditLabel}
+          </StyledText>
+        </View>
+      )}
 
       <View className="bg-paper-100 rounded-xl border border-ink-100 p-3">
         {rows.map((row, index) => (

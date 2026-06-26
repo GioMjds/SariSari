@@ -72,7 +72,7 @@ export default function RootLayout() {
     return (
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
         <SafeAreaProvider>
-          <StatusBar style="inverted" backgroundColor="#623418" />
+          <StatusBar style="dark" backgroundColor="#EFE6D2" />
           <DatabaseErrorScreen message={dbInitError} onRetry={runDbInit} />
         </SafeAreaProvider>
       </GestureHandlerRootView>

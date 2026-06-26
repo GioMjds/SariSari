@@ -6,6 +6,12 @@ import { StyledText } from '@/components/elements';
 
 interface AddPaymentHeaderProps {
   customer?: Customer | null;
+  /**
+   * True when the screen was opened from the Quick Settle action
+   * on a single UtangCard. Drives the eyebrow label so the cashier
+   * knows they're targeting a specific credit instead of FIFO.
+   */
+  quickSettle?: boolean;
   onBack: () => void;
 }
 
@@ -15,7 +21,11 @@ interface AddPaymentHeaderProps {
  * outstanding balance. Mirrors the AddCreditHeader so the two
  * screens share the same visual anchor.
  */
-export function AddPaymentHeader({ customer, onBack }: AddPaymentHeaderProps) {
+export function AddPaymentHeader({
+  customer,
+  quickSettle = false,
+  onBack,
+}: AddPaymentHeaderProps) {
   return (
     <View className="px-5 pt-3 pb-4 bg-background">
       <View className="flex-row items-center justify-between mb-4">
@@ -31,13 +41,13 @@ export function AddPaymentHeader({ customer, onBack }: AddPaymentHeaderProps) {
 
         <View className="items-center">
           <StyledText variant="extrabold" className="text-ink-900 text-h2">
-            Record Payment
+            {quickSettle ? 'Quick Settle' : 'Record Payment'}
           </StyledText>
           <StyledText
             variant="medium"
             className="label-caps text-ink-400 mt-0.5"
           >
-            Bayad Slip
+            {quickSettle ? 'Targeted Bayad' : 'Bayad Slip'}
           </StyledText>
         </View>
 

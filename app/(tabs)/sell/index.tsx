@@ -196,8 +196,9 @@ export default function Sell() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Fixed cinnamon header */}
+    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-background">
+        {/* Fixed cinnamon header */}
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -416,6 +417,7 @@ export default function Sell() {
         currentFilters={filters}
         onApplyFilters={handleApplyFilters}
       />
+      </View>
     </SafeAreaView>
   );
 }

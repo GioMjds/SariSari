@@ -171,8 +171,8 @@ export default function Reports() {
 
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-paper-200">
-        <View className="flex-1 items-center justify-center">
+      <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+        <View className="flex-1 bg-paper-200 items-center justify-center">
           <ActivityIndicator size="large" color="#623418" />
           <StyledText
             variant="extrabold"
@@ -187,8 +187,9 @@ export default function Reports() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
-      <ScrollView
+    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-paper-200">
+        <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -598,6 +599,7 @@ export default function Reports() {
           </StyledText>
         </View>
       </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
