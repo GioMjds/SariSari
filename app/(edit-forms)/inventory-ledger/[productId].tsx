@@ -1,17 +1,49 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, TouchableOpacity, FlatList, ActivityIndicator, Image } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyledText } from '@/components/elements';
-import { StatusPill } from '@/components/ui';
 import { useProducts } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
-import { InventoryTransaction, InventoryEventType } from '@/types/inventory.types';
+import {
+  InventoryEventType,
+  InventoryTransaction,
+} from '@/types/inventory.types';
+import {
+  LedgerEmptyState,
+  LedgerHero,
+  LedgerList,
+  LedgerSkeleton,
+  LedgerToolbar,
+  LedgerTypeFilter,
+  LogTransactionForm,
+} from '@/components/inventory/ledger';
 
-const sariImage = require('@/assets/images/sari-emotions/sari-inventory-state.png');
-
+/**
+ * Inventory Ledger — the per-product transaction history screen.
+ *
+ * Layout (top → bottom):
+ *   1. Slim white top bar (back button + eyebrow + product name).
+ *   2. `LedgerHero` — receipt-style hero with the product's current
+ *      stock (big tabular number), 30-day movement totals, and a
+ *      "Log Transaction" CTA.
+ *   3. `LedgerToolbar` — search input + type-filter chips, both
+ *      wrapped in a single control surface.
+ *   4. `LedgerList` — animated timeline of transactions, day-grouped
+ *      with running-balance pills on every row.
+ *   5. FAB (bottom-right) — opens `LogTransactionForm` so the owner
+ *      can restock / record a sale / mark damaged / adjust stock
+ *      without scrolling.
+ *
+ * The screen is the orchestrator: it owns data fetching via hooks
+ * (products + inventory), the page-level refresh control, the
+ * filter/search state, and the form's open/close state. All visual
+ * rendering is delegated to the presentation sub-components under
+ * `components/inventory/ledger/`.
+ */
 export default function InventoryLedger() {
-  const router = useRouter();
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const parsedProductId = parseInt(productId ?? '', 10);
 
@@ -21,168 +53,155 @@ export default function InventoryLedger() {
 
   const product = productQuery.data;
   const isLoading = productQuery.isLoading || transactionsQuery.isLoading;
-  const transactions = transactionsQuery.data || [];
+  const isRefetching =
+    productQuery.isRefetching || transactionsQuery.isRefetching;
 
+  const transactions: InventoryTransaction[] = useMemo(
+    () => transactionsQuery.data ?? [],
+    [transactionsQuery.data],
+  );
+
+  // ─── Filter state (shared by toolbar + list) ───────────────────
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
+
+  // Per-type totals used to render the chip count badges.
+  // Computed once per `transactions` change so the toolbar and the
+  // hero stats grid can't drift.
+  const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
+    const acc: Partial<Record<InventoryEventType, number>> = {};
+    for (const tx of transactions) {
+      acc[tx.type] = (acc[tx.type] ?? 0) + 1;
+    }
+    return acc;
+  }, [transactions]);
+
+  // ─── Form open state ────────────────────────────────────────────
+  const [formOpen, setFormOpen] = useState<boolean>(false);
+
+  // ─── Handlers ───────────────────────────────────────────────────
   const handleBack = () => {
+    Haptics.selectionAsync().catch(() => {});
     router.back();
   };
 
-  const formatDateTime = (timestampStr: string) => {
-    try {
-      const d = new Date(timestampStr);
-      if (isNaN(d.getTime())) {
-        const normalized = timestampStr.replace(' ', 'T') + 'Z';
-        const dNorm = new Date(normalized);
-        if (!isNaN(dNorm.getTime())) {
-          return dNorm.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-        }
-        return timestampStr;
-      }
-      return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-    } catch {
-      return timestampStr;
-    }
+  const handleRefresh = () => {
+    productQuery.refetch();
+    transactionsQuery.refetch();
   };
 
-  const getEventBadge = (type: InventoryEventType, sign?: 'positive' | 'negative' | null) => {
-    switch (type) {
-      case 'restock':
-        return <StatusPill variant="success" size="sm">Restock</StatusPill>;
-      case 'sale':
-        return <StatusPill variant="info" size="sm">Sale</StatusPill>;
-      case 'damaged':
-        return <StatusPill variant="danger" size="sm">Damaged</StatusPill>;
-      case 'adjustment':
-        return (
-          <StatusPill variant="warning" size="sm">
-            {sign === 'positive' ? 'Adjust (+)' : 'Adjust (-)'}
-          </StatusPill>
-        );
-      default:
-        return <StatusPill variant="neutral" size="sm">Event</StatusPill>;
-    }
+  const handleOpenForm = () => {
+    Haptics.selectionAsync().catch(() => {});
+    setFormOpen(true);
   };
 
-  const getQuantityDisplay = (type: InventoryEventType, qty: number, sign?: 'positive' | 'negative' | null) => {
-    if (type === 'restock') {
-      return { text: `+${qty}`, color: 'text-sage-700' };
-    }
-    if (type === 'sale' || type === 'damaged') {
-      return { text: `-${qty}`, color: 'text-semantic-danger' };
-    }
-    if (type === 'adjustment') {
-      return sign === 'positive'
-        ? { text: `+${qty}`, color: 'text-sage-700' }
-        : { text: `-${qty}`, color: 'text-semantic-danger' };
-    }
-    return { text: `${qty}`, color: 'text-ink-700' };
-  };
+  if (isLoading) {
+    return <LedgerSkeleton />;
+  }
 
-  const getEventIcon = (type: InventoryEventType, sign?: 'positive' | 'negative' | null) => {
-    switch (type) {
-      case 'restock':
-        return <Ionicons name="arrow-up-circle" size={24} color="#2F5C3E" />;
-      case 'sale':
-        return <Ionicons name="cart" size={24} color="#1F4E5B" />;
-      case 'damaged':
-        return <Ionicons name="close-circle" size={24} color="#C22D2D" />;
-      case 'adjustment':
-        return sign === 'positive'
-          ? <Ionicons name="trending-up" size={24} color="#C77B0E" />
-          : <Ionicons name="trending-down" size={24} color="#C77B0E" />;
-      default:
-        return <Ionicons name="cube" size={24} color="#7A7165" />;
-    }
-  };
+  const hasTransactions = transactions.length > 0;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Header */}
-      <View className="bg-cinnamon-500 px-4 py-5 flex-row items-center border-b border-cinnamon-600">
-        <TouchableOpacity
-          hitSlop={20}
-          activeOpacity={0.2}
+      {/* ─── Slim top bar ───────────────────────────────────────── */}
+      <View className="flex-row items-center px-5 pt-3 pb-2">
+        <Pressable
           onPress={handleBack}
-          className="mr-3 p-1 rounded-full bg-cinnamon-600/35"
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
         >
-          <FontAwesome name="arrow-left" size={18} color="#fff" />
-        </TouchableOpacity>
-        <View className="flex-1">
-          <StyledText variant="extrabold" className="text-white text-lg">
+          <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
+        </Pressable>
+
+        <View className="flex-1 ml-3">
+          <StyledText variant="extrabold" className="label-caps text-ink-400">
             Inventory Ledger
           </StyledText>
           {product && (
-            <StyledText variant="regular" className="text-paper-200 text-xs mt-0.5" numberOfLines={1}>
+            <StyledText
+              variant="black"
+              className="text-ink-900 text-base mt-0.5"
+              numberOfLines={1}
+            >
               {product.name}
             </StyledText>
           )}
         </View>
       </View>
 
-      {/* Main Content */}
-      {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#E85A1F" />
-        </View>
-      ) : transactions.length === 0 ? (
-        <View className="flex-1 justify-center items-center p-6 bg-paper-100">
-          <Image
-            source={sariImage}
-            style={{ width: 180, height: 180, marginBottom: 16 }}
-            resizeMode="contain"
-          />
-          <StyledText variant="extrabold" className="text-ink-900 text-xl text-center mb-2">
-            No ledger entries yet
-          </StyledText>
-          <StyledText variant="regular" className="text-ink-500 text-sm text-center px-4 leading-5">
-            Transactions like restocking, sales, and damage adjustments will show up here as they occur.
-          </StyledText>
-        </View>
+      {/* ─── Body ───────────────────────────────────────────────── */}
+      {!product ? null : !hasTransactions ? (
+        <LedgerEmptyState
+          currentStock={product.quantity}
+          currentStockLabel="pcs on hand"
+        />
       ) : (
-        <FlatList
-          data={transactions}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          renderItem={({ item }: { item: InventoryTransaction }) => {
-            const qtyDisplay = getQuantityDisplay(item.type, item.quantity, item.adjustment_sign);
-            return (
-              <View className="bg-paper-50 border border-ink-100 rounded-2xl p-4 mb-3 shadow-sm flex-row justify-between items-center">
-                {/* Event Info */}
-                <View className="flex-row items-center flex-1 mr-4">
-                  <View className="mr-3 bg-paper-100 p-2 rounded-full">
-                    {getEventIcon(item.type, item.adjustment_sign)}
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-center gap-2 mb-1.5 flex-wrap">
-                      {getEventBadge(item.type, item.adjustment_sign)}
-                      <StyledText variant="regular" className="text-ink-400 text-[10px]">
-                        {formatDateTime(item.timestamp)}
-                      </StyledText>
-                    </View>
-                    {item.note ? (
-                      <StyledText variant="regular" className="text-ink-700 text-xs leading-4">
-                        {item.note}
-                      </StyledText>
-                    ) : (
-                      <StyledText variant="regular" className="text-ink-400 text-xs italic">
-                        No description provided
-                      </StyledText>
-                    )}
-                  </View>
-                </View>
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 140 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={handleRefresh}
+              tintColor="#623418"
+              colors={['#E85A1F']}
+            />
+          }
+        >
+          {/* Hero — receipt-style summary card */}
+          <View className="px-4">
+            <LedgerHero
+              product={product}
+              transactions={transactions}
+              onLogTransaction={handleOpenForm}
+            />
+          </View>
 
-                {/* Qty change */}
-                <View className="items-end">
-                  <StyledText variant="extrabold" className={`text-base ${qtyDisplay.color}`}>
-                    {qtyDisplay.text}
-                  </StyledText>
-                  <StyledText variant="medium" className="text-ink-400 text-[10px] uppercase mt-0.5">
-                    pieces
-                  </StyledText>
-                </View>
-              </View>
-            );
-          }}
+          {/* Toolbar — search + filter chips */}
+          <LedgerToolbar
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            counts={counts}
+          />
+
+          {/* Timeline */}
+          <View className="px-4 mt-2">
+            <LedgerList
+              transactions={transactions}
+              currentStock={product.quantity}
+              searchQuery={searchQuery}
+              selectedType={selectedType}
+            />
+          </View>
+        </ScrollView>
+      )}
+
+      {/* ─── FAB ────────────────────────────────────────────────── */}
+      {product && (
+        <Pressable
+          onPress={handleOpenForm}
+          accessibilityRole="button"
+          accessibilityLabel="Log a new transaction"
+          className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-persimmon-500 items-center justify-center shadow-persimmon-glow active:opacity-90"
+          style={({ pressed }) => ({
+            transform: [{ scale: pressed ? 0.96 : 1 }],
+          })}
+        >
+          <FontAwesome name="plus" size={22} color="#FBF7EE" />
+        </Pressable>
+      )}
+
+      {/* ─── Log-transaction sheet ───────────────────────────────── */}
+      {product && (
+        <LogTransactionForm
+          product={product}
+          visible={formOpen}
+          onClose={() => setFormOpen(false)}
         />
       )}
     </SafeAreaView>

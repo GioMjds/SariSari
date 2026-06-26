@@ -11,7 +11,7 @@ import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 import { useCredits, useProducts, useSales } from '@/hooks';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { Href, useFocusEffect, useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -31,18 +31,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  *   4. Attention queue: top 3 stock, suki, and recent sales.
  *
  * Routing:
- *   - New Sale -> /sell?tab=new-sale
- *   - Add Stock -> /products (existing restock flow requires a product)
- *   - Record Payment -> /credits (existing payment form needs a suki)
- *   - View All stock -> /products
- *   - View All utang -> /credits
- *   - View All sales -> /sales
+ *   - New Sale -> /(edit-forms)/add-sales
+ *   - Add Stock -> /inventory (existing restock flow requires a product)
+ *   - Record Payment -> /utang (existing payment form needs a suki)
+ *   - View All stock -> /inventory
+ *   - View All utang -> /utang
+ *   - View All sales -> /sell
  *
  * Money handling: integer pesos end-to-end (see AGENTS.md) — we never multiply
  * or divide before formatting. `MoneyText` handles the render edge.
  */
 const routes = {
-  newSale: '/sell?tab=new-sale',
+  newSale: '/(edit-forms)/add-sales',
   products: '/inventory',
   credits: '/utang',
   sales: '/sell',
@@ -151,14 +151,10 @@ export default function Dashboard() {
     }
   }, [refetchAll]);
 
-  useFocusEffect(
-    useCallback(() => {
-      refetchAll();
-    }, [refetchAll]),
-  );
+
 
   const handleNewSale = useCallback(() => {
-    router.replace(routes.newSale);
+    router.push(routes.newSale);
   }, [router]);
 
   const handleAddStock = useCallback(() => {

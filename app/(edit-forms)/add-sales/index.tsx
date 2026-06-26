@@ -23,9 +23,6 @@ import { Modal } from '@/components/ui';
  *     customer picker trigger, and Complete Sale CTA.
  *   • CustomerPickerModal — slide-up modal for picking a suki.
  *
- * The modal-sheet presentation, grabber, and gesture are inherited
- * from `app/(edit-forms)/_layout.tsx` — no extra config needed here.
- *
  * The unsaved-cart dismiss guard uses `usePreventRemove`, which
  * intercepts every "leave the sheet" intent — the header back
  * button, the swipe-down gesture, and the Android hardware back
@@ -58,7 +55,7 @@ export default function AddSales() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
       <View className="flex-1">
         <AddSalesHeader itemCount={form.itemCount} onBack={form.router.back} />
 
@@ -71,19 +68,17 @@ export default function AddSales() {
           onUpdateQuantity={form.handleUpdateQuantity}
         />
 
-        <View className="absolute bottom-0 left-0 right-0">
-          <CartSummaryTray
-            itemCount={form.itemCount}
-            total={form.total}
-            paymentType={form.paymentType}
-            selectedCustomer={form.selectedCustomer}
-            isSubmitDisabled={form.isSubmitDisabled}
-            isPending={form.insertSaleMutation.isPending}
-            onPaymentTypeChange={form.handlePaymentTypeChange}
-            onOpenCustomerPicker={() => form.setShowCustomerPicker(true)}
-            onSubmit={form.submit}
-          />
-        </View>
+        <CartSummaryTray
+          itemCount={form.itemCount}
+          total={form.total}
+          paymentType={form.paymentType}
+          selectedCustomer={form.selectedCustomer}
+          isSubmitDisabled={form.isSubmitDisabled}
+          isPending={form.insertSaleMutation.isPending}
+          onPaymentTypeChange={form.handlePaymentTypeChange}
+          onOpenCustomerPicker={() => form.setShowCustomerPicker(true)}
+          onSubmit={form.submit}
+        />
       </View>
 
       <CustomerPickerModal

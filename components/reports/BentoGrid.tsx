@@ -151,7 +151,7 @@ export function BentoKPICard({
 	footer,
 }: BentoKPICardProps) {
 	return (
-		<View className="rounded-card bg-paper-50 shadow-paper overflow-hidden flex-row">
+		<View className="flex-1 rounded-card bg-paper-50 shadow-paper overflow-hidden flex-row">
 			{/* Left accent rule — like the binding edge of a passport */}
 			<View className={`w-1.5 ${CARD_ACCENT_BAR[accent]}`} />
 

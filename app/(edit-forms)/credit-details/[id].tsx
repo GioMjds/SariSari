@@ -3,7 +3,6 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCredits, useProfile } from '@/hooks';
 import { useModalStore } from '@/stores';
@@ -76,16 +75,7 @@ export default function CustomerDetails() {
     history: '',
   });
 
-  // Refetch on focus so the suki's data reflects writes made on
-  // sibling screens.
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-    }, [refetch, queryClient, id]),
-  );
+
 
   const handleRefresh = useCallback(() => {
     refetch();

@@ -1,15 +1,15 @@
 import {
-    deleteProduct,
-    getAllProducts,
-    getProduct,
-    getProductBySku,
-    insertProduct,
-    updateProduct,
+  deleteProduct,
+  getAllProducts,
+  getProduct,
+  getProductBySku,
+  insertProduct,
+  updateProduct,
 } from '@/database/products';
 import { useToastStore } from '@/stores/ToastStore';
 import {
-    InsertProductParams,
-    UpdateProductParams,
+  InsertProductParams,
+  UpdateProductParams,
 } from '@/types/products.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 

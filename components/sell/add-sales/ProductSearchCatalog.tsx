@@ -93,7 +93,7 @@ export function ProductSearchCatalog({
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 240 }}
+          contentContainerStyle={{ paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (

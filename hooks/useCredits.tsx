@@ -215,6 +215,9 @@ export function useCredits() {
           queryClient.invalidateQueries({
             queryKey: ['customer-details', customerId],
           });
+          queryClient.invalidateQueries({
+            queryKey: ['credit-history', customerId],
+          });
         }
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
         addToast({
@@ -246,6 +249,9 @@ export function useCredits() {
           queryClient.invalidateQueries({
             queryKey: ['customer-details', vars.customerId],
           });
+          queryClient.invalidateQueries({
+            queryKey: ['credit-history', vars.customerId],
+          });
         }
         queryClient.invalidateQueries({ queryKey: ['customers'] });
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
@@ -274,6 +280,9 @@ export function useCredits() {
         });
         queryClient.invalidateQueries({
           queryKey: ['payments-by-customer', vars.customer_id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['credit-history', vars.customer_id],
         });
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
         addToast({
@@ -311,6 +320,9 @@ export function useCredits() {
           queryClient.invalidateQueries({
             queryKey: ['payments-by-customer', vars.customerId],
           });
+          queryClient.invalidateQueries({
+            queryKey: ['credit-history', vars.customerId],
+          });
         }
         queryClient.invalidateQueries({ queryKey: ['customers'] });
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
@@ -325,6 +337,9 @@ export function useCredits() {
         queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
         queryClient.invalidateQueries({
           queryKey: ['customer-details', customerId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['credit-history', customerId],
         });
         queryClient.invalidateQueries({ queryKey: ['customers'] });
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });

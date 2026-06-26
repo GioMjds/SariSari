@@ -1,4 +1,11 @@
-// `/settings` — the regular (non-modal) Settings route. Renders the
-// shared `SettingsScreen` component so the modal and full-screen entries
-// stay in lockstep.
-export { SettingsScreen as default } from '@/components/settings/SettingsScreen';
+import { SettingsScreen } from '@/components/settings/SettingsScreen';
+import { StatusBar } from 'expo-status-bar';
+
+export default function SettingsModal() {
+  return (
+    <>
+      <StatusBar style="light" backgroundColor="#623418" />
+      <SettingsScreen />
+    </>
+  );
+}

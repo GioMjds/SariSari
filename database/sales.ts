@@ -28,6 +28,10 @@ export const initSalesTables = async () => {
       FOREIGN KEY (sale_id) REFERENCES sales(id),
       FOREIGN KEY (product_id) REFERENCES products(id)
     );
+
+    CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);
+    CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);
   `);
 };
 

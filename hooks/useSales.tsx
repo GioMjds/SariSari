@@ -1,15 +1,15 @@
 import {
-    deleteSale,
-    getAllSales,
-    getSale,
-    getSaleItems,
-    getSalesByDateRange,
-    getTodayStats,
-    insertSale,
+  deleteSale,
+  getAllSales,
+  getSale,
+  getSaleItems,
+  getSalesByDateRange,
+  getTodayStats,
+  insertSale,
 } from '@/database/sales';
 import {
-    GetSalesByDateRangeParams,
-    InsertSaleParams,
+  GetSalesByDateRangeParams,
+  InsertSaleParams,
 } from '@/types/sales.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inventoryKeys } from './useInventory';

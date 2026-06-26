@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewCredit, Product } from '@/types';
-import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
+import { tryParsePesosInput } from '@/lib/money';
 import { useCredits, useProducts } from '@/hooks';
 
 export interface CreditFormData {
@@ -91,7 +90,7 @@ export const DUE_PRESETS: DuePresetConfig[] = [
  */
 export function useAddCreditForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const queryClient = useQueryClient();
+
 
   const { useCustomer, useInsertCredit } = useCredits();
   const { getAllProductsQuery } = useProducts();
@@ -126,14 +125,7 @@ export function useAddCreditForm() {
   const { data: customer } = useCustomer(Number(id));
   const { data: products = [] } = getAllProductsQuery;
 
-  // Refetch on focus so prices and stock are fresh when the user opens
-  // this sheet from a customer profile.
-  useFocusEffect(
-    useCallback(() => {
-      queryClient.invalidateQueries({ queryKey: ['customer', id] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    }, [queryClient, id]),
-  );
+
 
   const insertCredit = useInsertCredit();
 

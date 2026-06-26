@@ -1,185 +1,196 @@
 import {
-    getAgingBuckets,
-    getCreditsOverview,
-    getFastMovingProducts,
-    getInventoryMovement,
-    getInventoryValue,
-    getLowStockItems,
-    getOutOfStockItems,
-    getProductProfitability,
-    getProfitabilityData,
-    getReportInsights,
-    getReportKPIs,
-    getSalesBreakdown,
-    getSalesOverTime,
-    getSlowMovingProducts,
-    getTopSellingProducts,
-    ProductProfitability,
+  getAgingBuckets,
+  getCreditsOverview,
+  getFastMovingProducts,
+  getInventoryMovement,
+  getInventoryValue,
+  getLowStockItems,
+  getOutOfStockItems,
+  getProductProfitability,
+  getProfitabilityData,
+  getReportInsights,
+  getReportKPIs,
+  getSalesBreakdown,
+  getSalesOverTime,
+  getSlowMovingProducts,
+  getTopSellingProducts,
+  ProductProfitability,
 } from '@/database/reports';
 import type {
-    AgingBucket,
-    CreditsOverview,
-    DateRange,
-    InventoryMovement,
-    InventoryValue,
-    ProfitabilityData,
-    ReportInsight,
-    ReportKPIs,
-    SalesBreakdown,
-    SalesDataPoint,
-    StockItem,
-    TopSellingProduct,
+  AgingBucket,
+  CreditsOverview,
+  DateRange,
+  InventoryMovement,
+  InventoryValue,
+  ProfitabilityData,
+  ReportInsight,
+  ReportKPIs,
+  SalesBreakdown,
+  SalesDataPoint,
+  StockItem,
+  TopSellingProduct,
 } from '@/types/reports.types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+
+// KPI
+export const useReportKPIs = (dateRange: DateRange) =>
+  useQuery<ReportKPIs>({
+    queryKey: ['report-kpis', dateRange.startDate, dateRange.endDate],
+    queryFn: () => getReportKPIs(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+// Sales
+export const useSalesOverTime = (dateRange: DateRange) =>
+  useQuery<SalesDataPoint[]>({
+    queryKey: [
+      'report-sales-over-time',
+      dateRange.startDate,
+      dateRange.endDate,
+    ],
+    queryFn: () => getSalesOverTime(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
+  useQuery<TopSellingProduct[]>({
+    queryKey: [
+      'report-top-products',
+      dateRange.startDate,
+      dateRange.endDate,
+      limit,
+    ],
+    queryFn: () => getTopSellingProducts(dateRange, limit),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useSalesBreakdown = (dateRange: DateRange) =>
+  useQuery<SalesBreakdown>({
+    queryKey: [
+      'report-sales-breakdown',
+      dateRange.startDate,
+      dateRange.endDate,
+    ],
+    queryFn: () => getSalesBreakdown(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+// Inventory
+export const useInventoryMovement = (dateRange: DateRange) =>
+  useQuery<InventoryMovement>({
+    queryKey: [
+      'report-inventory-movement',
+      dateRange.startDate,
+      dateRange.endDate,
+    ],
+    queryFn: () => getInventoryMovement(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useInventoryValue = () =>
+  useQuery<InventoryValue>({
+    queryKey: ['report-inventory-value'],
+    queryFn: () => getInventoryValue(),
+  });
+
+export const useLowStockItems = (threshold = 10) =>
+  useQuery<StockItem[]>({
+    queryKey: ['report-low-stock', threshold],
+    queryFn: () => getLowStockItems(threshold),
+  });
+
+export const useOutOfStockItems = () =>
+  useQuery<StockItem[]>({
+    queryKey: ['report-out-of-stock'],
+    queryFn: () => getOutOfStockItems(),
+  });
+
+export const useFastMovingProducts = (dateRange: DateRange, limit = 10) =>
+  useQuery<StockItem[]>({
+    queryKey: [
+      'report-fast-moving',
+      dateRange.startDate,
+      dateRange.endDate,
+      limit,
+    ],
+    queryFn: () => getFastMovingProducts(dateRange, limit),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useSlowMovingProducts = (dateRange: DateRange, limit = 10) =>
+  useQuery<StockItem[]>({
+    queryKey: [
+      'report-slow-moving',
+      dateRange.startDate,
+      dateRange.endDate,
+      limit,
+    ],
+    queryFn: () => getSlowMovingProducts(dateRange, limit),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+// Credits
+export const useCreditsOverview = (dateRange: DateRange) =>
+  useQuery<CreditsOverview>({
+    queryKey: [
+      'report-credits-overview',
+      dateRange.startDate,
+      dateRange.endDate,
+    ],
+    queryFn: () => getCreditsOverview(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useAgingBuckets = () =>
+  useQuery<AgingBucket[]>({
+    queryKey: ['report-aging-buckets'],
+    queryFn: () => getAgingBuckets(),
+  });
+
+// Profitability & insights
+export const useProfitability = (dateRange: DateRange) =>
+  useQuery<ProfitabilityData>({
+    queryKey: ['report-profitability', dateRange.startDate, dateRange.endDate],
+    queryFn: () => getProfitabilityData(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useProductProfitability = (dateRange: DateRange, limit = 10) =>
+  useQuery<ProductProfitability[]>({
+    queryKey: [
+      'report-product-profitability',
+      dateRange.startDate,
+      dateRange.endDate,
+      limit,
+    ],
+    queryFn: () => getProductProfitability(dateRange, limit),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
+
+export const useReportInsights = (dateRange: DateRange) =>
+  useQuery<ReportInsight[]>({
+    queryKey: ['report-insights', dateRange.startDate, dateRange.endDate],
+    queryFn: () => getReportInsights(dateRange),
+    enabled: !!dateRange,
+    placeholderData: keepPreviousData,
+  });
 
 export function useReports() {
   const queryClient = useQueryClient();
-
-  // KPI
-  const useReportKPIs = (dateRange: DateRange) =>
-    useQuery<ReportKPIs>({
-      queryKey: ['report-kpis', dateRange.startDate, dateRange.endDate],
-      queryFn: () => getReportKPIs(dateRange),
-      enabled: !!dateRange,
-    });
-
-  // Sales
-  const useSalesOverTime = (dateRange: DateRange) =>
-    useQuery<SalesDataPoint[]>({
-      queryKey: [
-        'report-sales-over-time',
-        dateRange.startDate,
-        dateRange.endDate,
-      ],
-      queryFn: () => getSalesOverTime(dateRange),
-      enabled: !!dateRange,
-    });
-
-  const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
-    useQuery<TopSellingProduct[]>({
-      queryKey: [
-        'report-top-products',
-        dateRange.startDate,
-        dateRange.endDate,
-        limit,
-      ],
-      queryFn: () => getTopSellingProducts(dateRange, limit),
-      enabled: !!dateRange,
-    });
-
-  const useSalesBreakdown = (dateRange: DateRange) =>
-    useQuery<SalesBreakdown>({
-      queryKey: [
-        'report-sales-breakdown',
-        dateRange.startDate,
-        dateRange.endDate,
-      ],
-      queryFn: () => getSalesBreakdown(dateRange),
-      enabled: !!dateRange,
-    });
-
-  // Inventory
-  const useInventoryMovement = (dateRange: DateRange) =>
-    useQuery<InventoryMovement>({
-      queryKey: [
-        'report-inventory-movement',
-        dateRange.startDate,
-        dateRange.endDate,
-      ],
-      queryFn: () => getInventoryMovement(dateRange),
-      enabled: !!dateRange,
-    });
-
-  const useInventoryValue = () =>
-    useQuery<InventoryValue>({
-      queryKey: ['report-inventory-value'],
-      queryFn: () => getInventoryValue(),
-    });
-
-  const useLowStockItems = (threshold = 10) =>
-    useQuery<StockItem[]>({
-      queryKey: ['report-low-stock', threshold],
-      queryFn: () => getLowStockItems(threshold),
-    });
-
-  const useOutOfStockItems = () =>
-    useQuery<StockItem[]>({
-      queryKey: ['report-out-of-stock'],
-      queryFn: () => getOutOfStockItems(),
-    });
-
-  const useFastMovingProducts = (dateRange: DateRange, limit = 10) =>
-    useQuery<StockItem[]>({
-      queryKey: [
-        'report-fast-moving',
-        dateRange.startDate,
-        dateRange.endDate,
-        limit,
-      ],
-      queryFn: () => getFastMovingProducts(dateRange, limit),
-      enabled: !!dateRange,
-    });
-
-  const useSlowMovingProducts = (dateRange: DateRange, limit = 10) =>
-    useQuery<StockItem[]>({
-      queryKey: [
-        'report-slow-moving',
-        dateRange.startDate,
-        dateRange.endDate,
-        limit,
-      ],
-      queryFn: () => getSlowMovingProducts(dateRange, limit),
-      enabled: !!dateRange,
-    });
-
-  // Credits
-  const useCreditsOverview = (dateRange: DateRange) =>
-    useQuery<CreditsOverview>({
-      queryKey: [
-        'report-credits-overview',
-        dateRange.startDate,
-        dateRange.endDate,
-      ],
-      queryFn: () => getCreditsOverview(dateRange),
-      enabled: !!dateRange,
-    });
-
-  const useAgingBuckets = () =>
-    useQuery<AgingBucket[]>({
-      queryKey: ['report-aging-buckets'],
-      queryFn: () => getAgingBuckets(),
-    });
-
-  // Profitability & insights
-  const useProfitability = (dateRange: DateRange) =>
-    useQuery<ProfitabilityData>({
-      queryKey: [
-        'report-profitability',
-        dateRange.startDate,
-        dateRange.endDate,
-      ],
-      queryFn: () => getProfitabilityData(dateRange),
-      enabled: !!dateRange,
-    });
-
-  const useProductProfitability = (dateRange: DateRange, limit = 10) =>
-    useQuery<ProductProfitability[]>({
-      queryKey: [
-        'report-product-profitability',
-        dateRange.startDate,
-        dateRange.endDate,
-        limit,
-      ],
-      queryFn: () => getProductProfitability(dateRange, limit),
-      enabled: !!dateRange,
-    });
-
-  const useReportInsights = (dateRange: DateRange) =>
-    useQuery<ReportInsight[]>({
-      queryKey: ['report-insights', dateRange.startDate, dateRange.endDate],
-      queryFn: () => getReportInsights(dateRange),
-      enabled: !!dateRange,
-    });
 
   const invalidateReports = async () => {
     await Promise.all([

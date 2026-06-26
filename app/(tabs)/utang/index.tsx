@@ -14,8 +14,8 @@ import { ITEMS_PER_PAGE } from '@/constants/stocks';
 import { useCredits } from '@/hooks';
 import { CreditFilter, CreditSort, Customer } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,13 +54,7 @@ export default function Credits() {
     setCurrentPage(1);
   }, [activeFilter, activeSort, searchQuery]);
 
-  // Refresh on tab focus (expo-router compatible)
-  useFocusEffect(
-    useCallback(() => {
-      refetch();
-      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-    }, [refetch, queryClient]),
-  );
+
 
   // Filtered customers based on search
   const filteredCustomers = useMemo(() => {

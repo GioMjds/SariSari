@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewPayment, Payment } from '@/types';
@@ -73,7 +72,7 @@ export function useAddPaymentForm() {
     /** Optional — present only when entered via Quick Settle. */
     creditId?: string;
   }>();
-  const queryClient = useQueryClient();
+
 
   const { useCustomer, useCustomerCredits, useInsertPayment } = useCredits();
 
@@ -112,13 +111,7 @@ export function useAddPaymentForm() {
     return unpaidCredits.find((c) => c.id === parsedId) ?? null;
   }, [creditId, unpaidCredits]);
 
-  // Refetch on focus so balances reflect the freshest ledger.
-  useFocusEffect(
-    useCallback(() => {
-      queryClient.invalidateQueries({ queryKey: ['customer', id] });
-      queryClient.invalidateQueries({ queryKey: ['customer-credits', id] });
-    }, [queryClient, id]),
-  );
+
 
   const insertPayment = useInsertPayment();
 

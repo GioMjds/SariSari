@@ -58,9 +58,11 @@ export const initCreditsTable = async () => {
 			FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL
 		);
 
-		CREATE INDEX IF NOT EXISTS idx_customer_id ON credit_transactions (customer_id);
-		CREATE INDEX IF NOT EXISTS idx_payment_customer_id ON payments (customer_id);
-		CREATE INDEX IF NOT EXISTS idx_credit_status ON credit_transactions (status);
+		CREATE INDEX IF NOT EXISTS idx_credit_transactions_customer_id ON credit_transactions(customer_id);
+		CREATE INDEX IF NOT EXISTS idx_credit_transactions_date ON credit_transactions(date);
+		CREATE INDEX IF NOT EXISTS idx_credit_transactions_status ON credit_transactions(status);
+		CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);
+		CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);
 		CREATE INDEX IF NOT EXISTS idx_customer_name ON customers (name);
 	`);
 };

@@ -245,14 +245,24 @@ export function InventoryActionModal({
                 <StyledText variant="medium" className="text-ink-900 mb-2 text-xs uppercase" style={{ letterSpacing: 0.5 }}>
                   Type
                 </StyledText>
+                {/* Segmented control — single row. We deliberately
+                    omit "Sale" here for the same reason
+                    `components/inventory/ledger/LogTransactionForm.tsx`
+                    does: sales aren't an inventory concern. The
+                    Sales tab and the `app/(edit-forms)/add-sales/`
+                    modal own the full sale flow (multi-item cart,
+                    customer picking, utang-vs-cash split). Letting
+                    this modal also emit sale events would either
+                    record stock-only decrements without a resibo or
+                    duplicate the sale pipeline — both bad. This
+                    form is for inventory-only corrections. */}
                 <View className="flex-row border border-ink-200 rounded-xl overflow-hidden bg-paper-50 p-1">
-                  {(['restock', 'sale', 'damaged', 'adjustment'] as const).map((t) => {
+                  {(['restock', 'damaged', 'adjustment'] as const).map((t) => {
                     const isActive = selectedType === t;
                     const labels: Record<string, { label: string; icon: string }> = {
-                      restock: { label: 'Rstk', icon: '+' },
-                      sale: { label: 'Sale', icon: '−' },
-                      damaged: { label: 'Dmg', icon: '−' },
-                      adjustment: { label: 'Adj', icon: '±' },
+                      restock: { label: 'Restock', icon: '+' },
+                      damaged: { label: 'Damaged', icon: '−' },
+                      adjustment: { label: 'Adjust', icon: '±' },
                     };
                     return (
                       <TouchableOpacity

@@ -1,8 +1,3 @@
-// useAppInfo — reads the installed app's display version + privacy URL from
-// `expo-constants`. `extra` is the typed extension point Expo injects into
-// the manifest at build time. We don't surface the runtime build number
-// (it's noise for store owners) — just the semver the user sees in their
-// store listing.
 import Constants from 'expo-constants';
 
 export type AppInfo = {

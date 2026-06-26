@@ -101,4 +101,21 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 3.');
   }
+
+  if (currentVersion < 4) {
+    console.log('Running migration to version 4 (Performance Indexes)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_customer_id ON credit_transactions(customer_id);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_date ON credit_transactions(date);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_status ON credit_transactions(status);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);');
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);');
+      await db.execAsync('PRAGMA user_version = 4;');
+    });
+    console.log('Database migrated to version 4.');
+  }
 }

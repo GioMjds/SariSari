@@ -1,5 +1,5 @@
 import { StyledTab } from '@/components/layout';
-import { Stack, usePathname } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useCallback } from 'react';
 import { BackHandler, View, Image } from 'react-native';
@@ -47,11 +47,10 @@ export default function ScreensLayout() {
   return (
     <>
       <StatusBar style="light" backgroundColor="#623418" />
-      <Stack
+      <Tabs
         screenOptions={{
           headerShown: false,
-          presentation: 'card',
-          contentStyle: { backgroundColor: '#EFE6D2' },
+          tabBarStyle: { display: 'none' },
         }}
       />
       <StyledTab />

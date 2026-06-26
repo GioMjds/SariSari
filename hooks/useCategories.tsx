@@ -1,16 +1,16 @@
 import {
-    deleteCategory,
-    getAllCategories,
-    getCategoriesWithCount,
-    getCategory,
-    getCategoryByName,
-    insertCategory,
-    updateCategory,
+  deleteCategory,
+  getAllCategories,
+  getCategoriesWithCount,
+  getCategory,
+  getCategoryByName,
+  insertCategory,
+  updateCategory,
 } from '@/database/categories';
 import { useToastStore } from '@/stores/ToastStore';
 import {
-    InsertCategoryParams,
-    UpdateCategoryParams,
+  InsertCategoryParams,
+  UpdateCategoryParams,
 } from '@/types/categories.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 

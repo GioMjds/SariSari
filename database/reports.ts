@@ -124,17 +124,21 @@ export const getSalesOverTime = async (
     profit: number;
   }>(
     `SELECT
-       date(timestamp) as date,
-       COALESCE(SUM(total), 0) as amount,
-       COALESCE(SUM(
-         (SELECT SUM(si.quantity * (si.price - p.cost_price))
-          FROM sale_items si
-          LEFT JOIN products p ON si.product_id = p.id
-          WHERE si.sale_id = s.id AND p.cost_price IS NOT NULL)
-       ), 0) as profit
+       date(s.timestamp) as date,
+       COALESCE(SUM(s.total), 0) as amount,
+       COALESCE(SUM(si_summary.profit), 0) as profit
      FROM sales s
-     WHERE timestamp BETWEEN ? AND ?
-     GROUP BY date(timestamp)
+     LEFT JOIN (
+       SELECT
+         si.sale_id,
+         SUM(si.quantity * (si.price - p.cost_price)) as profit
+       FROM sale_items si
+       JOIN products p ON si.product_id = p.id
+       WHERE p.cost_price IS NOT NULL
+       GROUP BY si.sale_id
+     ) si_summary ON s.id = si_summary.sale_id
+     WHERE s.timestamp BETWEEN ? AND ?
+     GROUP BY date(s.timestamp)
      ORDER BY date ASC`,
     [startDate, endDate],
   );

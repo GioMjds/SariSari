@@ -5,7 +5,10 @@ import {
   insertInventoryTransaction,
 } from '@/database/inventory';
 import { useToastStore } from '@/stores/ToastStore';
-import { InsertInventoryV2, InventoryTransaction } from '@/types/inventory.types';
+import {
+  InsertInventoryV2,
+  InventoryTransaction,
+} from '@/types/inventory.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const inventoryKeys = {
@@ -49,8 +52,14 @@ export function useInventoryTransactionsByProduct(productId: number) {
     queryKey: inventoryKeys.byProduct(productId),
     queryFn: () => {
       const endDate = new Date().toISOString();
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      return getInventoryTransactionsByProductAndDateRange(productId, startDate, endDate);
+      const startDate = new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000,
+      ).toISOString();
+      return getInventoryTransactionsByProductAndDateRange(
+        productId,
+        startDate,
+        endDate,
+      );
     },
     enabled: typeof productId === 'number' && !Number.isNaN(productId),
   });
@@ -68,7 +77,10 @@ export function useInventory() {
 
   const useGetInventoryTransactions = (productId?: number) => {
     return useQuery<InventoryTransaction[]>({
-      queryKey: typeof productId === 'number' ? inventoryKeys.byProduct(productId) : inventoryKeys.transactions(),
+      queryKey:
+        typeof productId === 'number'
+          ? inventoryKeys.byProduct(productId)
+          : inventoryKeys.transactions(),
       queryFn: () => getInventoryTransactions(productId),
       enabled: typeof productId === 'number' && !Number.isNaN(productId),
     });

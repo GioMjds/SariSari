@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
+
 import { router } from 'expo-router';
 import { Customer, NewSaleItem, Product } from '@/types';
 import { useCredits, useProducts, useSales } from '@/hooks';
@@ -34,7 +33,7 @@ export interface AddSalesFormData {
  * components stay presentational.
  */
 export function useAddSalesForm() {
-  const queryClient = useQueryClient();
+
 
   const { getAllProductsQuery } = useProducts();
   const { useCustomers } = useCredits();
@@ -61,14 +60,7 @@ export function useAddSalesForm() {
     getAllProductsQuery;
   const { data: customers = [] } = useCustomers();
 
-  // Refetch on focus so stock counts and suki balances are fresh each
-  // time the modal is opened — mirrors useAddCreditForm's behavior.
-  useFocusEffect(
-    useCallback(() => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-    }, [queryClient]),
-  );
+
 
   // ─── Derived values ────────────────────────────────────────────
 

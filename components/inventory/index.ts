@@ -6,4 +6,5 @@ export * from './InventoryHeader';
 export * from './InventoryHero';
 export * from './InventoryRow';
 export * from './InventorySkeleton';
+export * from './ledger';
 export * from './StockAlertBanner';

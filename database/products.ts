@@ -14,6 +14,8 @@ export const initProductsTable = async () => {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);
   `);
 };
 
