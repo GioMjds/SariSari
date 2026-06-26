@@ -48,7 +48,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/logo.png",
-          "color": "`#EFE6D2`"
+          "color": "#EFE6D2"
         }
       ]
     ],
@@ -58,7 +58,7 @@
     },
     "extra": {
       "router": {},
-      "privacyPolicyUrl": "https://sarisari-app.vercel.app/privacy-policy",
+      "privacyPolicyUrl": "https://giomjds.github.io/SariSari/",
       "eas": {
         "projectId": "982c08c5-26c3-4edc-b8f3-64830767ef23"
       }
