@@ -3,6 +3,7 @@ import { MoneyText, ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
 import { MotiView } from 'moti';
 import { memo } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardHeroProps {
   totalpesos: number;
@@ -25,6 +26,7 @@ export const DashboardHero = memo(function DashboardHero({
   itemsSold,
   creditSales,
 }: DashboardHeroProps) {
+  const { t } = useTranslation();
   return (
     <MotiView
       from={{ opacity: 0, translateY: 18 }}
@@ -36,10 +38,10 @@ export const DashboardHero = memo(function DashboardHero({
           {/* Eyebrow + supporting metrics strip */}
           <View className="px-5 pt-4 pb-1 flex-row items-center justify-between">
             <StyledText variant="extrabold" className="label-caps text-ink-400">
-              Today
+              {t('common:heroToday')}
             </StyledText>
             <StyledText variant="medium" className="text-mono text-ink-500">
-              {transactionCount} txn
+              {t('common:heroTransactions', { count: transactionCount })}
             </StyledText>
           </View>
 
@@ -55,14 +57,17 @@ export const DashboardHero = memo(function DashboardHero({
             </View>
           </View>
 
-          <ReceiptHeroDivider label="BREAKDOWN" tone="cinnamon" />
+          <ReceiptHeroDivider label={t('common:heroBreakdown')} tone="cinnamon" />
 
           {/* Supporting metrics — three small rows */}
           <View className="px-5 pt-3 pb-4">
-            <MetricRow label="ITEMS SOLD" value={String(itemsSold)} />
+            <MetricRow
+              label={t('common:heroItemsSold')}
+              value={String(itemsSold)}
+            />
             <View className="h-px border-t border-dashed border-ink-200 my-1.5" />
             <MetricRow
-              label="CREDIT (UTANG) SALES"
+              label={t('common:heroCreditSales')}
               value={String(creditSales)}
             />
           </View>

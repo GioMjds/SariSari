@@ -1,0 +1,33 @@
+{
+  "headerTitle": "Sari-Sari Setup",
+
+  "back": "Bumalik",
+  "skipTour": "Laktawan ang tour",
+  "letsGo": "Tara na →",
+  "finishTour": "Tapos na ang tour →",
+  "next": "Susunod →",
+
+  "backA11y": "Bumalik",
+  "skipA11y": "Laktawan ang natitirang tour",
+  "continueA11y": "Magpatuloy",
+
+  "toastMissingFields": "Pakidagdag ang iyong pangalan at pangalan ng tindahan",
+  "toastWelcome": "Maligayang pagdating! Ready na ang tindahan mo.",
+  "toastSaveFailed": "Hindi na-save ang onboarding data",
+
+  "langPickerPrompt": "Piliin ang language mo",
+
+  "profileIntro": "Hi! Ako si Sari, ang katulong mo sa tindahan. Anong itatawag ko sa'yo?",
+  "profileNameLabel": "Pangalan mo",
+  "profileNamePlaceholder": "hal. Aling Nena",
+  "profileStoreLabel": "At ano ang pangalan ng tindahan mo?",
+  "profileStorePlaceholder": "hal. Nena Sari-Sari",
+
+  "readyStamp": "READY",
+  "readyGreetingNamed": "Ikinagagalak kitang makilala, {{name}}.",
+  "readyGreetingDefault": "Ikinagagalak kang makilala.",
+  "readySublineNamed": "Ready na si {{storeName}}.",
+  "readySublineDefault": "Ready na ang tindahan mo.",
+  "readyCta": "Buksan ang tindahan ko →",
+  "readyCtaA11y": "Buksan ang tindahan ko"
+}

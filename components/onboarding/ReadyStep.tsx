@@ -5,6 +5,7 @@ import { StatusStamp } from '@/components/ui/StatusStamp';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { SARI_READY_ASSET } from '@/constants/onboardingTour.assets';
 import { OnboardingProfile } from '@/types/onboarding.types';
+import { useTranslation } from 'react-i18next';
 
 /**
  * ReadyStep — final onboarding screen. A persimmon "READY" stamp sits
@@ -24,6 +25,7 @@ type Props = {
 
 export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 	const reducedMotion = useReducedMotion();
+	const { t } = useTranslation('onboarding');
 	const trimmedName = profile.ownerName.trim();
 	const trimmedStore = profile.storeName.trim();
 	const canOpen =
@@ -44,7 +46,7 @@ export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 					className="w-full h-full"
 				/>
 				<View className="absolute top-2 right-2">
-					<StatusStamp label="READY" tone="persimmon" rotate={-8} />
+					<StatusStamp label={t('readyStamp')} tone="persimmon" rotate={-8} />
 				</View>
 			</View>
 
@@ -54,8 +56,8 @@ export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 					className="text-ink-900 text-h1 text-center"
 				>
 					{trimmedName
-						? `Nice to meet you, ${trimmedName}.`
-						: 'Nice to meet you.'}
+						? t('readyGreetingNamed', { name: trimmedName })
+						: t('readyGreetingDefault')}
 				</StyledText>
 
 				<StyledText
@@ -63,8 +65,8 @@ export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 					className="text-ink-600 text-body text-center mt-2"
 				>
 					{trimmedStore
-						? `${trimmedStore} is ready to go.`
-						: 'Your store is ready to go.'}
+						? t('readySublineNamed', { storeName: trimmedStore })
+						: t('readySublineDefault')}
 				</StyledText>
 			</View>
 
@@ -73,7 +75,7 @@ export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 					onPress={onOpenStore}
 					disabled={!canOpen}
 					accessibilityRole="button"
-					accessibilityLabel="Open my store"
+					accessibilityLabel={t('readyCtaA11y')}
 					accessibilityState={{ disabled: !canOpen }}
 					className={`bg-persimmon-500 rounded-2xl py-4 items-center shadow-persimmon-glow press-scale active:opacity-80 ${
 						!canOpen ? 'opacity-50' : ''
@@ -86,7 +88,7 @@ export function ReadyStep({ profile, saving, onOpenStore }: Props) {
 							variant="semibold"
 							className="text-white text-base"
 						>
-							Open my store →
+							{t('readyCta')}
 						</StyledText>
 					)}
 				</TouchableOpacity>

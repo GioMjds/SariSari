@@ -1,14 +1,19 @@
-import { Tab, tabs } from '@/constants';
+import { getTabs, Tab } from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, usePathname, useRouter } from 'expo-router';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { useTranslation } from 'react-i18next';
 
 export const StyledTab = memo(() => {
 	const router = useRouter();
 	const pathname = usePathname();
-	const visibleRoutes = tabs.slice(0, 5);
+	const { t } = useTranslation();
+
+	// Tab labels are translated on each render so a language switch
+	// updates the bar in place without remounting.
+	const visibleRoutes = useMemo<Tab[]>(() => getTabs(t).slice(0, 5), [t]);
 
 	const handlePress = useCallback(
 		(href: Href) => {

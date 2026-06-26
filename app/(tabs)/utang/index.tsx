@@ -15,12 +15,14 @@ import { useCredits } from '@/hooks';
 import { CreditFilter, CreditSort, Customer } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Credits() {
+  const { t } = useTranslation('utang');
   const [activeFilter, setActiveFilter] = useState<CreditFilter>('all');
   const [activeSort, setActiveSort] = useState<CreditSort>('balance_desc');
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -88,16 +90,23 @@ export default function Credits() {
   const headerSubtitle = useMemo(() => {
     const overdue = kpis?.overdueCount ?? 0;
     if (overdue > 0) {
-      return `${overdue} overdue ${overdue === 1 ? 'customer needs' : 'customers need'} follow-up`;
+      return t(
+        overdue === 1 ? 'subtitleOverdueSingular' : 'subtitleOverduePlural',
+        { count: overdue },
+      );
     }
     const totalCustomers = filteredCustomers.length;
-    if (totalCustomers === 0)
-      return 'Add your first suki to start tracking utang';
+    if (totalCustomers === 0) return t('subtitleEmpty');
     if (priorityCustomer) {
-      return `${priorityCustomer.name} top of the list`;
+      return t('subtitleTopOfList', { name: priorityCustomer.name });
     }
-    return 'Ledger is clear — all balances settled';
-  }, [kpis?.overdueCount, filteredCustomers.length, priorityCustomer]);
+    return t('subtitleLedgerClear');
+  }, [
+    kpis?.overdueCount,
+    filteredCustomers.length,
+    priorityCustomer,
+    t,
+  ]);
 
   const handleRefresh = () => {
     refetch();
@@ -145,7 +154,7 @@ export default function Credits() {
       <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
         <View className="flex-1 bg-background">
           <CreditsHeader
-            subtitle="Loading your ledger…"
+            subtitle={t('subtitleLoading')}
             onAddCustomer={handleAddCustomer}
           />
           <CreditsSkeleton />
@@ -217,7 +226,7 @@ export default function Credits() {
                 <SearchBar
                   value={value}
                   onChange={onChange}
-                  placeholder="Search customers…"
+                  placeholder={t('searchCustomersPlaceholder')}
                   debounceMs={250}
                 />
               )}
@@ -239,7 +248,11 @@ export default function Credits() {
             <View>
               <StyledText variant="medium" className="text-ink-500 text-sm">
                 {filteredCustomers.length}{' '}
-                {filteredCustomers.length === 1 ? 'suki' : 'sukis'}
+                {t(
+                  filteredCustomers.length === 1
+                    ? 'sukiSingular'
+                    : 'sukiPlural',
+                )}
               </StyledText>
               {activeFilter !== 'all' && (
                 <StyledText
@@ -247,10 +260,10 @@ export default function Credits() {
                   className="text-ink-400 text-[10px] mt-0.5"
                 >
                   {activeFilter === 'with_balance'
-                    ? 'with outstanding balance'
+                    ? t('withBalance')
                     : activeFilter === 'paid'
-                      ? 'all paid up'
-                      : 'past due date'}
+                      ? t('allPaidUp')
+                      : t('pastDueDate')}
                 </StyledText>
               )}
             </View>

@@ -10,6 +10,7 @@ import { InventoryEventType } from '@/types/inventory.types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,6 +27,7 @@ type SortDirection = 'asc' | 'desc';
 type PendingAction = { product: Product; type: InventoryEventType };
 
 export default function Products() {
+  const { t } = useTranslation('inventory');
   const [activeTab, setActiveTab] = useState<TabType>('products');
   const params = useLocalSearchParams<{
     filterCategory?: string;
@@ -83,11 +85,17 @@ export default function Products() {
 
   const subtitle =
     activeTab === 'products'
-      ? `${productsStats.total} products · ${productsStats.lowStock} low · ${productsStats.outStock} out`
-      : `${(categories || []).length} categories total`;
+      ? t('subtitleProducts', {
+          total: productsStats.total,
+          low: productsStats.lowStock,
+          out: productsStats.outStock,
+        })
+      : t('subtitleCategories', { count: (categories || []).length });
 
-  const title = activeTab === 'products' ? 'Catalog' : 'Your Categories';
-  const eyebrow = activeTab === 'products' ? 'MASTER DATA' : 'SECTIONS';
+  const title =
+    activeTab === 'products' ? t('titleCatalog') : t('titleCategories');
+  const eyebrow =
+    activeTab === 'products' ? t('eyebrowMaster') : t('eyebrowSections');
 
   const handleSort = (option: SortOption) => {
     if (sortBy === option) {
@@ -130,7 +138,7 @@ export default function Products() {
                   activeTab === 'products' ? 'text-white' : 'text-paper-300'
                 }`}
               >
-                Products
+                {t('tabProducts')}
               </StyledText>
             </Pressable>
             <Pressable
@@ -145,7 +153,7 @@ export default function Products() {
                   activeTab === 'categories' ? 'text-white' : 'text-paper-300'
                 }`}
               >
-                Categories
+                {t('tabCategories')}
               </StyledText>
             </Pressable>
           </View>
@@ -212,7 +220,7 @@ export default function Products() {
               activeOpacity={0.8}
               onPress={() => router.push('/(edit-forms)/add-product')}
               accessibilityRole="button"
-              accessibilityLabel="Add product"
+              accessibilityLabel={t('addProductA11y')}
               className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
             >
               <FontAwesome name="plus" size={18} color="#FBF7EE" />
@@ -232,7 +240,7 @@ export default function Products() {
                 <SearchBar
                   value={search}
                   onChange={setSearch}
-                  placeholder="Search products or SKU..."
+                  placeholder={t('searchPlaceholder')}
                 />
               </View>
               <TouchableOpacity
@@ -287,7 +295,7 @@ export default function Products() {
               variant="extrabold"
               className="text-ink-900 text-xl mb-4"
             >
-              Sort By
+              {t('sortBy')}
             </StyledText>
             {sortOption.map((option) => (
               <TouchableOpacity
@@ -307,7 +315,9 @@ export default function Products() {
                     variant="medium"
                     className="text-ink-800 ml-3 text-base"
                   >
-                    {option.label}
+                    {t(`sort${
+                      option.key.charAt(0).toUpperCase() + option.key.slice(1)
+                    }`)}
                   </StyledText>
                 </View>
                 {sortBy === option.key && (
@@ -327,7 +337,7 @@ export default function Products() {
                 variant="semibold"
                 className="text-ink-700 text-center text-base"
               >
-                Close
+                {t('common:close')}
               </StyledText>
             </TouchableOpacity>
           </Pressable>
@@ -370,7 +380,7 @@ export default function Products() {
                 variant="regular"
                 className="text-ink-500 text-xs text-center mt-1"
               >
-                Select action to perform
+                {t('actionSheetSubtitle')}
               </StyledText>
             </View>
 
@@ -394,7 +404,7 @@ export default function Products() {
                   variant="semibold"
                   className="text-ink-800 text-base"
                 >
-                  Mark Damaged
+                  {t('actionMarkDamaged')}
                 </StyledText>
               </TouchableOpacity>
 
@@ -417,7 +427,7 @@ export default function Products() {
                   variant="semibold"
                   className="text-ink-800 text-base"
                 >
-                  Adjust Stock
+                  {t('actionAdjustStock')}
                 </StyledText>
               </TouchableOpacity>
 
@@ -442,7 +452,7 @@ export default function Products() {
                   variant="semibold"
                   className="text-ink-800 text-base"
                 >
-                  View Ledger
+                  {t('actionViewLedger')}
                 </StyledText>
               </TouchableOpacity>
 
@@ -468,7 +478,7 @@ export default function Products() {
                   variant="extrabold"
                   className="text-cinnamon-500 text-base"
                 >
-                  Edit Product
+                  {t('actionEditProduct')}
                 </StyledText>
               </TouchableOpacity>
 
@@ -492,7 +502,7 @@ export default function Products() {
                   variant="extrabold"
                   className="text-semantic-danger text-base"
                 >
-                  Delete Product
+                  {t('actionDeleteProduct')}
                 </StyledText>
               </TouchableOpacity>
             </View>
@@ -524,19 +534,21 @@ export default function Products() {
                 variant="extrabold"
                 className="text-ink-900 text-xl mb-2 text-center"
               >
-                Delete Product?
+                {t('deleteTitle')}
               </StyledText>
               <StyledText
                 variant="regular"
                 className="text-ink-500 text-sm text-center"
               >
-                {`Are you sure you want to delete "${productToDelete?.name || ''}"?`}
+                {t('deleteBody', {
+                  name: productToDelete?.name || '',
+                })}
               </StyledText>
               <StyledText
                 variant="semibold"
                 className="text-semantic-danger text-sm mt-2 text-center"
               >
-                This action cannot be undone.
+                {t('deleteWarning')}
               </StyledText>
             </View>
             <View className="gap-3">
@@ -552,7 +564,7 @@ export default function Products() {
                     variant="extrabold"
                     className="text-white text-center text-base"
                   >
-                    Yes, Delete Product
+                    {t('deleteConfirm')}
                   </StyledText>
                 )}
               </TouchableOpacity>
@@ -564,7 +576,7 @@ export default function Products() {
                   variant="semibold"
                   className="text-ink-700 text-center text-base"
                 >
-                  Cancel
+                  {t('common:cancel')}
                 </StyledText>
               </TouchableOpacity>
             </View>

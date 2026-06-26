@@ -3,6 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardQuickActionsProps {
   onNewSale: () => void;
@@ -23,6 +24,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
   onAddStock,
   onRecordPayment,
 }: DashboardQuickActionsProps) {
+  const { t } = useTranslation();
   return (
     <MotiView
       from={{ opacity: 0, translateY: 12 }}
@@ -35,7 +37,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
           onPress={onNewSale}
           activeOpacity={0.9}
           accessibilityRole="button"
-          accessibilityLabel="New sale"
+          accessibilityLabel={t('common:qaNewSale')}
           className="bg-persimmon-500 rounded-2xl py-4 flex-row items-center justify-center press-scale"
           style={{
             shadowColor: '#E85A1F',
@@ -51,23 +53,23 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
             className="text-paper-50 text-lg ml-2"
             style={{ letterSpacing: 0.3 }}
           >
-            New Sale
+            {t('common:qaNewSale')}
           </StyledText>
         </TouchableOpacity>
 
         {/* Row 2: two-up secondary actions */}
         <View className="flex-row gap-2.5 mt-2.5">
           <SecondaryAction
-            label="Add Stock"
+            label={t('common:qaAddStock')}
             icon="cube"
             onPress={onAddStock}
-            accessibilityLabel="Add stock"
+            accessibilityLabel={t('common:qaAddStock')}
           />
           <SecondaryAction
-            label="Record Payment"
+            label={t('common:qaRecordPayment')}
             icon="money"
             onPress={onRecordPayment}
-            accessibilityLabel="Record payment"
+            accessibilityLabel={t('common:qaRecordPayment')}
           />
         </View>
       </View>

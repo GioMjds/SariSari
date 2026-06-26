@@ -1,0 +1,33 @@
+{
+  "tabProducts": "Products",
+  "tabCategories": "Categories",
+
+  "eyebrowMaster": "MASTER DATA",
+  "eyebrowSections": "SECTIONS",
+  "titleCatalog": "Catalog",
+  "titleCategories": "Your Categories",
+  "subtitleProducts": "{{total}} products · {{low}} low · {{out}} out",
+  "subtitleCategories": "{{count}} categories total",
+
+  "addProductA11y": "Add product",
+
+  "searchPlaceholder": "Search products or SKU...",
+
+  "sortBy": "Sort By",
+  "sortName": "Name",
+  "sortPrice": "Price",
+  "sortStock": "Stock",
+  "sortSku": "SKU",
+
+  "actionSheetSubtitle": "Select action to perform",
+  "actionMarkDamaged": "Mark Damaged",
+  "actionAdjustStock": "Adjust Stock",
+  "actionViewLedger": "View Ledger",
+  "actionEditProduct": "Edit Product",
+  "actionDeleteProduct": "Delete Product",
+
+  "deleteTitle": "Delete Product?",
+  "deleteBody": "Are you sure you want to delete \"{{name}}\"?",
+  "deleteWarning": "This action cannot be undone.",
+  "deleteConfirm": "Yes, Delete Product"
+}

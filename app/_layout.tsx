@@ -2,6 +2,7 @@ import { GlobalModal, Toast } from '@/components/ui';
 import { DatabaseErrorScreen } from '@/components/system/DatabaseErrorScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeDatabases } from '@/configs';
+import { initI18n } from '@/lib/i18n';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -35,6 +36,7 @@ export default function RootLayout() {
   });
 
   const [dbInitError, setDbInitError] = useState<string | null>(null);
+  const [i18nReady, setI18nReady] = useState<boolean>(false);
 
   const runDbInit = useCallback(async () => {
     setDbInitError(null);
@@ -48,16 +50,37 @@ export default function RootLayout() {
     }
   }, []);
 
+  /**
+   * Initialize i18n separately from the DB so a malformed locale JSON
+   * never surfaces as a "Database Error" screen. If i18n init fails for
+   * any reason we log and continue — `react-i18next` falls back to its
+   * `fallbackLng: 'en'` so the user still sees English.
+   */
+  const runI18nInit = useCallback(async () => {
+    try {
+      await initI18n();
+      setI18nReady(true);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Failed to initialize i18n, falling back to English:', message);
+      // Still mark ready so the splash can hide — the app is usable in
+      // English-only mode if the locale bundle fails to load.
+      setI18nReady(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (!fontsLoaded) return;
     runDbInit();
-  }, [fontsLoaded, runDbInit]);
+    runI18nInit();
+  }, [fontsLoaded, runDbInit, runI18nInit]);
 
   useEffect(() => {
-    if (fontsLoaded && !dbInitError) {
+    if (fontsLoaded && !dbInitError && i18nReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, dbInitError]);
+  }, [fontsLoaded, dbInitError, i18nReady]);
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync('#EFE6D2');

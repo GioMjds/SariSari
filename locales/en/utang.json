@@ -1,0 +1,21 @@
+{
+  "eyebrow": "UTANG LEDGER",
+  "title": "Credits",
+
+  "addCustomerA11y": "Add customer",
+
+  "subtitleOverdueSingular": "{{count}} overdue customer needs follow-up",
+  "subtitleOverduePlural": "{{count}} overdue customers need follow-up",
+  "subtitleEmpty": "Add your first suki to start tracking utang",
+  "subtitleTopOfList": "{{name}} top of the list",
+  "subtitleLedgerClear": "Ledger is clear — all balances settled",
+  "subtitleLoading": "Loading your ledger…",
+
+  "searchCustomersPlaceholder": "Search customers…",
+
+  "sukiSingular": "suki",
+  "sukiPlural": "sukis",
+  "withBalance": "with outstanding balance",
+  "allPaidUp": "all paid up",
+  "pastDueDate": "past due date"
+}

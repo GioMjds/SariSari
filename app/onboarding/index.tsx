@@ -16,6 +16,7 @@ import {
 } from '@/lib/onboardingStepMachine';
 import { useToastStore } from '@/stores';
 import { OnboardingProfile } from '@/types';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -33,6 +34,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  * nothing is persisted mid-tour, so a kill-and-reopen returns the user
  * to the start. The `maxReachableIndex` tracks the furthest step
  * reached so the dot pagination can offer a back-step shortcut.
+ *
+ * The header title, button labels, toasts, and accessibility strings
+ * are translated through the `onboarding` namespace. The first-step
+ * language picker lives inside `ProfileStep` so it can switch language
+ * live and immediately re-render every translated string below it.
  */
 export default function OnboardingPage() {
 	const [step, setStep] = useState<Step>({ kind: 'profile' });
@@ -45,6 +51,7 @@ export default function OnboardingPage() {
 
 	const router = useRouter();
 	const addToast = useToastStore((state) => state.addToast);
+	const { t } = useTranslation('onboarding');
 
 	const currentIndex = indexOf(step);
 
@@ -61,7 +68,7 @@ export default function OnboardingPage() {
 		const storeName = profile.storeName.trim();
 		if (!ownerName || !storeName) {
 			addToast({
-				message: 'Please add your name and store name',
+				message: t('toastMissingFields'),
 				variant: 'danger',
 				duration: 1800,
 			});
@@ -72,14 +79,14 @@ export default function OnboardingPage() {
 			setSaving(true);
 			await markOnboardingComplete({ ownerName, storeName });
 			addToast({
-				message: 'Welcome! Your store is ready.',
+				message: t('toastWelcome'),
 				variant: 'success',
 				duration: 1800,
 			});
 			router.replace('/(tabs)');
 		} catch (_error) {
 			addToast({
-				message: 'Could not save onboarding data',
+				message: t('toastSaveFailed'),
 				variant: 'danger',
 				duration: 2000,
 			});
@@ -118,6 +125,12 @@ export default function OnboardingPage() {
 			? ONBOARDING_TOUR_STEPS.find((s) => s.tab === step.tab)
 			: undefined;
 
+	const continueLabel = isProfile
+		? t('letsGo')
+		: isLastTour
+			? t('finishTour')
+			: t('next');
+
 	return (
 		<SafeAreaView className="flex-1 bg-background">
 			{/*
@@ -131,7 +144,7 @@ export default function OnboardingPage() {
 			<View className="px-6 pt-4">
 				<View className="flex-row justify-between items-center">
 					<StyledText variant="extrabold" className="text-2xl text-primary">
-						Sari-Sari Setup
+						{t('headerTitle')}
 					</StyledText>
 					<OnboardingPagination
 						currentIndex={currentIndex}
@@ -169,11 +182,11 @@ export default function OnboardingPage() {
 						<TouchableOpacity
 							onPress={handleBack}
 							accessibilityRole="button"
-							accessibilityLabel="Go back"
+							accessibilityLabel={t('backA11y')}
 							className="flex-1 border border-persimmon-500 rounded-2xl py-3 items-center press-scale active:opacity-70"
 						>
 							<StyledText variant="semibold" className="text-persimmon-600">
-								Back
+								{t('back')}
 							</StyledText>
 						</TouchableOpacity>
 					)}
@@ -182,11 +195,11 @@ export default function OnboardingPage() {
 						<TouchableOpacity
 							onPress={handleSkip}
 							accessibilityRole="button"
-							accessibilityLabel="Skip the rest of the tour"
+							accessibilityLabel={t('skipA11y')}
 							className="px-4 py-3 press-scale active:opacity-70"
 						>
 							<StyledText variant="medium" className="text-persimmon-600">
-								Skip tour
+								{t('skipTour')}
 							</StyledText>
 						</TouchableOpacity>
 					)}
@@ -195,7 +208,7 @@ export default function OnboardingPage() {
 						onPress={handleNext}
 						disabled={isProfile && !isProfileComplete}
 						accessibilityRole="button"
-						accessibilityLabel="Continue"
+						accessibilityLabel={t('continueA11y')}
 						accessibilityState={{
 							disabled: isProfile && !isProfileComplete,
 						}}
@@ -204,7 +217,7 @@ export default function OnboardingPage() {
 						}`}
 					>
 						<StyledText variant="semibold" className="text-white">
-							{isProfile ? "Let's go →" : isLastTour ? 'Finish tour →' : 'Next →'}
+							{continueLabel}
 						</StyledText>
 					</TouchableOpacity>
 				</View>

@@ -20,7 +20,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.giomjds.sarisari"
+      "package": "com.giomjds.sarisari",
+      "notification": {
+        "icon": "./assets/images/logo.png",
+        "color": "#EFE6D2",
+        "androidMode": "default"
+      }
     },
     "web": {
       "output": "static",
@@ -37,12 +42,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#EFE6D2",
           "dark": {
-            "backgroundColor": "#C2410C"
+            "backgroundColor": "#EFE6D2"
           }
         }
       ],
       "expo-sqlite",
-      "expo-font"
+      "expo-font",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -54,6 +60,7 @@
       "eas": {
         "projectId": "982c08c5-26c3-4edc-b8f3-64830767ef23"
       }
-    }
+    },
+    "owner": "Gio Majadas"
   }
 }

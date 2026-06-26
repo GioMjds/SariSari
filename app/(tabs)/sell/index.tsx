@@ -28,6 +28,7 @@ import {
 } from 'date-fns';
 import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
@@ -52,6 +53,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  */
 export default function Sell() {
   const router = useRouter();
+  const { t } = useTranslation('sales');
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -225,7 +227,7 @@ export default function Sell() {
               variant="extrabold"
               className="label-caps text-paper-200 opacity-80"
             >
-              Resibo Book
+              {t('eyebrow')}
             </StyledText>
           </View>
 
@@ -235,15 +237,20 @@ export default function Sell() {
                 variant="black"
                 className="text-paper-50 text-h1"
               >
-                My Sales
+                {t('title')}
               </StyledText>
               <StyledText
                 variant="regular"
                 className="text-paper-200 text-sm mt-1 opacity-90"
               >
                 {filteredSales.length === 0
-                  ? 'Start your resibo book'
-                  : `${filteredSales.length} ${filteredSales.length === 1 ? 'resibo' : 'resibos'} on file`}
+                  ? t('subtitleEmpty')
+                  : t(
+                      filteredSales.length === 1
+                        ? 'subtitleSingular'
+                        : 'subtitlePlural',
+                      { count: filteredSales.length },
+                    )}
               </StyledText>
             </View>
 
@@ -253,7 +260,7 @@ export default function Sell() {
                 hitSlop={12}
                 onPress={() => setFilterModalVisible(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Filter sales"
+                accessibilityLabel={t('filterSalesA11y')}
                 className="relative w-11 h-11 rounded-full items-center justify-center"
                 style={({ pressed }) => ({
                   backgroundColor: 'rgba(251, 247, 238, 0.15)', // bg-paper-50/15
@@ -278,7 +285,7 @@ export default function Sell() {
                 hitSlop={12}
                 onPress={handleOpenAddSales}
                 accessibilityRole="button"
-                accessibilityLabel="Record new sale"
+                accessibilityLabel={t('recordNewSaleA11y')}
                 className="w-11 h-11 rounded-full items-center justify-center bg-persimmon-500"
                 style={({ pressed }) => ({
                   shadowColor: '#564E45',
@@ -322,7 +329,7 @@ export default function Sell() {
                   transition={{ type: 'timing', duration: 480, delay: 80 }}
                 >
                   <View className="px-4 mt-2 mb-4">
-                    <ReceiptHero tone="persimmon" headerLabel="Today Slip">
+                    <ReceiptHero tone="persimmon" headerLabel={t('todaySlip')}>
                       <View className="px-5 pt-5 pb-1 flex-row items-center justify-between">
                         <View className="flex-row items-center">
                           <FontAwesome
@@ -335,7 +342,7 @@ export default function Sell() {
                             variant="extrabold"
                             className="label-caps text-paper-50 opacity-95"
                           >
-                            Today&apos;s Slip
+                            {t('todaySlipSub')}
                           </StyledText>
                         </View>
                         <StyledText
@@ -346,7 +353,7 @@ export default function Sell() {
                         </StyledText>
                       </View>
 
-                      <ReceiptHeroDivider label="Amount Due" tone="persimmon" />
+                      <ReceiptHeroDivider label={t('amountDue')} tone="persimmon" />
 
                       <View className="px-5">
                         <MoneyText
@@ -359,10 +366,13 @@ export default function Sell() {
                       <ReceiptHeroMeta
                         rows={[
                           {
-                            label: 'Items Sold',
+                            label: t('itemsSold'),
                             value: String(stats.items_sold),
                           },
-                          { label: 'Credits', value: String(stats.credit_sales) },
+                          {
+                            label: t('credits'),
+                            value: String(stats.credit_sales),
+                          },
                         ]}
                       />
                     </ReceiptHero>

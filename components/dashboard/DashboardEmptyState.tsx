@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardEmptyStateProps {
   onAddProduct: () => void;
@@ -20,6 +21,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
   onAddProduct,
   onStartFirstSale,
 }: DashboardEmptyStateProps) {
+  const { t } = useTranslation();
   return (
     <View
       className="bg-paper-50 mx-4 mb-4 rounded-2xl border border-ink-100 p-5"
@@ -32,23 +34,23 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
       }}
     >
       <StyledText variant="extrabold" className="label-caps text-ink-400 mb-1">
-        Welcome
+        {t('common:emptyEyebrow')}
       </StyledText>
       <StyledText variant="black" className="text-ink-900 text-lg mb-1">
-        Set up your counter
+        {t('common:emptyTitle')}
       </StyledText>
       <StyledText
         variant="regular"
         className="text-ink-500 text-sm mb-4"
       >
-        Add your first product so the till knows what to sell.
+        {t('common:emptyBody')}
       </StyledText>
 
       <TouchableOpacity
         onPress={onAddProduct}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Add product"
+        accessibilityLabel={t('common:emptyAddProduct')}
         className="bg-persimmon-500 rounded-pill py-3 flex-row items-center justify-center mb-2.5 press-scale"
         style={{
           shadowColor: '#E85A1F',
@@ -63,7 +65,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
           variant="extrabold"
           className="text-paper-50 text-sm ml-2"
         >
-          Add Product
+          {t('common:emptyAddProduct')}
         </StyledText>
       </TouchableOpacity>
 
@@ -71,7 +73,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
         onPress={onStartFirstSale}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Start first sale"
+        accessibilityLabel={t('common:emptyFirstSale')}
         className="bg-paper-100 rounded-pill py-3 flex-row items-center justify-center border border-ink-200 press-scale"
       >
         <FontAwesome name="shopping-cart" size={14} color="#623418" />
@@ -79,7 +81,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
           variant="extrabold"
           className="text-cinnamon-700 text-sm ml-2"
         >
-          Start First Sale
+          {t('common:emptyFirstSale')}
         </StyledText>
       </TouchableOpacity>
     </View>

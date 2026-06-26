@@ -8,6 +8,7 @@ import { Customer, Product, SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardAttentionSectionProps {
   stockAttention: AttentionProduct[];
@@ -50,6 +51,7 @@ export const DashboardAttentionSection = memo(
     onViewAllUtang,
     onViewAllSales,
   }: DashboardAttentionSectionProps) {
+    const { t } = useTranslation();
     const showStock = stockAttention.length > 0;
     const showUtang = sukis.length > 0;
     const showSales = recentSales.length > 0;
@@ -61,11 +63,15 @@ export const DashboardAttentionSection = memo(
         {showStock && (
           <AttentionBlock
             icon="cube"
-            label="Stock"
+            label={t('common:attentionStock')}
             tone="warning"
             count={stockAttention.length}
             onViewAll={onViewAllStock}
             viewAllHref="/inventory"
+            viewAllLabel={t('common:viewAll')}
+            viewAllA11y={t('common:viewAllA11y', {
+              label: t('common:attentionStock').toLowerCase(),
+            })}
           >
             {stockAttention.map((item, idx) => (
               <StockRow
@@ -80,11 +86,15 @@ export const DashboardAttentionSection = memo(
         {showUtang && (
           <AttentionBlock
             icon="credit-card"
-            label="Utang"
+            label={t('common:attentionSukis')}
             tone="danger"
             count={sukis.length}
             onViewAll={onViewAllUtang}
             viewAllHref="/utang"
+            viewAllLabel={t('common:viewAll')}
+            viewAllA11y={t('common:viewAllA11y', {
+              label: t('common:attentionSukis').toLowerCase(),
+            })}
           >
             {sukis.map((item, idx) => (
               <SukiRow
@@ -99,11 +109,15 @@ export const DashboardAttentionSection = memo(
         {showSales && (
           <AttentionBlock
             icon="shopping-cart"
-            label="Recent sales"
+            label={t('common:attentionSales')}
             tone="ink"
             count={recentSales.length}
             onViewAll={onViewAllSales}
             viewAllHref="/sell"
+            viewAllLabel={t('common:viewAll')}
+            viewAllA11y={t('common:viewAllA11y', {
+              label: t('common:attentionSales').toLowerCase(),
+            })}
           >
             {recentSales.map((item, idx) => (
               <SaleRowMini
@@ -139,6 +153,8 @@ function AttentionBlock({
   tone,
   count,
   onViewAll,
+  viewAllLabel,
+  viewAllA11y,
   children,
 }: {
   icon: keyof typeof FontAwesome.glyphMap;
@@ -147,6 +163,8 @@ function AttentionBlock({
   count: number;
   onViewAll: () => void;
   viewAllHref: Href;
+  viewAllLabel: string;
+  viewAllA11y: string;
   children: React.ReactNode;
 }) {
   return (
@@ -186,14 +204,14 @@ function AttentionBlock({
           onPress={onViewAll}
           activeOpacity={0.7}
           accessibilityRole="link"
-          accessibilityLabel={`View all ${label.toLowerCase()}`}
+          accessibilityLabel={viewAllA11y}
           className="flex-row items-center press-scale"
         >
           <StyledText
             variant="extrabold"
             className={`text-xs ${TONE_LABEL[tone]}`}
           >
-            View all
+            {viewAllLabel}
           </StyledText>
           <FontAwesome
             name="chevron-right"

@@ -1,0 +1,33 @@
+{
+  "headerTitle": "Sari-Sari Setup",
+
+  "back": "Back",
+  "skipTour": "Skip tour",
+  "letsGo": "Let's go →",
+  "finishTour": "Finish tour →",
+  "next": "Next →",
+
+  "backA11y": "Go back",
+  "skipA11y": "Skip the rest of the tour",
+  "continueA11y": "Continue",
+
+  "toastMissingFields": "Please add your name and store name",
+  "toastWelcome": "Welcome! Your store is ready.",
+  "toastSaveFailed": "Could not save onboarding data",
+
+  "langPickerPrompt": "Pick your language",
+
+  "profileIntro": "Hi! I'm Sari, your store helper. What should I call you?",
+  "profileNameLabel": "Your name",
+  "profileNamePlaceholder": "e.g. Aling Nena",
+  "profileStoreLabel": "And what's your store called?",
+  "profileStorePlaceholder": "e.g. Nena Sari-Sari",
+
+  "readyStamp": "READY",
+  "readyGreetingNamed": "Nice to meet you, {{name}}.",
+  "readyGreetingDefault": "Nice to meet you.",
+  "readySublineNamed": "{{storeName}} is ready to go.",
+  "readySublineDefault": "Your store is ready to go.",
+  "readyCta": "Open my store →",
+  "readyCtaA11y": "Open my store"
+}
