@@ -7,17 +7,13 @@ import {
   DashboardSkeleton,
 } from '@/components/dashboard';
 import { StyledText } from '@/components/elements';
-import { Modal as CustomModal } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 import { useCredits, useProducts, useSales } from '@/hooks';
-import { useDialogStore } from '@/stores';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Href, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  BackHandler,
-  Image,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -45,8 +41,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  * Money handling: integer pesos end-to-end (see AGENTS.md) — we never multiply
  * or divide before formatting. `MoneyText` handles the render edge.
  */
-const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
-
 const routes = {
   newSale: '/sell?tab=new-sale',
   products: '/inventory',
@@ -57,8 +51,6 @@ const routes = {
 export default function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
@@ -165,45 +157,16 @@ export default function Dashboard() {
     }, [refetchAll]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const backAction = () => {
-        showDialog({
-          title: 'Exit App',
-          message: 'Are you sure you want to exit the app?',
-          showCloseButton: false,
-        });
-        return true;
-      };
-
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        backAction,
-      );
-
-      return () => backHandler.remove();
-    }, [showDialog]),
-  );
-
-  const handleExitApp = () => {
-    hideDialog();
-    BackHandler.exitApp();
-  };
-
-  const handleCancelExit = () => {
-    hideDialog();
-  };
-
   const handleNewSale = useCallback(() => {
-    router.push(routes.newSale);
+    router.replace(routes.newSale);
   }, [router]);
 
   const handleAddStock = useCallback(() => {
-    router.push(routes.products);
+    router.replace(routes.products);
   }, [router]);
 
   const handleRecordPayment = useCallback(() => {
-    router.push(routes.credits);
+    router.replace(routes.credits);
   }, [router]);
 
   const handleOpenSettings = useCallback(() => {
@@ -264,40 +227,12 @@ export default function Dashboard() {
                 recentSales={recentSales}
                 onViewAllStock={handleAddStock}
                 onViewAllUtang={handleRecordPayment}
-                onViewAllSales={() => router.push(routes.sales)}
+                onViewAllSales={() => router.replace(routes.sales)}
               />
             )}
           </>
         )}
       </ScrollView>
-
-      <CustomModal
-        visible={dialogVisible}
-        onClose={handleCancelExit}
-        title="Exit App"
-        description="Are you sure you want to exit the app?"
-        variant="warning"
-        buttons={[
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: handleCancelExit,
-          },
-          {
-            text: 'Exit',
-            style: 'destructive',
-            onPress: handleExitApp,
-          },
-        ]}
-      >
-        <View className="items-center mt-2 mb-1">
-          <Image
-            source={sariExitImage}
-            style={{ width: 140, height: 140 }}
-            resizeMode="contain"
-          />
-        </View>
-      </CustomModal>
     </SafeAreaView>
   );
 }

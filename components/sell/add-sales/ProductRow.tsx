@@ -1,0 +1,169 @@
+import type { NewSaleItem, Product } from '@/types';
+import { Pressable, View } from 'react-native';
+import { PerforationRow } from '../PerforationRow';
+import { StyledText } from '@/components/elements';
+import { MoneyText } from '@/components/ui';
+import { StepperStamp } from './StepperStamp';
+
+interface ProductRowProps {
+  product: Product;
+  cartLine: NewSaleItem | undefined;
+  onAdd: (product: Product) => void;
+  onUpdateQuantity: (productId: number, delta: number) => void;
+}
+
+/**
+ * ProductRow — a resibo-style "torn paper stub" for each catalog item.
+ *
+ * Layout (top → bottom):
+ *   • Perforated edge (top)
+ *   • Header row: product name (h2) + SKU mono stamp
+ *   • Dotted divider
+ *   • Body row: price (oversize MoneyText) on the left, stock dot +
+ *     count on the right. When the item is in the cart, the body
+ *     swaps to a centered stamp-style stepper.
+ *   • Perforated edge (bottom)
+ *
+ * The card itself is disabled (with paper-texture desaturated via
+ * opacity) when the product is out of stock.
+ */
+export function ProductRow({
+  product,
+  cartLine,
+  onAdd,
+  onUpdateQuantity,
+}: ProductRowProps) {
+  const isOutOfStock = product.quantity <= 0;
+  const isLowStock = !isOutOfStock && product.quantity <= 5;
+  const inCart = !!cartLine;
+
+  // Stock dot color: red-600 / orange-600 / sage-500.
+  const dotColor = isOutOfStock
+    ? '#C13030'
+    : isLowStock
+      ? '#C77B0E'
+      : '#4F7A24';
+  const stockLabel = isOutOfStock
+    ? 'Out of stock'
+    : `${product.quantity} in stock`;
+
+  return (
+    <Pressable
+      onPress={() => {
+        if (isOutOfStock) return;
+        // If already in cart, tap on the body still opens the stepper
+        // path — increment via the cart path keeps the existing line
+        // and respects stock caps. The + button on the stepper does
+        // the same thing, so tap-to-add is just the simpler gesture.
+        if (!inCart) onAdd(product);
+      }}
+      disabled={isOutOfStock}
+      accessibilityRole="button"
+      accessibilityLabel={
+        isOutOfStock
+          ? `${product.name} out of stock`
+          : `Add ${product.name} to cart`
+      }
+      className={`mx-4 mb-4 rounded-3xl overflow-hidden bg-paper-50 border border-ink-100 ${
+        isOutOfStock ? 'opacity-60' : 'active:opacity-90'
+      }`}
+      style={{
+        shadowColor: '#564E45',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
+      }}
+    >
+      <PerforationRow side="top" />
+
+      <View className="paper-texture px-5 pt-3 pb-3">
+        {/* Header: name + SKU stamp */}
+        <View className="flex-row items-start justify-between mb-2">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-h2 flex-1 mr-3"
+            numberOfLines={2}
+          >
+            {product.name}
+          </StyledText>
+          <View className="self-start bg-paper-100 border border-dashed border-ink-200 rounded-md px-2 py-0.5">
+            <StyledText
+              variant="medium"
+              className="text-mono text-ink-500 text-[10px]"
+            >
+              SKU {product.sku}
+            </StyledText>
+          </View>
+        </View>
+
+        {/* Dotted divider */}
+        <View className="divider-dotted-thin mb-3" />
+
+        {/* Body: price + stock indicator (or stepper when in cart) */}
+        {inCart && cartLine ? (
+          <View className="flex-row items-center justify-between">
+            <MoneyText
+              value={product.price}
+              size="lg"
+              className="text-ink-700"
+            />
+            <StepperStamp
+              quantity={cartLine.quantity}
+              onDecrement={() => onUpdateQuantity(product.id, -1)}
+              onIncrement={() => onUpdateQuantity(product.id, 1)}
+              max={product.quantity}
+            />
+          </View>
+        ) : (
+          <View className="flex-row items-end justify-between">
+            <View>
+              <StyledText
+                variant="medium"
+                className="label-caps text-ink-400 mb-0.5"
+              >
+                Price
+              </StyledText>
+              <MoneyText
+                value={product.price}
+                size="xl"
+                className="text-ink-900"
+              />
+            </View>
+            <View className="items-end pb-0.5">
+              <View className="flex-row items-center">
+                <View
+                  className="w-2.5 h-2.5 rounded-full mr-2"
+                  style={{ backgroundColor: dotColor }}
+                />
+                <StyledText
+                  variant="semibold"
+                  className={`text-xs ${
+                    isOutOfStock
+                      ? 'text-semantic-danger'
+                      : isLowStock
+                        ? 'text-semantic-warning'
+                        : 'text-ink-700'
+                  }`}
+                >
+                  {stockLabel}
+                </StyledText>
+              </View>
+              {isLowStock && (
+                <StyledText
+                  variant="medium"
+                  className="label-caps text-semantic-warning mt-1"
+                >
+                  Low stock
+                </StyledText>
+              )}
+            </View>
+          </View>
+        )}
+      </View>
+
+      <PerforationRow side="bottom" />
+      <View className="h-3" />
+    </Pressable>
+  );
+}

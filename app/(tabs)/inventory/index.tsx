@@ -374,7 +374,7 @@ export default function Products() {
             </View>
 
             <View className="gap-2">
-              {/* Action: Damage */}
+              {/* Action: Mark Damaged */}
               <TouchableOpacity
                 onPress={() => {
                   const product = selectedProductForSheet!;
@@ -397,7 +397,7 @@ export default function Products() {
                 </StyledText>
               </TouchableOpacity>
 
-              {/* Action: Adjust */}
+              {/* Action: Adjust Stock */}
               <TouchableOpacity
                 onPress={() => {
                   const product = selectedProductForSheet!;
@@ -448,7 +448,30 @@ export default function Products() {
               {/* Divider */}
               <View className="h-[1px] bg-ink-100 my-2" />
 
-              {/* Action: Delete */}
+              {/* Action: Edit Product */}
+              <TouchableOpacity
+                onPress={() => {
+                  const product = selectedProductForSheet!;
+                  router.push(`/(edit-forms)/edit-product/${product.id}`);
+                  setSelectedProductForSheet(null);
+                }}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-red-200"
+              >
+                <FontAwesome
+                  name="pencil"
+                  size={18}
+                  color="#C22D2D"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-cinnamon-500 text-base"
+                >
+                  Edit Product
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: Delete Product */}
               <TouchableOpacity
                 onPress={() => {
                   const product = selectedProductForSheet!;

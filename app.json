@@ -8,12 +8,14 @@
     "scheme": "sarisari",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "backgroundColor": "#EFE6D2",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "backgroundColor": "#EFE6D2"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#F6EED9",
+        "backgroundColor": "#EFE6D2",
         "foregroundImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,

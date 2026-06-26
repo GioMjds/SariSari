@@ -16,7 +16,7 @@ export const StyledTab = memo(() => {
 				? pathname !== '/' && pathname !== ''
 				: pathname !== href && !pathname.startsWith(`${href}/`);
 
-			if (shouldNavigate) router.push(href);
+			if (shouldNavigate) router.replace(href);
 		},
 		[pathname, router]
 	);

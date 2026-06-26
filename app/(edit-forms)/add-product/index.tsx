@@ -1,669 +1,104 @@
-import { StyledText } from '@/components/elements';
-import { useCategories, useProducts } from '@/hooks';
-import { Alert } from '@/utils';
-import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
-import { FontAwesome } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import {
-  ActivityIndicator,
-  BackHandler,
-  Platform,
-  Pressable,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-interface AddProductForm {
-  productName: string;
-  sku: string;
-  bundleCost: string;
-  piecesPerBundle: string;
-  costPerPiece: string;
-  price: string;
-  initialStock: string;
-  category: string;
-}
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { router } from 'expo-router';
+import { Modal } from '@/components/ui';
+import {
+  AddProductHeader,
+  BasicInfoCard,
+  PricingProfitCard,
+  StockCard,
+  ActionButtons,
+  useAddProductForm,
+} from '@/components/inventory/products/add-product';
 
 export default function AddProduct() {
-  const [autoGenerateSku, setAutoGenerateSku] = useState<boolean>(true);
-  const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
-
-  const router = useRouter();
-
-  const { insertProductMutation } = useProducts();
-  const { getAllCategoriesQuery } = useCategories();
-  const { data: categories = [] } = getAllCategoriesQuery;
-
-  const {
-    handleSubmit,
-    control,
-    setValue,
-    watch,
-    formState: { isDirty },
-  } = useForm<AddProductForm>({
-    mode: 'onSubmit',
-    defaultValues: {
-      productName: '',
-      sku: '',
-      bundleCost: '',
-      piecesPerBundle: '',
-      costPerPiece: '',
-      price: '',
-      initialStock: '',
-      category: '',
-    },
-  });
-
-  const formValues = watch();
-
-  const safeTrim = (s?: string) => (s ?? '').trim();
-
-  const hasActualChanges =
-    isDirty &&
-    (safeTrim(formValues?.productName) !== '' ||
-      safeTrim(formValues?.price) !== '' ||
-      safeTrim(formValues?.costPerPiece) !== '' ||
-      safeTrim(formValues?.bundleCost) !== '' ||
-      safeTrim(formValues?.initialStock) !== '');
-
-  // Auto-calculate cost per piece when bundle values change
-  useEffect(() => {
-    if (
-      useBundlePricing &&
-      formValues.bundleCost &&
-      formValues.piecesPerBundle
-    ) {
-      const bundleCost = tryParsePesosInput(formValues.bundleCost);
-      const pieces = parseInt(formValues.piecesPerBundle);
-      if (bundleCost > 0 && !isNaN(pieces) && pieces > 0) {
-        const costPerPiece = bundleCost / pieces;
-        setValue('costPerPiece', costPerPiece.toFixed(2));
-      }
-    }
-  }, [
-    formValues.bundleCost,
-    formValues.piecesPerBundle,
-    useBundlePricing,
-    setValue,
-  ]);
-
-  // Generate SKU from product name
-  const generateSku = (name: string) => {
-    if (!name) return '';
-    const parts = name.trim().split(' ');
-    const prefix = parts
-      .slice(0, 2)
-      .map((p) => p.charAt(0).toUpperCase())
-      .join('');
-    const timestamp = Date.now().toString().slice(-4);
-    return `${prefix}-${timestamp}`;
-  };
-
-  // Auto-generate SKU when product name changes
-  const handleNameChange = (text: string) => {
-    if (autoGenerateSku) setValue('sku', generateSku(text));
-  };
-
-  // Handle back navigation
-  const handleBackPress = () => {
-    if (hasActualChanges) {
-      Alert.alert(
-        'Unsaved Changes',
-        'You have unsaved changes. Are you sure you want to discard them?',
-        [
-          { text: "Don't Leave", style: 'cancel', onPress: () => {} },
-          {
-            text: 'Discard',
-            style: 'destructive',
-            onPress: () => router.back(),
-          },
-        ],
-      );
-    } else {
-      router.back();
-    }
-  };
-
-  // Handle hardware back button only while screen is focused
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (hasActualChanges) {
-          Alert.alert(
-            'Unsaved Changes',
-            'You have unsaved changes. Are you sure you want to discard them?',
-            [
-              {
-                text: "Don't Leave",
-                style: 'cancel',
-                onPress: () => {},
-              },
-              {
-                text: 'Discard',
-                style: 'destructive',
-                onPress: () => router.back(),
-              },
-            ],
-          );
-          return true;
-        }
-        return false;
-      };
-
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        onBackPress,
-      );
-
-      return () => backHandler.remove();
-    }, [hasActualChanges, router]),
-  );
-
-  const onSubmit = async (data: AddProductForm) => {
-    if (!data.productName.trim()) throw new Error('Product name is required');
-    if (!data.sku.trim()) throw new Error('SKU is required');
-    if (!data.price || tryParsePesosInput(data.price) <= 0)
-      throw new Error('Valid price is required');
-
-    const priceValue = parsePesosInput(data.price);
-    const stockValue = data.initialStock ? parseInt(data.initialStock) : 0;
-    const costPriceValue = data.costPerPiece
-      ? parsePesosInput(data.costPerPiece)
-      : undefined;
-
-    // Validate that cost price is less than selling price
-    if (costPriceValue !== undefined && costPriceValue >= priceValue) {
-      throw new Error('Cost price must be less than selling price');
-    }
-
-    // Insert product with initial stock and cost price
-    await insertProductMutation.mutateAsync({
-      name: data.productName.trim(),
-      sku: data.sku.trim(),
-      price: priceValue,
-      quantity: stockValue,
-      cost_price: costPriceValue,
-      category: data.category || undefined,
-    });
-
-    router.push('/(tabs)');
-  };
+  const form = useAddProductForm();
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Header */}
-      <View className="bg-primary-500 px-4 py-6 flex-row items-center">
-        <TouchableOpacity
-          hitSlop={20}
-          activeOpacity={0.2}
-          onPress={handleBackPress}
-          className="mr-3"
-        >
-          <FontAwesome name="arrow-left" size={20} color="#fff" />
-        </TouchableOpacity>
-        <StyledText variant="extrabold" className="text-white text-2xl">
-          Add Product
-        </StyledText>
-      </View>
-
       <KeyboardAwareScrollView
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 100 : 80}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: 32,
-          flexGrow: 1,
-        }}
         className="flex-1"
+        showsVerticalScrollIndicator={false}
+        enableAutomaticScroll
+        enableOnAndroid
+        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* Product Name */}
-        <View className="mb-4">
-          <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
-            Product Name *
-          </StyledText>
-          <Controller
-            control={control}
-            name="productName"
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                placeholder="e.g., Lucky Me Pancit Canton"
-                value={value}
-                onChangeText={(text) => {
-                  onChange(text);
-                  handleNameChange(text);
-                }}
-                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
-                placeholderTextColor="#9ca3af"
-              />
-            )}
+        <AddProductHeader onBack={form.confirmDiscard} />
+
+        <View className="px-4">
+          <BasicInfoCard
+            control={form.control}
+            sku={form.sku}
+            autoGenerateSku={form.autoGenerateSku}
+            onToggleAutoGenerateSku={() =>
+              form.setAutoGenerateSku(!form.autoGenerateSku)
+            }
+            categories={form.categories}
+            selectedCategory={form.category}
+            onSelectCategory={form.selectCategory}
+          />
+
+          <View className="my-3 border-t border-dashed border-ink-300" />
+
+          <PricingProfitCard
+            control={form.control}
+            costPerPiece={form.costPerPiece}
+            price={form.price}
+            useBundlePricing={form.useBundlePricing}
+            onToggleBundlePricing={() =>
+              form.setUseBundlePricing(!form.useBundlePricing)
+            }
+            onApplyMarkupPreset={form.applyMarkupPreset}
+            profitPerPiece={form.profitPerPiece}
+            markupPercent={form.markupPercent}
+            isLossWarning={form.isLossWarning}
+            hasCost={!!form.costPerPiece && form.costPerPiece !== '0.00'}
+            hasPrice={!!form.price && form.price !== '0.00'}
+          />
+
+          <View className="my-3 border-t border-dashed border-ink-300" />
+
+          <StockCard
+            control={form.control}
+            initialStock={form.initialStock}
+            onBumpStock={form.bumpStock}
+          />
+
+          <ActionButtons
+            disabled={form.isSubmitDisabled}
+            isPending={form.insertProductMutation.isPending}
+            onSubmit={form.submit}
+            onCancel={form.confirmDiscard}
           />
         </View>
-
-        {/* SKU */}
-        <View className="mb-4">
-          <View className="flex-row justify-between items-center mb-2">
-            <StyledText variant="semibold" className="text-warm-900 text-sm">
-              SKU (Stock Keeping Unit) *
-            </StyledText>
-            <Pressable
-              onPress={() => setAutoGenerateSku(!autoGenerateSku)}
-              className="flex-row items-center active:opacity-50"
-            >
-              <View
-                className={`w-5 h-5 rounded border-2 mr-2 items-center justify-center ${
-                  autoGenerateSku
-                    ? 'bg-secondary-500 border-accent'
-                    : 'border-warm-200'
-                }`}
-              >
-                {autoGenerateSku && (
-                  <FontAwesome name="check" size={12} color="#fff" />
-                )}
-              </View>
-              <StyledText variant="regular" className="text-warm-600 text-xs">
-                Auto-generate
-              </StyledText>
-            </Pressable>
-          </View>
-          <Controller
-            control={control}
-            name="sku"
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                placeholder="e.g., PC-001"
-                value={value}
-                onChangeText={onChange}
-                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
-                placeholderTextColor="#9ca3af"
-                editable={!autoGenerateSku}
-                style={{
-                  opacity: autoGenerateSku ? 0.6 : 1,
-                }}
-              />
-            )}
-          />
-          {autoGenerateSku && (
-            <StyledText
-              variant="regular"
-              className="text-warm-500 text-xs mt-1"
-            >
-              SKU will be auto-generated based on product name
-            </StyledText>
-          )}
-        </View>
-
-        {/* Cost Price Section */}
-        <View className="bg-warm-50 rounded-xl p-4 mb-4">
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center">
-              <FontAwesome
-                name="calculator"
-                size={16}
-                color="#3b82f6"
-                style={{ marginRight: 8 }}
-              />
-              <StyledText variant="semibold" className="text-warm-700 text-sm">
-                Cost Price (for Profit Tracking)
-              </StyledText>
-            </View>
-            <Pressable
-              onPress={() => setUseBundlePricing(!useBundlePricing)}
-              className="flex-row items-center active:opacity-50"
-            >
-              <View
-                className={`w-5 h-5 rounded border-2 mr-2 items-center justify-center ${
-                  useBundlePricing
-                    ? 'bg-secondary-500 border-accent'
-                    : 'border-warm-200'
-                }`}
-              >
-                {useBundlePricing && (
-                  <FontAwesome name="check" size={12} color="#fff" />
-                )}
-              </View>
-              <StyledText variant="regular" className="text-warm-700 text-xs">
-                Bundle
-              </StyledText>
-            </Pressable>
-          </View>
-
-          {useBundlePricing ? (
-            <>
-              {/* Bundle Cost */}
-              <View className="mb-3">
-                <StyledText
-                  variant="medium"
-                  className="text-warm-700 text-xs mb-2"
-                >
-                  Total Bundle Cost (₱)
-                </StyledText>
-                <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-                  <StyledText
-                    variant="medium"
-                    className="text-warm-600 text-base mr-2"
-                  >
-                    ₱
-                  </StyledText>
-                  <Controller
-                    control={control}
-                    name="bundleCost"
-                    render={({ field: { value, onChange } }) => (
-                      <TextInput
-                        placeholder="0.00"
-                        value={value}
-                        onChangeText={onChange}
-                        keyboardType="decimal-pad"
-                        className="flex-1 font-stack-sans text-base text-warm-900"
-                        placeholderTextColor="#9ca3af"
-                      />
-                    )}
-                  />
-                </View>
-              </View>
-
-              {/* Pieces per Bundle */}
-              <View className="mb-3">
-                <StyledText
-                  variant="medium"
-                  className="text-warm-700 text-xs mb-2"
-                >
-                  Pieces per Bundle
-                </StyledText>
-                <Controller
-                  control={control}
-                  name="piecesPerBundle"
-                  render={({ field: { value, onChange } }) => (
-                    <TextInput
-                      placeholder="10"
-                      value={value}
-                      onChangeText={onChange}
-                      keyboardType="number-pad"
-                      className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
-                      placeholderTextColor="#9ca3af"
-                    />
-                  )}
-                />
-              </View>
-
-              {/* Auto-calculated Cost per Piece */}
-              <View>
-                <StyledText
-                  variant="medium"
-                  className="text-warm-700 text-xs mb-2"
-                >
-                  Cost per Piece (Auto-calculated)
-                </StyledText>
-                <View className="bg-white/60 rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-                  <StyledText
-                    variant="medium"
-                    className="text-warm-600 text-base mr-2"
-                  >
-                    ₱
-                  </StyledText>
-                  <Controller
-                    control={control}
-                    name="costPerPiece"
-                    render={({ field: { value } }) => (
-                      <TextInput
-                        placeholder="0.00"
-                        value={value}
-                        editable={false}
-                        className="flex-1 font-stack-sans text-base text-warm-900"
-                        placeholderTextColor="#9ca3af"
-                      />
-                    )}
-                  />
-                </View>
-              </View>
-            </>
-          ) : (
-            <>
-              {/* Direct Cost per Piece */}
-              <View>
-                <StyledText
-                  variant="medium"
-                  className="text-warm-700 text-xs mb-2"
-                >
-                  Cost per Piece (₱)
-                </StyledText>
-                <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-                  <StyledText
-                    variant="medium"
-                    className="text-warm-600 text-base mr-2"
-                  >
-                    ₱
-                  </StyledText>
-                  <Controller
-                    control={control}
-                    name="costPerPiece"
-                    render={({ field: { value, onChange } }) => (
-                      <TextInput
-                        placeholder="5.00"
-                        value={value}
-                        onChangeText={onChange}
-                        keyboardType="decimal-pad"
-                        className="flex-1 font-stack-sans text-base text-warm-900"
-                        placeholderTextColor="#9ca3af"
-                      />
-                    )}
-                  />
-                </View>
-              </View>
-            </>
-          )}
-
-          <StyledText
-            variant="regular"
-            className="text-blue-600 text-xs mt-3 leading-4"
-          >
-            Please enter the price you paid you&apos;ve buy originally. This
-            helps track your actual profit.
-          </StyledText>
-        </View>
-
-        {/* Price */}
-        <View className="mb-4">
-          <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
-            Selling Price (₱) *
-          </StyledText>
-          <View className="bg-white rounded-xl px-4 py-3 flex-row items-center shadow-sm">
-            <StyledText
-              variant="medium"
-              className="text-warm-600 text-base mr-2"
-            >
-              ₱
-            </StyledText>
-            <Controller
-              control={control}
-              name="price"
-              render={({ field: { value, onChange } }) => (
-                <TextInput
-                  placeholder="0.00"
-                  value={value}
-                  onChangeText={onChange}
-                  keyboardType="decimal-pad"
-                  className="flex-1 font-stack-sans text-base text-warm-900"
-                  placeholderTextColor="#9ca3af"
-                />
-              )}
-            />
-          </View>
-
-          {/* Profit Preview */}
-          {formValues.costPerPiece &&
-            formValues.price &&
-            tryParsePesosInput(formValues.costPerPiece) > 0 &&
-            tryParsePesosInput(formValues.price) > 0 && (
-              <View className="bg-secondary-50 rounded-lg p-3 mt-2 flex-row items-center justify-between">
-                <View>
-                  <StyledText
-                    variant="regular"
-                    className="text-secondary-700 text-xs mb-1"
-                  >
-                    Profit per pcs:
-                  </StyledText>
-                  <StyledText
-                    variant="extrabold"
-                    className="text-secondary-700 text-lg"
-                  >
-                    ₱
-                    {(
-                      tryParsePesosInput(formValues.price) -
-                      tryParsePesosInput(formValues.costPerPiece)
-                    ).toFixed(2)}
-                  </StyledText>
-                </View>
-                {/* <View>
-                                    <StyledText variant="regular" className="text-secondary-700 text-xs mb-1">
-                                        Overall Profit:
-                                    </StyledText>
-                                    <StyledText variant="extrabold" className="text-secondary-700 text-lg">
-                                        ₱{(tryParsePesosInput(formValues.price) - tryParsePesosInput(formValues.costPerPiece)).toFixed(2)}
-                                    </StyledText>
-                                </View> */}
-                <View className="items-end">
-                  <StyledText
-                    variant="regular"
-                    className="text-secondary-700 text-xs mb-1"
-                  >
-                    Markup
-                  </StyledText>
-                  <StyledText
-                    variant="extrabold"
-                    className="text-secondary-700 text-lg"
-                  >
-                    {(
-                      ((tryParsePesosInput(formValues.price) -
-                        tryParsePesosInput(formValues.costPerPiece)) /
-                        tryParsePesosInput(formValues.costPerPiece)) *
-                      100
-                    ).toFixed(1)}
-                    %
-                  </StyledText>
-                </View>
-              </View>
-            )}
-        </View>
-
-        {/* Initial Stock */}
-        <View className="mb-4">
-          <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
-            Initial Stock Quantity
-          </StyledText>
-          <Controller
-            control={control}
-            name="initialStock"
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                placeholder="0"
-                value={value}
-                onChangeText={onChange}
-                keyboardType="number-pad"
-                className="bg-white rounded-xl px-4 py-3 font-stack-sans text-base text-warm-900 shadow-sm"
-                placeholderTextColor="#9ca3af"
-              />
-            )}
-          />
-          <StyledText variant="regular" className="text-warm-500 text-xs mt-1">
-            You can leave this as 0 and add stock later via the Catalog
-          </StyledText>
-        </View>
-
-        {/* Category (Optional - UI only for now) */}
-        <View className="mb-4">
-          <StyledText variant="semibold" className="text-warm-900 text-sm mb-2">
-            Category (Optional)
-          </StyledText>
-          {categories.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View className="flex-row gap-2">
-                {categories.map((category) => (
-                  <Controller
-                    key={category.id}
-                    control={control}
-                    name="category"
-                    render={({ field: { value, onChange } }) => (
-                      <Pressable
-                        onPress={() =>
-                          onChange(value === category.name ? '' : category.name)
-                        }
-                        className="px-4 py-2 rounded-xl active:opacity-70"
-                        style={{
-                          backgroundColor:
-                            value === category.name ? '#AD49E1' : '#fff',
-                          borderWidth: value === category.name ? 0 : 1,
-                          borderColor: '#e5e7eb',
-                        }}
-                      >
-                        <StyledText
-                          variant="medium"
-                          className={`text-sm ${
-                            value === category.name
-                              ? 'text-white'
-                              : 'text-warm-600'
-                          }`}
-                        >
-                          {category.name}
-                        </StyledText>
-                      </Pressable>
-                    )}
-                  />
-                ))}
-              </View>
-            </ScrollView>
-          ) : (
-            <View className="bg-gray-50 rounded-xl p-4 flex-row items-center">
-              <FontAwesome
-                name="info-circle"
-                size={16}
-                color="#6b7280"
-                style={{ marginRight: 8 }}
-              />
-              <StyledText
-                variant="regular"
-                className="text-gray-600 text-xs flex-1"
-              >
-                No categories yet. Go to Products → Categories tab to add one.
-              </StyledText>
-            </View>
-          )}
-        </View>
-
-        {/* Submit Button */}
-        <Pressable
-          onPress={handleSubmit(onSubmit)}
-          disabled={insertProductMutation.isPending}
-          className={`bg-secondary-500 rounded-xl py-4 items-center shadow-md active:opacity-70 ${
-            insertProductMutation.isPending ? 'opacity-50' : ''
-          }`}
-        >
-          {insertProductMutation.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <StyledText variant="extrabold" className="text-white text-base">
-              Add Product
-            </StyledText>
-          )}
-        </Pressable>
-
-        {/* Cancel Button */}
-        <TouchableOpacity
-          onPress={handleBackPress}
-          className="bg-warm-100 rounded-xl py-4 items-center mt-3 active:opacity-70"
-        >
-          <StyledText variant="semibold" className="text-warm-900 text-base">
-            Cancel
-          </StyledText>
-        </TouchableOpacity>
       </KeyboardAwareScrollView>
+
+      <Modal
+        visible={form.showDialog}
+        onClose={() => form.setShowDialog(false)}
+        title="Unsaved Changes"
+        description="You have unsaved changes. Are you sure you want to discard them?"
+        variant="warning"
+        useNativeModal={false}
+        buttons={[
+          {
+            text: "Don't Leave",
+            style: 'cancel',
+            onPress: () => form.setShowDialog(false),
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              form.setShowDialog(false);
+              router.back();
+            },
+          },
+        ]}
+      />
     </SafeAreaView>
   );
 }

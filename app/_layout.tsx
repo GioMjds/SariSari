@@ -8,10 +8,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
+import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import '../global.css';
-import { Platform, View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -56,6 +57,14 @@ export default function RootLayout() {
     NavigationBar.setBackgroundColorAsync('#EFE6D2');
   }, []);
 
+  const CustomTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: '#EFE6D2', // Sets the fallback background for all screens
+    },
+  };
+
   // When the DB fails to initialize, fail loud. Don't render the Stack —
   // a partially-mounted navigator on top of a broken DB would render
   // empty screens that look "fine" until the user tries an action.
@@ -71,24 +80,23 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider>
-          <StatusBar style="inverted" backgroundColor="#623418" />
-          <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation:
-                  Platform.OS === 'ios' ? 'ios_from_right' : 'slide_from_right',
-                contentStyle: { backgroundColor: '#EFE6D2' },
-              }}
-            />
-          </View>
-          <Toast />
-          <GlobalModal />
-        </SafeAreaProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <ThemeProvider value={CustomTheme}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+        <QueryClientProvider client={queryClient}>
+          <SafeAreaProvider>
+            <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: '#EFE6D2' },
+                }}
+              />
+            </View>
+            <Toast />
+            <GlobalModal />
+          </SafeAreaProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    </ThemeProvider>
   );
 }
