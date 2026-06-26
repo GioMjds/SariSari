@@ -8,6 +8,8 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { getCurrentLanguage } from '@/lib/i18n';
 import { LanguagePickerDialog } from './LanguagePickerDialog';
+import { exportBackup, importRestore } from '@/lib/backup';
+import { useQueryClient } from '@tanstack/react-query';
 
 /**
  * SettingsScreen — what the app actually does today, plus the shape of
@@ -31,6 +33,17 @@ export const SettingsScreen = () => {
   const { profile, loading: profileLoading } = useProfile();
   const { t } = useTranslation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const handleBackup = useCallback(async () => {
+    await exportBackup(t);
+  }, [t]);
+
+  const handleRestore = useCallback(async () => {
+    await importRestore(t, () => {
+      queryClient.clear();
+    });
+  }, [t, queryClient]);
 
   const stub = useCallback(
     (label: string) => {
@@ -124,38 +137,38 @@ export const SettingsScreen = () => {
             />
           </SettingsSection>
 
-          {/* Section 3 — Coming soon */}
+          {/* Section 3 — Database */}
+          <SettingsSection
+            title={t('common:settingsDatabaseSection')}
+            subtitle={t('common:settingsDatabaseSub')}
+          >
+            <SettingsRow
+              label={t('common:settingsBackup')}
+              value={t('common:settingsBackupAvailable')}
+              icon="cloud-upload"
+              interactive
+              onPress={handleBackup}
+            />
+            <SettingsRow
+              label={t('common:settingsRestore')}
+              value={t('common:settingsRestoreAvailable')}
+              icon="cloud-download"
+              interactive
+              onPress={handleRestore}
+            />
+          </SettingsSection>
+
+          {/* Section 4 — Coming soon */}
           <SettingsSection
             title={t('common:settingsComingSoonSection')}
             subtitle={t('common:settingsComingSoonSub')}
           >
-            <SettingsRow
-              label={t('common:settingsBackup')}
-              value={t('common:settingsNotAvailable')}
-              icon="cloud-upload"
-              interactive
-              onPress={() => stub(t('common:settingsBackup'))}
-            />
-            <SettingsRow
-              label={t('common:settingsRestore')}
-              value={t('common:settingsNotAvailable')}
-              icon="cloud-download"
-              interactive
-              onPress={() => stub(t('common:settingsRestore'))}
-            />
             <SettingsRow
               label={t('common:settingsExport')}
               value={t('common:settingsNotAvailable')}
               icon="share-square-o"
               interactive
               onPress={() => stub(t('common:settingsExport'))}
-            />
-            <SettingsRow
-              label={t('common:settingsExportBackup')}
-              value={t('common:settingsNotAvailable')}
-              icon="archive"
-              interactive
-              onPress={() => stub(t('common:settingsExportBackup'))}
             />
           </SettingsSection>
 

@@ -50,6 +50,12 @@
           "icon": "./assets/images/logo.png",
           "color": "#EFE6D2"
         }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
       ]
     ],
     "experiments": {
@@ -63,6 +69,6 @@
         "projectId": "982c08c5-26c3-4edc-b8f3-64830767ef23"
       }
     },
-    "owner": "Gio Majadas"
+    "owner": "mimic1"
   }
 }

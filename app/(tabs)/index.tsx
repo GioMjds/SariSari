@@ -14,12 +14,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**

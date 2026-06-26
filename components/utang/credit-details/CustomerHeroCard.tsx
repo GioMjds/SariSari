@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
-import { Clipboard, Linking, Pressable, Share, View } from 'react-native';
+import { Alert, Clipboard, Linking, Pressable, Share, View } from 'react-native';
 import {
   CreditTransaction,
   CustomerWithDetails,
@@ -17,6 +17,8 @@ import {
 import { formatPesos } from '@/lib/money';
 import { MoneyText, StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
+import { useTranslation } from 'react-i18next';
+import { shareCreditStatementPdf } from '@/lib/pdfGenerator';
 
 interface CustomerHeroCardProps {
   customer: CustomerWithDetails;
@@ -486,8 +488,9 @@ function StatementShareButton({
   credits: CreditTransaction[];
   storeName: string;
 }) {
-  const handlePress = async () => {
-    Haptics.selectionAsync().catch(() => {});
+  const { t } = useTranslation();
+
+  const handleShareText = async () => {
     const text = buildStatement({ storeName, customer, credits });
     try {
       await Share.share({
@@ -504,6 +507,38 @@ function StatementShareButton({
         // can do here. The share sheet already showed the text.
       }
     }
+  };
+
+  const handleSharePdf = async () => {
+    await shareCreditStatementPdf({
+      storeName,
+      customerName: customer.name,
+      credits,
+      totalBalance: customer.outstanding_balance,
+    });
+  };
+
+  const handlePress = () => {
+    Haptics.selectionAsync().catch(() => {});
+    
+    Alert.alert(
+      t('common:shareStatementTitle', 'Share Statement'),
+      t('common:shareStatementMessage', 'Choose how you want to share the statement with your suki:'),
+      [
+        {
+          text: t('common:shareAsText', 'Share as Text (SMS/Chat)'),
+          onPress: handleShareText,
+        },
+        {
+          text: t('common:shareAsPdf', 'Share as PDF Resibo'),
+          onPress: handleSharePdf,
+        },
+        {
+          text: t('common:cancel', 'Cancel'),
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   return (
