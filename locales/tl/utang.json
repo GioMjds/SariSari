@@ -1,0 +1,21 @@
+{
+  "eyebrow": "UTANG LEDGER",
+  "title": "Mga Utang",
+
+  "addCustomerA11y": "Magdagdag ng suki",
+
+  "subtitleOverdueSingular": "{{count}} overdue na suki na kailangang sundan",
+  "subtitleOverduePlural": "{{count}} overdue na suki na kailangang sundan",
+  "subtitleEmpty": "Magdagdag ng unang suki para ma-track ang utang",
+  "subtitleTopOfList": "Si {{name}} ang nasa itaas",
+  "subtitleLedgerClear": "Lahat ng bayad na — walang natitirang utang",
+  "subtitleLoading": "Nilo-load ang ledger mo…",
+
+  "searchCustomersPlaceholder": "Maghanap ng suki…",
+
+  "sukiSingular": "suki",
+  "sukiPlural": "mga suki",
+  "withBalance": "may natitirang utang",
+  "allPaidUp": "bayad na lahat",
+  "pastDueDate": "lampas na sa due date"
+}

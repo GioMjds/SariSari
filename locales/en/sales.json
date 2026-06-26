@@ -1,0 +1,20 @@
+{
+  "eyebrow": "Resibo Book",
+  "title": "My Sales",
+  "subtitleEmpty": "Start your resibo book",
+  "subtitleSingular": "{{count}} resibo on file",
+  "subtitlePlural": "{{count}} resibos on file",
+
+  "filterSalesA11y": "Filter sales",
+  "recordNewSaleA11y": "Record new sale",
+
+  "todaySlip": "Today Slip",
+  "todaySlipSub": "Today's Slip",
+  "amountDue": "Amount Due",
+  "itemsSold": "Items Sold",
+  "credits": "Credits",
+
+  "emptyTitle": "No sales yet",
+  "emptyBody": "Record your first sale to start your resibo book.",
+  "emptyCta": "New Sale"
+}

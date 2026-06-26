@@ -3,6 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { useTranslation } from 'react-i18next';
 
 interface CreditsHeaderProps {
   subtitle: string;
@@ -22,6 +23,7 @@ export const CreditsHeader = memo(function CreditsHeader({
   subtitle,
   onAddCustomer,
 }: CreditsHeaderProps) {
+  const { t } = useTranslation('utang');
   return (
     <MotiView
       from={{ opacity: 0 }}
@@ -53,7 +55,7 @@ export const CreditsHeader = memo(function CreditsHeader({
             className="text-label text-paper-200 opacity-80"
             style={{ letterSpacing: 1.4 }}
           >
-            UTANG LEDGER
+            {t('eyebrow')}
           </StyledText>
         </View>
 
@@ -65,7 +67,7 @@ export const CreditsHeader = memo(function CreditsHeader({
               className="text-h1 text-paper-50 text-3xl"
               style={{ letterSpacing: -0.28 }}
             >
-              Credits
+              {t('title')}
             </StyledText>
             <StyledText
               variant="regular"
@@ -80,7 +82,7 @@ export const CreditsHeader = memo(function CreditsHeader({
             activeOpacity={0.8}
             onPress={onAddCustomer}
             accessibilityRole="button"
-            accessibilityLabel="Add customer"
+            accessibilityLabel={t('addCustomerA11y')}
             className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
           >
             <FontAwesome name="user-plus" size={18} color="#FBF7EE" />

@@ -12,6 +12,7 @@ import { useCredits, useProducts, useSales } from '@/hooks';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -130,8 +131,6 @@ export default function Dashboard() {
   const hasAnySales = sales.length > 0;
   const isFreshStore = !hasAnyProducts && !hasAnySales;
 
-  // ─── Refresh ──────────────────────────────────────────────────
-
   const refetchAll = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['sales-stats'] }),
@@ -150,8 +149,6 @@ export default function Dashboard() {
       setRefreshing(false);
     }
   }, [refetchAll]);
-
-
 
   const handleNewSale = useCallback(() => {
     router.push(routes.newSale);
@@ -236,6 +233,7 @@ export default function Dashboard() {
 }
 
 function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const { t } = useTranslation();
   return (
     <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
       <View className="flex-row items-center mb-3">
@@ -261,7 +259,7 @@ function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
           className="text-label text-paper-200 opacity-80"
           style={{ letterSpacing: 1.4 }}
         >
-          COUNTER COMMAND CENTER
+          {t('common:dashboardEyebrow')}
         </StyledText>
       </View>
 
@@ -272,19 +270,19 @@ function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
             className="text-h1 text-paper-50 text-3xl"
             style={{ letterSpacing: -0.28 }}
           >
-            Dashboard
+            {t('common:dashboardTitle')}
           </StyledText>
           <StyledText
             variant="regular"
             className="text-sm text-paper-200 opacity-90 mt-1"
           >
-            Your counter at a glance
+            {t('common:dashboardSubtitle')}
           </StyledText>
         </View>
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Open settings"
+          accessibilityLabel={t('common:settingsTitle')}
           onPress={onOpenSettings}
           className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:opacity-70"
         >

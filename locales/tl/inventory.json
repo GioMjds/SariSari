@@ -1,0 +1,33 @@
+{
+  "tabProducts": "Mga Produkto",
+  "tabCategories": "Mga Kategorya",
+
+  "eyebrowMaster": "PANGUNAHING DATA",
+  "eyebrowSections": "MGA SEKSYON",
+  "titleCatalog": "Katalogo",
+  "titleCategories": "Mga Kategorya Mo",
+  "subtitleProducts": "{{total}} produkto · {{low}} kaunti · {{out}} ubos",
+  "subtitleCategories": "{{count}} kategorya",
+
+  "addProductA11y": "Magdagdag ng produkto",
+
+  "searchPlaceholder": "Maghanap ng produkto o SKU...",
+
+  "sortBy": "Ayusin Ayon Sa",
+  "sortName": "Pangalan",
+  "sortPrice": "Presyo",
+  "sortStock": "Stock",
+  "sortSku": "SKU",
+
+  "actionSheetSubtitle": "Piliin ang gagawin",
+  "actionMarkDamaged": "Markahan Sirang",
+  "actionAdjustStock": "Ayusin ang Stock",
+  "actionViewLedger": "Tingnan ang Ledger",
+  "actionEditProduct": "I-edit ang Produkto",
+  "actionDeleteProduct": "I-delete ang Produkto",
+
+  "deleteTitle": "I-delete ang Produkto?",
+  "deleteBody": "Sigurado ka bang gusto mong i-delete ang \"{{name}}\"?",
+  "deleteWarning": "Hindi na maibabalik ang aksyon na ito.",
+  "deleteConfirm": "Oo, I-delete ang Produkto"
+}

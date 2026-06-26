@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { View } from 'react-native';
 import { MotiView } from 'moti';
 import { AlertCard } from './AlertCard';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardAlertCardsProps {
   lowStockCount: number;
@@ -28,6 +29,7 @@ export const DashboardAlertCards = memo(function DashboardAlertCards({
   onTapStock,
   onTapUtang,
 }: DashboardAlertCardsProps) {
+  const { t } = useTranslation();
   const stockTotal = lowStockCount + outOfStockCount;
   const showStock = stockTotal > 0;
   const showUtang = outstandingPesos > 0;
@@ -46,32 +48,44 @@ export const DashboardAlertCards = memo(function DashboardAlertCards({
             <AlertCard
               tone="warning"
               icon="exclamation-triangle"
-              eyebrow="Stock"
+              eyebrow={t('common:alertsStockEyebrow')}
               valueText={`${stockTotal}`}
               valueKind="count"
               subtitle={
                 outOfStockCount > 0
-                  ? `${outOfStockCount} out · ${lowStockCount} low`
-                  : `${lowStockCount} low stock`
+                  ? t('common:alertsStockSubtitleOutAndLow', {
+                      out: outOfStockCount,
+                      low: lowStockCount,
+                    })
+                  : t('common:alertsStockSubtitleLowOnly', {
+                      low: lowStockCount,
+                    })
               }
               onPress={onTapStock}
-              accessibilityLabel={`${stockTotal} items need stock attention`}
+              accessibilityLabel={t('common:alertsStockA11y', {
+                count: stockTotal,
+              })}
             />
           )}
           {showUtang && (
             <AlertCard
               tone="danger"
               icon="credit-card"
-              eyebrow="Utang"
+              eyebrow={t('common:alertsUtangEyebrow')}
               valueText={`${outstandingPesos}`}
               valueKind="money"
               subtitle={
                 customersWithBalance === 1
-                  ? '1 suki owes'
-                  : `${customersWithBalance} suki owe`
+                  ? t('common:alertsUtangSukiOne')
+                  : t('common:alertsUtangSukiMany', {
+                      count: customersWithBalance,
+                    })
               }
               onPress={onTapUtang}
-              accessibilityLabel={`Outstanding utang ${outstandingPesos} pesos across ${customersWithBalance} customers`}
+              accessibilityLabel={t('common:alertsUtangA11y', {
+                amount: outstandingPesos,
+                count: customersWithBalance,
+              })}
             />
           )}
         </View>

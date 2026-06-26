@@ -1,0 +1,20 @@
+{
+  "eyebrow": "Resibo Book",
+  "title": "Mga Benta Ko",
+  "subtitleEmpty": "Simulan ang iyong resibo book",
+  "subtitleSingular": "{{count}} resibo na naka-file",
+  "subtitlePlural": "{{count}} resibos na naka-file",
+
+  "filterSalesA11y": "I-filter ang mga benta",
+  "recordNewSaleA11y": "Mag-record ng bagong benta",
+
+  "todaySlip": "Resibo Ngayon",
+  "todaySlipSub": "Resibo ng Araw na Ito",
+  "amountDue": "Kailangang Bayaran",
+  "itemsSold": "Mga Nabenta",
+  "credits": "Utang",
+
+  "emptyTitle": "Walang benta pa",
+  "emptyBody": "Mag-record ng unang benta para simulan ang iyong resibo book.",
+  "emptyCta": "Bagong Benta"
+}
