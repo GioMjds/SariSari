@@ -1,6 +1,6 @@
 {
   "appName": "SariSari",
-  "settings": "Settings",
+  "settings": "Mga Setting",
   "save": "I-save",
   "cancel": "Kanselahin",
   "delete": "I-delete",
@@ -13,7 +13,7 @@
   "finish": "Tapos na",
   "skip": "Laktawan",
 
-  "dashboardEyebrow": "COUNTER COMMAND CENTER",
+  "dashboardEyebrow": "SENTRO NG KONTROL NG COUNTER",
   "dashboardTitle": "Dashboard",
   "dashboardSubtitle": "Ang inyong counter sa isang sulyap",
 
@@ -21,7 +21,7 @@
   "heroTransactions": "{{count}} benta",
   "heroItemsSold": "MGA NABENTA",
   "heroCreditSales": "UTANG NA BENTA",
-  "heroBreakdown": "BREAKDOWN",
+  "heroBreakdown": "DETALYE",
 
   "qaNewSale": "Bagong Benta",
   "qaAddStock": "Magdagdag ng Stock",
@@ -31,7 +31,7 @@
   "alertsStockValue": "{{count}}",
   "alertsStockSubtitleOutAndLow": "{{out}} ubos · {{low}} kaunti",
   "alertsStockSubtitleLowOnly": "{{low}} kaunting stock",
-  "alertsStockA11y": "{{count}} items na kailangan ng stock attention",
+  "alertsStockA11y": "{{count}} na produkto na kailangang asikasuhin ang stock",
 
   "alertsUtangEyebrow": "Utang",
   "alertsUtangA11y": "Utang na {{amount}} pesos mula sa {{count}} suki",
@@ -40,7 +40,7 @@
 
   "emptyEyebrow": "Maligayang Pagdating",
   "emptyTitle": "I-setup ang iyong counter",
-  "emptyBody": "Magdagdag ng unang produkto para alam ng till kung ano ang ibebenta.",
+  "emptyBody": "Magdagdag ng unang produkto para alam ng counter kung ano ang ibebenta.",
   "emptyAddProduct": "Magdagdag ng Produkto",
   "emptyFirstSale": "Simulan ang Unang Benta",
 
@@ -50,33 +50,33 @@
   "viewAll": "Tingnan lahat",
   "viewAllA11y": "Tingnan lahat ng {{label}}",
 
-  "settingsTitle": "Settings",
+  "settingsTitle": "Mga Setting",
   "settingsSubtitle": "Tindahan at mga darating na feature",
   "settingsStoreSection": "Tindahan",
-  "settingsStoreSectionSub": "Mula sa iyong onboarding profile",
+  "settingsStoreSectionSub": "Mula sa iyong profile sa onboarding",
   "settingsComingSoonSection": "Paparating",
-  "settingsComingSoonSub": "Sa roadmap — kapag na-tap, ipinapaalala na hindi pa ito ready",
+  "settingsComingSoonSub": "Nasa plano — kapag pinindot, ipapaalala na hindi pa ito handa",
   "settingsStoreName": "Pangalan ng tindahan",
   "settingsOwnerName": "Pangalan ng may-ari",
-  "settingsBackup": "Backup Data",
-  "settingsRestore": "Restore Data",
+  "settingsBackup": "I-backup ang Data",
+  "settingsRestore": "I-restore ang Data",
   "settingsExport": "I-export ang Data",
-  "settingsLanguage": "Language",
+  "settingsLanguage": "Wika",
   "settingsExportBackup": "I-export ang Backup",
   "settingsNotAvailable": "Hindi pa available",
   "settingsGoBackA11y": "Bumalik",
-  "settingsFooter": "SariSari — isang working prototype.",
+  "settingsFooter": "SariSari — isang gumaganang prototype.",
   "settingsComingSoonAlertTitle": "{{label}} — paparating pa",
-  "settingsComingSoonAlertBody": "Hindi pa ito ready. Nasa roadmap ito at ilalabas kapag okay na ang data flow at privacy.",
+  "settingsComingSoonAlertBody": "Hindi pa ito handa. Nasa plano ito at ilalabas kapag maayos na ang data flow at privacy.",
 
-  "languagePickerTitle": "Piliin ang iyong language",
-  "languagePickerSubtitle": "Piliin ang language na gusto mong gamitin ni Sari.",
+  "languagePickerTitle": "Piliin ang iyong wika",
+  "languagePickerSubtitle": "Piliin ang wika na gusto mong gamitin ni Sari.",
   "languageEnglish": "English",
   "languageTagalog": "Tagalog",
   "languageActive": "Aktibo",
 
-  "sellTitle": "Sell",
-  "inventoryTitle": "Inventory",
+  "sellTitle": "Benta",
+  "inventoryTitle": "Imbentaryo",
   "utangTitle": "Utang",
-  "reportsTitle": "Reports"
+  "reportsTitle": "Mga Ulat"
 }

@@ -64,8 +64,6 @@ export default function RootLayout() {
       const message =
         error instanceof Error ? error.message : 'Unknown error';
       console.warn('Failed to initialize i18n, falling back to English:', message);
-      // Still mark ready so the splash can hide — the app is usable in
-      // English-only mode if the locale bundle fails to load.
       setI18nReady(true);
     }
   }, []);
@@ -77,10 +75,10 @@ export default function RootLayout() {
   }, [fontsLoaded, runDbInit, runI18nInit]);
 
   useEffect(() => {
-    if (fontsLoaded && !dbInitError && i18nReady) {
+    if (fontsLoaded && i18nReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, dbInitError, i18nReady]);
+  }, [fontsLoaded, i18nReady]);
 
   useEffect(() => {
     NavigationBar.setBackgroundColorAsync('#EFE6D2');

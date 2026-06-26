@@ -2,9 +2,9 @@
   "tabProducts": "Mga Produkto",
   "tabCategories": "Mga Kategorya",
 
-  "eyebrowMaster": "MASTER DATA",
+  "eyebrowMaster": "PANGUNAHING DATA",
   "eyebrowSections": "MGA SEKSYON",
-  "titleCatalog": "Catalog",
+  "titleCatalog": "Katalogo",
   "titleCategories": "Mga Kategorya Mo",
   "subtitleProducts": "{{total}} produkto · {{low}} kaunti · {{out}} ubos",
   "subtitleCategories": "{{count}} kategorya",

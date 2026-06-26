@@ -24,9 +24,6 @@ export default function SaleDetails() {
   const { data: sale, isLoading } = useGetSale(Number(id));
 
   const handleDeleteSale = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
-      () => {},
-    );
     Alert.alert(
       'Delete Sale',
       'Are you sure you want to delete this sale? This will restore the inventory.',
@@ -38,10 +35,6 @@ export default function SaleDetails() {
           onPress: async () => {
             try {
               await deleteSaleMutation.mutateAsync(Number(id));
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success,
-              ).catch(() => {});
-              router.back();
             } catch {
               Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Error,
