@@ -50,12 +50,6 @@
           "icon": "./assets/images/logo.png",
           "color": "#EFE6D2"
         }
-      ],
-      [
-        "expo-document-picker",
-        {
-          "iCloudContainerEnvironment": "Production"
-        }
       ]
     ],
     "experiments": {

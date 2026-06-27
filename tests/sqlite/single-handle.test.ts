@@ -2,7 +2,16 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = join(__dirname, '..', '..');
-const ALLOW = new Set(['configs/sqlite.ts']);
+// `lib/backup/integrity.ts` and `lib/backup/snapshots.ts` open a SECOND,
+// read-only probe handle (via `openProbeDatabase`) so the integrity check
+// can run `PRAGMA integrity_check` against candidate snapshot files (the
+// live `db` is in WAL mode and would conflict with the probe). The probe
+// is short-lived and never writes — see spec §6.
+const ALLOW = new Set([
+	'configs/sqlite.ts',
+	'lib/backup/integrity.ts',
+	'lib/backup/snapshots.ts',
+]);
 const SKIP_DIRS = new Set([
   'node_modules',
   '.git',

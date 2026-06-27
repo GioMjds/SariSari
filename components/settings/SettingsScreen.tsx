@@ -1,15 +1,17 @@
 import { StyledText } from '@/components/elements';
 import { useProfile } from '@/hooks/useProfile';
 import { FontAwesome } from '@expo/vector-icons';
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { getCurrentLanguage } from '@/lib/i18n';
 import { LanguagePickerDialog } from './LanguagePickerDialog';
-import { exportBackup, importRestore } from '@/lib/backup';
-import { useQueryClient } from '@tanstack/react-query';
+import {
+  CloudBackupSection,
+  LocalSnapshotsSection,
+} from './backup';
 
 /**
  * SettingsScreen — what the app actually does today, plus the shape of
@@ -17,13 +19,11 @@ import { useQueryClient } from '@tanstack/react-query';
  *
  * Sections:
  *   1. Store           — store name + owner name (live, from onboarding profile).
- *   2. Coming soon     — Backup / Restore / Export. These are real
- *                        features that need design and a privacy review before
- *                        they ship, so they render as interactive rows that
- *                        explain what they will do and acknowledge the user
- *                        with a friendly alert. No fake success state.
- *   3. Language        — opens the language picker dialog so the owner can
+ *   2. Language        — opens the language picker dialog so the owner can
  *                        switch between English and Tagalog live.
+ *   3. Database        — Cloud Backup (Phase 1 stub when OAuth client ID is
+ *                        empty; Phase 2 wires the Drive UI) + Local Snapshots
+ *                        (rolling 7-deep backup history, with restore picker).
  *
  * This component is rendered by both `/settings` (the regular route) and
  * `/(edit-forms)/settings` (the modal route), so the visual layer lives
@@ -33,27 +33,6 @@ export const SettingsScreen = () => {
   const { profile, loading: profileLoading } = useProfile();
   const { t } = useTranslation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const handleBackup = useCallback(async () => {
-    await exportBackup(t);
-  }, [t]);
-
-  const handleRestore = useCallback(async () => {
-    await importRestore(t, () => {
-      queryClient.clear();
-    });
-  }, [t, queryClient]);
-
-  const stub = useCallback(
-    (label: string) => {
-      Alert.alert(
-        t('common:settingsComingSoonAlertTitle', { label }),
-        t('common:settingsComingSoonAlertBody'),
-      );
-    },
-    [t],
-  );
 
   const activeLang = getCurrentLanguage();
   const languageValue =
@@ -142,34 +121,8 @@ export const SettingsScreen = () => {
             title={t('common:settingsDatabaseSection')}
             subtitle={t('common:settingsDatabaseSub')}
           >
-            <SettingsRow
-              label={t('common:settingsBackup')}
-              value={t('common:settingsBackupAvailable')}
-              icon="cloud-upload"
-              interactive
-              onPress={handleBackup}
-            />
-            <SettingsRow
-              label={t('common:settingsRestore')}
-              value={t('common:settingsRestoreAvailable')}
-              icon="cloud-download"
-              interactive
-              onPress={handleRestore}
-            />
-          </SettingsSection>
-
-          {/* Section 4 — Coming soon */}
-          <SettingsSection
-            title={t('common:settingsComingSoonSection')}
-            subtitle={t('common:settingsComingSoonSub')}
-          >
-            <SettingsRow
-              label={t('common:settingsExport')}
-              value={t('common:settingsNotAvailable')}
-              icon="share-square-o"
-              interactive
-              onPress={() => stub(t('common:settingsExport'))}
-            />
+            <CloudBackupSection />
+            <LocalSnapshotsSection />
           </SettingsSection>
 
           <View className="px-6 pt-2 pb-6">

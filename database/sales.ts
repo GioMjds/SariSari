@@ -1,5 +1,6 @@
 import { db } from '../configs/sqlite';
 import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
+import { useBackupCounter } from '../stores/backupCounter';
 import {
   Sale,
   SaleItemWithProduct,
@@ -159,6 +160,16 @@ export const insertSale = async (
     }
 
     await db.execAsync('COMMIT;');
+
+    // Fire-and-forget backup counter bump. A failed bump MUST NOT
+    // affect the sale — the sale is the source of truth; backups are
+    // best-effort. The 20-sale scheduler will retry on the next sale.
+    try {
+      useBackupCounter.getState().bump();
+    } catch {
+      // intentional swallow — see spec §7 "What never throws across a sale"
+    }
+
     return saleId;
   } catch (err) {
     // ROLLBACK ignores failures (e.g. no active txn) — best-effort cleanup.

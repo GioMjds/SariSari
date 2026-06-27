@@ -1,3 +1,4 @@
+export * from './useBackup';
 export * from './useCategories';
 export * from './useCredits';
 export * from './useInventory';
