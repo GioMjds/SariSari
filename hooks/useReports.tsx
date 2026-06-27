@@ -35,6 +35,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 // KPI
 export const useReportKPIs = (dateRange: DateRange) =>
@@ -192,7 +193,7 @@ export const useReportInsights = (dateRange: DateRange) =>
 export function useReports() {
   const queryClient = useQueryClient();
 
-  const invalidateReports = async () => {
+  const invalidateReports = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['report-kpis'] }),
       queryClient.invalidateQueries({ queryKey: ['report-sales-over-time'] }),
@@ -214,7 +215,7 @@ export function useReports() {
       }),
       queryClient.invalidateQueries({ queryKey: ['report-insights'] }),
     ]);
-  };
+  }, [queryClient]);
 
   return {
     useReportKPIs,

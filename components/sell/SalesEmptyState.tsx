@@ -2,12 +2,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
-/**
- * SalesEmptyState — Sari mascot on a torn paper card. Lives where the
- * receipt list would be. Title flips between "no sales yet" and
- * "no matches" depending on whether the user has any sales at all.
- */
-
 interface SalesEmptyStateProps {
   onNewSale: () => void;
   hasSales: boolean;
@@ -16,6 +10,11 @@ interface SalesEmptyStateProps {
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#EFE6D2';
 
+/**
+ * SalesEmptyState — Sari mascot on a torn paper card. Lives where the
+ * receipt list would be. Title flips between "no sales yet" and
+ * "no matches" depending on whether the user has any sales at all.
+ */
 export function SalesEmptyState({ onNewSale, hasSales }: SalesEmptyStateProps) {
   const title = hasSales ? 'Walang nagmamatch' : 'Wala pang resibo';
   const subtitle = hasSales

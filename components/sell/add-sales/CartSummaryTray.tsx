@@ -9,7 +9,13 @@ interface CartSummaryTrayProps {
   itemCount: number;
   total: number;
   paymentType: 'cash' | 'credit';
-  selectedCustomer: Customer | null;
+  /**
+   * Hybrid buyer identifier:
+   *   • `Customer` → registered Suki.
+   *   • `string`   → typed one-off name (cash sales only).
+   *   • `null`     → no buyer captured.
+   */
+  selectedCustomer: Customer | string | null;
   isSubmitDisabled: boolean;
   isPending: boolean;
   onPaymentTypeChange: (type: 'cash' | 'credit') => void;
@@ -23,7 +29,10 @@ interface CartSummaryTrayProps {
  * Anchors to the bottom of the screen and stacks four blocks:
  *   1. Total items + grand total row.
  *   2. Payment mode toggle (Cash / Credit).
- *   3. Customer picker trigger — only rendered when payment is Credit.
+ *   3. Buyer / Suki picker trigger — rendered for BOTH payment modes:
+ *        • credit → "Suki (Required)", warning-styled when null.
+ *        • cash   → "Buyer / Suki (Optional)", neutral-styled when null.
+ *      Tapping opens the hybrid `CustomerPickerModal`.
  *   4. Complete Sale CTA (persimmon, matching `SubmitButton` style).
  *
  * Disabled state uses `bg-ink-100` so the brand fill reads as a
@@ -40,6 +49,18 @@ export function CartSummaryTray({
   onOpenCustomerPicker,
   onSubmit,
 }: CartSummaryTrayProps) {
+  const isCredit = paymentType === 'credit';
+  const isRegisteredSuki =
+    typeof selectedCustomer === 'object' && selectedCustomer !== null;
+  const displayName =
+    typeof selectedCustomer === 'string'
+      ? selectedCustomer
+      : selectedCustomer?.name ?? null;
+
+  // Label + state flags: credit requires a Suki, cash accepts anything.
+  const buyerLabel = isCredit ? 'Suki (Required)' : 'Buyer / Suki (Optional)';
+  const isRequiredAndMissing = isCredit && !selectedCustomer;
+
   return (
     <View className="bg-paper-50 border-t border-ink-150 px-4 pt-3 pb-6 shadow-paper-lift">
       {/* Total row */}
@@ -86,53 +107,93 @@ export function CartSummaryTray({
         />
       </View>
 
-      {/* Customer picker (credit only) */}
-      {paymentType === 'credit' && (
-        <Pressable
-          onPress={onOpenCustomerPicker}
-          accessibilityRole="button"
-          accessibilityLabel={
-            selectedCustomer
-              ? `Change customer. Currently ${selectedCustomer.name}`
-              : 'Select customer'
-          }
-          className={`flex-row items-center justify-between rounded-xl px-3 py-3 mb-3 border ${
-            selectedCustomer
+      {/* Hybrid buyer picker — both modes. Warning tone for missing suki on credit,
+          neutral tone otherwise. Cash mode shows the buyer as resolved. */}
+      <Pressable
+        onPress={onOpenCustomerPicker}
+        accessibilityRole="button"
+        accessibilityLabel={
+          displayName
+            ? `Change buyer. Currently ${displayName}`
+            : isCredit
+              ? 'Select customer'
+              : 'Add buyer name'
+        }
+        className={`flex-row items-center justify-between rounded-xl px-3 py-3 mb-3 border ${
+          isRequiredAndMissing
+            ? 'bg-semantic-warning-50 border-semantic-warning/30'
+            : displayName
               ? 'bg-white border-ink-100'
-              : 'bg-semantic-warning-50 border-semantic-warning/30'
-          } active:opacity-70`}
-        >
-          <View className="flex-row items-center flex-1 pr-2">
-            <FontAwesome
-              name={selectedCustomer ? 'user' : 'exclamation-triangle'}
-              size={14}
-              color={selectedCustomer ? '#623418' : '#C77B0E'}
-            />
-            <View className="ml-2 flex-1">
-              <StyledText
-                variant="medium"
-                className="label-caps text-ink-400"
-              >
-                Suki
-              </StyledText>
-              <StyledText
-                variant={selectedCustomer ? 'extrabold' : 'semibold'}
-                className={`text-sm ${
-                  selectedCustomer ? 'text-ink-900' : 'text-semantic-warning'
-                }`}
-                numberOfLines={1}
-              >
-                {selectedCustomer ? selectedCustomer.name : 'Select customer'}
-              </StyledText>
-            </View>
-          </View>
+              : 'bg-paper-50 border-ink-200'
+        } active:opacity-70`}
+      >
+        <View className="flex-row items-center flex-1 pr-2">
           <FontAwesome
-            name="chevron-right"
-            size={12}
-            color={selectedCustomer ? '#623418' : '#C77B0E'}
+            name={
+              isRequiredAndMissing
+                ? 'exclamation-triangle'
+                : displayName
+                  ? 'user'
+                  : 'user-o'
+            }
+            size={14}
+            color={isRequiredAndMissing ? '#C77B0E' : '#623418'}
           />
-        </Pressable>
-      )}
+          <View className="ml-2 flex-1">
+            <StyledText
+              variant="medium"
+              className={`label-caps ${
+                isRequiredAndMissing ? 'text-semantic-warning' : 'text-ink-400'
+              }`}
+            >
+              {buyerLabel}
+            </StyledText>
+            <StyledText
+              variant={displayName ? 'extrabold' : 'semibold'}
+              className={`text-sm ${
+                isRequiredAndMissing
+                  ? 'text-semantic-warning'
+                  : displayName
+                    ? 'text-ink-900'
+                    : 'text-ink-500'
+              }`}
+              numberOfLines={1}
+            >
+              {displayName ??
+                (isCredit ? 'Select customer' : 'Add buyer name (optional)')}
+            </StyledText>
+          </View>
+        </View>
+
+        {/* Small badge indicating whether the selection is a registered Suki
+            or a one-off typed name. Helps the owner double-check at the
+            counter that they didn't accidentally type a name for a credit
+            sale (which would clear the picker on toggle). */}
+        {displayName ? (
+          <View
+            className={`mr-2 px-2 py-0.5 rounded-full border ${
+              isRegisteredSuki
+                ? 'bg-persimmon-500/10 border-persimmon-500/30'
+                : 'bg-ink-100 border-ink-200'
+            }`}
+          >
+            <StyledText
+              variant="extrabold"
+              className={`text-[10px] label-caps ${
+                isRegisteredSuki ? 'text-persimmon-600' : 'text-ink-500'
+              }`}
+            >
+              {isRegisteredSuki ? 'Suki' : 'One-off'}
+            </StyledText>
+          </View>
+        ) : null}
+
+        <FontAwesome
+          name="chevron-right"
+          size={12}
+          color={isRequiredAndMissing ? '#C77B0E' : '#623418'}
+        />
+      </Pressable>
 
       {/* Complete Sale CTA */}
       <Pressable

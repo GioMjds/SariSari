@@ -1,22 +1,32 @@
 import { StyledText } from '@/components/elements';
 import {
-  MoneyText,
-  ReceiptHero,
-  ReceiptHeroDivider,
-  ReceiptHeroMeta,
-  ReceiptHeroTotal,
-  StatusStamp,
-} from '@/components/ui';
+  SaleDetailsFooter,
+  SaleDetailsHeader,
+  SaleDetailsHero,
+  SaleDetailsItemList,
+} from '@/components/sell';
 import { useSales } from '@/hooks';
 import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MotiView } from 'moti';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+/**
+ * SaleDetails — orchestrator for the Sale Details (resibo) screen.
+ *
+ * Owns only:
+ *   • Loading state.
+ *   • Data fetching via `useSales().useGetSale(id)`.
+ *   • Local date/number formatting (`dateLine`, `dateShort`, etc.).
+ *   • The Alert.alert delete confirmation flow.
+ *   • Navigation (router.back).
+ *
+ * Every visual block — header, hero, item list, footer — is delegated
+ * to a presentational subcomponent under `components/sell/sale-details/`.
+ */
 export default function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -79,38 +89,26 @@ export default function SaleDetails() {
     );
   }
 
+  // ─── Derived values (only formatting lives here) ──────────────────
   const isCredit = sale.payment_type === 'credit';
   const timestamp = parseStoredTimestamp(sale.timestamp) || new Date();
   const dateLine = format(timestamp, 'MMM dd, yyyy · hh:mm a');
   const dateShort = format(timestamp, 'MM/dd/yy');
   const timeShort = format(timestamp, 'hh:mm a');
   const itemsCount = sale.items_count;
-  const stampTone = isCredit ? 'persimmon' : 'sage';
-  const stampLabel = isCredit ? 'UTANG' : 'CASH';
+  const grandTotalDisplay = sale.total.toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const buyerName = sale.customer_name?.trim() ?? null;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
-        <Pressable
-          onPress={handleBack}
-          hitSlop={20}
-          className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center shadow-paper border border-ink-100 active:opacity-70"
-        >
-          <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
-        </Pressable>
-
-        <StyledText variant="extrabold" className="label-caps text-ink-400">
-          Sale · {String(sale.id).padStart(5, '0')}
-        </StyledText>
-
-        <Pressable
-          onPress={handleDeleteSale}
-          hitSlop={20}
-          className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center shadow-paper border border-ink-100 active:opacity-70"
-        >
-          <FontAwesome name="trash" size={14} color="#C13030" />
-        </Pressable>
-      </View>
+      <SaleDetailsHeader
+        saleId={sale.id}
+        onBack={handleBack}
+        onDelete={handleDeleteSale}
+      />
 
       <ScrollView
         className="flex-1"
@@ -120,243 +118,48 @@ export default function SaleDetails() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ─── Receipt Hero (staggered fade-in) ──────────────── */}
-        <MotiView
-          from={{ opacity: 0, translateY: 18 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 480, delay: 60 }}
-        >
-          <ReceiptHero tone="persimmon">
-            {/* Eyebrow stamp + customer block */}
-            <View className="px-5 pt-6 pb-3 flex-row items-start justify-between">
-              <View className="flex-1 pr-3">
-                <StyledText
-                  variant="black"
-                  className="text-ink-900 text-3xl"
-                  style={{ letterSpacing: -0.5 }}
-                >
-                  {isCredit ? 'Utang Record' : 'Paid in Full'}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-sm mt-1"
-                >
-                  {dateLine}
-                </StyledText>
-              </View>
-              <StatusStamp
-                label={stampLabel}
-                tone={stampTone}
-                size="md"
-                rotate={isCredit ? -8 : 6}
-              />
-            </View>
-
-            {isCredit && sale.customer_name && (
-              <View className="mx-5 mt-1 mb-2 bg-paper-100 rounded-xl px-4 py-3 border border-dashed border-ink-200">
-                <StyledText className="label-caps text-ink-400 mb-1">
-                  Bill to
-                </StyledText>
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-900 text-lg"
-                >
-                  {sale.customer_name}
-                </StyledText>
-                <View className="flex-row items-center mt-1">
-                  <FontAwesome name="clock-o" size={11} color="#7A7165" />
-                  <StyledText
-                    variant="regular"
-                    className="text-ink-500 text-xs ml-1.5"
-                  >
-                    Due on request
-                  </StyledText>
-                </View>
-              </View>
-            )}
-
-            {/* Meta block — date, time, item count, ref no. */}
-            <ReceiptHeroMeta
-              rows={[
-                { label: 'Date', value: dateShort },
-                { label: 'Time', value: timeShort },
-                {
-                  label: 'Items',
-                  value: `${itemsCount} ${itemsCount === 1 ? 'pc' : 'pcs'}`,
-                },
-                {
-                  label: 'Ref №',
-                  value: `R-${String(sale.id).padStart(6, '0')}`,
-                },
-              ]}
-            />
-
-            {/* Grand total — printed plate */}
-            <ReceiptHeroTotal
-              label={isCredit ? 'BALANCE OUTSTANDING' : 'TOTAL PAID'}
-              amount={sale.total}
-            />
-          </ReceiptHero>
-        </MotiView>
-
-        {/* ─── Items — Itemised ledger ─────────────────────── */}
-        <MotiView
-          from={{ opacity: 0, translateY: 18 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 480, delay: 140 }}
-        >
-          <View className="mx-4 mt-7">
-            {/* Section eyebrow */}
-            <View className="flex-row items-center justify-between mb-3 px-1">
-              <StyledText variant="black" className="label-caps text-ink-700">
-                Itemised list
-              </StyledText>
-              <View className="flex-row items-center">
-                <View className="w-1.5 h-1.5 rounded-full bg-persimmon-500 mr-1.5" />
-                <StyledText variant="medium" className="text-mono text-ink-500">
-                  {sale.items.length} lines
-                </StyledText>
-              </View>
-            </View>
-
-            {/* Item rows — printed-receipt style */}
-            <View className="bg-paper-50 rounded-3xl shadow-paper border border-ink-100 overflow-hidden">
-              {sale.items.map((item, index) => {
-                const lineTotal = item.quantity * item.price;
-                const isLast = index === sale.items.length - 1;
-                return (
-                  <MotiView
-                    key={item.id}
-                    from={{ opacity: 0, translateX: -8 }}
-                    animate={{ opacity: 1, translateX: 0 }}
-                    transition={{
-                      type: 'timing',
-                      duration: 360,
-                      delay: 220 + index * 60,
-                    }}
-                  >
-                    <View
-                      className={`px-5 py-4 ${isLast ? '' : 'border-b border-dashed border-ink-200'}`}
-                    >
-                      <View className="flex-row items-start justify-between">
-                        <View className="flex-1 pr-3">
-                          <StyledText
-                            variant="extrabold"
-                            className="text-ink-900 text-base"
-                            numberOfLines={2}
-                          >
-                            {item.product_name}
-                          </StyledText>
-                          <View className="flex-row items-center mt-1.5">
-                            <View className="bg-paper-200 rounded-md px-2 py-0.5">
-                              <StyledText
-                                variant="medium"
-                                className="text-mono text-ink-700"
-                              >
-                                {item.quantity}×
-                              </StyledText>
-                            </View>
-                            <MoneyText
-                              value={item.price}
-                              className="text-mono text-ink-700 text-sm ml-3"
-                            />
-                          </View>
-                        </View>
-                        <MoneyText
-                          value={lineTotal}
-                          className="text-ink-900 text-base"
-                        />
-                      </View>
-                    </View>
-                  </MotiView>
-                );
-              })}
-
-              {/* Ledger footer — dashes + total line */}
-              <View className="bg-paper-100 px-5 py-3 flex-row items-center justify-between border-t border-dashed border-ink-300">
-                <StyledText
-                  variant="medium"
-                  className="label-caps text-ink-500"
-                >
-                  Subtotal
-                </StyledText>
-                <MoneyText
-                  value={sale.total}
-                  className="text-base text-ink-900"
-                />
-              </View>
-            </View>
-          </View>
-        </MotiView>
-
-        {/* ─── Footer note ─────────────────────────────────── */}
-        <MotiView
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: 'timing', duration: 480, delay: 320 }}
-        >
-          <View className="mx-4 mt-7">
-            <ReceiptHeroDivider label="thank you" tone="sage" />
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-xs text-center mt-3"
-              style={{ lineHeight: 18 }}
-            >
-              Salamat sa iyong pagbili.
-              {'\n'}Keep this resibo for your records.
-            </StyledText>
-          </View>
-        </MotiView>
-      </ScrollView>
-
-      {/* ─── Sticky grand-total plate (deep cinnamon) ──────── */}
-      <MotiView
-        from={{ opacity: 0, translateY: 30 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 520, delay: 220 }}
-        className="absolute bottom-0 left-0 right-0"
-      >
-        <View className="px-4 pb-5 pt-3">
-          <View className="bg-cinnamon-500 rounded-3xl shadow-paper-deep px-5 py-4 flex-row items-center justify-between overflow-hidden">
-            <View className="flex-1">
-              <StyledText
-                variant="medium"
-                className="label-caps text-paper-200 opacity-90"
-              >
-                {isCredit ? 'Utang total' : 'Grand total'}
-              </StyledText>
-              <View className="flex-row items-baseline mt-1">
-                <StyledText
-                  variant="medium"
-                  className="text-paper-100 text-base mr-1"
-                  style={{ letterSpacing: -0.5 }}
-                >
-                  ₱
-                </StyledText>
-                <StyledText
-                  variant="black"
-                  className="text-paper-50 text-3xl"
-                  style={{ letterSpacing: -0.5 }}
-                >
-                  {sale.total.toLocaleString('en-PH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </StyledText>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={handleDeleteSale}
-              hitSlop={12}
-              className="w-12 h-12 rounded-full bg-semantic-danger items-center justify-center shadow-paper active:opacity-80"
-              style={{ marginLeft: 12 }}
-            >
-              <FontAwesome name="trash" size={16} color="#FFF1EA" />
-            </Pressable>
-          </View>
+        <View className="mx-4">
+          <SaleDetailsHero
+            paymentType={sale.payment_type}
+            hasCustomerName={!!buyerName}
+            customerName={buyerName}
+            dateLine={dateLine}
+            dateShort={dateShort}
+            timeShort={timeShort}
+            itemsCount={itemsCount}
+            saleId={sale.id}
+            total={sale.total}
+            heroTitleLabel={isCredit ? 'Utang Record' : 'Paid in Full'}
+            dateLabel="Date"
+            timeLabel="Time"
+            itemsLabel="Items"
+            itemsLabelSingular="pc"
+            itemsLabelPlural="pcs"
+            refNoLabel="Ref №"
+            creditTotalLabel="BALANCE OUTSTANDING"
+            cashTotalLabel="TOTAL PAID"
+            billToLabel="Bill to"
+            soldToLabel="Sold to"
+            dueOnRequestLabel="Due on request"
+          />
         </View>
-      </MotiView>
+
+        <SaleDetailsItemList
+          items={sale.items}
+          subtotal={sale.total}
+          sectionLabel="Itemised list"
+          subtotalLabel="Subtotal"
+        />
+
+        <SaleDetailsFooter
+          grandTotalLabel={isCredit ? 'Utang total' : 'Grand total'}
+          grandTotalDisplay={grandTotalDisplay}
+          thankYouMessage={
+            'Salamat sa iyong pagbili.\nKeep this resibo for your records.'
+          }
+          onDelete={handleDeleteSale}
+        />
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -91,14 +91,13 @@ export const getReportKPIs = async (
 
   const coverageUnits = profitResult?.coverage_units ?? 0;
   const totalUnits = profitResult?.total_units ?? 0;
-  const profitCoverage =
-    totalUnits > 0 ? coverageUnits / totalUnits : null;
+  const profitCoverage = totalUnits > 0 ? coverageUnits / totalUnits : null;
 
   return {
     totalSales: salesResult?.total || 0,
     // Profit is `null` when no sold items had cost data so the UI can show
     // "unavailable" rather than 0.0.
-    totalProfit: profitCoverage === 0 ? null : profitResult?.profit ?? 0,
+    totalProfit: profitCoverage === 0 ? null : (profitResult?.profit ?? 0),
     totalCreditsIssued: creditsIssuedResult?.total || 0,
     totalCreditsCollected: creditsCollectedResult?.total || 0,
     totalExpenses: 0, // Future scope — not in this stabilization pass.
@@ -123,22 +122,28 @@ export const getSalesOverTime = async (
     amount: number;
     profit: number;
   }>(
-    `SELECT
-       date(s.timestamp) as date,
-       COALESCE(SUM(s.total), 0) as amount,
-       COALESCE(SUM(si_summary.profit), 0) as profit
-     FROM sales s
-     LEFT JOIN (
+    `WITH filtered_sales AS (
+       SELECT id, total, timestamp
+       FROM sales
+       WHERE timestamp BETWEEN ? AND ?
+     ),
+     sale_profits AS (
        SELECT
          si.sale_id,
          SUM(si.quantity * (si.price - p.cost_price)) as profit
        FROM sale_items si
        JOIN products p ON si.product_id = p.id
        WHERE p.cost_price IS NOT NULL
+         AND si.sale_id IN (SELECT id FROM filtered_sales)
        GROUP BY si.sale_id
-     ) si_summary ON s.id = si_summary.sale_id
-     WHERE s.timestamp BETWEEN ? AND ?
-     GROUP BY date(s.timestamp)
+     )
+     SELECT
+       date(fs.timestamp) as date,
+       COALESCE(SUM(fs.total), 0) as amount,
+       COALESCE(SUM(sp.profit), 0) as profit
+     FROM filtered_sales fs
+     LEFT JOIN sale_profits sp ON fs.id = sp.sale_id
+     GROUP BY date(fs.timestamp)
      ORDER BY date ASC`,
     [startDate, endDate],
   );
@@ -157,17 +162,28 @@ export const getTopSellingProducts = async (
   // only meaningful when cost_price is recorded, so we surface it as 0 with
   // the understanding the UI labels it "estimated" or hides it.
   const results = await db.getAllAsync<TopSellingProduct>(
-    `SELECT
+    `WITH sales_in_range AS (
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+     ),
+     product_sales AS (
+       SELECT
+         si.product_id,
+         SUM(si.quantity) as unitsSold,
+         SUM(si.quantity * si.price) as revenue,
+         SUM(si.quantity * (si.price - p.cost_price)) as profit
+       FROM sale_items si
+       LEFT JOIN products p ON si.product_id = p.id
+       WHERE si.sale_id IN (SELECT id FROM sales_in_range)
+       GROUP BY si.product_id
+     )
+     SELECT
        p.id,
        p.name,
-       COALESCE(SUM(si.quantity), 0) as unitsSold,
-       COALESCE(SUM(si.quantity * si.price), 0) as revenue,
-       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit
+       COALESCE(ps.unitsSold, 0) as unitsSold,
+       COALESCE(ps.revenue, 0) as revenue,
+       COALESCE(ps.profit, 0) as profit
      FROM products p
-     JOIN sale_items si ON p.id = si.product_id
-     JOIN sales s ON si.sale_id = s.id
-     WHERE s.timestamp BETWEEN ? AND ?
-     GROUP BY p.id, p.name
+     JOIN product_sales ps ON p.id = ps.product_id
      ORDER BY unitsSold DESC
      LIMIT ?`,
     [startDate, endDate, limit],
@@ -313,7 +329,16 @@ export const getFastMovingProducts = async (
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
   const results = await db.getAllAsync<any>(
-    `SELECT
+    `WITH sales_in_range AS (
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+     ),
+     product_sales AS (
+       SELECT product_id, SUM(quantity) as quantity_sold
+       FROM sale_items
+       WHERE sale_id IN (SELECT id FROM sales_in_range)
+       GROUP BY product_id
+     )
+     SELECT
        p.id,
        p.name,
        p.quantity,
@@ -321,11 +346,8 @@ export const getFastMovingProducts = async (
        p.cost_price as costPrice,
        'fast' as velocity
      FROM products p
-     JOIN sale_items si ON p.id = si.product_id
-     JOIN sales s ON si.sale_id = s.id
-     WHERE s.timestamp BETWEEN ? AND ?
-     GROUP BY p.id
-     ORDER BY SUM(si.quantity) DESC
+     JOIN product_sales ps ON p.id = ps.product_id
+     ORDER BY ps.quantity_sold DESC
      LIMIT ?`,
     [startDate, endDate, limit],
   );
@@ -341,7 +363,16 @@ export const getSlowMovingProducts = async (
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
   const results = await db.getAllAsync<any>(
-    `SELECT
+    `WITH sales_in_range AS (
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+     ),
+     product_sales AS (
+       SELECT product_id, SUM(quantity) as quantity_sold
+       FROM sale_items
+       WHERE sale_id IN (SELECT id FROM sales_in_range)
+       GROUP BY product_id
+     )
+     SELECT
        p.id,
        p.name,
        p.quantity,
@@ -349,11 +380,9 @@ export const getSlowMovingProducts = async (
        p.cost_price as costPrice,
        'slow' as velocity
      FROM products p
-     LEFT JOIN sale_items si ON p.id = si.product_id
-     LEFT JOIN sales s ON si.sale_id = s.id AND s.timestamp BETWEEN ? AND ?
+     LEFT JOIN product_sales ps ON p.id = ps.product_id
      WHERE p.quantity > 0
-     GROUP BY p.id
-     ORDER BY COALESCE(SUM(si.quantity), 0) ASC
+     ORDER BY COALESCE(ps.quantity_sold, 0) ASC
      LIMIT ?`,
     [startDate, endDate, limit],
   );
@@ -523,23 +552,36 @@ export const getProductProfitability = async (
   // That's the only honest way to rank "most profitable" — partial cost data
   // would mislead the owner.
   const results = await db.getAllAsync<ProductProfitability>(
-    `SELECT
+    `WITH sales_in_range AS (
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+     ),
+     product_sales AS (
+       SELECT
+         si.product_id,
+         SUM(si.quantity * si.price) as totalRevenue,
+         SUM(si.quantity * (si.price - p.cost_price)) as totalProfit,
+         SUM(si.quantity) as unitsSold,
+         AVG(si.price - p.cost_price) as profitPerUnit
+       FROM sale_items si
+       JOIN products p ON si.product_id = p.id
+       WHERE p.cost_price IS NOT NULL
+         AND si.sale_id IN (SELECT id FROM sales_in_range)
+       GROUP BY si.product_id
+     )
+     SELECT
        p.id,
        p.name,
-       COALESCE(SUM(si.quantity * si.price), 0) as totalRevenue,
-       COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as totalProfit,
-       COALESCE(SUM(si.quantity), 0) as unitsSold,
-       COALESCE(AVG(si.price - p.cost_price), 0) as profitPerUnit,
+       COALESCE(ps.totalRevenue, 0) as totalRevenue,
+       COALESCE(ps.totalProfit, 0) as totalProfit,
+       COALESCE(ps.unitsSold, 0) as unitsSold,
+       COALESCE(ps.profitPerUnit, 0) as profitPerUnit,
        CASE
-         WHEN SUM(si.quantity * si.price) > 0
-         THEN (SUM(si.quantity * (si.price - p.cost_price)) / SUM(si.quantity * si.price)) * 100
+         WHEN COALESCE(ps.totalRevenue, 0) > 0
+         THEN (COALESCE(ps.totalProfit, 0) / COALESCE(ps.totalRevenue, 0)) * 100
          ELSE 0
        END as marginPercent
      FROM products p
-     JOIN sale_items si ON p.id = si.product_id
-     JOIN sales s ON si.sale_id = s.id
-     WHERE s.timestamp BETWEEN ? AND ? AND p.cost_price IS NOT NULL
-     GROUP BY p.id, p.name
+     JOIN product_sales ps ON p.id = ps.product_id
      ORDER BY totalProfit DESC
      LIMIT ?`,
     [startDate, endDate, limit],

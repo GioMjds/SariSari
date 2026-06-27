@@ -40,11 +40,14 @@ export function useAddSalesForm() {
   const { insertSaleMutation } = useSales();
 
   // Local UI state — the cart, payment mode, search query, and suki picker.
+  // `selectedCustomer` accepts either a registered Customer object (when
+  // picking from the suki list) or a plain string for one-off custom names
+  // typed during cash checkout. `null` means no buyer was captured.
   const [cartItems, setCartItems] = useState<NewSaleItem[]>([]);
   const [paymentType, setPaymentType] = useState<'cash' | 'credit'>('cash');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null,
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<
+    Customer | string | null
+  >(null);
   const [showCustomerPicker, setShowCustomerPicker] = useState<boolean>(false);
 
   // react-hook-form — search input only. Matches the field-shape
@@ -159,15 +162,32 @@ export function useAddSalesForm() {
   const handlePaymentTypeChange = useCallback(
     (type: 'cash' | 'credit') => {
       setPaymentType(type);
-      // Clear the selected suki when switching back to cash so a stale
-      // customer reference can't ride into a cash submission.
-      if (type === 'cash') setSelectedCustomer(null);
+      // Credit sales require a registered suki — clear any plain string
+      // (one-off name) so the user can't submit a typed buyer as a Suki
+      // for an utang record. Switching back to cash preserves whatever
+      // was captured, so the user can toggle modes without re-entering.
+      if (type === 'credit' && typeof selectedCustomer === 'string') {
+        setSelectedCustomer(null);
+      }
     },
-    [],
+    [selectedCustomer],
   );
 
   const handleSelectCustomer = useCallback((customer: Customer) => {
     setSelectedCustomer(customer);
+    setShowCustomerPicker(false);
+  }, []);
+
+  /**
+   * Accepts a typed one-off name (from the customer picker's "Use 'X'
+   * as a one-off name" action). Treated as a string in selectedCustomer
+   * so we can distinguish it from a registered Customer object during
+   * submission — string means "no customer_credit_id; just record a name".
+   */
+  const handleSelectOneOffName = useCallback((name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setSelectedCustomer(trimmed);
     setShowCustomerPicker(false);
   }, []);
 
@@ -194,8 +214,18 @@ export function useAddSalesForm() {
           price: item.price,
         })),
         payment_type: paymentType,
-        customer_name: selectedCustomer?.name,
-        customer_credit_id: selectedCustomer?.id,
+        // Map the hybrid selectedCustomer shape into the two columns:
+        //   • string  → typed one-off name; no Suki link.
+        //   • Customer object → registered Suki; save both columns.
+        //   • null → leave both unset.
+        customer_name:
+          typeof selectedCustomer === 'string'
+            ? selectedCustomer
+            : selectedCustomer?.name,
+        customer_credit_id:
+          typeof selectedCustomer === 'string'
+            ? undefined
+            : selectedCustomer?.id,
       });
 
       clearCart();
@@ -260,6 +290,7 @@ export function useAddSalesForm() {
     clearCart,
     handlePaymentTypeChange,
     handleSelectCustomer,
+    handleSelectOneOffName,
     submit,
     getCartLine,
 

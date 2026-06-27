@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -42,7 +42,7 @@ const HERO_ACCENT_BG: Record<NonNullable<BentoHeroProps['accent']>, string> = {
 	ink: 'bg-ink-900',
 };
 
-export function BentoHero({
+export const BentoHero = memo(function BentoHero({
 	kicker,
 	headline,
 	subline,
@@ -110,7 +110,7 @@ export function BentoHero({
 			)}
 		</MotiView>
 	);
-}
+});
 
 /**
  * BentoKPICard — secondary KPI tile. Used by the three non-hero
@@ -141,7 +141,7 @@ const CARD_ICON_BG: Record<BentoKPICardProps['accent'], string> = {
 	ink: 'bg-ink-100',
 };
 
-export function BentoKPICard({
+export const BentoKPICard = memo(function BentoKPICard({
 	kicker,
 	headline,
 	subline,
@@ -217,4 +217,4 @@ export function BentoKPICard({
 			</View>
 		</View>
 	);
-}
+});

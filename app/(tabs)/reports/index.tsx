@@ -24,7 +24,7 @@ import {
   profitSubline,
 } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -32,6 +32,50 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const EMPTY_ARRAY: any[] = [];
+
+const DEFAULT_KPIS = {
+  totalSales: 0,
+  totalProfit: null,
+  totalCreditsIssued: 0,
+  totalCreditsCollected: 0,
+  totalExpenses: 0,
+  inventoryCostOut: 0,
+  profitCoverage: null,
+};
+
+const DEFAULT_SALES_BREAKDOWN = {
+  cashSales: 0,
+  creditSales: 0,
+  averageTransactionValue: 0,
+  totalTransactions: 0,
+};
+
+const DEFAULT_INVENTORY_MOVEMENT = {
+  itemsSold: 0,
+  lowStockCount: 0,
+  outOfStockCount: 0,
+};
+
+const DEFAULT_INVENTORY_VALUE = {
+  currentStockValue: 0,
+  potentialSalesValue: 0,
+  costCoverage: null,
+};
+
+const DEFAULT_CREDITS_OVERVIEW = {
+  issued: 0,
+  collected: 0,
+  outstanding: 0,
+  activeAccounts: 0,
+};
+
+const DEFAULT_PROFITABILITY = {
+  totalProfit: null,
+  marginPercent: null,
+  coverage: null,
+};
 
 /**
  * General Reports — the offline store analytics almanac.
@@ -115,59 +159,29 @@ export default function Reports() {
     productProfitabilityQuery.isFetching ||
     insightsQuery.isFetching;
 
-  const kpis = kpisQuery.data ?? {
-    totalSales: 0,
-    totalProfit: null,
-    totalCreditsIssued: 0,
-    totalCreditsCollected: 0,
-    totalExpenses: 0,
-    inventoryCostOut: 0,
-    profitCoverage: null,
-  };
-  const salesOverTime = salesOverTimeQuery.data ?? [];
-  const topProducts = topProductsQuery.data ?? [];
-  const salesBreakdown = salesBreakdownQuery.data ?? {
-    cashSales: 0,
-    creditSales: 0,
-    averageTransactionValue: 0,
-    totalTransactions: 0,
-  };
-  const inventoryMovement = inventoryMovementQuery.data ?? {
-    itemsSold: 0,
-    lowStockCount: 0,
-    outOfStockCount: 0,
-  };
-  const inventoryValue = inventoryValueQuery.data ?? {
-    currentStockValue: 0,
-    potentialSalesValue: 0,
-    costCoverage: null,
-  };
-  const lowStockItems = lowStockItemsQuery.data ?? [];
-  const fastMovingProducts = fastMovingProductsQuery.data ?? [];
-  const slowMovingProducts = slowMovingProductsQuery.data ?? [];
-  const creditsOverview = creditsOverviewQuery.data ?? {
-    issued: 0,
-    collected: 0,
-    outstanding: 0,
-    activeAccounts: 0,
-  };
-  const agingBuckets = agingBucketsQuery.data ?? [];
-  const profitability = profitabilityQuery.data ?? {
-    totalProfit: null,
-    marginPercent: null,
-    coverage: null,
-  };
-  const productProfitability = productProfitabilityQuery.data ?? [];
-  const insights = insightsQuery.data ?? [];
+  const kpis = kpisQuery.data ?? DEFAULT_KPIS;
+  const salesOverTime = salesOverTimeQuery.data ?? EMPTY_ARRAY;
+  const topProducts = topProductsQuery.data ?? EMPTY_ARRAY;
+  const salesBreakdown = salesBreakdownQuery.data ?? DEFAULT_SALES_BREAKDOWN;
+  const inventoryMovement = inventoryMovementQuery.data ?? DEFAULT_INVENTORY_MOVEMENT;
+  const inventoryValue = inventoryValueQuery.data ?? DEFAULT_INVENTORY_VALUE;
+  const lowStockItems = lowStockItemsQuery.data ?? EMPTY_ARRAY;
+  const fastMovingProducts = fastMovingProductsQuery.data ?? EMPTY_ARRAY;
+  const slowMovingProducts = slowMovingProductsQuery.data ?? EMPTY_ARRAY;
+  const creditsOverview = creditsOverviewQuery.data ?? DEFAULT_CREDITS_OVERVIEW;
+  const agingBuckets = agingBucketsQuery.data ?? EMPTY_ARRAY;
+  const profitability = profitabilityQuery.data ?? DEFAULT_PROFITABILITY;
+  const productProfitability = productProfitabilityQuery.data ?? EMPTY_ARRAY;
+  const insights = insightsQuery.data ?? EMPTY_ARRAY;
 
-  const handleDateRangeChange = (type: DateRangeType) => {
+  const handleDateRangeChange = useCallback((type: DateRangeType) => {
     setDateRangeType(type);
     setDateRange(getDateRangeFromType(type));
-  };
+  }, []);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     await invalidateReports();
-  };
+  }, [invalidateReports]);
 
   if (isLoading) {
     return (

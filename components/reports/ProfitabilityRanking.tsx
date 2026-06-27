@@ -1,6 +1,7 @@
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { formatCurrency } from '@/utils';
+import { memo } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -28,7 +29,7 @@ type ProfitabilityRankingProps = {
 	products: ProfitabilityRow[];
 };
 
-export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
+export const ProfitabilityRanking = memo(function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 	if (products.length === 0) {
 		return (
 			<View className="py-4 items-center">
@@ -141,4 +142,4 @@ export function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
 			})}
 		</View>
 	);
-}
+});

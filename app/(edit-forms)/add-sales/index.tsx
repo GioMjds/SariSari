@@ -84,8 +84,10 @@ export default function AddSales() {
       <CustomerPickerModal
         visible={form.showCustomerPicker}
         customers={form.customers}
+        paymentType={form.paymentType}
         onClose={() => form.setShowCustomerPicker(false)}
         onSelect={form.handleSelectCustomer}
+        onSelectOneOffName={form.handleSelectOneOffName}
       />
 
       <Modal

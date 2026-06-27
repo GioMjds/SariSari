@@ -55,7 +55,7 @@ graph TD
 
 ### Module layout
 
-```
+```folder
 lib/backup/
   snapshots.ts        // create, list, prune local rolling snapshots + safety copies
   integrity.ts        // SQLite magic header + read-only integrity_check
@@ -93,10 +93,11 @@ components/settings/backup/
 ```
 
 The layering rule (AGENTS.md §3) is preserved:
+
 - `lib/backup/` never imports from `app/`, `components/`, `hooks/`, or `stores/` (except `stores/backupCounter` for the bump wiring — justified below).
 - `hooks/useBackup.tsx` is the only consumer of `lib/backup/`.
 - `stores/backupCounter.ts` holds **only** the integer counter. No business data.
-- The sale counter bump is done via the singleton import in `database/sales.ts` *after* COMMIT. This is the only stateful cross-layer call. Acceptable because (a) the counter is UI-side Zustand, not a cache, and (b) the bump is fire-and-forget; a failure cannot affect the sale.
+- The sale counter bump is done via the singleton import in `database/sales.ts` _after_ COMMIT. This is the only stateful cross-layer call. Acceptable because (a) the counter is UI-side Zustand, not a cache, and (b) the bump is fire-and-forget; a failure cannot affect the sale.
 
 ---
 
@@ -104,7 +105,7 @@ The layering rule (AGENTS.md §3) is preserved:
 
 ### 3.1. Directory layout
 
-```
+```folder
 {FileSystem.documentDirectory}SQLiteBackups/
   ├── auto/                          ← rolling 7 snapshots (auto-pruned)
   │     sarisari_snapshot_2026-06-27_14-02-31-421.db
@@ -137,18 +138,22 @@ async function performLocalSnapshot(): Promise<SnapshotResult> {
   await assertDiskSpace();
   await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
 
-  const stamp = formatStamp();   // includes ms suffix
+  const stamp = formatStamp(); // includes ms suffix
   const filename = `sarisari_snapshot_${stamp}.db`;
   const dest = `${AUTO_DIR}${filename}`;
 
   await FileSystem.copyAsync({ from: DB_PATH, to: dest });
 
-  await pruneAutoSnapshots(keep = 7);
+  await pruneAutoSnapshots((keep = 7));
 
   await AsyncStorage.setItem('last_backup_at', String(Date.now()));
   backupCounter.getState().reset();
 
-  return { path: dest, bytes: (await FileSystem.getInfoAsync(dest)).size, createdAt: Date.now() };
+  return {
+    path: dest,
+    bytes: (await FileSystem.getInfoAsync(dest)).size,
+    createdAt: Date.now(),
+  };
 }
 ```
 
@@ -157,7 +162,9 @@ async function performLocalSnapshot(): Promise<SnapshotResult> {
 ```ts
 async function pruneAutoSnapshots(keep: number) {
   const files = await FileSystem.readDirectoryAsync(AUTO_DIR);
-  const snapshots = files.filter(f => f.startsWith('sarisari_snapshot_')).sort();  // ISO prefix sorts chronologically
+  const snapshots = files
+    .filter((f) => f.startsWith('sarisari_snapshot_'))
+    .sort(); // ISO prefix sorts chronologically
   if (snapshots.length <= keep) return;
   const toDelete = snapshots.slice(0, snapshots.length - keep);
   for (const f of toDelete) {
@@ -168,12 +175,12 @@ async function pruneAutoSnapshots(keep: number) {
 
 ### 3.6. Triggers
 
-| Trigger         | Condition                            | Source                              |
-|-----------------|--------------------------------------|-------------------------------------|
-| App start       | `now - lastBackupAt > 24h`           | `scheduler.runStartupChecks()`      |
-| Sale milestone  | `backupCounter.count >= 20`          | `useEffect` in `RootLayout`         |
-| Manual          | User taps "Backup now"               | `useBackupNow()` mutation           |
-| Pre-restore     | Always, before any destructive write | `restore.ts` (saves to `safety/`)   |
+| Trigger        | Condition                            | Source                            |
+| -------------- | ------------------------------------ | --------------------------------- |
+| App start      | `now - lastBackupAt > 24h`           | `scheduler.runStartupChecks()`    |
+| Sale milestone | `backupCounter.count >= 20`          | `useEffect` in `RootLayout`       |
+| Manual         | User taps "Backup now"               | `useBackupNow()` mutation         |
+| Pre-restore    | Always, before any destructive write | `restore.ts` (saves to `safety/`) |
 
 The first three write to `auto/`. Pre-restore writes to `safety/`.
 
@@ -197,7 +204,7 @@ Persisted in AsyncStorage under `last_backup_at` (epoch ms, string). Read at app
 
 ### 4.2. Cloud file layout
 
-```
+```folder
 appDataFolder/
   ├── sarisari_backup.db          ← latest snapshot (overwritten on each sync)
   └── backup_metadata.json        ← small sidecar
@@ -221,7 +228,7 @@ The metadata file is fetched without downloading the DB, so the picker and the "
 
 ### 4.4. Cloud upload flow
 
-```
+```text
 performCloudUpload():
   1. token = await ensureFreshToken()
   2. allowed = await shouldAttemptCloudUpload()    // see §4.6
@@ -240,13 +247,13 @@ performCloudUpload():
 
 ### 4.5. Drive API calls (bare `fetch`, no SDK)
 
-| Op              | Endpoint                                                                          |
-|-----------------|-----------------------------------------------------------------------------------|
-| Find            | `GET /drive/v3/files?spaces=appDataFolder&q=name='sarisari_backup.db'`            |
-| Create          | `POST /upload/drive/v3/files?uploadType=multipart`                                |
-| Update          | `PATCH /upload/drive/v3/files/{fileId}?uploadType=media`                          |
-| Download        | `GET /drive/v3/files/{fileId}?alt=media`                                          |
-| Delete          | `DELETE /drive/v3/files/{fileId}`                                                 |
+| Op       | Endpoint                                                               |
+| -------- | ---------------------------------------------------------------------- |
+| Find     | `GET /drive/v3/files?spaces=appDataFolder&q=name='sarisari_backup.db'` |
+| Create   | `POST /upload/drive/v3/files?uploadType=multipart`                     |
+| Update   | `PATCH /upload/drive/v3/files/{fileId}?uploadType=media`               |
+| Download | `GET /drive/v3/files/{fileId}?alt=media`                               |
+| Delete   | `DELETE /drive/v3/files/{fileId}`                                      |
 
 All requests carry `Authorization: Bearer <token>`. 401 → one refresh-and-retry. 429 → respect `Retry-After`. 5xx → throw, sync queue re-arms.
 
@@ -265,7 +272,7 @@ async function shouldAttemptCloudUpload(): Promise<boolean> {
 
 ### 4.7. Sync queue state machine
 
-```
+```flowchart
                 ┌──────────────┐
                 │ IDLE         │  Drive linked, no pending
                 └──────┬───────┘
@@ -295,6 +302,7 @@ Transitions are driven by three event sources: snapshot completion, `AppState` c
 ### 4.8. Unlinking
 
 `useUnlinkGoogleDrive()`:
+
 1. `DELETE` both Drive files (best-effort; ignore 404)
 2. `SecureStore.deleteItemAsync('gdrive_access')` and `gdrive_refresh`
 3. Set `cloud_linked = false` (AsyncStorage)
@@ -310,7 +318,7 @@ The single funnel for every destructive restore. Pre-restore snapshot is mandato
 ```ts
 async function restoreFromLocal(snapshotPath: string) {
   // 1. Validate source
-  await integrity.validate(snapshotPath);   // throws → abort, no changes
+  await integrity.validate(snapshotPath); // throws → abort, no changes
 
   // 2. Take a safety copy (always, before any other write)
   await snapshotManager.createPreRestoreSafetyCopy();
@@ -348,13 +356,13 @@ async function restoreFromLocal(snapshotPath: string) {
 
 ### Failure-mode table
 
-| Failure                                 | Outcome                                                    |
-|-----------------------------------------|------------------------------------------------------------|
-| `integrity.validate` rejects source     | Nothing happens. User picks a different file.              |
-| `db.closeAsync()` throws                | User sees error, aborts. No writes.                        |
-| `copyAsync` to `DB_PATH` fails          | Safety copy is restored over the partial file.             |
-| `Updates.reloadAsync` fails             | Safety copy exists; user reopens manually; data is sound.  |
-| `reloadAsync` succeeds                  | App restarts on new DB, migrations run.                    |
+| Failure                             | Outcome                                                   |
+| ----------------------------------- | --------------------------------------------------------- |
+| `integrity.validate` rejects source | Nothing happens. User picks a different file.             |
+| `db.closeAsync()` throws            | User sees error, aborts. No writes.                       |
+| `copyAsync` to `DB_PATH` fails      | Safety copy is restored over the partial file.            |
+| `Updates.reloadAsync` fails         | Safety copy exists; user reopens manually; data is sound. |
+| `reloadAsync` succeeds              | App restarts on new DB, migrations run.                   |
 
 ### Restore from cloud
 
@@ -386,7 +394,9 @@ This spec assumes `expo-sqlite` 16 supports `closeAsync()`. The plan will verify
 async function validate(filePath: string): Promise<IntegrityResult> {
   // 1. Magic header
   const headerB64 = await FileSystem.readAsStringAsync(filePath, {
-    encoding: 'base64', position: 0, length: 16,
+    encoding: 'base64',
+    position: 0,
+    length: 16,
   });
   if (headerB64 !== 'U1FMaXRlIGZvcm1hdCAzAA==') {
     return { ok: false, reason: 'bad_header' };
@@ -396,9 +406,9 @@ async function validate(filePath: string): Promise<IntegrityResult> {
   const probe = await SQLite.openDatabaseAsync(filePath);
   try {
     const rows = await probe.getAllAsync<{ integrity_check: string }>(
-      'PRAGMA integrity_check'
+      'PRAGMA integrity_check',
     );
-    const result = rows.map(r => r.integrity_check).join(' ');
+    const result = rows.map((r) => r.integrity_check).join(' ');
     if (result !== 'ok') {
       return { ok: false, reason: 'integrity_check_failed', detail: result };
     }
@@ -427,27 +437,31 @@ Errors are **typed** and **non-fatal** for backups. A failed cloud sync never bl
 ```ts
 // lib/backup/types.ts
 export type BackupError =
-  | { kind: 'insufficient_disk';   freeBytes: number; needBytes: number; }
-  | { kind: 'integrity_failed';    reason: 'bad_header' | 'integrity_check_failed' | 'unreasonable_size'; detail?: string; }
-  | { kind: 'gdrive_auth';         status: 401 | 403; message: string; }
-  | { kind: 'gdrive_quota';        status: 429; retryAfterSec: number; }
-  | { kind: 'gdrive_server';       status: number; message: string; }
-  | { kind: 'gdrive_network';      message: string; }
-  | { kind: 'restore_in_progress'; message: string; }
-  | { kind: 'unknown';             message: string; };
+  | { kind: 'insufficient_disk'; freeBytes: number; needBytes: number }
+  | {
+      kind: 'integrity_failed';
+      reason: 'bad_header' | 'integrity_check_failed' | 'unreasonable_size';
+      detail?: string;
+    }
+  | { kind: 'gdrive_auth'; status: 401 | 403; message: string }
+  | { kind: 'gdrive_quota'; status: 429; retryAfterSec: number }
+  | { kind: 'gdrive_server'; status: number; message: string }
+  | { kind: 'gdrive_network'; message: string }
+  | { kind: 'restore_in_progress'; message: string }
+  | { kind: 'unknown'; message: string };
 ```
 
 ### Recovery table
 
-| Error kind              | User-facing                                                  | Recovery                            |
-|-------------------------|--------------------------------------------------------------|-------------------------------------|
-| `insufficient_disk`     | Toast: "Need X MB free. Please free space."                  | User deletes other files            |
-| `integrity_failed`      | Alert: "This backup is corrupt and can't be restored."       | Pick another                        |
-| `gdrive_auth` (401/403) | Banner: "Google Drive link expired. Re-link to continue."    | Tap → re-runs OAuth                 |
-| `gdrive_quota`          | Silent queue, retry after `Retry-After`                      | Auto                                |
-| `gdrive_server/network` | Silent queue, retry next Wi-Fi                               | Auto                                |
-| `restore_in_progress`   | Modal: "Restore already in progress."                        | Wait                                |
-| Anything else           | Toast: "Backup failed: <reason>." + log to console           | Manual retry                        |
+| Error kind              | User-facing                                               | Recovery                 |
+| ----------------------- | --------------------------------------------------------- | ------------------------ |
+| `insufficient_disk`     | Toast: "Need X MB free. Please free space."               | User deletes other files |
+| `integrity_failed`      | Alert: "This backup is corrupt and can't be restored."    | Pick another             |
+| `gdrive_auth` (401/403) | Banner: "Google Drive link expired. Re-link to continue." | Tap → re-runs OAuth      |
+| `gdrive_quota`          | Silent queue, retry after `Retry-After`                   | Auto                     |
+| `gdrive_server/network` | Silent queue, retry next Wi-Fi                            | Auto                     |
+| `restore_in_progress`   | Modal: "Restore already in progress."                     | Wait                     |
+| `Anything else`         | Toast: "Backup failed: `<reason>`." + log to console      | Manual retry             |
 
 **What never throws across a sale:** `performLocalSnapshot()` failure does NOT cancel the sale. The sale is already committed to SQLite. The 20-sale counter just doesn't reset, so the next sale re-tries. The user's business is uninterrupted.
 
@@ -461,7 +475,7 @@ export type BackupError =
 
 ### Settings · Database (replaces the current "Backup" / "Restore" rows)
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │ DATABASE                                         │
 │ Automatic and on-demand backups of your store.   │
@@ -490,7 +504,7 @@ export type BackupError =
 
 ### Restore picker modal
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │  Restore from backup                       [×]   │
 ├──────────────────────────────────────────────────┤
@@ -516,7 +530,7 @@ export type BackupError =
 
 ### Cloud-newer banner (on app start, dismissable)
 
-```
+```diagram
 ┌──────────────────────────────────────────────────┐
 │  ℹ  A newer backup is in Google Drive.           │
 │     Cloud: 14:00 today · Local: 09:00 today      │
@@ -530,16 +544,16 @@ export type BackupError =
 
 ### State coverage
 
-| State                    | UI                                              |
-|--------------------------|-------------------------------------------------|
-| No snapshots yet         | "Your first backup will appear here."           |
-| Linking Drive in progress| Spinner on the toggle row                        |
-| Unlinked                 | Cloud backup row shows "Not linked. [Link]"      |
-| Drive linked, no uploads | "Drive linked. Backups will sync on Wi-Fi."      |
-| Sync pending, no Wi-Fi   | "3 snapshots waiting for Wi-Fi to upload."       |
-| Auth expired             | "Google Drive link expired. [Re-link]"          |
-| Restore in progress      | "Restoring… don't close the app."                |
-| Restore failed           | Alert + automatic rollback via safety copy       |
+| State                     | UI                                          |
+| ------------------------- | ------------------------------------------- |
+| No snapshots yet          | "Your first backup will appear here."       |
+| Linking Drive in progress | Spinner on the toggle row                   |
+| Unlinked                  | Cloud backup row shows "Not linked. [Link]" |
+| Drive linked, no uploads  | "Drive linked. Backups will sync on Wi-Fi." |
+| Sync pending, no Wi-Fi    | "3 snapshots waiting for Wi-Fi to upload."  |
+| Auth expired              | "Google Drive link expired. [Re-link]"      |
+| Restore in progress       | "Restoring… don't close the app."           |
+| Restore failed            | Alert + automatic rollback via safety copy  |
 
 ### Accessibility
 
@@ -552,6 +566,7 @@ export type BackupError =
 ## 9. Testing Plan
 
 ### `tests/backup/snapshots.test.ts` (better-sqlite3 + temp dir)
+
 - `pruneAutoSnapshots(keep=7)` deletes the N-7 oldest by filename
 - Filename collision (same second) → ms suffix prevents it
 - Disk-space pre-flight throws `insufficient_disk` when freeBytes < 5× dbBytes (mock `getFreeDiskStorageAsync`)
@@ -559,6 +574,7 @@ export type BackupError =
 - Pre-restore safety copies live in `safety/` and are NOT touched by rolling prune
 
 ### `tests/backup/restore.test.ts`
+
 - `integrity.validate` rejects: bad header, empty file, oversized file
 - `integrity.validate` accepts: real better-sqlite3 file
 - Restore pipeline: when `copyAsync` fails, safety copy is restored (mock copy to throw)
@@ -567,10 +583,12 @@ export type BackupError =
 - `Updates.reloadAsync` is mocked — verified it's called last
 
 ### `tests/backup/metadata.test.ts`
+
 - `buildMetadata({storeName, ownerName, salesCount, appVersion})` round-trips through JSON
 - Read/write both work with realistic inputs
 
 ### `tests/backup/scheduler.test.ts`
+
 - `runStartupChecks` with no `lastBackupAt` → triggers snapshot
 - `runStartupChecks` with `lastBackupAt` 23h ago → does NOT trigger
 - `runStartupChecks` with `lastBackupAt` 25h ago → triggers
@@ -580,18 +598,21 @@ export type BackupError =
 - Counter reset to 0 after snapshot
 
 ### `tests/backup/syncQueue.test.ts`
+
 - State machine: IDLE → QUEUED → UPLOADING → IDLE on success
 - State machine: IDLE → QUEUED → UPLOADING → QUEUED on 5xx
 - State machine: UPLOADING → QUEUED (with re-link prompt) on 401
 - AsyncStorage key `cloud_sync_pending` toggles correctly
 
 ### What we do NOT test
+
 - Real OAuth round-trip (expo-auth-session needs a native module)
 - Real Google Drive HTTP calls (mocked via `global.fetch = jest.fn()`)
 - AppState transitions (tested manually)
 - `Updates.reloadAsync` behavior (tested manually; mocked in unit tests)
 
 ### Manual verification (per AGENTS.md "verify on simulator")
+
 1. Fresh install → Drive unlinked → confirm "Link Google Drive" row appears
 2. Link Drive → complete OAuth → confirm banner says "Backed up to Drive"
 3. Turn off Wi-Fi → record 21 sales → confirm local snapshot created, "Pending cloud sync" indicator
@@ -605,17 +626,17 @@ export type BackupError =
 
 ## 10. Edge Cases & Error Handling
 
-| Edge Case                    | Impact                                | Handling                                                                                                                       |
-| :--------------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------ |
-| **No Disk Space**            | Backup crash or truncation            | Pre-flight disk space check cancels backup if free storage < 5× DB size. Toast alerts the user.                                |
-| **Offline during trigger**   | Backup not synced to cloud            | `cloud_sync_pending = true` in AsyncStorage. Attempt upload on next Wi-Fi.                                                      |
-| **Auth token expired**       | Cloud upload fails                    | `ensureFreshToken()` runs once and retries. If refresh fails, banner prompts user to re-link.                                   |
-| **Partial write on restore** | Corrupt database on app start         | Safety copy is always written before any destructive op. `copyAsync` failure triggers automatic rollback.                     |
-| **Database Schema Drift**    | App crashes if db columns differ      | Restore executes DB migrations on reload, keeping compatibility with older backups.                                            |
-| **Filename collision**       | Snapshot overwrites itself            | Filename includes `ms3` suffix from `Date.now()`. Two snapshots in the same millisecond are impossible from a single user.     |
-| **App killed during snapshot** | Half-written .db file              | `copyAsync` is not atomic. Detection: file size < 1KB → rejected by integrity check. Manual cleanup on next app start.         |
-| **Cloud newer than local**   | User might be looking at stale data   | On app start, if `cloud_metadata.updatedAt > lastBackupAt`, show banner offering restore. User decides.                         |
-| **Unlink Drive with pending sync** | Lost pending upload             | Pending flag is cleared on unlink. Local snapshots remain. Next time user re-links, fresh sync starts.                          |
+| Edge Case                          | Impact                              | Handling                                                                                                                   |
+| :--------------------------------- | :---------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| **No Disk Space**                  | Backup crash or truncation          | Pre-flight disk space check cancels backup if free storage < 5× DB size. Toast alerts the user.                            |
+| **Offline during trigger**         | Backup not synced to cloud          | `cloud_sync_pending = true` in AsyncStorage. Attempt upload on next Wi-Fi.                                                 |
+| **Auth token expired**             | Cloud upload fails                  | `ensureFreshToken()` runs once and retries. If refresh fails, banner prompts user to re-link.                              |
+| **Partial write on restore**       | Corrupt database on app start       | Safety copy is always written before any destructive op. `copyAsync` failure triggers automatic rollback.                  |
+| **Database Schema Drift**          | App crashes if db columns differ    | Restore executes DB migrations on reload, keeping compatibility with older backups.                                        |
+| **Filename collision**             | Snapshot overwrites itself          | Filename includes `ms3` suffix from `Date.now()`. Two snapshots in the same millisecond are impossible from a single user. |
+| **App killed during snapshot**     | Half-written .db file               | `copyAsync` is not atomic. Detection: file size < 1KB → rejected by integrity check. Manual cleanup on next app start.     |
+| **Cloud newer than local**         | User might be looking at stale data | On app start, if `cloud_metadata.updatedAt > lastBackupAt`, show banner offering restore. User decides.                    |
+| **Unlink Drive with pending sync** | Lost pending upload                 | Pending flag is cleared on unlink. Local snapshots remain. Next time user re-links, fresh sync starts.                     |
 
 ---
 

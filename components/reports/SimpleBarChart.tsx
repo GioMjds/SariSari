@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { formatCompactCurrency } from '@/utils';
 
@@ -21,7 +21,7 @@ interface SimpleBarChartProps {
  * Renders an empty-state plate when there is no data so the layout
  * doesn't collapse.
  */
-export function AlmanacBarChart({
+export const AlmanacBarChart = memo(function AlmanacBarChart({
 	data,
 	height = 200,
 	barColor = '#623418', // cinnamon-500
@@ -158,7 +158,7 @@ export function AlmanacBarChart({
 			<View className="h-px bg-ink-900 mt-2 mx-1" />
 		</View>
 	);
-}
+});
 
 /**
  * Small re-export so existing callers don't break — the original

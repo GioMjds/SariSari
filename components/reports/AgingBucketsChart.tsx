@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { AgingBucket, StockItem } from '@/types';
 import { MotiView } from 'moti';
+import { memo } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -22,7 +23,7 @@ const STAMP_BG: { bg: string; border: string; text: string; tone: string }[] = [
 	{ bg: 'bg-semantic-danger-50', border: 'border-semantic-danger', text: 'text-semantic-danger', tone: 'danger' },
 ];
 
-export function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChartProps) {
+export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChartProps) {
 	if (buckets.length === 0) {
 		return (
 			<View className="py-4 items-center">
@@ -48,8 +49,8 @@ export function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChart
 					const stamp = STAMP_BG[index % STAMP_BG.length];
 					const pct =
 						totalOutstanding > 0
-							? (bucket.amount / totalOutstanding) * 100
-							: 0;
+						? (bucket.amount / totalOutstanding) * 100
+						: 0;
 					const rotate = index % 2 === 0 ? -1.5 : 1.5;
 
 					return (
@@ -106,13 +107,13 @@ export function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChart
 									style={{
 										width: `${pct}%`,
 										backgroundColor:
-											stamp.tone === 'sage'
-												? '#4F7A24'
-												: stamp.tone === 'info'
-													? '#2E6FA8'
-													: stamp.tone === 'warning'
-														? '#C77B0E'
-														: '#C13030',
+										stamp.tone === 'sage'
+										? '#4F7A24'
+										: stamp.tone === 'info'
+										? '#2E6FA8'
+										: stamp.tone === 'warning'
+										? '#C77B0E'
+										: '#C13030',
 									}}
 								/>
 							</View>
@@ -122,7 +123,7 @@ export function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChart
 			</View>
 		</View>
 	);
-}
+});
 
 /**
  * StockMovementDetails — A small "stock ticker" style row showing
@@ -137,7 +138,7 @@ type StockMovementDetailsProps = {
 	slowMoving: StockItem[];
 };
 
-export function StockMovementDetails({
+export const StockMovementDetails = memo(function StockMovementDetails({
 	itemsSold,
 	lowStockCount,
 	outOfStockCount,
@@ -269,4 +270,4 @@ export function StockMovementDetails({
 			</View>
 		</View>
 	);
-}
+});

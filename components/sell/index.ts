@@ -4,4 +4,7 @@ export * from './SalesEmptyState';
 export * from './SalesFilterModal';
 export * from './SalesSkeleton';
 export * from './PerforationRow';
+export * from './SellHeader';
+export * from './TodayStatsHero';
 export * from './add-sales';
+export * from './sale-details';
