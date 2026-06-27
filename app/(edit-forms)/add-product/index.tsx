@@ -2,7 +2,7 @@ import { View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { router } from 'expo-router';
-import { Modal } from '@/components/ui';
+import { BarcodeScannerModal, Modal } from '@/components/ui';
 import {
   AddProductHeader,
   BasicInfoCard,
@@ -39,6 +39,7 @@ export default function AddProduct() {
             categories={form.categories}
             selectedCategory={form.category}
             onSelectCategory={form.selectCategory}
+            onPressScan={form.openScanner}
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />
@@ -57,6 +58,7 @@ export default function AddProduct() {
             isLossWarning={form.isLossWarning}
             hasCost={!!form.costPerPiece && form.costPerPiece !== '0.00'}
             hasPrice={!!form.price && form.price !== '0.00'}
+            priceInputRef={form.priceInputRef}
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />
@@ -98,6 +100,13 @@ export default function AddProduct() {
             },
           },
         ]}
+      />
+
+      <BarcodeScannerModal
+        visible={form.isScannerOpen}
+        mode="single"
+        onClose={form.closeScanner}
+        onScan={form.handleScannedBarcode}
       />
     </SafeAreaView>
   );

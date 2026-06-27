@@ -9,7 +9,7 @@ import {
   ProductSearchCatalog,
   useAddSalesForm,
 } from '@/components/sell/add-sales';
-import { Modal } from '@/components/ui';
+import { BarcodeScannerModal, Modal } from '@/components/ui';
 
 /**
  * AddSales — POS checkout screen rendered as a modal form sheet.
@@ -66,6 +66,7 @@ export default function AddSales() {
           getCartLine={form.getCartLine}
           onAdd={form.handleAddItem}
           onUpdateQuantity={form.handleUpdateQuantity}
+          onPressScan={form.openScanner}
         />
 
         <CartSummaryTray
@@ -117,6 +118,16 @@ export default function AddSales() {
           />
         </View>
       </Modal>
+
+      <BarcodeScannerModal
+        visible={form.isScannerOpen}
+        mode="continuous"
+        onClose={form.closeScanner}
+        onScan={form.handleScannedBarcode}
+        lastScanned={form.lastScanned}
+        itemCount={form.itemCount}
+        total={form.total}
+      />
     </SafeAreaView>
   );
 }

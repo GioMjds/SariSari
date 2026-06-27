@@ -1,3 +1,4 @@
+export * from './BarcodeScannerModal';
 export * from './GlobalModal';
 export * from './Modal';
 export * from './MoneyText';

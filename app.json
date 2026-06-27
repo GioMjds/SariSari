@@ -50,6 +50,12 @@
           "icon": "./assets/images/logo.png",
           "color": "#EFE6D2"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SariSari to use the device camera to scan product barcodes."
+        }
       ]
     ],
     "experiments": {

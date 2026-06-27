@@ -21,6 +21,8 @@ interface ProductSearchCatalogProps {
   onAdd: (product: Product) => void;
   /** Delta is +/-1. Decrementing past zero removes the line. */
   onUpdateQuantity: (productId: number, delta: number) => void;
+  /** Opens the camera scanner modal — the primary POS scanning entry. */
+  onPressScan: () => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export function ProductSearchCatalog({
   getCartLine,
   onAdd,
   onUpdateQuantity,
+  onPressScan,
 }: ProductSearchCatalogProps) {
   return (
     <View className="flex-1">
@@ -82,6 +85,15 @@ export function ProductSearchCatalog({
             </>
           )}
         />
+        <Pressable
+          onPress={onPressScan}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Scan barcode"
+          className="active:opacity-50 ml-3"
+        >
+          <FontAwesome name="barcode" size={18} color="#623418" />
+        </Pressable>
       </View>
 
       {/* Products List */}

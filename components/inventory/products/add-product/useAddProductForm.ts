@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
-import { BackHandler } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { useCategories, useProducts } from '@/hooks';
-import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
+import { lookupOfflineBarcode } from '@/constants/barcodes';
+import {
+  applyBarcodeToAddProductForm,
+  parsePesosInput,
+  tryParsePesosInput,
+} from '@/lib';
+import { useToastStore } from '@/stores';
 
 /**
  * Form values for the Add Product screen.
@@ -63,10 +69,17 @@ export function useAddProductForm() {
   const { insertProductMutation } = useProducts();
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
+  const addToast = useToastStore((state) => state.addToast);
 
   const [autoGenerateSku, setAutoGenerateSku] = useState<boolean>(true);
   const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+
+  // Forwarded to the price TextInput so we can focus it ~250ms after
+  // a successful scan (giving the scanner modal close animation time
+  // to finish before the keyboard pops up).
+  const priceInputRef = useRef<TextInput | null>(null);
 
   const {
     control,
@@ -247,6 +260,55 @@ export function useAddProductForm() {
     }, [confirmDiscard, hasActualChanges]),
   );
 
+  // ─── Barcode scanner ───────────────────────────────────────────
+
+  const openScanner = useCallback(() => setIsScannerOpen(true), []);
+  const closeScanner = useCallback(() => setIsScannerOpen(false), []);
+
+  const handleScannedBarcode = useCallback(
+    (barcode: string) => {
+      // Pure helper decides what to write. Rule order matters: when
+      // auto-generate-SKU is on, we MUST flip it off BEFORE writing
+      // productName, otherwise the auto-gen useEffect below re-runs
+      // and clobbers our scanned SKU.
+      const patch = applyBarcodeToAddProductForm({
+        barcode,
+        currentProductName: productName ?? '',
+        autoGenerateSku,
+        lookup: lookupOfflineBarcode,
+      });
+
+      if (patch.setAutoGenerateSku) {
+        setAutoGenerateSku(false);
+      }
+
+      setValue('sku', patch.sku, { shouldDirty: true });
+
+      if (patch.productName !== undefined) {
+        setValue('productName', patch.productName, { shouldDirty: true });
+      }
+      if (patch.category !== undefined) {
+        setValue('category', patch.category, { shouldDirty: true });
+      }
+
+      if (patch.toast) {
+        addToast(patch.toast);
+      }
+
+      setIsScannerOpen(false);
+
+      // Focus the price field after the modal close animation settles.
+      // 250ms gives KeyboardAwareScrollView time to compute the new
+      // layout (it was rendered with the camera surface mounted).
+      if (typeof patch.productName === 'string') {
+        setTimeout(() => {
+          priceInputRef.current?.focus();
+        }, 250);
+      }
+    },
+    [addToast, autoGenerateSku, productName, setValue],
+  );
+
   // ─── Submit ────────────────────────────────────────────────────
 
   const submit = handleSubmit((data) => {
@@ -296,6 +358,10 @@ export function useAddProductForm() {
     setUseBundlePricing,
     showDialog,
     setShowDialog,
+    isScannerOpen,
+
+    // Refs forwarded to text inputs so the screen can wire focus targets
+    priceInputRef,
 
     // Derived
     hasActualChanges,
@@ -310,6 +376,11 @@ export function useAddProductForm() {
     selectCategory,
     confirmDiscard,
     submit,
+
+    // Scanner
+    openScanner,
+    closeScanner,
+    handleScannedBarcode,
 
     // Mutation state
     insertProductMutation,

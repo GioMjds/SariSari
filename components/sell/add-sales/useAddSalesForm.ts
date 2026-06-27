@@ -1,11 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
 import { useCredits, useProducts, useSales } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
+import { applyBarcodeToPosCart } from '@/lib';
+import { useToastStore } from '@/stores';
 
 /**
  * Form data for the Add Sales screen.
@@ -38,6 +41,7 @@ export function useAddSalesForm() {
   const { getAllProductsQuery } = useProducts();
   const { useCustomers } = useCredits();
   const { insertSaleMutation } = useSales();
+  const addToast = useToastStore((state) => state.addToast);
 
   // Local UI state — the cart, payment mode, search query, and suki picker.
   // `selectedCustomer` accepts either a registered Customer object (when
@@ -49,6 +53,18 @@ export function useAddSalesForm() {
     Customer | string | null
   >(null);
   const [showCustomerPicker, setShowCustomerPicker] = useState<boolean>(false);
+
+  // Barcode scanner state.
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [lastScanned, setLastScanned] = useState<{
+    name: string;
+    sku: string;
+    at: number;
+    found: boolean;
+  } | null>(null);
+  // Throttle ref: only one accepted scan per barcode per 1.5s.
+  // Mirrors `applyBarcodeToPosCart` and the modal's own throttle.
+  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   // react-hook-form — search input only. Matches the field-shape
   // convention used by other edit-form routes.
@@ -156,6 +172,70 @@ export function useAddSalesForm() {
     setSelectedCustomer(null);
     reset({ search: '' });
   }, [reset]);
+
+  // ─── Barcode scanner ───────────────────────────────────────────
+
+  const openScanner = useCallback(() => {
+    setIsScannerOpen(true);
+  }, []);
+
+  const closeScanner = useCallback(() => {
+    setIsScannerOpen(false);
+  }, []);
+
+  const handleScannedBarcode = useCallback(
+    (barcode: string) => {
+      const result = applyBarcodeToPosCart({
+        barcode,
+        products,
+        lastScan: lastScanRef.current,
+        now: Date.now(),
+      });
+
+      if (result.kind === 'duplicate') {
+        // Throttled — silently drop. No haptic, no toast.
+        return;
+      }
+
+      // Update the throttle ref regardless of add/missing so the same
+      // barcode can't queue again for the next 1.5s.
+      lastScanRef.current = result.lastScan;
+
+      if (result.kind === 'add') {
+        // result.product is `PosScanProductLike`; the caller (this hook)
+        // always passes full `Product` rows from `useProducts()`, so the
+        // timestamps are present at runtime. Cast widens the narrow
+        // helper type back to the domain type `handleAddItem` expects.
+        handleAddItem(result.product as Product);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+          () => {},
+        );
+        setLastScanned({
+          name: result.product.name,
+          sku: result.product.sku,
+          at: result.lastScan.at,
+          found: true,
+        });
+        return;
+      }
+
+      // result.kind === 'missing'
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Error,
+      ).catch(() => {});
+      addToast({
+        message: `Product not registered in inventory (SKU: ${result.barcode})`,
+        variant: 'danger',
+      });
+      setLastScanned({
+        name: '',
+        sku: result.barcode,
+        at: result.lastScan.at,
+        found: false,
+      });
+    },
+    [products, addToast, handleAddItem],
+  );
 
   // ─── Payment / customer handlers ───────────────────────────────
 
@@ -280,6 +360,8 @@ export function useAddSalesForm() {
     paymentType,
     selectedCustomer,
     showCustomerPicker,
+    isScannerOpen,
+    lastScanned,
 
     // Setters
     setShowCustomerPicker,
@@ -293,6 +375,11 @@ export function useAddSalesForm() {
     handleSelectOneOffName,
     submit,
     getCartLine,
+
+    // Scanner
+    openScanner,
+    closeScanner,
+    handleScannedBarcode,
 
     // Mutation
     insertSaleMutation,

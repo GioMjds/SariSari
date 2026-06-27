@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import type { RefObject } from 'react';
 import { Control, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements';
@@ -20,6 +21,9 @@ interface PricingProfitCardProps {
   isLossWarning: boolean;
   hasCost: boolean;
   hasPrice: boolean;
+  /** Forwarded to the price TextInput so the form hook can focus it
+   *  after a successful barcode scan. */
+  priceInputRef?: RefObject<TextInput | null>;
 }
 
 /**
@@ -52,6 +56,7 @@ export function PricingProfitCard({
   isLossWarning,
   hasCost,
   hasPrice,
+  priceInputRef,
 }: PricingProfitCardProps) {
   return (
     <View className="bg-paper-50 rounded-2xl border border-dashed border-ink-300 p-4">
@@ -277,6 +282,7 @@ export function PricingProfitCard({
             name="price"
             render={({ field: { value, onChange } }) => (
               <TextInput
+                ref={priceInputRef}
                 placeholder="0.00"
                 placeholderTextColor="#A89F90"
                 value={value}

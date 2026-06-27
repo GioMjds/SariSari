@@ -182,6 +182,55 @@ jest.mock('expo-router', () => ({
 	usePathname: () => '/',
 }));
 
+// Mock expo-haptics — both `stores/ToastStore.ts` and the new barcode
+// scanner code import this module. Tests don't assert haptic side
+// effects, so no-op stubs are correct. `ToastStore.hapticFor` calls
+// become no-ops in tests (acceptable — no test asserts haptics).
+jest.mock('expo-haptics', () => ({
+	impactAsync: jest.fn(async () => undefined),
+	notificationAsync: jest.fn(async () => undefined),
+	selectionAsync: jest.fn(async () => undefined),
+	ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+	NotificationFeedbackType: {
+		Success: 'success',
+		Warning: 'warning',
+		Error: 'error',
+	},
+}));
+
+// Mock expo-camera — `components/ui/BarcodeScannerModal.tsx` imports
+// `CameraView`, `useCameraPermissions`, and the permission-status enum.
+// Tests don't render the camera surface; default to a granted
+// permission so existing UI flows aren't blocked by an "undetermined"
+// state. CameraView is stubbed as a plain View (children pass-through).
+//
+// The `mock*`-prefixed variables (mockReact, mockRN) are exempt from
+// Jest's "no out-of-scope refs in mock factories" rule.
+const mockReact = require('react');
+const mockRN = require('react-native');
+jest.mock('expo-camera', () => {
+	const CameraViewStub = ({ children, ...rest }: any) =>
+		mockReact.createElement(mockRN.View, rest, children);
+	CameraViewStub.displayName = 'CameraView';
+	return {
+		CameraView: CameraViewStub,
+		useCameraPermissions: jest.fn(() => [
+			{ granted: true, canAskAgain: true, status: 'granted' },
+			jest.fn(async () => ({
+				granted: true,
+				canAskAgain: true,
+				status: 'granted',
+			})),
+			jest.fn(async () => undefined),
+		]),
+		PermissionStatus: {
+			GRANTED: 'granted',
+			DENIED: 'denied',
+			UNDETERMINED: 'undetermined',
+		},
+	};
+});
+
 // Mock React Native Animated helper if available (avoids resolution errors in Node)
 try {
 	jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');

@@ -18,6 +18,10 @@ interface BasicInfoCardProps {
   categories: Category[];
   selectedCategory: string;
   onSelectCategory: (name: string) => void;
+  /** Opens the camera scanner modal. Hidden when auto-SKU is on
+   *  (the form hook turns auto-gen off when a scan succeeds — the
+   *  button is the primary way to switch to "manual" SKU mode). */
+  onPressScan: () => void;
 }
 
 /**
@@ -40,6 +44,7 @@ export function BasicInfoCard({
   categories,
   selectedCategory,
   onSelectCategory,
+  onPressScan,
 }: BasicInfoCardProps) {
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
@@ -125,15 +130,34 @@ export function BasicInfoCard({
             variant="regular"
             className="text-ink-400 text-xs mt-1"
           >
-            Auto-generated from product name — toggle off to enter manually
+            Auto-generated from product name — toggle off or scan a barcode
           </StyledText>
         ) : (
-          <StyledText
-            variant="regular"
-            className="text-ink-400 text-xs mt-1"
+          <Pressable
+            onPress={onPressScan}
+            accessibilityRole="button"
+            accessibilityLabel="Scan barcode"
+            hitSlop={8}
+            className="press-scale flex-row items-center mt-1 active:opacity-70"
           >
-            Scan a barcode or type a custom SKU
-          </StyledText>
+            <FontAwesome
+              name="barcode"
+              size={14}
+              color="#623418"
+            />
+            <StyledText
+              variant="semibold"
+              className="text-cinnamon-600 text-xs ml-2"
+            >
+              Scan barcode
+            </StyledText>
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs ml-2"
+            >
+              or type a custom SKU
+            </StyledText>
+          </Pressable>
         )}
       </View>
 
