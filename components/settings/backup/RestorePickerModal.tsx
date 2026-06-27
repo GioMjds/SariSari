@@ -1,8 +1,8 @@
 // components/settings/backup/RestorePickerModal.tsx
 // Modal picker that lets the user choose a snapshot to restore. Spec §8.
 //
-// Phase 1: Local tab only (the Cloud tab renders an "empty" state and is
-// disabled). Phase 2 will populate the Cloud tab via `useCloudBackups`.
+// Phase 1: Local tab only. Phase 2 enables the Cloud tab when
+// `useCloudBackups()` returns ≥1 entry.
 //
 // The picker is a controlled modal — `visible` + `onClose` rather than
 // the global modal store, because it carries selection state that lives
@@ -15,15 +15,16 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui/Modal';
 import { RestoreConfirmDialog } from './RestoreConfirmDialog';
-import type { Snapshot } from '@/lib/backup';
+import type { CloudBackup, Snapshot } from '@/lib/backup';
 
 type Tab = 'local' | 'cloud';
 
 type RestorePickerModalProps = {
   visible: boolean;
   snapshots: Snapshot[];
-  selected: Snapshot | null;
-  onSelect: (snap: Snapshot) => void;
+  cloudBackups: CloudBackup[];
+  selected: Snapshot | CloudBackup | null;
+  onSelect: (item: Snapshot | CloudBackup) => void;
   onClose: () => void;
   onConfirm: () => Promise<void>;
   confirming: boolean;
@@ -69,6 +70,7 @@ const formatStamp = (isoStamp: string): string => {
 export function RestorePickerModal({
   visible,
   snapshots,
+  cloudBackups,
   selected,
   onSelect,
   onClose,
@@ -123,12 +125,12 @@ export function RestorePickerModal({
           </Pressable>
           <Pressable
             onPress={() => setTab('cloud')}
-            disabled
+            disabled={cloudBackups.length === 0}
             accessibilityRole="tab"
             accessibilityState={{ selected: tab === 'cloud' }}
             className={`flex-1 py-2 rounded-lg items-center ${
-              tab === 'cloud' ? 'bg-paper-50' : 'opacity-50'
-            }`}
+              tab === 'cloud' ? 'bg-paper-50' : ''
+            } ${cloudBackups.length === 0 ? 'opacity-50' : ''}`}
           >
             <StyledText
               variant={tab === 'cloud' ? 'extrabold' : 'semibold'}
@@ -137,7 +139,9 @@ export function RestorePickerModal({
               }`}
               style={{ letterSpacing: 0.8 }}
             >
-              {t('common:restorePickerTabCloud', { count: 0 })}
+              {t('common:restorePickerTabCloud', {
+                count: cloudBackups.length,
+              })}
             </StyledText>
           </Pressable>
         </View>
@@ -160,7 +164,10 @@ export function RestorePickerModal({
                 const isoStamp = filename
                   .replace(/^sarisari_snapshot_/, '')
                   .replace(/\.db$/, '');
-                const isSelected = selected?.path === snap.path;
+                const isSelected =
+                selected != null &&
+                'path' in selected &&
+                selected.path === snap.path;
                 return (
                   <Pressable
                     key={snap.path}
@@ -205,7 +212,7 @@ export function RestorePickerModal({
               })}
             </ScrollView>
           )
-        ) : (
+        ) : cloudBackups.length === 0 ? (
           <View className="py-8 items-center">
             <FontAwesome name="cloud" size={32} color="#9C8E7E" />
             <StyledText
@@ -215,6 +222,80 @@ export function RestorePickerModal({
               {t('common:restorePickerCloudEmpty')}
             </StyledText>
           </View>
+        ) : (
+          <ScrollView
+            className="max-h-72"
+            showsVerticalScrollIndicator={false}
+          >
+            {cloudBackups.map((backup) => {
+              const dt = new Date(backup.metadata.updatedAt);
+              const monthNames = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec',
+              ];
+              const stamp = `${monthNames[dt.getMonth()]} ${dt.getDate()}, ${String(
+                dt.getHours(),
+              ).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+              const isSelected =
+                selected != null &&
+                'fileId' in selected &&
+                selected.fileId === backup.fileId;
+              return (
+                <Pressable
+                  key={backup.fileId}
+                  onPress={() => onSelect(backup)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={stamp}
+                  className={`flex-row items-center px-3 py-3 rounded-xl mb-2 border ${
+                    isSelected
+                      ? 'bg-persimmon-50 border-persimmon-500'
+                      : 'bg-paper-50 border-warm-100'
+                  } active:opacity-80`}
+                >
+                  <View
+                    className={`w-5 h-5 rounded-full border-2 items-center justify-center mr-3 ${
+                      isSelected
+                        ? 'bg-persimmon-500 border-persimmon-500'
+                        : 'border-ink-200'
+                    }`}
+                  >
+                    {isSelected ? (
+                      <FontAwesome name="check" size={10} color="#FBF7EE" />
+                    ) : null}
+                  </View>
+                  <View className="flex-1">
+                    <StyledText
+                      variant={isSelected ? 'extrabold' : 'semibold'}
+                      className="text-sm text-ink-700"
+                    >
+                      {stamp}
+                    </StyledText>
+                    <StyledText
+                      variant="regular"
+                      className="text-xs text-ink-400 mt-0.5"
+                    >
+                      {backup.metadata.storeName ||
+                        t('common:cloudBackupSectionTitle')}
+                      {backup.metadata.salesCount
+                        ? ` · ${backup.metadata.salesCount} sales`
+                        : ''}
+                    </StyledText>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         )}
 
         {/* Warning footer + restore button */}

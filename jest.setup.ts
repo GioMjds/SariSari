@@ -42,10 +42,19 @@ process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3000';
 process.env.EXPO_PUBLIC_DJANGO_URL = 'http://localhost:8000';
 
 // Mock Expo modules
+// Mock expo-secure-store — bare jest.fn() returns undefined for
+// getItemAsync, which breaks OAuth tests that need to round-trip
+// tokens. We back the mock with an in-memory Map so set → get works.
+const mockSecureStoreMap = new Map<string, string>();
 jest.mock('expo-secure-store', () => ({
-	getItemAsync: jest.fn(),
-	setItemAsync: jest.fn(),
-	deleteItemAsync: jest.fn(),
+	getItemAsync: jest.fn(async (key: string) => mockSecureStoreMap.get(key) ?? null),
+	setItemAsync: jest.fn(async (key: string, value: string) => {
+		mockSecureStoreMap.set(key, value);
+	}),
+	deleteItemAsync: jest.fn(async (key: string) => {
+		mockSecureStoreMap.delete(key);
+	}),
+	__reset: () => mockSecureStoreMap.clear(),
 }));
 
 // Mock expo-file-system/legacy — the legacy namespace is a flat object
@@ -90,6 +99,75 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // per-case behavior via `jest.spyOn(Updates, 'reloadAsync')`.
 jest.mock('expo-updates', () => ({
 	reloadAsync: jest.fn(async () => undefined),
+}));
+
+// Mock expo-network — the scheduler's `shouldAttemptCloudUpload` calls
+// `Network.getNetworkStateAsync`. Tests override per-case via the mock's
+// `mockResolvedValueOnce`. Default is a Wi-Fi-connected state.
+jest.mock('expo-network', () => ({
+	getNetworkStateAsync: jest.fn(async () => ({
+		isConnected: true,
+		isInternetReachable: true,
+		type: 'WIFI',
+	})),
+	NetworkStateType: { WIFI: 'WIFI', CELLULAR: 'CELLULAR', NONE: 'NONE' },
+}));
+
+// Mock expo-constants — `lib/backup/metadata.ts` reads
+// `Constants.expoConfig?.version` for the metadata sidecar. Tests
+// override via `jest.requireMock('expo-constants').default`.
+jest.mock('expo-constants', () => ({
+	__esModule: true,
+	default: {
+		expoConfig: { version: '1.0.0', extra: { googleClientId: '' } },
+		manifest: undefined,
+	},
+}));
+
+// Mock expo-auth-session — `lib/backup/googleDrive.ts` uses PKCE for
+// OAuth. Tests don't exercise the OAuth flow itself; auth tests stub
+// the whole module out. The mock provides the surface area
+// `googleDrive.ts` imports (`makeRedirectUri`, `ResponseType`, etc.).
+jest.mock('expo-auth-session', () => ({
+	makeRedirectUri: jest.fn(() => 'sarisari://redirect'),
+	ResponseType: { Code: 'code', Token: 'token' },
+	CodeChallengeMethod: { S256: 'S256' },
+	useAuthRequest: jest.fn(() => [
+		null,
+		null,
+		jest.fn(),
+	]),
+	useAuthRequestResult: jest.fn(),
+	AuthRequest: class {
+		promptAsync = jest.fn(async () => ({ type: 'success', params: { code: 'x' } }));
+	},
+	exchangeCodeAsync: jest.fn(async () => ({
+		accessToken: 'a',
+		refreshToken: 'r',
+		expiresIn: 3600,
+		tokenType: 'Bearer',
+	})),
+	refreshAsync: jest.fn(async () => ({
+		accessToken: 'a',
+		expiresIn: 3600,
+		tokenType: 'Bearer',
+	})),
+}));
+
+// Mock expo-web-browser — used by the OAuth flow's
+// `WebBrowser.openAuthSessionAsync`. Tests stub it.
+jest.mock('expo-web-browser', () => ({
+	maybeCompleteAuthSession: jest.fn(),
+	openAuthSessionAsync: jest.fn(async () => ({ type: 'success', url: '' })),
+}));
+
+// Mock expo-crypto — `googleDrive.ts` uses `Crypto.digestStringAsync`
+// for PKCE. Tests stub.
+jest.mock('expo-crypto', () => ({
+	digestStringAsync: jest.fn(async () => 'hashed'),
+	randomUUID: jest.fn(() => 'uuid'),
+	Random: { getRandomBytesAsync: jest.fn(async () => new Uint8Array(32)) },
+	CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
 }));
 
 jest.mock('expo-router', () => ({

@@ -8,11 +8,21 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
+import { AppState } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View } from 'react-native';
+import {
+  consumeQueue,
+  runStartupChecks,
+  subscribeCounter,
+} from '@/lib/backup';
+import { useSchedulerInputs } from '@/hooks/useBackup';
+import { CloudNewerBanner } from '@/components/settings/backup';
 import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
@@ -37,6 +47,7 @@ export default function RootLayout() {
 
   const [dbInitError, setDbInitError] = useState<string | null>(null);
   const [i18nReady, setI18nReady] = useState<boolean>(false);
+  const schedulerInputs = useSchedulerInputs();
 
   const runDbInit = useCallback(async () => {
     setDbInitError(null);
@@ -84,6 +95,43 @@ export default function RootLayout() {
     NavigationBar.setBackgroundColorAsync('#EFE6D2');
   }, []);
 
+  // Backup scheduler wiring — spec §3.6 (triggers). Runs once on mount
+  // after fonts + i18n are ready; never blocks the UI.
+  useEffect(() => {
+    if (!fontsLoaded || !i18nReady || dbInitError) return;
+    void runStartupChecks(schedulerInputs);
+    const unsubCounter = subscribeCounter(schedulerInputs);
+    const subAppState = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void consumeQueue(schedulerInputs);
+      }
+    });
+    return () => {
+      unsubCounter();
+      subAppState.remove();
+    };
+    // schedulerInputs is a fresh object on every render of useSchedulerInputs
+    // (it reads TanStack Query state). The effect's body is idempotent
+    // so re-subscribing is safe; we just want the latest inputs.
+  }, [fontsLoaded, i18nReady, dbInitError, schedulerInputs]);
+
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
+
+  const handleBannerRestore = useCallback(() => {
+    // Open the Settings screen; the LocalSnapshotsSection there has
+    // the restore picker with the Cloud tab pre-selected via state.
+    router.push('/settings');
+  }, []);
+
+  const handleBannerDismiss = useCallback(async () => {
+    setBannerDismissed(true);
+    try {
+      await AsyncStorage.setItem('cloud_newer_banner_dismissed_at', String(Date.now()));
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const CustomTheme = {
     ...DefaultTheme,
     colors: {
@@ -112,6 +160,12 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
             <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+              {!bannerDismissed ? (
+                <CloudNewerBanner
+                  onRestorePress={handleBannerRestore}
+                  onDismiss={handleBannerDismiss}
+                />
+              ) : null}
               <Stack
                 screenOptions={{
                   headerShown: false,

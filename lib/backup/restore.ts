@@ -149,23 +149,52 @@ export const restoreFromLocal = async (snapshotPath: string): Promise<void> => {
 };
 
 /**
- * Restore from a downloaded cloud copy. The Phase 1 implementation is a
- * thin stub that throws `gdrive_not_configured`; Phase 2 (Drive) wires
- * the actual download.
+ * Restore from a Google Drive backup. Spec §5 ("Restore from cloud").
  *
- * The signature is intentionally permissive (`any` for the file id) so
- * Phase 2 can pass either a Drive file id or a richer descriptor without
- * touching this file.
+ * Flow:
+ *   1. download the cloud DB to `cacheDirectory`
+ *   2. delegate to `restoreFromLocal` (validates, safety copy, overwrite,
+ *      reload)
+ *   3. always delete the temp file in `finally`
+ *
+ * The function id is accepted for forward-compat — the picker passes the
+ * Drive file id from `useCloudBackups()` so a future "specific version"
+ * restore can re-use this entry point without changing the call site.
+ *
+ * On any failure during download or delegation, the temp file is cleaned
+ * up and the error is rethrown as a `RestoreError` with the appropriate
+ * code.
  */
 export const restoreFromCloud = async (_fileId: string): Promise<void> => {
-  const err: BackupError = {
-    kind: 'gdrive_not_configured',
-    message:
-      'Google Drive restore is not yet available. Set extra.googleClientId in app.json and rebuild.',
-  };
-  throw new RestoreError(
-    'gdrive_not_configured',
-    err.message,
-    err,
-  );
+  let tmp: string | null = null;
+  try {
+    const { downloadCloudToTemp } = await import('./scheduler');
+    tmp = await downloadCloudToTemp();
+  } catch (err) {
+    // The scheduler throws typed `BackupError`s. Surface them as
+    // `gdrive_not_configured` for any not-configured case, otherwise
+    // `copy_failed` (download is essentially "copy from network").
+    const e = err as BackupError;
+    if (e?.kind === 'gdrive_not_configured' || e?.kind === 'gdrive_auth') {
+      throw new RestoreError('gdrive_not_configured', e.message, err);
+    }
+    throw new RestoreError(
+      'copy_failed',
+      'Failed to download the backup from Google Drive.',
+      err,
+    );
+  }
+  try {
+    await restoreFromLocal(tmp);
+  } finally {
+    // Best-effort cleanup; cacheDirectory is OS-managed but we don't
+    // want stale restore files lingering between attempts.
+    if (tmp) {
+      try {
+        await FileSystem.deleteAsync(tmp, { idempotent: true });
+      } catch {
+        // ignore
+      }
+    }
+  }
 };

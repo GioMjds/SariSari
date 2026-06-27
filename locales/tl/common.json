@@ -118,6 +118,12 @@
 
   "useCellularForCloud": "Gumamit ng cellular data para sa cloud upload",
 
+  "cloudNewerBannerTitle": "May mas bagong backup sa Google Drive",
+  "cloudNewerBannerSubtitle": "Cloud: {{cloud}} · Lokal: {{local}}",
+  "cloudNewerBannerRestoreCta": "I-restore mula sa cloud",
+  "cloudNewerBannerDismiss": "Isara",
+  "cloudBackupConsentError": "Hindi ma-link ang Google Drive. Subukan muli.",
+
   "shareStatementTitle": "I-share ang Statement",
   "shareStatementMessage": "Piliin kung paano i-share ang statement sa iyong suki:",
   "shareAsText": "I-share bilang Text (SMS/Chat)",

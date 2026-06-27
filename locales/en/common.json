@@ -118,6 +118,12 @@
 
   "useCellularForCloud": "Use cellular data for cloud uploads",
 
+  "cloudNewerBannerTitle": "A newer backup is in Google Drive",
+  "cloudNewerBannerSubtitle": "Cloud: {{cloud}} · Local: {{local}}",
+  "cloudNewerBannerRestoreCta": "Restore from cloud",
+  "cloudNewerBannerDismiss": "Dismiss",
+  "cloudBackupConsentError": "Could not link Google Drive. Please try again.",
+
   "shareStatementTitle": "Share Statement",
   "shareStatementMessage": "Choose how you want to share the statement with your suki:",
   "shareAsText": "Share as Text (SMS/Chat)",

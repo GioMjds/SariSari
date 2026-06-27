@@ -14,11 +14,13 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import {
   useBackupNow,
+  useCloudBackups,
   useLocalSnapshots,
+  useRestoreFromCloud,
   useRestoreFromSnapshot,
 } from '@/hooks/useBackup';
 import { RestorePickerModal } from './RestorePickerModal';
-import type { Snapshot } from '@/lib/backup';
+import type { CloudBackup, Snapshot } from '@/lib/backup';
 
 /**
  * Format a file size in bytes as a short human string (`1.2 MB`,
@@ -87,14 +89,17 @@ const formatRelative = (
 export function LocalSnapshotsSection() {
   const { t } = useTranslation();
   const snapshotsQuery = useLocalSnapshots();
+  const cloudQuery = useCloudBackups();
   const backupNow = useBackupNow();
   const restore = useRestoreFromSnapshot();
+  const restoreCloud = useRestoreFromCloud();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerSelection, setPickerSelection] = useState<Snapshot | null>(
-    null,
-  );
+  const [pickerSelection, setPickerSelection] = useState<
+    Snapshot | CloudBackup | null
+  >(null);
 
   const snapshots = snapshotsQuery.data ?? [];
+  const cloudBackups = cloudQuery.data ?? [];
   const isLoading = snapshotsQuery.isLoading;
   const lastSnapshot = snapshots[0] ?? null;
 
@@ -103,13 +108,16 @@ export function LocalSnapshotsSection() {
     setPickerOpen(true);
   };
 
-  const handlePickRestore = (snap: Snapshot) => {
-    setPickerSelection(snap);
+  const handlePickRestore = (item: Snapshot | CloudBackup) => {
+    setPickerSelection(item);
   };
 
   const handleConfirmRestore = async () => {
-    if (pickerSelection) {
+    if (!pickerSelection) return;
+    if ('path' in pickerSelection) {
       await restore.mutateAsync(pickerSelection);
+    } else {
+      await restoreCloud.mutateAsync(pickerSelection.fileId);
     }
     setPickerOpen(false);
     setPickerSelection(null);
@@ -229,6 +237,7 @@ export function LocalSnapshotsSection() {
       <RestorePickerModal
         visible={pickerOpen}
         snapshots={snapshots}
+        cloudBackups={cloudBackups}
         selected={pickerSelection}
         onSelect={handlePickRestore}
         onClose={() => {
@@ -236,7 +245,7 @@ export function LocalSnapshotsSection() {
           setPickerSelection(null);
         }}
         onConfirm={handleConfirmRestore}
-        confirming={restore.isPending}
+        confirming={restore.isPending || restoreCloud.isPending}
       />
     </View>
   );
