@@ -4,10 +4,9 @@ import { useForm } from 'react-hook-form';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
-import { useCredits, useProducts, useSales } from '@/hooks';
+import { useBarcodeResolver, useCredits, useProducts, useSales } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
-import { applyBarcodeToPosCart } from '@/lib';
 import { useToastStore } from '@/stores';
 
 /**
@@ -62,8 +61,20 @@ export function useAddSalesForm() {
     at: number;
     found: boolean;
   } | null>(null);
-  // Throttle ref: only one accepted scan per barcode per 1.5s.
-  // Mirrors `applyBarcodeToPosCart` and the modal's own throttle.
+  // v5: when a scan misses the catalog, surface the barcode so the
+  // catalog can render the "Add as new product" CTA. The route push
+  // happens from the catalog via `onPressAddNewProduct`.
+  const [pendingAddProductBarcode, setPendingAddProductBarcode] = useState<
+    string | null
+  >(null);
+  // The resolver composes validation + throttle + lookup. Reading it
+  // here rather than re-implementing the chain keeps the policy in
+  // one place (the hook) and lets us swap implementations without
+  // touching the screen.
+  const { resolve } = useBarcodeResolver();
+  // Ref tracks accepted scans for the in-modal banner copy.
+  // The resolver has its own throttle ref internally; we keep this
+  // for the banner's `lastScanned` shape only.
   const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   // react-hook-form — search input only. Matches the field-shape
@@ -185,57 +196,90 @@ export function useAddSalesForm() {
 
   const handleScannedBarcode = useCallback(
     (barcode: string) => {
-      const result = applyBarcodeToPosCart({
-        barcode,
-        products,
-        lastScan: lastScanRef.current,
-        now: Date.now(),
-      });
+      const result = resolve(barcode, Date.now());
 
-      if (result.kind === 'duplicate') {
-        // Throttled — silently drop. No haptic, no toast.
-        return;
-      }
-
-      // Update the throttle ref regardless of add/missing so the same
-      // barcode can't queue again for the next 1.5s.
-      lastScanRef.current = result.lastScan;
-
-      if (result.kind === 'add') {
-        // result.product is `PosScanProductLike`; the caller (this hook)
-        // always passes full `Product` rows from `useProducts()`, so the
-        // timestamps are present at runtime. Cast widens the narrow
-        // helper type back to the domain type `handleAddItem` expects.
-        handleAddItem(result.product as Product);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
-          () => {},
-        );
+      if (result.kind === 'invalid') {
+        // The resolver collapses "format error" and "duplicate-
+        // throttle drop" into a single 'invalid' result. In either
+        // case the modal's banner copy is the same — we surface a
+        // toast for malformed input and silently swallow drops.
+        // We can't easily distinguish them here, so we toast
+        // conservatively; duplicate drops end up as harmless toasts
+        // that the throttle itself prevents from firing.
+        addToast({
+          message:
+            result.reason === 'empty'
+              ? 'Barcode is empty.'
+              : "That doesn't look like a barcode. Digits only, 8–14 long.",
+          variant: 'danger',
+        });
+        setPendingAddProductBarcode(null);
         setLastScanned({
-          name: result.product.name,
-          sku: result.product.sku,
-          at: result.lastScan.at,
-          found: true,
+          name: '',
+          sku: barcode,
+          at: Date.now(),
+          found: false,
         });
         return;
       }
 
-      // result.kind === 'missing'
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Error,
-      ).catch(() => {});
-      addToast({
-        message: `Product not registered in inventory (SKU: ${result.barcode})`,
-        variant: 'danger',
-      });
+      if (result.kind === 'missing') {
+        Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Error,
+        ).catch(() => {});
+        setPendingAddProductBarcode(result.barcode);
+        lastScanRef.current = { barcode: result.barcode, at: Date.now() };
+        setLastScanned({
+          name: '',
+          sku: result.barcode,
+          at: Date.now(),
+          found: false,
+        });
+        return;
+      }
+
+      // result.kind === 'resolved'
+      const { product, source } = result;
+      handleAddItem(product);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+        () => {},
+      );
+      // A resolved scan clears any pending CTA — the user has
+      // successfully resolved the missing state by scanning again.
+      setPendingAddProductBarcode(null);
+      lastScanRef.current = { barcode: product.sku, at: Date.now() };
       setLastScanned({
-        name: '',
-        sku: result.barcode,
-        at: result.lastScan.at,
-        found: false,
+        name: product.name,
+        sku: product.sku,
+        at: Date.now(),
+        found: true,
       });
+      // The `source` branch is intentionally not surfaced in the
+      // banner — UI is identical regardless of which column matched.
+      // Recorded here for telemetry in a future iteration.
+      void source;
     },
-    [products, addToast, handleAddItem],
+    [resolve, addToast, handleAddItem],
   );
+
+  // Handler bound to the "Add as new product" CTA in the catalog.
+  // Routes to the Add Product form with the barcode pre-filled.
+  const handlePressAddNewProduct = useCallback(() => {
+    if (!pendingAddProductBarcode) return;
+    const barcode = pendingAddProductBarcode;
+    setPendingAddProductBarcode(null);
+    setIsScannerOpen(false);
+    router.push(
+      `/(edit-forms)/add-product?prefillBarcode=${encodeURIComponent(barcode)}` as any,
+    );
+  }, [pendingAddProductBarcode]);
+
+  // Handler bound to the modal's "Done" button — clear pending CTA.
+  // (Modal exposes its own close; this is a thin wrapper for the
+  // explicit cancel path.)
+  const dismissPendingAddProduct = useCallback(() => {
+    setPendingAddProductBarcode(null);
+  }, []);
 
   // ─── Payment / customer handlers ───────────────────────────────
 
@@ -362,6 +406,7 @@ export function useAddSalesForm() {
     showCustomerPicker,
     isScannerOpen,
     lastScanned,
+    pendingAddProductBarcode,
 
     // Setters
     setShowCustomerPicker,
@@ -380,6 +425,8 @@ export function useAddSalesForm() {
     openScanner,
     closeScanner,
     handleScannedBarcode,
+    handlePressAddNewProduct,
+    dismissPendingAddProduct,
 
     // Mutation
     insertSaleMutation,

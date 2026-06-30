@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useForm } from 'react-hook-form';
 import { useCategories, useProducts } from '@/hooks';
 import { lookupOfflineBarcode } from '@/constants/barcodes';
@@ -19,10 +19,16 @@ import { useToastStore } from '@/stores';
  * decimal strings (the user's typed value) for display math —
  * see AGENTS.md: integer-pesos invariant. We parse them to
  * integer pesos exactly once, inside `submit`, via `parsePesosInput`.
+ *
+ * `barcode` was added in the v5 rebuild. It is the printed machine-
+ * readable identifier on the product packaging, distinct from `sku`
+ * which is the store's internal identifier. The two can diverge (e.g.
+ * `sku = COKE-1.5L`, `barcode = 4800016112345`) or be identical.
  */
 export interface AddProductFormData {
   productName: string;
   sku: string;
+  barcode: string;
   category: string;
   bundleCost: string;
   piecesPerBundle: string;
@@ -60,13 +66,14 @@ const safeTrim = (s?: string) => (s ?? '').trim();
  * Encapsulates react-hook-form setup, the SKU auto-generation
  * toggle, the bundle/single cost toggle, the markup-preset and
  * stock-quick-bump helpers, the live profit/markup preview math,
- * the unsaved-changes guard, and the submit pipeline.
+ * the unsaved-changes guard, the scanner integration, the
+ * inline duplicate-barcode guard, and the submit pipeline.
  *
  * The screen and its components stay presentational; this hook is
  * the single place where business logic lives.
  */
 export function useAddProductForm() {
-  const { insertProductMutation } = useProducts();
+  const { insertProductMutation, getAllProductsQuery } = useProducts();
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
   const addToast = useToastStore((state) => state.addToast);
@@ -91,6 +98,7 @@ export function useAddProductForm() {
     defaultValues: {
       productName: '',
       sku: '',
+      barcode: '',
       category: '',
       bundleCost: '',
       piecesPerBundle: '',
@@ -102,6 +110,7 @@ export function useAddProductForm() {
 
   const productName = watch('productName');
   const sku = watch('sku');
+  const barcode = watch('barcode');
   const price = watch('price');
   const costPerPiece = watch('costPerPiece');
   const bundleCost = watch('bundleCost');
@@ -122,7 +131,8 @@ export function useAddProductForm() {
       safeTrim(bundleCost) !== '' ||
       safeTrim(initialStock) !== '' ||
       safeTrim(category) !== '' ||
-      safeTrim(sku) !== '');
+      safeTrim(sku) !== '' ||
+      safeTrim(barcode) !== '');
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the profit card hides itself in that case.
@@ -136,13 +146,42 @@ export function useAddProductForm() {
   const isLossWarning =
     parsedCost > 0 && parsedPrice > 0 && parsedPrice <= parsedCost;
 
+  // ─── Duplicate-barcode guard ──────────────────────────────────
+  //
+  // When the user types or scans a barcode, compare it against the
+  // existing catalog. If another product owns this value (either via
+  // its `barcode` column or — for legacy rows — its `sku`), surface
+  // an inline error and block submit. This mirrors the partial
+  // unique index `idx_products_barcode` — the index is the post-submit
+  // safety net; this effect is the pre-submit guard that lets us show
+  // a useful inline error with an "Edit that product" link instead of
+  // a generic SQLITE_CONSTRAINT toast.
+
+  const existingProducts = getAllProductsQuery.data ?? [];
+
+  const trimmedBarcode = safeTrim(barcode);
+
+  const barcodeConflictProduct = useMemo(() => {
+    if (!trimmedBarcode) return null;
+    return (
+      existingProducts.find(
+        (p) =>
+          (p.barcode != null && p.barcode === trimmedBarcode) ||
+          p.sku === trimmedBarcode,
+      ) ?? null
+    );
+  }, [trimmedBarcode, existingProducts]);
+
+  const isBarcodeDuplicate = barcodeConflictProduct != null;
+
   // Required-field guard for the submit button.
   const isSubmitDisabled =
     insertProductMutation.isPending ||
     !safeTrim(productName) ||
     !safeTrim(sku) ||
     !price ||
-    parsedPrice <= 0;
+    parsedPrice <= 0 ||
+    isBarcodeDuplicate;
 
   // ─── Auto-calculate cost-per-piece when bundle values change ──
 
@@ -266,23 +305,48 @@ export function useAddProductForm() {
   const closeScanner = useCallback(() => setIsScannerOpen(false), []);
 
   const handleScannedBarcode = useCallback(
-    (barcode: string) => {
-      // Pure helper decides what to write. Rule order matters: when
-      // auto-generate-SKU is on, we MUST flip it off BEFORE writing
-      // productName, otherwise the auto-gen useEffect below re-runs
-      // and clobbers our scanned SKU.
-      const patch = applyBarcodeToAddProductForm({
-        barcode,
+    (barcodeValue: string) => {
+      // Pure helper decides what to write (and whether to block).
+      // The hook composes the form writes from the returned patch.
+      // Three outcomes: apply, invalid, duplicate.
+      const result = applyBarcodeToAddProductForm({
+        barcode: barcodeValue,
         currentProductName: productName ?? '',
         autoGenerateSku,
         lookup: lookupOfflineBarcode,
+        existingProducts,
       });
 
+      if (result.kind === 'invalid') {
+        addToast({
+          message:
+            result.reason === 'empty'
+              ? 'Barcode is empty.'
+              : "That doesn't look like a barcode. Digits only, 8–14 long.",
+          variant: 'warning',
+        });
+        // Still close the modal — a bad scan shouldn't keep the user
+        // stuck. (User can scan again or type by hand.)
+        setIsScannerOpen(false);
+        return;
+      }
+
+      if (result.kind === 'duplicate') {
+        // Mark the conflict product for the inline error; the field
+        // effect below will detect it on the next render and light up
+        // the duplicate banner. We still close the modal so the user
+        // can address the conflict in the form.
+        setValue('barcode', barcodeValue, { shouldDirty: true });
+        setIsScannerOpen(false);
+        return;
+      }
+
+      // result.kind === 'apply'
+      const patch = result.patch;
       if (patch.setAutoGenerateSku) {
         setAutoGenerateSku(false);
       }
-
-      setValue('sku', patch.sku, { shouldDirty: true });
+      setValue('barcode', patch.barcode, { shouldDirty: true });
 
       if (patch.productName !== undefined) {
         setValue('productName', patch.productName, { shouldDirty: true });
@@ -306,8 +370,38 @@ export function useAddProductForm() {
         }, 250);
       }
     },
-    [addToast, autoGenerateSku, productName, setValue],
+    [addToast, autoGenerateSku, existingProducts, productName, setValue],
   );
+
+  // ─── Prefill from route param (inventory-tab scan-to-add) ──────
+  //
+  // When the inventory tab's new barcode button is used, it pushes
+  // this route with `?prefillBarcode=<value>` rather than opening the
+  // in-form scanner. We consume the param here and run the same
+  // handler so behavior is identical regardless of entry point.
+  //
+  // The `prefillAppliedRef` guard is required for two reasons:
+  //   1. React 19 StrictMode double-mounts effects in dev. Without
+  //      the guard we'd call `handleScannedBarcode` twice and the
+  //      second call would race with the auto-gen-off + productName
+  //      write sequence.
+  //   2. After applying the prefill we clear the param with
+  //      `router.setParams`. A re-entry (e.g. back-nav then forward
+  //      again) would otherwise re-trigger the effect.
+  const params = useLocalSearchParams<{ prefillBarcode?: string }>();
+  const prefillAppliedRef = useRef(false);
+
+  useEffect(() => {
+    const prefill = params.prefillBarcode;
+    if (!prefill || prefillAppliedRef.current) return;
+    prefillAppliedRef.current = true;
+    handleScannedBarcode(prefill);
+    // Clear the param without firing a navigation event so the URL
+    // is consistent on a hard reload of this route. `router` from
+    // expo-router is a stable module-scope handle and doesn't need
+    // to be listed as a dep.
+    router.setParams({ prefillBarcode: undefined });
+  }, [params.prefillBarcode, handleScannedBarcode]);
 
   // ─── Submit ────────────────────────────────────────────────────
 
@@ -317,11 +411,13 @@ export function useAddProductForm() {
     const costPriceValue = data.costPerPiece
       ? parsePesosInput(data.costPerPiece)
       : undefined;
+    const trimmedBarcode = safeTrim(data.barcode);
 
     insertProductMutation.mutate(
       {
         name: safeTrim(data.productName),
         sku: safeTrim(data.sku),
+        barcode: trimmedBarcode || null,
         price: priceValue,
         quantity: Number.isFinite(stockValue) ? stockValue : 0,
         cost_price: costPriceValue,
@@ -343,6 +439,7 @@ export function useAddProductForm() {
     // Watched values — drive the live profit / markup preview
     productName,
     sku,
+    barcode,
     price,
     costPerPiece,
     initialStock,
@@ -369,6 +466,8 @@ export function useAddProductForm() {
     profitPerPiece,
     markupPercent,
     isLossWarning,
+    isBarcodeDuplicate,
+    barcodeConflictProduct,
 
     // Handlers
     applyMarkupPreset,

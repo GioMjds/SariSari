@@ -2,7 +2,7 @@ import { StyledText } from '@/components/elements';
 import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
 import { ProductsTab } from '@/components/inventory/products';
 import { CategoriesTab } from '@/components/inventory/category';
-import { SearchBar } from '@/components/ui/SearchBar';
+import { BarcodeScannerModal, SearchBar } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
 import { useCategories, useProducts } from '@/hooks';
 import { Product } from '@/types';
@@ -11,7 +11,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -57,6 +57,26 @@ export default function Products() {
     useState<Product | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  // Barcode scanner state — opens the camera from the inventory header
+  // so the user can register a new product without first entering the
+  // Add Product form. On a successful scan we push the Add Product
+  // route with the scanned barcode as a prefill param (`prefillBarcode`
+  // — the v5 spec renamed the param from the old `prefillSku`); the
+  // form hook consumes the param and runs the same scanner handler
+  // that the in-form scan button uses.
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const openScanner = useCallback(() => setIsScannerOpen(true), []);
+  const closeScanner = useCallback(() => setIsScannerOpen(false), []);
+  const handleScannedBarcode = useCallback(
+    (barcode: string) => {
+      setIsScannerOpen(false);
+      router.push(
+        `/(edit-forms)/add-product?prefillBarcode=${encodeURIComponent(barcode)}` as any,
+      );
+    },
+    [router],
+  );
 
   // Deep-link restock effect
   useEffect(() => {
@@ -216,15 +236,26 @@ export default function Products() {
           </View>
 
           {activeTab === 'products' && (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => router.push('/(edit-forms)/add-product')}
-              accessibilityRole="button"
-              accessibilityLabel={t('addProductA11y')}
-              className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
-            >
-              <FontAwesome name="plus" size={18} color="#FBF7EE" />
-            </TouchableOpacity>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={openScanner}
+                accessibilityRole="button"
+                accessibilityLabel="Scan barcode to add a product"
+                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
+              >
+                <FontAwesome name="barcode" size={18} color="#FBF7EE" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(edit-forms)/add-product')}
+                accessibilityRole="button"
+                accessibilityLabel={t('addProductA11y')}
+                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
+              >
+                <FontAwesome name="plus" size={18} color="#FBF7EE" />
+              </TouchableOpacity>
+            </View>
           )}
         </MotiView>
 
@@ -583,6 +614,16 @@ export default function Products() {
           </View>
         </View>
       </Modal>
+
+      {/* Barcode scanner — opens from the inventory header. Single
+          mode closes after one accepted scan, then routes into the
+          Add Product form with the scanned value as a prefill param. */}
+      <BarcodeScannerModal
+        visible={isScannerOpen}
+        mode="single"
+        onClose={closeScanner}
+        onScan={handleScannedBarcode}
+      />
       </View>
     </SafeAreaView>
   );

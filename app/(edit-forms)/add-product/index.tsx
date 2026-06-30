@@ -1,7 +1,7 @@
 import { View, Platform } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { router } from 'expo-router';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
 import {
   AddProductHeader,
@@ -40,6 +40,11 @@ export default function AddProduct() {
             selectedCategory={form.category}
             onSelectCategory={form.selectCategory}
             onPressScan={form.openScanner}
+            barcode={form.barcode}
+            barcodeConflictProduct={form.barcodeConflictProduct}
+            onPressEditConflictingProduct={(productId) =>
+              router.push(`/(edit-forms)/edit-product/${productId}` as any)
+            }
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />

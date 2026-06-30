@@ -23,6 +23,16 @@ interface ProductSearchCatalogProps {
   onUpdateQuantity: (productId: number, delta: number) => void;
   /** Opens the camera scanner modal — the primary POS scanning entry. */
   onPressScan: () => void;
+  /**
+   * v5: when a barcode scan misses the catalog, the POS hooks surface
+   * the scanned value here so the catalog renders an inline CTA card.
+   * The card is hidden when `null`. Tapping the CTA invokes
+   * `onPressAddNewProduct` (which routes to Add Product with the
+   * barcode pre-filled).
+   */
+  pendingAddProductBarcode?: string | null;
+  onPressAddNewProduct?: () => void;
+  onDismissPendingAddProduct?: () => void;
 }
 
 /**
@@ -49,6 +59,9 @@ export function ProductSearchCatalog({
   onAdd,
   onUpdateQuantity,
   onPressScan,
+  pendingAddProductBarcode,
+  onPressAddNewProduct,
+  onDismissPendingAddProduct,
 }: ProductSearchCatalogProps) {
   return (
     <View className="flex-1">
@@ -96,6 +109,56 @@ export function ProductSearchCatalog({
         </Pressable>
       </View>
 
+      {/* v5: inline CTA card for missing barcodes. Hidden when no
+          pending barcode is set. Sits between the search bar and the
+          catalog list so the user sees it immediately after a miss. */}
+      {pendingAddProductBarcode ? (
+        <View className="mx-4 mb-3 bg-semantic-danger-50 border border-semantic-danger/30 rounded-2xl p-4 shadow-paper">
+          <View className="flex-row items-start">
+            <View className="w-9 h-9 rounded-full bg-semantic-danger/15 items-center justify-center mr-3">
+              <FontAwesome name="barcode" size={16} color="#C22D2D" />
+            </View>
+            <View className="flex-1">
+              <StyledText variant="extrabold" className="text-ink-900 text-sm">
+                Not in inventory
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-ink-700 text-xs mt-1"
+              >
+                {pendingAddProductBarcode}
+              </StyledText>
+            </View>
+            {onDismissPendingAddProduct ? (
+              <Pressable
+                onPress={onDismissPendingAddProduct}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Dismiss not in inventory card"
+                className="active:opacity-50"
+              >
+                <FontAwesome name="times" size={16} color="#623418" />
+              </Pressable>
+            ) : null}
+          </View>
+          {onPressAddNewProduct ? (
+            <Pressable
+              onPress={onPressAddNewProduct}
+              accessibilityRole="button"
+              accessibilityLabel="Add as new product from scanned barcode"
+              className="press-scale mt-3 rounded-xl py-2.5 bg-persimmon-500 shadow-persimmon-glow items-center"
+            >
+              <StyledText
+                variant="extrabold"
+                className="text-paper-50 text-sm"
+              >
+                Add as new product
+              </StyledText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
       {/* Products List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
@@ -137,4 +200,3 @@ export function ProductSearchCatalog({
     </View>
   );
 }
-

@@ -1,8 +1,10 @@
 import {
+  BarcodeAlreadyExistsError,
   deleteProduct,
   getAllProducts,
   getProduct,
   getProductBySku,
+  getProductByBarcode,
   insertProduct,
   updateProduct,
 } from '@/database/products';
@@ -13,20 +15,28 @@ import {
 } from '@/types/products.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+export const productKeys = {
+  all: ['products'] as const,
+  list: () => [...productKeys.all, 'list'] as const,
+  barcode: (barcode: string) => [...productKeys.all, 'barcode', barcode] as const,
+  sku: (sku: string) => [...productKeys.all, 'sku', sku] as const,
+  detail: (id: number) => [...productKeys.all, 'detail', id] as const,
+};
+
 export function useProducts() {
   const queryClient = useQueryClient();
   const addToast = useToastStore((state) => state.addToast);
 
   // Query: Get all products
   const getAllProductsQuery = useQuery({
-    queryKey: ['products'],
+    queryKey: productKeys.list(),
     queryFn: getAllProducts,
   });
 
   // Query: Get product by ID (accepts id parameter)
   const useGetProduct = (id: number) => {
     return useQuery({
-      queryKey: ['product', id],
+      queryKey: productKeys.detail(id),
       queryFn: () => getProduct(id),
       enabled: !!id,
     });
@@ -35,9 +45,22 @@ export function useProducts() {
   // Query: Get product by SKU
   const useGetProductBySku = (sku: string) => {
     return useQuery({
-      queryKey: ['product-sku', sku],
+      queryKey: productKeys.sku(sku),
       queryFn: () => getProductBySku(sku),
       enabled: !!sku,
+    });
+  };
+
+  // Query: Get product by barcode
+  const useFindProductByBarcode = (barcode: string | null | undefined) => {
+    return useQuery({
+      queryKey: productKeys.barcode(barcode ?? ''),
+      queryFn: () =>
+        barcode && barcode.length > 0
+          ? getProductByBarcode(barcode)
+          : Promise.resolve(null),
+      enabled: !!barcode && barcode.length > 0,
+      staleTime: 60_000,
     });
   };
 
@@ -50,10 +73,19 @@ export function useProducts() {
       quantity = 0,
       cost_price,
       category,
+      barcode,
     }: InsertProductParams) =>
-      insertProduct(name, sku, price, quantity, cost_price, category),
+      insertProduct(
+        name,
+        sku,
+        price,
+        quantity,
+        cost_price,
+        category,
+        barcode,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       addToast({
         message: 'Product added successfully',
@@ -62,6 +94,14 @@ export function useProducts() {
       });
     },
     onError: (error: Error) => {
+      if (error instanceof BarcodeAlreadyExistsError) {
+        addToast({
+          message: `Barcode is already used by another product`,
+          variant: 'danger',
+          duration: 5000,
+        });
+        return;
+      }
       addToast({
         message: error.message || 'Failed to add product',
         variant: 'danger',
@@ -80,11 +120,23 @@ export function useProducts() {
       quantity,
       cost_price,
       category,
+      barcode,
     }: UpdateProductParams) =>
-      updateProduct(id, name, sku, price, quantity, cost_price, category),
+      updateProduct(
+        id,
+        name,
+        sku,
+        price,
+        quantity,
+        cost_price,
+        category,
+        barcode,
+      ),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['product', variables.id] });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: productKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       addToast({
         message: 'Product updated successfully',
@@ -93,6 +145,14 @@ export function useProducts() {
       });
     },
     onError: (error: Error) => {
+      if (error instanceof BarcodeAlreadyExistsError) {
+        addToast({
+          message: `Barcode is already used by another product`,
+          variant: 'danger',
+          duration: 5000,
+        });
+        return;
+      }
       addToast({
         message: error.message || 'Failed to update product',
         variant: 'danger',
@@ -105,7 +165,7 @@ export function useProducts() {
   const deleteProductMutation = useMutation({
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       addToast({
         message: 'Product deleted successfully',
@@ -127,6 +187,7 @@ export function useProducts() {
     getAllProductsQuery,
     useGetProduct,
     useGetProductBySku,
+    useFindProductByBarcode,
 
     // Mutations
     insertProductMutation,

@@ -118,4 +118,36 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 4.');
   }
+
+  if (currentVersion < 5) {
+    console.log('Running migration to version 5 (Product barcode column)...');
+    // The version gate is the primary safety net against running the
+    // ALTER TABLE twice. The PRAGMA probe below is a belt-and-suspenders
+    // check that runs even on a fresh DB whose `user_version` jumps
+    // straight to 5 (e.g. a developer who resets the version after a
+    // bad migration). With both guards in place, `ALTER TABLE ADD
+    // COLUMN barcode` is safe to call once.
+    await db.withTransactionAsync(async () => {
+      const productColumns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(products)',
+      );
+      const hasBarcodeColumn = productColumns.some(
+        (c) => c.name === 'barcode',
+      );
+
+      if (!hasBarcodeColumn) {
+        await db.execAsync('ALTER TABLE products ADD COLUMN barcode TEXT;');
+      }
+
+      // Partial unique index: only enforced when barcode is non-null,
+      // so legacy rows with `barcode IS NULL` continue to coexist and
+      // multiple "no barcode recorded" products are allowed.
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;',
+      );
+
+      await db.execAsync('PRAGMA user_version = 5;');
+    });
+    console.log('Database migrated to version 5.');
+  }
 }

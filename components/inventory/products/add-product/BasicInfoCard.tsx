@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { StyledText } from '@/components/elements';
+import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
 
@@ -22,6 +23,13 @@ interface BasicInfoCardProps {
    *  (the form hook turns auto-gen off when a scan succeeds — the
    *  button is the primary way to switch to "manual" SKU mode). */
   onPressScan: () => void;
+  /** Optional printed barcode (v5). When populated, rendered under SKU. */
+  barcode?: string;
+  /** When another product already owns this barcode, we surface a
+   *  blocking inline error with an "Edit that product" link. */
+  barcodeConflictProduct?: Product | null;
+  /** Handler for the "Edit that product" link inside the duplicate error. */
+  onPressEditConflictingProduct?: (productId: number) => void;
 }
 
 /**
@@ -31,6 +39,9 @@ interface BasicInfoCardProps {
  *   • Product Name (required, drives auto-SKU generation).
  *   • SKU with an "Auto-generate" checkbox at the top-right of the
  *     label row. When auto is on the input is dimmed and locked.
+ *   • Barcode (v5) — only rendered when populated (scan or deep-link
+ *     populated it). Inline duplicate error blocks submit when another
+ *     product owns this value.
  *   • Category selector — horizontal scroll of pills. Active pill
  *     uses brand persimmon; inactive uses the parchment chip. When
  *     no categories exist yet, an info banner nudges the user to
@@ -45,7 +56,12 @@ export function BasicInfoCard({
   selectedCategory,
   onSelectCategory,
   onPressScan,
+  barcode,
+  barcodeConflictProduct,
+  onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
+  const hasBarcode = !!barcode && barcode.length > 0;
+  const isDuplicate = !!barcodeConflictProduct;
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
       <View className="mb-3">
@@ -160,6 +176,77 @@ export function BasicInfoCard({
           </Pressable>
         )}
       </View>
+
+      {/* Barcode (v5) — only rendered when populated. The row reads
+          as a thin "barcode: 4800016112345" stamp so the form stays
+          calm when the user hasn't scanned anything yet. */}
+      {hasBarcode ? (
+        <View className="mb-4">
+          <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+            Barcode
+          </StyledText>
+          <Controller
+            control={control}
+            name="barcode"
+            render={({ field: { value, onChange } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                placeholder="Type a barcode"
+                placeholderTextColor="#A89F90"
+                accessibilityLabel="Barcode"
+                keyboardType="number-pad"
+                className={`bg-paper-100 text-ink-900 text-base border rounded-xl px-4 py-3 ${
+                  isDuplicate
+                    ? 'border-semantic-danger'
+                    : 'border-ink-200'
+                }`}
+              />
+            )}
+          />
+          {isDuplicate && barcodeConflictProduct ? (
+            <View className="mt-2 bg-semantic-danger-50 border border-semantic-danger/30 rounded-xl px-3 py-2.5 flex-row items-start">
+              <FontAwesome
+                name="exclamation-triangle"
+                size={14}
+                color="#C22D2D"
+                style={{ marginTop: 2 }}
+              />
+              <View className="flex-1 ml-2">
+                <StyledText
+                  variant="semibold"
+                  className="text-semantic-danger text-xs"
+                >
+                  Barcode {barcode} is already used by{' '}
+                  <StyledText variant="extrabold">
+                    {barcodeConflictProduct.name}
+                  </StyledText>
+                  .
+                </StyledText>
+                {barcodeConflictProduct.id != null &&
+                onPressEditConflictingProduct ? (
+                  <Pressable
+                    onPress={() =>
+                      onPressEditConflictingProduct(barcodeConflictProduct.id)
+                    }
+                    accessibilityRole="link"
+                    accessibilityLabel={`Edit product ${barcodeConflictProduct.name}`}
+                    hitSlop={6}
+                    className="mt-1.5 active:opacity-70"
+                  >
+                    <StyledText
+                      variant="semibold"
+                      className="text-cinnamon-600 text-xs underline"
+                    >
+                      Edit that product
+                    </StyledText>
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* Category */}
       <View>

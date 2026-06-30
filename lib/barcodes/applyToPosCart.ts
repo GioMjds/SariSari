@@ -14,14 +14,24 @@
  * a real checkout counter: scanning the same item 3 times in 0.5s
  * means "add 1 unit", but scanning Coke then Sprite in 0.5s means
  * "add both".
+ *
+ * Lookup contract:
+ *   1. Validate the format via `validateBarcode`.
+ *   2. If invalid → return `{ kind: 'invalid', reason }`.
+ *   3. Try `product.barcode === scannedValue` first (modern path).
+ *   4. Fall back to `product.sku === scannedValue` so legacy rows
+ *      where the SKU doubles as the barcode still resolve. The `source`
+ *      on the resolved branch records which path matched for telemetry.
+ *   5. If neither path matches → return `{ kind: 'missing', barcode }`.
+ *
+ * The duplicate throttle fires BEFORE the lookup so a re-scan inside
+ * the window never re-walks the catalog and never overwrites a useful
+ * missing/resolved event the user hasn't acted on yet.
  */
-export interface PosScanProductLike {
-  id: number;
-  sku: string;
-  name: string;
-  price: number;
-  quantity: number;
-}
+import { validateBarcode, DEFAULT_BARCODE_THROTTLE_MS } from './format';
+import type { Product } from '@/types/products.types';
+
+export type PosScanProductLike = Product;
 
 export interface PosScanInput {
   barcode: string;
@@ -41,45 +51,81 @@ export type PosScanResult =
   | {
       kind: 'add';
       product: PosScanProductLike;
+      /** Tells the caller whether the hit came from `barcode` or `sku`. */
+      source: 'barcode' | 'sku';
       lastScan: { barcode: string; at: number };
     }
-  /** No inventory matches this SKU — caller should toast an error. */
+  /** No inventory matches this value — caller should show the missing CTA. */
   | {
       kind: 'missing';
       barcode: string;
       lastScan: { barcode: string; at: number };
+    }
+  /** Format validation failed — caller should toast an invalid-barcode message. */
+  | {
+      kind: 'invalid';
+      reason: 'empty' | 'format';
     };
 
-export const DEFAULT_POS_SCAN_THROTTLE_MS = 1500;
+export const DEFAULT_POS_SCAN_THROTTLE_MS = DEFAULT_BARCODE_THROTTLE_MS;
 
 export function applyBarcodeToPosCart(input: PosScanInput): PosScanResult {
   const { barcode, products, lastScan, now } = input;
   const throttleMs = input.throttleMs ?? DEFAULT_POS_SCAN_THROTTLE_MS;
+
+  // Format validation runs before the throttle so an invalid scan
+  // can't queue up a phantom `lastScan` entry that would suppress
+  // the user's next legitimate attempt at the same barcode.
+  const validation = validateBarcode(barcode);
+  if (!validation.ok) {
+    return { kind: 'invalid', reason: validation.reason };
+  }
+  const validatedBarcode = validation.barcode;
 
   // Throttle: same barcode inside the throttle window is dropped.
   // (Different barcodes don't throttle each other — a Suki scanning
   // Coke and then Sprite within 0.3s should see both register.)
   if (
     lastScan &&
-    lastScan.barcode === barcode &&
+    lastScan.barcode === validatedBarcode &&
     now - lastScan.at < throttleMs
   ) {
     return { kind: 'duplicate' };
   }
 
-  const product = products.find((p) => p.sku === barcode);
-
-  if (product) {
+  // First try the dedicated barcode column. Modern (post-v5) rows
+  // can have distinct `sku` and `barcode`, so this is the preferred
+  // path. If the column is `null` (legacy or unrecorded), we
+  // fall through to the SKU lookup so a pre-migration database
+  // keeps working without a data migration.
+  const byBarcode = products.find(
+    (p) => p.barcode != null && p.barcode === validatedBarcode,
+  );
+  if (byBarcode) {
     return {
       kind: 'add',
-      product,
-      lastScan: { barcode, at: now },
+      product: byBarcode,
+      source: 'barcode',
+      lastScan: { barcode: validatedBarcode, at: now },
+    };
+  }
+
+  // SKU fallback. Pre-v5 rows store the printed identifier in the
+  // `sku` column because there was no separate barcode column.
+  // Resolving via SKU here preserves the legacy contract.
+  const bySku = products.find((p) => p.sku === validatedBarcode);
+  if (bySku) {
+    return {
+      kind: 'add',
+      product: bySku,
+      source: 'sku',
+      lastScan: { barcode: validatedBarcode, at: now },
     };
   }
 
   return {
     kind: 'missing',
-    barcode,
-    lastScan: { barcode, at: now },
+    barcode: validatedBarcode,
+    lastScan: { barcode: validatedBarcode, at: now },
   };
 }

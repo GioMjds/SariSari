@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
   Modal as RNModal,
   Pressable,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -15,6 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { validateBarcode } from '@/lib/barcodes/format';
 
 export type BarcodeScannerMode = 'single' | 'continuous';
 
@@ -39,6 +41,10 @@ export interface BarcodeScannerModalProps {
   itemCount?: number;
   /** Continuous-mode cart total for the banner. */
   total?: number;
+  /** Whether to render the manual-entry fallback when the camera is
+   *  unavailable. Defaults to true so devices without a camera (or
+   *  users with denied permission) still have an entry path. */
+  enableManualEntry?: boolean;
 }
 
 // Consumer UPC/EAN formats only. No QR / DataMatrix — sari-sari products
@@ -89,6 +95,7 @@ export function BarcodeScannerModal({
   lastScanned,
   itemCount,
   total,
+  enableManualEntry = true,
 }: BarcodeScannerModalProps) {
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -96,13 +103,37 @@ export function BarcodeScannerModal({
   const [permission, requestPermission] = useCameraPermissions();
   const lastReadRef = useRef<{ barcode: string; at: number } | null>(null);
 
-  // Reset the local throttle whenever the modal hides so the next
-  // opening starts with a clean slate.
+  // v5 manual-entry state. Held here so the camera-up branch can
+  // ignore it cleanly. `error` is the inline validation message from
+  // `validateBarcode` (empty / format); cleared on every keystroke.
+  const [manualBarcode, setManualBarcode] = useState<string>('');
+  const [manualError, setManualError] = useState<string | null>(null);
+
+  // Reset the local throttle and the manual-entry input whenever the
+  // modal hides so the next opening starts with a clean slate.
   useEffect(() => {
     if (!visible) {
       lastReadRef.current = null;
+      setManualBarcode('');
+      setManualError(null);
     }
   }, [visible]);
+
+  const submitManualEntry = useCallback(() => {
+    const validation = validateBarcode(manualBarcode);
+    if (!validation.ok) {
+      setManualError(
+        validation.reason === 'empty'
+          ? 'Type a barcode to continue.'
+          : 'Digits only, 8–14 long.',
+      );
+      return;
+    }
+    setManualError(null);
+    // Route through the same `onScan` callback as a camera accept —
+    // the parent hook treats both inputs identically.
+    onScan(validation.barcode);
+  }, [manualBarcode, onScan]);
 
   const handleBarcodeScanned = useCallback(
     (event: { data: string }) => {
@@ -214,6 +245,14 @@ export function BarcodeScannerModal({
         {!showCamera && visible ? (
           <PermissionGate
             permission={permission}
+            manualBarcode={manualBarcode}
+            manualError={manualError}
+            enableManualEntry={enableManualEntry}
+            onChangeManualBarcode={(value) => {
+              setManualBarcode(value);
+              if (manualError) setManualError(null);
+            }}
+            onSubmitManualEntry={submitManualEntry}
             onRequest={async () => {
               await requestPermission();
             }}
@@ -436,13 +475,28 @@ interface PermissionGateProps {
   permission: ReturnType<typeof useCameraPermissions>[0];
   onRequest: () => void | Promise<void>;
   onOpenSettings: () => void;
+  /** v5 manual-entry props — present so devices without cameras (or
+   *  users with permanently denied permission) can still type the
+   *  barcode instead of being stuck. */
+  enableManualEntry: boolean;
+  manualBarcode: string;
+  manualError: string | null;
+  onChangeManualBarcode: (value: string) => void;
+  onSubmitManualEntry: () => void;
 }
 
-/** Renders one of three states: loading, requestable, blocked. */
+/** Renders one of three states: loading, requestable, blocked.
+ *  v5: appends a manual-entry input below the gate when `enableManualEntry`
+ *  so the user always has an escape hatch. */
 function PermissionGate({
   permission,
   onRequest,
   onOpenSettings,
+  enableManualEntry,
+  manualBarcode,
+  manualError,
+  onChangeManualBarcode,
+  onSubmitManualEntry,
 }: PermissionGateProps) {
   // permission is null until the initial async read completes.
   if (!permission || permission.granted === undefined) {
@@ -463,7 +517,7 @@ function PermissionGate({
 
   return (
     <View className="flex-1 items-center justify-center bg-black px-8">
-      <View className="bg-paper-50 rounded-2xl border border-paper-300 px-6 py-7 items-center shadow-paper-lift">
+      <View className="bg-paper-50 rounded-2xl border border-paper-300 px-6 py-7 items-center shadow-paper-lift w-full">
         <View className="w-14 h-14 rounded-full bg-persimmon-500/15 items-center justify-center mb-4">
           <FontAwesome name="camera" size={26} color="#E85A1F" />
         </View>
@@ -493,6 +547,60 @@ function PermissionGate({
             {blocked ? 'Open Settings' : 'Allow Camera'}
           </StyledText>
         </Pressable>
+
+        {enableManualEntry ? (
+          <View className="mt-6 w-full">
+            <View className="flex-row items-center mb-2">
+              <View className="flex-1 h-px bg-ink-200" />
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-xs mx-3 uppercase tracking-widest"
+              >
+                or
+              </StyledText>
+              <View className="flex-1 h-px bg-ink-200" />
+            </View>
+            <StyledText
+              variant="semibold"
+              className="text-ink-900 text-sm text-center mb-2"
+            >
+              Camera not available. You can type the barcode instead.
+            </StyledText>
+            <TextInput
+              value={manualBarcode}
+              onChangeText={onChangeManualBarcode}
+              placeholder="Type barcode manually"
+              placeholderTextColor="#A89F90"
+              keyboardType="number-pad"
+              accessibilityLabel="Type barcode manually"
+              onSubmitEditing={onSubmitManualEntry}
+              className={`bg-paper-100 text-ink-900 text-base border rounded-xl px-4 py-3 ${
+                manualError ? 'border-semantic-danger' : 'border-ink-200'
+              }`}
+            />
+            {manualError ? (
+              <StyledText
+                variant="regular"
+                className="text-semantic-danger text-xs mt-2 text-center"
+              >
+                {manualError}
+              </StyledText>
+            ) : null}
+            <Pressable
+              onPress={onSubmitManualEntry}
+              accessibilityRole="button"
+              accessibilityLabel="Submit typed barcode"
+              className="press-scale mt-3 px-5 py-3 rounded-xl bg-cinnamon-600 active:opacity-80"
+            >
+              <StyledText
+                variant="extrabold"
+                className="text-paper-50 text-sm text-center"
+              >
+                Submit
+              </StyledText>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     </View>
   );

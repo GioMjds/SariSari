@@ -67,6 +67,9 @@ export default function AddSales() {
           onAdd={form.handleAddItem}
           onUpdateQuantity={form.handleUpdateQuantity}
           onPressScan={form.openScanner}
+          pendingAddProductBarcode={form.pendingAddProductBarcode}
+          onPressAddNewProduct={form.handlePressAddNewProduct}
+          onDismissPendingAddProduct={form.dismissPendingAddProduct}
         />
 
         <CartSummaryTray

@@ -132,5 +132,21 @@
   "sellTitle": "Benta",
   "inventoryTitle": "Imbentaryo",
   "utangTitle": "Utang",
-  "reportsTitle": "Mga Ulat"
+  "reportsTitle": "Mga Ulat",
+
+  "barcode": {
+    "invalid": "Hindi parang barcode iyan. Mga numero lang, 8-14 ang haba.",
+    "cta": {
+      "addAsNewProduct": "Idagdag bilang bagong produkto",
+      "title": "Wala sa imbentaryo"
+    },
+    "form": {
+      "duplicateWithEdit": "Ang barcode na {{barcode}} ay ginagamit na ng {{productName}}.",
+      "editExistingProduct": "I-edit ang produktong iyon"
+    },
+    "modal": {
+      "manualEntryPlaceholder": "Mag-type ng barcode",
+      "cameraUnavailable": "Hindi available ang camera. Pwede mong i-type ang barcode."
+    }
+  }
 }

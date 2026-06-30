@@ -132,5 +132,21 @@
   "sellTitle": "Sell",
   "inventoryTitle": "Inventory",
   "utangTitle": "Utang",
-  "reportsTitle": "Reports"
+  "reportsTitle": "Reports",
+
+  "barcode": {
+    "invalid": "That doesn't look like a barcode. Digits only, 8–14 long.",
+    "cta": {
+      "addAsNewProduct": "Add as new product",
+      "title": "Not in inventory"
+    },
+    "form": {
+      "duplicateWithEdit": "Barcode {{barcode}} is already used by {{productName}}.",
+      "editExistingProduct": "Edit that product"
+    },
+    "modal": {
+      "manualEntryPlaceholder": "Type barcode manually",
+      "cameraUnavailable": "Camera not available. You can type the barcode instead."
+    }
+  }
 }

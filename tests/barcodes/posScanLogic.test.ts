@@ -1,10 +1,14 @@
 // Pure-TS parity tests for the POS barcode-scan handler.
 //
 // Mirrors the live `useAddSalesForm.handleScannedBarcode` flow:
-//  1. Throttle: same barcode within throttleMs → drop (duplicate).
-//  2. Lookup the product by SKU in the loaded products list.
-//  3. If hit → return kind: 'add' so the hook adds to the cart.
-//  4. If miss → return kind: 'missing' so the hook toasts an error.
+//  1. Format-validate via `validateBarcode`.
+//  2. Throttle: same barcode within throttleMs → drop (duplicate).
+//  3. Lookup the product by `barcode` column first, then `sku` fallback.
+//  4. If `barcode`-column hit → return kind: 'add' source: 'barcode'.
+//  5. If `sku`-column hit (legacy row) → return kind: 'add' source: 'sku'.
+//  6. If miss → return kind: 'missing' so the hook surfaces the
+//     "Add as new product" CTA.
+//  7. If format invalid → return kind: 'invalid' so the hook toasts.
 //
 // The throttle is per-barcode, not global: scanning Coke then Sprite
 // within 0.3s should register both. Only repeated scans of the same
@@ -15,30 +19,56 @@ import {
   DEFAULT_POS_SCAN_THROTTLE_MS,
   applyBarcodeToPosCart,
 } from '../../lib/barcodes/applyToPosCart';
+import type { Product } from '../../types/products.types';
 
-const products = [
+const products: Product[] = [
   {
     id: 1,
     sku: '4800016551829',
+    barcode: '4800016551829', // modern row — barcode column populated
     name: 'Coke Original Can 330ml',
     price: 1500,
+    cost_price: undefined,
     quantity: 10,
+    category: 'Beverages',
+    created_at: '2026-06-30 00:00:00',
+    updated_at: '2026-06-30 00:00:00',
   },
   {
     id: 2,
     sku: '4800249011013',
+    barcode: '4800249011013',
     name: 'Rebisco Skyflakes Crackers Original 25g',
     price: 800,
+    cost_price: undefined,
     quantity: 5,
+    category: 'Snacks',
+    created_at: '2026-06-30 00:00:00',
+    updated_at: '2026-06-30 00:00:00',
   },
-] as const;
+  {
+    // Legacy row where barcode IS NULL — the SKU doubles as the printed id.
+    // In backward-compat flow, a real-world scan can only produce digit-only
+    // strings, so the legacy SKU that resolves via fallback is also digits.
+    id: 3,
+    sku: '4800016551828',
+    barcode: null,
+    name: 'Coke 1.5L Bottle',
+    price: 2500,
+    cost_price: undefined,
+    quantity: 7,
+    category: 'Beverages',
+    created_at: '2026-06-30 00:00:00',
+    updated_at: '2026-06-30 00:00:00',
+  },
+];
 
 describe('applyBarcodeToPosCart', () => {
   test('default throttle is 1500ms', () => {
     expect(DEFAULT_POS_SCAN_THROTTLE_MS).toBe(1500);
   });
 
-  test('first scan of a known SKU → kind: add with the matched product', () => {
+  test('first scan of a barcode-column match → kind: add, source: barcode', () => {
     const result = applyBarcodeToPosCart({
       barcode: '4800016551829',
       products,
@@ -49,7 +79,7 @@ describe('applyBarcodeToPosCart', () => {
     expect(result.kind).toBe('add');
     if (result.kind === 'add') {
       expect(result.product.id).toBe(1);
-      expect(result.product.name).toBe('Coke Original Can 330ml');
+      expect(result.source).toBe('barcode');
       expect(result.lastScan).toEqual({
         barcode: '4800016551829',
         at: 1_000_000,
@@ -57,7 +87,22 @@ describe('applyBarcodeToPosCart', () => {
     }
   });
 
-  test('first scan of an unknown SKU → kind: missing', () => {
+  test('legacy SKU-as-barcode row → kind: add, source: sku', () => {
+    const result = applyBarcodeToPosCart({
+      barcode: '4800016551828',
+      products,
+      lastScan: null,
+      now: 1_000_000,
+    });
+
+    expect(result.kind).toBe('add');
+    if (result.kind === 'add') {
+      expect(result.product.id).toBe(3);
+      expect(result.source).toBe('sku');
+    }
+  });
+
+  test('first scan of an unknown value → kind: missing', () => {
     const result = applyBarcodeToPosCart({
       barcode: '0000000000000',
       products,
@@ -69,6 +114,34 @@ describe('applyBarcodeToPosCart', () => {
     if (result.kind === 'missing') {
       expect(result.barcode).toBe('0000000000000');
       expect(result.lastScan.at).toBe(1_000_000);
+    }
+  });
+
+  test('invalid format → kind: invalid before throttle', () => {
+    const result = applyBarcodeToPosCart({
+      barcode: 'abc123',
+      products,
+      lastScan: null,
+      now: 1_000_000,
+    });
+
+    expect(result.kind).toBe('invalid');
+    if (result.kind === 'invalid') {
+      expect(result.reason).toBe('format');
+    }
+  });
+
+  test('empty input → kind: invalid reason: empty', () => {
+    const result = applyBarcodeToPosCart({
+      barcode: '',
+      products,
+      lastScan: null,
+      now: 1_000_000,
+    });
+
+    expect(result.kind).toBe('invalid');
+    if (result.kind === 'invalid') {
+      expect(result.reason).toBe('empty');
     }
   });
 
