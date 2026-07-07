@@ -39,10 +39,10 @@ export function HistoryTabContent({
           onChange={onSearchChange}
           resultCount={0}
           totalCount={totalCount}
-          noun="entry"
+          noun="Entry"
           placeholder="Search description…"
         />
-        <NoMatchesState noun="entry" />
+        <NoMatchesState noun="Entry" />
       </View>
     );
   }
@@ -53,7 +53,7 @@ export function HistoryTabContent({
         onChange={onSearchChange}
         resultCount={history.length}
         totalCount={totalCount}
-        noun="entry"
+        noun="Entry"
         placeholder="Search description…"
       />
       <HistoryTimeline history={history} />

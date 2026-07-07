@@ -12,6 +12,12 @@
   "next": "Susunod",
   "finish": "Tapos na",
   "skip": "Laktawan",
+  "call": "Tawagan",
+  "sms": "SMS",
+  "statement": "Statement",
+  "addPayment": "Magdagdag ng Bayad",
+  "addCredit": "Magdagdag ng Utang",
+  "markAllAsPaid": "Markahan Lahat bilang Bayad",
 
   "dashboardEyebrow": "SENTRO NG KONTROL NG COUNTER",
   "dashboardTitle": "Dashboard",

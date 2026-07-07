@@ -1,6 +1,6 @@
 # SariSari 🏪
 
-> **SariSari** is an offline-by-default mobile assistant and management application designed specifically for Filipino sari-sari store owners. Built as a working prototype, it helps store owners track inventory, execute sales (POS), and maintain customer credit (_utang_) records without requiring internet connectivity. It is currently a working prototype — not a finished product.
+> **SariSari** is an offline-first mobile assistant and management application designed specifically for Filipino sari-sari store owners. It helps store owners track inventory, execute sales (POS), and maintain customer credit (_utang_) records without requiring internet connectivity.
 
 ---
 

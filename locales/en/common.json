@@ -12,6 +12,12 @@
   "next": "Next",
   "finish": "Finish",
   "skip": "Skip",
+  "call": "Call",
+  "sms": "SMS",
+  "statement": "Statement",
+  "addPayment": "Add Payment",
+  "addCredit": "Add Credit",
+  "markAllAsPaid": "Mark All as Paid",
 
   "dashboardEyebrow": "COUNTER COMMAND CENTER",
   "dashboardTitle": "Dashboard",

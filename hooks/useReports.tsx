@@ -1,13 +1,10 @@
 import {
   getAgingBuckets,
   getCreditsOverview,
-  getFastMovingProducts,
   getInventoryMovement,
   getInventoryValue,
   getLowStockItems,
-  getOutOfStockItems,
   getProductProfitability,
-  getProfitabilityData,
   getReportInsights,
   getReportKPIs,
   getSalesBreakdown,
@@ -22,7 +19,6 @@ import type {
   DateRange,
   InventoryMovement,
   InventoryValue,
-  ProfitabilityData,
   ReportInsight,
   ReportKPIs,
   SalesBreakdown,
@@ -44,6 +40,7 @@ export const useReportKPIs = (dateRange: DateRange) =>
     queryFn: () => getReportKPIs(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 // Sales
@@ -57,6 +54,7 @@ export const useSalesOverTime = (dateRange: DateRange) =>
     queryFn: () => getSalesOverTime(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
@@ -70,6 +68,7 @@ export const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
     queryFn: () => getTopSellingProducts(dateRange, limit),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useSalesBreakdown = (dateRange: DateRange) =>
@@ -82,6 +81,7 @@ export const useSalesBreakdown = (dateRange: DateRange) =>
     queryFn: () => getSalesBreakdown(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 // Inventory
@@ -95,37 +95,21 @@ export const useInventoryMovement = (dateRange: DateRange) =>
     queryFn: () => getInventoryMovement(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useInventoryValue = () =>
   useQuery<InventoryValue>({
     queryKey: ['report-inventory-value'],
     queryFn: () => getInventoryValue(),
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useLowStockItems = (threshold = 10) =>
   useQuery<StockItem[]>({
     queryKey: ['report-low-stock', threshold],
     queryFn: () => getLowStockItems(threshold),
-  });
-
-export const useOutOfStockItems = () =>
-  useQuery<StockItem[]>({
-    queryKey: ['report-out-of-stock'],
-    queryFn: () => getOutOfStockItems(),
-  });
-
-export const useFastMovingProducts = (dateRange: DateRange, limit = 10) =>
-  useQuery<StockItem[]>({
-    queryKey: [
-      'report-fast-moving',
-      dateRange.startDate,
-      dateRange.endDate,
-      limit,
-    ],
-    queryFn: () => getFastMovingProducts(dateRange, limit),
-    enabled: !!dateRange,
-    placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useSlowMovingProducts = (dateRange: DateRange, limit = 10) =>
@@ -139,6 +123,7 @@ export const useSlowMovingProducts = (dateRange: DateRange, limit = 10) =>
     queryFn: () => getSlowMovingProducts(dateRange, limit),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 // Credits
@@ -152,22 +137,17 @@ export const useCreditsOverview = (dateRange: DateRange) =>
     queryFn: () => getCreditsOverview(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useAgingBuckets = () =>
   useQuery<AgingBucket[]>({
     queryKey: ['report-aging-buckets'],
     queryFn: () => getAgingBuckets(),
+    staleTime: 2 * 60 * 1000,
   });
 
 // Profitability & insights
-export const useProfitability = (dateRange: DateRange) =>
-  useQuery<ProfitabilityData>({
-    queryKey: ['report-profitability', dateRange.startDate, dateRange.endDate],
-    queryFn: () => getProfitabilityData(dateRange),
-    enabled: !!dateRange,
-    placeholderData: keepPreviousData,
-  });
 
 export const useProductProfitability = (dateRange: DateRange, limit = 10) =>
   useQuery<ProductProfitability[]>({
@@ -180,6 +160,7 @@ export const useProductProfitability = (dateRange: DateRange, limit = 10) =>
     queryFn: () => getProductProfitability(dateRange, limit),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export const useReportInsights = (dateRange: DateRange) =>
@@ -188,6 +169,7 @@ export const useReportInsights = (dateRange: DateRange) =>
     queryFn: () => getReportInsights(dateRange),
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
+    staleTime: 2 * 60 * 1000,
   });
 
 export function useReports() {
@@ -205,11 +187,9 @@ export function useReports() {
       queryClient.invalidateQueries({ queryKey: ['report-inventory-value'] }),
       queryClient.invalidateQueries({ queryKey: ['report-low-stock'] }),
       queryClient.invalidateQueries({ queryKey: ['report-out-of-stock'] }),
-      queryClient.invalidateQueries({ queryKey: ['report-fast-moving'] }),
       queryClient.invalidateQueries({ queryKey: ['report-slow-moving'] }),
       queryClient.invalidateQueries({ queryKey: ['report-credits-overview'] }),
       queryClient.invalidateQueries({ queryKey: ['report-aging-buckets'] }),
-      queryClient.invalidateQueries({ queryKey: ['report-profitability'] }),
       queryClient.invalidateQueries({
         queryKey: ['report-product-profitability'],
       }),
@@ -225,12 +205,9 @@ export function useReports() {
     useInventoryMovement,
     useInventoryValue,
     useLowStockItems,
-    useOutOfStockItems,
-    useFastMovingProducts,
     useSlowMovingProducts,
     useCreditsOverview,
     useAgingBuckets,
-    useProfitability,
     useProductProfitability,
     useReportInsights,
     invalidateReports,

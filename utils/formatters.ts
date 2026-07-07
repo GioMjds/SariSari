@@ -3,6 +3,8 @@ import { formatPesos, formatPesosCompact } from '@/lib/money';
 import { CreditTransaction } from '@/types/credits.types';
 import { DateRange, DateRangeType } from '@/types/reports.types';
 import { endOfDay, startOfDay, startOfMonth, subDays } from 'date-fns';
+import * as Haptics from 'expo-haptics';
+import { Linking } from 'react-native';
 
 export const getDateRangeFromType = (type: DateRangeType): DateRange => {
   const now = new Date();
@@ -149,4 +151,17 @@ export function dateIssueNumber(d: Date): string {
 export function profitSubline(margin: number | null | undefined): string {
 	if (margin === null || margin === undefined) return '';
 	return `${margin.toFixed(1)}% margin`;
+}
+
+export function dialPhone(phone: string) {
+  Haptics.selectionAsync().catch(() => {});
+  const url = `tel:${phone}`;
+  Linking.openURL(url).catch(() => {});
+}
+
+export function smsPhone(phone: string, name: string) {
+  Haptics.selectionAsync().catch(() => {});
+  const body = `Hi ${name}, this is a quick reminder from the sari-sari store about your outstanding balance. Maraming salamat!`;
+  const url = `sms:${phone}?body=${encodeURIComponent(body)}`;
+  Linking.openURL(url).catch(() => {});
 }

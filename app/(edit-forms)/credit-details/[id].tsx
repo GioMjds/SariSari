@@ -75,8 +75,6 @@ export default function CustomerDetails() {
     history: '',
   });
 
-
-
   const handleRefresh = useCallback(() => {
     refetch();
     queryClient.invalidateQueries({ queryKey: ['credit-history', id] });
@@ -177,17 +175,9 @@ export default function CustomerDetails() {
     return history.filter((h) => matchesSearch(term, [h.description]));
   }, [history, searchByTab.history]);
 
-  // ─── Loading state ──────────────────────────────────────────────
+  if (isLoading) return <CreditDetailsSkeleton />;
 
-  if (isLoading) {
-    return <CreditDetailsSkeleton />;
-  }
-
-  // ─── Not found state ────────────────────────────────────────────
-
-  if (!customer) {
-    return <CustomerNotFound onBack={handleBack} />;
-  }
+  if (!customer) return <CustomerNotFound onBack={handleBack} />;
 
   const activeCreditCount = customer.credits.filter(
     (c) => c.status !== 'paid',

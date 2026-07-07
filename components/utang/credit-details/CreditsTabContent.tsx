@@ -45,10 +45,10 @@ export function CreditsTabContent({
           onChange={onSearchChange}
           resultCount={0}
           totalCount={totalCount}
-          noun="credit"
+          noun="Credit"
           placeholder="Search by product or note…"
         />
-        <NoMatchesState noun="credit" />
+        <NoMatchesState noun="Credit" />
       </View>
     );
   }
@@ -59,7 +59,7 @@ export function CreditsTabContent({
         onChange={onSearchChange}
         resultCount={credits.length}
         totalCount={totalCount}
-        noun="credit"
+        noun="Credit"
         placeholder="Search by product or note…"
       />
       {credits.map((credit, idx) => (

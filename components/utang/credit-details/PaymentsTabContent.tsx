@@ -39,10 +39,10 @@ export function PaymentsTabContent({
           onChange={onSearchChange}
           resultCount={0}
           totalCount={totalCount}
-          noun="payment"
+          noun="Payment"
           placeholder="Search payment notes…"
         />
-        <NoMatchesState noun="payment" />
+        <NoMatchesState noun="Payment" />
       </View>
     );
   }
@@ -53,7 +53,7 @@ export function PaymentsTabContent({
         onChange={onSearchChange}
         resultCount={payments.length}
         totalCount={totalCount}
-        noun="payment"
+        noun="Payment"
         placeholder="Search payment notes…"
       />
       {payments.map((payment, idx) => (

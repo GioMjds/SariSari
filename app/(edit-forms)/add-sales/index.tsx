@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import {
   AddSalesHeader,
   CartSummaryTray,
@@ -56,6 +57,7 @@ export default function AddSales() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+      <StatusBar style={form.isScannerOpen ? 'light' : 'dark'} />
       <View className="flex-1">
         <AddSalesHeader itemCount={form.itemCount} onBack={form.router.back} />
 

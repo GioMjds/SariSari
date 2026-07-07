@@ -2,7 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { AgingBucket, StockItem } from '@/types';
 import { MotiView } from 'moti';
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -24,6 +24,12 @@ const STAMP_BG: { bg: string; border: string; text: string; tone: string }[] = [
 ];
 
 export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalOutstanding }: CreditAgingChartProps) {
+	// Track whether this is the very first render. On first paint we skip
+	// the entrance animation; subsequent data changes (date-range/refresh)
+	// flip `hasMounted` to true so the stamp-pop animation plays.
+	const hasMounted = useRef(false);
+	const animationKey = buckets.map((b) => `${b.range}:${b.amount}`).join('|');
+
 	if (buckets.length === 0) {
 		return (
 			<View className="py-4 items-center">
@@ -41,6 +47,10 @@ export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalO
 		);
 	}
 
+	// After the empty-state guard so we only flip once real buckets are shown.
+	const shouldAnimate = hasMounted.current;
+	if (!hasMounted.current) hasMounted.current = true;
+
 	return (
 		<View>
 			{/* Stack of postage stamps */}
@@ -55,14 +65,14 @@ export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalO
 
 					return (
 						<MotiView
-							key={`bucket-${index}`}
-							from={{ opacity: 0, scale: 0.92, rotate: '0deg' }}
+							key={`bucket-${animationKey}-${index}`}
+							from={shouldAnimate ? { opacity: 0, scale: 0.92, rotate: '0deg' } : undefined}
 							animate={{ opacity: 1, scale: 1, rotate: `${rotate}deg` }}
 							transition={{
 								type: 'spring',
 								damping: 14,
 								stiffness: 180,
-								delay: 80 * index,
+								delay: shouldAnimate ? 80 * index : 0,
 							}}
 							className={`flex-1 min-w-[45%] rounded-md ${stamp.bg} ${stamp.border} border-2 border-dashed p-3 shadow-paper`}
 						>

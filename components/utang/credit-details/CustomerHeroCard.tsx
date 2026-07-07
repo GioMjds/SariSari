@@ -1,24 +1,27 @@
 import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
-import { Alert, Clipboard, Linking, Pressable, Share, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { t } from 'i18next';
+import { dialPhone, smsPhone } from '@/utils';
 import {
   CreditTransaction,
   CustomerWithDetails,
   Payment,
 } from '@/types/credits.types';
 import {
-  buildStatement,
   classifyDebtLimit,
   deriveTrustTags,
   lifetimeCreditVolume,
-  type TrustTag,
 } from '@/lib/creditDetails';
 import { formatPesos } from '@/lib/money';
 import { MoneyText, StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
-import { useTranslation } from 'react-i18next';
-import { shareCreditStatementPdf } from '@/lib/pdfGenerator';
+import { ContactRow } from './ContactRow';
+import { Perforations } from './Perforations';
+import { DebtLimitBar } from './DebtLimitBar';
+import { TrustTagPill } from './TrustTagPill';
+import { ContactLink } from './ContactLink';
+import { StatementShareButton } from './StatementShareButton';
 
 interface CustomerHeroCardProps {
   customer: CustomerWithDetails;
@@ -128,17 +131,12 @@ export function CustomerHeroCard({
         {/* Hero money — featured plate */}
         <View className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200">
           <View className="flex-row items-baseline justify-between mb-1">
-            <StyledText
-              variant="extrabold"
-              className="label-caps text-ink-400"
-            >
+            <StyledText variant="extrabold" className="label-caps text-ink-400">
               Outstanding Balance
             </StyledText>
-            <StyledText
-              variant="medium"
-              className="text-mono text-ink-500"
-            >
-              {activeCreditCount} active {activeCreditCount === 1 ? 'item' : 'items'}
+            <StyledText variant="medium" className="text-mono text-ink-500">
+              {activeCreditCount} active{' '}
+              {activeCreditCount === 1 ? 'item' : 'items'}
             </StyledText>
           </View>
 
@@ -192,7 +190,7 @@ export function CustomerHeroCard({
           {customer.phone && (
             <ContactLink
               icon="phone"
-              label="Call"
+              label={t('common:call', 'Call')}
               tone="sage"
               onPress={() => dialPhone(customer.phone!)}
             />
@@ -200,7 +198,7 @@ export function CustomerHeroCard({
           {customer.phone && (
             <ContactLink
               icon="comment"
-              label="SMS"
+              label={t('common:sms', 'SMS')}
               tone="persimmon"
               onPress={() => smsPhone(customer.phone!, customer.name)}
             />
@@ -209,6 +207,7 @@ export function CustomerHeroCard({
             customer={customer}
             credits={credits}
             storeName={storeName}
+            disabled={!hasOutstanding}
           />
         </View>
 
@@ -220,7 +219,9 @@ export function CustomerHeroCard({
             accessibilityRole="button"
             accessibilityLabel="Add payment for this suki"
             className={`press-scale flex-1 rounded-xl py-3 flex-row items-center justify-center ${
-              hasOutstanding ? 'bg-sage-500' : 'bg-paper-200 border border-ink-200'
+              hasOutstanding
+                ? 'bg-sage-500'
+                : 'bg-paper-200 border border-ink-200 opacity-50'
             }`}
             style={
               hasOutstanding
@@ -245,7 +246,7 @@ export function CustomerHeroCard({
                 hasOutstanding ? 'text-paper-50' : 'text-ink-500'
               }`}
             >
-              Add Payment
+              {t('common:addPayment', 'Add Payment')}
             </StyledText>
           </Pressable>
           <Pressable
@@ -259,7 +260,7 @@ export function CustomerHeroCard({
               variant="extrabold"
               className="text-cinnamon-700 text-sm ml-2"
             >
-              Add Credit
+              {t('common:addCredit', 'Add Credit')}
             </StyledText>
           </Pressable>
         </View>
@@ -278,7 +279,7 @@ export function CustomerHeroCard({
                 variant="extrabold"
                 className="text-cinnamon-700 text-xs ml-2"
               >
-                Mark All as Paid
+                {t('common:markAllAsPaid', 'Mark All as Paid')}
               </StyledText>
             </Pressable>
           </View>
@@ -288,288 +289,4 @@ export function CustomerHeroCard({
       </View>
     </MotiView>
   );
-}
-
-/* ─── Subcomponents ──────────────────────────────────────────────────── */
-
-function Perforations({
-  negativeTop,
-  negativeBottom,
-}: {
-  negativeTop?: boolean;
-  negativeBottom?: boolean;
-}) {
-  const PERF_COUNT = 22;
-  const PERF_BG = '#EFE6D2';
-  return (
-    <View
-      className="relative h-0"
-      style={negativeTop ? { top: -3 } : negativeBottom ? { bottom: -3 } : undefined}
-    >
-      <View
-        className="absolute left-0 right-0 h-3 flex-row justify-between"
-        style={negativeTop ? { top: 0 } : { top: -6 }}
-      >
-        {Array.from({ length: PERF_COUNT }).map((_, i) => (
-          <View
-            key={`p-${negativeTop ? 't' : 'b'}-${i}`}
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: PERF_BG }}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function ContactRow({ customer }: { customer: CustomerWithDetails }) {
-  if (!customer.phone && !customer.address) return null;
-  return (
-    <View className="mt-1.5">
-      {customer.phone && (
-        <View className="flex-row items-center mb-0.5">
-          <FontAwesome name="phone" size={10} color="#FBF7EE" style={{ opacity: 0.7 }} />
-          <StyledText
-            variant="medium"
-            className="text-mono text-paper-200 ml-1.5"
-            style={{ opacity: 0.92 }}
-          >
-            {customer.phone}
-          </StyledText>
-        </View>
-      )}
-      {customer.address && (
-        <View className="flex-row items-center">
-          <FontAwesome name="map-marker" size={10} color="#FBF7EE" style={{ opacity: 0.7 }} />
-          <StyledText
-            variant="medium"
-            className="text-mono text-paper-200 ml-1.5"
-            numberOfLines={1}
-            style={{ opacity: 0.92 }}
-          >
-            {customer.address}
-          </StyledText>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function DebtLimitBar({
-  ratio,
-  tone,
-  surplusPesos,
-  limit,
-}: {
-  ratio: number;
-  tone: 'safe' | 'warning' | 'over-limit';
-  surplusPesos: number;
-  limit: number;
-}) {
-  const widthPct = Math.max(2, Math.min(100, ratio * 100));
-  const trackBg =
-    tone === 'over-limit'
-      ? 'bg-semantic-danger-50'
-      : tone === 'warning'
-        ? 'bg-semantic-warning-50'
-        : 'bg-paper-200';
-  const fillBg =
-    tone === 'over-limit'
-      ? 'bg-semantic-danger'
-      : tone === 'warning'
-        ? 'bg-semantic-warning'
-        : 'bg-sage-500';
-  const label =
-    tone === 'over-limit'
-      ? `⚠️ Exceeded Credit Limit by ${formatPesos(surplusPesos)}`
-      : tone === 'warning'
-        ? 'Approaching credit limit'
-        : 'Within credit limit';
-  const labelTone =
-    tone === 'over-limit'
-      ? 'text-semantic-danger'
-      : tone === 'warning'
-        ? 'text-semantic-warning'
-        : 'text-sage-700';
-
-  return (
-    <View className="px-5 pt-4 pb-1">
-      <View className="flex-row items-baseline justify-between mb-1.5">
-        <StyledText
-          variant="extrabold"
-          className="label-caps text-ink-400"
-        >
-          Credit Limit
-        </StyledText>
-        <StyledText
-          variant="medium"
-          className="text-mono text-ink-500"
-        >
-          of {formatPesos(limit)}
-        </StyledText>
-      </View>
-      <View className={`h-2 rounded-full ${trackBg} overflow-hidden`}>
-        <View
-          className={`h-full rounded-full ${fillBg}`}
-          style={{ width: `${widthPct}%` }}
-        />
-      </View>
-      <StyledText
-        variant="extrabold"
-        className={`text-mono mt-1.5 ${labelTone}`}
-        style={{ fontSize: 11 }}
-      >
-        {label}
-      </StyledText>
-    </View>
-  );
-}
-
-function TrustTagPill({ tag }: { tag: TrustTag }) {
-  const visual: Record<TrustTag, { variant: 'success' | 'info' | 'warning'; label: string }> = {
-    good_payer: { variant: 'success', label: 'Good payer' },
-    frequent_suki: { variant: 'info', label: 'Frequent suki' },
-    needs_followup: { variant: 'warning', label: 'Needs follow-up' },
-  };
-  const v = visual[tag];
-  return (
-    <StatusPill variant={v.variant} size="sm" dot>
-      {v.label}
-    </StatusPill>
-  );
-}
-
-function ContactLink({
-  icon,
-  label,
-  tone,
-  onPress,
-}: {
-  icon: 'phone' | 'comment';
-  label: string;
-  tone: 'sage' | 'persimmon';
-  onPress: () => void;
-}) {
-  const active = tone === 'sage';
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      className={`press-scale flex-1 rounded-xl py-2.5 flex-row items-center justify-center border ${
-        active
-          ? 'bg-sage-50 border-sage-500'
-          : 'bg-persimmon-50 border-persimmon-300'
-      }`}
-    >
-      <FontAwesome
-        name={icon}
-        size={12}
-        color={active ? '#4F7A24' : '#C8460F'}
-      />
-      <StyledText
-        variant="extrabold"
-        className={`text-xs ml-1.5 ${
-          active ? 'text-sage-700' : 'text-persimmon-700'
-        }`}
-      >
-        {label}
-      </StyledText>
-    </Pressable>
-  );
-}
-
-function StatementShareButton({
-  customer,
-  credits,
-  storeName,
-}: {
-  customer: CustomerWithDetails;
-  credits: CreditTransaction[];
-  storeName: string;
-}) {
-  const { t } = useTranslation();
-
-  const handleShareText = async () => {
-    const text = buildStatement({ storeName, customer, credits });
-    try {
-      await Share.share({
-        message: text,
-        title: `Statement for ${customer.name}`,
-      });
-    } catch {
-      // User cancelled or share unavailable — fall back to clipboard so
-      // the cashier can still paste into Messenger/Viber manually.
-      try {
-        Clipboard.setString(text);
-      } catch {
-        // Clipboard unavailable on this platform — nothing more we
-        // can do here. The share sheet already showed the text.
-      }
-    }
-  };
-
-  const handleSharePdf = async () => {
-    await shareCreditStatementPdf({
-      storeName,
-      customerName: customer.name,
-      credits,
-      totalBalance: customer.outstanding_balance,
-    });
-  };
-
-  const handlePress = () => {
-    Haptics.selectionAsync().catch(() => {});
-    
-    Alert.alert(
-      t('common:shareStatementTitle', 'Share Statement'),
-      t('common:shareStatementMessage', 'Choose how you want to share the statement with your suki:'),
-      [
-        {
-          text: t('common:shareAsText', 'Share as Text (SMS/Chat)'),
-          onPress: handleShareText,
-        },
-        {
-          text: t('common:shareAsPdf', 'Share as PDF Resibo'),
-          onPress: handleSharePdf,
-        },
-        {
-          text: t('common:cancel', 'Cancel'),
-          style: 'cancel',
-        },
-      ]
-    );
-  };
-
-  return (
-    <Pressable
-      onPress={handlePress}
-      accessibilityRole="button"
-      accessibilityLabel="Share statement"
-      className="press-scale flex-1 rounded-xl py-2.5 flex-row items-center justify-center bg-paper-100 border border-ink-300"
-    >
-      <FontAwesome name="share-square-o" size={12} color="#623418" />
-      <StyledText
-        variant="extrabold"
-        className="text-cinnamon-700 text-xs ml-1.5"
-      >
-        Statement
-      </StyledText>
-    </Pressable>
-  );
-}
-
-/* ─── Helpers ────────────────────────────────────────────────────────── */
-
-function dialPhone(phone: string) {
-  Haptics.selectionAsync().catch(() => {});
-  const url = `tel:${phone}`;
-  Linking.openURL(url).catch(() => {});
-}
-
-function smsPhone(phone: string, name: string) {
-  Haptics.selectionAsync().catch(() => {});
-  const body = `Hi ${name}, this is a quick reminder from the sari-sari store about your outstanding balance. Maraming salamat!`;
-  const url = `sms:${phone}?body=${encodeURIComponent(body)}`;
-  Linking.openURL(url).catch(() => {});
 }

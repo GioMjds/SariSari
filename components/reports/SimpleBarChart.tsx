@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { memo, useState } from 'react';
+import { memo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { formatCompactCurrency } from '@/utils';
 
@@ -10,6 +10,10 @@ interface SimpleBarChartProps {
 	barColor?: string;
 	/** Highlight color for the maximum bar */
 	accentColor?: string;
+	/** Changing this value remounts the chart and replays nothing — bars appear
+	 * instantly. Pass the date-range key so the chart resets cleanly after a
+	 * range change without a mount flash. */
+	dataKey?: string;
 }
 
 /**
@@ -26,8 +30,14 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 	height = 200,
 	barColor = '#623418', // cinnamon-500
 	accentColor = '#E85A1F', // persimmon-500
+	dataKey,
 }: SimpleBarChartProps) {
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+	// On first paint skip the `from` state so the peak label appears instantly.
+	// Selection-toggle animations still run because `animate` drives opacity reactively.
+	const hasMounted = useRef(false);
+	const shouldAnimate = hasMounted.current;
+	if (!hasMounted.current) hasMounted.current = true;
 
 	if (data.length === 0) {
 		return (
@@ -103,7 +113,7 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 						>
 							{/* Value label (only on peak or selected for clarity) */}
 							<MotiView
-								from={{ opacity: 0 }}
+								from={shouldAnimate ? { opacity: 0 } : undefined}
 								animate={{ opacity: isPeak || isSelected ? 1 : 0 }}
 								transition={{ type: 'timing', duration: 220 }}
 								className="mb-1"

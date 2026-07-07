@@ -134,7 +134,7 @@ export function ProductPicker({
       <RNModal
         visible={dropdownOpen}
         transparent
-        animationType="slide"
+        animationType="fade"
         presentationStyle="overFullScreen"
         statusBarTranslucent
         onRequestClose={() => onDropdownOpenChange(false)}
@@ -199,7 +199,6 @@ export function ProductPicker({
                 placeholder="Search or type item name…"
                 placeholderTextColor="#A89F90"
                 accessibilityLabel="Search or type item name"
-                autoFocus
                 className="flex-1 ml-2.5 text-ink-900 text-base"
               />
               {value.length > 0 && (

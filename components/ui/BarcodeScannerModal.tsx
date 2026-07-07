@@ -11,9 +11,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { MotiView } from 'moti';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { validateBarcode } from '@/lib/barcodes/format';
@@ -155,19 +155,13 @@ export function BarcodeScannerModal({
       // Medium haptic for every accepted scan. Pattern mirrors
       // stores/ToastStore.ts: namespace import + .catch(() => {}) to
       // silently swallow platform errors.
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
-        () => {},
-      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
       onScan(barcode);
     },
     [onScan],
   );
 
-  // Camera is conditionally rendered — never active unless we have
-  // permission AND the modal is visible. This avoids the
-  // "only one Camera preview active at a time" pitfall documented at
-  // https://docs.expo.dev/versions/v54.0.0/sdk/camera/.
   const showCamera = !!permission?.granted && visible;
 
   return (
@@ -195,7 +189,9 @@ export function BarcodeScannerModal({
         ) : null}
 
         {/* Viewfinder overlay — drawn on top of (or instead of) the camera */}
-        {showCamera ? <ViewfinderOverlay reducedMotion={reducedMotion} /> : null}
+        {showCamera ? (
+          <ViewfinderOverlay reducedMotion={reducedMotion} />
+        ) : null}
 
         {/* Top bar — Cancel + Done */}
         {showCamera ? (
@@ -442,8 +438,7 @@ function ScanResultBanner({
     tone === 'danger'
       ? 'bg-semantic-danger-50 border-semantic-danger/30'
       : 'bg-paper-50 border-paper-300';
-  const textClass =
-    tone === 'danger' ? 'text-semantic-danger' : 'text-ink-900';
+  const textClass = tone === 'danger' ? 'text-semantic-danger' : 'text-ink-900';
 
   return (
     <View

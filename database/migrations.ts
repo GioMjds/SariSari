@@ -150,4 +150,22 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 5.');
   }
+
+  if (currentVersion < 6) {
+    console.log('Running migration to version 6 (Aging-bucket composite index)...');
+    await db.withTransactionAsync(async () => {
+      // The getAgingBuckets query filters on status != 'paid' then ranges on
+      // date.  A composite (status, date) index lets SQLite satisfy both
+      // predicates with a single index range scan instead of a full-table scan.
+      // Note: SQLite cannot use the plain idx_credit_transactions_date index
+      // when a CAST/julianday expression wraps the column, which is why the
+      // query was rewritten to use sargable date BETWEEN … clauses first.
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_credit_transactions_status_date ON credit_transactions(status, date);',
+      );
+
+      await db.execAsync('PRAGMA user_version = 6;');
+    });
+    console.log('Database migrated to version 6.');
+  }
 }

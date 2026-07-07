@@ -1,74 +1,257 @@
 import { getTabs, Tab } from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, usePathname, useRouter } from 'expo-router';
-import { memo, useCallback, useMemo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import {
+  TouchableOpacity,
+  View,
+  Keyboard,
+  Platform,
+  LayoutChangeEvent,
+} from 'react-native';
 import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
+// Mirrors persimmon-500 / paper-50 / ink-300 from tailwind.config.js.
+// Kept as hex here because FontAwesome's `color` prop can't read a
+// Tailwind/NativeWind class, only a raw color value.
+const ICON_ACTIVE = '#FBF7EE';
+const ICON_INACTIVE = '#A89F90';
+
+const getHrefString = (href: Href): string =>
+  typeof href === 'object' ? href.pathname : href;
+
+type TabLayout = { x: number; y: number; width: number; height: number };
+
+interface TabButtonProps {
+  tab: Tab;
+  hrefString: string;
+  isFocused: boolean;
+  onPress: () => void;
+  onLayoutMeasured: (key: string, focused: boolean, layout: TabLayout) => void;
+}
+
+/**
+ * TabButton is memoized to avoid redundant renders of inactive buttons.
+ * Delegates layout event to the parent through a stable callback.
+ */
+const TabButton = memo(({ tab, hrefString, isFocused, onPress, onLayoutMeasured }: TabButtonProps) => {
+  const handleLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const { x, y, width, height } = e.nativeEvent.layout;
+      onLayoutMeasured(hrefString, isFocused, { x, y, width, height });
+    },
+    [hrefString, isFocused, onLayoutMeasured],
+  );
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={{ selected: isFocused, disabled: isFocused }}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={isFocused}
+      onLayout={handleLayout}
+      style={{
+        paddingVertical: 4,
+        paddingHorizontal: 2,
+      }}
+    >
+      <View className="flex-row items-center py-3 px-4 rounded-full">
+        <FontAwesome
+          name={tab.icon}
+          size={18}
+          color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
+        />
+        {isFocused && (
+          <StyledText
+            variant="extrabold"
+            className="text-xs text-paper-50 ml-2 font-extrabold"
+            numberOfLines={1}
+          >
+            {tab.name}
+          </StyledText>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+});
+
+TabButton.displayName = 'TabButton';
 
 export const StyledTab = memo(() => {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
-  // Tab labels are translated on each render so a language switch
-  // updates the bar in place without remounting.
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const translateY = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  // Keep a stable ref to the current pathname so that handlePress does not recreate 
+  // on every path change, preventing all 5 TabButtons from re-rendering.
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  // Keep track of the active indicator layout instantly with a single shared value,
+  // snapping it on tab switches with no progress timeline animations.
+  const activeLayout = useSharedValue<TabLayout>({ x: 0, y: 0, width: 0, height: 0 });
+  const indicatorOpacity = useSharedValue(0);
+  const layouts = useRef<Record<string, TabLayout>>({});
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSubscription = Keyboard.addListener(showEvent, () =>
+      setKeyboardVisible(true),
+    );
+    const hideSubscription = Keyboard.addListener(hideEvent, () =>
+      setKeyboardVisible(false),
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    translateY.value = withTiming(keyboardVisible ? 120 : 0, { duration: 250 });
+    opacity.value = withTiming(keyboardVisible ? 0 : 1, { duration: 250 });
+  }, [keyboardVisible, translateY, opacity]);
+
+  const wrapperAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    const layout = activeLayout.value;
+
+    return {
+      transform: [
+        { translateX: layout.x },
+        { translateY: layout.y },
+      ],
+      width: layout.width,
+      height: layout.height,
+      opacity: indicatorOpacity.value,
+    };
+  });
+
   const visibleRoutes = useMemo<Tab[]>(() => getTabs(t).slice(0, 5), [t]);
+
+  const isRouteFocused = useCallback((hrefString: string) => {
+    const currentPath = pathnameRef.current;
+    return hrefString === '/'
+      ? currentPath === '/' || currentPath === ''
+      : currentPath === hrefString || currentPath.startsWith(`${hrefString}/`);
+  }, []);
+
+  const moveIndicatorTo = useCallback(
+    (key: string) => {
+      const layout = layouts.current[key];
+      if (layout) {
+        activeLayout.value = layout;
+        indicatorOpacity.value = 1;
+      }
+    },
+    [activeLayout, indicatorOpacity],
+  );
+
+  // Re-anchor the indicator whenever the focused route changes.
+  useEffect(() => {
+    const activeTab = visibleRoutes.find((tab) =>
+      isRouteFocused(getHrefString(tab.href)),
+    );
+    if (activeTab) moveIndicatorTo(getHrefString(activeTab.href));
+  }, [pathname, visibleRoutes, isRouteFocused, moveIndicatorTo]);
+
+  const onLayoutMeasured = useCallback(
+    (key: string, focused: boolean, layout: TabLayout) => {
+      layouts.current[key] = layout;
+      if (focused) moveIndicatorTo(key);
+    },
+    [moveIndicatorTo],
+  );
 
   const handlePress = useCallback(
     (href: Href) => {
-      const hrefString = typeof href === 'object' ? href.pathname : href;
-      const shouldNavigate =
-        hrefString === '/'
-          ? pathname !== '/' && pathname !== ''
-          : pathname !== hrefString && !pathname.startsWith(`${hrefString}/`);
-
-      if (shouldNavigate) router.replace(href);
+      const hrefString = getHrefString(href);
+      if (!isRouteFocused(hrefString)) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        router.replace(href);
+      }
     },
-    [pathname, router],
+    [isRouteFocused, router],
   );
 
+  const bottomInset = Math.max(insets.bottom, 16);
+
   return (
-    <View
-      className="bg-white px-6 py-4 shadow-xl shadow-black"
-      style={{ elevation: 6 }}
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          bottom: bottomInset,
+          left: 16,
+          right: 16,
+          zIndex: 1000,
+        },
+        wrapperAnimatedStyle,
+      ]}
+      pointerEvents={keyboardVisible ? 'none' : 'auto'}
     >
-      <View className="flex-row justify-between items-center">
+      <View
+        className="bg-cinnamon-900 border border-cinnamon-800 rounded-full py-2 px-2 flex-row justify-between items-center shadow-2xl"
+        style={{
+          shadowColor: '#150903',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.35,
+          shadowRadius: 15,
+          elevation: 10,
+        }}
+      >
+        {/* Sliding highlight pill, snaps instantly to the active tab layout bounds. */}
+        <Animated.View
+          pointerEvents="none"
+          className="absolute bg-persimmon-500 rounded-full"
+          style={[{ top: 0, left: 0 }, indicatorStyle]}
+        />
+
         {visibleRoutes.map((tab: Tab) => {
-          const hrefString =
-            typeof tab.href === 'object' ? tab.href.pathname : tab.href;
+          const hrefString = getHrefString(tab.href);
           const isFocused =
             hrefString === '/'
               ? pathname === '/' || pathname === ''
-              : pathname === hrefString ||
-                pathname.startsWith(`${hrefString}/`);
+              : pathname === hrefString || pathname.startsWith(`${hrefString}/`);
 
           return (
-            <TouchableOpacity
+            <TabButton
               key={hrefString}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isFocused, disabled: isFocused }}
+              tab={tab}
+              hrefString={hrefString}
+              isFocused={isFocused}
               onPress={() => handlePress(tab.href)}
-              className={`flex-1 items-center py-2 ${isFocused ? 'rounded-xl bg-secondary-50' : ''}`}
-              activeOpacity={0.2}
-              disabled={isFocused}
-            >
-              <FontAwesome
-                name={tab.icon}
-                size={20}
-                color={isFocused ? '#B45309' : '#A8A29E'}
-              />
-              <StyledText
-                variant={isFocused ? 'extrabold' : 'light'}
-                className={`text-md leading-4 mt-1 text-center ${isFocused ? 'text-primary-500' : 'text-warm-500'}`}
-              >
-                {tab.name}
-              </StyledText>
-            </TouchableOpacity>
+              onLayoutMeasured={onLayoutMeasured}
+            />
           );
         })}
       </View>
-    </View>
+    </Animated.View>
   );
 });
 

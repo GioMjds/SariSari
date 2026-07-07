@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { memo, type ReactNode } from 'react';
+import { memo, useRef, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -33,6 +33,8 @@ type BentoHeroProps = {
 	footer?: ReactNode;
 	icon?: ReactNode;
 	accent?: 'persimmon' | 'sage' | 'cinnamon' | 'ink';
+	/** Changing this value triggers the entrance animation (e.g. pass the date-range key). */
+	animationKey?: string;
 };
 
 const HERO_ACCENT_BG: Record<NonNullable<BentoHeroProps['accent']>, string> = {
@@ -49,12 +51,21 @@ export const BentoHero = memo(function BentoHero({
 	footer,
 	icon,
 	accent = 'persimmon',
+	animationKey,
 }: BentoHeroProps) {
+	// Skip the slide-in on first paint; only animate when data changes
+	// (i.e. when the parent passes a new animationKey after a date-range
+	// change or refresh, which unmounts/remounts this MotiView via `key`).
+	const hasMounted = useRef(false);
+	const shouldAnimate = hasMounted.current;
+	if (!hasMounted.current) hasMounted.current = true;
+
 	return (
 		<MotiView
-			from={{ opacity: 0, translateY: 12 }}
+			key={animationKey}
+			from={shouldAnimate ? { opacity: 0, translateY: 12 } : undefined}
 			animate={{ opacity: 1, translateY: 0 }}
-			transition={{ type: 'timing', duration: 380, delay: 80 }}
+			transition={{ type: 'timing', duration: 380, delay: shouldAnimate ? 80 : 0 }}
 			className={`rounded-card overflow-hidden ${HERO_ACCENT_BG[accent]} shadow-paper-lift`}
 		>
 			<View className="px-5 pt-4 pb-2 flex-row items-center justify-between">

@@ -2,6 +2,7 @@ import { View, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { StatusBar } from 'expo-status-bar';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
 import {
   AddProductHeader,
@@ -17,6 +18,7 @@ export default function AddProduct() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <StatusBar style={form.isScannerOpen ? 'light' : 'dark'} />
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}

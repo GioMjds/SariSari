@@ -20,6 +20,7 @@ export interface ReportKPIs {
 	// 0 means profit was definitely 0; null means there were no sales to
 	// measure coverage against.
 	profitCoverage: number | null;
+	marginPercent: number | null;
 }
 
 export interface SalesDataPoint {
@@ -28,9 +29,16 @@ export interface SalesDataPoint {
 	profit?: number;
 }
 
-export interface TopSellingProduct {
+export interface StockItem {
 	id: number;
 	name: string;
+	quantity: number;
+	costPrice: number;
+	sellingPrice: number;
+	velocity?: 'fast' | 'slow';
+}
+
+export interface TopSellingProduct extends StockItem {
 	unitsSold: number;
 	revenue: number;
 	profit?: number;
@@ -47,15 +55,6 @@ export interface InventoryMovement {
 	itemsSold: number;
 	lowStockCount: number;
 	outOfStockCount: number;
-}
-
-export interface StockItem {
-	id: number;
-	name: string;
-	quantity: number;
-	costPrice: number;
-	sellingPrice: number;
-	velocity?: 'fast' | 'slow';
 }
 
 export interface InventoryValue {
@@ -77,15 +76,6 @@ export interface AgingBucket {
 	range: string;
 	amount: number;
 	count: number;
-}
-
-export interface ProfitabilityData {
-	// Same nullable contract as ReportKPIs.totalProfit — null means we
-	// couldn't compute a profit number because no sold units had cost data.
-	totalProfit: number | null;
-	marginPercent: number | null;
-	coverage: number | null;
-	profitByCategory?: { category: string; profit: number }[];
 }
 
 export interface ReportInsight {
