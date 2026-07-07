@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { View } from 'react-native';
+import React, { useMemo, useCallback, memo } from 'react';
+import { View, SectionList, RefreshControl } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { format, isToday, isYesterday, isValid } from 'date-fns';
@@ -28,26 +28,34 @@ interface LedgerListProps {
   currentStock: number;
   searchQuery: string;
   selectedType: LedgerTypeFilter;
+  isRefetching?: boolean;
+  onRefresh?: () => void;
+  ListHeaderComponent?: React.ReactElement | null;
 }
+
+const LIST_CONTAINER_STYLE = { paddingBottom: 140 } as const;
+
+type LedgerRowData = InventoryTransaction & { runningBalance: number };
+
+const keyExtractor = (item: LedgerRowData) => `${item.type}-${item.id}`;
 
 /**
  * LedgerList — the filtered, animated transaction timeline.
  *
+ * Uses SectionList for high-performance virtualized rendering.
  * The screen passes the raw 30-day list; this component filters it,
  * computes a **running balance** for each row, groups entries into
  * sticky day buckets, and renders them with the same receipt-ledger
  * visual language used by `components/utang/credit-details/`.
- *
- * Empty states are split:
- *   • `transactions.length === 0` → parent renders `LedgerEmptyState`.
- *   • Filter excludes everything but data exists → inline
- *     `LedgerNoMatches` so the user gets actionable guidance.
  */
-export function LedgerList({
+export const LedgerList = memo(function LedgerList({
   transactions,
   currentStock,
   searchQuery,
   selectedType,
+  isRefetching,
+  onRefresh,
+  ListHeaderComponent,
 }: LedgerListProps) {
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -83,52 +91,83 @@ export function LedgerList({
     });
   }, [filtered, currentStock]);
 
-  // Group by day bucket for the sticky day separator UX. Hooks must
-  // be called unconditionally, so this `useMemo` lives above any
-  // early-return.
+  // Group by day bucket for the sticky day separator UX.
   const groups = useMemo(() => groupByDay(rowsWithBalance), [rowsWithBalance]);
 
-  if (filtered.length === 0) {
-    if (transactions.length === 0) {
-      // No data at all — let the screen show LedgerEmptyState.
-      return null;
-    }
-    return <LedgerNoMatches />;
-  }
+  const sections = useMemo(() => {
+    return groups.map((g) => ({
+      key: g.key,
+      label: g.label,
+      data: g.entries,
+    }));
+  }, [groups]);
 
-  let rowIndex = 0;
-  return (
-    <View>
-      {groups.map((group) => (
-        <View key={group.key} className="mb-2">
-          <DaySeparator label={group.label} count={group.entries.length} />
-          {group.entries.map((row) => {
-            const i = rowIndex++;
-            return (
-              <MotiView
-                key={`${row.type}-${row.id}`}
-                from={{ opacity: 0, translateX: -8 }}
-                animate={{ opacity: 1, translateX: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 280,
-                  delay: 40 * Math.min(i, 12),
-                }}
-                className="mb-2.5"
-              >
-                <LedgerRow row={row} />
-              </MotiView>
-            );
-          })}
+  const renderItem = useCallback(
+    ({ item, index }: { item: LedgerRowData; index: number }) => {
+      // Stagger animation delay per item within its section to prevent lag
+      const delay = (index % 8) * 40;
+      return (
+        <View className="px-4">
+          <MotiView
+            from={{ opacity: 0, translateX: -8 }}
+            animate={{ opacity: 1, translateX: 0 }}
+            transition={{
+              type: 'timing',
+              duration: 280,
+              delay,
+            }}
+            className="mb-2.5"
+          >
+            <LedgerRow row={item} />
+          </MotiView>
         </View>
-      ))}
-    </View>
+      );
+    },
+    [],
   );
-}
+
+  const renderSectionHeader = useCallback(
+    ({ section: { label, data } }: { section: { label: string; data: any[] } }) => (
+      <View className="px-4 mt-2">
+        <DaySeparator label={label} count={data.length} />
+      </View>
+    ),
+    [],
+  );
+
+  const renderEmpty = useCallback(() => (
+    <View className="px-4">
+      <LedgerNoMatches />
+    </View>
+  ), []);
+
+  return (
+    <SectionList
+      sections={sections}
+      renderItem={renderItem}
+      renderSectionHeader={renderSectionHeader}
+      ListHeaderComponent={ListHeaderComponent}
+      ListEmptyComponent={renderEmpty}
+      contentContainerStyle={LIST_CONTAINER_STYLE}
+      showsVerticalScrollIndicator={false}
+      keyExtractor={keyExtractor}
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={!!isRefetching}
+            onRefresh={onRefresh}
+            tintColor="#623418"
+            colors={['#E85A1F']}
+          />
+        ) : undefined
+      }
+    />
+  );
+});
 
 /* ─── Single row ──────────────────────────────────────────────────── */
 
-function LedgerRow({
+const LedgerRow = memo(function LedgerRow({
   row,
 }: {
   row: InventoryTransaction & { runningBalance: number };
@@ -201,21 +240,18 @@ function LedgerRow({
       </View>
     </View>
   );
-}
+});
 
 /* ─── Day separator ─────────────────────────────────────────────────── */
 
-function DaySeparator({ label, count }: { label: string; count: number }) {
+const DaySeparator = memo(function DaySeparator({ label, count }: { label: string; count: number }) {
   return (
     <View className="flex-row items-center bg-paper-100 border border-ink-100 rounded-xl px-3 py-2 mb-2.5">
       <View className="w-1.5 h-1.5 rounded-full bg-cinnamon-500 mr-2" />
       <StyledText variant="extrabold" className="label-caps text-ink-700">
         {label}
       </StyledText>
-      {/* Spacer pushes the count to the far right edge. Using an
-          explicit <View style={{ flex: 1 }} /> instead of `ml-auto`
-          because ml-auto was collapsing the count against the label
-          when the parent didn't reserve enough space. */}
+      {/* Spacer pushes the count to the far right edge. */}
       <View style={{ flex: 1 }} />
       <StyledText
         variant="medium"
@@ -226,11 +262,11 @@ function DaySeparator({ label, count }: { label: string; count: number }) {
       </StyledText>
     </View>
   );
-}
+});
 
 /* ─── No matches inline state ─────────────────────────────────────── */
 
-function LedgerNoMatches() {
+const LedgerNoMatches = memo(function LedgerNoMatches() {
   return (
     <View className="items-center justify-center py-10 px-6 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
       <View className="w-12 h-12 rounded-full bg-paper-100 border border-ink-200 items-center justify-center mb-3">
@@ -250,7 +286,7 @@ function LedgerNoMatches() {
       </StyledText>
     </View>
   );
-}
+});
 
 /* ─── Pill + icon helpers (module-scope) ─────────────────────────── */
 

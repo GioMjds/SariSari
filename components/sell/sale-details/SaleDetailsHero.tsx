@@ -26,22 +26,28 @@ interface SaleDetailsHeroProps {
   saleId: number;
   /** Integer-pesos total — drives the printed-plate `ReceiptHeroTotal`. */
   total: number;
-  /** Pre-formatted labels for the hero (eyebrow, meta, total, customer card). */
+  /** Override eyebrow title ("Utang Record" / "Paid in Full") —
+   *  varies per payment type so it stays as a prop. */
   heroTitleLabel: string;
-  dateLabel: string;
-  timeLabel: string;
-  itemsLabel: string;
-  itemsLabelSingular: string;
-  itemsLabelPlural: string;
-  refNoLabel: string;
-  /** Override label for the credit-mode total plate (e.g. "Balance Outstanding"). */
+  /** Override label for the credit-mode total plate. */
   creditTotalLabel: string;
-  /** Override label for the cash-mode total plate (e.g. "Total Paid"). */
+  /** Override label for the cash-mode total plate. */
   cashTotalLabel: string;
-  billToLabel: string;
-  soldToLabel: string;
-  dueOnRequestLabel: string;
 }
+
+// Static UI copy that never varies — kept here so the parent screen
+// doesn’t need to pass (and diff) ten identical string literals every render.
+const LABELS = {
+  date: 'Date',
+  time: 'Time',
+  items: 'Items',
+  pc: 'pc',
+  pcs: 'pcs',
+  refNo: 'Ref No.',
+  billTo: 'Bill to',
+  soldTo: 'Sold to',
+  dueOnRequest: 'Due on request',
+} as const;
 
 /**
  * SaleDetailsHero — the receipt-style hero card that anchors the top
@@ -51,7 +57,7 @@ interface SaleDetailsHeroProps {
  *   • Eyebrow title ("Utang Record" / "Paid in Full") + status stamp.
  *   • Customer card — "Bill to" for credit (with "Due on request"),
  *     "Sold to" for cash (no due dates / terms).
- *   • Meta rows (date, time, items, ref №) via ReceiptHeroMeta.
+ *   • Meta rows (date, time, items, ref no.) via ReceiptHeroMeta.
  *   • Printed-plate total at the bottom via ReceiptHeroTotal.
  *
  * Pure presentational — every string and number is pre-computed by
@@ -68,22 +74,13 @@ export function SaleDetailsHero({
   saleId,
   total,
   heroTitleLabel,
-  dateLabel,
-  timeLabel,
-  itemsLabel,
-  itemsLabelSingular,
-  itemsLabelPlural,
-  refNoLabel,
   creditTotalLabel,
   cashTotalLabel,
-  billToLabel,
-  soldToLabel,
-  dueOnRequestLabel,
 }: SaleDetailsHeroProps) {
   const isCredit = paymentType === 'credit';
   const stampTone = isCredit ? 'persimmon' : 'sage';
   const stampLabel = isCredit ? 'UTANG' : 'CASH';
-  const itemsValue = `${itemsCount} ${itemsCount === 1 ? itemsLabelSingular : itemsLabelPlural}`;
+  const itemsValue = `${itemsCount} ${itemsCount === 1 ? LABELS.pc : LABELS.pcs}`;
   const refNo = `R-${String(saleId).padStart(6, '0')}`;
 
   return (
@@ -103,10 +100,7 @@ export function SaleDetailsHero({
             >
               {heroTitleLabel}
             </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-sm mt-1"
-            >
+            <StyledText variant="regular" className="text-ink-500 text-sm mt-1">
               {dateLine}
             </StyledText>
           </View>
@@ -130,12 +124,9 @@ export function SaleDetailsHero({
             }`}
           >
             <StyledText className="label-caps text-ink-400 mb-1">
-              {isCredit ? billToLabel : soldToLabel}
+              {isCredit ? LABELS.billTo : LABELS.soldTo}
             </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-lg"
-            >
+            <StyledText variant="extrabold" className="text-ink-900 text-lg">
               {customerName}
             </StyledText>
             {isCredit && (
@@ -145,7 +136,7 @@ export function SaleDetailsHero({
                   variant="regular"
                   className="text-ink-500 text-xs ml-1.5"
                 >
-                  {dueOnRequestLabel}
+                  {LABELS.dueOnRequest}
                 </StyledText>
               </View>
             )}
@@ -155,10 +146,10 @@ export function SaleDetailsHero({
         {/* Meta block — date, time, item count, ref no. */}
         <ReceiptHeroMeta
           rows={[
-            { label: dateLabel, value: dateShort },
-            { label: timeLabel, value: timeShort },
-            { label: itemsLabel, value: itemsValue },
-            { label: refNoLabel, value: refNo },
+            { label: LABELS.date, value: dateShort },
+            { label: LABELS.time, value: timeShort },
+            { label: LABELS.items, value: itemsValue },
+            { label: LABELS.refNo, value: refNo },
           ]}
         />
 

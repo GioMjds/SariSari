@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StyledText } from '@/components/elements';
 import { TouchableOpacity, View } from 'react-native';
 
@@ -9,7 +10,7 @@ interface ChipProps {
   accessibilityLabel: string;
 }
 
-export function Chip({
+export const Chip = memo(function Chip({
   label,
   count,
   active,
@@ -50,4 +51,4 @@ export function Chip({
       </View>
     </TouchableOpacity>
   );
-}
+});

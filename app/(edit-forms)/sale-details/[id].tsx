@@ -5,23 +5,27 @@ import {
   SaleDetailsHero,
   SaleDetailsItemList,
 } from '@/components/sell';
-import { useSales } from '@/hooks';
+import { useDeleteSale, useGetSale } from '@/hooks';
 import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Hoisted to module scope — stable reference, no inline object re-allocation on re-render.
+const SCROLL_CONTENT_STYLE = { paddingTop: 16, paddingBottom: 140 } as const;
 
 /**
  * SaleDetails — orchestrator for the Sale Details (resibo) screen.
  *
  * Owns only:
  *   • Loading state.
- *   • Data fetching via `useSales().useGetSale(id)`.
- *   • Local date/number formatting (`dateLine`, `dateShort`, etc.).
- *   • The Alert.alert delete confirmation flow.
+ *   • Data fetching via `useGetSale(id)` + `useDeleteSale()`.
+ *   • Local date/number formatting (`dateLine`, `dateShort`, etc.) — memoised.
+ *   • The Alert.alert delete confirmation flow — stable via useCallback.
  *   • Navigation (router.back).
  *
  * Every visual block — header, hero, item list, footer — is delegated
@@ -30,10 +34,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { useGetSale, deleteSaleMutation } = useSales();
-  const { data: sale, isLoading } = useGetSale(Number(id));
+  const numericId = Number(id);
+  const { data: sale, isLoading } = useGetSale(numericId);
+  const deleteSaleMutation = useDeleteSale();
+  const insets = useSafeAreaInsets();
 
-  const handleDeleteSale = () => {
+  const handleDeleteSale = useCallback(() => {
     Alert.alert(
       'Delete Sale',
       'Are you sure you want to delete this sale? This will restore the inventory.',
@@ -44,7 +50,7 @@ export default function SaleDetails() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteSaleMutation.mutateAsync(Number(id));
+              await deleteSaleMutation.mutateAsync(numericId);
             } catch {
               Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Error,
@@ -55,17 +61,33 @@ export default function SaleDetails() {
         },
       ],
     );
-  };
+  }, [deleteSaleMutation, numericId]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     router.back();
-  };
+  }, [router]);
+
+  const isCredit = sale?.payment_type === 'credit';
+  const { dateLine, dateShort, timeShort, grandTotalDisplay } = useMemo(() => {
+    const ts = parseStoredTimestamp(sale?.timestamp) || new Date();
+    return {
+      dateLine: format(ts, 'MMM dd, yyyy · hh:mm a'),
+      dateShort: format(ts, 'MM/dd/yy'),
+      timeShort: format(ts, 'hh:mm a'),
+      grandTotalDisplay: (sale?.total ?? 0).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    };
+  }, [sale?.timestamp, sale?.total]);
+  const itemsCount = sale?.items_count ?? 0;
+  const buyerName = sale?.customer_name?.trim() ?? null;
 
   // ─── Loading state ───────────────────────────────────────────────
   if (isLoading || !sale) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
         {/* Slim top bar so loading state still feels intentional */}
         <View className="flex-row items-center px-5 pt-3 pb-2">
           <Pressable
@@ -85,25 +107,12 @@ export default function SaleDetails() {
             Loading resibo…
           </StyledText>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  // ─── Derived values (only formatting lives here) ──────────────────
-  const isCredit = sale.payment_type === 'credit';
-  const timestamp = parseStoredTimestamp(sale.timestamp) || new Date();
-  const dateLine = format(timestamp, 'MMM dd, yyyy · hh:mm a');
-  const dateShort = format(timestamp, 'MM/dd/yy');
-  const timeShort = format(timestamp, 'hh:mm a');
-  const itemsCount = sale.items_count;
-  const grandTotalDisplay = sale.total.toLocaleString('en-PH', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const buyerName = sale.customer_name?.trim() ?? null;
-
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <SaleDetailsHeader
         saleId={sale.id}
         onBack={handleBack}
@@ -112,10 +121,7 @@ export default function SaleDetails() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{
-          paddingTop: 16,
-          paddingBottom: 140,
-        }}
+        contentContainerStyle={SCROLL_CONTENT_STYLE}
         showsVerticalScrollIndicator={false}
       >
         <View className="mx-4">
@@ -130,17 +136,8 @@ export default function SaleDetails() {
             saleId={sale.id}
             total={sale.total}
             heroTitleLabel={isCredit ? 'Utang Record' : 'Paid in Full'}
-            dateLabel="Date"
-            timeLabel="Time"
-            itemsLabel="Items"
-            itemsLabelSingular="pc"
-            itemsLabelPlural="pcs"
-            refNoLabel="Ref №"
             creditTotalLabel="BALANCE OUTSTANDING"
             cashTotalLabel="TOTAL PAID"
-            billToLabel="Bill to"
-            soldToLabel="Sold to"
-            dueOnRequestLabel="Due on request"
           />
         </View>
 
@@ -160,6 +157,6 @@ export default function SaleDetails() {
           onDelete={handleDeleteSale}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

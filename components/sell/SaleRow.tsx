@@ -1,3 +1,4 @@
+import React from 'react';
 import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
@@ -24,7 +25,7 @@ interface SaleRowProps {
  * No business logic, no animation — kept pure so the parent FlatList
  * can wrap it in MotiView with a per-row stagger.
  */
-export function SaleRow({ sale, onPress }: SaleRowProps) {
+export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowProps) {
   const isCredit = sale.payment_type === 'credit';
   const stampTone: 'persimmon' | 'sage' = isCredit ? 'persimmon' : 'sage';
   const stampLabel = isCredit ? 'UTANG' : 'CASH';
@@ -137,4 +138,4 @@ export function SaleRow({ sale, onPress }: SaleRowProps) {
       <View className="h-3" />
     </Pressable>
   );
-}
+})

@@ -85,7 +85,7 @@ export const BentoHero = memo(function BentoHero({
 						className="text-label text-paper-100"
 						style={{ letterSpacing: 1.5 }}
 					>
-						№ 01
+						No. 01
 					</StyledText>
 				</View>
 			</View>

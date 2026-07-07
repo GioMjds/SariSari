@@ -2,7 +2,7 @@ import { StyledText } from '@/components/elements';
 import { ReceiptHeroDivider } from '@/components/ui';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 interface SaleDetailsFooterProps {
   /** Pre-formatted grand-total label (e.g. "Utang total" / "Grand total"). */
@@ -51,7 +51,7 @@ export function SaleDetailsFooter({
           <StyledText
             variant="regular"
             className="text-ink-500 text-xs text-center mt-3"
-            style={{ lineHeight: 18 }}
+            style={styles.thankYouText}
           >
             {thankYouMessage}
           </StyledText>
@@ -78,14 +78,14 @@ export function SaleDetailsFooter({
                 <StyledText
                   variant="medium"
                   className="text-paper-100 text-base mr-1"
-                  style={{ letterSpacing: -0.5 }}
+                  style={styles.totalLabel}
                 >
                   ₱
                 </StyledText>
                 <StyledText
                   variant="black"
                   className="text-paper-50 text-3xl"
-                  style={{ letterSpacing: -0.5 }}
+                  style={styles.totalAmount}
                 >
                   {grandTotalDisplay}
                 </StyledText>
@@ -98,7 +98,7 @@ export function SaleDetailsFooter({
               accessibilityRole="button"
               accessibilityLabel="Delete sale"
               className="w-12 h-12 rounded-full bg-semantic-danger items-center justify-center shadow-paper active:opacity-80"
-              style={{ marginLeft: 12 }}
+              style={styles.deleteButton}
             >
               <FontAwesome name="trash" size={16} color="#FFF1EA" />
             </Pressable>
@@ -108,3 +108,12 @@ export function SaleDetailsFooter({
     </>
   );
 }
+
+// ─── Stable style references ──────────────────────────────────────────────────────
+// Hoisted to module scope so inline objects are never re-allocated on render.
+const styles = StyleSheet.create({
+  thankYouText: { lineHeight: 18 },
+  totalLabel: { letterSpacing: -0.5 },
+  totalAmount: { letterSpacing: -0.5 },
+  deleteButton: { marginLeft: 12 },
+});

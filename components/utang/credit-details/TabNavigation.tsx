@@ -1,5 +1,5 @@
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
@@ -42,10 +42,22 @@ export function TabNavigation({
     Partial<Record<CreditDetailTab, { x: number; width: number }>>
   >({});
 
-  const onTabLayout = useCallback(
-    (key: CreditDetailTab) => (e: LayoutChangeEvent) => {
-      const { x, width } = e.nativeEvent.layout;
-      setMetrics((prev) => ({ ...prev, [key]: { x, width } }));
+  // Stable per-tab layout handlers — stored in a ref so each Pressable
+  // always receives the same function reference across renders, preventing
+  // the entire tab row from re-rendering when `activeTab` or `metrics` changes.
+  const layoutHandlersRef = useRef<
+    Partial<Record<CreditDetailTab, (e: LayoutChangeEvent) => void>>
+  >({});
+
+  const getTabLayoutHandler = useCallback(
+    (key: CreditDetailTab) => {
+      if (!layoutHandlersRef.current[key]) {
+        layoutHandlersRef.current[key] = (e: LayoutChangeEvent) => {
+          const { x, width } = e.nativeEvent.layout;
+          setMetrics((prev) => ({ ...prev, [key]: { x, width } }));
+        };
+      }
+      return layoutHandlersRef.current[key]!;
     },
     [],
   );
@@ -81,7 +93,7 @@ export function TabNavigation({
           return (
             <Pressable
               key={tab.key}
-              onLayout={onTabLayout(tab.key)}
+              onLayout={getTabLayoutHandler(tab.key)}
               onPress={() => onChange(tab.key)}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}

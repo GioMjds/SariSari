@@ -1,3 +1,4 @@
+import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,7 @@ interface PaginationProps {
  * on Android. The page number fades in on swap so the counter feels
  * alive without distracting from the list above.
  */
-export function Pagination ({
+export const Pagination = React.memo(function Pagination({
   currentPage,
   totalPages,
   onPageChange,
@@ -90,4 +91,4 @@ export function Pagination ({
       </View>
     </View>
   );
-};
+});

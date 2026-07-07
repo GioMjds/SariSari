@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MotiView } from 'moti';
 import { SearchBar } from '@/components/ui';
@@ -43,7 +44,7 @@ interface LedgerToolbarProps {
  * LedgerToolbar — the search box + horizontal type-filter chip row
  * that sits above the transaction timeline.
  */
-export function LedgerToolbar({
+export const LedgerToolbar = memo(function LedgerToolbar({
   searchQuery,
   setSearchQuery,
   selectedType,
@@ -64,7 +65,7 @@ export function LedgerToolbar({
               onChange={setSearchQuery}
               placeholder="Search notes or dates…"
               accessibilityLabel="Search ledger entries"
-              debounceMs={0}
+              debounceMs={200}
             />
           </View>
 
@@ -126,4 +127,4 @@ export function LedgerToolbar({
       </View>
     </MotiView>
   );
-}
+});

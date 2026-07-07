@@ -24,9 +24,9 @@ interface SaleDetailsItemListProps {
  *     like a printed receipt.
  *   • Ledger footer (subtotal) at the bottom.
  *
- * Each row is wrapped in a MotiView with a small stagger so the lines
- * appear one after another on mount. Pure presentational — receives
- * pre-computed `subtotal` so it has no formatting logic.
+ * The whole section enters as one unit (single MotiView fade+slide)
+ * rather than per-row worklets, keeping Reanimated overhead constant
+ * regardless of item count.
  */
 export function SaleDetailsItemList({
   items,
@@ -54,22 +54,12 @@ export function SaleDetailsItemList({
           </View>
         </View>
 
-        {/* Item rows — printed-receipt style */}
         <View className="bg-paper-50 rounded-3xl shadow-paper border border-ink-100 overflow-hidden">
           {items.map((item, index) => {
             const lineTotal = item.quantity * item.price;
             const isLast = index === items.length - 1;
             return (
-              <MotiView
-                key={item.id}
-                from={{ opacity: 0, translateX: -8 }}
-                animate={{ opacity: 1, translateX: 0 }}
-                transition={{
-                  type: 'timing',
-                  duration: 360,
-                  delay: 220 + index * 60,
-                }}
-              >
+              <View key={item.id}>
                 <View
                   className={`px-5 py-4 ${
                     isLast ? '' : 'border-b border-dashed border-ink-200'
@@ -105,22 +95,16 @@ export function SaleDetailsItemList({
                     />
                   </View>
                 </View>
-              </MotiView>
+              </View>
             );
           })}
 
           {/* Ledger footer — dashes + subtotal line */}
           <View className="bg-paper-100 px-5 py-3 flex-row items-center justify-between border-t border-dashed border-ink-300">
-            <StyledText
-              variant="medium"
-              className="label-caps text-ink-500"
-            >
+            <StyledText variant="medium" className="label-caps text-ink-500">
               {subtotalLabel}
             </StyledText>
-            <MoneyText
-              value={subtotal}
-              className="text-base text-ink-900"
-            />
+            <MoneyText value={subtotal} className="text-base text-ink-900" />
           </View>
         </View>
       </View>

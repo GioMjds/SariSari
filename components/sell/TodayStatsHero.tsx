@@ -1,3 +1,4 @@
+import React from 'react';
 import { StyledText } from '@/components/elements';
 import {
   MoneyText,
@@ -38,7 +39,7 @@ interface TodayStatsHeroProps {
  * Wrapped in a MotiView stagger so it fades in after the header.
  * Pure presentational — receives every rendered string as a prop.
  */
-export function TodayStatsHero({
+export const TodayStatsHero = React.memo(function TodayStatsHero({
   stats,
   headerLabel,
   headerSubLabel,
@@ -105,4 +106,4 @@ export function TodayStatsHero({
       </View>
     </MotiView>
   );
-}
+})

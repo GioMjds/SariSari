@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { memo } from 'react';
 import { View } from 'react-native';
 import { format, isValid } from 'date-fns';
 import { MotiView } from 'moti';
@@ -24,7 +25,7 @@ interface PaymentCardProps {
  * the label. Optional notes float in their own dashed callout below
  * so they don't compete with the money line for attention.
  */
-export function PaymentCard({ payment, index }: PaymentCardProps) {
+export const PaymentCard = memo(function PaymentCard({ payment, index }: PaymentCardProps) {
   const paymentDate = parseStoredTimestamp(payment.date);
   const method = describeMethod(payment.payment_method);
 
@@ -101,7 +102,7 @@ export function PaymentCard({ payment, index }: PaymentCardProps) {
       {card}
     </MotiView>
   );
-}
+})
 
 /* ─── Method badge ───────────────────────────────────────────────────── */
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -6,6 +6,7 @@ import { ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { InventoryTransaction } from '@/types/inventory.types';
 import { Product } from '@/types/products.types';
+import { MovementChip } from './MovementChip';
 
 interface LedgerHeroProps {
   product: Product;
@@ -17,25 +18,11 @@ interface LedgerHeroProps {
  * LedgerHero — the receipt-style hero card that anchors the inventory
  * ledger screen.
  *
- * Composition (top → bottom):
- *   • Cinnamon header band — eyebrow ("Stock Ledger"), product name
- *     (big bold), SKU caption. Sets the screen's identity in one beat.
- *   • Perforated divider into a paper-textured body.
- *   • "Current Stock" featured plate — big tabular integer so the
- *     cashier always sees the on-hand count first.
- *   • Dashed divider into a 3-up movement summary — Restocked / Sold
- *     / Damaged with a "this period" label so each card communicates
- *     context, not just a number.
- *   • Quick-action footer — full-width "Log transaction" pill in
- *     persimmon that opens the bottom-sheet form from anywhere on
- *     the screen (the FAB is still there for redundancy, but this
- *     keeps the hero self-sufficient when scrolled).
- *
  * Pure presentation. Sums are derived in a `useMemo` so a refetch
  * doesn't re-allocate. Mirrors the `CustomerHeroCard` pattern from
  * `components/utang/credit-details/`.
  */
-export function LedgerHero({
+export const LedgerHero = memo(function LedgerHero({
   product,
   transactions,
   onLogTransaction,
@@ -55,10 +42,6 @@ export function LedgerHero({
         tx.type === 'adjustment' &&
         tx.adjustment_sign === 'positive'
       ) {
-        // A positive adjustment operationally equals a restock —
-        // on-hand went up without a physical delivery. Roll them
-        // into the "stock coming in" bucket so the hero matches the
-        // mental model.
         restocked += tx.quantity;
       }
     }
@@ -72,10 +55,6 @@ export function LedgerHero({
       transition={{ type: 'timing', duration: 480, delay: 60 }}
     >
       <ReceiptHero tone="cinnamon" headerLabel="Stock Ledger">
-        {/* Product identity — name + SKU. Rendered on the cream
-            paper body so we use high-contrast ink colors (ink-900
-            for the name, ink-500 for the caption) — paper-50
-            cream text would disappear against the same bg. */}
         <View className="px-5 pt-4 pb-3">
           <StyledText
             variant="black"
@@ -175,71 +154,4 @@ export function LedgerHero({
       </ReceiptHero>
     </MotiView>
   );
-}
-
-/* ─── Movement chip ─────────────────────────────────────────────────── */
-
-type MovementTone = 'sage' | 'info' | 'danger';
-
-const TONE_BG: Record<MovementTone, string> = {
-  sage: 'bg-sage-50',
-  info: 'bg-semantic-info-50',
-  danger: 'bg-semantic-danger-50',
-};
-const TONE_TEXT: Record<MovementTone, string> = {
-  sage: 'text-sage-700',
-  info: 'text-semantic-info',
-  danger: 'text-semantic-danger',
-};
-const TONE_BORDER: Record<MovementTone, string> = {
-  sage: 'border-sage-500',
-  info: 'border-semantic-info',
-  danger: 'border-semantic-danger',
-};
-const TONE_ICON_COLOR: Record<MovementTone, string> = {
-  sage: '#2F5C3E',
-  info: '#2E6FA8',
-  danger: '#C22D2D',
-};
-
-function MovementChip({
-  label,
-  value,
-  tone,
-  icon,
-}: {
-  label: string;
-  value: number;
-  tone: MovementTone;
-  icon: 'arrow-up' | 'shopping-cart' | 'exclamation-triangle';
-}) {
-  return (
-    <View
-      className={`flex-1 ${TONE_BG[tone]} border ${TONE_BORDER[tone]} rounded-xl px-3 py-2.5`}
-    >
-      <View className="flex-row items-center mb-1">
-        <FontAwesome name={icon} size={10} color={TONE_ICON_COLOR[tone]} />
-        <StyledText
-          variant="extrabold"
-          className={`label-caps ${TONE_TEXT[tone]} ml-1.5`}
-        >
-          {label}
-        </StyledText>
-      </View>
-      <StyledText
-        variant="black"
-        className={`${TONE_TEXT[tone]} text-xl`}
-        style={{ fontVariant: ['tabular-nums'] }}
-      >
-        {value}
-      </StyledText>
-      <StyledText
-        variant="medium"
-        className="text-mono text-ink-500 mt-0.5"
-        style={{ fontSize: 10 }}
-      >
-        pcs this period
-      </StyledText>
-    </View>
-  );
-}
+});

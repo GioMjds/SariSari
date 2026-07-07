@@ -14,6 +14,32 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inventoryKeys } from './useInventory';
 
+// ─── Standalone hooks ─────────────────────────────────────────────────────────
+// These are exported individually so screens that only need one query don't
+// accidentally subscribe to the full useSales() bundle (getAllSales, getTodayStats).
+
+/** Fetch a single sale by id — use this in detail screens. */
+export function useGetSale(id: number) {
+  return useQuery({
+    queryKey: ['sale', id],
+    queryFn: () => getSale(id),
+  });
+}
+
+/** Mutation to delete a sale — use this in detail screens. */
+export function useDeleteSale() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteSale(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['sale'] });
+      queryClient.invalidateQueries({ queryKey: ['sale-items'] });
+    },
+  });
+}
+
 export function useSales() {
   const queryClient = useQueryClient();
 
@@ -29,13 +55,10 @@ export function useSales() {
     queryFn: () => getAllSales(),
   });
 
-  // Query: Get sale by ID (accepts id parameter)
-  const useGetSale = (id: number) => {
-    return useQuery({
-      queryKey: ['sale', id],
-      queryFn: () => getSale(id),
-    });
-  };
+  // Query: Get sale by ID — delegates to the standalone export above.
+  // Kept here so existing callers of useSales().useGetSale() still work.
+  // Prefer importing useGetSale directly for new code.
+  const useGetSaleById = (id: number) => useGetSale(id);
 
   // Query: Get sale items by sale_id
   const useGetSaleItems = (saleId: number) => {
@@ -79,22 +102,16 @@ export function useSales() {
     },
   });
 
-  // Mutation: Delete a sale
-  const deleteSaleMutation = useMutation({
-    mutationFn: (id: number) => deleteSale(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
-      queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['sale'] });
-      queryClient.invalidateQueries({ queryKey: ['sale-items'] });
-    },
-  });
+  // Mutation: Delete a sale — delegates to the standalone export above.
+  // Kept here so existing callers of useSales().deleteSaleMutation still work.
+  // Prefer importing useDeleteSale directly for new code.
+  const deleteSaleMutation = useDeleteSale();
 
   return {
     // Queries
     getTodayStatsQuery,
     getAllSalesQuery,
-    useGetSale,
+    useGetSale: useGetSaleById,
     useGetSaleItems,
     useGetSalesByDateRange,
 

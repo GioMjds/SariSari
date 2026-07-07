@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { Skeleton } from '@/components/ui';
 
@@ -13,8 +13,9 @@ import { Skeleton } from '@/components/ui';
  * `components/utang/credit-details/CreditDetailsSkeleton.tsx`.
  */
 export function LedgerSkeleton() {
+  const insets = useSafeAreaInsets();
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       {/* Slim top bar — back + eyebrow */}
       <View className="px-5 pt-3 pb-2 flex-row items-center">
         <Skeleton width={40} height={40} borderRadius={9999} />
@@ -65,6 +66,6 @@ export function LedgerSkeleton() {
         <View className="h-2.5" />
         <Skeleton width={'100%'} height={84} borderRadius={16} shimmer />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

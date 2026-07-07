@@ -20,6 +20,9 @@ import {
   type CreditDetailTab,
 } from '@/components/utang/credit-details';
 
+// Hoisted to module scope — stable reference, no new object on every scroll.
+const SCROLL_CONTENT_STYLE = { paddingBottom: 140 } as const;
+
 /**
  * Credit-details screen — the suki profile view.
  *
@@ -130,13 +133,13 @@ export default function CustomerDetails() {
   const handleAddCredit = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/(edit-forms)/add-credit/${customer.id}` as any);
+    router.push(`/(edit-forms)/add-credit/${customer.id}`);
   }, [customer]);
 
   const handleAddPayment = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/(edit-forms)/add-payment/${customer.id}` as any);
+    router.push(`/(edit-forms)/add-payment/${customer.id}`);
   }, [customer]);
 
   const handleQuickSettle = useCallback(
@@ -144,7 +147,7 @@ export default function CustomerDetails() {
       if (!customer) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       router.push(
-        `/(edit-forms)/add-payment/${customer.id}?creditId=${credit.id}` as any,
+        `/(edit-forms)/add-payment/${customer.id}?creditId=${credit.id}`,
       );
     },
     [customer],
@@ -175,14 +178,36 @@ export default function CustomerDetails() {
     return history.filter((h) => matchesSearch(term, [h.description]));
   }, [history, searchByTab.history]);
 
+  // Stable search-change handlers — one per tab so tab-content components
+  // receive the same callback reference across renders, preventing needless
+  // re-renders of CreditsTabContent / PaymentsTabContent / HistoryTabContent.
+  const handleCreditsSearchChange = useCallback(
+    (v: string) => setSearchByTab((s) => ({ ...s, credits: v })),
+    [],
+  );
+  const handlePaymentsSearchChange = useCallback(
+    (v: string) => setSearchByTab((s) => ({ ...s, payments: v })),
+    [],
+  );
+  const handleHistorySearchChange = useCallback(
+    (v: string) => setSearchByTab((s) => ({ ...s, history: v })),
+    [],
+  );
+
   if (isLoading) return <CreditDetailsSkeleton />;
 
   if (!customer) return <CustomerNotFound onBack={handleBack} />;
 
+  // Derived values — intentionally after early returns; they depend on
   const activeCreditCount = customer.credits.filter(
     (c) => c.status !== 'paid',
   ).length;
   const storeName = profile?.storeName?.trim() || 'your sari-sari store';
+  const tabCounts = {
+    credits: customer.credits.length,
+    payments: customer.payments.length,
+    history: history.length,
+  } as const;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -194,7 +219,7 @@ export default function CustomerDetails() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={SCROLL_CONTENT_STYLE}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -223,11 +248,7 @@ export default function CustomerDetails() {
           <TabNavigation
             activeTab={activeTab}
             onChange={handleTabChange}
-            counts={{
-              credits: customer.credits.length,
-              payments: customer.payments.length,
-              history: history.length,
-            }}
+            counts={tabCounts}
           />
         </View>
 
@@ -238,9 +259,7 @@ export default function CustomerDetails() {
               credits={filteredCredits}
               totalCount={customer.credits.length}
               searchValue={searchByTab.credits}
-              onSearchChange={(v) =>
-                setSearchByTab((s) => ({ ...s, credits: v }))
-              }
+              onSearchChange={handleCreditsSearchChange}
               onQuickSettle={handleQuickSettle}
             />
           )}
@@ -249,9 +268,7 @@ export default function CustomerDetails() {
               payments={filteredPayments}
               totalCount={customer.payments.length}
               searchValue={searchByTab.payments}
-              onSearchChange={(v) =>
-                setSearchByTab((s) => ({ ...s, payments: v }))
-              }
+              onSearchChange={handlePaymentsSearchChange}
             />
           )}
           {activeTab === 'history' && (
@@ -259,9 +276,7 @@ export default function CustomerDetails() {
               history={filteredHistory}
               totalCount={history.length}
               searchValue={searchByTab.history}
-              onSearchChange={(v) =>
-                setSearchByTab((s) => ({ ...s, history: v }))
-              }
+              onSearchChange={handleHistorySearchChange}
             />
           )}
         </View>

@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -50,6 +50,7 @@ export default function InventoryLedger() {
   const { useGetProduct } = useProducts();
   const productQuery = useGetProduct(parsedProductId);
   const transactionsQuery = useInventoryTransactionsByProduct(parsedProductId);
+  const insets = useSafeAreaInsets();
 
   const product = productQuery.data;
   const isLoading = productQuery.isLoading || transactionsQuery.isLoading;
@@ -80,20 +81,20 @@ export default function InventoryLedger() {
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
   // ─── Handlers ───────────────────────────────────────────────────
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     router.back();
-  };
+  }, []);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     productQuery.refetch();
     transactionsQuery.refetch();
-  };
+  }, [productQuery, transactionsQuery]);
 
-  const handleOpenForm = () => {
+  const handleOpenForm = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     setFormOpen(true);
-  };
+  }, []);
 
   if (isLoading) {
     return <LedgerSkeleton />;
@@ -102,7 +103,7 @@ export default function InventoryLedger() {
   const hasTransactions = transactions.length > 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       {/* ─── Slim top bar ───────────────────────────────────────── */}
       <View className="flex-row items-center px-5 pt-3 pb-2">
         <Pressable
@@ -138,47 +139,35 @@ export default function InventoryLedger() {
           currentStockLabel="pcs on hand"
         />
       ) : (
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 140 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={handleRefresh}
-              tintColor="#623418"
-              colors={['#E85A1F']}
-            />
+        <LedgerList
+          transactions={transactions}
+          currentStock={product.quantity}
+          searchQuery={searchQuery}
+          selectedType={selectedType}
+          isRefetching={isRefetching}
+          onRefresh={handleRefresh}
+          ListHeaderComponent={
+            <View>
+              {/* Hero — receipt-style summary card */}
+              <View className="px-4">
+                <LedgerHero
+                  product={product}
+                  transactions={transactions}
+                  onLogTransaction={handleOpenForm}
+                />
+              </View>
+
+              {/* Toolbar — search + filter chips */}
+              <LedgerToolbar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedType={selectedType}
+                setSelectedType={setSelectedType}
+                counts={counts}
+              />
+            </View>
           }
-        >
-          {/* Hero — receipt-style summary card */}
-          <View className="px-4">
-            <LedgerHero
-              product={product}
-              transactions={transactions}
-              onLogTransaction={handleOpenForm}
-            />
-          </View>
-
-          {/* Toolbar — search + filter chips */}
-          <LedgerToolbar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            selectedType={selectedType}
-            setSelectedType={setSelectedType}
-            counts={counts}
-          />
-
-          {/* Timeline */}
-          <View className="px-4 mt-2">
-            <LedgerList
-              transactions={transactions}
-              currentStock={product.quantity}
-              searchQuery={searchQuery}
-              selectedType={selectedType}
-            />
-          </View>
-        </ScrollView>
+        />
       )}
 
       {/* ─── FAB ────────────────────────────────────────────────── */}
@@ -204,6 +193,6 @@ export default function InventoryLedger() {
           onClose={() => setFormOpen(false)}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }

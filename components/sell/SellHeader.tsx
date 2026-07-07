@@ -1,3 +1,4 @@
+import React from 'react';
 import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -30,7 +31,7 @@ interface SellHeaderProps {
  * Wrapped in a MotiView fade so the header animates in once on mount.
  * Pure presentational — receives everything it renders as props.
  */
-export function SellHeader({
+export const SellHeader = React.memo(function SellHeader({
   eyebrow,
   title,
   subtitle,
@@ -73,10 +74,7 @@ export function SellHeader({
 
         <View className="flex-row items-start justify-between">
           <View className="flex-1 mr-3">
-            <StyledText
-              variant="black"
-              className="text-paper-50 text-h1"
-            >
+            <StyledText variant="black" className="text-paper-50 text-h1">
               {title}
             </StyledText>
             {subtitle ? (
@@ -138,4 +136,4 @@ export function SellHeader({
       </View>
     </MotiView>
   );
-}
+});

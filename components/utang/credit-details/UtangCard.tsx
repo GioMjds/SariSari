@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { format, isValid } from 'date-fns';
 import { MotiView } from 'moti';
@@ -42,7 +43,7 @@ interface UtangCardProps {
  * fetching and the settle handler. When `index` is provided, the row
  * fades + slides into place on mount via Moti.
  */
-export function UtangCard({ credit, onQuickSettle, index }: UtangCardProps) {
+export const UtangCard = memo(function UtangCard({ credit, onQuickSettle, index }: UtangCardProps) {
   const creditDate = parseStoredTimestamp(credit.date);
   const dueDate = credit.due_date
     ? parseStoredTimestamp(credit.due_date)
@@ -210,7 +211,7 @@ export function UtangCard({ credit, onQuickSettle, index }: UtangCardProps) {
       {card}
     </MotiView>
   );
-}
+})
 
 /* ─── Status pill ────────────────────────────────────────────────────── */
 

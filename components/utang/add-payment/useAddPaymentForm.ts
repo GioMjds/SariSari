@@ -200,6 +200,10 @@ export function useAddPaymentForm() {
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
     );
 
+    if (remaining <= 0) {
+      return { rows, unallocated: 0 };
+    }
+
     for (const credit of fifo) {
       const owedBefore = credit.amount - credit.amount_paid;
       if (owedBefore <= 0) continue;

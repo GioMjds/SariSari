@@ -1,4 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
+import { memo } from 'react';
 import { MotiView } from 'moti';
 import { Pressable, View } from 'react-native';
 import { t } from 'i18next';
@@ -59,7 +60,7 @@ interface CustomerHeroCardProps {
  * tags are derived here at render time from props — pure
  * presentation, easy to test.
  */
-export function CustomerHeroCard({
+export const CustomerHeroCard = memo(function CustomerHeroCard({
   customer,
   credits,
   payments,
@@ -289,4 +290,4 @@ export function CustomerHeroCard({
       </View>
     </MotiView>
   );
-}
+})

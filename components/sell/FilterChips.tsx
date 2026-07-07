@@ -84,7 +84,7 @@ const CHIP_SHADOW = {
   elevation: 2,
 };
 
-export function FilterChips({
+export const FilterChips = React.memo(function FilterChips({
   filters,
   onChange,
   onOpenMore,
@@ -209,4 +209,4 @@ export function FilterChips({
       </ScrollView>
     </View>
   );
-}
+});

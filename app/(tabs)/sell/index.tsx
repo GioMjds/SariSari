@@ -15,7 +15,7 @@ import { parseStoredTimestamp } from '@/utils';
 import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -148,23 +148,31 @@ export default function Sell() {
     return count;
   }, [filters]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([refetchStats(), refetchSales()]);
     setRefreshing(false);
-  };
+  }, [refetchStats, refetchSales]);
 
-  const handleSalePress = (saleId: number) => {
+  const handleSalePress = useCallback((saleId: number) => {
     router.push(`/(edit-forms)/sale-details/${saleId}` as any);
-  };
+  }, [router]);
 
-  const handleApplyFilters = (newFilters: SalesFilterState) => {
+  const handleApplyFilters = useCallback((newFilters: SalesFilterState) => {
     setFilters(newFilters);
-  };
+  }, []);
 
-  const handleOpenAddSales = () => {
+  const handleOpenAddSales = useCallback(() => {
     router.push('/(edit-forms)/add-sales' as any);
-  };
+  }, [router]);
+
+  const handleOpenFilters = useCallback(() => {
+    setFilterModalVisible(true);
+  }, []);
+
+  const handleCloseFilters = useCallback(() => {
+    setFilterModalVisible(false);
+  }, []);
 
   // Subtitle line under the hero title. Shifts between three i18n keys
   // based on whether the filtered list is empty or has entries.
@@ -181,7 +189,7 @@ export default function Sell() {
   // Hide the hero when there are no sales anywhere yet — keep layout clean.
   const showHero = (stats !== undefined && stats !== null) || sales.length > 0;
 
-  const renderSaleItem = ({
+  const renderSaleItem = useCallback(({
     item,
     index,
   }: {
@@ -199,7 +207,56 @@ export default function Sell() {
         <SaleRow sale={item} onPress={handleSalePress} />
       </MotiView>
     );
-  };
+  }, [handleSalePress]);
+
+  const keyExtractor = useCallback((item: SaleWithItems) => item.id.toString(), []);
+
+  // Memoize ListHeaderComponent to prevent unnecessary re-rendering
+  const listHeader = useMemo(() => {
+    return (
+      <View>
+        {/* Today's Slip hero */}
+        {showHero && stats && (
+          <TodayStatsHero
+            stats={stats}
+            headerLabel={t('todaySlip')}
+            headerSubLabel={t('todaySlipSub')}
+            amountDueLabel={t('amountDue')}
+            itemsSoldLabel={t('itemsSold')}
+            creditsLabel={t('credits')}
+          />
+        )}
+
+        {/* Filter chips strip */}
+        <MotiView
+          from={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ type: 'timing', duration: 360, delay: 160 }}
+        >
+          <FilterChips
+            filters={filters}
+            onChange={setFilters}
+            onOpenMore={handleOpenFilters}
+          />
+        </MotiView>
+      </View>
+    );
+  }, [showHero, stats, filters, t, setFilters, handleOpenFilters]);
+
+  // Memoize ListEmptyComponent to prevent unnecessary re-rendering
+  const listEmpty = useMemo(() => {
+    if (isLoading) {
+      return <SalesSkeleton />;
+    }
+    return (
+      <View className="px-2 pb-12">
+        <SalesEmptyState
+          onNewSale={handleOpenAddSales}
+          hasSales={sales.length > 0}
+        />
+      </View>
+    );
+  }, [isLoading, handleOpenAddSales, sales.length]);
 
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
@@ -209,7 +266,7 @@ export default function Sell() {
           title={t('title')}
           subtitle={subtitle}
           activeFilterCount={activeFilterCount}
-          onOpenFilters={() => setFilterModalVisible(true)}
+          onOpenFilters={handleOpenFilters}
           onOpenAddSales={handleOpenAddSales}
           filterA11yLabel={t('filterSalesA11y')}
           newSaleA11yLabel={t('recordNewSaleA11y')}
@@ -220,7 +277,7 @@ export default function Sell() {
           <FlatList
             data={paginatedSales}
             renderItem={renderSaleItem}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={keyExtractor}
             contentContainerStyle={{ paddingBottom: 120 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -231,46 +288,8 @@ export default function Sell() {
                 colors={['#E85A1F']}
               />
             }
-            ListHeaderComponent={
-              <View>
-                {/* Today's Slip hero */}
-                {showHero && stats && (
-                  <TodayStatsHero
-                    stats={stats}
-                    headerLabel={t('todaySlip')}
-                    headerSubLabel={t('todaySlipSub')}
-                    amountDueLabel={t('amountDue')}
-                    itemsSoldLabel={t('itemsSold')}
-                    creditsLabel={t('credits')}
-                  />
-                )}
-
-                {/* Filter chips strip */}
-                <MotiView
-                  from={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ type: 'timing', duration: 360, delay: 160 }}
-                >
-                  <FilterChips
-                    filters={filters}
-                    onChange={setFilters}
-                    onOpenMore={() => setFilterModalVisible(true)}
-                  />
-                </MotiView>
-              </View>
-            }
-            ListEmptyComponent={
-              isLoading ? (
-                <SalesSkeleton />
-              ) : (
-                <View className="px-2 pb-12">
-                  <SalesEmptyState
-                    onNewSale={handleOpenAddSales}
-                    hasSales={sales.length > 0}
-                  />
-                </View>
-              )
-            }
+            ListHeaderComponent={listHeader}
+            ListEmptyComponent={listEmpty}
           />
 
           {/* Pagination */}
@@ -288,7 +307,7 @@ export default function Sell() {
         {/* Filter modal */}
         <SalesFilterModal
           visible={filterModalVisible}
-          onClose={() => setFilterModalVisible(false)}
+          onClose={handleCloseFilters}
           currentFilters={filters}
           onApplyFilters={handleApplyFilters}
         />
