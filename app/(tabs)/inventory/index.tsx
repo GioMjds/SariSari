@@ -2,11 +2,13 @@ import { StyledText } from '@/components/elements';
 import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
 import { ProductsTab } from '@/components/inventory/products';
 import { CategoriesTab } from '@/components/inventory/category';
+import { SuppliersTab } from '@/components/inventory/suppliers/SuppliersTab';
 import { BarcodeScannerModal, SearchBar } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
-import { useCategories, useProducts } from '@/hooks';
-import { Product } from '@/types';
+import { useCategories, useProducts, useSuppliers } from '@/hooks';
+import { Product, Supplier } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
+import { useInventoryViewStore } from '@/stores';
 import { FontAwesome } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
@@ -21,7 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type TabType = 'products' | 'categories';
+type TabType = 'products' | 'categories' | 'suppliers';
 type SortDirection = 'asc' | 'desc';
 
 type PendingAction = { product: Product; type: InventoryEventType };
@@ -34,6 +36,7 @@ export default function Products() {
     restock?: string;
   }>();
   const router = useRouter();
+  const { viewMode, setViewMode } = useInventoryViewStore();
 
   // Hoisted state for search & sort
   const [search, setSearch] = useState<string>('');
@@ -44,9 +47,11 @@ export default function Products() {
   // Queries for live counts in header subtitle
   const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
+  const { getAllSuppliersQuery, deleteSupplierMutation } = useSuppliers();
 
   const products = getAllProductsQuery.data;
   const categories = getCategoriesWithCountQuery.data;
+  const suppliers = getAllSuppliersQuery.data;
 
   // Local state for restocking and actions
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
@@ -57,6 +62,14 @@ export default function Products() {
     useState<Product | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
+  // Local state for suppliers
+  const [selectedSupplierForSheet, setSelectedSupplierForSheet] =
+    useState<Supplier | null>(null);
+  const [showSupplierDeleteModal, setShowSupplierDeleteModal] =
+    useState(false);
+  const [supplierToDelete, setSupplierToDelete] =
+    useState<Supplier | null>(null);
 
   // Barcode scanner state — opens the camera from the inventory header
   // so the user can register a new product without first entering the
@@ -110,14 +123,30 @@ export default function Products() {
           low: productsStats.lowStock,
           out: productsStats.outStock,
         })
-      : t('subtitleCategories', { count: (categories || []).length });
+      : activeTab === 'categories'
+      ? t('subtitleCategories', { count: (categories || []).length })
+      : t('subtitleSuppliers', { count: (suppliers || []).length });
 
   const title =
-    activeTab === 'products' ? t('titleCatalog') : t('titleCategories');
-  const eyebrow =
-    activeTab === 'products' ? t('eyebrowMaster') : t('eyebrowSections');
+    activeTab === 'products'
+      ? t('titleCatalog')
+      : activeTab === 'categories'
+      ? t('titleCategories')
+      : t('titleSuppliers');
 
-  const handleSort = (option: SortOption) => {
+  const eyebrow =
+    activeTab === 'products'
+      ? t('eyebrowMaster')
+      : activeTab === 'categories'
+      ? t('eyebrowSections')
+      : t('eyebrowMaster');
+
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+    setSearch('');
+  }, []);
+
+  const handleSort = useCallback((option: SortOption) => {
     if (sortBy === option) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -125,9 +154,9 @@ export default function Products() {
       setSortDirection('asc');
     }
     setShowSortModal(false);
-  };
+  }, [sortBy]);
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (productToDelete) {
       deleteProductMutation.mutate(productToDelete.id, {
         onSuccess: () => {
@@ -136,7 +165,25 @@ export default function Products() {
         },
       });
     }
-  };
+  }, [productToDelete, deleteProductMutation]);
+
+  const handleClearSearch = useCallback(() => {
+    setSearch('');
+  }, []);
+
+  const handleRestock = useCallback((product: Product) => {
+    const qtyDiff = LOW_STOCK_THRESHOLD - product.quantity;
+    setInitialQuantity(Math.max(1, qtyDiff));
+    setPendingAction({ product, type: 'restock' });
+  }, []);
+
+  const handleMore = useCallback((product: Product) => {
+    setSelectedProductForSheet(product);
+  }, []);
+
+  const handleSupplierMore = useCallback((supplier: Supplier) => {
+    setSelectedSupplierForSheet(supplier);
+  }, []);
 
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
@@ -147,8 +194,8 @@ export default function Products() {
         <View className="px-5 pb-4">
           <View className="flex-row bg-cinnamon-700/50 rounded-xl p-1 border border-cinnamon-600">
             <Pressable
-              onPress={() => setActiveTab('products')}
-              className={`flex-1 py-2 rounded-lg items-center ${
+              onPress={() => handleTabChange('products')}
+              className={`flex-1 py-2 rounded-lg items-center active:scale-[0.96] transition-transform ${
                 activeTab === 'products' ? 'bg-persimmon-500' : ''
               }`}
             >
@@ -162,8 +209,8 @@ export default function Products() {
               </StyledText>
             </Pressable>
             <Pressable
-              onPress={() => setActiveTab('categories')}
-              className={`flex-1 py-2 rounded-lg items-center ${
+              onPress={() => handleTabChange('categories')}
+              className={`flex-1 py-2 rounded-lg items-center active:scale-[0.96] transition-transform ${
                 activeTab === 'categories' ? 'bg-persimmon-500' : ''
               }`}
             >
@@ -174,6 +221,21 @@ export default function Products() {
                 }`}
               >
                 {t('tabCategories')}
+              </StyledText>
+            </Pressable>
+            <Pressable
+              onPress={() => handleTabChange('suppliers')}
+              className={`flex-1 py-2 rounded-lg items-center active:scale-[0.96] transition-transform ${
+                activeTab === 'suppliers' ? 'bg-persimmon-500' : ''
+              }`}
+            >
+              <StyledText
+                variant="semibold"
+                className={`text-sm ${
+                  activeTab === 'suppliers' ? 'text-white' : 'text-paper-300'
+                }`}
+              >
+                {t('tabSuppliers')}
               </StyledText>
             </Pressable>
           </View>
@@ -242,7 +304,7 @@ export default function Products() {
                 onPress={openScanner}
                 accessibilityRole="button"
                 accessibilityLabel="Scan barcode to add a product"
-                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
+                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
               >
                 <FontAwesome name="barcode" size={18} color="#FBF7EE" />
               </TouchableOpacity>
@@ -251,7 +313,21 @@ export default function Products() {
                 onPress={() => router.push('/(edit-forms)/add-product')}
                 accessibilityRole="button"
                 accessibilityLabel={t('addProductA11y')}
-                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 press-scale"
+                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
+              >
+                <FontAwesome name="plus" size={18} color="#FBF7EE" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {activeTab === 'suppliers' && (
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => router.push('/(edit-forms)/add-supplier')}
+                accessibilityRole="button"
+                accessibilityLabel={t('addSupplierA11y')}
+                className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
               >
                 <FontAwesome name="plus" size={18} color="#FBF7EE" />
               </TouchableOpacity>
@@ -259,8 +335,8 @@ export default function Products() {
           )}
         </MotiView>
 
-        {/* Search & Sort Row (Z3a) — ONLY for products tab */}
-        {activeTab === 'products' && (
+        {/* Search & Sort Row (Z3a) — ONLY for products and suppliers tab */}
+        {(activeTab === 'products' || activeTab === 'suppliers') && (
           <MotiView
             from={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -271,19 +347,39 @@ export default function Products() {
                 <SearchBar
                   value={search}
                   onChange={setSearch}
-                  placeholder={t('searchPlaceholder')}
+                  debounceMs={300}
+                  placeholder={
+                    activeTab === 'products'
+                      ? t('searchPlaceholder')
+                      : t('searchSuppliersPlaceholder')
+                  }
                 />
               </View>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setShowSortModal(true)}
-                className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 relative"
-              >
-                <FontAwesome name="sort" size={18} color="#FBF7EE" />
-                {(sortBy !== 'stock' || sortDirection !== 'asc') && (
-                  <View className="absolute top-2 right-2 w-2 h-2 rounded-full bg-persimmon-500" />
-                )}
-              </TouchableOpacity>
+              {activeTab === 'products' && (
+                <>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setShowSortModal(true)}
+                    className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 relative active:scale-[0.96] transition-transform"
+                  >
+                    <FontAwesome name="sort" size={18} color="#FBF7EE" />
+                    {(sortBy !== 'stock' || sortDirection !== 'asc') && (
+                      <View className="absolute top-2 right-2 w-2 h-2 rounded-full bg-persimmon-500" />
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+                    className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 active:scale-[0.96] transition-transform"
+                  >
+                    <FontAwesome
+                      name={viewMode === 'list' ? 'th-large' : 'list'}
+                      size={18}
+                      color="#FBF7EE"
+                    />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </MotiView>
         )}
@@ -296,14 +392,17 @@ export default function Products() {
           search={search}
           sortBy={sortBy}
           sortDirection={sortDirection}
-          onClearSearch={() => setSearch('')}
-          onRestock={(product) =>
-            setPendingAction({ product, type: 'restock' })
-          }
-          onMore={(product) => setSelectedProductForSheet(product)}
+          onClearSearch={handleClearSearch}
+          onRestock={handleRestock}
+          onMore={handleMore}
         />
-      ) : (
+      ) : activeTab === 'categories' ? (
         <CategoriesTab />
+      ) : (
+        <SuppliersTab
+          search={search}
+          onMore={handleSupplierMore}
+        />
       )}
 
       {/* Sort Modal */}
@@ -362,7 +461,8 @@ export default function Products() {
             ))}
             <TouchableOpacity
               onPress={() => setShowSortModal(false)}
-              className="bg-ink-100 rounded-xl py-3 mt-4 active:opacity-70"
+              hitSlop={8}
+              className="bg-ink-100 rounded-xl py-3 mt-4 active:opacity-70 active:scale-[0.98] transition-transform"
             >
               <StyledText
                 variant="semibold"
@@ -423,7 +523,7 @@ export default function Products() {
                   setSelectedProductForSheet(null);
                   setPendingAction({ product, type: 'damaged' });
                 }}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
               >
                 <FontAwesome
                   name="ban"
@@ -446,7 +546,7 @@ export default function Products() {
                   setSelectedProductForSheet(null);
                   setPendingAction({ product, type: 'adjustment' });
                 }}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
               >
                 <FontAwesome
                   name="sliders"
@@ -471,7 +571,7 @@ export default function Products() {
                     `/(edit-forms)/inventory-ledger/${product.id}` as any,
                   );
                 }}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
               >
                 <FontAwesome
                   name="list-alt"
@@ -497,7 +597,7 @@ export default function Products() {
                   router.push(`/(edit-forms)/edit-product/${product.id}`);
                   setSelectedProductForSheet(null);
                 }}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-red-200"
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
               >
                 <FontAwesome
                   name="pencil"
@@ -521,7 +621,7 @@ export default function Products() {
                   setProductToDelete(product);
                   setShowDeleteModal(true);
                 }}
-                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200"
+                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
               >
                 <FontAwesome
                   name="trash"
@@ -586,7 +686,7 @@ export default function Products() {
               <TouchableOpacity
                 onPress={confirmDelete}
                 disabled={deleteProductMutation.isPending}
-                className="bg-semantic-danger rounded-xl py-3 active:opacity-70"
+                className="bg-semantic-danger rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
               >
                 {deleteProductMutation.isPending ? (
                   <ActivityIndicator color="#fff" />
@@ -601,7 +701,175 @@ export default function Products() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setShowDeleteModal(false)}
-                className="bg-ink-100 rounded-xl py-3 active:opacity-70"
+                className="bg-ink-100 rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
+              >
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-700 text-center text-base"
+                >
+                  {t('common:cancel')}
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Supplier Action Sheet Modal (Overflow menu) */}
+      <Modal
+        visible={!!selectedSupplierForSheet}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedSupplierForSheet(null)}
+        statusBarTranslucent
+      >
+        <Pressable
+          className="flex-1 justify-end"
+          onPress={() => setSelectedSupplierForSheet(null)}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        >
+          <Pressable
+            className="bg-white rounded-t-3xl p-6 pb-10"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="items-center mb-4">
+              <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-lg text-center"
+              >
+                {selectedSupplierForSheet?.name}
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-xs text-center mt-1"
+              >
+                {t('actionSheetSubtitle')}
+              </StyledText>
+            </View>
+
+            <View className="gap-2">
+              {/* Action: Edit Supplier */}
+              <TouchableOpacity
+                onPress={() => {
+                  const supplier = selectedSupplierForSheet!;
+                  router.push(`/(edit-forms)/edit-supplier/${supplier.id}`);
+                  setSelectedSupplierForSheet(null);
+                }}
+                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
+              >
+                <FontAwesome
+                  name="pencil"
+                  size={18}
+                  color="#E85A1F"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-cinnamon-500 text-base"
+                >
+                  {t('actionEditSupplier')}
+                </StyledText>
+              </TouchableOpacity>
+
+              {/* Action: Delete Supplier */}
+              <TouchableOpacity
+                onPress={() => {
+                  const supplier = selectedSupplierForSheet!;
+                  setSelectedSupplierForSheet(null);
+                  setSupplierToDelete(supplier);
+                  setShowSupplierDeleteModal(true);
+                }}
+                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
+              >
+                <FontAwesome
+                  name="trash"
+                  size={18}
+                  color="#C22D2D"
+                  className="mr-3 w-6 text-center"
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-semantic-danger text-base"
+                >
+                  {t('actionDeleteSupplier')}
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Supplier Delete Confirmation Modal */}
+      <Modal
+        visible={showSupplierDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSupplierDeleteModal(false)}
+      >
+        <View
+          className="flex-1 justify-center items-center px-6"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        >
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
+            <View className="items-center mb-4">
+              <View className="bg-red-50 rounded-full p-4 mb-3">
+                <FontAwesome
+                  name="exclamation-triangle"
+                  size={32}
+                  color="#C22D2D"
+                />
+              </View>
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-xl mb-2 text-center"
+              >
+                {t('deleteSupplierTitle')}
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-sm text-center"
+              >
+                {t('deleteSupplierBody', {
+                  name: supplierToDelete?.name || '',
+                })}
+              </StyledText>
+              <StyledText
+                variant="semibold"
+                className="text-semantic-danger text-sm mt-2 text-center"
+              >
+                {t('deleteSupplierWarning')}
+              </StyledText>
+            </View>
+            <View className="gap-3">
+              <TouchableOpacity
+                onPress={() => {
+                  if (supplierToDelete) {
+                    deleteSupplierMutation.mutate(supplierToDelete.id, {
+                      onSuccess: () => {
+                        setShowSupplierDeleteModal(false);
+                        setSupplierToDelete(null);
+                      },
+                    });
+                  }
+                }}
+                disabled={deleteSupplierMutation.isPending}
+                className="bg-semantic-danger rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
+              >
+                {deleteSupplierMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <StyledText
+                    variant="extrabold"
+                    className="text-white text-center text-base"
+                  >
+                    {t('deleteSupplierConfirm')}
+                  </StyledText>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowSupplierDeleteModal(false)}
+                className="bg-ink-100 rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
               >
                 <StyledText
                   variant="semibold"

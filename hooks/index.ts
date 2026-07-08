@@ -8,3 +8,4 @@ export * from './useProducts';
 export * from './useProfile';
 export * from './useReports';
 export * from './useSales';
+export * from './useSuppliers';

@@ -1,17 +1,22 @@
 {
   "tabProducts": "Mga Produkto",
   "tabCategories": "Mga Kategorya",
+  "tabSuppliers": "Mga Supplier",
 
   "eyebrowMaster": "PANGUNAHING DATA",
   "eyebrowSections": "MGA SEKSYON",
   "titleCatalog": "Katalogo",
   "titleCategories": "Mga Kategorya Mo",
+  "titleSuppliers": "Direktoryo ng Supplier",
   "subtitleProducts": "{{total}} produkto · {{low}} kaunti · {{out}} ubos",
   "subtitleCategories": "{{count}} kategorya",
+  "subtitleSuppliers": "{{count}} na supplier",
 
   "addProductA11y": "Magdagdag ng produkto",
+  "addSupplierA11y": "Magdagdag ng supplier",
 
   "searchPlaceholder": "Maghanap ng produkto o SKU...",
+  "searchSuppliersPlaceholder": "Maghanap ng supplier...",
 
   "sortBy": "Ayusin Ayon Sa",
   "sortName": "Pangalan",
@@ -25,9 +30,27 @@
   "actionViewLedger": "Tingnan ang Ledger",
   "actionEditProduct": "I-edit ang Produkto",
   "actionDeleteProduct": "I-delete ang Produkto",
+  "actionEditSupplier": "I-edit ang Supplier",
+  "actionDeleteSupplier": "I-delete ang Supplier",
 
   "deleteTitle": "I-delete ang Produkto?",
   "deleteBody": "Sigurado ka bang gusto mong i-delete ang \"{{name}}\"?",
   "deleteWarning": "Hindi na maibabalik ang aksyon na ito.",
-  "deleteConfirm": "Oo, I-delete ang Produkto"
+  "deleteConfirm": "Oo, I-delete ang Produkto",
+
+  "deleteSupplierTitle": "I-delete ang Supplier?",
+  "deleteSupplierBody": "Sigurado ka bang gusto mong i-delete ang \"{{name}}\"?",
+  "deleteSupplierWarning": "Tatanggalin nito ang supplier sa lahat ng kaugnay na produkto at log ng imbentaryo.",
+  "deleteSupplierConfirm": "Oo, I-delete ang Supplier",
+
+  "labelName": "Pangalan",
+  "labelContact": "Impormasyon sa Pagkontak",
+  "labelNotes": "Mga Tala",
+  "labelSupplier": "Supplier",
+  "labelWholesaleCost": "Presyo ng Pakyawan",
+  "selectSupplier": "Pumili ng Supplier",
+  "noSupplier": "Walang Supplier",
+  "inlineAddSupplier": "+ Magdagdag ng Bagong Supplier",
+  "addSupplier": "Magdagdag ng Supplier",
+  "editSupplier": "I-edit ang Supplier"
 }

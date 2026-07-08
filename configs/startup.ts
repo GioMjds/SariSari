@@ -4,6 +4,7 @@ import {
   initInventoryTable,
   initProductsTable,
   initSalesTables,
+  initSuppliersTable,
   runMigrations,
 } from '@/database';
 import { seedDatabase } from '@/database/seed';
@@ -48,6 +49,7 @@ export const initializeDatabases = async () => {
       await initInventoryTable();
       await initSalesTables();
       await initCategoriesTable();
+      await initSuppliersTable();
       await runMigrations();
     });
 

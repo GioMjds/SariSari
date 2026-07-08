@@ -5,8 +5,9 @@ import { useCategories, useProducts } from '@/hooks';
 import { Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useInventoryViewStore } from '@/stores';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -20,6 +21,7 @@ import {
 
 import { FilterChips } from '../FilterChips';
 import { InventoryRow } from '../InventoryRow';
+import { ProductGridItem } from './ProductGridItem';
 import { ProductsEmptyState } from './ProductsEmptyState';
 import { ProductsHero } from './ProductsHero';
 import { ProductsSkeleton } from './ProductsSkeleton';
@@ -36,7 +38,7 @@ interface ProductsTabProps {
   onMore: (product: Product) => void;
 }
 
-export function ProductsTab({
+export const ProductsTab = memo(function ProductsTab({
   filterCategory,
   search,
   sortBy,
@@ -45,7 +47,7 @@ export function ProductsTab({
   onRestock,
   onMore,
 }: ProductsTabProps) {
-  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  const { viewMode } = useInventoryViewStore();
 
   const [showCategorySheet, setShowCategorySheet] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -70,7 +72,7 @@ export function ProductsTab({
   const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
 
-  const debounceRef = useRef<number | null>(null);
+
 
   // Synchronize filterCategory prop (from deep links) with state
   useEffect(() => {
@@ -83,19 +85,10 @@ export function ProductsTab({
     }
   }, [filterCategory]);
 
-  // Debounce search
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(
-      () => setDebouncedSearch(search.trim()),
-      300,
-    ) as unknown as number;
-  }, [search]);
-
   // Reset to first page when search, sort, or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, sortBy, sortDirection, filters]);
+  }, [search, sortBy, sortDirection, filters]);
 
   // Fetch products & categories
   const { data: products = [], isLoading, refetch } = getAllProductsQuery;
@@ -126,8 +119,8 @@ export function ProductsTab({
     }
 
     // Filter by search term
-    if (debouncedSearch) {
-      const term = debouncedSearch.toLowerCase();
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(term) ||
@@ -156,7 +149,7 @@ export function ProductsTab({
     });
 
     return result;
-  }, [products, debouncedSearch, sortBy, sortDirection, filters]);
+  }, [products, search, sortBy, sortDirection, filters]);
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -200,17 +193,6 @@ export function ProductsTab({
     setRefreshing(false);
   };
 
-  const handleProductPress = useCallback(
-    (product: Product) => {
-      router.push(`/(edit-forms)/edit-product/${product.id}` as any);
-    },
-    [router],
-  );
-
-  const handleProductLongPress = useCallback((product: Product) => {
-    setSelectedProduct(product);
-    setShowDeleteModal(true);
-  }, []);
 
   const confirmDelete = () => {
     if (selectedProduct) {
@@ -259,6 +241,26 @@ export function ProductsTab({
     }
   }, [onClearSearch]);
 
+  const renderProductItem = useCallback(
+    ({ item, index }: { item: Product; index: number }) =>
+      viewMode === 'grid' ? (
+        <ProductGridItem
+          product={item}
+          index={index}
+          onRestock={onRestock}
+          onMore={onMore}
+        />
+      ) : (
+        <InventoryRow
+          item={item}
+          index={index}
+          onRestock={onRestock}
+          onMore={onMore}
+        />
+      ),
+    [viewMode, onRestock, onMore],
+  );
+
   if (isLoading) {
     return <ProductsSkeleton />;
   }
@@ -268,7 +270,7 @@ export function ProductsTab({
   const showEmptyState = filteredProducts.length === 0;
   const emptyVariant = !hasProductsInDb
     ? 'no-products'
-    : debouncedSearch
+    : search.trim()
       ? 'no-search'
       : 'no-filter';
 
@@ -296,26 +298,22 @@ export function ProductsTab({
       {showEmptyState ? (
         <ProductsEmptyState
           variant={emptyVariant}
-          searchTerm={debouncedSearch}
+          searchTerm={search}
           onAddPress={() => router.push('/(edit-forms)/add-product')}
           onClearSearch={handleClearSearch}
           onClearFilters={handleClearFilters}
         />
       ) : (
-        <FlatList
+         <FlatList
+          key={viewMode}
+          numColumns={viewMode === 'grid' ? 2 : 1}
           data={paginatedProducts}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item, index }) => (
-            <InventoryRow
-              item={item}
-              index={index}
-              onRestock={onRestock}
-              onMore={onMore}
-            />
-          )}
+          renderItem={renderProductItem}
           contentContainerStyle={{
             paddingTop: 8,
             paddingBottom: 120,
+            paddingHorizontal: viewMode === 'grid' ? 8 : 0,
           }}
           refreshControl={
             <RefreshControl
@@ -533,4 +531,4 @@ export function ProductsTab({
       </Modal>
     </View>
   );
-}
+});

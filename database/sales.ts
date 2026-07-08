@@ -238,6 +238,54 @@ export const getAllSales = async (): Promise<SaleWithItems[]> => {
   });
 };
 
+export const getRecentSales = async (limit: number): Promise<SaleWithItems[]> => {
+  const sales = await db.getAllAsync<Sale>(
+    'SELECT * FROM sales ORDER BY timestamp DESC LIMIT ?',
+    [limit],
+  );
+
+  if (sales.length === 0) return [];
+
+  const saleIds = sales.map((s) => s.id);
+  const placeholders = saleIds.map(() => '?').join(',');
+  const allItems = await db.getAllAsync<
+    SaleItemWithProduct & { sale_id: number }
+  >(
+    `SELECT si.*, p.name as product_name
+     FROM sale_items si
+     JOIN products p ON si.product_id = p.id
+     WHERE si.sale_id IN (${placeholders})`,
+    saleIds,
+  );
+
+  const itemsBySaleId: Record<number, SaleItemWithProduct[]> = {};
+  for (const item of allItems) {
+    if (!itemsBySaleId[item.sale_id]) {
+      itemsBySaleId[item.sale_id] = [];
+    }
+    itemsBySaleId[item.sale_id].push({
+      id: item.id,
+      sale_id: item.sale_id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+      product_name: item.product_name,
+    });
+  }
+
+  return sales.map((sale) => {
+    const items = itemsBySaleId[sale.id] || [];
+    return { ...sale, items, items_count: items.length };
+  });
+};
+
+export const hasSales = async (): Promise<boolean> => {
+  const row = await db.getFirstAsync<{ exists_val: number }>(
+    'SELECT EXISTS(SELECT 1 FROM sales) as exists_val',
+  );
+  return !!row?.exists_val;
+};
+
 export const getSalesByDateRange = async (
   startDate: string,
   endDate: string,

@@ -1,10 +1,12 @@
 import {
   deleteSale,
   getAllSales,
+  getRecentSales,
   getSale,
   getSaleItems,
   getSalesByDateRange,
   getTodayStats,
+  hasSales,
   insertSale,
 } from '@/database/sales';
 import {
@@ -37,6 +39,22 @@ export function useDeleteSale() {
       queryClient.invalidateQueries({ queryKey: ['sale'] });
       queryClient.invalidateQueries({ queryKey: ['sale-items'] });
     },
+  });
+}
+
+/** Fetch recent sales up to a limit — optimized for dashboard. */
+export function useRecentSales(limit: number) {
+  return useQuery({
+    queryKey: ['sales', 'recent', limit],
+    queryFn: () => getRecentSales(limit),
+  });
+}
+
+/** Check if there are any sales in the store — optimized for onboarding/empty state. */
+export function useHasSales() {
+  return useQuery({
+    queryKey: ['sales', 'has-any'],
+    queryFn: () => hasSales(),
   });
 }
 

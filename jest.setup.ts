@@ -237,3 +237,71 @@ try {
 } catch {
 	// Module not found in this environment; ignore
 }
+
+// Mock @expo/vector-icons to prevent EventEmitter/font loading failures in test runner
+jest.mock('@expo/vector-icons', () => {
+	const mockReact = require('react');
+	const mockRN = require('react-native');
+	return {
+		FontAwesome: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+		Ionicons: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+		MaterialIcons: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+		MaterialCommunityIcons: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+		Feather: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+		Entypo: (props: any) => mockReact.createElement(mockRN.Text, props, props.name),
+	};
+});
+
+// Mock expo-image-picker to prevent EventEmitter failures in Node/Jest
+jest.mock('expo-image-picker', () => ({
+	requestCameraPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+	requestMediaLibraryPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+	launchCameraAsync: jest.fn(async () => ({ canceled: true, assets: [] })),
+	launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: [] })),
+}));
+
+// Mock expo-linear-gradient to prevent EventEmitter failures in Node/Jest
+jest.mock('expo-linear-gradient', () => {
+	const mockReact = require('react');
+	const mockRN = require('react-native');
+	return {
+		LinearGradient: ({ children, ...rest }: any) => mockReact.createElement(mockRN.View, rest, children),
+	};
+});
+
+// Mock react-native-reanimated using a lightweight mock to bypass react-native's mockComponent constructor errors
+jest.mock('react-native-reanimated', () => {
+	const mockReact = require('react');
+	const mockRN = require('react-native');
+	return {
+		__esModule: true,
+		default: {
+			View: mockRN.View,
+			Text: mockRN.Text,
+			Image: mockRN.View,
+			ScrollView: mockRN.ScrollView,
+		},
+		useSharedValue: (initial: any) => ({ value: initial }),
+		useAnimatedStyle: (fn: any) => fn() || {},
+		withTiming: (toValue: any) => toValue,
+		withRepeat: (animation: any) => animation,
+		Easing: {
+			inOut: (fn: any) => fn,
+			ease: (x: any) => x,
+			linear: (x: any) => x,
+		},
+	};
+});
+
+// Mock react-native Modal to avoid importing LogBox and standard Text mock components
+jest.mock('react-native/Libraries/Modal/Modal', () => {
+	const mockReact = require('react');
+	const mockRN = require('react-native');
+	const ModalMock = ({ visible, children }: any) => {
+		return visible ? mockReact.createElement(mockRN.View, null, children) : null;
+	};
+	return {
+		__esModule: true,
+		default: ModalMock,
+	};
+});

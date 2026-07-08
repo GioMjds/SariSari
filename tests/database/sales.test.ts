@@ -11,6 +11,8 @@ import {
 	insertSale,
 	getSale,
 	deleteSale,
+	getRecentSales,
+	hasSales,
 } from '../../database/sales';
 import {
 	initInventoryTable,
@@ -110,5 +112,36 @@ describe('Sales Database (credit-sale round-trip)', () => {
 		expect(sale?.payment_type).toBe('cash');
 		expect(sale?.credit_transaction_id).toBeNull();
 		await deleteSale(saleId);
+	});
+
+	test('getRecentSales and hasSales functions work correctly', async () => {
+		const initialHasSales = await hasSales();
+		expect(initialHasSales).toBe(false);
+		
+		const saleId1 = await insertSale(
+			[{ product_id: productId, quantity: 1, price: 2500 }],
+			'cash',
+		);
+		const saleId2 = await insertSale(
+			[{ product_id: productId, quantity: 1, price: 2500 }],
+			'cash',
+		);
+
+		const updatedHasSales = await hasSales();
+		expect(updatedHasSales).toBe(true);
+
+		const recent = await getRecentSales(1);
+		expect(recent.length).toBe(1);
+		expect(recent[0].id).toBe(saleId2); // most recent first
+
+		const recentAll = await getRecentSales(5);
+		expect(recentAll.length).toBe(2);
+
+		// Clean up
+		await deleteSale(saleId1);
+		await deleteSale(saleId2);
+
+		const finalHasSales = await hasSales();
+		expect(finalHasSales).toBe(false);
 	});
 });

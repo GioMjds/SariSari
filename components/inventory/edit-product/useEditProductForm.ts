@@ -20,6 +20,8 @@ export interface EditProductFormData {
   costPerPiece: string;
   price: string;
   category: string;
+  supplier_id: string;
+  imageUri: string;
 }
 
 /**
@@ -65,6 +67,8 @@ export function useEditProductForm() {
       costPerPiece: '',
       price: '',
       category: '',
+      supplier_id: '',
+      imageUri: '',
     },
     values: product
       ? {
@@ -73,6 +77,8 @@ export function useEditProductForm() {
           costPerPiece: product.cost_price ? product.cost_price.toString() : '',
           price: product.price.toString(),
           category: product.category || '',
+          supplier_id: product.supplier_id || '',
+          imageUri: product.image_uri || '',
         }
       : undefined,
   });
@@ -81,6 +87,8 @@ export function useEditProductForm() {
   const costPerPiece = watch('costPerPiece');
   const price = watch('price');
   const category = watch('category');
+  const supplierId = watch('supplier_id');
+  const imageUri = watch('imageUri');
 
   // ─── Derived values ────────────────────────────────────────────
 
@@ -95,7 +103,9 @@ export function useEditProductForm() {
       costPerPiece !==
         (product.cost_price ? product.cost_price.toString() : '') ||
       price !== product.price.toString() ||
-      category !== (product.category || ''));
+      category !== (product.category || '') ||
+      supplierId !== (product.supplier_id || '') ||
+      imageUri !== (product.image_uri || ''));
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the pricing card hides the preview in that case.
@@ -194,6 +204,12 @@ export function useEditProductForm() {
       quantity: product?.quantity || 0,
       cost_price: costPriceValue,
       category: data.category || undefined,
+      // Preserve the existing barcode — the edit form has no barcode field,
+      // so omitting it would cause normalizeBarcode(undefined) → null and
+      // silently wipe whatever barcode was already stored.
+      barcode: product?.barcode ?? null,
+      supplier_id: data.supplier_id ? data.supplier_id : null,
+      image_uri: data.imageUri ? data.imageUri.trim() : null,
     });
   });
 
@@ -223,6 +239,7 @@ export function useEditProductForm() {
     costPerPiece,
     price,
     category,
+    supplierId,
 
     // Local UI state
     showDiscardModal,

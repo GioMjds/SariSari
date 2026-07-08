@@ -12,9 +12,13 @@ import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
-import { Product } from '@/types';
+import { Product, Supplier } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useInsertInventory } from '@/hooks/useInventory';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { SupplierPickerModal } from './SupplierPickerModal';
+import { tryParsePesosInput } from '@/lib/money';
+import { useTranslation } from 'react-i18next';
 
 interface PendingAction {
   product: Product;
@@ -34,11 +38,20 @@ export function InventoryActionModal({
 }: InventoryActionModalProps) {
   const visible = !!pendingAction;
 
+  const { t } = useTranslation('inventory');
   const [selectedType, setSelectedType] = useState<InventoryEventType>('restock');
   const [quantity, setQuantity] = useState(1);
   const [adjustmentSign, setAdjustmentSign] = useState<'positive' | 'negative'>('positive');
   const [note, setNote] = useState('');
   const [shakeTrigger, setShakeTrigger] = useState(0);
+
+  // Supplier & Unit Cost state
+  const [unitCost, setUnitCost] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
+
+  const { getAllSuppliersQuery } = useSuppliers();
+  const suppliers = getAllSuppliersQuery.data;
 
   const insertInventory = useInsertInventory();
 
@@ -50,8 +63,17 @@ export function InventoryActionModal({
       setAdjustmentSign('positive');
       setNote('');
       setShakeTrigger(0);
+
+      // Prefill unitCost and default supplier
+      setUnitCost(pendingAction.product.cost_price ? String(pendingAction.product.cost_price) : '');
+      if (pendingAction.product.supplier_id && suppliers && suppliers.length > 0) {
+        const defaultSupplier = suppliers.find((s) => s.id === pendingAction.product.supplier_id);
+        setSelectedSupplier(defaultSupplier || null);
+      } else {
+        setSelectedSupplier(null);
+      }
     }
-  }, [pendingAction, initialQuantity]);
+  }, [pendingAction, initialQuantity, suppliers]);
 
   if (!pendingAction) return null;
 
@@ -88,6 +110,10 @@ export function InventoryActionModal({
   const handleConfirm = () => {
     if (!isValid || insertInventory.isPending) return;
 
+    const parsedUnitCost = selectedType === 'restock' && unitCost.trim()
+      ? tryParsePesosInput(unitCost)
+      : null;
+
     insertInventory.mutate(
       {
         product_id: pendingAction.product.id,
@@ -95,6 +121,8 @@ export function InventoryActionModal({
         quantity,
         note: note.trim() || null,
         adjustment_sign: selectedType === 'adjustment' ? adjustmentSign : null,
+        unit_cost: parsedUnitCost,
+        supplier_id: selectedType === 'restock' && selectedSupplier ? selectedSupplier.id : null,
       },
       {
         onSuccess: () => {
@@ -344,6 +372,45 @@ export function InventoryActionModal({
               </View>
             </View>
 
+            {selectedType === 'restock' && (
+              <View className="mb-4 gap-4">
+                {/* Wholesale Unit Cost */}
+                <View>
+                  <StyledText variant="medium" className="text-ink-900 mb-2 text-xs uppercase" style={{ letterSpacing: 0.5 }}>
+                    {t('labelWholesaleCost')}
+                  </StyledText>
+                  <TextInput
+                    placeholder="e.g. 12.50"
+                    value={unitCost}
+                    onChangeText={setUnitCost}
+                    keyboardType="numeric"
+                    placeholderTextColor="#A1978A"
+                    className="bg-paper-50 border border-ink-200 rounded-xl px-4 py-3 text-ink-900 text-sm shadow-sm"
+                  />
+                </View>
+
+                {/* Supplier Dropdown */}
+                <View>
+                  <StyledText variant="medium" className="text-ink-900 mb-2 text-xs uppercase" style={{ letterSpacing: 0.5 }}>
+                    {t('labelSupplier')}
+                  </StyledText>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setShowSupplierPicker(true)}
+                    className="bg-paper-50 border border-ink-200 rounded-xl px-4 py-3.5 flex-row items-center justify-between shadow-sm"
+                  >
+                    <StyledText
+                      variant={selectedSupplier ? 'semibold' : 'regular'}
+                      className={selectedSupplier ? 'text-ink-900 text-sm' : 'text-ink-400 text-sm'}
+                    >
+                      {selectedSupplier ? selectedSupplier.name : t('selectSupplier')}
+                    </StyledText>
+                    <FontAwesome name="chevron-down" size={14} color="#7A7165" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {/* Note input */}
             <View className="mb-6">
               <StyledText variant="medium" className="text-ink-900 mb-2 text-xs uppercase" style={{ letterSpacing: 0.5 }}>
@@ -403,6 +470,13 @@ export function InventoryActionModal({
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <SupplierPickerModal
+        visible={showSupplierPicker}
+        onClose={() => setShowSupplierPicker(false)}
+        selectedSupplierId={selectedSupplier ? selectedSupplier.id : null}
+        onSelect={(supplier) => setSelectedSupplier(supplier)}
+      />
     </Modal>
   );
 }

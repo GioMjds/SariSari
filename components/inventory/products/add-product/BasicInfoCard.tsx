@@ -5,11 +5,16 @@ import {
   ScrollView,
   TextInput,
   View,
+  TouchableOpacity,
 } from 'react-native';
+import { useState } from 'react';
 import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { SupplierPickerModal } from '../../SupplierPickerModal';
+import { ProductImagePicker } from '../ProductImagePicker';
 
 interface BasicInfoCardProps {
   control: Control<AddProductFormData>;
@@ -60,6 +65,10 @@ export function BasicInfoCard({
   barcodeConflictProduct,
   onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
+  const [showSupplierPicker, setShowSupplierPicker] = useState<boolean>(false);
+  const { getAllSuppliersQuery } = useSuppliers();
+  const suppliers = getAllSuppliersQuery.data || [];
+
   const hasBarcode = !!barcode && barcode.length > 0;
   const isDuplicate = !!barcodeConflictProduct;
   return (
@@ -72,6 +81,18 @@ export function BasicInfoCard({
           Name, SKU, and category — the identity of your item
         </StyledText>
       </View>
+
+      {/* Product Image Picker */}
+      <Controller
+        control={control}
+        name="imageUri"
+        render={({ field: { value, onChange } }) => (
+          <ProductImagePicker
+            imageUri={value}
+            onImageChange={onChange}
+          />
+        )}
+      />
 
       {/* Product Name */}
       <View className="mb-4">
@@ -142,10 +163,7 @@ export function BasicInfoCard({
           )}
         />
         {autoGenerateSku ? (
-          <StyledText
-            variant="regular"
-            className="text-ink-400 text-xs mt-1"
-          >
+          <StyledText variant="regular" className="text-ink-400 text-xs mt-1">
             Auto-generated from product name — toggle off or scan a barcode
           </StyledText>
         ) : (
@@ -156,21 +174,14 @@ export function BasicInfoCard({
             hitSlop={8}
             className="press-scale flex-row items-center mt-1 active:opacity-70"
           >
-            <FontAwesome
-              name="barcode"
-              size={14}
-              color="#623418"
-            />
+            <FontAwesome name="barcode" size={14} color="#623418" />
             <StyledText
               variant="semibold"
               className="text-cinnamon-600 text-xs ml-2"
             >
               Scan barcode
             </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-400 text-xs ml-2"
-            >
+            <StyledText variant="regular" className="text-ink-400 text-xs ml-2">
               or type a custom SKU
             </StyledText>
           </Pressable>
@@ -197,9 +208,7 @@ export function BasicInfoCard({
                 accessibilityLabel="Barcode"
                 keyboardType="number-pad"
                 className={`bg-paper-100 text-ink-900 text-base border rounded-xl px-4 py-3 ${
-                  isDuplicate
-                    ? 'border-semantic-danger'
-                    : 'border-ink-200'
+                  isDuplicate ? 'border-semantic-danger' : 'border-ink-200'
                 }`}
               />
             )}
@@ -302,11 +311,55 @@ export function BasicInfoCard({
               variant="medium"
               className="text-semantic-info text-xs ml-2 flex-1"
             >
-              No categories yet — create one from the Products tab to
-              organize this item.
+              No categories yet — create one from the Products tab to organize
+              this item.
             </StyledText>
           </View>
         )}
+      </View>
+
+      {/* Supplier */}
+      <View className="mt-4">
+        <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+          Supplier
+        </StyledText>
+        <Controller
+          control={control}
+          name="supplierId"
+          render={({ field: { value, onChange } }) => {
+            const currentSupplier = suppliers.find((s) => s.id === value);
+            return (
+              <>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setShowSupplierPicker(true)}
+                  className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <StyledText
+                    variant={currentSupplier ? 'semibold' : 'regular'}
+                    className={
+                      currentSupplier
+                        ? 'text-ink-900 text-base'
+                        : 'text-ink-400 text-base'
+                    }
+                  >
+                    {currentSupplier ? currentSupplier.name : 'Select Supplier'}
+                  </StyledText>
+                  <FontAwesome name="chevron-down" size={14} color="#7A7165" />
+                </TouchableOpacity>
+
+                <SupplierPickerModal
+                  visible={showSupplierPicker}
+                  onClose={() => setShowSupplierPicker(false)}
+                  selectedSupplierId={value || null}
+                  onSelect={(supplier) => {
+                    onChange(supplier ? supplier.id : '');
+                  }}
+                />
+              </>
+            );
+          }}
+        />
       </View>
     </View>
   );

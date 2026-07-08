@@ -11,6 +11,7 @@ export const initProductsTable = async () => {
       cost_price INTEGER,
       quantity INTEGER NOT NULL DEFAULT 0,
       category TEXT,
+      image_uri TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -74,6 +75,8 @@ export const insertProduct = async (
   cost_price?: number,
   category?: string,
   barcode?: string | null,
+  supplier_id?: string | null,
+  image_uri?: string | null,
 ): Promise<number> => {
   // The products table owns `quantity` as the source of truth, but the
   // inventory_transactions table is the audit log. Every stock change —
@@ -86,15 +89,15 @@ export const insertProduct = async (
   try {
     await db.withTransactionAsync(async () => {
       const result = await db.runAsync(
-        'INSERT INTO products (name, sku, price, quantity, cost_price, category, barcode) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode],
+        'INSERT INTO products (name, sku, price, quantity, cost_price, category, barcode, supplier_id, image_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode, supplier_id ?? null, image_uri ?? null],
       );
       productId = result.lastInsertRowId;
 
       if (quantity > 0) {
         await db.runAsync(
-          'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
-          [productId, 'restock', quantity],
+          'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
+          [productId, 'restock', quantity, cost_price ?? null, supplier_id ?? null],
         );
       }
     });
@@ -120,6 +123,8 @@ export const updateProduct = async (
   cost_price?: number,
   category?: string,
   barcode?: string | null,
+  supplier_id?: string | null,
+  image_uri?: string | null,
 ) => {
   const normalizedBarcode = normalizeBarcode(barcode);
 
@@ -135,14 +140,14 @@ export const updateProduct = async (
         [id],
       );
       await db.runAsync(
-        'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, barcode = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode, id],
+        'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, barcode = ?, supplier_id = ?, image_uri = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode, supplier_id ?? null, image_uri ?? null, id],
       );
       if (current && current.quantity !== quantity) {
         const delta = quantity - current.quantity;
         await db.runAsync(
-          'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
-          [id, 'restock', delta],
+          'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
+          [id, 'restock', delta, cost_price ?? null, supplier_id ?? null],
         );
       }
     });

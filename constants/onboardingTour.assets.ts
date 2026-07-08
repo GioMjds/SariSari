@@ -16,7 +16,7 @@ import { TabKey } from './onboardingTour';
 export function sariAssetFor(tab: TabKey): ImageSourcePropType {
 	switch (tab) {
 		case 'dashboard':
-			return require('@/assets/images/sari-emotions/sari-dashboard-state.png');
+			return require('@/assets/images/sari-emotions/sari-default-state.png');
 		case 'sell':
 			return require('@/assets/images/sari-emotions/sari-sales-state.png');
 		case 'inventory':

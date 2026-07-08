@@ -9,10 +9,6 @@ export function ProductsSkeleton() {
         <View
           key={`skeleton-${i}`}
           className="bg-white mx-4 mb-3 rounded-2xl p-4 shadow-sm border border-ink-100"
-          style={{
-            borderLeftWidth: 4,
-            borderLeftColor: '#EAE6DF', // neutral loading status stripe color
-          }}
         >
           {/* Top row: Name & status pill placeholder */}
           <View className="flex-row justify-between items-start">

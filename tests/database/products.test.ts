@@ -266,4 +266,38 @@ describe('Products Database — barcode column (v5)', () => {
 			updateProduct(id, 'Self Update', 'SU-001', 100, 0, undefined, undefined, '4800016551824'),
 		).resolves.toBeUndefined();
 	});
+
+	test('insertProduct and updateProduct saves and updates image_uri', async () => {
+		const id = await insertProduct(
+			'Image Product',
+			'IMG-001',
+			1000,
+			5,
+			500,
+			'Beverages',
+			null,
+			null,
+			'product_images/coke.jpg'
+		);
+
+		let product = await getProduct(id);
+		expect(product).not.toBeNull();
+		expect(product?.image_uri).toBe('product_images/coke.jpg');
+
+		await updateProduct(
+			id,
+			'Image Product Updated',
+			'IMG-001',
+			1000,
+			5,
+			500,
+			'Beverages',
+			null,
+			null,
+			'product_images/coke-diet.jpg'
+		);
+
+		product = await getProduct(id);
+		expect(product?.image_uri).toBe('product_images/coke-diet.jpg');
+	});
 });

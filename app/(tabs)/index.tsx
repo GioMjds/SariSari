@@ -8,14 +8,17 @@ import {
 } from '@/components/dashboard';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-import { useCredits, useProducts, useSales } from '@/hooks';
+import { useCredits, useProducts, useSales, useRecentSales, useHasSales } from '@/hooks';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const sariDashboardImg = require('@/assets/images/sari-emotions/sari-default-state.png');
+const sariLowStockImg = require('@/assets/images/sari-emotions/sari-low-stock-state.png');
 
 /**
  * Dashboard — Counter Command Center.
@@ -51,12 +54,15 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // ─── Data sources ─────────────────────────────────────────────
-  const { getTodayStatsQuery, getAllSalesQuery } = useSales();
+  const { getTodayStatsQuery } = useSales();
+  const recentSalesQuery = useRecentSales(3);
+  const hasSalesQuery = useHasSales();
   const { getAllProductsQuery } = useProducts();
   const { useCustomers, useCreditKPIs } = useCredits();
 
   const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
-  const { data: sales = [] } = getAllSalesQuery;
+  const { data: recentSalesList = [], isLoading: recentSalesLoading } = recentSalesQuery;
+  const { data: hasAnySales = false, isLoading: hasSalesLoading } = hasSalesQuery;
   const { data: products, isLoading: productsLoading } = getAllProductsQuery;
   const { data: kpis } = useCreditKPIs();
   const { data: priorityCustomers = [] } = useCustomers(
@@ -64,7 +70,7 @@ export default function Dashboard() {
     'balance_desc',
   );
 
-  const isLoading = statsLoading || productsLoading;
+  const isLoading = statsLoading || productsLoading || recentSalesLoading || hasSalesLoading;
 
   // ─── Derived data ─────────────────────────────────────────────
 
@@ -105,12 +111,12 @@ export default function Dashboard() {
   }, [priorityCustomers]);
 
   /**
-   * Top 3 newest sales. The store hook already returns timestamp-desc
-   * ordering, so we just take the first three.
+   * Top 3 newest sales. The query already returns the limited set,
+   * so we just map it.
    */
   const recentSales = useMemo(() => {
-    return sales.slice(0, 3).map((sale) => ({ sale }));
-  }, [sales]);
+    return recentSalesList.map((sale) => ({ sale }));
+  }, [recentSalesList]);
 
   const stockCounts = useMemo(() => {
     if (!products) return { lowStockCount: 0, outOfStockCount: 0 };
@@ -123,7 +129,6 @@ export default function Dashboard() {
   }, [products]);
 
   const hasAnyProducts = !!products && products.length > 0;
-  const hasAnySales = sales.length > 0;
   const isFreshStore = !hasAnyProducts && !hasAnySales;
 
   const refetchAll = useCallback(async () => {
@@ -150,22 +155,28 @@ export default function Dashboard() {
   }, [router]);
 
   const handleAddStock = useCallback(() => {
-    router.replace(routes.products);
+    router.push(routes.products);
   }, [router]);
 
   const handleRecordPayment = useCallback(() => {
-    router.replace(routes.credits);
+    router.push(routes.credits);
   }, [router]);
 
   const handleOpenSettings = useCallback(() => {
     router.push('/settings');
   }, [router]);
 
+  const handleViewAllSales = useCallback(() => {
+    router.push(routes.sales);
+  }, [router]);
+
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
       <View className="flex-1 bg-paper-200">
-        <DashboardHeader onOpenSettings={handleOpenSettings} />
-
+        <DashboardHeader
+          onOpenSettings={handleOpenSettings}
+          hasLowStock={stockCounts.lowStockCount > 0 || stockCounts.outOfStockCount > 0}
+        />
         {isLoading ? (
           <DashboardSkeleton />
         ) : (
@@ -215,7 +226,7 @@ export default function Dashboard() {
                 recentSales={recentSales}
                 onViewAllStock={handleAddStock}
                 onViewAllUtang={handleRecordPayment}
-                onViewAllSales={() => router.replace(routes.sales)}
+                onViewAllSales={handleViewAllSales}
               />
             )}
           </ScrollView>
@@ -225,20 +236,21 @@ export default function Dashboard() {
   );
 }
 
-function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
+function DashboardHeader({
+  onOpenSettings,
+  hasLowStock,
+}: {
+  onOpenSettings: () => void;
+  hasLowStock: boolean;
+}) {
   const { t } = useTranslation();
+  const mascotSource = hasLowStock ? sariLowStockImg : sariDashboardImg;
+
   return (
     <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
       <View className="flex-row items-center mb-3">
         <View
           className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2"
-          style={{
-            shadowColor: '#564E45',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06,
-            shadowRadius: 6,
-            elevation: 2,
-          }}
         >
           <StyledText
             variant="black"
@@ -257,20 +269,27 @@ function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
       </View>
 
       <View className="flex-row items-start justify-between">
-        <View className="flex-1 mr-3">
-          <StyledText
-            variant="extrabold"
-            className="text-h1 text-paper-50 text-3xl"
-            style={{ letterSpacing: -0.28 }}
-          >
-            {t('common:dashboardTitle')}
-          </StyledText>
-          <StyledText
-            variant="regular"
-            className="text-sm text-paper-200 opacity-90 mt-1"
-          >
-            {t('common:dashboardSubtitle')}
-          </StyledText>
+        <View className="flex-row items-start flex-1 mr-3">
+          <Image
+            source={mascotSource}
+            style={{ width: 56, height: 56, marginRight: 12, marginTop: 2 }}
+            resizeMode="contain"
+          />
+          <View className="flex-1">
+            <StyledText
+              variant="extrabold"
+              className="text-h1 text-paper-50 text-3xl"
+              style={{ letterSpacing: -0.28 }}
+            >
+              {t('common:dashboardTitle')}
+            </StyledText>
+            <StyledText
+              variant="regular"
+              className="text-sm text-paper-200 opacity-90 mt-1"
+            >
+              {t('common:dashboardSubtitle')}
+            </StyledText>
+          </View>
         </View>
 
         <Pressable

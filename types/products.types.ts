@@ -14,6 +14,8 @@ export interface Product {
   cost_price?: number;
   quantity: number;
   category?: string;
+  supplier_id?: string | null;
+  image_uri?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,8 @@ export interface InsertProductParams {
   quantity?: number;
   cost_price?: number;
   category?: string;
+  supplier_id?: string | null;
+  image_uri?: string | null;
 }
 
 // Parameters for updateProduct function
@@ -41,4 +45,6 @@ export interface UpdateProductParams {
   quantity: number;
   cost_price?: number;
   category?: string;
+  supplier_id?: string | null;
+  image_uri?: string | null;
 }

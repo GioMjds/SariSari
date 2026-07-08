@@ -9,6 +9,8 @@ import {
 import { Product } from '@/types';
 import { formatPesos } from '@/lib/money';
 import { StyledText } from '@/components/elements';
+import { Image } from 'expo-image';
+import { getProductImageUri } from '@/lib';
 
 interface ProductPickerProps {
   /** Current value of the `productName` form field. */
@@ -227,35 +229,59 @@ export function ProductPicker({
                 ItemSeparatorComponent={() => (
                   <View className="border-t border-dashed border-ink-200" />
                 )}
-                renderItem={({ item }) => (
-                  <Pressable
-                    onPress={() => {
-                      onSelect(item);
-                      onDropdownOpenChange(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Pick ${item.name}`}
-                    className="px-1 py-3 flex-row items-center justify-between"
-                    style={({ pressed }) => ({
-                      transform: [{ scale: pressed ? 0.97 : 1 }],
-                      backgroundColor: pressed ? '#F6F0E2' : 'transparent',
-                    })}
-                  >
-                    <View className="flex-1 pr-2">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-ink-900 text-sm"
-                        numberOfLines={1}
-                      >
-                        {item.name}
-                      </StyledText>
-                      <StyledText
-                        variant="regular"
-                        className="text-ink-500 text-xs mt-0.5"
-                      >
-                        Stock: {item.quantity}
-                      </StyledText>
-                    </View>
+                 renderItem={({ item }) => {
+                   const placeholderText = item.name ? item.name.trim().charAt(0).toUpperCase() : '?';
+                   const displayImageUri = getProductImageUri(item.image_uri);
+                   
+                   return (
+                     <Pressable
+                       onPress={() => {
+                         onSelect(item);
+                         onDropdownOpenChange(false);
+                       }}
+                       accessibilityRole="button"
+                       accessibilityLabel={`Pick ${item.name}`}
+                       className="px-1 py-3 flex-row items-center justify-between"
+                       style={({ pressed }) => ({
+                         transform: [{ scale: pressed ? 0.97 : 1 }],
+                         backgroundColor: pressed ? '#F6F0E2' : 'transparent',
+                       })}
+                     >
+                       {/* Left Column: Tiny Image & Name/Stock info */}
+                       <View className="flex-1 flex-row items-center pr-2">
+                         {/* Tiny Image Thumbnail */}
+                         <View className="w-8 h-8 rounded-lg bg-paper-100 border border-ink-150 overflow-hidden mr-2.5 justify-center items-center">
+                           {displayImageUri ? (
+                             <Image
+                               source={{ uri: displayImageUri }}
+                               className="w-full h-full"
+                               contentFit="cover"
+                             />
+                           ) : (
+                             <View className="w-full h-full bg-persimmon-50 items-center justify-center">
+                               <StyledText variant="black" className="text-persimmon-600 text-xs">
+                                 {placeholderText}
+                               </StyledText>
+                             </View>
+                           )}
+                         </View>
+
+                         <View className="flex-1">
+                           <StyledText
+                             variant="extrabold"
+                             className="text-ink-900 text-sm"
+                             numberOfLines={1}
+                           >
+                             {item.name}
+                           </StyledText>
+                           <StyledText
+                             variant="regular"
+                             className="text-ink-500 text-xs mt-0.5"
+                           >
+                             Stock: {item.quantity}
+                           </StyledText>
+                         </View>
+                       </View>
                     <StyledText
                       variant="extrabold"
                       className="text-ink-900 text-sm"
@@ -263,7 +289,8 @@ export function ProductPicker({
                       {formatPesos(item.price)}
                     </StyledText>
                   </Pressable>
-                )}
+                );
+              }}
               />
             ) : (
               <View className="py-10 items-center">

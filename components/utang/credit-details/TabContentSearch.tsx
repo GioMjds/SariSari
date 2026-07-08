@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Pressable, TextInput } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
@@ -11,6 +12,7 @@ interface TabContentSearchProps {
   /** Label for the active list, e.g. "credits", "payments". */
   noun: string;
   placeholder?: string;
+  debounceMs?: number;
 }
 
 /**
@@ -29,8 +31,26 @@ export function TabContentSearch({
   totalCount,
   noun,
   placeholder = 'Search…',
+  debounceMs = 200,
 }: TabContentSearchProps) {
-  const trimmed = value.trim();
+  const [localValue, setLocalValue] = useState(value);
+
+  // Sync with parent value (e.g. if the parent resets search, or switches tabs)
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  // Debounced propagation
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localValue !== value) {
+        onChange(localValue);
+      }
+    }, debounceMs);
+    return () => clearTimeout(handler);
+  }, [localValue, onChange, value, debounceMs]);
+
+  const trimmed = localValue.trim();
   const hasQuery = trimmed.length > 0;
 
   return (
@@ -44,10 +64,23 @@ export function TabContentSearch({
           {noun}
         </StyledText>
         <View className="flex-1 ml-2">
-          <SearchInput value={value} onChange={onChange} placeholder={placeholder} />
+          <TextInput
+            value={localValue}
+            onChangeText={setLocalValue}
+            placeholder={placeholder}
+            placeholderTextColor="#A89F90"
+            accessibilityLabel="Search this tab"
+            className="text-ink-900 text-sm py-0 px-0"
+            returnKeyType="search"
+          />
         </View>
         {hasQuery && (
-          <ClearButton onClear={() => onChange('')} />
+          <ClearButton
+            onClear={() => {
+              setLocalValue('');
+              onChange('');
+            }}
+          />
         )}
       </View>
 
@@ -63,31 +96,7 @@ export function TabContentSearch({
   );
 }
 
-/* ─── Inline input + clear button ────────────────────────────────────── */
-
-import { Pressable, TextInput } from 'react-native';
-
-function SearchInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder={placeholder}
-      placeholderTextColor="#A89F90"
-      accessibilityLabel="Search this tab"
-      className="text-ink-900 text-sm py-0 px-0"
-      returnKeyType="search"
-    />
-  );
-}
+/* ─── Inline clear button ────────────────────────────────────── */
 
 function ClearButton({ onClear }: { onClear: () => void }) {
   return (

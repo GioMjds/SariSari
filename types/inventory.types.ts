@@ -10,6 +10,8 @@ export interface InventoryTransaction {
   quantity: number;
   note?: string | null;
   adjustment_sign?: 'positive' | 'negative' | null;
+  unit_cost?: number | null;
+  supplier_id?: string | null;
   timestamp: string;
 }
 
@@ -25,4 +27,6 @@ export interface InsertInventoryV2 {
   quantity: number; // > 0
   note?: string | null;
   adjustment_sign?: 'positive' | 'negative' | null;
+  unit_cost?: number | null;
+  supplier_id?: string | null;
 }

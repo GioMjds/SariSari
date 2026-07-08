@@ -168,4 +168,57 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 6.');
   }
+
+  if (currentVersion < 7) {
+    console.log('Running migration to version 7 (Supplier Directory & Purchase Costing)...');
+    await db.withTransactionAsync(async () => {
+      // 1. Create table suppliers
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS suppliers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          contact TEXT,
+          notes TEXT,
+          created_at INTEGER NOT NULL
+        );
+      `);
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);');
+
+      // 2. Add supplier_id column to products
+      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
+      const hasSupplierId = productColumns.some(c => c.name === 'supplier_id');
+      if (!hasSupplierId) {
+        await db.execAsync('ALTER TABLE products ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;');
+      }
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_supplier_id ON products(supplier_id);');
+
+      // 3. Add unit_cost and supplier_id columns to inventory_transactions
+      const invCols = await db.getAllAsync<{ name: string }>('PRAGMA table_info(inventory_transactions)');
+      const hasUnitCost = invCols.some(c => c.name === 'unit_cost');
+      if (!hasUnitCost) {
+        await db.execAsync('ALTER TABLE inventory_transactions ADD COLUMN unit_cost REAL;');
+      }
+      const hasTxSupplierId = invCols.some(c => c.name === 'supplier_id');
+      if (!hasTxSupplierId) {
+        await db.execAsync('ALTER TABLE inventory_transactions ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;');
+      }
+      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_inventory_transactions_supplier_id ON inventory_transactions(supplier_id);');
+
+      await db.execAsync('PRAGMA user_version = 7;');
+    });
+    console.log('Database migrated to version 7.');
+  }
+
+  if (currentVersion < 8) {
+    console.log('Running migration to version 8 (Product image URI)...');
+    await db.withTransactionAsync(async () => {
+      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
+      const hasImageUri = productColumns.some(c => c.name === 'image_uri');
+      if (!hasImageUri) {
+        await db.execAsync('ALTER TABLE products ADD COLUMN image_uri TEXT;');
+      }
+      await db.execAsync('PRAGMA user_version = 8;');
+    });
+    console.log('Database migrated to version 8.');
+  }
 }

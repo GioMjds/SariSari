@@ -45,18 +45,11 @@ export function AlertCard({
       })}
     >
       <View
-        className={`rounded-2xl p-3 border ${
+        className={`rounded-xl p-3 border ${
           tone === 'warning'
             ? 'bg-semantic-warning-50 border-semantic-warning-100'
             : 'bg-semantic-danger-50 border-semantic-danger-100'
         }`}
-        style={{
-          shadowColor: '#564E45',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 6,
-          elevation: 2,
-        }}
       >
         <View className="flex-row items-center justify-between mb-1.5">
           <View className="flex-row items-center">
