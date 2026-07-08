@@ -1,9 +1,13 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller, useFormState } from 'react-hook-form';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
 import { StyledText } from '@/components/elements';
 import { Category } from '@/types/categories.types';
 import type { EditProductFormData } from './useEditProductForm';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { SupplierPickerModal } from '../SupplierPickerModal';
+import { ProductImagePicker } from '../products/ProductImagePicker';
 
 interface EditBasicInfoCardProps {
   control: Control<EditProductFormData>;
@@ -34,9 +38,10 @@ export function EditBasicInfoCard({
   selectedCategory,
   onSelectCategory,
 }: EditBasicInfoCardProps) {
-  // useFormState just to keep the linter happy if we add per-field
-  // error rendering later — for now we don't surface errors, mirroring
-  // the original screen.
+  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
+  const { getAllSuppliersQuery } = useSuppliers();
+  const suppliers = getAllSuppliersQuery.data || [];
+
   useFormState({ control });
 
   return (
@@ -49,6 +54,18 @@ export function EditBasicInfoCard({
           Edit name and category — the identity of your item
         </StyledText>
       </View>
+
+      {/* Product Image Picker */}
+      <Controller
+        control={control}
+        name="imageUri"
+        render={({ field: { value, onChange } }) => (
+          <ProductImagePicker
+            imageUri={value}
+            onImageChange={onChange}
+          />
+        )}
+      />
 
       {/* Product Name */}
       <View className="mb-4">
@@ -162,6 +179,46 @@ export function EditBasicInfoCard({
             </StyledText>
           </View>
         )}
+      </View>
+
+      {/* Supplier */}
+      <View className="mt-4">
+        <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+          Supplier
+        </StyledText>
+        <Controller
+          control={control}
+          name="supplier_id"
+          render={({ field: { value, onChange } }) => {
+            const currentSupplier = suppliers.find((s) => s.id === value);
+            return (
+              <>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setShowSupplierPicker(true)}
+                  className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+                >
+                  <StyledText
+                    variant={currentSupplier ? 'semibold' : 'regular'}
+                    className={currentSupplier ? 'text-ink-900 text-base' : 'text-ink-400 text-base'}
+                  >
+                    {currentSupplier ? currentSupplier.name : 'Select Supplier'}
+                  </StyledText>
+                  <FontAwesome name="chevron-down" size={14} color="#7A7165" />
+                </TouchableOpacity>
+
+                <SupplierPickerModal
+                  visible={showSupplierPicker}
+                  onClose={() => setShowSupplierPicker(false)}
+                  selectedSupplierId={value || null}
+                  onSelect={(supplier) => {
+                    onChange(supplier ? supplier.id : '');
+                  }}
+                />
+              </>
+            );
+          }}
+        />
       </View>
     </View>
   );

@@ -4,6 +4,8 @@ import { PerforationRow } from '../PerforationRow';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { StepperStamp } from './StepperStamp';
+import { Image } from 'expo-image';
+import { getProductImageUri } from '@/lib';
 
 interface ProductRowProps {
   product: Product;
@@ -47,6 +49,10 @@ export function ProductRow({
     ? 'Out of stock'
     : `${product.quantity} in stock`;
 
+  // Placeholder design: First letter of name capitalized.
+  const placeholderText = product.name ? product.name.trim().charAt(0).toUpperCase() : '?';
+  const displayImageUri = getProductImageUri(product.image_uri);
+
   return (
     <Pressable
       onPress={() => {
@@ -78,22 +84,42 @@ export function ProductRow({
       <PerforationRow side="top" />
 
       <View className="paper-texture px-5 pt-3 pb-3">
-        {/* Header: name + SKU stamp */}
-        <View className="flex-row items-start justify-between mb-2">
-          <StyledText
-            variant="extrabold"
-            className="text-ink-900 text-h2 flex-1 mr-3"
-            numberOfLines={2}
-          >
-            {product.name}
-          </StyledText>
-          <View className="self-start bg-paper-100 border border-dashed border-ink-200 rounded-md px-2 py-0.5">
+        {/* Header: Image (left) + Name & SKU (right) */}
+        <View className="flex-row items-start mb-2">
+          {/* Image box */}
+          <View className="w-12 h-12 rounded-xl bg-paper-100 border border-ink-150 overflow-hidden mr-3 items-center justify-center">
+            {displayImageUri ? (
+              <Image
+                source={{ uri: displayImageUri }}
+                className="w-full h-full"
+                contentFit="cover"
+              />
+            ) : (
+              <View className="w-full h-full bg-persimmon-50 items-center justify-center">
+                <StyledText variant="black" className="text-persimmon-600 text-base">
+                  {placeholderText}
+                </StyledText>
+              </View>
+            )}
+          </View>
+
+          {/* Name & SKU */}
+          <View className="flex-1 mr-2">
             <StyledText
-              variant="medium"
-              className="text-mono text-ink-500 text-[10px]"
+              variant="extrabold"
+              className="text-ink-900 text-h2 mb-1"
+              numberOfLines={2}
             >
-              SKU {product.sku}
+              {product.name}
             </StyledText>
+            <View className="self-start bg-paper-100 border border-dashed border-ink-200 rounded-md px-2 py-0.5">
+              <StyledText
+                variant="medium"
+                className="text-mono text-ink-500 text-[10px]"
+              >
+                SKU {product.sku}
+              </StyledText>
+            </View>
           </View>
         </View>
 

@@ -13,13 +13,6 @@ export function DashboardSkeleton() {
       {/* Hero placeholder */}
       <View
         className="bg-paper-50 rounded-3xl mx-4 mb-4 border border-ink-100"
-        style={{
-          shadowColor: '#564E45',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 3,
-        }}
       >
         {/* Cinnamon header strip */}
         <View className="bg-cinnamon-500 rounded-t-3xl px-5 pt-5 pb-4">
@@ -53,14 +46,7 @@ export function DashboardSkeleton() {
       {/* Attention-queue placeholder */}
       <View className="px-4">
         <View
-          className="bg-paper-50 rounded-2xl border border-ink-100 mb-3"
-          style={{
-            shadowColor: '#564E45',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06,
-            shadowRadius: 6,
-            elevation: 2,
-          }}
+          className="bg-paper-50 rounded-xl border border-ink-100 mb-3"
         >
           <View className="px-4 pt-3 pb-3 flex-row justify-between border-b border-dashed border-ink-200">
             <Skeleton width={90} height={14} borderRadius={4} />
@@ -70,7 +56,7 @@ export function DashboardSkeleton() {
             {[0, 1, 2].map((i) => (
               <View
                 key={`row-${i}`}
-                className={`flex-row justify-between items-center py-2.5 ${
+                className={`flex-row justify-between items-center py-4 ${
                   i < 2 ? 'border-b border-dashed border-ink-200' : ''
                 }`}
               >

@@ -1,17 +1,22 @@
 {
   "tabProducts": "Products",
   "tabCategories": "Categories",
+  "tabSuppliers": "Suppliers",
 
   "eyebrowMaster": "MASTER DATA",
   "eyebrowSections": "SECTIONS",
   "titleCatalog": "Catalog",
   "titleCategories": "Your Categories",
+  "titleSuppliers": "Suppliers Directory",
   "subtitleProducts": "{{total}} products · {{low}} low · {{out}} out",
   "subtitleCategories": "{{count}} categories total",
+  "subtitleSuppliers": "{{count}} suppliers total",
 
   "addProductA11y": "Add product",
+  "addSupplierA11y": "Add supplier",
 
   "searchPlaceholder": "Search products or SKU...",
+  "searchSuppliersPlaceholder": "Search suppliers...",
 
   "sortBy": "Sort By",
   "sortName": "Name",
@@ -25,9 +30,27 @@
   "actionViewLedger": "View Ledger",
   "actionEditProduct": "Edit Product",
   "actionDeleteProduct": "Delete Product",
+  "actionEditSupplier": "Edit Supplier",
+  "actionDeleteSupplier": "Delete Supplier",
 
   "deleteTitle": "Delete Product?",
   "deleteBody": "Are you sure you want to delete \"{{name}}\"?",
   "deleteWarning": "This action cannot be undone.",
-  "deleteConfirm": "Yes, Delete Product"
+  "deleteConfirm": "Yes, Delete Product",
+
+  "deleteSupplierTitle": "Delete Supplier?",
+  "deleteSupplierBody": "Are you sure you want to delete \"{{name}}\"?",
+  "deleteSupplierWarning": "This will unset this supplier on all related products and inventory logs.",
+  "deleteSupplierConfirm": "Yes, Delete Supplier",
+
+  "labelName": "Name",
+  "labelContact": "Contact Info",
+  "labelNotes": "Notes",
+  "labelSupplier": "Supplier",
+  "labelWholesaleCost": "Wholesale Unit Cost",
+  "selectSupplier": "Select Supplier",
+  "noSupplier": "No Supplier",
+  "inlineAddSupplier": "+ Add New Supplier",
+  "addSupplier": "Add Supplier",
+  "editSupplier": "Edit Supplier"
 }

@@ -14,11 +14,13 @@ import {
   UpdateProductParams,
 } from '@/types/products.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { saveProductImageLocal, deleteLocalProductImage } from '@/lib';
 
 export const productKeys = {
   all: ['products'] as const,
   list: () => [...productKeys.all, 'list'] as const,
-  barcode: (barcode: string) => [...productKeys.all, 'barcode', barcode] as const,
+  barcode: (barcode: string) =>
+    [...productKeys.all, 'barcode', barcode] as const,
   sku: (sku: string) => [...productKeys.all, 'sku', sku] as const,
   detail: (id: number) => [...productKeys.all, 'detail', id] as const,
 };
@@ -66,7 +68,7 @@ export function useProducts() {
 
   // Mutation: Insert a new product
   const insertProductMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       name,
       sku,
       price,
@@ -74,8 +76,14 @@ export function useProducts() {
       cost_price,
       category,
       barcode,
-    }: InsertProductParams) =>
-      insertProduct(
+      supplier_id,
+      image_uri,
+    }: InsertProductParams) => {
+      let permanentImageUri: string | null = null;
+      if (image_uri) {
+        permanentImageUri = await saveProductImageLocal(image_uri);
+      }
+      return insertProduct(
         name,
         sku,
         price,
@@ -83,7 +91,10 @@ export function useProducts() {
         cost_price,
         category,
         barcode,
-      ),
+        supplier_id,
+        permanentImageUri,
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -112,7 +123,7 @@ export function useProducts() {
 
   // Mutation: Update a product
   const updateProductMutation = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       name,
       sku,
@@ -121,8 +132,23 @@ export function useProducts() {
       cost_price,
       category,
       barcode,
-    }: UpdateProductParams) =>
-      updateProduct(
+      supplier_id,
+      image_uri,
+    }: UpdateProductParams) => {
+      const existingProduct = await getProduct(id);
+      let finalImageUri = existingProduct?.image_uri || null;
+
+      if (image_uri && image_uri !== existingProduct?.image_uri) {
+        if (existingProduct?.image_uri) {
+          await deleteLocalProductImage(existingProduct.image_uri);
+        }
+        finalImageUri = await saveProductImageLocal(image_uri);
+      } else if (image_uri === null && existingProduct?.image_uri) {
+        await deleteLocalProductImage(existingProduct.image_uri);
+        finalImageUri = null;
+      }
+
+      return updateProduct(
         id,
         name,
         sku,
@@ -131,7 +157,10 @@ export function useProducts() {
         cost_price,
         category,
         barcode,
-      ),
+        supplier_id,
+        finalImageUri,
+      );
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({
@@ -163,7 +192,13 @@ export function useProducts() {
 
   // Mutation: Delete a product
   const deleteProductMutation = useMutation({
-    mutationFn: (id: number) => deleteProduct(id),
+    mutationFn: async (id: number) => {
+      const existingProduct = await getProduct(id);
+      if (existingProduct?.image_uri) {
+        await deleteLocalProductImage(existingProduct.image_uri);
+      }
+      return deleteProduct(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
       queryClient.invalidateQueries({ queryKey: ['categories'] });

@@ -194,20 +194,23 @@ export default function CustomerDetails() {
     [],
   );
 
+  const tabCounts = useMemo(() => {
+    return {
+      credits: customer?.credits?.length ?? 0,
+      payments: customer?.payments?.length ?? 0,
+      history: history?.length ?? 0,
+    };
+  }, [customer, history]);
+
   if (isLoading) return <CreditDetailsSkeleton />;
 
   if (!customer) return <CustomerNotFound onBack={handleBack} />;
 
-  // Derived values — intentionally after early returns; they depend on
+  // Derived values — intentionally after early returns; they depend on customer being defined.
   const activeCreditCount = customer.credits.filter(
     (c) => c.status !== 'paid',
   ).length;
   const storeName = profile?.storeName?.trim() || 'your sari-sari store';
-  const tabCounts = {
-    credits: customer.credits.length,
-    payments: customer.payments.length,
-    history: history.length,
-  } as const;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>

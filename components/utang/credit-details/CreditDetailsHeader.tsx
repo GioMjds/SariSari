@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
@@ -15,7 +16,7 @@ interface CreditDetailsHeaderProps {
  * No state of its own; receives both actions via props so the screen
  * keeps ownership of navigation and the delete-confirmation modal.
  */
-export function CreditDetailsHeader({ onBack, onDelete }: CreditDetailsHeaderProps) {
+export const CreditDetailsHeader = memo(function CreditDetailsHeader({ onBack, onDelete }: CreditDetailsHeaderProps) {
   return (
     <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
       <Pressable
@@ -46,4 +47,4 @@ export function CreditDetailsHeader({ onBack, onDelete }: CreditDetailsHeaderPro
       </Pressable>
     </View>
   );
-}
+});

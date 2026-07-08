@@ -48,8 +48,7 @@ export const StockAlertBanner = React.memo(function StockAlertBanner({
           from={{ opacity: 0, translateY: -10 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 300 }}
-          className="mx-4 rounded-2xl p-4 flex-row items-center gap-3 bg-cinnamon-700"
-          style={{ borderLeftWidth: 4, borderLeftColor: '#E85A1F' }}
+          className="mx-4 rounded-2xl p-4 flex-row items-center gap-3 bg-cinnamon-700 border border-persimmon-500/35"
         >
           {/* Left: 40x40 icon circular container */}
           <View

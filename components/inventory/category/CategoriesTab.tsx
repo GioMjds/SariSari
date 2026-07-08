@@ -1,11 +1,12 @@
 import { StyledText } from '@/components/elements';
 import { CategoryCard } from './CategoryCard';
+import { CategoriesSkeleton } from './CategoriesSkeleton';
 import { useCategories } from '@/hooks';
 import { CategoryWithCount } from '@/types';
 import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
@@ -25,7 +26,7 @@ interface CategoryFormData {
   name: string;
 }
 
-export function CategoriesTab() {
+function CategoriesTabComponent() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
@@ -157,47 +158,11 @@ export function CategoriesTab() {
   };
 
   if (isLoading) {
-    return (
-      <View className="flex-1 justify-center items-center py-12">
-        <ActivityIndicator size="large" color="#E85A1F" />
-      </View>
-    );
+    return <CategoriesSkeleton />;
   }
 
   return (
     <View className="flex-1">
-      {/* Redesigned Categories Stats Card */}
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 320 }}
-        className="px-4 pt-3 pb-2"
-      >
-        <View className="bg-white rounded-2xl p-4 flex-row items-center justify-between border border-ink-100 shadow-sm">
-          <View>
-            <StyledText
-              variant="semibold"
-              className="text-ink-400 text-xs uppercase tracking-wider mb-1"
-            >
-              Total Categories
-            </StyledText>
-            <StyledText variant="extrabold" className="text-ink-900 text-2xl">
-              {categories.length}
-            </StyledText>
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleAddCategory}
-            className="bg-persimmon-500 rounded-pill px-5 py-3 flex-row items-center gap-2 shadow-persimmon-glow"
-          >
-            <FontAwesome name="plus" size={14} color="#FBF7EE" />
-            <StyledText variant="extrabold" className="text-paper-50 text-sm">
-              Add Category
-            </StyledText>
-          </TouchableOpacity>
-        </View>
-      </MotiView>
-
       {/* Categories List with stagger animation */}
       <FlatList
         data={categories}
@@ -642,3 +607,5 @@ export function CategoriesTab() {
     </View>
   );
 }
+
+export const CategoriesTab = memo(CategoriesTabComponent);

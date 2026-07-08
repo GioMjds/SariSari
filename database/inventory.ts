@@ -21,7 +21,7 @@ export const initInventoryTable = async () => {
 };
 
 export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
-  const { product_id, type, quantity, note = null, adjustment_sign = null } = tx;
+  const { product_id, type, quantity, note = null, adjustment_sign = null, unit_cost = null, supplier_id = null } = tx;
 
   if (quantity <= 0) {
     throw new Error('Quantity must be greater than 0');
@@ -62,15 +62,22 @@ export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
 
     // 3. Insert into inventory_transactions
     const result = await db.runAsync(
-      'INSERT INTO inventory_transactions (product_id, type, quantity, note, adjustment_sign) VALUES (?, ?, ?, ?, ?)',
-      [product_id, type, quantity, note, adjustment_sign],
+      'INSERT INTO inventory_transactions (product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id],
     );
 
     // 4. Update products table
-    await db.runAsync(
-      'UPDATE products SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [newQuantity, product_id],
-    );
+    if (type === 'restock' && unit_cost !== null && unit_cost !== undefined) {
+      await db.runAsync(
+        'UPDATE products SET quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [newQuantity, unit_cost, product_id],
+      );
+    } else {
+      await db.runAsync(
+        'UPDATE products SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [newQuantity, product_id],
+      );
+    }
 
     insertedId = result.lastInsertRowId;
   });

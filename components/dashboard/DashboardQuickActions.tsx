@@ -38,14 +38,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
           activeOpacity={0.9}
           accessibilityRole="button"
           accessibilityLabel={t('common:qaNewSale')}
-          className="bg-persimmon-500 rounded-2xl py-4 flex-row items-center justify-center press-scale"
-          style={{
-            shadowColor: '#E85A1F',
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.22,
-            shadowRadius: 14,
-            elevation: 5,
-          }}
+          className="bg-persimmon-500 rounded-xl py-4 flex-row items-center justify-center press-scale"
         >
           <FontAwesome name="plus-circle" size={20} color="#FBF7EE" />
           <StyledText
@@ -94,14 +87,7 @@ function SecondaryAction({
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      className="flex-1 bg-paper-50 rounded-2xl py-4 px-3 flex-row items-center justify-center border border-ink-100 press-scale"
-      style={{
-        shadowColor: '#564E45',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        elevation: 2,
-      }}
+      className="flex-1 bg-paper-50 rounded-xl py-4 px-3 flex-row items-center justify-center border border-ink-100 press-scale"
     >
       <View
         className="w-9 h-9 rounded-full items-center justify-center mr-2 bg-cinnamon-50"

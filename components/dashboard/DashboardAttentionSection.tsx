@@ -169,14 +169,7 @@ function AttentionBlock({
 }) {
   return (
     <View
-      className="bg-paper-50 rounded-2xl border border-ink-100 mb-3 overflow-hidden"
-      style={{
-        shadowColor: '#564E45',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 6,
-        elevation: 2,
-      }}
+      className="bg-paper-50 rounded-xl border border-ink-100 mb-3 overflow-hidden"
     >
       <View className="px-4 pt-3 pb-2 flex-row items-center justify-between border-b border-dashed border-ink-200">
         <View className="flex-row items-center">
@@ -242,7 +235,7 @@ function StockRow({
     <Link href={`/inventory?restock=${item.product.id}`} asChild>
       <TouchableOpacity
         activeOpacity={0.7}
-        className={`flex-row items-center justify-between py-2.5 ${
+        className={`flex-row items-center justify-between py-4 ${
           !isLast ? 'border-b border-dashed border-ink-200' : ''
         }`}
       >
@@ -297,7 +290,7 @@ function SukiRow({
   const lastActivity = parseStoredTimestamp(customer.last_transaction_date);
   return (
     <View
-      className={`flex-row items-center justify-between py-2.5 ${
+      className={`flex-row items-center justify-between py-4 ${
         !isLast ? 'border-b border-dashed border-ink-200' : ''
       }`}
     >
@@ -349,7 +342,7 @@ function SaleRowMini({
   const itemsLabel = `${sale.items_count} ${sale.items_count === 1 ? 'item' : 'items'}`;
   return (
     <View
-      className={`flex-row items-center justify-between py-2.5 ${
+      className={`flex-row items-center justify-between py-4 ${
         !isLast ? 'border-b border-dashed border-ink-200' : ''
       }`}
     >

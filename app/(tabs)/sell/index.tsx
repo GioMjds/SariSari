@@ -27,6 +27,23 @@ import {
   subMonths,
 } from 'date-fns';
 
+// Static animation targets to prevent garbage collection and animation re-triggering on reference updates.
+const FILTER_CHIPS_FROM = { opacity: 0 };
+const FILTER_CHIPS_ANIMATE = { opacity: 1 };
+const FILTER_CHIPS_TRANSITION = {
+  type: 'timing' as const,
+  duration: 360,
+  delay: 160,
+};
+
+const SALE_ITEM_FROM = { opacity: 0, translateY: 12 };
+const SALE_ITEM_ANIMATE = { opacity: 1, translateY: 0 };
+const SALE_ITEM_TRANSITIONS = Array.from({ length: 5 }, (_, i) => ({
+  type: 'timing' as const,
+  duration: 400,
+  delay: 200 + i * 50,
+}));
+
 /**
  * Sell tab — Sales History & Reports hub.
  *
@@ -123,11 +140,11 @@ export default function Sell() {
       });
     }
 
-    // Sort by timestamp descending (newest first)
+    // Sort by timestamp descending (newest first) — optimized string comparison avoids Date parsing overhead.
     return filtered.sort((a, b) => {
-      const dateA = parseStoredTimestamp(a.timestamp)?.getTime() || 0;
-      const dateB = parseStoredTimestamp(b.timestamp)?.getTime() || 0;
-      return dateB - dateA;
+      const tsA = a.timestamp || '';
+      const tsB = b.timestamp || '';
+      return tsA < tsB ? 1 : tsA > tsB ? -1 : 0;
     });
   }, [sales, filters]);
 
@@ -154,16 +171,19 @@ export default function Sell() {
     setRefreshing(false);
   }, [refetchStats, refetchSales]);
 
-  const handleSalePress = useCallback((saleId: number) => {
-    router.push(`/(edit-forms)/sale-details/${saleId}` as any);
-  }, [router]);
+  const handleSalePress = useCallback(
+    (saleId: number) => {
+      router.push(`/(edit-forms)/sale-details/${saleId}` as any);
+    },
+    [router],
+  );
 
   const handleApplyFilters = useCallback((newFilters: SalesFilterState) => {
     setFilters(newFilters);
   }, []);
 
   const handleOpenAddSales = useCallback(() => {
-    router.push('/(edit-forms)/add-sales' as any);
+    router.push('/(edit-forms)/add-sales');
   }, [router]);
 
   const handleOpenFilters = useCallback(() => {
@@ -179,37 +199,32 @@ export default function Sell() {
   const subtitle =
     filteredSales.length === 0
       ? t('subtitleEmpty')
-      : t(
-          filteredSales.length === 1
-            ? 'subtitleSingular'
-            : 'subtitlePlural',
-          { count: filteredSales.length },
-        );
+      : t(filteredSales.length === 1 ? 'subtitleSingular' : 'subtitlePlural', {
+          count: filteredSales.length,
+        });
 
   // Hide the hero when there are no sales anywhere yet — keep layout clean.
   const showHero = (stats !== undefined && stats !== null) || sales.length > 0;
 
-  const renderSaleItem = useCallback(({
-    item,
-    index,
-  }: {
-    item: SaleWithItems;
-    index: number;
-  }) => {
-    // Stagger only the first page so re-renders on scroll don't re-animate.
-    const delay = 200 + (index % 5) * 50;
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 12 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 400, delay }}
-      >
-        <SaleRow sale={item} onPress={handleSalePress} />
-      </MotiView>
-    );
-  }, [handleSalePress]);
+  const renderSaleItem = useCallback(
+    ({ item, index }: { item: SaleWithItems; index: number }) => {
+      return (
+        <MotiView
+          from={SALE_ITEM_FROM}
+          animate={SALE_ITEM_ANIMATE}
+          transition={SALE_ITEM_TRANSITIONS[index % 5]}
+        >
+          <SaleRow sale={item} onPress={handleSalePress} />
+        </MotiView>
+      );
+    },
+    [handleSalePress],
+  );
 
-  const keyExtractor = useCallback((item: SaleWithItems) => item.id.toString(), []);
+  const keyExtractor = useCallback(
+    (item: SaleWithItems) => item.id.toString(),
+    [],
+  );
 
   // Memoize ListHeaderComponent to prevent unnecessary re-rendering
   const listHeader = useMemo(() => {
@@ -229,9 +244,9 @@ export default function Sell() {
 
         {/* Filter chips strip */}
         <MotiView
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: 'timing', duration: 360, delay: 160 }}
+          from={FILTER_CHIPS_FROM}
+          animate={FILTER_CHIPS_ANIMATE}
+          transition={FILTER_CHIPS_TRANSITION}
         >
           <FilterChips
             filters={filters}
@@ -290,6 +305,10 @@ export default function Sell() {
             }
             ListHeaderComponent={listHeader}
             ListEmptyComponent={listEmpty}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={3}
+            removeClippedSubviews={true}
           />
 
           {/* Pagination */}

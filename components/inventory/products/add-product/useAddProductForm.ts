@@ -35,6 +35,8 @@ export interface AddProductFormData {
   costPerPiece: string;
   price: string;
   initialStock: string;
+  supplierId: string;
+  imageUri: string;
 }
 
 /**
@@ -105,6 +107,8 @@ export function useAddProductForm() {
       costPerPiece: '',
       price: '',
       initialStock: '',
+      supplierId: '',
+      imageUri: '',
     },
   });
 
@@ -117,6 +121,8 @@ export function useAddProductForm() {
   const piecesPerBundle = watch('piecesPerBundle');
   const initialStock = watch('initialStock');
   const category = watch('category');
+  const supplierId = watch('supplierId');
+  const imageUri = watch('imageUri');
 
   // ─── Derived display values ────────────────────────────────────
 
@@ -132,7 +138,9 @@ export function useAddProductForm() {
       safeTrim(initialStock) !== '' ||
       safeTrim(category) !== '' ||
       safeTrim(sku) !== '' ||
-      safeTrim(barcode) !== '');
+      safeTrim(barcode) !== '' ||
+      safeTrim(supplierId) !== '' ||
+      safeTrim(imageUri) !== '');
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the profit card hides itself in that case.
@@ -422,6 +430,8 @@ export function useAddProductForm() {
         quantity: Number.isFinite(stockValue) ? stockValue : 0,
         cost_price: costPriceValue,
         category: safeTrim(data.category) || undefined,
+        supplier_id: data.supplierId ? data.supplierId : null,
+        image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
       },
       {
         onSuccess: () => {
@@ -444,6 +454,7 @@ export function useAddProductForm() {
     costPerPiece,
     initialStock,
     category,
+    supplierId,
 
     // Domain data
     categories,

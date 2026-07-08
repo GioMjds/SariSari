@@ -1,5 +1,5 @@
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, memo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
@@ -32,7 +32,7 @@ interface TabNavigationProps {
  * updated synchronously when `activeTab` changes — no spring, no
  * wiggle. The pill snaps to its new tab on each render.
  */
-export function TabNavigation({
+export const TabNavigation = memo(function TabNavigation({
   activeTab,
   onChange,
   counts,
@@ -138,4 +138,4 @@ export function TabNavigation({
       </View>
     </View>
   );
-}
+});

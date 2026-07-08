@@ -5,6 +5,7 @@ export * from './onboarding.types';
 export * from './products.types';
 export * from './reports.types';
 export * from './sales.types';
+export * from './suppliers.types';
 export * from './ui/Alert.types';
 export * from './ui/Modal.types';
 export * from './ui/Toast.types';
