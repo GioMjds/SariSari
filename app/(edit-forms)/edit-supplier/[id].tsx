@@ -176,7 +176,7 @@ export default function EditSupplier() {
               onPress={handleSubmit(onSubmit)}
               disabled={!isValid || updateSupplierMutation.isPending}
               className={`py-4 rounded-xl items-center justify-center shadow-persimmon-glow ${
-                isValid ? 'bg-persimmon-500' : 'bg-ink-200'
+                isValid && !updateSupplierMutation.isPending ? 'bg-persimmon-500' : 'bg-ink-200'
               }`}
             >
               {updateSupplierMutation.isPending ? (

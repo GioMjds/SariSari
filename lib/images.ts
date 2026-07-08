@@ -68,8 +68,11 @@ export async function ensureImageDirectory(): Promise<void> {
 export async function saveProductImageLocal(tempUri: string): Promise<string> {
   await ensureImageDirectory();
   
-  // Extract file extension or default to jpg
-  const extension = tempUri.split('.').pop()?.split('?')[0] || 'jpg';
+  // Extract file extension, guarding against content:// URIs and URIs
+  // without a dot-extension (e.g. Android media content URIs where
+  // `.split('.')` returns the whole URI as the single token).
+  const rawExtension = tempUri.split('.').pop()?.split('?')[0] ?? '';
+  const extension = /^[a-zA-Z0-9]{1,6}$/.test(rawExtension) ? rawExtension : 'jpg';
   const filename = `prod_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}.${extension}`;
   const relativePath = `${IMAGE_DIR_NAME}/${filename}`;
   const destinationUri = `${FileSystem.documentDirectory}${relativePath}`;

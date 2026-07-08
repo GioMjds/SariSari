@@ -42,7 +42,7 @@ export const ProductGridItem = React.memo(function ProductGridItem({
   const displayImageUri = getProductImageUri(product.image_uri);
 
   const handlePress = () => {
-    router.push(`/(edit-forms)/edit-product/${product.id}`);
+    router.push(`/(edit-forms)/product-details/${product.id}`);
   };
 
   return (
@@ -68,6 +68,7 @@ export const ProductGridItem = React.memo(function ProductGridItem({
           {displayImageUri ? (
             <Image
               source={{ uri: displayImageUri }}
+              style={{ width: '100%', height: '100%', borderRadius: 16 }}
               className="w-full h-full rounded-t-2xl"
               contentFit="cover"
             />

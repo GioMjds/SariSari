@@ -9,6 +9,7 @@ import { LOW_STOCK_THRESHOLD } from '@/constants';
 import { formatPesos } from '@/lib/money';
 import { Image } from 'expo-image';
 import { getProductImageUri } from '@/lib';
+import { useRouter } from 'expo-router';
 
 interface InventoryRowProps {
   item: Product;
@@ -23,6 +24,7 @@ export const InventoryRow = React.memo(function InventoryRow({
   onRestock,
   onMore,
 }: InventoryRowProps) {
+  const router = useRouter();
   const isOutOfStock = item.quantity === 0;
   const isLowStock = item.quantity > 0 && item.quantity < LOW_STOCK_THRESHOLD;
 
@@ -53,12 +55,13 @@ export const InventoryRow = React.memo(function InventoryRow({
       className="mx-4 mb-3"
     >
       <TouchableOpacity
+        onPress={() => router.push(`/(edit-forms)/product-details/${item.id}`)}
         onLongPress={() => onMore(item)}
         delayLongPress={400}
         activeOpacity={0.9}
         className="active:scale-[0.96] transition-transform duration-100"
         accessibilityRole="button"
-        accessibilityLabel={`${item.name}, ${pillText}, ${subtitle}. Long press for actions.`}
+        accessibilityLabel={`${item.name}, ${pillText}, ${subtitle}. Tap to view details. Long press for actions.`}
       >
         <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-4 flex-row justify-between items-center">
           {/* Left Column: Product Image & Info */}
@@ -68,6 +71,7 @@ export const InventoryRow = React.memo(function InventoryRow({
               {displayImageUri ? (
                 <Image
                   source={{ uri: displayImageUri }}
+                  style={{ width: '100%', height: '100%', borderRadius: 6 }}
                   className="w-full h-full rounded-md"
                   contentFit="cover"
                 />

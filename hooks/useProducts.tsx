@@ -83,17 +83,22 @@ export function useProducts() {
       if (image_uri) {
         permanentImageUri = await saveProductImageLocal(image_uri);
       }
-      return insertProduct(
-        name,
-        sku,
-        price,
-        quantity,
-        cost_price,
-        category,
-        barcode,
-        supplier_id,
-        permanentImageUri,
-      );
+      try {
+        return await insertProduct(
+          name,
+          sku,
+          price,
+          quantity,
+          cost_price,
+          category,
+          barcode,
+          supplier_id,
+          permanentImageUri,
+        );
+      } catch (error) {
+        if (permanentImageUri) await deleteLocalProductImage(permanentImageUri);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
@@ -194,10 +199,11 @@ export function useProducts() {
   const deleteProductMutation = useMutation({
     mutationFn: async (id: number) => {
       const existingProduct = await getProduct(id);
+      const result = await deleteProduct(id);
       if (existingProduct?.image_uri) {
         await deleteLocalProductImage(existingProduct.image_uri);
       }
-      return deleteProduct(id);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });

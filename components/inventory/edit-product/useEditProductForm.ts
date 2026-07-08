@@ -204,6 +204,10 @@ export function useEditProductForm() {
       quantity: product?.quantity || 0,
       cost_price: costPriceValue,
       category: data.category || undefined,
+      // Preserve the existing barcode — the edit form has no barcode field,
+      // so omitting it would cause normalizeBarcode(undefined) → null and
+      // silently wipe whatever barcode was already stored.
+      barcode: product?.barcode ?? null,
       supplier_id: data.supplier_id ? data.supplier_id : null,
       image_uri: data.imageUri ? data.imageUri.trim() : null,
     });
