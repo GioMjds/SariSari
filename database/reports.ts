@@ -62,11 +62,11 @@ export const getReportKPIs = async (
       total_units: number;
     }>(
       `SELECT
-         COALESCE(SUM(si.quantity * (si.price - p.cost_price)), 0) as profit,
-         COALESCE(SUM(si.quantity * p.cost_price), 0) as cogs,
-         COALESCE(SUM(si.quantity * si.price), 0) as revenue,
-         COALESCE(SUM(CASE WHEN p.cost_price IS NOT NULL THEN si.quantity ELSE 0 END), 0) as coverage_units,
-         COALESCE(SUM(si.quantity), 0) as total_units
+         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))), 0) as profit,
+         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * COALESCE(si.cost_price, p.cost_price)), 0) as cogs,
+         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * si.price), 0) as revenue,
+         COALESCE(SUM(CASE WHEN COALESCE(si.cost_price, p.cost_price) IS NOT NULL THEN COALESCE(si.sold_unit_qty, si.quantity) ELSE 0 END), 0) as coverage_units,
+         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity)), 0) as total_units
        FROM sale_items si
        JOIN sales s ON si.sale_id = s.id
        LEFT JOIN products p ON si.product_id = p.id
@@ -136,10 +136,10 @@ export const getSalesOverTime = async (
      sale_profits AS (
        SELECT
          si.sale_id,
-         SUM(si.quantity * (si.price - p.cost_price)) as profit
+         SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))) as profit
        FROM sale_items si
        JOIN products p ON si.product_id = p.id
-       WHERE p.cost_price IS NOT NULL
+       WHERE COALESCE(si.cost_price, p.cost_price) IS NOT NULL
          AND si.sale_id IN (SELECT id FROM filtered_sales)
        GROUP BY si.sale_id
      )
@@ -173,9 +173,9 @@ export const getTopSellingProducts = async (
      product_sales AS (
        SELECT
          si.product_id,
-         SUM(si.quantity) as unitsSold,
-         SUM(si.quantity * si.price) as revenue,
-         SUM(si.quantity * (si.price - p.cost_price)) as profit
+         SUM(COALESCE(si.sold_unit_qty, si.quantity)) as unitsSold,
+         SUM(COALESCE(si.sold_unit_qty, si.quantity) * si.price) as revenue,
+         SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))) as profit
        FROM sale_items si
        LEFT JOIN products p ON si.product_id = p.id
        WHERE si.sale_id IN (SELECT id FROM sales_in_range)
@@ -247,7 +247,7 @@ export const getInventoryMovement = async (
   const [itemsSoldResult, lowStockResult, outOfStockResult] = await Promise.all(
     [
       db.getFirstAsync<{ total: number }>(
-        `SELECT COALESCE(SUM(si.quantity), 0) as total
+        `SELECT COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity)), 0) as total
          FROM sale_items si
          JOIN sales s ON si.sale_id = s.id
          WHERE s.timestamp BETWEEN ? AND ?`,
@@ -346,7 +346,7 @@ export const getSlowMovingProducts = async (
        SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
      ),
      product_sales AS (
-       SELECT product_id, SUM(quantity) as quantity_sold
+       SELECT product_id, SUM(COALESCE(sold_unit_qty, quantity)) as quantity_sold
        FROM sale_items
        WHERE sale_id IN (SELECT id FROM sales_in_range)
        GROUP BY product_id
@@ -483,13 +483,13 @@ export const getProductProfitability = async (
      product_sales AS (
        SELECT
          si.product_id,
-         SUM(si.quantity * si.price) as totalRevenue,
-         SUM(si.quantity * (si.price - p.cost_price)) as totalProfit,
-         SUM(si.quantity) as unitsSold,
-         AVG(si.price - p.cost_price) as profitPerUnit
+         SUM(COALESCE(si.sold_unit_qty, si.quantity) * si.price) as totalRevenue,
+         SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))) as totalProfit,
+         SUM(COALESCE(si.sold_unit_qty, si.quantity)) as unitsSold,
+         AVG(si.price - COALESCE(si.cost_price, p.cost_price)) as profitPerUnit
        FROM sale_items si
        JOIN products p ON si.product_id = p.id
-       WHERE p.cost_price IS NOT NULL
+       WHERE COALESCE(si.cost_price, p.cost_price) IS NOT NULL
          AND si.sale_id IN (SELECT id FROM sales_in_range)
        GROUP BY si.product_id
      )
@@ -533,7 +533,7 @@ export const getReportInsights = async (
         name: string;
         quantity: number;
       }>(
-        `SELECT p.name, SUM(si.quantity) as quantity
+        `SELECT p.name, SUM(COALESCE(si.sold_unit_qty, si.quantity)) as quantity
          FROM products p
          JOIN sale_items si ON p.id = si.product_id
          JOIN sales s ON si.sale_id = s.id
