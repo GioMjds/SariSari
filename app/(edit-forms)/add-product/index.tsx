@@ -52,7 +52,7 @@ export default function AddProduct() {
           <View className="my-3 border-t border-dashed border-ink-300" />
 
           <PricingProfitCard
-            control={form.control}
+            control={form.control as any}
             costPerPiece={form.costPerPiece}
             price={form.price}
             useBundlePricing={form.useBundlePricing}
@@ -66,6 +66,17 @@ export default function AddProduct() {
             hasCost={!!form.costPerPiece && form.costPerPiece !== '0.00'}
             hasPrice={!!form.price && form.price !== '0.00'}
             priceInputRef={form.priceInputRef}
+            enableWholesale={form.enableWholesale}
+            onToggleWholesale={() =>
+              form.setValue('enableWholesale', !form.enableWholesale, {
+                shouldDirty: true,
+              })
+            }
+            retailUnitName={form.retailUnitName}
+            wholesaleUnitName={form.wholesaleUnitName}
+            conversionFactor={form.conversionFactor}
+            wholesalePrice={form.wholesalePrice}
+            wholesaleCostPrice={form.wholesaleCostPrice}
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />

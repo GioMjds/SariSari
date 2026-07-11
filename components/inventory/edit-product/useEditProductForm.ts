@@ -22,6 +22,13 @@ export interface EditProductFormData {
   category: string;
   supplier_id: string;
   imageUri: string;
+  enableWholesale: boolean;
+  retailUnitName: string;
+  wholesaleUnitName: string;
+  conversionFactor: string;
+  wholesalePrice: string;
+  wholesaleCostPrice: string;
+  wholesaleBarcode: string;
 }
 
 /**
@@ -69,6 +76,13 @@ export function useEditProductForm() {
       category: '',
       supplier_id: '',
       imageUri: '',
+      enableWholesale: false,
+      retailUnitName: 'Pc',
+      wholesaleUnitName: 'Case',
+      conversionFactor: '12',
+      wholesalePrice: '',
+      wholesaleCostPrice: '',
+      wholesaleBarcode: '',
     },
     values: product
       ? {
@@ -79,6 +93,13 @@ export function useEditProductForm() {
           category: product.category || '',
           supplier_id: product.supplier_id || '',
           imageUri: product.image_uri || '',
+          enableWholesale: !!(product.wholesale_unit_name && product.conversion_factor && product.conversion_factor > 1),
+          retailUnitName: product.retail_unit_name || 'Pc',
+          wholesaleUnitName: product.wholesale_unit_name || 'Case',
+          conversionFactor: product.conversion_factor ? product.conversion_factor.toString() : '12',
+          wholesalePrice: product.wholesale_price ? product.wholesale_price.toString() : '',
+          wholesaleCostPrice: product.wholesale_cost_price ? product.wholesale_cost_price.toString() : '',
+          wholesaleBarcode: product.wholesale_barcode || '',
         }
       : undefined,
   });
@@ -89,6 +110,13 @@ export function useEditProductForm() {
   const category = watch('category');
   const supplierId = watch('supplier_id');
   const imageUri = watch('imageUri');
+  const enableWholesale = watch('enableWholesale');
+  const retailUnitName = watch('retailUnitName');
+  const wholesaleUnitName = watch('wholesaleUnitName');
+  const conversionFactor = watch('conversionFactor');
+  const wholesalePrice = watch('wholesalePrice');
+  const wholesaleCostPrice = watch('wholesaleCostPrice');
+  const wholesaleBarcode = watch('wholesaleBarcode');
 
   // ─── Derived values ────────────────────────────────────────────
 
@@ -105,7 +133,28 @@ export function useEditProductForm() {
       price !== product.price.toString() ||
       category !== (product.category || '') ||
       supplierId !== (product.supplier_id || '') ||
-      imageUri !== (product.image_uri || ''));
+      imageUri !== (product.image_uri || '') ||
+      enableWholesale !==
+        !!(
+          product.wholesale_unit_name &&
+          product.conversion_factor &&
+          product.conversion_factor > 1
+        ) ||
+      retailUnitName !== (product.retail_unit_name || 'Pc') ||
+      wholesaleUnitName !== (product.wholesale_unit_name || 'Case') ||
+      conversionFactor !==
+        (product.conversion_factor
+          ? product.conversion_factor.toString()
+          : '12') ||
+      wholesalePrice !==
+        (product.wholesale_price
+          ? product.wholesale_price.toString()
+          : '') ||
+      wholesaleCostPrice !==
+        (product.wholesale_cost_price
+          ? product.wholesale_cost_price.toString()
+          : '') ||
+      wholesaleBarcode !== (product.wholesale_barcode || ''));
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the pricing card hides the preview in that case.
@@ -196,6 +245,14 @@ export function useEditProductForm() {
       throw new Error('Cost price must be less than selling price');
     }
 
+    const enableWholesaleVal = data.enableWholesale;
+    const retailUnitNameVal = data.retailUnitName.trim() || 'Pc';
+    const wholesaleUnitNameVal = enableWholesaleVal ? (data.wholesaleUnitName.trim() || null) : null;
+    const conversionFactorNum = enableWholesaleVal && data.conversionFactor ? parseInt(data.conversionFactor, 10) : null;
+    const wholesalePriceVal = enableWholesaleVal && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null;
+    const wholesaleCostVal = enableWholesaleVal && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null;
+    const wholesaleBarcodeVal = enableWholesaleVal && data.wholesaleBarcode ? data.wholesaleBarcode.trim() || null : null;
+
     updateProductMutation.mutate({
       id: productId,
       name: data.name.trim(),
@@ -210,6 +267,12 @@ export function useEditProductForm() {
       barcode: product?.barcode ?? null,
       supplier_id: data.supplier_id ? data.supplier_id : null,
       image_uri: data.imageUri ? data.imageUri.trim() : null,
+      retail_unit_name: retailUnitNameVal,
+      wholesale_unit_name: wholesaleUnitNameVal,
+      wholesale_price: wholesalePriceVal,
+      wholesale_cost_price: wholesaleCostVal,
+      conversion_factor: conversionFactorNum && Number.isFinite(conversionFactorNum) && conversionFactorNum >= 2 ? conversionFactorNum : null,
+      wholesale_barcode: wholesaleBarcodeVal,
     });
   });
 
@@ -240,6 +303,13 @@ export function useEditProductForm() {
     price,
     category,
     supplierId,
+    enableWholesale,
+    retailUnitName,
+    wholesaleUnitName,
+    conversionFactor,
+    wholesalePrice,
+    wholesaleCostPrice,
+    wholesaleBarcode,
 
     // Local UI state
     showDiscardModal,

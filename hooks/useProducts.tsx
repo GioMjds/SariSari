@@ -75,6 +75,12 @@ export function useProducts() {
       barcode,
       supplier_id,
       image_uri,
+      retail_unit_name,
+      wholesale_unit_name,
+      wholesale_price,
+      wholesale_cost_price,
+      conversion_factor,
+      wholesale_barcode,
     }: InsertProductParams) => {
       let permanentImageUri: string | null = null;
       if (image_uri) {
@@ -91,6 +97,12 @@ export function useProducts() {
           barcode,
           supplier_id,
           permanentImageUri,
+          retail_unit_name,
+          wholesale_unit_name,
+          wholesale_price,
+          wholesale_cost_price,
+          conversion_factor,
+          wholesale_barcode,
         );
       } catch (error) {
         if (permanentImageUri) await deleteLocalProductImage(permanentImageUri);
@@ -136,6 +148,12 @@ export function useProducts() {
       barcode,
       supplier_id,
       image_uri,
+      retail_unit_name,
+      wholesale_unit_name,
+      wholesale_price,
+      wholesale_cost_price,
+      conversion_factor,
+      wholesale_barcode,
     }: UpdateProductParams) => {
       const existingProduct = await getProduct(id);
       let finalImageUri = existingProduct?.image_uri || null;
@@ -161,6 +179,12 @@ export function useProducts() {
         barcode,
         supplier_id,
         finalImageUri,
+        retail_unit_name,
+        wholesale_unit_name,
+        wholesale_price,
+        wholesale_cost_price,
+        conversion_factor,
+        wholesale_barcode,
       );
     },
     onSuccess: (_, variables) => {

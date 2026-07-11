@@ -2,7 +2,6 @@ export * from './useBackup';
 export * from './useBarcodeResolver';
 export * from './useCategories';
 export * from './useCredits';
-export * from './useFindProductByBarcode';
 export * from './useInventory';
 export * from './useProducts';
 export * from './useProfile';

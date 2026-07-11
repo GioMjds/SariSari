@@ -26,6 +26,10 @@ export const initSalesTables = async () => {
       product_id INTEGER NOT NULL,
       quantity INTEGER NOT NULL,
       price INTEGER NOT NULL,
+      sold_unit_name TEXT,
+      sold_unit_qty INTEGER,
+      conversion_factor INTEGER,
+      cost_price INTEGER,
       FOREIGN KEY (sale_id) REFERENCES sales(id),
       FOREIGN KEY (product_id) REFERENCES products(id)
     );
@@ -51,6 +55,16 @@ export class InsufficientStockError extends Error {
   }
 }
 
+export interface InsertSaleItemInput {
+  product_id: number;
+  quantity: number;
+  price: number;
+  selected_unit?: 'retail' | 'wholesale';
+  sold_unit_name?: string;
+  sold_unit_qty?: number;
+  conversion_factor?: number | null;
+}
+
 /**
  * Insert a sale, its items, the stock deductions, the inventory movement
  * history, and (for credit sales) the utang ledger entry — all inside a
@@ -62,7 +76,7 @@ export class InsufficientStockError extends Error {
  * again with a fresh read inside the transaction (we do that here).
  */
 export const insertSale = async (
-  items: { product_id: number; quantity: number; price: number }[],
+  items: InsertSaleItemInput[],
   payment_type: 'cash' | 'credit' = 'cash',
   customer_name?: string,
   customer_credit_id?: number,
@@ -85,21 +99,36 @@ export const insertSale = async (
     // 1. Re-read each product's quantity inside the transaction so we can
     //    fail fast on a stale optimistic cache from the caller.
     for (const item of items) {
-      const row = await db.getFirstAsync<{ quantity: number }>(
-        'SELECT quantity FROM products WHERE id = ?',
+      const productRow = await db.getFirstAsync<{
+        quantity: number;
+        cost_price: number | null;
+        wholesale_cost_price: number | null;
+        retail_unit_name: string;
+        wholesale_unit_name: string | null;
+        conversion_factor: number | null;
+      }>(
+        'SELECT quantity, cost_price, wholesale_cost_price, retail_unit_name, wholesale_unit_name, conversion_factor FROM products WHERE id = ?',
         [item.product_id],
       );
-      const available = row?.quantity ?? 0;
+      const available = productRow?.quantity ?? 0;
       if (item.quantity <= 0) {
         throw new Error(
           `Invalid quantity for product ${item.product_id}: ${item.quantity}`,
         );
       }
-      if (available < item.quantity) {
+      const isWholesale =
+        item.selected_unit === 'wholesale' &&
+        productRow?.conversion_factor != null &&
+        productRow.conversion_factor >= 2;
+      const piecesRequired = isWholesale
+        ? item.quantity * productRow!.conversion_factor!
+        : item.quantity;
+
+      if (available < piecesRequired) {
         throw new InsufficientStockError(
           item.product_id,
           available,
-          item.quantity,
+          piecesRequired,
         );
       }
     }
@@ -121,19 +150,59 @@ export const insertSale = async (
     //    movement. Doing them in this order keeps the audit trail consistent:
     //    if any line fails the whole transaction rolls back.
     for (const item of items) {
+      const productRow = await db.getFirstAsync<{
+        cost_price: number | null;
+        wholesale_cost_price: number | null;
+        retail_unit_name: string;
+        wholesale_unit_name: string | null;
+        conversion_factor: number | null;
+      }>(
+        'SELECT cost_price, wholesale_cost_price, retail_unit_name, wholesale_unit_name, conversion_factor FROM products WHERE id = ?',
+        [item.product_id],
+      );
+
+      const isWholesale =
+        item.selected_unit === 'wholesale' &&
+        productRow?.conversion_factor != null &&
+        productRow.conversion_factor >= 2;
+      const piecesDeducted = isWholesale
+        ? item.quantity * productRow!.conversion_factor!
+        : item.quantity;
+      const soldUnitName =
+        item.sold_unit_name ||
+        (isWholesale
+          ? productRow?.wholesale_unit_name || 'Case'
+          : productRow?.retail_unit_name || 'Pc');
+      const soldUnitQty = item.sold_unit_qty ?? item.quantity;
+      const conversionFactor = isWholesale ? productRow?.conversion_factor : null;
+      const costPriceSnapshot = isWholesale
+        ? productRow?.wholesale_cost_price ?? null
+        : productRow?.cost_price ?? null;
+
       await db.runAsync(
-        'INSERT INTO sale_items (sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?)',
-        [saleId, item.product_id, item.quantity, item.price],
+        `INSERT INTO sale_items (
+          sale_id, product_id, quantity, price, sold_unit_name, sold_unit_qty, conversion_factor, cost_price
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          saleId,
+          item.product_id,
+          piecesDeducted,
+          item.price,
+          soldUnitName,
+          soldUnitQty,
+          conversionFactor ?? null,
+          costPriceSnapshot ?? null,
+        ],
       );
 
       await db.runAsync(
         'UPDATE products SET quantity = quantity - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [item.quantity, item.product_id],
+        [piecesDeducted, item.product_id],
       );
 
       await db.runAsync(
         'INSERT INTO inventory_transactions (product_id, type, quantity) VALUES (?, ?, ?)',
-        [item.product_id, 'sale', item.quantity],
+        [item.product_id, 'sale', piecesDeducted],
       );
     }
 

@@ -2,6 +2,10 @@ import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
 
 export const initProductsTable = async () => {
+  // The CREATE TABLE block is the authoritative schema for fresh DBs. On
+  // an existing pre-v9 DB it is a no-op (table already exists at the old
+  // schema), so v9-only columns are missing — which is fine, the v9
+  // migration in database/migrations.ts will ALTER them in.
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,13 +15,40 @@ export const initProductsTable = async () => {
       cost_price INTEGER,
       quantity INTEGER NOT NULL DEFAULT 0,
       category TEXT,
+      barcode TEXT,
       image_uri TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      retail_unit_name TEXT NOT NULL DEFAULT 'Pc',
+      wholesale_unit_name TEXT,
+      wholesale_price INTEGER,
+      wholesale_cost_price INTEGER,
+      conversion_factor INTEGER,
+      wholesale_barcode TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
   `);
+
+  // The wholesale_barcode partial unique index depends on the v9 column.
+  // On a fresh DB the column was just added by CREATE TABLE above; on a
+  // pre-v9 DB the column is still missing. Creating the index on the old
+  // table throws "no such column: wholesale_barcode", which would fail
+  // the whole init block in configs/startup.ts and prevent the v9
+  // migration from ever running. Probe first; the v9 migration creates
+  // the index on the upgrade path.
+  const productColumns = await db.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(products)',
+  );
+  const hasWholesaleBarcode = productColumns.some(
+    (c) => c.name === 'wholesale_barcode',
+  );
+  if (hasWholesaleBarcode) {
+    await db.execAsync(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;',
+    );
+  }
 };
 
 /**
@@ -32,7 +63,7 @@ export class BarcodeAlreadyExistsError extends Error {
   existing: Product;
   constructor(existing: Product) {
     super(
-      `Barcode ${existing.barcode ?? existing.sku} is already used by product ${existing.id} (${existing.name}).`,
+      `Barcode ${existing.barcode ?? existing.wholesale_barcode ?? existing.sku} is already used by product ${existing.id} (${existing.name}).`,
     );
     this.name = 'BarcodeAlreadyExistsError';
     this.existing = existing;
@@ -52,7 +83,9 @@ function isUniqueBarcodeError(err: unknown): boolean {
   const message = anyErr.message ?? '';
   return (
     message.includes('UNIQUE constraint failed: products.barcode') ||
-    message.includes('idx_products_barcode')
+    message.includes('idx_products_barcode') ||
+    message.includes('UNIQUE constraint failed: products.wholesale_barcode') ||
+    message.includes('idx_products_wholesale_barcode')
   );
 }
 
@@ -67,6 +100,26 @@ function normalizeBarcode(barcode?: string | null): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+async function checkBarcodeCollision(
+  barcode: string | null,
+  wholesaleBarcode: string | null,
+  excludeId?: number,
+): Promise<void> {
+  if (barcode && wholesaleBarcode && barcode === wholesaleBarcode) {
+    throw new Error('Retail barcode and wholesale barcode must be different.');
+  }
+
+  const toCheck = [barcode, wholesaleBarcode].filter(
+    (b): b is string => b != null && b.length > 0,
+  );
+  for (const b of toCheck) {
+    const existing = await getProductByBarcode(b);
+    if (existing && existing.id !== excludeId) {
+      throw new BarcodeAlreadyExistsError(existing);
+    }
+  }
+}
+
 export const insertProduct = async (
   name: string,
   sku: string,
@@ -77,20 +130,44 @@ export const insertProduct = async (
   barcode?: string | null,
   supplier_id?: string | null,
   image_uri?: string | null,
+  retail_unit_name: string = 'Pc',
+  wholesale_unit_name?: string | null,
+  wholesale_price?: number | null,
+  wholesale_cost_price?: number | null,
+  conversion_factor?: number | null,
+  wholesale_barcode?: string | null,
 ): Promise<number> => {
-  // The products table owns `quantity` as the source of truth, but the
-  // inventory_transactions table is the audit log. Every stock change —
-  // including initial stock at product creation — must land in both
-  // tables inside the same transaction, so the column and the ledger
-  // never disagree.
-  let productId = 0;
   const normalizedBarcode = normalizeBarcode(barcode);
+  const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
+
+  await checkBarcodeCollision(normalizedBarcode, normalizedWholesaleBarcode);
+
+  let productId = 0;
 
   try {
     await db.withTransactionAsync(async () => {
       const result = await db.runAsync(
-        'INSERT INTO products (name, sku, price, quantity, cost_price, category, barcode, supplier_id, image_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode, supplier_id ?? null, image_uri ?? null],
+        `INSERT INTO products (
+          name, sku, price, quantity, cost_price, category, barcode, supplier_id, image_uri,
+          retail_unit_name, wholesale_unit_name, wholesale_price, wholesale_cost_price, conversion_factor, wholesale_barcode
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          name,
+          sku,
+          price,
+          quantity,
+          cost_price ?? null,
+          category ?? null,
+          normalizedBarcode,
+          supplier_id ?? null,
+          image_uri ?? null,
+          retail_unit_name || 'Pc',
+          wholesale_unit_name ?? null,
+          wholesale_price ?? null,
+          wholesale_cost_price ?? null,
+          conversion_factor ?? null,
+          normalizedWholesaleBarcode,
+        ],
       );
       productId = result.lastInsertRowId;
 
@@ -102,11 +179,14 @@ export const insertProduct = async (
       }
     });
   } catch (err) {
-    if (isUniqueBarcodeError(err) && normalizedBarcode != null) {
-      // Fetch the conflicting row outside the failed transaction so the
-      // typed error can carry it.
-      const existing = await getProductByBarcode(normalizedBarcode);
-      if (existing) throw new BarcodeAlreadyExistsError(existing);
+    if (isUniqueBarcodeError(err)) {
+      const toCheck = [normalizedBarcode, normalizedWholesaleBarcode].filter(
+        (b): b is string => b != null,
+      );
+      for (const b of toCheck) {
+        const existing = await getProductByBarcode(b);
+        if (existing) throw new BarcodeAlreadyExistsError(existing);
+      }
     }
     throw err;
   }
@@ -125,23 +205,48 @@ export const updateProduct = async (
   barcode?: string | null,
   supplier_id?: string | null,
   image_uri?: string | null,
+  retail_unit_name: string = 'Pc',
+  wholesale_unit_name?: string | null,
+  wholesale_price?: number | null,
+  wholesale_cost_price?: number | null,
+  conversion_factor?: number | null,
+  wholesale_barcode?: string | null,
 ) => {
   const normalizedBarcode = normalizeBarcode(barcode);
+  const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
+
+  await checkBarcodeCollision(normalizedBarcode, normalizedWholesaleBarcode, id);
 
   try {
-    // Same pattern as insert: read the current quantity inside the
-    // transaction, compute the delta, write the column update and the
-    // inventory movement together. If the caller is changing quantity,
-    // the audit log gets a row; if they only changed name/price/etc.,
-    // no movement row is written.
     await db.withTransactionAsync(async () => {
       const current = await db.getFirstAsync<{ quantity: number }>(
         'SELECT quantity FROM products WHERE id = ?',
         [id],
       );
       await db.runAsync(
-        'UPDATE products SET name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, barcode = ?, supplier_id = ?, image_uri = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, sku, price, quantity, cost_price ?? null, category ?? null, normalizedBarcode, supplier_id ?? null, image_uri ?? null, id],
+        `UPDATE products SET
+          name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, barcode = ?, supplier_id = ?, image_uri = ?,
+          retail_unit_name = ?, wholesale_unit_name = ?, wholesale_price = ?, wholesale_cost_price = ?, conversion_factor = ?, wholesale_barcode = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?`,
+        [
+          name,
+          sku,
+          price,
+          quantity,
+          cost_price ?? null,
+          category ?? null,
+          normalizedBarcode,
+          supplier_id ?? null,
+          image_uri ?? null,
+          retail_unit_name || 'Pc',
+          wholesale_unit_name ?? null,
+          wholesale_price ?? null,
+          wholesale_cost_price ?? null,
+          conversion_factor ?? null,
+          normalizedWholesaleBarcode,
+          id,
+        ],
       );
       if (current && current.quantity !== quantity) {
         const delta = quantity - current.quantity;
@@ -152,10 +257,15 @@ export const updateProduct = async (
       }
     });
   } catch (err) {
-    if (isUniqueBarcodeError(err) && normalizedBarcode != null) {
-      const existing = await getProductByBarcode(normalizedBarcode);
-      if (existing && existing.id !== id) {
-        throw new BarcodeAlreadyExistsError(existing);
+    if (isUniqueBarcodeError(err)) {
+      const toCheck = [normalizedBarcode, normalizedWholesaleBarcode].filter(
+        (b): b is string => b != null,
+      );
+      for (const b of toCheck) {
+        const existing = await getProductByBarcode(b);
+        if (existing && existing.id !== id) {
+          throw new BarcodeAlreadyExistsError(existing);
+        }
       }
     }
     throw err;
@@ -186,18 +296,12 @@ export const getProductBySku = async (sku: string): Promise<Product | null> => {
   return result || null;
 };
 
-/**
- * Look up a product by its printed barcode (the v5 column). Returns
- * `null` for legacy rows where the SKU doubles as the barcode — those
- * rows have `barcode IS NULL` and must be resolved via
- * `getProductBySku`. The POS resolver composes both lookups in order.
- */
 export const getProductByBarcode = async (
   barcode: string,
 ): Promise<Product | null> => {
   const result = await db.getFirstAsync<Product>(
-    'SELECT * FROM products WHERE barcode = ? LIMIT 1',
-    [barcode],
+    'SELECT * FROM products WHERE barcode = ? OR wholesale_barcode = ? LIMIT 1',
+    [barcode, barcode],
   );
   return result || null;
 };

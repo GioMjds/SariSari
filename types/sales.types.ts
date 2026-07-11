@@ -19,6 +19,10 @@ export interface SaleItem {
   product_id: number;
   quantity: number;
   price: number;
+  sold_unit_name?: string | null;
+  sold_unit_qty?: number | null;
+  conversion_factor?: number | null;
+  cost_price?: number | null;
 }
 
 export interface SaleWithDetails extends Sale {
@@ -52,6 +56,14 @@ export interface NewSaleItem {
   price: number;
   quantity: number;
   stock: number;
+  selected_unit?: 'retail' | 'wholesale';
+  retail_unit_name?: string;
+  wholesale_unit_name?: string | null;
+  retail_price?: number;
+  wholesale_price?: number | null;
+  conversion_factor?: number | null;
+  sold_unit_name?: string;
+  sold_unit_qty?: number;
 }
 
 export interface NewSale {
@@ -76,6 +88,10 @@ export interface InsertSale {
     product_id: number;
     quantity: number;
     price: number;
+    selected_unit?: 'retail' | 'wholesale';
+    sold_unit_name?: string;
+    sold_unit_qty?: number;
+    conversion_factor?: number | null;
   }[];
   payment_type: 'cash' | 'credit';
   customer_name?: string;
@@ -89,6 +105,10 @@ export interface InsertSaleParams {
     product_id: number;
     quantity: number;
     price: number;
+    selected_unit?: 'retail' | 'wholesale';
+    sold_unit_name?: string;
+    sold_unit_qty?: number;
+    conversion_factor?: number | null;
   }[];
   payment_type: 'cash' | 'credit';
   customer_name?: string;

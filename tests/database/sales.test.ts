@@ -10,6 +10,7 @@ import {
 	initSalesTables,
 	insertSale,
 	getSale,
+	getSaleItems,
 	deleteSale,
 	getRecentSales,
 	hasSales,
@@ -143,5 +144,53 @@ describe('Sales Database (credit-sale round-trip)', () => {
 
 		const finalHasSales = await hasSales();
 		expect(finalHasSales).toBe(false);
+	});
+
+	test('insertSale with wholesale unit deducts conversion_factor pieces and records snapshot', async () => {
+		const wholesaleProdId = await insertProduct(
+			'Coke Case Product',
+			'COK-CASE-TEST',
+			60, // retail price ₱60
+			30, // 30 pieces stock
+			50, // retail cost ₱50
+			'Beverages',
+			null,
+			null,
+			null,
+			'Bottle',
+			'Case',
+			660, // wholesale price ₱660
+			600, // wholesale cost ₱600
+			12 // 12 bottles / case
+		);
+
+		const saleId = await insertSale(
+			[
+				{
+					product_id: wholesaleProdId,
+					quantity: 2, // 2 Cases sold
+					price: 660, // ₱660 per case
+					selected_unit: 'wholesale',
+					sold_unit_name: 'Case',
+					sold_unit_qty: 2,
+					conversion_factor: 12,
+				},
+			],
+			'cash'
+		);
+
+		// Verify stock reduced by 2 * 12 = 24 base pieces (30 -> 6)
+		const productAfter = await getProduct(wholesaleProdId);
+		expect(productAfter?.quantity).toBe(6);
+
+		// Verify sale item snapshot
+		const saleItems = await getSaleItems(saleId);
+		expect(saleItems.length).toBe(1);
+		expect(saleItems[0].quantity).toBe(24); // base pieces deducted
+		expect(saleItems[0].price).toBe(660);
+		expect(saleItems[0].sold_unit_name).toBe('Case');
+		expect(saleItems[0].sold_unit_qty).toBe(2);
+		expect(saleItems[0].conversion_factor).toBe(12);
+		expect(saleItems[0].cost_price).toBe(600); // wholesale cost snapshot
 	});
 });

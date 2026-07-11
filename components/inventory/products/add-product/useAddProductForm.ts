@@ -37,6 +37,13 @@ export interface AddProductFormData {
   initialStock: string;
   supplierId: string;
   imageUri: string;
+  enableWholesale: boolean;
+  retailUnitName: string;
+  wholesaleUnitName: string;
+  conversionFactor: string;
+  wholesalePrice: string;
+  wholesaleCostPrice: string;
+  wholesaleBarcode: string;
 }
 
 /**
@@ -109,6 +116,13 @@ export function useAddProductForm() {
       initialStock: '',
       supplierId: '',
       imageUri: '',
+      enableWholesale: false,
+      retailUnitName: 'Pc',
+      wholesaleUnitName: 'Case',
+      conversionFactor: '12',
+      wholesalePrice: '',
+      wholesaleCostPrice: '',
+      wholesaleBarcode: '',
     },
   });
 
@@ -123,6 +137,13 @@ export function useAddProductForm() {
   const category = watch('category');
   const supplierId = watch('supplierId');
   const imageUri = watch('imageUri');
+  const enableWholesale = watch('enableWholesale');
+  const retailUnitName = watch('retailUnitName');
+  const wholesaleUnitName = watch('wholesaleUnitName');
+  const conversionFactor = watch('conversionFactor');
+  const wholesalePrice = watch('wholesalePrice');
+  const wholesaleCostPrice = watch('wholesaleCostPrice');
+  const wholesaleBarcode = watch('wholesaleBarcode');
 
   // ─── Derived display values ────────────────────────────────────
 
@@ -140,7 +161,14 @@ export function useAddProductForm() {
       safeTrim(sku) !== '' ||
       safeTrim(barcode) !== '' ||
       safeTrim(supplierId) !== '' ||
-      safeTrim(imageUri) !== '');
+      safeTrim(imageUri) !== '' ||
+      enableWholesale ||
+      safeTrim(retailUnitName) !== 'Pc' ||
+      safeTrim(wholesaleUnitName) !== 'Case' ||
+      safeTrim(conversionFactor) !== '12' ||
+      safeTrim(wholesalePrice) !== '' ||
+      safeTrim(wholesaleCostPrice) !== '' ||
+      safeTrim(wholesaleBarcode) !== '');
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the profit card hides itself in that case.
@@ -421,6 +449,14 @@ export function useAddProductForm() {
       : undefined;
     const trimmedBarcode = safeTrim(data.barcode);
 
+    const enableWholesale = data.enableWholesale;
+    const retailUnitName = safeTrim(data.retailUnitName) || 'Pc';
+    const wholesaleUnitName = enableWholesale ? (safeTrim(data.wholesaleUnitName) || null) : null;
+    const conversionFactorNum = enableWholesale && data.conversionFactor ? parseInt(data.conversionFactor, 10) : null;
+    const wholesalePriceVal = enableWholesale && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null;
+    const wholesaleCostVal = enableWholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null;
+    const wholesaleBarcodeVal = enableWholesale && safeTrim(data.wholesaleBarcode) ? safeTrim(data.wholesaleBarcode) : null;
+
     insertProductMutation.mutate(
       {
         name: safeTrim(data.productName),
@@ -432,6 +468,12 @@ export function useAddProductForm() {
         category: safeTrim(data.category) || undefined,
         supplier_id: data.supplierId ? data.supplierId : null,
         image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
+        retail_unit_name: retailUnitName,
+        wholesale_unit_name: wholesaleUnitName,
+        wholesale_price: wholesalePriceVal,
+        wholesale_cost_price: wholesaleCostVal,
+        conversion_factor: conversionFactorNum && Number.isFinite(conversionFactorNum) && conversionFactorNum >= 2 ? conversionFactorNum : null,
+        wholesale_barcode: wholesaleBarcodeVal,
       },
       {
         onSuccess: () => {
@@ -455,6 +497,13 @@ export function useAddProductForm() {
     initialStock,
     category,
     supplierId,
+    enableWholesale,
+    retailUnitName,
+    wholesaleUnitName,
+    conversionFactor,
+    wholesalePrice,
+    wholesaleCostPrice,
+    wholesaleBarcode,
 
     // Domain data
     categories,

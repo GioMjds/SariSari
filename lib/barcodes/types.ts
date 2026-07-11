@@ -18,7 +18,8 @@ export type ScanResolution =
   | {
       kind: 'resolved';
       product: Product;
-      source: 'barcode' | 'sku';
+      source: 'barcode' | 'sku' | 'wholesale_barcode';
+      matchedUnit: 'retail' | 'wholesale';
     }
   | {
       kind: 'missing';

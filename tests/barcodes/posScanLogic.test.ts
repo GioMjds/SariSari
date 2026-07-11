@@ -31,6 +31,12 @@ const products: Product[] = [
     cost_price: undefined,
     quantity: 10,
     category: 'Beverages',
+    retail_unit_name: 'Can',
+    wholesale_unit_name: 'Case',
+    wholesale_price: 16500,
+    wholesale_cost_price: 15000,
+    conversion_factor: 12,
+    wholesale_barcode: '8888000011112',
     created_at: '2026-06-30 00:00:00',
     updated_at: '2026-06-30 00:00:00',
   },
@@ -100,6 +106,23 @@ describe('applyBarcodeToPosCart', () => {
       expect(result.product.id).toBe(3);
       expect(result.source).toBe('sku');
     }
+  });
+
+  test('matches wholesale_barcode and returns source: wholesale_barcode and matchedUnit: wholesale', () => {
+    const res = applyBarcodeToPosCart({
+      barcode: '8888000011112',
+      products,
+      lastScan: null,
+      now: 1000,
+    });
+
+    expect(res).toEqual({
+      kind: 'add',
+      product: products[0],
+      source: 'wholesale_barcode',
+      matchedUnit: 'wholesale',
+      lastScan: { barcode: '8888000011112', at: 1000 },
+    });
   });
 
   test('first scan of an unknown value → kind: missing', () => {

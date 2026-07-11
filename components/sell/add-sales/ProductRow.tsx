@@ -10,34 +10,30 @@ import { getProductImageUri } from '@/lib';
 interface ProductRowProps {
   product: Product;
   cartLine: NewSaleItem | undefined;
-  onAdd: (product: Product) => void;
-  onUpdateQuantity: (productId: number, delta: number) => void;
+  onAdd: (product: Product, selectedUnit?: 'retail' | 'wholesale') => void;
+  onUpdateQuantity: (
+    productId: number,
+    delta: number,
+    selectedUnit?: 'retail' | 'wholesale',
+  ) => void;
+  onToggleUnit?: (productId: number) => void;
 }
 
 /**
  * ProductRow — a resibo-style "torn paper stub" for each catalog item.
- *
- * Layout (top → bottom):
- *   • Perforated edge (top)
- *   • Header row: product name (h2) + SKU mono stamp
- *   • Dotted divider
- *   • Body row: price (oversize MoneyText) on the left, stock dot +
- *     count on the right. When the item is in the cart, the body
- *     swaps to a centered stamp-style stepper.
- *   • Perforated edge (bottom)
- *
- * The card itself is disabled (with paper-texture desaturated via
- * opacity) when the product is out of stock.
  */
 export function ProductRow({
   product,
   cartLine,
   onAdd,
   onUpdateQuantity,
+  onToggleUnit,
 }: ProductRowProps) {
   const isOutOfStock = product.quantity <= 0;
   const isLowStock = !isOutOfStock && product.quantity <= 5;
   const inCart = !!cartLine;
+  const activeUnit = cartLine?.selected_unit || 'retail';
+  const displayPrice = inCart ? cartLine!.price : product.price;
 
   // Stock dot color: red-600 / orange-600 / sage-500.
   const dotColor = isOutOfStock
@@ -126,19 +122,81 @@ export function ProductRow({
         {/* Dotted divider */}
         <View className="divider-dotted-thin mb-3" />
 
+        {product.wholesale_price != null &&
+          product.conversion_factor != null &&
+          product.conversion_factor >= 2 && (
+            <View className="flex-row items-center mb-3 bg-paper-100 rounded-xl p-1 border border-ink-100">
+              <Pressable
+                onPress={() => {
+                  if (inCart && cartLine?.selected_unit !== 'retail') {
+                    onToggleUnit?.(product.id);
+                  } else if (!inCart) {
+                    onAdd(product, 'retail');
+                  }
+                }}
+                className={`flex-1 py-1.5 rounded-lg items-center ${
+                  !inCart || cartLine?.selected_unit === 'retail'
+                    ? 'bg-cinnamon-500 border border-cinnamon-600'
+                    : ''
+                }`}
+              >
+                <StyledText
+                  variant="extrabold"
+                  className={`text-xs ${
+                    !inCart || cartLine?.selected_unit === 'retail'
+                      ? 'text-paper-50'
+                      : 'text-ink-700'
+                  }`}
+                >
+                  Tingi ({product.retail_unit_name || 'Pc'})
+                </StyledText>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  if (inCart && cartLine?.selected_unit !== 'wholesale') {
+                    onToggleUnit?.(product.id);
+                  } else if (!inCart) {
+                    onAdd(product, 'wholesale');
+                  }
+                }}
+                className={`flex-1 py-1.5 rounded-lg items-center ${
+                  inCart && cartLine?.selected_unit === 'wholesale'
+                    ? 'bg-cinnamon-500 border border-cinnamon-600'
+                    : ''
+                }`}
+              >
+                <StyledText
+                  variant="extrabold"
+                  className={`text-xs ${
+                    inCart && cartLine?.selected_unit === 'wholesale'
+                      ? 'text-paper-50'
+                      : 'text-ink-700'
+                  }`}
+                >
+                  Pakyaw ({product.wholesale_unit_name || 'Case'})
+                </StyledText>
+              </Pressable>
+            </View>
+          )}
+
         {/* Body: price + stock indicator (or stepper when in cart) */}
         {inCart && cartLine ? (
           <View className="flex-row items-center justify-between">
             <MoneyText
-              value={product.price}
+              value={displayPrice}
               size="lg"
               className="text-ink-700"
             />
             <StepperStamp
               quantity={cartLine.quantity}
-              onDecrement={() => onUpdateQuantity(product.id, -1)}
-              onIncrement={() => onUpdateQuantity(product.id, 1)}
-              max={product.quantity}
+              onDecrement={() => onUpdateQuantity(product.id, -1, activeUnit)}
+              onIncrement={() => onUpdateQuantity(product.id, 1, activeUnit)}
+              max={
+                activeUnit === 'wholesale' && product.conversion_factor
+                  ? Math.floor(product.quantity / product.conversion_factor)
+                  : product.quantity
+              }
             />
           </View>
         ) : (
@@ -151,7 +209,7 @@ export function ProductRow({
                 Price
               </StyledText>
               <MoneyText
-                value={product.price}
+                value={displayPrice}
                 size="xl"
                 className="text-ink-900"
               />

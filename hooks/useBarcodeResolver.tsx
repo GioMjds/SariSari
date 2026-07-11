@@ -27,10 +27,60 @@ import {
   DEFAULT_BARCODE_THROTTLE_MS,
 } from '@/lib/barcodes/format';
 import type { ScanResolution } from '@/lib/barcodes/types';
+import type { Product } from '@/types';
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
   now?: () => number;
+}
+
+export function resolveBarcodeAgainstProducts(
+  barcode: string,
+  products: Product[],
+): ScanResolution {
+  const validation = validateBarcode(barcode);
+  if (!validation.ok) {
+    return { kind: 'invalid', reason: validation.reason };
+  }
+  const validated = validation.barcode;
+
+  // Direct retail barcode match first.
+  const byBarcode = products.find(
+    (p) => p.barcode != null && p.barcode === validated,
+  );
+  if (byBarcode) {
+    return {
+      kind: 'resolved',
+      product: byBarcode,
+      source: 'barcode',
+      matchedUnit: 'retail',
+    };
+  }
+
+  // Direct wholesale barcode match second.
+  const byWholesaleBarcode = products.find(
+    (p) => p.wholesale_barcode != null && p.wholesale_barcode === validated,
+  );
+  if (byWholesaleBarcode) {
+    return {
+      kind: 'resolved',
+      product: byWholesaleBarcode,
+      source: 'wholesale_barcode',
+      matchedUnit: 'wholesale',
+    };
+  }
+
+  // SKU fallback for legacy rows.
+  const bySku = products.find((p) => p.sku === validated);
+  if (bySku) {
+    return {
+      kind: 'resolved',
+      product: bySku,
+      source: 'sku',
+      matchedUnit: 'retail',
+    };
+  }
+  return { kind: 'missing', barcode: validated };
 }
 
 export function useBarcodeResolver(
@@ -46,9 +96,6 @@ export function useBarcodeResolver(
   const { getAllProductsQuery } = useProducts();
   const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
-  // Snapshot the products list once per render. The query cache is
-  // reactive; if a scan completes and triggers a query invalidation,
-  // a fresh resolver call will see the new list naturally.
   const products = getAllProductsQuery.data ?? [];
 
   const resolve = useCallback(
@@ -66,31 +113,11 @@ export function useBarcodeResolver(
         last.barcode === validated &&
         nowValue - last.at < throttleMs
       ) {
-        // Return the same as "missing" so the caller has the barcode
-        // available — the modal uses it to suppress duplicate-state UI.
-        // The kind stays as a separate `duplicate` marker since the
-        // POS consumes the throttle ref differently from the form.
         return { kind: 'invalid', reason: 'format' };
       }
       lastScanRef.current = { barcode: validated, at: nowValue };
 
-      // Direct barcode match first.
-      const byBarcode = products.find(
-        (p) => p.barcode != null && p.barcode === validated,
-      );
-      if (byBarcode) {
-        return {
-          kind: 'resolved',
-          product: byBarcode,
-          source: 'barcode',
-        };
-      }
-      // SKU fallback for legacy rows.
-      const bySku = products.find((p) => p.sku === validated);
-      if (bySku) {
-        return { kind: 'resolved', product: bySku, source: 'sku' };
-      }
-      return { kind: 'missing', barcode: validated };
+      return resolveBarcodeAgainstProducts(validated, products);
     },
     [products, throttleMs, now],
   );
