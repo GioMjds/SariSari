@@ -65,6 +65,28 @@ export function useInventoryTransactionsByProduct(productId: number) {
   });
 }
 
+export function useGetInventoryTransactions(productId?: number) {
+  return useQuery<InventoryTransaction[]>({
+    queryKey:
+      typeof productId === 'number'
+        ? inventoryKeys.byProduct(productId)
+        : inventoryKeys.transactions(),
+    queryFn: () => getInventoryTransactions(productId),
+    enabled: typeof productId === 'number' && !Number.isNaN(productId),
+  });
+}
+
+export function useGetInventoryTransactionsByDateRange(
+  startDate?: string,
+  endDate?: string,
+) {
+  return useQuery<InventoryTransaction[]>({
+    queryKey: inventoryKeys.byDateRange(startDate || '', endDate || ''),
+    queryFn: () => getInventoryTransactionsByDateRange(startDate!, endDate!),
+    enabled: !!startDate && !!endDate,
+  });
+}
+
 // Keep the useInventory hook with updated queries/mutations for backwards compatibility
 export function useInventory() {
   const queryClient = useQueryClient();
@@ -74,28 +96,6 @@ export function useInventory() {
     queryKey: inventoryKeys.transactions(),
     queryFn: () => getInventoryTransactions(),
   });
-
-  const useGetInventoryTransactions = (productId?: number) => {
-    return useQuery<InventoryTransaction[]>({
-      queryKey:
-        typeof productId === 'number'
-          ? inventoryKeys.byProduct(productId)
-          : inventoryKeys.transactions(),
-      queryFn: () => getInventoryTransactions(productId),
-      enabled: typeof productId === 'number' && !Number.isNaN(productId),
-    });
-  };
-
-  const useGetInventoryTransactionsByDateRange = (
-    startDate?: string,
-    endDate?: string,
-  ) => {
-    return useQuery<InventoryTransaction[]>({
-      queryKey: inventoryKeys.byDateRange(startDate || '', endDate || ''),
-      queryFn: () => getInventoryTransactionsByDateRange(startDate!, endDate!),
-      enabled: !!startDate && !!endDate,
-    });
-  };
 
   const insertInventoryMutation = useMutation({
     mutationFn: async (tx: InsertInventoryV2) => {

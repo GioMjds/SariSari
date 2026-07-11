@@ -25,6 +25,34 @@ export const productKeys = {
   detail: (id: number) => [...productKeys.all, 'detail', id] as const,
 };
 
+export function useGetProduct(id: number) {
+  return useQuery({
+    queryKey: productKeys.detail(id),
+    queryFn: () => getProduct(id),
+    enabled: !!id,
+  });
+}
+
+export function useGetProductBySku(sku: string) {
+  return useQuery({
+    queryKey: productKeys.sku(sku),
+    queryFn: () => getProductBySku(sku),
+    enabled: !!sku,
+  });
+}
+
+export function useFindProductByBarcode(barcode: string | null | undefined) {
+  return useQuery({
+    queryKey: productKeys.barcode(barcode ?? ''),
+    queryFn: () =>
+      barcode && barcode.length > 0
+        ? getProductByBarcode(barcode)
+        : Promise.resolve(null),
+    enabled: !!barcode && barcode.length > 0,
+    staleTime: 60_000,
+  });
+}
+
 export function useProducts() {
   const queryClient = useQueryClient();
   const addToast = useToastStore((state) => state.addToast);
@@ -34,37 +62,6 @@ export function useProducts() {
     queryKey: productKeys.list(),
     queryFn: getAllProducts,
   });
-
-  // Query: Get product by ID (accepts id parameter)
-  const useGetProduct = (id: number) => {
-    return useQuery({
-      queryKey: productKeys.detail(id),
-      queryFn: () => getProduct(id),
-      enabled: !!id,
-    });
-  };
-
-  // Query: Get product by SKU
-  const useGetProductBySku = (sku: string) => {
-    return useQuery({
-      queryKey: productKeys.sku(sku),
-      queryFn: () => getProductBySku(sku),
-      enabled: !!sku,
-    });
-  };
-
-  // Query: Get product by barcode
-  const useFindProductByBarcode = (barcode: string | null | undefined) => {
-    return useQuery({
-      queryKey: productKeys.barcode(barcode ?? ''),
-      queryFn: () =>
-        barcode && barcode.length > 0
-          ? getProductByBarcode(barcode)
-          : Promise.resolve(null),
-      enabled: !!barcode && barcode.length > 0,
-      staleTime: 60_000,
-    });
-  };
 
   // Mutation: Insert a new product
   const insertProductMutation = useMutation({

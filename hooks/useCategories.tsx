@@ -14,6 +14,22 @@ import {
 } from '@/types/categories.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+export function useGetCategory(id: number) {
+  return useQuery({
+    queryKey: ['category', id],
+    queryFn: () => getCategory(id),
+    enabled: !!id,
+  });
+}
+
+export function useGetCategoryByName(name: string) {
+  return useQuery({
+    queryKey: ['category-name', name],
+    queryFn: () => getCategoryByName(name),
+    enabled: !!name,
+  });
+}
+
 export function useCategories() {
   const queryClient = useQueryClient();
   const addToast = useToastStore((state) => state.addToast);
@@ -29,24 +45,6 @@ export function useCategories() {
     queryKey: ['categories-with-count'],
     queryFn: getCategoriesWithCount,
   });
-
-  // Query: Get category by ID
-  const useGetCategory = (id: number) => {
-    return useQuery({
-      queryKey: ['category', id],
-      queryFn: () => getCategory(id),
-      enabled: !!id,
-    });
-  };
-
-  // Query: Get category by name
-  const useGetCategoryByName = (name: string) => {
-    return useQuery({
-      queryKey: ['category-name', name],
-      queryFn: () => getCategoryByName(name),
-      enabled: !!name,
-    });
-  };
 
   // Mutation: Insert a new category
   const insertCategoryMutation = useMutation({

@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { Skeleton } from '@/components/ui';
 
@@ -8,12 +8,15 @@ import { Skeleton } from '@/components/ui';
  * tab strip + two card placeholders) so the swap from skeleton →
  * live data is layout-shift-free.
  *
- * Renders inside its own SafeAreaView so the screen can early-return
+ * Renders inside its own View with safe-area padding top so the screen can early-return
  * this component without extra wrappers.
  */
 export function CreditDetailsSkeleton() {
+  const insets = useSafeAreaInsets();
+  const paddingTop = Math.max(insets.top, 40);
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-background" style={{ paddingTop }}>
       {/* Slim top bar — three skeleton slots */}
       <View className="px-5 pt-3 pb-2 flex-row items-center justify-between">
         <View className="w-10 h-10" />
@@ -38,6 +41,6 @@ export function CreditDetailsSkeleton() {
           <Skeleton width={'100%'} height={80} borderRadius={16} />
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

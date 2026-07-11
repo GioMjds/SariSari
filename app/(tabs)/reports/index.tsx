@@ -239,6 +239,7 @@ export default function Reports() {
               <View className="mt-3">
                 <BentoGrid>
                   <BentoHero
+                    animationKey={`${dateRangeType}-${kpis.totalSales}`}
                     kicker="TOTAL SALES · COVER STORY"
                     headline={formatCompactCurrency(kpis.totalSales)}
                     subline={`${salesBreakdown.totalTransactions} ${

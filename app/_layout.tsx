@@ -23,7 +23,13 @@ import {
 } from '@/lib/backup';
 import { useSchedulerInputs } from '@/hooks/useBackup';
 import { CloudNewerBanner } from '@/components/settings/backup';
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
 import '../global.css';
+
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+});
 
 SplashScreen.preventAutoHideAsync();
 

@@ -177,7 +177,11 @@ export const StyledTab = memo(() => {
     const activeTab = visibleRoutes.find((tab) =>
       isRouteFocused(getHrefString(tab.href)),
     );
-    if (activeTab) moveIndicatorTo(getHrefString(activeTab.href));
+    if (activeTab) {
+      moveIndicatorTo(getHrefString(activeTab.href));
+    } else {
+      indicatorOpacity.value = 0;
+    }
   }, [pathname, visibleRoutes, isRouteFocused, moveIndicatorTo]);
 
   const onLayoutMeasured = useCallback(

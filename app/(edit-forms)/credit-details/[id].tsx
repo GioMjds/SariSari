@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,7 @@ export default function CustomerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { openModal } = useModalStore();
+  const insets = useSafeAreaInsets();
 
   const {
     useCustomerDetails,
@@ -212,8 +213,10 @@ export default function CustomerDetails() {
   ).length;
   const storeName = profile?.storeName?.trim() || 'your sari-sari store';
 
+  const paddingTop = Math.max(insets.top, 40);
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <View className="flex-1 bg-background" style={{ paddingTop }}>
       <CreditDetailsHeader
         onBack={handleBack}
         onDelete={handleDeleteCustomer}
@@ -284,6 +287,6 @@ export default function CustomerDetails() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

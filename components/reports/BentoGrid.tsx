@@ -53,19 +53,12 @@ export const BentoHero = memo(function BentoHero({
 	accent = 'persimmon',
 	animationKey,
 }: BentoHeroProps) {
-	// Skip the slide-in on first paint; only animate when data changes
-	// (i.e. when the parent passes a new animationKey after a date-range
-	// change or refresh, which unmounts/remounts this MotiView via `key`).
-	const hasMounted = useRef(false);
-	const shouldAnimate = hasMounted.current;
-	if (!hasMounted.current) hasMounted.current = true;
-
 	return (
 		<MotiView
 			key={animationKey}
-			from={shouldAnimate ? { opacity: 0, translateY: 12 } : undefined}
+			from={{ opacity: 0, translateY: 12 }}
 			animate={{ opacity: 1, translateY: 0 }}
-			transition={{ type: 'timing', duration: 380, delay: shouldAnimate ? 80 : 0 }}
+			transition={{ type: 'timing', duration: 380 }}
 			className={`rounded-card overflow-hidden ${HERO_ACCENT_BG[accent]} shadow-paper-lift`}
 		>
 			<View className="px-5 pt-4 pb-2 flex-row items-center justify-between">

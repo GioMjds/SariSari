@@ -34,6 +34,7 @@ export default function Products() {
   const params = useLocalSearchParams<{
     filterCategory?: string;
     restock?: string;
+    tab?: string;
   }>();
   const router = useRouter();
   const { viewMode, setViewMode } = useInventoryViewStore();
@@ -104,6 +105,19 @@ export default function Products() {
       }
     }
   }, [params.restock, products, router]);
+
+  // Synchronize tab state with search params (including deep links)
+  useEffect(() => {
+    if (params.filterCategory || params.restock) {
+      setActiveTab('products');
+      if (params.filterCategory) {
+        router.setParams({ filterCategory: undefined });
+      }
+    } else if (params.tab && ['products', 'categories', 'suppliers'].includes(params.tab)) {
+      setActiveTab(params.tab as TabType);
+      router.setParams({ tab: undefined });
+    }
+  }, [params.filterCategory, params.restock, params.tab, router]);
 
   // Compute live product stock counts for header
   const productsStats = useMemo(() => {

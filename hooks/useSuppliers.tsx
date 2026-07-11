@@ -15,6 +15,14 @@ export const supplierKeys = {
   detail: (id: string) => [...supplierKeys.all, 'detail', id] as const,
 };
 
+export function useGetSupplier(id: string) {
+  return useQuery({
+    queryKey: supplierKeys.detail(id),
+    queryFn: () => getSupplier(id),
+    enabled: !!id,
+  });
+}
+
 export function useSuppliers() {
   const queryClient = useQueryClient();
   const addToast = useToastStore((state) => state.addToast);
@@ -24,15 +32,6 @@ export function useSuppliers() {
     queryKey: supplierKeys.list(),
     queryFn: listSuppliers,
   });
-
-  // Query: Get supplier by ID
-  const useGetSupplier = (id: string) => {
-    return useQuery({
-      queryKey: supplierKeys.detail(id),
-      queryFn: () => getSupplier(id),
-      enabled: !!id,
-    });
-  };
 
   // Mutation: Insert a new supplier
   const insertSupplierMutation = useMutation({

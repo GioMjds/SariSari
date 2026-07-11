@@ -58,6 +58,21 @@ export function useHasSales() {
   });
 }
 
+export function useGetSaleItems(saleId: number) {
+  return useQuery({
+    queryKey: ['sale-items', saleId],
+    queryFn: () => getSaleItems(saleId),
+  });
+}
+
+export function useGetSalesByDateRange(params: GetSalesByDateRangeParams) {
+  return useQuery({
+    queryKey: ['sales-by-date', params.startDate, params.endDate],
+    queryFn: () => getSalesByDateRange(params.startDate, params.endDate),
+    enabled: !!params.startDate && !!params.endDate,
+  });
+}
+
 export function useSales() {
   const queryClient = useQueryClient();
 
@@ -77,23 +92,6 @@ export function useSales() {
   // Kept here so existing callers of useSales().useGetSale() still work.
   // Prefer importing useGetSale directly for new code.
   const useGetSaleById = (id: number) => useGetSale(id);
-
-  // Query: Get sale items by sale_id
-  const useGetSaleItems = (saleId: number) => {
-    return useQuery({
-      queryKey: ['sale-items', saleId],
-      queryFn: () => getSaleItems(saleId),
-    });
-  };
-
-  // Query: Get sales by date range
-  const useGetSalesByDateRange = (params: GetSalesByDateRangeParams) => {
-    return useQuery({
-      queryKey: ['sales-by-date', params.startDate, params.endDate],
-      queryFn: () => getSalesByDateRange(params.startDate, params.endDate),
-      enabled: !!params.startDate && !!params.endDate,
-    });
-  };
 
   // Mutation: Insert a new sale
   const insertSaleMutation = useMutation({
