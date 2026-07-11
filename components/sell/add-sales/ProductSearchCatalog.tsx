@@ -18,39 +18,21 @@ interface ProductSearchCatalogProps {
   isLoading: boolean;
   /** Lookup the current cart line for a product, or `undefined`. */
   getCartLine: (productId: number) => NewSaleItem | undefined;
-  onAdd: (product: Product) => void;
+  onAdd: (product: Product, selectedUnit?: 'retail' | 'wholesale') => void;
   /** Delta is +/-1. Decrementing past zero removes the line. */
-  onUpdateQuantity: (productId: number, delta: number) => void;
+  onUpdateQuantity: (
+    productId: number,
+    delta: number,
+    selectedUnit?: 'retail' | 'wholesale',
+  ) => void;
+  onToggleUnit?: (productId: number) => void;
   /** Opens the camera scanner modal — the primary POS scanning entry. */
   onPressScan: () => void;
-  /**
-   * v5: when a barcode scan misses the catalog, the POS hooks surface
-   * the scanned value here so the catalog renders an inline CTA card.
-   * The card is hidden when `null`. Tapping the CTA invokes
-   * `onPressAddNewProduct` (which routes to Add Product with the
-   * barcode pre-filled).
-   */
   pendingAddProductBarcode?: string | null;
   onPressAddNewProduct?: () => void;
   onDismissPendingAddProduct?: () => void;
 }
 
-/**
- * ProductSearchCatalog — the search bar + scrollable product list
- * for the POS. Pure presentation: receives the filtered catalog,
- * cart lookup, and handlers via props.
- *
- * Visual language: each row reads as a "resibo stub" — a torn paper
- * receipt pulled off the counter, with perforated top/bottom edges,
- * a monospace SKU stamp, a colored stock dot, and a stamp-style
- * stepper when the item is in the cart. Mirrors `SaleRow` so the
- * resibo book (history) and the POS register feel like the same
- * surface, viewed from different angles.
- *
- * The search field is bound through react-hook-form's `Controller`
- * so it participates in the same plumbing as the rest of the
- * edit-form routes (reset, dispatch, etc.).
- */
 export function ProductSearchCatalog({
   control,
   filteredProducts,
@@ -58,6 +40,7 @@ export function ProductSearchCatalog({
   getCartLine,
   onAdd,
   onUpdateQuantity,
+  onToggleUnit,
   onPressScan,
   pendingAddProductBarcode,
   onPressAddNewProduct,
@@ -177,6 +160,7 @@ export function ProductSearchCatalog({
               cartLine={getCartLine(item.id)}
               onAdd={onAdd}
               onUpdateQuantity={onUpdateQuantity}
+              onToggleUnit={onToggleUnit}
             />
           )}
           ListEmptyComponent={

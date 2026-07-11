@@ -8,7 +8,7 @@ import { Product } from '@/types';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
 import { formatPesos } from '@/lib/money';
 import { Image } from 'expo-image';
-import { getProductImageUri } from '@/lib';
+import { getProductImageUri, formatDualStock, formatDualPrice } from '@/lib';
 import { useRouter } from 'expo-router';
 
 interface InventoryRowProps {
@@ -36,9 +36,19 @@ export const InventoryRow = React.memo(function InventoryRow({
 
   const pillText = isOutOfStock
     ? 'Out'
-    : `${item.quantity} left`;
+    : formatDualStock(
+        item.quantity,
+        item.retail_unit_name ?? 'Pc',
+        item.wholesale_unit_name,
+        item.conversion_factor,
+      );
 
-  const subtitle = `${formatPesos(item.price)}`;
+  const subtitle = formatDualPrice(
+    item.price,
+    item.wholesale_price,
+    item.retail_unit_name ?? 'Pc',
+    item.wholesale_unit_name,
+  );
 
   const placeholderText = item.name.trim().charAt(0).toUpperCase();
   const displayImageUri = getProductImageUri(item.image_uri);

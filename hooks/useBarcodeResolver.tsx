@@ -27,6 +27,7 @@ import {
   DEFAULT_BARCODE_THROTTLE_MS,
 } from '@/lib/barcodes/format';
 import type { ScanResolution } from '@/lib/barcodes/types';
+import type { Product } from '@/types';
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;

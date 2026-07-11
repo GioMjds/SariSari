@@ -68,6 +68,12 @@ export default function AddSales() {
           getCartLine={form.getCartLine}
           onAdd={form.handleAddItem}
           onUpdateQuantity={form.handleUpdateQuantity}
+          onToggleUnit={(productId) => {
+            const idx = form.cartItems.findIndex(
+              (item) => item.product_id === productId,
+            );
+            if (idx !== -1) form.toggleCartItemUnit(idx);
+          }}
           onPressScan={form.openScanner}
           pendingAddProductBarcode={form.pendingAddProductBarcode}
           onPressAddNewProduct={form.handlePressAddNewProduct}

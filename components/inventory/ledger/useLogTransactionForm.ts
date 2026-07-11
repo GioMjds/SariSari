@@ -26,6 +26,9 @@ interface UseLogTransactionFormReturn {
   adjustmentSign: AdjustmentSign;
   setAdjustmentSign: (s: AdjustmentSign) => void;
 
+  unitMode: 'retail' | 'wholesale';
+  setUnitMode: (m: 'retail' | 'wholesale') => void;
+
   // Derived
   currentQuantity: number;
   projectedQuantity: number;
@@ -40,51 +43,42 @@ interface UseLogTransactionFormReturn {
   reset: () => void;
 }
 
-/**
- * `useLogTransactionForm(product, options?)` — owns the state and
- * submit pipeline for the in-page "Log Transaction" bottom sheet.
- *
- * The form's `quantity` field is **always a positive integer**; the
- * +/- sign for adjustments is tracked separately as `adjustmentSign`
- * to match the `InventoryActionModal` UX.
- *
- * `isValid` is a UX guard — the underlying
- * `insertInventoryTransaction` in `database/inventory.ts` is the
- * authoritative check (`quantity > 0` + no negative final stock
- * inside `db.withTransactionAsync`).
- */
 export function useLogTransactionForm(
   product: Product,
   options: UseLogTransactionFormOptions = {},
 ): UseLogTransactionFormReturn {
   const insertInventory = useInsertInventory();
-  // Destructure the callback up front so the `useCallback` dep array
-  // below stays stable across renders (otherwise `options` is a new
-  // object on every parent render and `submit` would be re-memoized
-  // every time, breaking the consuming component's memoization).
   const { onSuccessCallback } = options;
 
   const [type, setType] = useState<InventoryEventType>('restock');
   const [quantity, setQuantity] = useState<number>(1);
   const [note, setNote] = useState<string>('');
   const [adjustmentSign, setAdjustmentSign] = useState<AdjustmentSign>('positive');
+  const [unitMode, setUnitMode] = useState<'retail' | 'wholesale'>('retail');
 
-  // Bumping this counter tells <LogTransactionForm> to re-run the
-  // shake animation. We don't store the error itself here — the
-  // mutation's toast already surfaces the failure to the user.
   const [shakeTrigger, setShakeTrigger] = useState(0);
 
   // ─── Derived values ─────────────────────────────────────────────
 
   const currentQuantity = product.quantity;
 
+  const hasWholesale =
+    product.conversion_factor != null &&
+    product.conversion_factor >= 2 &&
+    !!product.wholesale_unit_name;
+
+  const actualPieces =
+    type === 'restock' && unitMode === 'wholesale' && hasWholesale
+      ? quantity * (product.conversion_factor || 1)
+      : quantity;
+
   let quantityChange = 0;
   if (type === 'restock') {
-    quantityChange = quantity;
+    quantityChange = actualPieces;
   } else if (type === 'sale' || type === 'damaged') {
-    quantityChange = -quantity;
+    quantityChange = -actualPieces;
   } else if (type === 'adjustment') {
-    quantityChange = adjustmentSign === 'positive' ? quantity : -quantity;
+    quantityChange = adjustmentSign === 'positive' ? actualPieces : -actualPieces;
   }
 
   const projectedQuantity = currentQuantity + quantityChange;
@@ -98,6 +92,7 @@ export function useLogTransactionForm(
     setQuantity(1);
     setNote('');
     setAdjustmentSign('positive');
+    setUnitMode('retail');
     setShakeTrigger(0);
   }, []);
 
@@ -110,12 +105,21 @@ export function useLogTransactionForm(
   const submit = useCallback(() => {
     if (!isValid || insertInventory.isPending) return;
 
+    const isWholesaleRestock =
+      type === 'restock' && unitMode === 'wholesale' && hasWholesale;
+
+    const autoNote = isWholesaleRestock
+      ? `Restocked ${quantity} ${product.wholesale_unit_name} (${actualPieces} ${product.retail_unit_name || 'Pcs'})${
+          note.trim() ? ' - ' + note.trim() : ''
+        }`
+      : note.trim() || null;
+
     insertInventory.mutate(
       {
         product_id: product.id,
         type,
-        quantity,
-        note: note.trim() || null,
+        quantity: actualPieces,
+        note: autoNote,
         adjustment_sign: type === 'adjustment' ? adjustmentSign : null,
       },
       {
@@ -136,6 +140,9 @@ export function useLogTransactionForm(
     quantity,
     note,
     adjustmentSign,
+    unitMode,
+    hasWholesale,
+    actualPieces,
     reset,
     onSuccessCallback,
   ]);
@@ -149,6 +156,8 @@ export function useLogTransactionForm(
     setNote,
     adjustmentSign,
     setAdjustmentSign,
+    unitMode,
+    setUnitMode,
     currentQuantity,
     projectedQuantity,
     isValid,

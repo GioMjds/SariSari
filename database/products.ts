@@ -2,6 +2,10 @@ import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
 
 export const initProductsTable = async () => {
+  // The CREATE TABLE block is the authoritative schema for fresh DBs. On
+  // an existing pre-v9 DB it is a no-op (table already exists at the old
+  // schema), so v9-only columns are missing — which is fine, the v9
+  // migration in database/migrations.ts will ALTER them in.
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,8 +29,26 @@ export const initProductsTable = async () => {
 
     CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;
   `);
+
+  // The wholesale_barcode partial unique index depends on the v9 column.
+  // On a fresh DB the column was just added by CREATE TABLE above; on a
+  // pre-v9 DB the column is still missing. Creating the index on the old
+  // table throws "no such column: wholesale_barcode", which would fail
+  // the whole init block in configs/startup.ts and prevent the v9
+  // migration from ever running. Probe first; the v9 migration creates
+  // the index on the upgrade path.
+  const productColumns = await db.getAllAsync<{ name: string }>(
+    'PRAGMA table_info(products)',
+  );
+  const hasWholesaleBarcode = productColumns.some(
+    (c) => c.name === 'wholesale_barcode',
+  );
+  if (hasWholesaleBarcode) {
+    await db.execAsync(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;',
+    );
+  }
 };
 
 /**

@@ -54,7 +54,7 @@ describe('Reports KPIs with Wholesale Transactions', () => {
     const startDate = new Date(now.getTime() - 86400000);
     const endDate = new Date(now.getTime() + 86400000);
 
-    const kpis = await getReportKPIs({ startDate, endDate });
+    const kpis = await getReportKPIs({ startDate, endDate, label: 'custom' });
     // Revenue = 2 cases * 660 = 1320
     expect(kpis.totalSales).toBe(1320);
     // Profit = 2 cases * (660 - 600) = 120 (not 24 * (660 - 50) = 14640)

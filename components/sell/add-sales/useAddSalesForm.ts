@@ -119,52 +119,86 @@ export function useAddSalesForm() {
 
   // ─── Cart handlers ────────────────────────────────────────────
 
-  const handleAddItem = useCallback((product: Product) => {
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.product_id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.quantity) {
-          Alert.alert(
-            'Insufficient Stock',
-            `Only ${product.quantity} items available`,
+  const handleAddItem = useCallback(
+    (product: Product, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
+      setCartItems((prev) => {
+        const existing = prev.find(
+          (item) =>
+            item.product_id === product.id &&
+            (item.selected_unit || 'retail') === selectedUnit,
+        );
+        const piecesPerUnit =
+          selectedUnit === 'wholesale' && product.conversion_factor
+            ? product.conversion_factor
+            : 1;
+
+        if (existing) {
+          const newQty = existing.quantity + 1;
+          if (newQty * piecesPerUnit > product.quantity) {
+            Alert.alert(
+              'Insufficient Stock',
+              `Only ${product.quantity} total pieces available`,
+            );
+            return prev;
+          }
+          return prev.map((item) =>
+            item.product_id === product.id &&
+            (item.selected_unit || 'retail') === selectedUnit
+              ? { ...item, quantity: item.quantity + 1 }
+              : item,
           );
+        }
+        if (product.quantity < piecesPerUnit) {
+          Alert.alert('Out of Stock', 'Insufficient stock for this packaging unit');
           return prev;
         }
-        return prev.map((item) =>
-          item.product_id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
-      }
-      if (product.quantity <= 0) {
-        Alert.alert('Out of Stock', 'This product is currently out of stock');
-        return prev;
-      }
-      return [
-        ...prev,
-        {
-          product_id: product.id,
-          product_name: product.name,
-          price: product.price,
-          quantity: 1,
-          stock: product.quantity,
-        },
-      ];
-    });
-  }, []);
+        const unitPrice =
+          selectedUnit === 'wholesale' && product.wholesale_price != null
+            ? product.wholesale_price
+            : product.price;
+
+        return [
+          ...prev,
+          {
+            product_id: product.id,
+            product_name: product.name,
+            price: unitPrice,
+            quantity: 1,
+            stock: product.quantity,
+            selected_unit: selectedUnit,
+            retail_unit_name: product.retail_unit_name || 'Pc',
+            wholesale_unit_name: product.wholesale_unit_name,
+            retail_price: product.price,
+            wholesale_price: product.wholesale_price,
+            conversion_factor: product.conversion_factor,
+          },
+        ];
+      });
+    },
+    [],
+  );
 
   const handleUpdateQuantity = useCallback(
-    (productId: number, delta: number) => {
+    (productId: number, delta: number, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
       setCartItems((prev) => {
         const next = prev
           .map((item) => {
-            if (item.product_id !== productId) return item;
+            if (
+              item.product_id !== productId ||
+              (item.selected_unit || 'retail') !== selectedUnit
+            ) {
+              return item;
+            }
             const newQuantity = item.quantity + delta;
             if (newQuantity <= 0) return null;
-            if (newQuantity > item.stock) {
+            const piecesPerUnit =
+              item.selected_unit === 'wholesale' && item.conversion_factor
+                ? item.conversion_factor
+                : 1;
+            if (newQuantity * piecesPerUnit > item.stock) {
               Alert.alert(
                 'Insufficient Stock',
-                `Only ${item.stock} items available`,
+                `Only ${item.stock} total pieces available`,
               );
               return item;
             }
@@ -176,6 +210,24 @@ export function useAddSalesForm() {
     },
     [],
   );
+
+  const toggleCartItemUnit = useCallback((index: number) => {
+    setCartItems((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+        const nextUnit = item.selected_unit === 'wholesale' ? 'retail' : 'wholesale';
+        const nextPrice =
+          nextUnit === 'wholesale' && item.wholesale_price != null
+            ? item.wholesale_price
+            : (item.retail_price ?? item.price);
+        return {
+          ...item,
+          selected_unit: nextUnit,
+          price: nextPrice,
+        };
+      }),
+    );
+  }, []);
 
   const clearCart = useCallback(() => {
     setCartItems([]);
@@ -239,8 +291,8 @@ export function useAddSalesForm() {
       }
 
       // result.kind === 'resolved'
-      const { product, source } = result;
-      handleAddItem(product);
+      const { product, source, matchedUnit } = result;
+      handleAddItem(product, matchedUnit);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
         () => {},
       );
@@ -315,18 +367,10 @@ export function useAddSalesForm() {
     setShowCustomerPicker(false);
   }, []);
 
-  // ─── Submit ───────────────────────────────────────────────────
+  // ─── Submission pipeline ───────────────────────────────────────
 
   const submit = useCallback(async () => {
-    if (cartItems.length === 0) {
-      Alert.alert('No Items', 'Please add items to the sale');
-      return;
-    }
-    if (paymentType === 'credit' && !selectedCustomer) {
-      Alert.alert(
-        'Customer Required',
-        'Please select a customer for credit sales',
-      );
+    if (cartItems.length === 0 || insertSaleMutation.isPending) {
       return;
     }
 
@@ -336,12 +380,12 @@ export function useAddSalesForm() {
           product_id: item.product_id,
           quantity: item.quantity,
           price: item.price,
+          selected_unit: item.selected_unit,
         })),
         payment_type: paymentType,
         // Map the hybrid selectedCustomer shape into the two columns:
         //   • string  → typed one-off name; no Suki link.
         //   • Customer object → registered Suki; save both columns.
-        //   • null → leave both unset.
         customer_name:
           typeof selectedCustomer === 'string'
             ? selectedCustomer
@@ -381,11 +425,8 @@ export function useAddSalesForm() {
   );
 
   return {
-    // Form wiring
+    // Form & Search
     control,
-    reset,
-
-    // Watched values
     search,
 
     // Domain data
@@ -414,6 +455,7 @@ export function useAddSalesForm() {
     // Handlers
     handleAddItem,
     handleUpdateQuantity,
+    toggleCartItemUnit,
     clearCart,
     handlePaymentTypeChange,
     handleSelectCustomer,

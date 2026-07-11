@@ -63,10 +63,22 @@ export default function EditProduct() {
 
           <View className="mt-3">
             <EditPricingCard
-              control={form.control}
+              control={form.control as any}
               profitPerPiece={form.profitPerPiece}
               markupPercent={form.markupPercent}
               isLossWarning={form.isLossWarning}
+              price={form.price}
+              enableWholesale={form.enableWholesale}
+              onToggleWholesale={() =>
+                form.setValue('enableWholesale', !form.enableWholesale, {
+                  shouldDirty: true,
+                })
+              }
+              retailUnitName={form.retailUnitName}
+              wholesaleUnitName={form.wholesaleUnitName}
+              conversionFactor={form.conversionFactor}
+              wholesalePrice={form.wholesalePrice}
+              wholesaleCostPrice={form.wholesaleCostPrice}
             />
           </View>
 

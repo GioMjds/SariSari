@@ -14,6 +14,7 @@ import { MoneyText } from '@/components/ui';
 import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useLogTransactionForm } from './useLogTransactionForm';
+import { formatDualStock } from '@/lib';
 
 interface LogTransactionFormProps {
   product: Product;
@@ -138,7 +139,12 @@ export function LogTransactionForm({
                     variant="semibold"
                     className="text-ink-900 text-lg mt-0.5"
                   >
-                    {form.currentQuantity}
+                    {formatDualStock(
+                      form.currentQuantity,
+                      product.retail_unit_name ?? 'Pc',
+                      product.wholesale_unit_name,
+                      product.conversion_factor,
+                    )}
                   </StyledText>
                 </View>
                 <View>
@@ -298,6 +304,58 @@ export function LogTransactionForm({
                 </View>
               </View>
             )}
+
+            {product.conversion_factor != null &&
+              product.conversion_factor >= 2 &&
+              !!product.wholesale_unit_name &&
+              form.type === 'restock' && (
+                <View className="mb-4">
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-900 mb-2 text-xs uppercase"
+                    style={{ letterSpacing: 0.5 }}
+                  >
+                    Unit
+                  </StyledText>
+                  <View className="flex-row gap-2">
+                    <TouchableOpacity
+                      onPress={() => form.setUnitMode('retail')}
+                      className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
+                        form.unitMode === 'retail'
+                          ? 'bg-cinnamon-500 border-cinnamon-600'
+                          : 'bg-paper-50 border-ink-200'
+                      }`}
+                    >
+                      <StyledText
+                        variant="extrabold"
+                        className={`text-xs ${
+                          form.unitMode === 'retail' ? 'text-paper-50' : 'text-ink-700'
+                        }`}
+                      >
+                        Tingi ({product.retail_unit_name || 'Pc'})
+                      </StyledText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => form.setUnitMode('wholesale')}
+                      className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
+                        form.unitMode === 'wholesale'
+                          ? 'bg-cinnamon-500 border-cinnamon-600'
+                          : 'bg-paper-50 border-ink-200'
+                      }`}
+                    >
+                      <StyledText
+                        variant="extrabold"
+                        className={`text-xs ${
+                          form.unitMode === 'wholesale' ? 'text-paper-50' : 'text-ink-700'
+                        }`}
+                      >
+                        Pakyaw ({product.wholesale_unit_name})
+                      </StyledText>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
 
             {/* Quantity stepper */}
             <View className="mb-4">
