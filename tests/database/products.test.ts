@@ -300,4 +300,55 @@ describe('Products Database — barcode column (v5)', () => {
 		product = await getProduct(id);
 		expect(product?.image_uri).toBe('product_images/coke-diet.jpg');
 	});
+
+	test('insertProduct stores wholesale packaging details', async () => {
+		const id = await insertProduct(
+			'Coke 1.5L Case',
+			'COK-15L-CS',
+			60,
+			24,
+			50,
+			'Beverages',
+			'1111222233334',
+			null,
+			null,
+			'Bottle',
+			'Case',
+			660,
+			600,
+			12,
+			'9999888877776'
+		);
+
+		const product = await getProduct(id);
+		expect(product).not.toBeNull();
+		expect(product?.retail_unit_name).toBe('Bottle');
+		expect(product?.wholesale_unit_name).toBe('Case');
+		expect(product?.wholesale_price).toBe(660);
+		expect(product?.wholesale_cost_price).toBe(600);
+		expect(product?.conversion_factor).toBe(12);
+		expect(product?.wholesale_barcode).toBe('9999888877776');
+	});
+
+	test('insertProduct throws when wholesale_barcode conflicts with an existing barcode', async () => {
+		await expect(
+			insertProduct(
+				'Conflict Item',
+				'CNF-001',
+				10,
+				1,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				'Pc',
+				'Case',
+				120,
+				undefined,
+				12,
+				'1111222233334' // matches Coke 1.5L Case retail barcode
+			)
+		).rejects.toThrow(BarcodeAlreadyExistsError);
+	});
 });
