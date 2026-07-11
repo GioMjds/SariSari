@@ -51,8 +51,9 @@ export type PosScanResult =
   | {
       kind: 'add';
       product: PosScanProductLike;
-      /** Tells the caller whether the hit came from `barcode` or `sku`. */
-      source: 'barcode' | 'sku';
+      /** Tells the caller whether the hit came from `barcode`, `sku`, or `wholesale_barcode`. */
+      source: 'barcode' | 'sku' | 'wholesale_barcode';
+      matchedUnit: 'retail' | 'wholesale';
       lastScan: { barcode: string; at: number };
     }
   /** No inventory matches this value — caller should show the missing CTA. */
@@ -106,6 +107,20 @@ export function applyBarcodeToPosCart(input: PosScanInput): PosScanResult {
       kind: 'add',
       product: byBarcode,
       source: 'barcode',
+      matchedUnit: 'retail',
+      lastScan: { barcode: validatedBarcode, at: now },
+    };
+  }
+
+  const byWholesaleBarcode = products.find(
+    (p) => p.wholesale_barcode != null && p.wholesale_barcode === validatedBarcode,
+  );
+  if (byWholesaleBarcode) {
+    return {
+      kind: 'add',
+      product: byWholesaleBarcode,
+      source: 'wholesale_barcode',
+      matchedUnit: 'wholesale',
       lastScan: { barcode: validatedBarcode, at: now },
     };
   }
@@ -119,6 +134,7 @@ export function applyBarcodeToPosCart(input: PosScanInput): PosScanResult {
       kind: 'add',
       product: bySku,
       source: 'sku',
+      matchedUnit: 'retail',
       lastScan: { barcode: validatedBarcode, at: now },
     };
   }
