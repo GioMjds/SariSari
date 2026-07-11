@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
 import { useBarcodeResolver, useCredits, useProducts, useSales } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
+import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
 import { useToastStore } from '@/stores';
 
@@ -127,30 +128,38 @@ export function useAddSalesForm() {
             item.product_id === product.id &&
             (item.selected_unit || 'retail') === selectedUnit,
         );
-        const piecesPerUnit =
-          selectedUnit === 'wholesale' && product.conversion_factor
-            ? product.conversion_factor
-            : 1;
+        const currentPieces = calculateCartProductPieces(prev, product.id);
+        const totalPieces =
+          currentPieces +
+          calculateTotalPieces(
+            1,
+            selectedUnit,
+            product.conversion_factor,
+          );
 
-        if (existing) {
-          const newQty = existing.quantity + 1;
-          if (newQty * piecesPerUnit > product.quantity) {
+        if (totalPieces > product.quantity) {
+          if (currentPieces === 0) {
+            Alert.alert(
+              'Out of Stock',
+              'Insufficient stock for this packaging unit',
+            );
+          } else {
             Alert.alert(
               'Insufficient Stock',
               `Only ${product.quantity} total pieces available`,
             );
-            return prev;
           }
+          return prev;
+        }
+
+        if (existing) {
+          const newQty = existing.quantity + 1;
           return prev.map((item) =>
             item.product_id === product.id &&
             (item.selected_unit || 'retail') === selectedUnit
               ? { ...item, quantity: item.quantity + 1 }
               : item,
           );
-        }
-        if (product.quantity < piecesPerUnit) {
-          Alert.alert('Out of Stock', 'Insufficient stock for this packaging unit');
-          return prev;
         }
         const unitPrice =
           selectedUnit === 'wholesale' && product.wholesale_price != null
@@ -181,6 +190,13 @@ export function useAddSalesForm() {
   const handleUpdateQuantity = useCallback(
     (productId: number, delta: number, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
       setCartItems((prev) => {
+        const matchingItems = prev.filter(
+          (item) =>
+            item.product_id === productId &&
+            (item.selected_unit || 'retail') === selectedUnit,
+        );
+        if (matchingItems.length === 0) return prev;
+
         const next = prev
           .map((item) => {
             if (
@@ -191,20 +207,19 @@ export function useAddSalesForm() {
             }
             const newQuantity = item.quantity + delta;
             if (newQuantity <= 0) return null;
-            const piecesPerUnit =
-              item.selected_unit === 'wholesale' && item.conversion_factor
-                ? item.conversion_factor
-                : 1;
-            if (newQuantity * piecesPerUnit > item.stock) {
-              Alert.alert(
-                'Insufficient Stock',
-                `Only ${item.stock} total pieces available`,
-              );
-              return item;
-            }
             return { ...item, quantity: newQuantity };
           })
           .filter(Boolean) as NewSaleItem[];
+
+        if (
+          calculateCartProductPieces(next, productId) > matchingItems[0].stock
+        ) {
+          Alert.alert(
+            'Insufficient Stock',
+            `Only ${matchingItems[0].stock} total pieces available`,
+          );
+          return prev;
+        }
         return next;
       });
     },
@@ -216,6 +231,18 @@ export function useAddSalesForm() {
       prev.map((item, idx) => {
         if (idx !== index) return item;
         const nextUnit = item.selected_unit === 'wholesale' ? 'retail' : 'wholesale';
+
+        if (nextUnit === 'wholesale') {
+          const piecesPerUnit = item.conversion_factor ?? 1;
+          if (item.quantity * piecesPerUnit > item.stock) {
+            Alert.alert(
+              'Insufficient Stock',
+              `Only ${item.stock} pieces available. Not enough for ${item.quantity} wholesale units.`,
+            );
+            return item;
+          }
+        }
+
         const nextPrice =
           nextUnit === 'wholesale' && item.wholesale_price != null
             ? item.wholesale_price

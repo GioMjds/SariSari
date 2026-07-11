@@ -192,7 +192,11 @@ export function ProductRow({
               quantity={cartLine.quantity}
               onDecrement={() => onUpdateQuantity(product.id, -1, activeUnit)}
               onIncrement={() => onUpdateQuantity(product.id, 1, activeUnit)}
-              max={product.quantity}
+              max={
+                activeUnit === 'wholesale' && product.conversion_factor
+                  ? Math.floor(product.quantity / product.conversion_factor)
+                  : product.quantity
+              }
             />
           </View>
         ) : (

@@ -2,6 +2,7 @@ import {
   formatDualStock,
   formatDualPrice,
   calculateTotalPieces,
+  calculateCartProductPieces,
   calculateWholesaleSavings,
 } from '../../lib/units';
 
@@ -43,6 +44,36 @@ describe('Unit Conversion & Formatting Utilities', () => {
 
     test('returns unitQty directly for retail unit', () => {
       expect(calculateTotalPieces(5, 'retail', 12)).toBe(5);
+    });
+  });
+
+  describe('calculateCartProductPieces', () => {
+    test('aggregates retail and wholesale lines for the same product in base pieces', () => {
+      expect(
+        calculateCartProductPieces(
+          [
+            {
+              product_id: 1,
+              quantity: 3,
+              selected_unit: 'retail',
+              conversion_factor: 12,
+            },
+            {
+              product_id: 1,
+              quantity: 1,
+              selected_unit: 'wholesale',
+              conversion_factor: 12,
+            },
+            {
+              product_id: 2,
+              quantity: 4,
+              selected_unit: 'wholesale',
+              conversion_factor: 6,
+            },
+          ],
+          1,
+        ),
+      ).toBe(15);
     });
   });
 

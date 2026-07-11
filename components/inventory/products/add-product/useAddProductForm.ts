@@ -161,7 +161,14 @@ export function useAddProductForm() {
       safeTrim(sku) !== '' ||
       safeTrim(barcode) !== '' ||
       safeTrim(supplierId) !== '' ||
-      safeTrim(imageUri) !== '');
+      safeTrim(imageUri) !== '' ||
+      enableWholesale ||
+      safeTrim(retailUnitName) !== 'Pc' ||
+      safeTrim(wholesaleUnitName) !== 'Case' ||
+      safeTrim(conversionFactor) !== '12' ||
+      safeTrim(wholesalePrice) !== '' ||
+      safeTrim(wholesaleCostPrice) !== '' ||
+      safeTrim(wholesaleBarcode) !== '');
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the profit card hides itself in that case.

@@ -1,4 +1,5 @@
 import { formatPesos } from './money';
+import type { NewSaleItem } from '@/types';
 
 /**
  * Helper to pluralize a unit name nicely for UI strings.
@@ -79,6 +80,28 @@ export function calculateTotalPieces(
     return qty * conversionFactor;
   }
   return qty;
+}
+
+/** Calculate the base pieces reserved by every cart line for one product. */
+export function calculateCartProductPieces(
+  cartItems: readonly Pick<
+    NewSaleItem,
+    'product_id' | 'quantity' | 'selected_unit' | 'conversion_factor'
+  >[],
+  productId: number,
+): number {
+  return cartItems.reduce(
+    (total, item) =>
+      item.product_id === productId
+        ? total +
+          calculateTotalPieces(
+            item.quantity,
+            item.selected_unit ?? 'retail',
+            item.conversion_factor,
+          )
+        : total,
+    0,
+  );
 }
 
 /**

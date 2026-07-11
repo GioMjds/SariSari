@@ -133,7 +133,28 @@ export function useEditProductForm() {
       price !== product.price.toString() ||
       category !== (product.category || '') ||
       supplierId !== (product.supplier_id || '') ||
-      imageUri !== (product.image_uri || ''));
+      imageUri !== (product.image_uri || '') ||
+      enableWholesale !==
+        !!(
+          product.wholesale_unit_name &&
+          product.conversion_factor &&
+          product.conversion_factor > 1
+        ) ||
+      retailUnitName !== (product.retail_unit_name || 'Pc') ||
+      wholesaleUnitName !== (product.wholesale_unit_name || 'Case') ||
+      conversionFactor !==
+        (product.conversion_factor
+          ? product.conversion_factor.toString()
+          : '12') ||
+      wholesalePrice !==
+        (product.wholesale_price
+          ? product.wholesale_price.toString()
+          : '') ||
+      wholesaleCostPrice !==
+        (product.wholesale_cost_price
+          ? product.wholesale_cost_price.toString()
+          : '') ||
+      wholesaleBarcode !== (product.wholesale_barcode || ''));
 
   // Live profit preview values — `0` means "empty / invalid input"
   // and the pricing card hides the preview in that case.

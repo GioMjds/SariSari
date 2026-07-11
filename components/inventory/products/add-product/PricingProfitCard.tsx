@@ -8,11 +8,7 @@ import {
   formatPesos,
   tryParsePesosInput,
 } from '@/lib';
-import {
-  AddProductFormData,
-  MARKUP_PRESETS,
-  MarkupPreset,
-} from './useAddProductForm';
+import { MARKUP_PRESETS, MarkupPreset } from './useAddProductForm';
 
 interface PricingProfitCardProps {
   control: Control<any>;
@@ -78,8 +74,12 @@ export function PricingProfitCard({
   wholesaleCostPrice = '',
 }: PricingProfitCardProps) {
   const retailPriceVal = tryParsePesosInput(price);
-  const wholesalePriceVal = wholesalePrice ? tryParsePesosInput(wholesalePrice) : 0;
-  const conversionFactorNum = conversionFactor ? parseInt(conversionFactor, 10) : 0;
+  const wholesalePriceVal = wholesalePrice
+    ? tryParsePesosInput(wholesalePrice)
+    : 0;
+  const conversionFactorNum = conversionFactor
+    ? parseInt(conversionFactor, 10)
+    : 0;
   const savings = calculateWholesaleSavings(
     retailPriceVal,
     wholesalePriceVal,
@@ -93,10 +93,7 @@ export function PricingProfitCard({
           <StyledText variant="black" className="label-caps text-cinnamon-500">
             Pricing & Profit
           </StyledText>
-          <StyledText
-            variant="regular"
-            className="text-ink-400 text-xs mt-0.5"
-          >
+          <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5">
             Set your cost, choose a markup, lock in the price
           </StyledText>
         </View>
@@ -212,10 +209,7 @@ export function PricingProfitCard({
                 )}
               />
             </View>
-            <StyledText
-              variant="regular"
-              className="text-ink-400 text-xs mt-1"
-            >
+            <StyledText variant="regular" className="text-ink-400 text-xs mt-1">
               Auto-calculated from bundle cost ÷ pieces
             </StyledText>
           </View>
@@ -263,7 +257,10 @@ export function PricingProfitCard({
               onPress={() => onApplyMarkupPreset(preset)}
               className="press-scale bg-paper-100 border border-ink-200 rounded-pill px-3 py-1.5 active:bg-paper-200"
             >
-              <StyledText variant="extrabold" className="text-cinnamon-600 text-xs">
+              <StyledText
+                variant="extrabold"
+                className="text-cinnamon-600 text-xs"
+              >
                 +{(preset * 100).toFixed(0)}%
               </StyledText>
             </Pressable>
@@ -303,7 +300,11 @@ export function PricingProfitCard({
 
         {isLossWarning && (
           <View className="mt-2 flex-row items-center bg-semantic-warning/10 rounded-xl px-3 py-2 border border-semantic-warning/20">
-            <FontAwesome name="exclamation-triangle" size={12} color="#C77B0E" />
+            <FontAwesome
+              name="exclamation-triangle"
+              size={12}
+              color="#C77B0E"
+            />
             <StyledText
               variant="semibold"
               className="text-semantic-warning text-xs ml-2 flex-1"
@@ -328,10 +329,7 @@ export function PricingProfitCard({
               >
                 Profit per piece
               </StyledText>
-              <StyledText
-                variant="extrabold"
-                className="text-sage-600 text-h2"
-              >
+              <StyledText variant="extrabold" className="text-sage-600 text-h2">
                 ₱
                 {profitPerPiece.toLocaleString('en-PH', {
                   minimumFractionDigits: 2,
@@ -346,10 +344,7 @@ export function PricingProfitCard({
               >
                 Markup
               </StyledText>
-              <StyledText
-                variant="extrabold"
-                className="text-sage-600 text-h2"
-              >
+              <StyledText variant="extrabold" className="text-sage-600 text-h2">
                 {markupPercent.toFixed(1)}%
               </StyledText>
             </View>
@@ -361,16 +356,25 @@ export function PricingProfitCard({
       <View className="mt-6 pt-4 border-t border-ink-200">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-1 pr-3">
-            <StyledText variant="black" className="label-caps text-cinnamon-500">
+            <StyledText
+              variant="black"
+              className="label-caps text-cinnamon-500"
+            >
               Wholesale (Pakyaw) Tier
             </StyledText>
-            <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5">
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs mt-0.5"
+            >
               Offer bulk pricing for suki & bulk buyers
             </StyledText>
           </View>
           {onToggleWholesale && (
             <Pressable
               onPress={onToggleWholesale}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: enableWholesale }}
+              accessibilityLabel="Enable wholesale (pakyaw) tier"
               className={`press-scale flex-row items-center border rounded-pill px-3 py-1.5 ${
                 enableWholesale
                   ? 'bg-cinnamon-500 border-cinnamon-600'
@@ -391,7 +395,10 @@ export function PricingProfitCard({
           <View className="mt-2 space-y-3">
             <View className="flex-row gap-2">
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Tingi Unit (Retail)
                 </StyledText>
                 <Controller
@@ -409,7 +416,10 @@ export function PricingProfitCard({
                 />
               </View>
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Unit (Bulk)
                 </StyledText>
                 <Controller
@@ -429,7 +439,10 @@ export function PricingProfitCard({
             </View>
 
             <View>
-              <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-xs mb-1"
+              >
                 Pieces per Pakyaw Unit
               </StyledText>
               <Controller
@@ -450,11 +463,17 @@ export function PricingProfitCard({
 
             <View className="flex-row gap-2">
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Selling Price
                 </StyledText>
                 <View className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 flex-row items-center">
-                  <StyledText variant="extrabold" className="text-ink-700 text-sm mr-1">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-700 text-sm mr-1"
+                  >
                     ₱
                   </StyledText>
                   <Controller
@@ -475,11 +494,17 @@ export function PricingProfitCard({
               </View>
 
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Cost Price
                 </StyledText>
                 <View className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 flex-row items-center">
-                  <StyledText variant="extrabold" className="text-ink-700 text-sm mr-1">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-700 text-sm mr-1"
+                  >
                     ₱
                   </StyledText>
                   <Controller
@@ -502,8 +527,16 @@ export function PricingProfitCard({
 
             {savings && (
               <View className="mt-3 rounded-xl bg-cinnamon-50 dark:bg-cinnamon-950/30 p-3.5 border border-cinnamon-200/50">
-                <StyledText variant="medium" className="text-cinnamon-800 dark:text-cinnamon-200 text-xs">
-                  Selling at wholesale price ({formatPesos(wholesalePriceVal)}/{wholesaleUnitName}) is equivalent to {formatPesos(savings.equivalentRetailPrice)} per {retailUnitName} (saving the customer {formatPesos(savings.savingsPerPiece)} or {savings.savingsPercent}% compared to retail).
+                <StyledText
+                  variant="medium"
+                  className="text-cinnamon-800 dark:text-cinnamon-200 text-xs"
+                >
+                  Selling at wholesale price ({formatPesos(wholesalePriceVal)}/
+                  {wholesaleUnitName}) is equivalent to{' '}
+                  {formatPesos(savings.equivalentRetailPrice)} per{' '}
+                  {retailUnitName} (saving the customer{' '}
+                  {formatPesos(savings.savingsPerPiece)} or{' '}
+                  {savings.savingsPercent}% compared to retail).
                 </StyledText>
               </View>
             )}

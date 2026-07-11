@@ -205,8 +205,6 @@ export default function Products() {
     setSelectedSupplierForSheet(supplier);
   }, []);
 
-  console.log(`Active tab: ${activeTab}`);
-
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
       <View className="flex-1 bg-background">

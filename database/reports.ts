@@ -138,7 +138,7 @@ export const getSalesOverTime = async (
          si.sale_id,
          SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))) as profit
        FROM sale_items si
-       JOIN products p ON si.product_id = p.id
+       LEFT JOIN products p ON si.product_id = p.id
        WHERE COALESCE(si.cost_price, p.cost_price) IS NOT NULL
          AND si.sale_id IN (SELECT id FROM filtered_sales)
        GROUP BY si.sale_id
