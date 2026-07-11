@@ -221,4 +221,36 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 8.');
   }
+
+  if (currentVersion < 9) {
+    console.log('Running migration to version 9 (Tingi vs. Pakyaw packaging units)...');
+    await db.withTransactionAsync(async () => {
+      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
+      const hasRetailUnit = productColumns.some((c) => c.name === 'retail_unit_name');
+      if (!hasRetailUnit) {
+        await db.execAsync("ALTER TABLE products ADD COLUMN retail_unit_name TEXT NOT NULL DEFAULT 'Pc';");
+        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_unit_name TEXT;');
+        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_price INTEGER;');
+        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_cost_price INTEGER;');
+        await db.execAsync('ALTER TABLE products ADD COLUMN conversion_factor INTEGER;');
+        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_barcode TEXT;');
+        await db.execAsync(
+          'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;'
+        );
+      }
+
+      const saleItemColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(sale_items)');
+      const hasSoldUnitName = saleItemColumns.some((c) => c.name === 'sold_unit_name');
+      if (!hasSoldUnitName) {
+        await db.execAsync('ALTER TABLE sale_items ADD COLUMN sold_unit_name TEXT;');
+        await db.execAsync('ALTER TABLE sale_items ADD COLUMN sold_unit_qty INTEGER;');
+        await db.execAsync('ALTER TABLE sale_items ADD COLUMN conversion_factor INTEGER;');
+        await db.execAsync('ALTER TABLE sale_items ADD COLUMN cost_price INTEGER;');
+      }
+
+      await db.execAsync('PRAGMA user_version = 9;');
+    });
+    console.log('Database migrated to version 9.');
+  }
 }
+
