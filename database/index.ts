@@ -7,4 +7,6 @@ export * from './sales';
 export * from './suppliers';
 export * from './migrations';
 export * from './cash';
+export * from './stock-intelligence';
+
 
