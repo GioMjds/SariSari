@@ -36,7 +36,7 @@ export function SubmitButton({
       accessibilityState={{ disabled, busy: isPending }}
       className={`mt-5 rounded-2xl py-4 flex-row items-center justify-center ${
         disabled
-          ? 'bg-ink-100'
+          ? 'bg-ink-100 shadow-none'
           : 'bg-persimmon-500 shadow-persimmon-glow'
       }`}
       style={({ pressed }) => ({

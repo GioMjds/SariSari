@@ -192,7 +192,7 @@ export function SalesFilterModal({
                       className={`px-4 py-2.5 rounded-pill border ${
                         isSelected
                           ? 'bg-cinnamon-500 border-cinnamon-500 shadow-paper'
-                          : 'bg-paper-100 border-ink-200'
+                          : 'bg-paper-100 border-ink-200 shadow-none'
                       }`}
                     >
                       <StyledText

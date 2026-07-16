@@ -204,7 +204,7 @@ export function CartSummaryTray({
         accessibilityState={{ disabled: isSubmitDisabled, busy: isPending }}
         className={`rounded-2xl py-4 flex-row items-center justify-center ${
           isSubmitDisabled
-            ? 'bg-ink-100'
+            ? 'bg-ink-100 shadow-none'
             : 'bg-persimmon-500 shadow-persimmon-glow'
         }`}
         style={({ pressed }) => ({

@@ -282,7 +282,7 @@ export function LogTransactionForm({
                         className={`flex-1 flex-row items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl border ${
                           isActive
                             ? `${activeBg} border-transparent shadow-sm`
-                            : 'bg-paper-50 border-ink-200'
+                            : 'bg-paper-50 border-ink-200 shadow-none'
                         }`}
                       >
                         <FontAwesome

@@ -31,7 +31,7 @@ export function SubmitButton({
       accessibilityState={{ disabled: isPending, busy: isPending }}
       className={`press-scale rounded-2xl py-4 flex-row items-center justify-center mt-5 ${
         isPending
-          ? 'bg-persimmon-500 opacity-40'
+          ? 'bg-persimmon-500 opacity-40 shadow-none'
           : 'bg-persimmon-500 shadow-persimmon-glow'
       }`}
     >

@@ -189,7 +189,7 @@ export default function AddSupplier() {
                       className={`text-ink-900 text-base border rounded-xl pl-11 pr-11 py-3.5 font-stack-sans ${
                         focusedField === 'name'
                           ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
-                          : 'bg-paper-100 border-ink-200'
+                          : 'bg-paper-100 border-ink-200 shadow-none'
                       }`}
                       placeholderTextColor="#A89F90"
                     />
@@ -245,7 +245,7 @@ export default function AddSupplier() {
                       className={`text-ink-900 text-base border rounded-xl pl-11 pr-11 py-3.5 font-stack-sans ${
                         focusedField === 'contact'
                           ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
-                          : 'bg-paper-100 border-ink-200'
+                          : 'bg-paper-100 border-ink-200 shadow-none'
                       }`}
                       placeholderTextColor="#A89F90"
                     />
@@ -324,7 +324,7 @@ export default function AddSupplier() {
                       className={`text-ink-900 text-base border rounded-xl pl-11 pr-4 py-3.5 font-stack-sans min-h-[100px] ${
                         focusedField === 'notes'
                           ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
-                          : 'bg-paper-100 border-ink-200'
+                          : 'bg-paper-100 border-ink-200 shadow-none'
                       }`}
                       placeholderTextColor="#A89F90"
                       textAlignVertical="top"
@@ -348,7 +348,7 @@ export default function AddSupplier() {
               }}
               className={`rounded-2xl py-4 flex-row items-center justify-center ${
                 !isValid || insertSupplierMutation.isPending
-                  ? 'bg-ink-100'
+                  ? 'bg-ink-100 shadow-none'
                   : 'bg-persimmon-500 shadow-persimmon-glow'
               }`}
               style={({ pressed }) => ({

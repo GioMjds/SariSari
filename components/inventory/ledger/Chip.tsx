@@ -27,7 +27,7 @@ export const Chip = memo(function Chip({
       className={`px-4 py-2 rounded-pill flex-row items-center ${
         active
           ? 'bg-persimmon-500 shadow-sm'
-          : 'bg-paper-50 border border-ink-200'
+          : 'bg-paper-50 border border-ink-200 shadow-none'
       }`}
     >
       <StyledText
