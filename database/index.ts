@@ -6,3 +6,5 @@ export * from './reports';
 export * from './sales';
 export * from './suppliers';
 export * from './migrations';
+export * from './cash';
+
