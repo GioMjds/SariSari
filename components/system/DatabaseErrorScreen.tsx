@@ -87,7 +87,6 @@ export const DatabaseErrorScreen = ({
 						<StyledText
 							variant="regular"
 							className="text-sm text-ink-700"
-							style={{ fontFamily: 'StackSansText-Medium' }}
 						>
 							{message || 'Unknown error'}
 						</StyledText>

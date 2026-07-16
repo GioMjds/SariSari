@@ -155,7 +155,7 @@ export const UtangCard = memo(function UtangCard({ credit, onQuickSettle, index 
 
       {/* Inline notes callout */}
       {credit.notes && credit.notes.trim() !== '' && (
-        <View className="mx-4 mb-3 rounded-xl border-l-2 border-ink-300 bg-paper-100 px-3 py-2">
+        <View className="mx-4 mb-3 rounded-xl bg-paper-100 px-3 py-2">
           <StyledText
             variant="medium"
             className="text-ink-700 text-caption"

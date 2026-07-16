@@ -1,10 +1,17 @@
 import { StyledText } from '@/components/elements';
-import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
+import {
+  InventoryActionModal,
+  ProductActionSheet,
+  ProductDeleteModal,
+  SortBottomSheet,
+  SupplierActionSheet,
+  SupplierDeleteModal,
+} from '@/components/inventory';
 import { ProductsTab } from '@/components/inventory/products';
 import { CategoriesTab } from '@/components/inventory/category';
 import { SuppliersTab } from '@/components/inventory/suppliers/SuppliersTab';
 import { BarcodeScannerModal, SearchBar } from '@/components/ui';
-import { LOW_STOCK_THRESHOLD, SortOption, sortOption } from '@/constants';
+import { LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
 import { useCategories, useProducts, useSuppliers } from '@/hooks';
 import { Product, Supplier } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
@@ -15,8 +22,6 @@ import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Modal,
   Pressable,
   TouchableOpacity,
   View,
@@ -27,6 +32,32 @@ type TabType = 'products' | 'categories' | 'suppliers';
 type SortDirection = 'asc' | 'desc';
 
 type PendingAction = { product: Product; type: InventoryEventType };
+
+// Reusable small circular button used in the header (barcode, add).
+// Centralized so the surface (paper-50/15), sizing, and active
+// feedback are identical across the products and suppliers tabs.
+function HeaderCircleButton({
+  icon,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: 'barcode' | 'plus';
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.94] active:opacity-80"
+    >
+      <FontAwesome name={icon} size={18} color="#FBF7EE" />
+    </TouchableOpacity>
+  );
+}
+
 
 export default function Products() {
   const { t } = useTranslation('inventory');
@@ -232,7 +263,7 @@ export default function Products() {
                         backgroundColor: isActive ? '#E85A1F' : 'transparent',
                       }}
                     >
-                      <StyledText 
+                      <StyledText
                         variant="semibold"
                         className="text-sm"
                         style={{ color: isActive ? '#FFFFFF' : '#E5D8BC' }}
@@ -246,34 +277,16 @@ export default function Products() {
             </View>
           </View>
 
-          {/* Monogram dot and Eyebrow */}
+          {/* Eyebrow — receipt label, no opacity (tokens guarantee contrast) */}
           <MotiView
             from={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ type: 'timing', duration: 320 }}
-            className="px-5 mb-2 flex-row items-center"
+            transition={{ type: 'timing', duration: 220 }}
+            className="px-5 mb-2"
           >
-            <View
-              className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2"
-              style={{
-                shadowColor: '#564E45',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.06,
-                shadowRadius: 6,
-                elevation: 2,
-              }}
-            >
-              <StyledText
-                variant="black"
-                className="text-paper-50 text-xl font-extrabold"
-              >
-                ₱
-              </StyledText>
-            </View>
             <StyledText
               variant="extrabold"
-              className="text-label text-paper-200 opacity-80 text-md"
-              style={{ letterSpacing: 1.4 }}
+              className="label-caps text-paper-300"
             >
               {eyebrow}
             </StyledText>
@@ -283,20 +296,20 @@ export default function Products() {
           <MotiView
             from={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ type: 'timing', duration: 320 }}
+            transition={{ type: 'timing', duration: 220, delay: 40 }}
             className="px-5 pb-5 flex-row justify-between items-start"
           >
             <View className="flex-1 mr-3">
               <StyledText
                 variant="extrabold"
-                className="text-h1 text-paper-50 text-3xl"
+                className="text-h1 text-paper-50"
                 style={{ letterSpacing: -0.28 }}
               >
                 {title}
               </StyledText>
               <StyledText
                 variant="regular"
-                className="text-sm text-paper-200 opacity-90 mt-1"
+                className="text-sm text-paper-200 mt-1"
               >
                 {subtitle}
               </StyledText>
@@ -304,48 +317,36 @@ export default function Products() {
 
             {activeTab === 'products' && (
               <View className="flex-row gap-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
+                <HeaderCircleButton
+                  icon="barcode"
                   onPress={openScanner}
-                  accessibilityRole="button"
                   accessibilityLabel="Scan barcode to add a product"
-                  className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
-                >
-                  <FontAwesome name="barcode" size={18} color="#FBF7EE" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.8}
+                />
+                <HeaderCircleButton
+                  icon="plus"
                   onPress={() => router.push('/(edit-forms)/add-product')}
-                  accessibilityRole="button"
                   accessibilityLabel={t('addProductA11y')}
-                  className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
-                >
-                  <FontAwesome name="plus" size={18} color="#FBF7EE" />
-                </TouchableOpacity>
+                />
               </View>
             )}
 
             {activeTab === 'suppliers' && (
               <View className="flex-row gap-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
+                <HeaderCircleButton
+                  icon="plus"
                   onPress={() => router.push('/(edit-forms)/add-supplier')}
-                  accessibilityRole="button"
                   accessibilityLabel={t('addSupplierA11y')}
-                  className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:scale-[0.96] transition-transform"
-                >
-                  <FontAwesome name="plus" size={18} color="#FBF7EE" />
-                </TouchableOpacity>
+                />
               </View>
             )}
           </MotiView>
 
-          {/* Search & Sort Row (Z3a) — ONLY for products and suppliers tab */}
+          {/* Search & Sort Row — ONLY for products and suppliers tab */}
           {(activeTab === 'products' || activeTab === 'suppliers') && (
             <MotiView
               from={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ type: 'timing', duration: 320, delay: 80 }}
+              transition={{ type: 'timing', duration: 220, delay: 80 }}
             >
               <View className="px-5 pb-4 flex-row items-center gap-3">
                 <View className="flex-1">
@@ -365,7 +366,9 @@ export default function Products() {
                     <TouchableOpacity
                       activeOpacity={0.8}
                       onPress={() => setShowSortModal(true)}
-                      className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 relative active:scale-[0.96] transition-transform"
+                      className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 relative active:scale-[0.94] active:opacity-80"
+                      accessibilityRole="button"
+                      accessibilityLabel={t('sortBy')}
                     >
                       <FontAwesome name="sort" size={18} color="#FBF7EE" />
                       {(sortBy !== 'stock' || sortDirection !== 'asc') && (
@@ -377,7 +380,13 @@ export default function Products() {
                       onPress={() =>
                         setViewMode(viewMode === 'list' ? 'grid' : 'list')
                       }
-                      className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 active:scale-[0.96] transition-transform"
+                      className="w-[46px] h-[46px] rounded-xl justify-center items-center bg-paper-50/15 active:scale-[0.94] active:opacity-80"
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        viewMode === 'list'
+                          ? 'Switch to grid view'
+                          : 'Switch to list view'
+                      }
                     >
                       <FontAwesome
                         name={viewMode === 'list' ? 'th-large' : 'list'}
@@ -410,77 +419,13 @@ export default function Products() {
         )}
 
         {/* Sort Modal */}
-        <Modal
+        <SortBottomSheet
           visible={showSortModal}
-          transparent
-          animationType="fade"
           onRequestClose={() => setShowSortModal(false)}
-        >
-          <Pressable
-            className="flex-1 justify-end"
-            onPress={() => setShowSortModal(false)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          >
-            <Pressable
-              className="bg-white rounded-t-3xl p-6"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-xl mb-4"
-              >
-                {t('sortBy')}
-              </StyledText>
-              {sortOption.map((option) => (
-                <TouchableOpacity
-                  key={option.key}
-                  hitSlop={20}
-                  onPress={() => handleSort(option.key)}
-                  activeOpacity={0.2}
-                  className="flex-row items-center justify-between py-4 border-b border-ink-100"
-                >
-                  <View className="flex-row items-center">
-                    <FontAwesome
-                      name={option.icon as any}
-                      size={18}
-                      color="#E85A1F"
-                    />
-                    <StyledText
-                      variant="medium"
-                      className="text-ink-800 ml-3 text-base"
-                    >
-                      {t(
-                        `sort${
-                          option.key.charAt(0).toUpperCase() +
-                          option.key.slice(1)
-                        }`,
-                      )}
-                    </StyledText>
-                  </View>
-                  {sortBy === option.key && (
-                    <FontAwesome
-                      name={sortDirection === 'asc' ? 'sort-asc' : 'sort-desc'}
-                      size={18}
-                      color="#E85A1F"
-                    />
-                  )}
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                onPress={() => setShowSortModal(false)}
-                hitSlop={8}
-                className="bg-ink-100 rounded-xl py-3 mt-4 active:opacity-70 active:scale-[0.98] transition-transform"
-              >
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-700 text-center text-base"
-                >
-                  {t('common:close')}
-                </StyledText>
-              </TouchableOpacity>
-            </Pressable>
-          </Pressable>
-        </Modal>
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+        />
 
         {/* Inventory Action Modal */}
         <InventoryActionModal
@@ -489,410 +434,54 @@ export default function Products() {
           onClose={() => setPendingAction(null)}
         />
 
-        {/* Action Sheet Modal (Overflow menu) */}
-        <Modal
-          visible={!!selectedProductForSheet}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedProductForSheet(null)}
-          statusBarTranslucent
-        >
-          <Pressable
-            className="flex-1 justify-end"
-            onPress={() => setSelectedProductForSheet(null)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          >
-            <Pressable
-              className="bg-white rounded-t-3xl p-6 pb-10"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View className="items-center mb-4">
-                <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-900 text-lg text-center"
-                >
-                  {selectedProductForSheet?.name}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-xs text-center mt-1"
-                >
-                  {t('actionSheetSubtitle')}
-                </StyledText>
-              </View>
-
-              <View className="gap-2">
-                {/* Action: Mark Damaged */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const product = selectedProductForSheet!;
-                    setSelectedProductForSheet(null);
-                    setPendingAction({ product, type: 'damaged' });
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="ban"
-                    size={18}
-                    color="#C22D2D"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-800 text-base"
-                  >
-                    {t('actionMarkDamaged')}
-                  </StyledText>
-                </TouchableOpacity>
-
-                {/* Action: Adjust Stock */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const product = selectedProductForSheet!;
-                    setSelectedProductForSheet(null);
-                    setPendingAction({ product, type: 'adjustment' });
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="sliders"
-                    size={18}
-                    color="#4A2610"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-800 text-base"
-                  >
-                    {t('actionAdjustStock')}
-                  </StyledText>
-                </TouchableOpacity>
-
-                {/* Action: View Ledger */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const product = selectedProductForSheet!;
-                    setSelectedProductForSheet(null);
-                    router.push(
-                      `/(edit-forms)/inventory-ledger/${product.id}` as any,
-                    );
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="list-alt"
-                    size={18}
-                    color="#E85A1F"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-800 text-base"
-                  >
-                    {t('actionViewLedger')}
-                  </StyledText>
-                </TouchableOpacity>
-
-                {/* Divider */}
-                <View className="h-[1px] bg-ink-100 my-2" />
-
-                {/* Action: Edit Product */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const product = selectedProductForSheet!;
-                    router.push(`/(edit-forms)/edit-product/${product.id}`);
-                    setSelectedProductForSheet(null);
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="pencil"
-                    size={18}
-                    color="#C22D2D"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="extrabold"
-                    className="text-cinnamon-500 text-base"
-                  >
-                    {t('actionEditProduct')}
-                  </StyledText>
-                </TouchableOpacity>
-
-                {/* Action: Delete Product */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const product = selectedProductForSheet!;
-                    setSelectedProductForSheet(null);
-                    setProductToDelete(product);
-                    setShowDeleteModal(true);
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="trash"
-                    size={18}
-                    color="#C22D2D"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="extrabold"
-                    className="text-semantic-danger text-base"
-                  >
-                    {t('actionDeleteProduct')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
+        {/* Action Sheet Modal (Overflow menu) — product */}
+        <ProductActionSheet
+          product={selectedProductForSheet}
+          onClose={() => setSelectedProductForSheet(null)}
+          onSelectAction={(type) => setPendingAction({ product: selectedProductForSheet!, type })}
+          onSelectDelete={() => {
+            setProductToDelete(selectedProductForSheet);
+            setShowDeleteModal(true);
+          }}
+        />
 
         {/* Delete Confirmation Modal */}
-        <Modal
+        <ProductDeleteModal
+          product={productToDelete}
           visible={showDeleteModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowDeleteModal(false)}
-        >
-          <View
-            className="flex-1 justify-center items-center px-6"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          >
-            <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
-              <View className="items-center mb-4">
-                <View className="bg-red-50 rounded-full p-4 mb-3">
-                  <FontAwesome
-                    name="exclamation-triangle"
-                    size={32}
-                    color="#C22D2D"
-                  />
-                </View>
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-900 text-xl mb-2 text-center"
-                >
-                  {t('deleteTitle')}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-sm text-center"
-                >
-                  {t('deleteBody', {
-                    name: productToDelete?.name || '',
-                  })}
-                </StyledText>
-                <StyledText
-                  variant="semibold"
-                  className="text-semantic-danger text-sm mt-2 text-center"
-                >
-                  {t('deleteWarning')}
-                </StyledText>
-              </View>
-              <View className="gap-3">
-                <TouchableOpacity
-                  onPress={confirmDelete}
-                  disabled={deleteProductMutation.isPending}
-                  className="bg-semantic-danger rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
-                >
-                  {deleteProductMutation.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <StyledText
-                      variant="extrabold"
-                      className="text-white text-center text-base"
-                    >
-                      {t('deleteConfirm')}
-                    </StyledText>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowDeleteModal(false)}
-                  className="bg-ink-100 rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-center text-base"
-                  >
-                    {t('common:cancel')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={confirmDelete}
+          isPending={deleteProductMutation.isPending}
+        />
 
         {/* Supplier Action Sheet Modal (Overflow menu) */}
-        <Modal
-          visible={!!selectedSupplierForSheet}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedSupplierForSheet(null)}
-          statusBarTranslucent
-        >
-          <Pressable
-            className="flex-1 justify-end"
-            onPress={() => setSelectedSupplierForSheet(null)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          >
-            <Pressable
-              className="bg-white rounded-t-3xl p-6 pb-10"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <View className="items-center mb-4">
-                <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-900 text-lg text-center"
-                >
-                  {selectedSupplierForSheet?.name}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-xs text-center mt-1"
-                >
-                  {t('actionSheetSubtitle')}
-                </StyledText>
-              </View>
-
-              <View className="gap-2">
-                {/* Action: Edit Supplier */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const supplier = selectedSupplierForSheet!;
-                    router.push(`/(edit-forms)/edit-supplier/${supplier.id}`);
-                    setSelectedSupplierForSheet(null);
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="pencil"
-                    size={18}
-                    color="#E85A1F"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="extrabold"
-                    className="text-cinnamon-500 text-base"
-                  >
-                    {t('actionEditSupplier')}
-                  </StyledText>
-                </TouchableOpacity>
-
-                {/* Action: Delete Supplier */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const supplier = selectedSupplierForSheet!;
-                    setSelectedSupplierForSheet(null);
-                    setSupplierToDelete(supplier);
-                    setShowSupplierDeleteModal(true);
-                  }}
-                  className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200 active:scale-[0.98] transition-transform active:opacity-85"
-                >
-                  <FontAwesome
-                    name="trash"
-                    size={18}
-                    color="#C22D2D"
-                    className="mr-3 w-6 text-center"
-                  />
-                  <StyledText
-                    variant="extrabold"
-                    className="text-semantic-danger text-base"
-                  >
-                    {t('actionDeleteSupplier')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
+        <SupplierActionSheet
+          supplier={selectedSupplierForSheet}
+          onClose={() => setSelectedSupplierForSheet(null)}
+          onSelectDelete={() => {
+            setSupplierToDelete(selectedSupplierForSheet);
+            setShowSupplierDeleteModal(true);
+          }}
+        />
 
         {/* Supplier Delete Confirmation Modal */}
-        <Modal
+        <SupplierDeleteModal
+          supplier={supplierToDelete}
           visible={showSupplierDeleteModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowSupplierDeleteModal(false)}
-        >
-          <View
-            className="flex-1 justify-center items-center px-6"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-          >
-            <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
-              <View className="items-center mb-4">
-                <View className="bg-red-50 rounded-full p-4 mb-3">
-                  <FontAwesome
-                    name="exclamation-triangle"
-                    size={32}
-                    color="#C22D2D"
-                  />
-                </View>
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-900 text-xl mb-2 text-center"
-                >
-                  {t('deleteSupplierTitle')}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-sm text-center"
-                >
-                  {t('deleteSupplierBody', {
-                    name: supplierToDelete?.name || '',
-                  })}
-                </StyledText>
-                <StyledText
-                  variant="semibold"
-                  className="text-semantic-danger text-sm mt-2 text-center"
-                >
-                  {t('deleteSupplierWarning')}
-                </StyledText>
-              </View>
-              <View className="gap-3">
-                <TouchableOpacity
-                  onPress={() => {
-                    if (supplierToDelete) {
-                      deleteSupplierMutation.mutate(supplierToDelete.id, {
-                        onSuccess: () => {
-                          setShowSupplierDeleteModal(false);
-                          setSupplierToDelete(null);
-                        },
-                      });
-                    }
-                  }}
-                  disabled={deleteSupplierMutation.isPending}
-                  className="bg-semantic-danger rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
-                >
-                  {deleteSupplierMutation.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <StyledText
-                      variant="extrabold"
-                      className="text-white text-center text-base"
-                    >
-                      {t('deleteSupplierConfirm')}
-                    </StyledText>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => setShowSupplierDeleteModal(false)}
-                  className="bg-ink-100 rounded-xl py-3 active:opacity-70 active:scale-[0.98] transition-transform"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-center text-base"
-                  >
-                    {t('common:cancel')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          onClose={() => setShowSupplierDeleteModal(false)}
+          onConfirm={() => {
+            if (supplierToDelete) {
+              deleteSupplierMutation.mutate(supplierToDelete.id, {
+                onSuccess: () => {
+                  setShowSupplierDeleteModal(false);
+                  setSupplierToDelete(null);
+                },
+              });
+            }
+          }}
+          isPending={deleteSupplierMutation.isPending}
+        />
 
-        {/* Barcode scanner — opens from the inventory header. Single
-          mode closes after one accepted scan, then routes into the
-          Add Product form with the scanned value as a prefill param. */}
         <BarcodeScannerModal
           visible={isScannerOpen}
           mode="single"

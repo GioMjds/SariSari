@@ -160,7 +160,7 @@ export const ToastItem = ({ toast, index, onDismiss }: ToastItemProps) => {
           <StyledText
             variant="extrabold"
             style={{ letterSpacing: 1.54 }}
-            className={`${eyebrowColor} text-[11px] uppercase`}
+            className={`${eyebrowColor} text-[10px] uppercase`}
           >
             {eyebrowText}
           </StyledText>
@@ -190,7 +190,7 @@ export const ToastItem = ({ toast, index, onDismiss }: ToastItemProps) => {
           >
             <StyledText
               variant="extrabold"
-              className={`${actionTextColor} text-[12px] uppercase`}
+              className={`${actionTextColor} text-[10px] uppercase`}
             >
               {toast.action.label}
             </StyledText>

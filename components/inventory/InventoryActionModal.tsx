@@ -347,7 +347,7 @@ export function InventoryActionModal({
                   }}
                   keyboardType="number-pad"
                   className="w-24 text-center text-2xl font-extrabold text-ink-900 border-b border-ink-300 py-1"
-                  style={{ fontFamily: 'System' }}
+                  style={{ fontFamily: 'StackSansText-Bold' }}
                 />
 
                 <TouchableOpacity

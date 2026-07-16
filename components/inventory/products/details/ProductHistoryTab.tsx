@@ -231,7 +231,7 @@ export const ProductHistoryTab = React.memo(function ProductHistoryTab({
                 <FontAwesome name="clock-o" size={9} color="#A89F90" />
                 <StyledText
                   variant="medium"
-                  className="text-ink-400 ml-1 text-[11px]"
+                  className="text-ink-400 ml-1 text-[10px]"
                 >
                   {dateLabel}
                 </StyledText>

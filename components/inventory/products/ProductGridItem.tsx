@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
@@ -22,7 +22,7 @@ export const ProductGridItem = React.memo(function ProductGridItem({
   index,
   onRestock,
   onMore,
-}: ProductGridItemProps) {
+  }: ProductGridItemProps) {
   const router = useRouter();
 
   const isOutOfStock = product.quantity === 0;
@@ -56,12 +56,17 @@ export const ProductGridItem = React.memo(function ProductGridItem({
       }}
       className="flex-1 m-2"
     >
-      <TouchableOpacity
-        activeOpacity={0.9}
+      <Pressable
         onPress={handlePress}
         onLongPress={() => onMore(product)}
         delayLongPress={400}
-        className="bg-white rounded-2xl border border-ink-100 shadow-sm overflow-hidden active:scale-[0.96] transition-transform duration-100"
+        accessibilityRole="button"
+        accessibilityLabel={`${product.name}, price ${product.price}. Tap to view details. Long press for actions.`}
+        style={({ pressed }) => ({
+          transform: [{ scale: pressed ? 0.96 : 1 }],
+          opacity: pressed ? 0.9 : 1,
+        })}
+        className="bg-white rounded-2xl border border-ink-100 shadow-sm overflow-hidden"
       >
         {/* Image Window */}
         <View className="h-[120px] w-full bg-paper-100 relative items-center justify-center overflow-hidden rounded-t-2xl">
@@ -116,26 +121,28 @@ export const ProductGridItem = React.memo(function ProductGridItem({
               className="text-persimmon-500 font-extrabold"
             />
 
-            <TouchableOpacity
+            <Pressable
               onPress={() => onRestock(product)}
-              activeOpacity={0.85}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={`Restock ${product.name}`}
-              className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center shadow-persimmon-glow active:scale-[0.96] transition-transform"
-              style={{
+              style={({ pressed }) => ({
                 shadowColor: '#E85A1F',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.18,
                 shadowRadius: 12,
                 elevation: 4,
-              }}
+                transform: [{ scale: pressed ? 0.96 : 1 }],
+                opacity: pressed ? 0.85 : 1,
+              })}
+              className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center shadow-persimmon-glow"
             >
               <FontAwesome name="plus" size={12} color="#FBF7EE" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     </MotiView>
   );
 });
+

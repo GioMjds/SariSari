@@ -81,7 +81,7 @@ export const TopProductsList = memo(function TopProductsList({
                   </StyledText>
                   <StyledText
                     variant="medium"
-                    className="text-ink-500 text-[11px] mt-0.5"
+                    className="text-ink-500 text-[10px] mt-0.5"
                   >
                     {product.unitsSold}{' '}
                     {product.unitsSold === 1 ? 'unit' : 'units'} moved out

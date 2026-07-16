@@ -1,4 +1,20 @@
 import { getTabs, Tab } from '@/constants';
+
+/**
+ * TAB_BAR_TOTAL_OFFSET — total vertical real estate the floating tab
+ * bar claims at the bottom of the screen (its own height + the safe-area
+ * margin underneath it).
+ *
+ * Pass this to <Pagination bottomOffset={TAB_BAR_TOTAL_OFFSET} /> from
+ * inside any tab that renders the pagination pill, so the pill clears
+ * the tab bar instead of being covered by it. The tab bar lives in the
+ * (tabs) layout, but its measured height is owned by this module —
+ * keep the number here so it stays in lockstep with the bar itself.
+ *
+ * 16 (bottom margin) + 16 (top padding) + 40 (tab content) ≈ 72.
+ * The trailing 8 is breathing room between the pill and the bar.
+ */
+export const TAB_BAR_TOTAL_OFFSET = 80;
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';

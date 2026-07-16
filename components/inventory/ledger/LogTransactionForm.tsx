@@ -385,7 +385,7 @@ export function LogTransactionForm({
                   keyboardType="number-pad"
                   accessibilityLabel="Quantity"
                   className="w-24 text-center text-2xl font-extrabold text-ink-900 border-b border-ink-300 py-1"
-                  style={{ fontFamily: 'System' }}
+                  style={{ fontFamily: 'StackSansText-Bold' }}
                 />
 
                 <TouchableOpacity

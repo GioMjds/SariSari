@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
 import { Pagination } from '@/components/ui';
 import { ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
 import { useCategories, useProducts } from '@/hooks';
@@ -275,16 +276,14 @@ export const ProductsTab = memo(function ProductsTab({
       : 'no-filter';
 
   return (
-    <View className="flex-1">
-      {/* Products Hero (Z2) - now sits at the top of the body page */}
+    <View className="flex-1 relative">
+      {/* Products Hero (Z2) - now a slim receipt summary bar */}
       {hasProductsInDb && (
-        <View className="mt-3">
-          <ProductsHero
-            total={stats.total}
-            lowStock={stats.lowStock + stats.outStock}
-            totalValuePesos={stats.totalValuepesos}
-          />
-        </View>
+        <ProductsHero
+          total={stats.total}
+          lowStock={stats.lowStock + stats.outStock}
+          totalValuePesos={stats.totalValuepesos}
+        />
       )}
 
       {/* Filter Chips Strip (Z3b) */}
@@ -311,8 +310,11 @@ export const ProductsTab = memo(function ProductsTab({
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderProductItem}
           contentContainerStyle={{
-            paddingTop: 8,
-            paddingBottom: 120,
+            paddingTop: 4,
+            // Reserve room for the floating pagination pill (paper
+            // surface, ~52px tall) plus the safe-area inset baked
+            // into the pill itself.
+            paddingBottom: 96,
             paddingHorizontal: viewMode === 'grid' ? 8 : 0,
           }}
           refreshControl={
@@ -334,6 +336,7 @@ export const ProductsTab = memo(function ProductsTab({
           onPageChange={setCurrentPage}
           totalItems={filteredProducts.length}
           itemsPerPage={ITEMS_PER_PAGE}
+          bottomOffset={TAB_BAR_TOTAL_OFFSET}
         />
       )}
 
@@ -348,7 +351,7 @@ export const ProductsTab = memo(function ProductsTab({
         <Pressable
           className="flex-1 justify-end"
           onPress={() => setShowCategorySheet(false)}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <Pressable
             className="bg-white rounded-t-3xl p-6 max-h-[80%]"
@@ -467,7 +470,7 @@ export const ProductsTab = memo(function ProductsTab({
       >
         <View
           className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
             <View className="items-center mb-4">

@@ -264,7 +264,7 @@ function StockRow({
         >
           <StyledText
             variant="extrabold"
-            className={`text-[11px] ${
+            className={`text-[10px] ${
               pillVariant === 'danger'
                 ? 'text-semantic-danger'
                 : 'text-semantic-warning'

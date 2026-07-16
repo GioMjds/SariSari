@@ -7,24 +7,28 @@
     "icon": "./assets/images/logo.png",
     "scheme": "sarisari",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "backgroundColor": "#EFE6D2",
+    "runtimeVersion": "1.0.0",
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#EFE6D2"
+      "backgroundColor": "#EFE6D2",
+      "bundleIdentifier": "com.giomjds.sarisari",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#EFE6D2",
         "foregroundImage": "./assets/images/logo.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.giomjds.sarisari"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",

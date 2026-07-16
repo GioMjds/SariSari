@@ -107,7 +107,7 @@ function LanguageRow({
           {active ? (
             <StyledText
               variant="medium"
-              className="text-[11px] text-persimmon-600 mt-0.5"
+              className="text-[10px] text-persimmon-600 mt-0.5"
             >
               {t('common:languageActive')}
             </StyledText>

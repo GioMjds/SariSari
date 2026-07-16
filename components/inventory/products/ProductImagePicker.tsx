@@ -126,7 +126,7 @@ export function ProductImagePicker({
         <Pressable
           className="flex-1 justify-end"
           onPress={() => setModalVisible(false)}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <Pressable
             className="bg-white rounded-t-3xl p-6"

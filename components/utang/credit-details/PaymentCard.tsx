@@ -78,7 +78,7 @@ export const PaymentCard = memo(function PaymentCard({ payment, index }: Payment
         </View>
 
         {payment.notes && payment.notes.trim() !== '' && (
-          <View className="mt-3 rounded-xl border-l-2 border-ink-300 bg-paper-100 px-3 py-2">
+          <View className="mt-3 rounded-xl bg-paper-100 px-3 py-2">
             <StyledText
               variant="medium"
               className="text-ink-700 text-caption"

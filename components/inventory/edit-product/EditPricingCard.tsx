@@ -122,8 +122,8 @@ export function EditPricingCard({
         <View
           className={`mt-3 rounded-lg p-3 flex-row items-center justify-between ${
             isLossWarning
-              ? 'bg-semantic-danger-50 border-l-4 border-semantic-danger'
-              : 'bg-sage-50 border-l-4 border-sage-500'
+              ? 'bg-semantic-danger-50 border border-semantic-danger-100'
+              : 'bg-sage-50 border border-sage-100'
           }`}
         >
           <View>

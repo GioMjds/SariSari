@@ -317,7 +317,7 @@ export function PricingProfitCard({
 
       {/* Profit Receipt card */}
       {hasCost && hasPrice && (
-        <View className="mt-4 bg-sage-50 border-l-4 border-sage-500 rounded-xl px-4 py-3">
+        <View className="mt-4 bg-sage-50 border border-sage-100 rounded-xl px-4 py-3">
           <StyledText variant="black" className="label-caps text-sage-600">
             Profit Receipt
           </StyledText>

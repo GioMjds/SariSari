@@ -196,7 +196,7 @@ export function Modal({
         transition={{ type: 'timing', duration: 200 }}
         style={[
           StyleSheet.absoluteFillObject,
-          { backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+          { backgroundColor: 'rgba(14, 12, 10, 0.4)' },
         ]}
       >
         <Pressable

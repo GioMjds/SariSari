@@ -71,7 +71,8 @@ export function AddCustomerHeader({
         {/* Decorative ₱ watermark */}
         <StyledText
           variant="black"
-          className="absolute -right-2 -top-3 text-paper-100 opacity-10 text-[120px] leading-none"
+          className="absolute -right-2 -top-3 text-paper-100 opacity-10 leading-none"
+          style={{ fontSize: 120 }}
         >
           ₱
         </StyledText>

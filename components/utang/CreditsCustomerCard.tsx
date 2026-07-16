@@ -131,7 +131,7 @@ export const CreditsCustomerCard = memo(function CreditsCustomerCard({
                 value={customer.total_credits}
                 size="sm"
                 variant="default"
-                className="text-ink-500 text-[11px] font-medium ml-1"
+                className="text-ink-500 text-[10px] font-medium ml-1"
               />
             </View>
 
@@ -149,7 +149,7 @@ export const CreditsCustomerCard = memo(function CreditsCustomerCard({
                 <FontAwesome name="money" size={10} color="#FBF7EE" />
                 <StyledText
                   variant="extrabold"
-                  className="text-paper-50 text-[11px] ml-1.5"
+                  className="text-paper-50 text-[10px] ml-1.5"
                 >
                   Payment
                 </StyledText>
@@ -167,7 +167,7 @@ export const CreditsCustomerCard = memo(function CreditsCustomerCard({
                 <FontAwesome name="plus" size={10} color="#623418" />
                 <StyledText
                   variant="extrabold"
-                  className="text-cinnamon-700 text-[11px] ml-1"
+                  className="text-cinnamon-700 text-[10px] ml-1"
                 >
                   Credit
                 </StyledText>

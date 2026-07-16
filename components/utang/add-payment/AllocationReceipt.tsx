@@ -207,7 +207,7 @@ function AllocationRowItem({ row }: AllocationRowItemProps) {
       {row.partiallyCovered && (
         <StyledText
           variant="medium"
-          className="text-ink-400 text-[11px] mt-0.5"
+          className="text-ink-400 text-[10px] mt-0.5"
         >
           {formatPesos(remainingAfter)} still owed
         </StyledText>

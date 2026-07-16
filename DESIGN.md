@@ -153,14 +153,14 @@ The design system is flat-by-default to preserve the receipt paper aesthetic. De
 
 ## 6. Do's and Don'ts
 
-### Do:
+### Do
 
 - **Do** wrap every ledger state mutation inside database transactions to maintain FIFO utang records.
 - **Do** display the mascot Sari in empty states and main dashboards to visually orient the user.
 - **Do** use `formatPesos` and `parsePesosInput` to guarantee all currency transactions are integer-accurate.
 - **Do** use responsive press-scaling (0.97 scale on active press) to provide tactile UI feedback.
 
-### Don't:
+### Don't
 
 - **Don't** use border-left or border-right colored stripes as decoration on cards or alerts.
 - **Don't** use text gradients or decorative glassmorphism.

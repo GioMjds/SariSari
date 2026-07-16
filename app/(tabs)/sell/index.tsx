@@ -7,6 +7,7 @@ import {
   SellHeader,
   TodayStatsHero,
 } from '@/components/sell';
+import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
 import { Pagination } from '@/components/ui';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
@@ -319,6 +320,7 @@ export default function Sell() {
               onPageChange={setCurrentPage}
               totalItems={filteredSales.length}
               itemsPerPage={ITEMS_PER_PAGE}
+              bottomOffset={TAB_BAR_TOTAL_OFFSET}
             />
           )}
         </View>

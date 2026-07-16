@@ -144,7 +144,7 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 							<View className="mt-2 items-center">
 								<StyledText
 									variant="semibold"
-									className={`text-[11px] ${
+									className={`text-[10px] ${
 										isToday ? 'text-persimmon-600' : 'text-ink-700'
 									}`}
 									style={{ letterSpacing: 0.3 }}
@@ -153,7 +153,7 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 								</StyledText>
 								<StyledText
 									variant="medium"
-									className="text-[8px] text-ink-400 uppercase"
+									className="text-[10px] text-ink-400 uppercase"
 									style={{ letterSpacing: 1 }}
 								>
 									{new Date(point.date).toLocaleString('en', { weekday: 'short' }).slice(0, 3)}

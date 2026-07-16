@@ -103,7 +103,7 @@ export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalO
 								</StyledText>
 								<StyledText
 									variant="extrabold"
-									className={`text-[11px] ${stamp.text}`}
+									className={`text-[10px] ${stamp.text}`}
 									style={{ letterSpacing: 0.4 }}
 								>
 									{Math.round(pct)}%
@@ -232,7 +232,7 @@ export const StockMovementDetails = memo(function StockMovementDetails({
 						</StyledText>
 					</View>
 					{fastMoving.length === 0 ? (
-						<StyledText variant="medium" className="text-ink-400 text-[11px]">
+						<StyledText variant="medium" className="text-ink-400 text-[10px]">
 							None yet
 						</StyledText>
 					) : (
@@ -240,7 +240,7 @@ export const StockMovementDetails = memo(function StockMovementDetails({
 							<StyledText
 								key={item.id}
 								variant="medium"
-								className="text-ink-700 text-[12px] mt-1"
+								className="text-ink-700 text-[10px] mt-1"
 								numberOfLines={1}
 							>
 								· {item.name}
@@ -261,7 +261,7 @@ export const StockMovementDetails = memo(function StockMovementDetails({
 						</StyledText>
 					</View>
 					{slowMoving.length === 0 ? (
-						<StyledText variant="medium" className="text-ink-400 text-[11px]">
+						<StyledText variant="medium" className="text-ink-400 text-[10px]">
 							None yet
 						</StyledText>
 					) : (
@@ -269,7 +269,7 @@ export const StockMovementDetails = memo(function StockMovementDetails({
 							<StyledText
 								key={item.id}
 								variant="medium"
-								className="text-ink-700 text-[12px] mt-1"
+								className="text-ink-700 text-[10px] mt-1"
 								numberOfLines={1}
 							>
 								· {item.name}

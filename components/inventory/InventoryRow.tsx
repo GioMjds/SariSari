@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StatusPill } from '@/components/ui';
@@ -64,92 +64,98 @@ export const InventoryRow = React.memo(function InventoryRow({
       }}
       className="mx-4 mb-3"
     >
-      <TouchableOpacity
+      <Pressable
         onPress={() => router.push(`/(edit-forms)/product-details/${item.id}`)}
         onLongPress={() => onMore(item)}
         delayLongPress={400}
-        activeOpacity={0.9}
-        className="active:scale-[0.96] transition-transform duration-100"
+        style={({ pressed }) => ({
+          transform: [{ scale: pressed ? 0.96 : 1 }],
+          opacity: pressed ? 0.9 : 1,
+        })}
+        className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-4 flex-row justify-between items-center"
         accessibilityRole="button"
         accessibilityLabel={`${item.name}, ${pillText}, ${subtitle}. Tap to view details. Long press for actions.`}
       >
-        <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-4 flex-row justify-between items-center">
-          {/* Left Column: Product Image & Info */}
-          <View className="flex-1 flex-row items-center mr-3">
-            {/* Image box with concentric border radius: outer (20px) = inner (6px) + padding (16px) - rounded-md */}
-            <View className="w-12 h-12 rounded-md bg-paper-100 border border-ink-150 overflow-hidden mr-3 items-center justify-center relative">
-              {displayImageUri ? (
-                <Image
-                  source={{ uri: displayImageUri }}
-                  style={{ width: '100%', height: '100%', borderRadius: 6 }}
-                  className="w-full h-full rounded-md"
-                  contentFit="cover"
-                />
-              ) : (
-                <View className="w-full h-full bg-persimmon-50 items-center justify-center rounded-md">
-                  <StyledText variant="black" className="text-persimmon-600 text-base">
-                    {placeholderText}
-                  </StyledText>
-                </View>
-              )}
-              {/* Subtle 1px overlay outline to prevent image wash-out */}
-              <View className="absolute inset-0 border border-black/10 rounded-md" pointerEvents="none" />
-            </View>
-
-            <View className="flex-1">
-              <StyledText
-                variant="semibold"
-                className="text-base text-ink-900 mb-1"
-              >
-                {item.name}
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-xs text-ink-500"
-                style={{ fontVariant: ['tabular-nums'] }}
-              >
-                {subtitle}
-              </StyledText>
-            </View>
+        {/* Left Column: Product Image & Info */}
+        <View className="flex-1 flex-row items-center mr-3">
+          {/* Image box with concentric border radius: outer (20px) = inner (6px) + padding (16px) - rounded-md */}
+          <View className="w-12 h-12 rounded-md bg-paper-100 border border-ink-150 overflow-hidden mr-3 items-center justify-center relative">
+            {displayImageUri ? (
+              <Image
+                source={{ uri: displayImageUri }}
+                style={{ width: '100%', height: '100%', borderRadius: 6 }}
+                className="w-full h-full rounded-md"
+                contentFit="cover"
+              />
+            ) : (
+              <View className="w-full h-full bg-persimmon-50 items-center justify-center rounded-md">
+                <StyledText variant="black" className="text-persimmon-600 text-base">
+                  {placeholderText}
+                </StyledText>
+              </View>
+            )}
+            {/* Subtle 1px overlay outline to prevent image wash-out */}
+            <View className="absolute inset-0 border border-black/10 rounded-md" pointerEvents="none" />
           </View>
 
-          {/* Right Column: Stock pill, Restock button, and More button */}
-          <View className="flex-row items-center gap-2">
-            <StatusPill variant={pillVariant} size="sm">
-              {pillText}
-            </StatusPill>
-
-            <TouchableOpacity
-              onPress={() => onRestock(item)}
-              activeOpacity={0.85}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`Restock ${item.name}`}
-              className="w-10 h-10 rounded-full bg-persimmon-500 items-center justify-center shadow-persimmon-glow active:scale-[0.96] transition-transform"
-              style={{
-                shadowColor: '#E85A1F',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.18,
-                shadowRadius: 12,
-                elevation: 4,
-              }}
+          <View className="flex-1">
+            <StyledText
+              variant="semibold"
+              className="text-base text-ink-900 mb-1"
             >
-              <FontAwesome name="plus" size={16} color="#FBF7EE" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => onMore(item)}
-              activeOpacity={0.85}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`More actions for ${item.name}`}
-              className="w-10 h-10 rounded-full bg-ink-50 border border-ink-100 items-center justify-center active:scale-[0.96] transition-transform"
+              {item.name}
+            </StyledText>
+            <StyledText
+              variant="regular"
+              className="text-xs text-ink-500"
+              style={{ fontVariant: ['tabular-nums'] }}
             >
-              <Ionicons name="ellipsis-horizontal" size={18} color="#4A2610" />
-            </TouchableOpacity>
+              {subtitle}
+            </StyledText>
           </View>
         </View>
-      </TouchableOpacity>
+
+        {/* Right Column: Stock pill, Restock button, and More button */}
+        <View className="flex-row items-center gap-2">
+          <StatusPill variant={pillVariant} size="sm">
+            {pillText}
+          </StatusPill>
+
+          <Pressable
+            onPress={() => onRestock(item)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`Restock ${item.name}`}
+            style={({ pressed }) => ({
+              shadowColor: '#E85A1F',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 12,
+              elevation: 4,
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+              opacity: pressed ? 0.85 : 1,
+            })}
+            className="w-10 h-10 rounded-full bg-persimmon-500 items-center justify-center shadow-persimmon-glow"
+          >
+            <FontAwesome name="plus" size={16} color="#FBF7EE" />
+          </Pressable>
+
+          <Pressable
+            onPress={() => onMore(item)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={`More actions for ${item.name}`}
+            style={({ pressed }) => ({
+              transform: [{ scale: pressed ? 0.96 : 1 }],
+              opacity: pressed ? 0.85 : 1,
+            })}
+            className="w-10 h-10 rounded-full bg-ink-50 border border-ink-100 items-center justify-center"
+          >
+            <Ionicons name="ellipsis-horizontal" size={18} color="#4A2610" />
+          </Pressable>
+        </View>
+      </Pressable>
     </MotiView>
   );
 });
+

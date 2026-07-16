@@ -20,7 +20,8 @@
 ## ✨ Core Features
 
 - **⚡ Fast Point of Sale (POS)**: Quick counter sales registering cash or credit (_utang_) transactions. Updates inventory automatically and logs movement records in real time.
-- **📦 Inventory & Category Tracker**: Complete catalog of products, categories, stock counts, selling prices, and purchase costs (calculating margin/markup). Supports low-stock thresholds and alerts.
+- **📦 Inventory & Category Tracker**: Complete catalog of products, categories, stock counts, selling prices, and purchase costs (calculating margin/markup). Supports low-stock thresholds and alerts. **Multi-tier pricing** is built in: items can be sold by piece (_tingi_) or by wholesale pack (_pakyaw_) with automatic unit conversion, dual barcode collision checks, and per-tier profit snapshots.
+- **🤝 Supplier Directory**: Track who you buy stock from, attach suppliers to products, and surface purchase-cost history inside the product details screen.
 - **📓 Suki Credit Ledger (Utang)**: Customer registry tracking outstanding suki loans. **Built today:** FIFO allocation of payments against the oldest unpaid credit per suki, with reversible payment deletions; per-suki credit limits; overdue tracking. **Planned:** automated risk/payer profiles and credit-limit enforcement at sale time.
 - **📊 Business Analytics & Reports**: Dashboard view tracking daily revenue, profitability, inventory valuation, cash vs. credit breakdowns, fast/slow-moving goods, credit aging buckets, and actionable store tips.
 - **✈️ Offline-First by Default**: Inventory CRUD, sales recording, utang tracking, and reports all work end-to-end with airplane mode on. There is no automatic backup yet — keep your device backed up to the cloud through your phone's normal channels.
@@ -57,6 +58,7 @@ Sari acts as a contextual system and UI indicator, dynamically updating her stat
 | **Forms**          | `react-hook-form` v7        | Interactive input validations and states                                   |
 | **Animations**     | Moti + Reanimated 4         | Smooth micro-interactions and gestures                                     |
 | **Testing DB**     | `better-sqlite3`            | Used in local Jest configurations to mock sqlite APIs                      |
+| **Web Companion**  | Vite + React 19 + Tailwind 4 | Marketing/landing site in `web/` (shadcn/ui, motion, radix-ui)            |
 
 ---
 

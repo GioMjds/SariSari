@@ -107,7 +107,7 @@ export const ProfitabilityRanking = memo(function ProfitabilityRanking({ product
 									</StyledText>
 									<StyledText
 										variant="medium"
-										className="text-ink-500 text-[11px] mt-0.5"
+										className="text-ink-500 text-[10px] mt-0.5"
 									>
 										{product.unitsSold} units · {product.marginPercent.toFixed(1)}% margin
 									</StyledText>

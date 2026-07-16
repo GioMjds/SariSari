@@ -242,7 +242,7 @@ function CategoriesTabComponent() {
         <Pressable
           className="flex-1 justify-end"
           onPress={handleCloseActionSheet}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <Pressable
             className="bg-white rounded-t-3xl p-6 pb-10"
@@ -366,7 +366,7 @@ function CategoriesTabComponent() {
           <Pressable
             className="flex-1 justify-end"
             onPress={() => setShowAddModal(false)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+            style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
           >
             <Pressable
               className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
@@ -454,7 +454,7 @@ function CategoriesTabComponent() {
           <Pressable
             className="flex-1 justify-end"
             onPress={() => setShowEditModal(false)}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+            style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
           >
             <Pressable
               className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
@@ -537,7 +537,7 @@ function CategoriesTabComponent() {
       >
         <View
           className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
             <View className="items-center mb-4">

@@ -44,11 +44,13 @@ export function ReportKPICard({
 						<FontAwesome
 							name={trend.isPositive ? 'arrow-up' : 'arrow-down'}
 							size={12}
-							color={trend.isPositive ? '#65A30D' : '#DC2626'}
+							color={trend.isPositive ? '#4F7A24' : '#C13030'}
 						/>
 						<StyledText
 							variant="semibold"
-							style={{ color: trend.isPositive ? '#65A30D' : '#DC2626', fontSize: 12, marginLeft: 4 }}
+							className={`text-[10px] ml-1 ${
+								trend.isPositive ? 'text-sage-700' : 'text-semantic-danger'
+							}`}
 						>
 							{trend.value}
 						</StyledText>

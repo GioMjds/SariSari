@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
 import { Pagination, SearchBar } from '@/components/ui';
 import {
   CompactLedgerMetrics,
@@ -312,6 +313,7 @@ export default function Credits() {
             onPageChange={setCurrentPage}
             totalItems={filteredCustomers.length}
             itemsPerPage={ITEMS_PER_PAGE}
+            bottomOffset={TAB_BAR_TOTAL_OFFSET}
           />
         )}
       </View>
