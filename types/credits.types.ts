@@ -35,7 +35,7 @@ export interface Payment {
 	customer_id: number;
 	credit_transaction_id?: number;
 	amount: number;
-	payment_method?: 'cash' | 'bank_transfer' | 'other';
+	payment_method: 'cash' | 'bank_transfer' | 'other';
 	date: string;
 	notes?: string;
 	created_at: string;
@@ -87,7 +87,7 @@ export interface NewPayment {
 	customer_id: number;
 	credit_transaction_id?: number;
 	amount: number;
-	payment_method?: 'cash' | 'bank_transfer' | 'other';
+	payment_method: 'cash' | 'bank_transfer' | 'other';
 	date?: string;
 	notes?: string;
 }

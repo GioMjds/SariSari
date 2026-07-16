@@ -448,14 +448,25 @@ export const getTodayStats = async (): Promise<SaleStats> => {
 };
 
 export const deleteSale = async (id: number) => {
-  // Wrap restore + delete + credit reversal in a transaction so we don't
-  // end up with stock restored for a sale that's still in the table, or
-  // an orphan credit_transaction that keeps the customer paying for a
-  // sale that no longer exists.
-  const items = await getSaleItems(id);
   const sale = await db.getFirstAsync<
-    Sale & { credit_transaction_id: number | null }
-  >('SELECT id, credit_transaction_id FROM sales WHERE id = ?', [id]);
+    Sale & { credit_transaction_id: number | null; timestamp: string }
+  >('SELECT id, credit_transaction_id, timestamp FROM sales WHERE id = ?', [id]);
+
+  if (!sale) return;
+
+  const isLocked = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM cash_sessions
+     WHERE status = 'closed'
+       AND ? >= opening_timestamp
+       AND ? <= closing_timestamp
+     LIMIT 1`,
+    [sale.timestamp, sale.timestamp],
+  );
+  if (isLocked) {
+    throw new Error('Cannot delete a sale belonging to a closed cash session');
+  }
+
+  const items = await getSaleItems(id);
 
   try {
     await db.execAsync('BEGIN TRANSACTION;');

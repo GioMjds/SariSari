@@ -263,11 +263,7 @@ export function useInsertPayment() {
   const { addToast } = useToastStore();
   return useMutation({
     mutationFn: (data: NewPayment) =>
-      insertPayment({
-        customer_id: data.customer_id,
-        credit_transaction_id: data.credit_transaction_id,
-        amount: data.amount,
-      }),
+      insertPayment(data),
     onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({

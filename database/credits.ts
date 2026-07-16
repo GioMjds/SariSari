@@ -347,6 +347,13 @@ const applyPaymentAllocation = async (
 };
 
 export const insertPayment = async (payment: NewPayment): Promise<number> => {
+  if (!payment.payment_method) {
+    throw new Error('Payment method is required for new payments');
+  }
+  if (!['cash', 'bank_transfer', 'other'].includes(payment.payment_method)) {
+    throw new Error(`Invalid payment method: ${payment.payment_method}`);
+  }
+
   const timestamp = payment.date || getCurrentLocalTimestamp();
   let paymentId = 0;
 
@@ -416,6 +423,18 @@ export const deletePayment = async (id: number): Promise<void> => {
       [id],
     );
     if (!payment) return;
+
+    const isLocked = await db.getFirstAsync<{ id: string }>(
+      `SELECT id FROM cash_sessions
+       WHERE status = 'closed'
+         AND ? >= opening_timestamp
+         AND ? <= closing_timestamp
+       LIMIT 1`,
+      [payment.date, payment.date],
+    );
+    if (isLocked) {
+      throw new Error('Cannot delete a payment belonging to a closed cash session');
+    }
 
     // Reverse every allocation recorded for this payment. If there are no
     // payment_allocations rows (legacy payment inserted before v3), fall
