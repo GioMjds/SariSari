@@ -9,4 +9,4 @@ export * from './useReports';
 export * from './useSales';
 export * from './useSuppliers';
 export * from './useCash';
-
+export * from './useStockIntelligence';
