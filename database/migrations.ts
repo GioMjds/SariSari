@@ -252,5 +252,60 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 9.');
   }
+
+  if (currentVersion < 10) {
+    console.log(
+      'Running migration to version 10 (Cash Control & Stock Intelligence)...',
+    );
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS cash_sessions (
+          id TEXT PRIMARY KEY,
+          business_date TEXT UNIQUE NOT NULL,
+          opening_cash INTEGER NOT NULL,
+          actual_cash INTEGER,
+          expected_cash INTEGER,
+          variance INTEGER,
+          status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'closed')),
+          opening_timestamp TEXT NOT NULL,
+          closing_timestamp TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_cash_sessions_date ON cash_sessions(business_date);
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS cash_entries (
+          id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL REFERENCES cash_sessions(id) ON DELETE CASCADE,
+          type TEXT NOT NULL CHECK(type IN ('expense', 'owner_drawing', 'owner_addition')),
+          amount INTEGER NOT NULL,
+          notes TEXT NOT NULL,
+          timestamp TEXT NOT NULL,
+          created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_cash_entries_session ON cash_entries(session_id);
+        CREATE INDEX IF NOT EXISTS idx_cash_entries_timestamp ON cash_entries(timestamp);
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS reorder_plans (
+          product_id INTEGER PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+          status TEXT NOT NULL CHECK(status IN ('adjusted', 'deferred', 'dismissed')),
+          adjusted_quantity INTEGER,
+          deferred_until TEXT,
+          last_stock INTEGER NOT NULL,
+          last_demand INTEGER NOT NULL,
+          last_cost INTEGER,
+          last_supplier_id TEXT,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+
+      await db.execAsync('PRAGMA user_version = 10;');
+    });
+    console.log('Database migrated to version 10.');
+  }
 }
 
