@@ -12,12 +12,12 @@ import { CategoriesTab } from '@/components/inventory/category';
 import { SuppliersTab } from '@/components/inventory/suppliers/SuppliersTab';
 import { BarcodeScannerModal, SearchBar } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
-import { useCategories, useProducts, useSuppliers } from '@/hooks';
+import { useCategories, useProducts, useSuppliers, useStockRecommendations } from '@/hooks';
 import { Product, Supplier } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useInventoryViewStore } from '@/stores';
 import { FontAwesome } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Href } from 'expo-router';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -80,6 +80,19 @@ export default function Products() {
   const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
   const { getAllSuppliersQuery, deleteSupplierMutation } = useSuppliers();
+  const { data: recommendations } = useStockRecommendations();
+
+  const activeRecommendationsCount = useMemo(() => {
+    if (!recommendations) return 0;
+    return recommendations.filter((rec) => {
+      const isDeferred =
+        rec.savedPlan?.status === 'deferred' &&
+        rec.savedPlan.deferredUntil &&
+        new Date(rec.savedPlan.deferredUntil).getTime() > Date.now();
+      const isDismissed = rec.savedPlan?.status === 'dismissed';
+      return !isDeferred && !isDismissed;
+    }).length;
+  }, [recommendations]);
 
   const products = getAllProductsQuery.data;
   const categories = getCategoriesWithCountQuery.data;
@@ -400,6 +413,23 @@ export default function Products() {
             </MotiView>
           )}
         </View>
+
+        {/* Warning banner right below header */}
+        {activeRecommendationsCount > 0 && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/inventory/recommendations' as Href)}
+            className="mx-5 mt-4 p-3 bg-semantic-warning-50 border border-semantic-warning-100 rounded-xl flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center gap-2">
+              <FontAwesome name="exclamation-triangle" size={16} color="#C77B0E" />
+              <StyledText variant="semibold" className="text-sm text-semantic-warning">
+                Stock Advice ({activeRecommendationsCount})
+              </StyledText>
+            </View>
+            <FontAwesome name="chevron-right" size={12} color="#C77B0E" />
+          </TouchableOpacity>
+        )}
 
         {/* Tab Content */}
         {activeTab === 'products' ? (

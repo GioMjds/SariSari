@@ -1,30 +1,27 @@
+import '../global.css';
 import { GlobalModal, Toast } from '@/components/ui';
 import { DatabaseErrorScreen } from '@/components/system/DatabaseErrorScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeDatabases } from '@/configs';
 import { initI18n } from '@/lib/i18n';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
-import { AppState } from 'react-native';
+import { AppState, View } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
-import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View } from 'react-native';
-import {
-  consumeQueue,
-  runStartupChecks,
-  subscribeCounter,
-} from '@/lib/backup';
+import { consumeQueue, runStartupChecks, subscribeCounter } from '@/lib/backup';
 import { useSchedulerInputs } from '@/hooks/useBackup';
 import { CloudNewerBanner } from '@/components/settings/backup';
-import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated';
-import '../global.css';
+import {
+  configureReanimatedLogger,
+  ReanimatedLogLevel,
+} from 'react-native-reanimated';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -78,9 +75,11 @@ export default function RootLayout() {
       await initI18n();
       setI18nReady(true);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Failed to initialize i18n, falling back to English:', message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(
+        'Failed to initialize i18n, falling back to English:',
+        message,
+      );
       setI18nReady(true);
     }
   }, []);
@@ -132,7 +131,10 @@ export default function RootLayout() {
   const handleBannerDismiss = useCallback(async () => {
     setBannerDismissed(true);
     try {
-      await AsyncStorage.setItem('cloud_newer_banner_dismissed_at', String(Date.now()));
+      await AsyncStorage.setItem(
+        'cloud_newer_banner_dismissed_at',
+        String(Date.now()),
+      );
     } catch {
       // ignore
     }

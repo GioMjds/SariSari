@@ -16,7 +16,8 @@ import {
   EditorialEyebrow,
 } from '@/components/reports';
 import { MoneyText } from '@/components/ui';
-import { useReports } from '@/hooks';
+import { useReports, useCashSessions, useCashEntries } from '@/hooks';
+import { formatPesos } from '@/lib/money';
 import { DateRange, DateRangeType } from '@/types';
 import {
   formatCompactCurrency,
@@ -24,12 +25,14 @@ import {
   profitSubline,
 } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
   View,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -83,6 +86,7 @@ const DEFAULT_CREDITS_OVERVIEW = {
  * is read-only.
  */
 export default function Reports() {
+  const queryClient = useQueryClient();
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
   const [dateRange, setDateRange] = useState<DateRange>(
     getDateRangeFromType('today'),
@@ -116,6 +120,7 @@ export default function Reports() {
   const agingBucketsQuery = useAgingBuckets();
   const productProfitabilityQuery = useProductProfitability(dateRange, 10);
   const insightsQuery = useReportInsights(dateRange);
+  const sessionsQuery = useCashSessions();
 
   // Per-section loading flags — each section renders as soon as its own
   // data arrives without waiting for every other query to finish.
@@ -138,6 +143,7 @@ export default function Reports() {
     slowMovingProductsQuery.isLoading;
   const isCreditAgingLoading =
     agingBucketsQuery.isLoading || creditsOverviewQuery.isLoading;
+  const isSessionsLoading = sessionsQuery.isLoading;
 
   const isRefreshing =
     kpisQuery.isFetching ||
@@ -151,7 +157,8 @@ export default function Reports() {
     creditsOverviewQuery.isFetching ||
     agingBucketsQuery.isFetching ||
     productProfitabilityQuery.isFetching ||
-    insightsQuery.isFetching;
+    insightsQuery.isFetching ||
+    sessionsQuery.isFetching;
 
   const kpis = kpisQuery.data ?? DEFAULT_KPIS;
   const salesOverTime = salesOverTimeQuery.data ?? EMPTY_ARRAY;
@@ -167,6 +174,7 @@ export default function Reports() {
   const agingBuckets = agingBucketsQuery.data ?? EMPTY_ARRAY;
   const productProfitability = productProfitabilityQuery.data ?? EMPTY_ARRAY;
   const insights = insightsQuery.data ?? EMPTY_ARRAY;
+  const sessions = sessionsQuery.data ?? EMPTY_ARRAY;
 
   const handleDateRangeChange = useCallback((type: DateRangeType) => {
     setDateRangeType(type);
@@ -174,8 +182,22 @@ export default function Reports() {
   }, []);
 
   const handleRefresh = useCallback(async () => {
-    await invalidateReports();
-  }, [invalidateReports]);
+    await Promise.all([
+      invalidateReports(),
+      queryClient.invalidateQueries({ queryKey: ['cash'] }),
+    ]);
+  }, [invalidateReports, queryClient]);
+
+  const startOfDayDate = new Date(dateRange.startDate);
+  startOfDayDate.setHours(0, 0, 0, 0);
+
+  const endOfDayDate = new Date(dateRange.endDate);
+  endOfDayDate.setHours(23, 59, 59, 999);
+
+  const filteredSessions = (sessions || []).filter((session: any) => {
+    const sessionDate = new Date(session.businessDate + 'T00:00:00');
+    return sessionDate >= startOfDayDate && sessionDate <= endOfDayDate;
+  });
 
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
@@ -633,8 +655,183 @@ export default function Reports() {
               )}
             </CollapsibleSection>
           </View>
+
+          {/* ─── Cashbook History ──────────────────────────────── */}
+          <View className="px-4 mt-6">
+            <CollapsibleSection
+              number="05"
+              title="Cashbook History"
+              subtitle="Daily drawer logs, counted physical cash, and variances"
+              tone="cinnamon"
+              icon={<FontAwesome name="book" size={16} color="#391C0A" />}
+              defaultExpanded
+            >
+              {isSessionsLoading ? (
+                <View className="items-center py-8">
+                  <ActivityIndicator size="large" color="#623418" />
+                </View>
+              ) : filteredSessions.length === 0 ? (
+                <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-400 text-sm"
+                  >
+                    No cash sessions found in this date range.
+                  </StyledText>
+                </View>
+              ) : (
+                <View>
+                  {filteredSessions.map((session) => (
+                    <CashSessionRow key={session.id} session={session} />
+                  ))}
+                </View>
+              )}
+            </CollapsibleSection>
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
+  );
+}
+
+function CashSessionRow({ session }: { session: any }) {
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const { data: entries = [], isLoading } = useCashEntries(
+    isExpanded ? session.id : undefined,
+  );
+
+  return (
+    <View className="mb-3 border border-ink-200 rounded-xl bg-paper-50 p-4">
+      {/* Clickable Header to Expand/Collapse */}
+      <Pressable
+        onPress={() => setIsExpanded(!isExpanded)}
+        accessibilityRole="button"
+        accessibilityLabel={`${session.businessDate} cash session`}
+        accessibilityState={{ expanded: isExpanded }}
+        className="flex-row justify-between items-center"
+      >
+        <View className="flex-1 mr-2">
+          <View className="flex-row items-center gap-2">
+            <StyledText variant="extrabold" className="text-ink-900 text-sm">
+              {session.businessDate}
+            </StyledText>
+            <View
+              className={`px-2 py-0.5 rounded-full ${
+                session.status === 'open' ? 'bg-sage-500' : 'bg-ink-400'
+              }`}
+            >
+              <StyledText
+                variant="semibold"
+                className="text-[10px] text-white uppercase"
+              >
+                {session.status}
+              </StyledText>
+            </View>
+          </View>
+          <View className="flex-row mt-1.5 gap-x-3 gap-y-1 flex-wrap">
+            <StyledText variant="regular" className="text-[11px] text-ink-500">
+              Opened: {formatPesos(session.openingCash)}
+            </StyledText>
+            {session.actualCash !== null && (
+              <StyledText
+                variant="regular"
+                className="text-[11px] text-ink-500"
+              >
+                Counted: {formatPesos(session.actualCash)}
+              </StyledText>
+            )}
+            {session.expectedCash !== null && (
+              <StyledText
+                variant="regular"
+                className="text-[11px] text-ink-500"
+              >
+                Expected: {formatPesos(session.expectedCash)}
+              </StyledText>
+            )}
+          </View>
+        </View>
+
+        <View className="items-end mr-4">
+          {session.variance !== null && (
+            <StyledText
+              variant="semibold"
+              className={`text-xs ${session.variance >= 0 ? 'text-sage-600' : 'text-semantic-danger'}`}
+            >
+              Var: {session.variance >= 0 ? '+' : ''}
+              {formatPesos(session.variance)}
+            </StyledText>
+          )}
+        </View>
+
+        <FontAwesome
+          name={isExpanded ? 'chevron-up' : 'chevron-down'}
+          size={12}
+          color="#564E45"
+        />
+      </Pressable>
+
+      {/* Expanded Section showing entries */}
+      {isExpanded && (
+        <View className="mt-4 pt-3 border-t border-dashed border-ink-200">
+          <StyledText
+            variant="semibold"
+            className="label-caps text-ink-500 text-[10px] mb-2"
+          >
+            Manual Movements ({entries.length})
+          </StyledText>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#623418" className="py-2" />
+          ) : entries.length === 0 ? (
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs italic py-1"
+            >
+              No manual cash movements recorded.
+            </StyledText>
+          ) : (
+            <View className="space-y-1.5">
+              {entries.map((entry) => (
+                <View
+                  key={entry.id}
+                  className="flex-row justify-between items-center py-1"
+                >
+                  <View className="flex-1 mr-2">
+                    <View className="flex-row items-center gap-1.5 flex-wrap">
+                      <StyledText
+                        variant="semibold"
+                        className={`text-[10px] uppercase font-stack-sans-bold ${
+                          entry.type === 'owner_addition'
+                            ? 'text-sage-600'
+                            : 'text-semantic-danger'
+                        }`}
+                      >
+                        {entry.type.replace('_', ' ')}
+                      </StyledText>
+                      <StyledText
+                        variant="regular"
+                        className="text-[11px] text-ink-500"
+                      >
+                        {entry.notes}
+                      </StyledText>
+                    </View>
+                  </View>
+                  <StyledText
+                    variant="medium"
+                    className={`text-xs ${
+                      entry.type === 'owner_addition'
+                        ? 'text-sage-600'
+                        : 'text-semantic-danger'
+                    }`}
+                  >
+                    {entry.type === 'owner_addition' ? '+' : '-'}
+                    {formatPesos(entry.amount)}
+                  </StyledText>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+    </View>
   );
 }

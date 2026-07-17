@@ -8,7 +8,8 @@ import {
 } from '@/components/dashboard';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-import { useCredits, useProducts, useSales, useRecentSales, useHasSales } from '@/hooks';
+import { useCredits, useProducts, useSales, useRecentSales, useHasSales, useCurrentSession, useCashSessionSummary } from '@/hooks';
+import { formatPesos } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Href, useRouter } from 'expo-router';
@@ -59,6 +60,8 @@ export default function Dashboard() {
   const hasSalesQuery = useHasSales();
   const { getAllProductsQuery } = useProducts();
   const { useCustomers, useCreditKPIs } = useCredits();
+  const { data: currentSession, isLoading: sessionLoading } = useCurrentSession();
+  const { data: sessionSummary, isLoading: summaryLoading } = useCashSessionSummary(currentSession?.id);
 
   const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
   const { data: recentSalesList = [], isLoading: recentSalesLoading } = recentSalesQuery;
@@ -70,7 +73,7 @@ export default function Dashboard() {
     'balance_desc',
   );
 
-  const isLoading = statsLoading || productsLoading || recentSalesLoading || hasSalesLoading;
+  const isLoading = statsLoading || productsLoading || recentSalesLoading || hasSalesLoading || sessionLoading || (!!currentSession && summaryLoading);
 
   // ─── Derived data ─────────────────────────────────────────────
 
@@ -138,6 +141,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['products'] }),
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] }),
       queryClient.invalidateQueries({ queryKey: ['customers'] }),
+      queryClient.invalidateQueries({ queryKey: ['cash'] }),
     ]);
   }, [queryClient]);
 
@@ -170,6 +174,61 @@ export default function Dashboard() {
     router.push(routes.sales);
   }, [router]);
 
+  const renderCashSessionBanner = () => {
+    if (sessionLoading) return null;
+
+    let message = '';
+    let actionText = '';
+    let bgColor = 'bg-persimmon-50 border-persimmon-100';
+    let textColor = 'text-persimmon-800';
+    let dotColor = 'bg-persimmon-400';
+
+    if (!currentSession) {
+      message = 'Drawer Closed today';
+      actionText = 'Open Cash Drawer';
+      bgColor = 'bg-persimmon-50 border-persimmon-100';
+      textColor = 'text-persimmon-800';
+      dotColor = 'bg-persimmon-400';
+    } else if (currentSession.status === 'open') {
+      const expected = sessionSummary?.expectedCash ?? currentSession.openingCash;
+      message = `Drawer Active: Expected ${formatPesos(expected)}`;
+      actionText = 'Manage Drawer';
+      bgColor = 'bg-sage-50 border-sage-100';
+      textColor = 'text-sage-700';
+      dotColor = 'bg-sage-500';
+    } else {
+      const variance = currentSession.variance ?? 0;
+      message = `Drawer Closed: Variance ${formatPesos(variance)}`;
+      actionText = 'Review Close';
+      bgColor = 'bg-ink-100 border-ink-200';
+      textColor = 'text-ink-700';
+      dotColor = 'bg-ink-400';
+    }
+
+    return (
+      <View className="px-4 mb-4">
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/(edit-forms)/cash-session' as any)}
+          className={`flex-row items-center justify-between p-3.5 rounded-xl border ${bgColor} active:opacity-80`}
+        >
+          <View className="flex-row items-center flex-1 mr-2">
+            <View className={`w-2.5 h-2.5 rounded-full mr-2.5 ${dotColor}`} />
+            <StyledText variant="semibold" className={`text-sm ${textColor} flex-1`}>
+              {message}
+            </StyledText>
+          </View>
+          <View className="flex-row items-center">
+            <StyledText variant="semibold" className="text-xs text-persimmon-600 mr-1">
+              {actionText}
+            </StyledText>
+            <FontAwesome name="angle-right" size={14} color="#E85A1F" />
+          </View>
+        </Pressable>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
       <View className="flex-1 bg-paper-200">
@@ -198,6 +257,8 @@ export default function Dashboard() {
               itemsSold={stats?.items_sold ?? 0}
               creditSales={stats?.credit_sales ?? 0}
             />
+
+            {renderCashSessionBanner()}
 
             <DashboardQuickActions
               onNewSale={handleNewSale}
