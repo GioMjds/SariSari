@@ -264,7 +264,6 @@ export function useAddPaymentForm() {
     control,
     handleSubmit,
     setValue,
-    watch,
     reset,
 
     // Watched values

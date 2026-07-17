@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, usePreventRemove } from '@react-navigation/native';
+import { usePreventRemove } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   AddSalesHeader,
@@ -33,26 +34,28 @@ import { BarcodeScannerModal, Modal } from '@/components/ui';
  */
 export default function AddSales() {
   const form = useAddSalesForm();
-  const navigation = useNavigation();
+  const router = useRouter();
   const hasItems = form.cartItems.length > 0;
 
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const pendingActionRef = useRef<any>(null);
+  const pendingLeaveRef = useRef<boolean>(false);
 
-  usePreventRemove(hasItems, ({ data }) => {
-    pendingActionRef.current = data.action;
+  usePreventRemove(hasItems, () => {
+    pendingLeaveRef.current = true;
     setShowDiscardModal(true);
   });
 
   const handleConfirmDiscard = () => {
     setShowDiscardModal(false);
     form.clearCart();
-    if (pendingActionRef.current) navigation.dispatch(pendingActionRef.current);
+    if (pendingLeaveRef.current) {
+      router.back();
+    }
   };
 
   const handleCancelDiscard = () => {
     setShowDiscardModal(false);
-    pendingActionRef.current = null;
+    pendingLeaveRef.current = false;
   };
 
   return (

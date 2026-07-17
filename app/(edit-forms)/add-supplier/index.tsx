@@ -318,6 +318,8 @@ function BasicInfoCard({ control, focusedField, setFocusedField, t }: Subcompone
               {value.length > 0 && (
                 <Pressable
                   onPress={() => onChange('')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear name field"
                   className="absolute right-4 z-10 p-1 active:opacity-70"
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
@@ -374,6 +376,8 @@ function BasicInfoCard({ control, focusedField, setFocusedField, t }: Subcompone
               {value.length > 0 && (
                 <Pressable
                   onPress={() => onChange('')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear contact field"
                   className="absolute right-4 z-10 p-1 active:opacity-70"
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >

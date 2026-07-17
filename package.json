@@ -13,7 +13,7 @@
     "test": "jest",
     "verify": "pnpm typecheck && pnpm test",
     "postinstall": "pnpm rebuild better-sqlite3",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@0.7.8"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

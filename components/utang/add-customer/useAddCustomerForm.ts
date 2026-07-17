@@ -134,7 +134,6 @@ export function useAddCustomerForm() {
     // Form wiring (passed through to the ticket sheet / RHF controllers)
     control,
     handleSubmit,
-    watch,
 
     // Watched values — drive the Passbook preview.
     name,

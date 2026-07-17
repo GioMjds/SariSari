@@ -259,7 +259,6 @@ export function useAddCreditForm() {
     control,
     handleSubmit,
     setValue,
-    watch,
     reset,
 
     // Watched values
