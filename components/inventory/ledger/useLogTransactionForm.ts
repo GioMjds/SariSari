@@ -6,12 +6,6 @@ import { useInsertInventory } from '@/hooks/useInventory';
 export type AdjustmentSign = 'positive' | 'negative';
 
 interface UseLogTransactionFormOptions {
-  /**
-   * Called after a successful mutation. The mutation's own
-   * `onSuccess` already invalidates `['products']` and
-   * `['inventory']` and toasts `'Stock updated'`, so the screen
-   * typically uses this to close the sheet.
-   */
   onSuccessCallback?: () => void;
 }
 
@@ -53,7 +47,8 @@ export function useLogTransactionForm(
   const [type, setType] = useState<InventoryEventType>('restock');
   const [quantity, setQuantity] = useState<number>(1);
   const [note, setNote] = useState<string>('');
-  const [adjustmentSign, setAdjustmentSign] = useState<AdjustmentSign>('positive');
+  const [adjustmentSign, setAdjustmentSign] =
+    useState<AdjustmentSign>('positive');
   const [unitMode, setUnitMode] = useState<'retail' | 'wholesale'>('retail');
 
   const [shakeTrigger, setShakeTrigger] = useState(0);
@@ -78,7 +73,8 @@ export function useLogTransactionForm(
   } else if (type === 'sale' || type === 'damaged') {
     quantityChange = -actualPieces;
   } else if (type === 'adjustment') {
-    quantityChange = adjustmentSign === 'positive' ? actualPieces : -actualPieces;
+    quantityChange =
+      adjustmentSign === 'positive' ? actualPieces : -actualPieces;
   }
 
   const projectedQuantity = currentQuantity + quantityChange;
@@ -145,6 +141,8 @@ export function useLogTransactionForm(
     actualPieces,
     reset,
     onSuccessCallback,
+    product.retail_unit_name,
+    product.wholesale_unit_name,
   ]);
 
   return {

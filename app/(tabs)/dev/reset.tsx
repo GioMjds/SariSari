@@ -13,13 +13,13 @@ export default function DevResetScreen() {
 
   if (!__DEV__) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+      >
         <Text>This screen is only available in development.</Text>
       </SafeAreaView>
     );
   }
-
-
 
   const runReset = async () => {
     const ok = await new Promise<boolean>((res) =>
@@ -28,9 +28,13 @@ export default function DevResetScreen() {
         'This will DELETE all local data in the app. Are you sure?',
         [
           { text: 'Cancel', style: 'cancel', onPress: () => res(false) },
-          { text: 'Yes, delete', style: 'destructive', onPress: () => res(true) },
-        ]
-      )
+          {
+            text: 'Yes, delete',
+            style: 'destructive',
+            onPress: () => res(true),
+          },
+        ],
+      ),
     );
 
     if (!ok) return;
@@ -85,7 +89,7 @@ export default function DevResetScreen() {
         // navigate to root which often triggers reload in dev; otherwise user can reload manually
         try {
           router.replace('/');
-        } catch (_e) {
+        } catch {
           // ignore
         }
       }, 800);
@@ -99,11 +103,13 @@ export default function DevResetScreen() {
   return (
     <SafeAreaView style={{ flex: 1, padding: 20 }}>
       <View style={{ marginTop: 8 }}>
-        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 12 }}>Development DB Reset</Text>
+        <Text style={{ fontSize: 20, fontWeight: '700', marginBottom: 12 }}>
+          Development DB Reset
+        </Text>
 
         <Text style={{ marginBottom: 16 }}>
-          Use this screen to drop local tables and vacuum the Expo SQLite database used by the app.
-          This is only available in development.
+          Use this screen to drop local tables and vacuum the Expo SQLite
+          database used by the app. This is only available in development.
         </Text>
 
         <Pressable
@@ -119,7 +125,9 @@ export default function DevResetScreen() {
           {running ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={{ color: 'black', fontWeight: '700' }}>Reset Local Database</Text>
+            <Text style={{ color: 'black', fontWeight: '700' }}>
+              Reset Local Database
+            </Text>
           )}
         </Pressable>
 
@@ -127,10 +135,20 @@ export default function DevResetScreen() {
           <Text style={{ marginTop: 16, color: '#374151' }}>{message}</Text>
         ) : null}
 
-        <View style={{ marginTop: 32, borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 10 }}>Onboarding helpers</Text>
+        <View
+          style={{
+            marginTop: 32,
+            borderTopWidth: 1,
+            borderTopColor: '#e5e7eb',
+            paddingTop: 16,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 10 }}>
+            Onboarding helpers
+          </Text>
           <Text style={{ marginBottom: 12 }}>
-            Clear the onboarding flag/profile stored in AsyncStorage to replay the first-run flow.
+            Clear the onboarding flag/profile stored in AsyncStorage to replay
+            the first-run flow.
           </Text>
           <Pressable
             onPress={async () => {
@@ -138,7 +156,9 @@ export default function DevResetScreen() {
               setMessage('Clearing onboarding state...');
               try {
                 await clearOnboardingState();
-                setMessage('Onboarding state cleared. Launch will show onboarding again.');
+                setMessage(
+                  'Onboarding state cleared. Launch will show onboarding again.',
+                );
               } catch (err: any) {
                 setMessage(`Clear failed: ${err?.message || String(err)}`);
               } finally {
@@ -153,7 +173,9 @@ export default function DevResetScreen() {
               alignItems: 'center',
             })}
           >
-            <Text style={{ color: '#111827', fontWeight: '700' }}>Clear Onboarding Flag</Text>
+            <Text style={{ color: '#111827', fontWeight: '700' }}>
+              Clear Onboarding Flag
+            </Text>
           </Pressable>
         </View>
       </View>

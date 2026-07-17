@@ -84,7 +84,7 @@ export default function OnboardingPage() {
 				duration: 1800,
 			});
 			router.replace('/(tabs)');
-		} catch (_error) {
+		} catch {
 			addToast({
 				message: t('toastSaveFailed'),
 				variant: 'danger',
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
 					<ProfileStep profile={profile} onChange={setProfile} />
 				)}
 
-				{tourStep && (
+				{!!tourStep && (
 					<TourCard step={tourStep} stepKey={currentIndex} />
 				)}
 

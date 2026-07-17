@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useCategories, useProducts } from '@/hooks';
 import { lookupOfflineBarcode } from '@/constants/barcodes';
 import {
@@ -101,7 +101,6 @@ export function useAddProductForm() {
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { isDirty },
   } = useForm<AddProductFormData>({
     defaultValues: {
@@ -126,24 +125,24 @@ export function useAddProductForm() {
     },
   });
 
-  const productName = watch('productName');
-  const sku = watch('sku');
-  const barcode = watch('barcode');
-  const price = watch('price');
-  const costPerPiece = watch('costPerPiece');
-  const bundleCost = watch('bundleCost');
-  const piecesPerBundle = watch('piecesPerBundle');
-  const initialStock = watch('initialStock');
-  const category = watch('category');
-  const supplierId = watch('supplierId');
-  const imageUri = watch('imageUri');
-  const enableWholesale = watch('enableWholesale');
-  const retailUnitName = watch('retailUnitName');
-  const wholesaleUnitName = watch('wholesaleUnitName');
-  const conversionFactor = watch('conversionFactor');
-  const wholesalePrice = watch('wholesalePrice');
-  const wholesaleCostPrice = watch('wholesaleCostPrice');
-  const wholesaleBarcode = watch('wholesaleBarcode');
+  const productName = useWatch({ control, name: 'productName' });
+  const sku = useWatch({ control, name: 'sku' });
+  const barcode = useWatch({ control, name: 'barcode' });
+  const price = useWatch({ control, name: 'price' });
+  const costPerPiece = useWatch({ control, name: 'costPerPiece' });
+  const bundleCost = useWatch({ control, name: 'bundleCost' });
+  const piecesPerBundle = useWatch({ control, name: 'piecesPerBundle' });
+  const initialStock = useWatch({ control, name: 'initialStock' });
+  const category = useWatch({ control, name: 'category' });
+  const supplierId = useWatch({ control, name: 'supplierId' });
+  const imageUri = useWatch({ control, name: 'imageUri' });
+  const enableWholesale = useWatch({ control, name: 'enableWholesale' });
+  const retailUnitName = useWatch({ control, name: 'retailUnitName' });
+  const wholesaleUnitName = useWatch({ control, name: 'wholesaleUnitName' });
+  const conversionFactor = useWatch({ control, name: 'conversionFactor' });
+  const wholesalePrice = useWatch({ control, name: 'wholesalePrice' });
+  const wholesaleCostPrice = useWatch({ control, name: 'wholesaleCostPrice' });
+  const wholesaleBarcode = useWatch({ control, name: 'wholesaleBarcode' });
 
   // ─── Derived display values ────────────────────────────────────
 
@@ -182,18 +181,10 @@ export function useAddProductForm() {
   const isLossWarning =
     parsedCost > 0 && parsedPrice > 0 && parsedPrice <= parsedCost;
 
-  // ─── Duplicate-barcode guard ──────────────────────────────────
-  //
-  // When the user types or scans a barcode, compare it against the
-  // existing catalog. If another product owns this value (either via
-  // its `barcode` column or — for legacy rows — its `sku`), surface
-  // an inline error and block submit. This mirrors the partial
-  // unique index `idx_products_barcode` — the index is the post-submit
-  // safety net; this effect is the pre-submit guard that lets us show
-  // a useful inline error with an "Edit that product" link instead of
-  // a generic SQLITE_CONSTRAINT toast.
-
-  const existingProducts = getAllProductsQuery.data ?? [];
+  const existingProducts = useMemo(
+    () => getAllProductsQuery.data ?? [],
+    [getAllProductsQuery.data],
+  );
 
   const trimmedBarcode = safeTrim(barcode);
 
@@ -451,11 +442,25 @@ export function useAddProductForm() {
 
     const enableWholesale = data.enableWholesale;
     const retailUnitName = safeTrim(data.retailUnitName) || 'Pc';
-    const wholesaleUnitName = enableWholesale ? (safeTrim(data.wholesaleUnitName) || null) : null;
-    const conversionFactorNum = enableWholesale && data.conversionFactor ? parseInt(data.conversionFactor, 10) : null;
-    const wholesalePriceVal = enableWholesale && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null;
-    const wholesaleCostVal = enableWholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null;
-    const wholesaleBarcodeVal = enableWholesale && safeTrim(data.wholesaleBarcode) ? safeTrim(data.wholesaleBarcode) : null;
+    const wholesaleUnitName = enableWholesale
+      ? safeTrim(data.wholesaleUnitName) || null
+      : null;
+    const conversionFactorNum =
+      enableWholesale && data.conversionFactor
+        ? parseInt(data.conversionFactor, 10)
+        : null;
+    const wholesalePriceVal =
+      enableWholesale && data.wholesalePrice
+        ? parsePesosInput(data.wholesalePrice)
+        : null;
+    const wholesaleCostVal =
+      enableWholesale && data.wholesaleCostPrice
+        ? parsePesosInput(data.wholesaleCostPrice)
+        : null;
+    const wholesaleBarcodeVal =
+      enableWholesale && safeTrim(data.wholesaleBarcode)
+        ? safeTrim(data.wholesaleBarcode)
+        : null;
 
     insertProductMutation.mutate(
       {
@@ -472,7 +477,12 @@ export function useAddProductForm() {
         wholesale_unit_name: wholesaleUnitName,
         wholesale_price: wholesalePriceVal,
         wholesale_cost_price: wholesaleCostVal,
-        conversion_factor: conversionFactorNum && Number.isFinite(conversionFactorNum) && conversionFactorNum >= 2 ? conversionFactorNum : null,
+        conversion_factor:
+          conversionFactorNum &&
+          Number.isFinite(conversionFactorNum) &&
+          conversionFactorNum >= 2
+            ? conversionFactorNum
+            : null,
         wholesale_barcode: wholesaleBarcodeVal,
       },
       {

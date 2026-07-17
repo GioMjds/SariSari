@@ -6,7 +6,6 @@ import { StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { Product } from '@/types';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
-import { formatPesos } from '@/lib/money';
 import { Image } from 'expo-image';
 import { getProductImageUri, formatDualStock, formatDualPrice } from '@/lib';
 import { useRouter } from 'expo-router';

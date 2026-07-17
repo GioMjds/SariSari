@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewCredit, Product } from '@/types';
@@ -105,7 +105,7 @@ export function useAddCreditForm() {
 
   // react-hook-form setup with the field defaults that match the
   // original screen.
-  const { control, handleSubmit, setValue, watch, reset } =
+  const { control, handleSubmit, setValue, reset } =
     useForm<CreditFormData>({
       defaultValues: {
         productName: '',
@@ -116,10 +116,10 @@ export function useAddCreditForm() {
       },
     });
 
-  const quantity = watch('quantity');
-  const amount = watch('amount');
-  const productName = watch('productName');
-  const dueDate = watch('dueDate');
+  const quantity = useWatch({ control, name: 'quantity' });
+  const amount = useWatch({ control, name: 'amount' });
+  const productName = useWatch({ control, name: 'productName' });
+  const dueDate = useWatch({ control, name: 'dueDate' });
 
   // Customer + product list from the query cache.
   const { data: customer } = useCustomer(Number(id));

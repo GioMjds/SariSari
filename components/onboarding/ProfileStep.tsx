@@ -7,7 +7,6 @@ import { SARI_PROFILE_ASSET } from '@/constants/onboardingTour.assets';
 import { useTranslation } from 'react-i18next';
 import {
 	changeAppLanguage,
-	getCurrentLanguage,
 	SupportedLanguage,
 } from '@/lib/i18n';
 
@@ -35,9 +34,9 @@ type Props = {
 
 export function ProfileStep({ profile, onChange }: Props) {
 	const reducedMotion = useReducedMotion();
-	const { t } = useTranslation();
-
-	const activeLang: SupportedLanguage = getCurrentLanguage();
+	const { t, i18n } = useTranslation();
+	// Reactive: i18n.language from the hook re-renders when changeAppLanguage() fires
+	const activeLang = i18n.language as SupportedLanguage;
 
 	const handleSelectLanguage = async (lang: SupportedLanguage) => {
 		if (lang === activeLang) return;

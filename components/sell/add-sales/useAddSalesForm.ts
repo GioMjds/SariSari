@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -80,11 +80,11 @@ export function useAddSalesForm() {
 
   // react-hook-form — search input only. Matches the field-shape
   // convention used by other edit-form routes.
-  const { control, reset, watch } = useForm<AddSalesFormData>({
+  const { control, reset } = useForm<AddSalesFormData>({
     defaultValues: { search: '' },
   });
 
-  const search = watch('search');
+  const search = useWatch({ control, name: 'search' }) || '';
 
   // Domain queries.
   const { data: products = [], isLoading: isProductsLoading } =
@@ -153,7 +153,6 @@ export function useAddSalesForm() {
         }
 
         if (existing) {
-          const newQty = existing.quantity + 1;
           return prev.map((item) =>
             item.product_id === product.id &&
             (item.selected_unit || 'retail') === selectedUnit

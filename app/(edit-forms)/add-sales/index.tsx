@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
@@ -37,22 +37,22 @@ export default function AddSales() {
   const hasItems = form.cartItems.length > 0;
 
   const [showDiscardModal, setShowDiscardModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState<any>(null);
+  const pendingActionRef = useRef<any>(null);
 
   usePreventRemove(hasItems, ({ data }) => {
-    setPendingAction(data.action);
+    pendingActionRef.current = data.action;
     setShowDiscardModal(true);
   });
 
   const handleConfirmDiscard = () => {
     setShowDiscardModal(false);
     form.clearCart();
-    if (pendingAction) navigation.dispatch(pendingAction);
+    if (pendingActionRef.current) navigation.dispatch(pendingActionRef.current);
   };
 
   const handleCancelDiscard = () => {
     setShowDiscardModal(false);
-    setPendingAction(null);
+    pendingActionRef.current = null;
   };
 
   return (

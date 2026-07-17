@@ -12,7 +12,12 @@ import { CategoriesTab } from '@/components/inventory/category';
 import { SuppliersTab } from '@/components/inventory/suppliers/SuppliersTab';
 import { BarcodeScannerModal, SearchBar } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
-import { useCategories, useProducts, useSuppliers, useStockRecommendations } from '@/hooks';
+import {
+  useCategories,
+  useProducts,
+  useSuppliers,
+  useStockRecommendations,
+} from '@/hooks';
 import { Product, Supplier } from '@/types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useInventoryViewStore } from '@/stores';
@@ -21,11 +26,7 @@ import { useLocalSearchParams, useRouter, Href } from 'expo-router';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Pressable,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Pressable, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'products' | 'categories' | 'suppliers';
@@ -57,7 +58,6 @@ function HeaderCircleButton({
     </TouchableOpacity>
   );
 }
-
 
 export default function Products() {
   const { t } = useTranslation('inventory');
@@ -256,7 +256,7 @@ export default function Products() {
         <View className="bg-cinnamon-500 pt-3">
           {/* Cinnamon-styled Tab Switcher */}
           <View className="px-5 pb-4">
-            <View className="flex-row bg-cinnamon-700/50 rounded-xl p-1 border border-cinnamon-600">
+            <View className="flex-row bg-cinnamon-800 rounded-xl p-1">
               {(['products', 'categories', 'suppliers'] as TabType[]).map(
                 (tab) => {
                   const isActive = activeTab === tab;
@@ -271,15 +271,20 @@ export default function Products() {
                     <Pressable
                       key={tab}
                       onPress={() => handleTabChange(tab)}
-                      className="flex-1 py-2 rounded-lg items-center active:scale-[0.96] transition-transform"
+                      className="flex-1 py-2 rounded-lg items-center active:scale-[0.96]"
                       style={{
                         backgroundColor: isActive ? '#E85A1F' : 'transparent',
+                        shadowColor: isActive ? '#000' : 'transparent',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: isActive ? 0.25 : 0,
+                        shadowRadius: 3,
+                        elevation: isActive ? 3 : 0,
                       }}
                     >
                       <StyledText
                         variant="semibold"
                         className="text-sm"
-                        style={{ color: isActive ? '#FFFFFF' : '#E5D8BC' }}
+                        style={{ color: isActive ? '#FFFFFF' : '#D49570' }}
                       >
                         {label}
                       </StyledText>
@@ -422,8 +427,15 @@ export default function Products() {
             className="mx-5 mt-4 p-3 bg-semantic-warning-50 border border-semantic-warning-100 rounded-xl flex-row items-center justify-between"
           >
             <View className="flex-row items-center gap-2">
-              <FontAwesome name="exclamation-triangle" size={16} color="#C77B0E" />
-              <StyledText variant="semibold" className="text-sm text-semantic-warning">
+              <FontAwesome
+                name="exclamation-triangle"
+                size={16}
+                color="#C77B0E"
+              />
+              <StyledText
+                variant="semibold"
+                className="text-sm text-semantic-warning"
+              >
                 Stock Advice ({activeRecommendationsCount})
               </StyledText>
             </View>
@@ -468,7 +480,9 @@ export default function Products() {
         <ProductActionSheet
           product={selectedProductForSheet}
           onClose={() => setSelectedProductForSheet(null)}
-          onSelectAction={(type) => setPendingAction({ product: selectedProductForSheet!, type })}
+          onSelectAction={(type) =>
+            setPendingAction({ product: selectedProductForSheet!, type })
+          }
           onSelectDelete={() => {
             setProductToDelete(selectedProductForSheet);
             setShowDeleteModal(true);

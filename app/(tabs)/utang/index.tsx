@@ -18,7 +18,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -33,13 +33,16 @@ export default function Credits() {
 
   const { useCustomers, useCreditKPIs, useSearchCustomers } = useCredits();
 
-  const { control, watch, reset } = useForm({
+  const { control, reset } = useForm({
     defaultValues: {
       searchQuery: '',
     },
   });
 
-  const searchQuery = watch('searchQuery');
+  const searchQuery = useWatch({
+    control,
+    name: 'searchQuery',
+  }) || '';
 
   const {
     data: customers = [],
@@ -278,7 +281,7 @@ export default function Credits() {
           )}
 
           {/* List / empty / cleared state */}
-          <View className="pb-8">
+          <View className="pb-28">
             {noCustomersAtAll ? (
               <CreditsEmptyState
                 variant="no-customers"

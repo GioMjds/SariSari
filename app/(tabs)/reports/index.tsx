@@ -324,7 +324,7 @@ export default function Reports() {
 
                   <View className="flex-row gap-3">
                     <BentoKPICard
-                      kicker="STOCK ASSET VALUE"
+                      kicker="STOCK ASSET VALUE · AT COST"
                       headline={formatCompactCurrency(
                         inventoryValue.currentStockValue,
                       )}

@@ -6,7 +6,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { getCurrentLanguage } from '@/lib/i18n';
+import { SupportedLanguage } from '@/lib/i18n';
 import { LanguagePickerDialog } from './LanguagePickerDialog';
 import {
   CloudBackupSection,
@@ -31,10 +31,13 @@ import {
  */
 export const SettingsScreen = () => {
   const { profile, loading: profileLoading } = useProfile();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
 
-  const activeLang = getCurrentLanguage();
+  // Use i18n.language from the hook — this is reactive and re-renders the
+  // component whenever changeAppLanguage() fires, unlike getCurrentLanguage()
+  // which reads the singleton synchronously and never triggers a re-render.
+  const activeLang = i18n.language as SupportedLanguage;
   const languageValue =
     activeLang === 'tl'
       ? t('common:languageTagalog')

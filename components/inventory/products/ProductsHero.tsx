@@ -54,7 +54,7 @@ export const ProductsHero = memo(function ProductsHero({
                 variant="extrabold"
                 className="label-caps text-persimmon-600"
               >
-                Ledger
+                Ledger · at cost
               </StyledText>
               <View className="flex-1 h-px bg-ink-200 mx-3 opacity-70" />
               <View className="flex-row items-baseline">

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -76,7 +76,7 @@ export function useAddPaymentForm() {
 
   const { useCustomer, useCustomerCredits, useInsertPayment } = useCredits();
 
-  const { control, handleSubmit, setValue, watch, reset } =
+  const { control, handleSubmit, setValue, reset } =
     useForm<PaymentFormData>({
       defaultValues: {
         amount: '',
@@ -85,7 +85,7 @@ export function useAddPaymentForm() {
       },
     });
 
-  const amount = watch('amount');
+  const amount = useWatch({ control, name: 'amount' });
   const amountTouchedRef = useRef(false);
 
   // Customer + unpaid credits from the query cache.

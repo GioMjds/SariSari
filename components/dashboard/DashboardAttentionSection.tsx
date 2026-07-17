@@ -7,7 +7,6 @@ import { StyledText } from '@/components/elements';
 import { Customer, Product, SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 import { useTranslation } from 'react-i18next';
 
 interface DashboardAttentionSectionProps {
@@ -168,9 +167,7 @@ function AttentionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <View
-      className="bg-paper-50 rounded-xl border border-ink-100 mb-3 overflow-hidden"
-    >
+    <View className="bg-paper-50 rounded-xl border border-ink-100 mb-3 overflow-hidden">
       <View className="px-4 pt-3 pb-2 flex-row items-center justify-between border-b border-dashed border-ink-200">
         <View className="flex-row items-center">
           <View

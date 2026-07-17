@@ -5,7 +5,6 @@ import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui/Modal';
 import {
   changeAppLanguage,
-  getCurrentLanguage,
   SupportedLanguage,
 } from '@/lib/i18n';
 import { t } from 'i18next';
@@ -30,8 +29,9 @@ export function LanguagePickerDialog({
   visible,
   onClose,
 }: LanguagePickerDialogProps) {
-  const { t } = useTranslation();
-  const activeLang = getCurrentLanguage();
+  const { t, i18n } = useTranslation();
+  // Reactive: re-renders when changeAppLanguage() updates i18next singleton
+  const activeLang = i18n.language as SupportedLanguage;
 
   const handleSelect = async (lang: SupportedLanguage) => {
     if (lang === activeLang) {

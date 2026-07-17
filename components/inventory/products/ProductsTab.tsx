@@ -7,17 +7,16 @@ import { Product } from '@/types';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useInventoryViewStore } from '@/stores';
-
 import { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { FilterChips } from '../FilterChips';
@@ -72,8 +71,6 @@ export const ProductsTab = memo(function ProductsTab({
   const router = useRouter();
   const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
-
-
 
   // Synchronize filterCategory prop (from deep links) with state
   useEffect(() => {
@@ -194,7 +191,6 @@ export const ProductsTab = memo(function ProductsTab({
     setRefreshing(false);
   };
 
-
   const confirmDelete = () => {
     if (selectedProduct) {
       deleteProductMutation.mutate(selectedProduct.id);
@@ -303,7 +299,7 @@ export const ProductsTab = memo(function ProductsTab({
           onClearFilters={handleClearFilters}
         />
       ) : (
-         <FlatList
+        <FlatList
           key={viewMode}
           numColumns={viewMode === 'grid' ? 2 : 1}
           data={paginatedProducts}
@@ -339,7 +335,6 @@ export const ProductsTab = memo(function ProductsTab({
           bottomOffset={TAB_BAR_TOTAL_OFFSET}
         />
       )}
-
 
       {/* Category Bottom Sheet / Filter Picker */}
       <Modal

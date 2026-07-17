@@ -3,7 +3,6 @@ import {
   View,
   Platform,
   TextInput,
-  TouchableOpacity,
   Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -131,16 +130,16 @@ export default function CashEntryScreen() {
         >
           You must open a cash session before recording movements.
         </StyledText>
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             router.replace('/(edit-forms)/cash-session' as any);
           }}
-          className="mt-6 bg-persimmon-500 px-6 py-3 rounded-xl"
+          className="mt-6 bg-persimmon-500 px-6 py-3 rounded-xl active:opacity-70"
         >
           <StyledText variant="semibold" className="text-white">
             Go to Cash Drawer
           </StyledText>
-        </TouchableOpacity>
+        </Pressable>
       </SafeAreaView>
     );
   }
@@ -206,10 +205,10 @@ export default function CashEntryScreen() {
                   {ENTRY_TYPES.map((typeOption) => {
                     const isSelected = value === typeOption.value;
                     return (
-                      <TouchableOpacity
+                      <Pressable
                         key={typeOption.value}
                         onPress={() => onChange(typeOption.value)}
-                        className={`flex-row items-center p-3.5 rounded-xl border-2 ${
+                        className={`flex-row items-center p-3.5 rounded-xl border-2 active:opacity-70 ${
                           isSelected
                             ? `${typeOption.bg} ${typeOption.border}`
                             : 'bg-paper-100 border-transparent'
@@ -255,7 +254,7 @@ export default function CashEntryScreen() {
                             )}
                           </View>
                         </View>
-                      </TouchableOpacity>
+                      </Pressable>
                     );
                   })}
                 </View>
@@ -316,7 +315,7 @@ export default function CashEntryScreen() {
                   </View>
                 )}
               />
-              {errors.amount && (
+              {!!errors.amount && (
                 <StyledText className="text-semantic-danger text-xs mt-1.5">
                   {errors.amount.message || 'Please enter a valid amount'}
                 </StyledText>
@@ -363,12 +362,12 @@ export default function CashEntryScreen() {
           </View>
 
           {/* Submit Button */}
-          <TouchableOpacity
+          <Pressable
             onPress={handleSubmit(onSubmit)}
             disabled={!isValid || insertCashEntryMutation.isPending}
             className={`w-full py-4 rounded-xl flex-row justify-center items-center ${
               isValid && !insertCashEntryMutation.isPending
-                ? 'bg-persimmon-500'
+                ? 'bg-persimmon-500 active:opacity-70'
                 : 'bg-ink-200'
             }`}
           >
@@ -380,7 +379,7 @@ export default function CashEntryScreen() {
                 ? 'Saving entry...'
                 : 'Save Entry'}
             </StyledText>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </KeyboardAwareScrollView>
     </SafeAreaView>

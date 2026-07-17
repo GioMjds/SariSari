@@ -1,6 +1,5 @@
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useMemo } from 'react';
 import {
   AddCreditHeader,
   CreditTicketSheet,
@@ -16,16 +15,15 @@ export default function AddCreditTransaction() {
    * cache. Lives here (not in the hook) because the hook is scoped
    * to form state, and the products cache is a query-layer concern.
    */
-  const productSuggestions = useMemo(() => {
-    const q = form.productQuery.trim().toLowerCase();
-    if (!q) return form.products.slice(0, 6);
-    return form.products
+  const q = form.productQuery.trim().toLowerCase();
+  const productSuggestions = !q
+    ? form.products.slice(0, 6)
+    : form.products
       .filter(
         (p) =>
           p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q),
       )
       .slice(0, 6);
-  }, [form.products, form.productQuery]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>

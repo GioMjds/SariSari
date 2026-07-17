@@ -49,7 +49,7 @@ export function FilterBar({
 						onPress={() => onFilterChange(filter.key)}
 						className={`px-4 py-2 rounded-full mr-2 ${
 							isActive
-								? 'bg-secondary-500'
+								? 'bg-persimmon-500 border border-persimmon-500'
 								: 'bg-white border border-warm-200'
 						}`}
 					>
