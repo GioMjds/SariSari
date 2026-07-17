@@ -1,7 +1,7 @@
 import { StyledTab } from '@/components/layout';
 import { Tabs, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { BackHandler, View, Image } from 'react-native';
 import { useDialogStore } from '@/stores';
 import { Modal as CustomModal } from '@/components/ui';
@@ -12,14 +12,14 @@ export default function ScreensLayout() {
   const pathname = usePathname();
   const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
 
-  const handleExitApp = useCallback(() => {
+  const handleExitApp = () => {
     hideDialog();
     BackHandler.exitApp();
-  }, [hideDialog]);
+  };
 
-  const handleCancelExit = useCallback(() => {
+  const handleCancelExit = () => {
     hideDialog();
-  }, [hideDialog]);
+  };
 
   useEffect(() => {
     const backAction = () => {

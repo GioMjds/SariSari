@@ -588,7 +588,7 @@ export const getReportInsights = async (
     insights.push({
       type: 'warning',
       title: 'Stock Alert',
-      message: `${lowStockCount.count} item${lowStockCount.count > 1 ? 's' : ''} need urgent restock`,
+      message: `${lowStockCount.count} item${lowStockCount.count > 1 ? 's' : ''} ${lowStockCount.count > 1 ? 'need' : 'needs'} urgent restock`,
       icon: 'exclamation-triangle',
     });
   }

@@ -1,18 +1,8 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { memo, useRef, type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { View } from 'react-native';
 
-/**
- * BentoGrid — A non-uniform, asymmetric grid for high-impact KPI
- * tiles. Used on the General Reports screen to break the monotony
- * of a uniform 2x2 — the lead metric ("Total Sales") spans the
- * entire first row like a magazine cover headline.
- *
- * The grid is implemented with NativeWind flex primitives so it
- * inherits the existing `gap-3` rhythm from the rest of the app,
- * but the slot ordering and spans are bespoke.
- */
 type BentoGridProps = {
 	children: ReactNode[];
 };

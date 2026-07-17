@@ -1,20 +1,4 @@
 import { getTabs, Tab } from '@/constants';
-
-/**
- * TAB_BAR_TOTAL_OFFSET — total vertical real estate the floating tab
- * bar claims at the bottom of the screen (its own height + the safe-area
- * margin underneath it).
- *
- * Pass this to <Pagination bottomOffset={TAB_BAR_TOTAL_OFFSET} /> from
- * inside any tab that renders the pagination pill, so the pill clears
- * the tab bar instead of being covered by it. The tab bar lives in the
- * (tabs) layout, but its measured height is owned by this module —
- * keep the number here so it stays in lockstep with the bar itself.
- *
- * 16 (bottom margin) + 16 (top padding) + 40 (tab content) ≈ 72.
- * The trailing 8 is breathing room between the pill and the bar.
- */
-export const TAB_BAR_TOTAL_OFFSET = 80;
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
@@ -35,9 +19,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
+export const TAB_BAR_TOTAL_OFFSET = 80;
+
 // Mirrors persimmon-500 / paper-50 / ink-300 from tailwind.config.js.
-// Kept as hex here because FontAwesome's `color` prop can't read a
-// Tailwind/NativeWind class, only a raw color value.
 const ICON_ACTIVE = '#FBF7EE';
 const ICON_INACTIVE = '#A89F90';
 
@@ -58,47 +42,55 @@ interface TabButtonProps {
  * TabButton is memoized to avoid redundant renders of inactive buttons.
  * Delegates layout event to the parent through a stable callback.
  */
-const TabButton = memo(({ tab, hrefString, isFocused, onPress, onLayoutMeasured }: TabButtonProps) => {
-  const handleLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      const { x, y, width, height } = e.nativeEvent.layout;
-      onLayoutMeasured(hrefString, isFocused, { x, y, width, height });
-    },
-    [hrefString, isFocused, onLayoutMeasured],
-  );
+const TabButton = memo(
+  ({
+    tab,
+    hrefString,
+    isFocused,
+    onPress,
+    onLayoutMeasured,
+  }: TabButtonProps) => {
+    const handleLayout = useCallback(
+      (e: LayoutChangeEvent) => {
+        const { x, y, width, height } = e.nativeEvent.layout;
+        onLayoutMeasured(hrefString, isFocused, { x, y, width, height });
+      },
+      [hrefString, isFocused, onLayoutMeasured],
+    );
 
-  return (
-    <TouchableOpacity
-      accessibilityRole="button"
-      accessibilityState={{ selected: isFocused, disabled: isFocused }}
-      onPress={onPress}
-      activeOpacity={0.7}
-      disabled={isFocused}
-      onLayout={handleLayout}
-      style={{
-        paddingVertical: 4,
-        paddingHorizontal: 2,
-      }}
-    >
-      <View className="flex-row items-center py-3 px-4 rounded-full">
-        <FontAwesome
-          name={tab.icon}
-          size={18}
-          color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
-        />
-        {isFocused && (
-          <StyledText
-            variant="extrabold"
-            className="text-xs text-paper-50 ml-2 font-extrabold"
-            numberOfLines={1}
-          >
-            {tab.name}
-          </StyledText>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-});
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityState={{ selected: isFocused, disabled: isFocused }}
+        onPress={onPress}
+        activeOpacity={0.7}
+        disabled={isFocused}
+        onLayout={handleLayout}
+        style={{
+          paddingVertical: 4,
+          paddingHorizontal: 2,
+        }}
+      >
+        <View className="flex-row items-center py-3 px-4 rounded-full">
+          <FontAwesome
+            name={tab.icon}
+            size={18}
+            color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
+          />
+          {isFocused && (
+            <StyledText
+              variant="extrabold"
+              className="text-xs text-paper-50 ml-2 font-extrabold"
+              numberOfLines={1}
+            >
+              {tab.name}
+            </StyledText>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 
 TabButton.displayName = 'TabButton';
 
@@ -112,7 +104,7 @@ export const StyledTab = memo(() => {
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
 
-  // Keep a stable ref to the current pathname so that handlePress does not recreate 
+  // Keep a stable ref to the current pathname so that handlePress does not recreate
   // on every path change, preventing all 5 TabButtons from re-rendering.
   const pathnameRef = useRef(pathname);
   useEffect(() => {
@@ -121,7 +113,12 @@ export const StyledTab = memo(() => {
 
   // Keep track of the active indicator layout instantly with a single shared value,
   // snapping it on tab switches with no progress timeline animations.
-  const activeLayout = useSharedValue<TabLayout>({ x: 0, y: 0, width: 0, height: 0 });
+  const activeLayout = useSharedValue<TabLayout>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
   const indicatorOpacity = useSharedValue(0);
   const layouts = useRef<Record<string, TabLayout>>({});
 
@@ -158,10 +155,7 @@ export const StyledTab = memo(() => {
     const layout = activeLayout.value;
 
     return {
-      transform: [
-        { translateX: layout.x },
-        { translateY: layout.y },
-      ],
+      transform: [{ translateX: layout.x }, { translateY: layout.y }],
       width: layout.width,
       height: layout.height,
       opacity: indicatorOpacity.value,
@@ -198,7 +192,13 @@ export const StyledTab = memo(() => {
     } else {
       indicatorOpacity.value = 0;
     }
-  }, [pathname, visibleRoutes, isRouteFocused, moveIndicatorTo]);
+  }, [
+    pathname,
+    visibleRoutes,
+    isRouteFocused,
+    moveIndicatorTo,
+    indicatorOpacity,
+  ]);
 
   const onLayoutMeasured = useCallback(
     (key: string, focused: boolean, layout: TabLayout) => {
@@ -257,7 +257,8 @@ export const StyledTab = memo(() => {
           const isFocused =
             hrefString === '/'
               ? pathname === '/' || pathname === ''
-              : pathname === hrefString || pathname.startsWith(`${hrefString}/`);
+              : pathname === hrefString ||
+                pathname.startsWith(`${hrefString}/`);
 
           return (
             <TabButton

@@ -11,7 +11,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,7 +38,7 @@ export default function SaleDetails() {
   const deleteSaleMutation = useDeleteSale();
   const insets = useSafeAreaInsets();
 
-  const handleDeleteSale = useCallback(() => {
+  const handleDeleteSale = () => {
     Alert.alert(
       'Delete Sale',
       'Are you sure you want to delete this sale? This will restore the inventory.',
@@ -61,26 +60,22 @@ export default function SaleDetails() {
         },
       ],
     );
-  }, [deleteSaleMutation, numericId]);
+  };
 
-  const handleBack = useCallback(() => {
+  const handleBack = () => {
     Haptics.selectionAsync().catch(() => {});
     router.back();
-  }, [router]);
+  };
 
   const isCredit = sale?.payment_type === 'credit';
-  const { dateLine, dateShort, timeShort, grandTotalDisplay } = useMemo(() => {
-    const ts = parseStoredTimestamp(sale?.timestamp) || new Date();
-    return {
-      dateLine: format(ts, 'MMM dd, yyyy · hh:mm a'),
-      dateShort: format(ts, 'MM/dd/yy'),
-      timeShort: format(ts, 'hh:mm a'),
-      grandTotalDisplay: (sale?.total ?? 0).toLocaleString('en-PH', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    };
-  }, [sale?.timestamp, sale?.total]);
+  const ts = parseStoredTimestamp(sale?.timestamp) || new Date();
+  const dateLine = format(ts, 'MMM dd, yyyy · hh:mm a');
+  const dateShort = format(ts, 'MM/dd/yy');
+  const timeShort = format(ts, 'hh:mm a');
+  const grandTotalDisplay = (sale?.total ?? 0).toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   const itemsCount = sale?.items_count ?? 0;
   const buyerName = sale?.customer_name?.trim() ?? null;
 

@@ -63,15 +63,13 @@ const PAYMENT_CHIPS: PaymentChipDef[] = [
 const CHIP_BASE = 'mr-2 px-4 py-2 rounded-pill border';
 const CHIP_INACTIVE = 'bg-paper-50 border-ink-200';
 
-const DATE_CHIP_ACTIVE = 'bg-cinnamon-500 border-cinnamon-500';
+const DATE_CHIP_ACTIVE = 'bg-persimmon-500 border-persimmon-500';
 const DATE_CHIP_TEXT_ACTIVE = 'text-paper-50';
 const DATE_CHIP_TEXT_INACTIVE = 'text-ink-700';
 
-const PAY_CHIP_ACTIVE_BY_VALUE: Record<PaymentTypeFilter, string> = {
-  all: 'bg-cinnamon-500 border-cinnamon-500',
-  cash: 'bg-sage-500 border-sage-500',
-  credit: 'bg-persimmon-500 border-persimmon-500',
-};
+// All payment-type chips use the same persimmon active state for consistency.
+// (The icon color already distinguishes cash vs. utang when active.)
+const PAY_CHIP_ACTIVE = 'bg-persimmon-500 border-persimmon-500';
 
 const PAY_CHIP_BASE =
   'mr-2 flex-row items-center px-4 py-2 rounded-pill border';
@@ -153,7 +151,7 @@ export const FilterChips = React.memo(function FilterChips({
         {PAYMENT_CHIPS.map((chip) => {
           const isActive = filters.paymentType === chip.value;
           const wrapClass = isActive
-            ? `${PAY_CHIP_BASE} ${PAY_CHIP_ACTIVE_BY_VALUE[chip.value]}`
+            ? `${PAY_CHIP_BASE} ${PAY_CHIP_ACTIVE}`
             : `${PAY_CHIP_BASE} ${CHIP_INACTIVE}`;
           const textClass = `text-sm ${
             isActive ? DATE_CHIP_TEXT_ACTIVE : DATE_CHIP_TEXT_INACTIVE

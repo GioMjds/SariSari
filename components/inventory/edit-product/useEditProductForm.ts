@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useCategories, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 
@@ -65,7 +65,6 @@ export function useEditProductForm() {
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { isDirty },
   } = useForm<EditProductFormData>({
     defaultValues: {
@@ -104,19 +103,19 @@ export function useEditProductForm() {
       : undefined,
   });
 
-  const name = watch('name');
-  const costPerPiece = watch('costPerPiece');
-  const price = watch('price');
-  const category = watch('category');
-  const supplierId = watch('supplier_id');
-  const imageUri = watch('imageUri');
-  const enableWholesale = watch('enableWholesale');
-  const retailUnitName = watch('retailUnitName');
-  const wholesaleUnitName = watch('wholesaleUnitName');
-  const conversionFactor = watch('conversionFactor');
-  const wholesalePrice = watch('wholesalePrice');
-  const wholesaleCostPrice = watch('wholesaleCostPrice');
-  const wholesaleBarcode = watch('wholesaleBarcode');
+  const name = useWatch({ control, name: 'name' });
+  const costPerPiece = useWatch({ control, name: 'costPerPiece' });
+  const price = useWatch({ control, name: 'price' });
+  const category = useWatch({ control, name: 'category' });
+  const supplierId = useWatch({ control, name: 'supplier_id' });
+  const imageUri = useWatch({ control, name: 'imageUri' });
+  const enableWholesale = useWatch({ control, name: 'enableWholesale' });
+  const retailUnitName = useWatch({ control, name: 'retailUnitName' });
+  const wholesaleUnitName = useWatch({ control, name: 'wholesaleUnitName' });
+  const conversionFactor = useWatch({ control, name: 'conversionFactor' });
+  const wholesalePrice = useWatch({ control, name: 'wholesalePrice' });
+  const wholesaleCostPrice = useWatch({ control, name: 'wholesaleCostPrice' });
+  const wholesaleBarcode = useWatch({ control, name: 'wholesaleBarcode' });
 
   // ─── Derived values ────────────────────────────────────────────
 

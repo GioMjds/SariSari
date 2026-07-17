@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { NewCustomer } from '@/types';
@@ -34,7 +34,7 @@ export function useAddCustomerForm() {
   const { useInsertCustomer } = useCredits();
   const insertCustomer = useInsertCustomer();
 
-  const { control, handleSubmit, watch } = useForm<CustomerFormData>({
+  const { control, handleSubmit } = useForm<CustomerFormData>({
     mode: 'onChange',
     defaultValues: {
       name: '',
@@ -47,11 +47,11 @@ export function useAddCustomerForm() {
 
   // Watched values — passed to the header for the live Passbook card
   // and to the submit button for the dirty check.
-  const name = watch('name');
-  const phone = watch('phone');
-  const address = watch('address');
-  const notes = watch('notes');
-  const creditLimit = watch('credit_limit');
+  const name = useWatch({ control, name: 'name' });
+  const phone = useWatch({ control, name: 'phone' });
+  const address = useWatch({ control, name: 'address' });
+  const notes = useWatch({ control, name: 'notes' });
+  const creditLimit = useWatch({ control, name: 'credit_limit' });
 
   // Parse the credit-limit string for display on the Passbook card.
   // `0` means "empty / invalid input", which we render as "No Limit".
@@ -134,7 +134,6 @@ export function useAddCustomerForm() {
     // Form wiring (passed through to the ticket sheet / RHF controllers)
     control,
     handleSubmit,
-    watch,
 
     // Watched values — drive the Passbook preview.
     name,

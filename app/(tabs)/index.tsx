@@ -198,11 +198,15 @@ export default function Dashboard() {
       dotColor = 'bg-sage-500';
     } else {
       const variance = currentSession.variance ?? 0;
+      const isNegative = variance < 0;
       message = `Drawer Closed: Variance ${formatPesos(variance)}`;
       actionText = 'Review Close';
-      bgColor = 'bg-ink-100 border-ink-200';
-      textColor = 'text-ink-700';
-      dotColor = 'bg-ink-400';
+      // Negative variance = cash shortfall → urgent red; zero/positive → neutral.
+      bgColor = isNegative
+        ? 'bg-semantic-danger-50 border-semantic-danger-100'
+        : 'bg-ink-100 border-ink-200';
+      textColor = isNegative ? 'text-semantic-danger' : 'text-ink-700';
+      dotColor = isNegative ? 'bg-semantic-danger' : 'bg-ink-400';
     }
 
     return (
