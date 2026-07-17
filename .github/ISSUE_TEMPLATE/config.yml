@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🙋 Questions & Support"
+    url: https://github.com/GioMjds/sarisari/blob/main/.github/SUPPORT.md
+    about: "Read our support guidelines to find out how to get help."
+  - name: "🔒 Security Report"
+    url: https://github.com/GioMjds/sarisari/blob/main/.github/SECURITY.md
+    about: "If you found a security vulnerability, report it privately here."
