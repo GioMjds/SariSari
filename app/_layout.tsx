@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { consumeQueue, runStartupChecks, subscribeCounter } from '@/lib/backup';
 import { useSchedulerInputs } from '@/hooks/useBackup';
 import { CloudNewerBanner } from '@/components/settings/backup';
+import { BuildBadge } from '@/components/BuildBadge';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -168,6 +169,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
             <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+              <BuildBadge />
               {!bannerDismissed ? (
                 <CloudNewerBanner
                   onRestorePress={handleBannerRestore}
