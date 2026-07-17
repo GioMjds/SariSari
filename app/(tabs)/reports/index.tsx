@@ -16,7 +16,23 @@ import {
   EditorialEyebrow,
 } from '@/components/reports';
 import { MoneyText } from '@/components/ui';
-import { useReports, useCashSessions, useCashEntries } from '@/hooks';
+import {
+  useAgingBuckets,
+  useCashEntries,
+  useCashSessions,
+  useCreditsOverview,
+  useInventoryMovement,
+  useInventoryValue,
+  useLowStockItems,
+  useProductProfitability,
+  useReportInsights,
+  useReportKPIs,
+  useReports,
+  useSalesBreakdown,
+  useSalesOverTime,
+  useSlowMovingProducts,
+  useTopSellingProducts,
+} from '@/hooks';
 import { formatPesos } from '@/lib/money';
 import { DateRange, DateRangeType } from '@/types';
 import {
@@ -92,21 +108,7 @@ export default function Reports() {
     getDateRangeFromType('today'),
   );
 
-  const {
-    useReportKPIs,
-    useSalesOverTime,
-    useTopSellingProducts,
-    useSalesBreakdown,
-    useInventoryMovement,
-    useInventoryValue,
-    useLowStockItems,
-    useSlowMovingProducts,
-    useCreditsOverview,
-    useAgingBuckets,
-    useProductProfitability,
-    useReportInsights,
-    invalidateReports,
-  } = useReports();
+  const { invalidateReports } = useReports();
 
   const kpisQuery = useReportKPIs(dateRange);
   const salesOverTimeQuery = useSalesOverTime(dateRange);

@@ -4,7 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCredits, useProfile } from '@/hooks';
+import {
+  useCreditHistory,
+  useCustomerDetails,
+  useDeleteCustomer,
+  useMarkAllCreditsAsPaid,
+  useProfile,
+} from '@/hooks';
 import { useModalStore } from '@/stores';
 import { matchesSearch } from '@/lib/creditDetails';
 import { CreditTransaction } from '@/types/credits.types';
@@ -20,40 +26,13 @@ import {
   type CreditDetailTab,
 } from '@/components/utang/credit-details';
 
-// Hoisted to module scope — stable reference, no new object on every scroll.
 const SCROLL_CONTENT_STYLE = { paddingBottom: 140 } as const;
 
-/**
- * Credit-details screen — the suki profile view.
- *
- * Layout (top → bottom):
- *   1. `CreditDetailsHeader` — slim top bar (back + delete).
- *   2. `CustomerHeroCard` — receipt-style hero with the customer's
- *      outstanding balance, contact shortcuts, trust tags, and
- *      debt-to-limit warning.
- *   3. `TabNavigation` — animated 3-segment control with sliding
- *      underbar.
- *   4. Active tab content — Credits / Payments / History, with a
- *      local search filter at the top of Credits and Payments.
- *
- * The screen is the orchestrator: it owns data fetching via hooks,
- * the page-level refresh control, the modals (delete, mark all paid),
- * and routes to add-credit / add-payment. All visual rendering of
- * list rows, headers, skeleton, and per-tab states is delegated to
- * the presentation sub-components under `components/utang/credit-details/`.
- */
 export default function CustomerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { openModal } = useModalStore();
   const insets = useSafeAreaInsets();
-
-  const {
-    useCustomerDetails,
-    useCreditHistory,
-    useMarkAllCreditsAsPaid,
-    useDeleteCustomer,
-  } = useCredits();
 
   const {
     data: customer,
@@ -70,7 +49,6 @@ export default function CustomerDetails() {
 
   const [activeTab, setActiveTab] = useState<CreditDetailTab>('credits');
 
-  // Local search state per-tab. Switching tabs preserves the queries.
   const [searchByTab, setSearchByTab] = useState<
     Record<CreditDetailTab, string>
   >({
@@ -88,8 +66,6 @@ export default function CustomerDetails() {
     Haptics.selectionAsync().catch(() => {});
     router.back();
   }, []);
-
-  // ─── Modal handlers ─────────────────────────────────────────────
 
   const handleMarkAllPaid = useCallback(() => {
     if (!customer) return;
@@ -129,8 +105,6 @@ export default function CustomerDetails() {
     });
   }, [customer, openModal, deleteCustomerMutation]);
 
-  // ─── Navigation handlers ────────────────────────────────────────
-
   const handleAddCredit = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
@@ -158,8 +132,6 @@ export default function CustomerDetails() {
     setActiveTab(next);
   }, []);
 
-  // ─── Derived lists (search-filtered) ────────────────────────────
-
   const filteredCredits = useMemo(() => {
     if (!customer) return [];
     const term = searchByTab.credits;
@@ -179,9 +151,6 @@ export default function CustomerDetails() {
     return history.filter((h) => matchesSearch(term, [h.description]));
   }, [history, searchByTab.history]);
 
-  // Stable search-change handlers — one per tab so tab-content components
-  // receive the same callback reference across renders, preventing needless
-  // re-renders of CreditsTabContent / PaymentsTabContent / HistoryTabContent.
   const handleCreditsSearchChange = useCallback(
     (v: string) => setSearchByTab((s) => ({ ...s, credits: v })),
     [],
@@ -207,7 +176,6 @@ export default function CustomerDetails() {
 
   if (!customer) return <CustomerNotFound onBack={handleBack} />;
 
-  // Derived values — intentionally after early returns; they depend on customer being defined.
   const activeCreditCount = customer.credits.filter(
     (c) => c.status !== 'paid',
   ).length;

@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewPayment, Payment } from '@/types';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
-import { useCredits } from '@/hooks';
 import { CreditTransaction } from '@/types/credits.types';
 
 /**
@@ -50,18 +49,15 @@ export interface AllocationRow {
 }
 
 /**
- * useAddPaymentForm — owns the Add Payment screen's form state.
+ * useAddPaymentForm — owns the Record Payment screen's form state.
  *
- * Encapsulates react-hook-form setup, the customer + credits queries,
- * the additive quick-pay presets, the live FIFO allocation simulator
- * (mirroring what `insertPayment` will write in the SQLite
- * transaction), and the submit pipeline.
+ * Encapsulates react-hook-form setup, quick-pay amount presets,
+ * date selection (defaults to today), payment method toggle, and the
+ * submit pipeline that posts to `useInsertPayment`. Also computes the
+ * live FIFO allocation preview right inside the hook.
  *
- * The screen and its components stay presentational; this hook is the
- * single place where business logic lives.
- *
- * Quick Settle: when the route is opened with `?creditId=<id>` (from
- * the ⚡ button on a UtangCard), the hook pins the payment to that
+ * When entered from Quick Settle (`/utang/add-payment/[id]?creditId=123`),
+ * the hook detects `creditId`, overrides the FIFO walk to target only that
  * one credit transaction, pre-fills the amount to its outstanding
  * balance, and surfaces a `pinnedCredit` flag so the UI can call out
  * the focused row.
@@ -73,8 +69,6 @@ export function useAddPaymentForm() {
     creditId?: string;
   }>();
 
-
-  const { useCustomer, useCustomerCredits, useInsertPayment } = useCredits();
 
   const { control, handleSubmit, setValue, reset } =
     useForm<PaymentFormData>({

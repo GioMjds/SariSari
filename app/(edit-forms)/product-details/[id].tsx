@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { StyledText } from '@/components/elements';
-import { useProducts, useSuppliers } from '@/hooks';
+import { useGetProduct, useGetSupplier, useProducts } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
 import {
   ProductDetailsHero,
@@ -23,34 +23,11 @@ import {
   type ProductDetailTab,
 } from '@/components/inventory/products/details';
 import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
+import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
-import { Product } from '@/types';
 
-// Hoisted to module scope — stable reference, no inline re-allocation.
-const SCROLL_CONTENT_STYLE = { paddingTop: 16, paddingBottom: 40 } as const;
+const SCROLL_CONTENT_STYLE = { paddingBottom: 110 } as const;
 
-/**
- * ProductDetails — orchestrator for the Product Profile screen.
- *
- * Layout (top → bottom):
- *   1. Slim top bar — back button · "Product Profile" eyebrow · trash
- *      button. Three equal-weight slots, mirroring the other detail
- *      screens (sale-details, credit-details, inventory-ledger).
- *   2. Receipt-style hero — `ProductDetailsHero` shows the product
- *      image monogram, name, SKU/barcode, stock stamp, meta block,
- *      and the selling-price printed plate.
- *   3. Segmented control — `ProductDetailsTabs` for
- *      Overview / History / Supplier. Sliding cinnamon pill.
- *   4. Active tab content — overview (edit + actions + financials +
- *      danger zone), history (transaction list), or supplier (link
- *      card or "no supplier" empty state).
- *
- * The screen owns data fetching via hooks, refresh control, the
- * edit/delete modals, and routes to edit-product. All visual
- * rendering of hero / tabs / per-tab content is delegated to
- * presentation sub-components under
- * `components/inventory/products/details/`.
- */
 export default function ProductDetailsPage() {
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
   const parsedProductId = parseInt(
@@ -59,13 +36,11 @@ export default function ProductDetailsPage() {
   );
   const queryClient = useQueryClient();
 
-  const { useGetProduct, deleteProductMutation } = useProducts();
+  const { deleteProductMutation } = useProducts();
   const productQuery = useGetProduct(parsedProductId);
   const transactionsQuery = useInventoryTransactionsByProduct(parsedProductId);
 
   const product = productQuery.data;
-  const { useGetSupplier } = useSuppliers();
-  // useGetSupplier already guards with `enabled: !!id` internally.
   const supplierQuery = useGetSupplier(product?.supplier_id ?? '');
 
   const [activeTab, setActiveTab] = useState<ProductDetailTab>('overview');
@@ -74,7 +49,6 @@ export default function ProductDetailsPage() {
     type: InventoryEventType;
   } | null>(null);
 
-  // ─── Handlers ─────────────────────────────────────────────────
   const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     router.back();
@@ -123,8 +97,6 @@ export default function ProductDetailsPage() {
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
   }, [productQuery, transactionsQuery, queryClient]);
 
-  // Stable handlers so the memoized tab content components don't
-  // re-render on every parent update.
   const handleRestock = useCallback(
     () => product && setPendingAction({ product, type: 'restock' }),
     [product],
@@ -139,9 +111,6 @@ export default function ProductDetailsPage() {
   );
   const handleModalClose = useCallback(() => setPendingAction(null), []);
 
-  // Per-tab counts surfaced as small superscript badges in the
-  // segmented control. History gets the transaction count; supplier
-  // is 0/1 so it's not worth a badge.
   const tabCounts = useMemo<Partial<Record<ProductDetailTab, number>>>(
     () => ({
       history: transactionsQuery.data?.length ?? 0,
@@ -222,10 +191,7 @@ export default function ProductDetailsPage() {
                 elevation: 3,
               }}
             >
-              <StyledText
-                variant="extrabold"
-                className="text-paper-50 text-sm"
-              >
+              <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Go Back
               </StyledText>
             </Pressable>

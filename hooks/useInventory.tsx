@@ -121,8 +121,6 @@ export function useInventory() {
 
   return {
     getInventoryTransactionsQuery,
-    useGetInventoryTransactions,
-    useGetInventoryTransactionsByDateRange,
     insertInventoryMutation,
   };
 }

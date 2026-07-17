@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { FontAwesome } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
-import { useSuppliers } from '@/hooks/useSuppliers';
+import { useGetSupplier, useSuppliers } from '@/hooks/useSuppliers';
 import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ export default function EditSupplier() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   
-  const { useGetSupplier, updateSupplierMutation } = useSuppliers();
+  const { updateSupplierMutation } = useSuppliers();
   const { data: supplier, isLoading } = useGetSupplier(id);
 
   const {

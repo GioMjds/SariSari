@@ -5,7 +5,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StyledText } from '@/components/elements';
-import { useProducts } from '@/hooks';
+import { useGetProduct } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
 import {
   InventoryEventType,
@@ -22,16 +22,16 @@ import {
 } from '@/components/inventory/ledger';
 
 /**
- * Inventory Ledger — the per-product transaction history screen.
+ * Inventory ledger screen — chronological audit log of every stock
+ * movement for a single product (`productId`).
  *
  * Layout (top → bottom):
- *   1. Slim white top bar (back button + eyebrow + product name).
- *   2. `LedgerHero` — receipt-style hero with the product's current
- *      stock (big tabular number), 30-day movement totals, and a
- *      "Log Transaction" CTA.
- *   3. `LedgerToolbar` — search input + type-filter chips, both
- *      wrapped in a single control surface.
- *   4. `LedgerList` — animated timeline of transactions, day-grouped
+ *   1. Header — slim top bar (`StyledText` title + close button).
+ *   2. `LedgerHero` — receipt-header card showing product name, SKU,
+ *      barcode, price, and current stock in a hero badge.
+ *   3. `LedgerToolbar` + `LedgerTypeFilter` — search input and type
+ *      pills (`All / + In / - Out / Set / Adj / Damaged`).
+ *   4. `LedgerList` — transaction rows grouped by `Today / Yesterday / Older`,
  *      with running-balance pills on every row.
  *   5. FAB (bottom-right) — opens `LogTransactionForm` so the owner
  *      can restock / record a sale / mark damaged / adjust stock
@@ -47,7 +47,6 @@ export default function InventoryLedger() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const parsedProductId = parseInt(productId ?? '', 10);
 
-  const { useGetProduct } = useProducts();
   const productQuery = useGetProduct(parsedProductId);
   const transactionsQuery = useInventoryTransactionsByProduct(parsedProductId);
   const insets = useSafeAreaInsets();

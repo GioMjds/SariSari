@@ -12,7 +12,7 @@ import {
   SortDropdown,
 } from '@/components/utang';
 import { ITEMS_PER_PAGE } from '@/constants/stocks';
-import { useCredits } from '@/hooks';
+import { useCreditKPIs, useCustomers, useSearchCustomers } from '@/hooks';
 import { CreditFilter, CreditSort, Customer } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -30,8 +30,6 @@ export default function Credits() {
 
   const router = useRouter();
   const queryClient = useQueryClient();
-
-  const { useCustomers, useCreditKPIs, useSearchCustomers } = useCredits();
 
   const { control, reset } = useForm({
     defaultValues: {

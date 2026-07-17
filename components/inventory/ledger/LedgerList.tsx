@@ -10,7 +10,7 @@ import {
   InventoryEventType,
 } from '@/types/inventory.types';
 import { parseStoredTimestamp } from '@/utils/timezone';
-import { LedgerTypeFilter } from './LedgerToolbar';
+import { LedgerTypeFilter } from './types';
 
 interface LedgerListProps {
   /**

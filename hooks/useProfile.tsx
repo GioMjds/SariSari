@@ -33,8 +33,16 @@ export const useProfile = (): ProfileState => {
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let active = true;
+    loadOnboardingState().then((state) => {
+      if (!active) return;
+      setProfile(state?.profile ?? null);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return { profile, loading, refresh };
 };

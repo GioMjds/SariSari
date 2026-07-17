@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import { NewCustomer } from '@/types';
 import { tryParsePesosInput } from '@/lib/money';
-import { useCredits } from '@/hooks';
+import { useInsertCustomer } from '@/hooks';
 import { Alert } from '@/utils';
 
 export interface CustomerFormData {
@@ -19,9 +19,9 @@ export interface CustomerFormData {
 const trim = (s: string | undefined) => (s ?? '').trim();
 
 /**
- * useAddCustomerForm — owns the Add Customer screen's form state.
+ * useAddCustomerForm — owns the Add Customer (New Suki) screen's form state.
  *
- * Encapsulates react-hook-form setup, the `watch()`ed fields that
+ * Encapsulates react-hook-form setup, the watched-values bridge that
  * drive the live Passbook preview, the credit-limit parser that
  * honours the integer-pesos invariant, and the submit pipeline that
  * posts to `useInsertCustomer` (which handles query invalidation +
@@ -31,7 +31,6 @@ const trim = (s: string | undefined) => (s ?? '').trim();
  * the single place where business logic lives.
  */
 export function useAddCustomerForm() {
-  const { useInsertCustomer } = useCredits();
   const insertCustomer = useInsertCustomer();
 
   const { control, handleSubmit } = useForm<CustomerFormData>({

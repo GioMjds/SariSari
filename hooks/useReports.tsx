@@ -198,18 +198,6 @@ export function useReports() {
   }, [queryClient]);
 
   return {
-    useReportKPIs,
-    useSalesOverTime,
-    useTopSellingProducts,
-    useSalesBreakdown,
-    useInventoryMovement,
-    useInventoryValue,
-    useLowStockItems,
-    useSlowMovingProducts,
-    useCreditsOverview,
-    useAgingBuckets,
-    useProductProfitability,
-    useReportInsights,
     invalidateReports,
   };
 }

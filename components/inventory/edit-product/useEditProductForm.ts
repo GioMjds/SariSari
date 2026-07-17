@@ -3,7 +3,7 @@ import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
-import { useCategories, useProducts } from '@/hooks';
+import { useCategories, useGetProduct, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 
 /**
@@ -32,23 +32,20 @@ export interface EditProductFormData {
 }
 
 /**
- * `useEditProductForm()` — owns the Edit Product screen's form state.
+ * Shared form logic + state for the Edit Product screen.
  *
- * Encapsulates react-hook-form setup (seeded from the product row),
- * the live profit/markup preview math, the unsaved-changes guard
- * wired to the Android hardware-back button, the submit pipeline
- * that posts to `useUpdateProduct`, and the delete-product flow.
+ * Owns react-hook-form setup, initial hydration from `useGetProduct`,
+ * category list subscription, discard/delete modal visibility, and the
+ * `submit` + `confirmDelete` mutations.
  *
- * The screen and its components stay presentational; this hook is
- * the single place where business logic lives — mirroring the
- * `useAddProductForm` and `useAddSalesForm` conventions.
+ * The layout component consumes the returned bundle to bind inputs
+ * and render modals without any state inside JSX.
  */
 export function useEditProductForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = parseInt(id, 10);
 
-  const { useGetProduct, updateProductMutation, deleteProductMutation } =
-    useProducts();
+  const { updateProductMutation, deleteProductMutation } = useProducts();
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
 

@@ -88,11 +88,6 @@ export function useSales() {
     queryFn: () => getAllSales(),
   });
 
-  // Query: Get sale by ID — delegates to the standalone export above.
-  // Kept here so existing callers of useSales().useGetSale() still work.
-  // Prefer importing useGetSale directly for new code.
-  const useGetSaleById = (id: number) => useGetSale(id);
-
   // Mutation: Insert a new sale
   const insertSaleMutation = useMutation({
     mutationFn: ({
@@ -119,17 +114,12 @@ export function useSales() {
   });
 
   // Mutation: Delete a sale — delegates to the standalone export above.
-  // Kept here so existing callers of useSales().deleteSaleMutation still work.
-  // Prefer importing useDeleteSale directly for new code.
   const deleteSaleMutation = useDeleteSale();
 
   return {
     // Queries
     getTodayStatsQuery,
     getAllSalesQuery,
-    useGetSale: useGetSaleById,
-    useGetSaleItems,
-    useGetSalesByDateRange,
 
     // Mutations
     insertSaleMutation,

@@ -21,10 +21,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as AuthSession from 'expo-auth-session';
+import { getAllSales } from '@/database/sales';
 import {
   createLocalSnapshot,
   exchangeCodeForTokens,
   getClientId,
+  getCloudNewerStatus,
   getDiscovery,
   getMetadataSidecar,
   GDRIVE_SCOPE,
@@ -71,7 +73,6 @@ export const useSchedulerInputs = () => {
     let cancelled = false;
     (async () => {
       try {
-        const { getAllSales } = await import('@/database/sales');
         const rows = await getAllSales();
         if (!cancelled) setSalesCount(rows.length);
       } catch {
@@ -243,22 +244,24 @@ export const useGoogleAuthRequest = (): [
   (opts?: AuthSession.AuthRequestPromptOptions) => Promise<AuthSession.AuthSessionResult>,
 ] => {
   const clientId = getClientId();
-  if (!clientId) {
-    const noop = async () =>
-      ({ type: 'cancel' } as AuthSession.AuthSessionResult);
-    return [null, null, noop];
-  }
   const discovery = getDiscovery();
   const redirectUri = makeRedirectUri();
   const config: AuthSession.AuthRequestConfig = {
-    clientId,
+    clientId: clientId || 'disabled-placeholder-client-id',
     scopes: [GDRIVE_SCOPE],
     redirectUri,
     responseType: AuthSession.ResponseType.Code,
     usePKCE: true,
     codeChallengeMethod: AuthSession.CodeChallengeMethod.S256,
   };
-  return AuthSession.useAuthRequest(config, discovery);
+  const [request, result, promptAsync] = AuthSession.useAuthRequest(config, discovery);
+
+  if (!clientId) {
+    const noop = async () =>
+      ({ type: 'cancel' } as AuthSession.AuthSessionResult);
+    return [null, null, noop];
+  }
+  return [request, result, promptAsync];
 };
 
 /**
@@ -404,7 +407,6 @@ export const useCloudNewerStatus = () => {
     queryKey: backupKeys.cloudNewer(),
     enabled: !!linked,
     queryFn: async () => {
-      const { getCloudNewerStatus } = await import('@/lib/backup');
       return getCloudNewerStatus();
     },
     staleTime: 60_000,

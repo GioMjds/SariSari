@@ -117,8 +117,6 @@ export function useCategories() {
     // Queries
     getAllCategoriesQuery,
     getCategoriesWithCountQuery,
-    useGetCategory,
-    useGetCategoryByName,
 
     // Mutations
     insertCategoryMutation,

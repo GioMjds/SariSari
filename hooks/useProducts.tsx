@@ -247,9 +247,6 @@ export function useProducts() {
   return {
     // Queries
     getAllProductsQuery,
-    useGetProduct,
-    useGetProductBySku,
-    useFindProductByBarcode,
 
     // Mutations
     insertProductMutation,

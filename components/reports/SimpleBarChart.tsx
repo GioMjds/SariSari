@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
-import { memo, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { formatCompactCurrency } from '@/utils';
 
@@ -37,7 +37,10 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 	// Selection-toggle animations still run because `animate` drives opacity reactively.
 	const hasMounted = useRef(false);
 	const shouldAnimate = hasMounted.current;
-	if (!hasMounted.current) hasMounted.current = true;
+
+	useEffect(() => {
+		hasMounted.current = true;
+	}, []);
 
 	if (data.length === 0) {
 		return (

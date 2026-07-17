@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewCredit, Product } from '@/types';
 import { tryParsePesosInput } from '@/lib/money';
-import { useCredits, useProducts } from '@/hooks';
+import { useCustomer, useInsertCredit, useProducts } from '@/hooks';
 
 export interface CreditFormData {
   productName: string;
@@ -92,7 +92,6 @@ export function useAddCreditForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
 
-  const { useCustomer, useInsertCredit } = useCredits();
   const { getAllProductsQuery } = useProducts();
 
   // Local UI state — product picker, due-date preset selection, and ticket items list.

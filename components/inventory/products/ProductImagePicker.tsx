@@ -222,9 +222,6 @@ export function ProductImagePicker({
 
 const styles = StyleSheet.create({
   pickerBox: {
-    shadowColor: '#564E45',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    boxShadow: '0 2px 6px rgba(86, 78, 69, 0.05)',
   },
 });

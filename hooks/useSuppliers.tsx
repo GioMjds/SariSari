@@ -100,7 +100,6 @@ export function useSuppliers() {
   return {
     // Queries
     getAllSuppliersQuery,
-    useGetSupplier,
 
     // Mutations
     insertSupplierMutation,

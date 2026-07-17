@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
-import { useBarcodeResolver, useCredits, useProducts, useSales } from '@/hooks';
+import { useBarcodeResolver, useCustomers, useProducts, useSales } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
@@ -24,22 +24,28 @@ export interface AddSalesFormData {
 }
 
 /**
- * useAddSalesForm — owns the Add Sales modal's POS state.
+ * Cart line item used inside `useAddSalesForm()`.
+ */
+export interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+/**
+ * `useAddSalesForm()` — owns the Add Sales (POS) screen's state.
  *
- * Encapsulates the cart line list (`NewSaleItem[]`), search query,
- * payment mode, and selected suki (for credit checkout). Wires the
- * submission pipeline to `useSales.insertSaleMutation` and surfaces
- * `InsufficientStockError` as an alert so the user can refresh.
+ * Encapsulates react-hook-form setup, cart manipulation (add, increment,
+ * decrement, set quantity, remove), stock validation (`calculateCartProductPieces`),
+ * payment-type/customer selection, barcode processing via `useBarcodeResolver()`,
+ * and the final transaction submission through `useSales()`.
  *
- * Mirrors the architectural pattern of `useAddCreditForm`: the hook
- * is the single place where business logic lives; the screen and its
+ * This hook is the single place where business logic lives; the screen and its
  * components stay presentational.
  */
 export function useAddSalesForm() {
 
 
   const { getAllProductsQuery } = useProducts();
-  const { useCustomers } = useCredits();
   const { insertSaleMutation } = useSales();
   const addToast = useToastStore((state) => state.addToast);
 

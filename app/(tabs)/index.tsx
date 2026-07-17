@@ -8,7 +8,7 @@ import {
 } from '@/components/dashboard';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-import { useCredits, useProducts, useSales, useRecentSales, useHasSales, useCurrentSession, useCashSessionSummary } from '@/hooks';
+import { useCreditKPIs, useCustomers, useProducts, useSales, useRecentSales, useHasSales, useCurrentSession, useCashSessionSummary } from '@/hooks';
 import { formatPesos } from '@/lib/money';
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -59,7 +59,6 @@ export default function Dashboard() {
   const recentSalesQuery = useRecentSales(3);
   const hasSalesQuery = useHasSales();
   const { getAllProductsQuery } = useProducts();
-  const { useCustomers, useCreditKPIs } = useCredits();
   const { data: currentSession, isLoading: sessionLoading } = useCurrentSession();
   const { data: sessionSummary, isLoading: summaryLoading } = useCashSessionSummary(currentSession?.id);
 

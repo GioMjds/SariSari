@@ -1,3 +1,4 @@
+import { db } from '@/configs/sqlite';
 import {
   deleteCreditTransaction,
   deleteCustomer,
@@ -193,7 +194,6 @@ export function useInsertCredit() {
   return useMutation({
     mutationFn: async (data: NewCredit | NewCredit[]) => {
       const credits = Array.isArray(data) ? data : [data];
-      const { db } = await import('@/configs/sqlite');
       await db.withTransactionAsync(async () => {
         for (const credit of credits) {
           await insertCreditTransaction(credit);
@@ -377,26 +377,5 @@ export function useUpdateCreditStatus() {
 }
 
 export function useCredits() {
-  return {
-    // Queries
-    useCustomers,
-    useCustomer,
-    useCustomerDetails,
-    useCustomerCredits,
-    usePaymentsByCustomer,
-    useCreditKPIs,
-    useCreditHistory,
-    useSearchCustomers,
-
-    // Mutations
-    useInsertCustomer,
-    useUpdateCustomer,
-    useDeleteCustomer,
-    useInsertCredit,
-    useDeleteCredit,
-    useInsertPayment,
-    useDeletePayment,
-    useMarkAllCreditsAsPaid,
-    useUpdateCreditStatus,
-  };
+  return {};
 }

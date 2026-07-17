@@ -2,7 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { AgingBucket, StockItem } from '@/types';
 import { MotiView } from 'moti';
-import { memo, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 
 /**
@@ -30,6 +30,12 @@ export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalO
 	const hasMounted = useRef(false);
 	const animationKey = buckets.map((b) => `${b.range}:${b.amount}`).join('|');
 
+	useEffect(() => {
+		if (buckets.length > 0) {
+			hasMounted.current = true;
+		}
+	}, [buckets.length]);
+
 	if (buckets.length === 0) {
 		return (
 			<View className="py-4 items-center">
@@ -49,7 +55,6 @@ export const CreditAgingChart = memo(function CreditAgingChart({ buckets, totalO
 
 	// After the empty-state guard so we only flip once real buckets are shown.
 	const shouldAnimate = hasMounted.current;
-	if (!hasMounted.current) hasMounted.current = true;
 
 	return (
 		<View>
