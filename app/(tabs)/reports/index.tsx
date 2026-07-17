@@ -672,7 +672,10 @@ export default function Reports() {
                 </View>
               ) : filteredSessions.length === 0 ? (
                 <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
-                  <StyledText variant="regular" className="text-ink-400 text-sm">
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-400 text-sm"
+                  >
                     No cash sessions found in this date range.
                   </StyledText>
                 </View>
@@ -692,22 +695,35 @@ export default function Reports() {
 }
 
 function CashSessionRow({ session }: { session: any }) {
-  const { data: entries = [], isLoading } = useCashEntries(session.id);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const { data: entries = [], isLoading } = useCashEntries(
+    isExpanded ? session.id : undefined,
+  );
 
   return (
     <View className="mb-3 border border-ink-200 rounded-xl bg-paper-50 p-4">
       {/* Clickable Header to Expand/Collapse */}
-      <Pressable onPress={() => setIsExpanded(!isExpanded)} className="flex-row justify-between items-center">
+      <Pressable
+        onPress={() => setIsExpanded(!isExpanded)}
+        accessibilityRole="button"
+        accessibilityLabel={`${session.businessDate} cash session`}
+        accessibilityState={{ expanded: isExpanded }}
+        className="flex-row justify-between items-center"
+      >
         <View className="flex-1 mr-2">
           <View className="flex-row items-center gap-2">
             <StyledText variant="extrabold" className="text-ink-900 text-sm">
               {session.businessDate}
             </StyledText>
-            <View className={`px-2 py-0.5 rounded-full ${
-              session.status === 'open' ? 'bg-sage-500' : 'bg-ink-400'
-            }`}>
-              <StyledText variant="semibold" className="text-[10px] text-white uppercase">
+            <View
+              className={`px-2 py-0.5 rounded-full ${
+                session.status === 'open' ? 'bg-sage-500' : 'bg-ink-400'
+              }`}
+            >
+              <StyledText
+                variant="semibold"
+                className="text-[10px] text-white uppercase"
+              >
                 {session.status}
               </StyledText>
             </View>
@@ -717,12 +733,18 @@ function CashSessionRow({ session }: { session: any }) {
               Opened: {formatPesos(session.openingCash)}
             </StyledText>
             {session.actualCash !== null && (
-              <StyledText variant="regular" className="text-[11px] text-ink-500">
+              <StyledText
+                variant="regular"
+                className="text-[11px] text-ink-500"
+              >
                 Counted: {formatPesos(session.actualCash)}
               </StyledText>
             )}
             {session.expectedCash !== null && (
-              <StyledText variant="regular" className="text-[11px] text-ink-500">
+              <StyledText
+                variant="regular"
+                className="text-[11px] text-ink-500"
+              >
                 Expected: {formatPesos(session.expectedCash)}
               </StyledText>
             )}
@@ -735,46 +757,74 @@ function CashSessionRow({ session }: { session: any }) {
               variant="semibold"
               className={`text-xs ${session.variance >= 0 ? 'text-sage-600' : 'text-semantic-danger'}`}
             >
-              Var: {session.variance >= 0 ? '+' : ''}{formatPesos(session.variance)}
+              Var: {session.variance >= 0 ? '+' : ''}
+              {formatPesos(session.variance)}
             </StyledText>
           )}
         </View>
 
-        <FontAwesome name={isExpanded ? 'chevron-up' : 'chevron-down'} size={12} color="#564E45" />
+        <FontAwesome
+          name={isExpanded ? 'chevron-up' : 'chevron-down'}
+          size={12}
+          color="#564E45"
+        />
       </Pressable>
 
       {/* Expanded Section showing entries */}
       {isExpanded && (
         <View className="mt-4 pt-3 border-t border-dashed border-ink-200">
-          <StyledText variant="semibold" className="label-caps text-ink-500 text-[10px] mb-2">
+          <StyledText
+            variant="semibold"
+            className="label-caps text-ink-500 text-[10px] mb-2"
+          >
             Manual Movements ({entries.length})
           </StyledText>
           {isLoading ? (
             <ActivityIndicator size="small" color="#623418" className="py-2" />
           ) : entries.length === 0 ? (
-            <StyledText variant="regular" className="text-ink-400 text-xs italic py-1">
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs italic py-1"
+            >
               No manual cash movements recorded.
             </StyledText>
           ) : (
             <View className="space-y-1.5">
               {entries.map((entry) => (
-                <View key={entry.id} className="flex-row justify-between items-center py-1">
+                <View
+                  key={entry.id}
+                  className="flex-row justify-between items-center py-1"
+                >
                   <View className="flex-1 mr-2">
                     <View className="flex-row items-center gap-1.5 flex-wrap">
-                      <StyledText variant="semibold" className={`text-[10px] uppercase font-stack-sans-bold ${
-                        entry.type === 'owner_addition' ? 'text-sage-600' : 'text-semantic-danger'
-                      }`}>
+                      <StyledText
+                        variant="semibold"
+                        className={`text-[10px] uppercase font-stack-sans-bold ${
+                          entry.type === 'owner_addition'
+                            ? 'text-sage-600'
+                            : 'text-semantic-danger'
+                        }`}
+                      >
                         {entry.type.replace('_', ' ')}
                       </StyledText>
-                      <StyledText variant="regular" className="text-[11px] text-ink-500">
+                      <StyledText
+                        variant="regular"
+                        className="text-[11px] text-ink-500"
+                      >
                         {entry.notes}
                       </StyledText>
                     </View>
                   </View>
-                  <StyledText variant="medium" className={`text-xs ${
-                    entry.type === 'owner_addition' ? 'text-sage-600' : 'text-semantic-danger'
-                  }`}>
-                    {entry.type === 'owner_addition' ? '+' : '-'}{formatPesos(entry.amount)}
+                  <StyledText
+                    variant="medium"
+                    className={`text-xs ${
+                      entry.type === 'owner_addition'
+                        ? 'text-sage-600'
+                        : 'text-semantic-danger'
+                    }`}
+                  >
+                    {entry.type === 'owner_addition' ? '+' : '-'}
+                    {formatPesos(entry.amount)}
                   </StyledText>
                 </View>
               ))}

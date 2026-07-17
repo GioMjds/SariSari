@@ -174,10 +174,12 @@ export const insertSale = async (
           ? productRow?.wholesale_unit_name || 'Case'
           : productRow?.retail_unit_name || 'Pc');
       const soldUnitQty = item.sold_unit_qty ?? item.quantity;
-      const conversionFactor = isWholesale ? productRow?.conversion_factor : null;
+      const conversionFactor = isWholesale
+        ? productRow?.conversion_factor
+        : null;
       const costPriceSnapshot = isWholesale
-        ? productRow?.wholesale_cost_price ?? null
-        : productRow?.cost_price ?? null;
+        ? (productRow?.wholesale_cost_price ?? null)
+        : (productRow?.cost_price ?? null);
 
       await db.runAsync(
         `INSERT INTO sale_items (
@@ -307,7 +309,9 @@ export const getAllSales = async (): Promise<SaleWithItems[]> => {
   });
 };
 
-export const getRecentSales = async (limit: number): Promise<SaleWithItems[]> => {
+export const getRecentSales = async (
+  limit: number,
+): Promise<SaleWithItems[]> => {
   const sales = await db.getAllAsync<Sale>(
     'SELECT * FROM sales ORDER BY timestamp DESC LIMIT ?',
     [limit],
@@ -448,41 +452,38 @@ export const getTodayStats = async (): Promise<SaleStats> => {
 };
 
 export const deleteSale = async (id: number) => {
-  const sale = await db.getFirstAsync<
-    Sale & { credit_transaction_id: number | null; timestamp: string }
-  >('SELECT id, credit_transaction_id, timestamp FROM sales WHERE id = ?', [id]);
-
-  if (!sale) return;
-
-  const isLocked = await db.getFirstAsync<{ id: string }>(
-    `SELECT id FROM cash_sessions
-     WHERE status = 'closed'
-       AND ? >= opening_timestamp
-       AND ? <= closing_timestamp
-     LIMIT 1`,
-    [sale.timestamp, sale.timestamp],
-  );
-  if (isLocked) {
-    throw new Error('Cannot delete a sale belonging to a closed cash session');
-  }
-
-  const items = await getSaleItems(id);
-
-  try {
-    await db.execAsync('BEGIN TRANSACTION;');
-
+  await db.withTransactionAsync(async () => {
+    const sale = await db.getFirstAsync<
+      Sale & { credit_transaction_id: number | null; timestamp: string }
+    >('SELECT id, credit_transaction_id, timestamp FROM sales WHERE id = ?', [
+      id,
+    ]);
+    if (!sale) return;
+    const isLocked = await db.getFirstAsync<{ id: string }>(
+      `SELECT id FROM cash_sessions
+       WHERE status = 'closed'
+         AND ? >= opening_timestamp
+         AND ? <= closing_timestamp
+       LIMIT 1`,
+      [sale.timestamp, sale.timestamp],
+    );
+    if (isLocked) {
+      throw new Error(
+        'Cannot delete a sale belonging to a closed cash session',
+      );
+    }
+    const items = await getSaleItems(id);
     // 1. Reverse the credit transaction (if this was a credit sale) before
     //    we lose the sales.credit_transaction_id back-pointer. The CASCADE
     //    on payment_allocations.credit_transaction_id cleans up the FIFO
     //    slice rows; the SET NULL on payments.credit_transaction_id just
     //    nulls the back-pointer on payment rows (we don't want to delete
     //    them — payment history is independent of sale history).
-    if (sale?.credit_transaction_id) {
+    if (sale.credit_transaction_id) {
       await db.runAsync('DELETE FROM credit_transactions WHERE id = ?', [
         sale.credit_transaction_id,
       ]);
     }
-
     // 2. Restore stock for each item and record the reversal in the
     //    inventory movement history so the ledger agrees with the column.
     for (const item of items) {
@@ -495,18 +496,8 @@ export const deleteSale = async (id: number) => {
         [item.product_id, 'restock', item.quantity],
       );
     }
-
     // 3. Drop the sale header and its items.
     await db.runAsync('DELETE FROM sale_items WHERE sale_id = ?', [id]);
     await db.runAsync('DELETE FROM sales WHERE id = ?', [id]);
-
-    await db.execAsync('COMMIT;');
-  } catch (err) {
-    try {
-      await db.execAsync('ROLLBACK;');
-    } catch {
-      // ignore
-    }
-    throw err;
-  }
+  });
 };

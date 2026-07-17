@@ -1,15 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  getCurrentSession,
-  getCashSessionSummary,
-  openSession,
   closeSession,
-  insertCashEntry,
   deleteCashEntry,
-  listCashSessions,
+  getCashSessionSummary,
+  getCurrentSession,
+  insertCashEntry,
   listCashEntries,
+  listCashSessions,
+  openSession,
 } from '@/database/cash';
 import { NewCashEntry } from '@/types/cash.types';
+import { Pesos } from '@/lib/money';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export const cashKeys = {
   all: ['cash'] as const,
@@ -39,9 +40,10 @@ export function useCashSessionSummary(sessionId: string | undefined) {
 export function useOpenSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (openingCash: number) => openSession(openingCash),
+    mutationFn: (openingCash: Pesos) => openSession(openingCash),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
   });
 }
@@ -54,11 +56,12 @@ export function useCloseSession() {
       actualCash,
     }: {
       sessionId: string;
-      actualCash: number;
+      actualCash: Pesos;
     }) => closeSession(sessionId, actualCash),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cashKeys.all });
       queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
     },
   });
 }

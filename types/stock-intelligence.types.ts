@@ -6,6 +6,7 @@ export interface ReorderRecommendation {
   currentStock: number;
   sales28Days: number;
   suggestedQuantity: number;
+  defaultSuggestedQuantity: number;
   estimatedSpend: number | null;
   preferredSupplierId: string | null;
   preferredSupplierName: string | null;

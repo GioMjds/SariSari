@@ -17,6 +17,7 @@ import {
   listCashEntries,
 } from '../../database/cash';
 import * as Crypto from 'expo-crypto';
+import { Pesos } from '../../lib/money';
 
 describe('Cash Control Database Operations', () => {
   beforeAll(async () => {
@@ -41,7 +42,7 @@ describe('Cash Control Database Operations', () => {
   });
 
   test('openSession creates open cash session', async () => {
-    const session = await openSession(1000);
+    const session = await openSession(1000 as Pesos);
     expect(session.openingCash).toBe(1000);
     expect(session.status).toBe('open');
     expect(session.actualCash).toBeNull();
@@ -56,12 +57,12 @@ describe('Cash Control Database Operations', () => {
   });
 
   test('cannot open session twice on same day due to unique constraint', async () => {
-    await openSession(1000);
-    await expect(openSession(2000)).rejects.toThrow();
+    await openSession(1000 as Pesos);
+    await expect(openSession(2000 as Pesos)).rejects.toThrow();
   });
 
   test('expected cash math including post-open, credit, legacy, and post-close exclusions', async () => {
-    const session = await openSession(1000);
+    const session = await openSession(1000 as Pesos);
     const tOpen = session.openingTimestamp;
 
     // Create helper timestamps
@@ -113,17 +114,17 @@ describe('Cash Control Database Operations', () => {
     // 3. Cash Entries setup (manual transactions)
     await insertCashEntry(session.id, {
       type: 'owner_addition',
-      amount: 500,
+      amount: 500 as Pesos,
       notes: 'Added change drawer bills',
     });
     await insertCashEntry(session.id, {
       type: 'expense',
-      amount: 120,
+      amount: 120 as Pesos,
       notes: 'Paid for ice delivery',
     });
     await insertCashEntry(session.id, {
       type: 'owner_drawing',
-      amount: 300,
+      amount: 300 as Pesos,
       notes: 'Owner personal cash draw',
     });
 
@@ -137,7 +138,7 @@ describe('Cash Control Database Operations', () => {
     expect(summary.expectedCash).toBe(1430);
 
     // Close session with actual cash count of 1400 (variance should be 1400 - 1430 = -30)
-    await closeSession(session.id, 1400);
+    await closeSession(session.id, 1400 as Pesos);
 
     const closedSession = (await getCurrentSession())!;
     expect(closedSession.status).toBe('closed');
@@ -167,21 +168,21 @@ describe('Cash Control Database Operations', () => {
   });
 
   test('locking validations on closed sessions', async () => {
-    const session = await openSession(1000);
+    const session = await openSession(1000 as Pesos);
     const entry = await insertCashEntry(session.id, {
       type: 'expense',
-      amount: 100,
+      amount: 100 as Pesos,
       notes: 'Pre-close expense',
     });
 
     // Close session
-    await closeSession(session.id, 900);
+    await closeSession(session.id, 900 as Pesos);
 
     // Cannot write entry to closed session
     await expect(
       insertCashEntry(session.id, {
         type: 'expense',
-        amount: 50,
+        amount: 50 as Pesos,
         notes: 'Should fail',
       })
     ).rejects.toThrow('Cannot add entries to a closed cash session');
@@ -193,7 +194,7 @@ describe('Cash Control Database Operations', () => {
 
     // Cannot close an already closed session
     await expect(
-      closeSession(session.id, 900)
+      closeSession(session.id, 900 as Pesos)
     ).rejects.toThrow('Cash session is already closed');
   });
 
@@ -219,9 +220,9 @@ describe('Cash Control Database Operations', () => {
     expect(sessions[1].businessDate).toBe('2026-07-15');
 
     // Insert entries for id-2
-    await insertCashEntry('id-2', { type: 'owner_addition', amount: 100, notes: 'A' });
+    await insertCashEntry('id-2', { type: 'owner_addition', amount: 100 as Pesos, notes: 'A' });
     await new Promise(resolve => setTimeout(resolve, 5));
-    await insertCashEntry('id-2', { type: 'expense', amount: 50, notes: 'B' });
+    await insertCashEntry('id-2', { type: 'expense', amount: 50 as Pesos, notes: 'B' });
 
     const entries = await listCashEntries('id-2');
     expect(entries.length).toBe(2);

@@ -22,7 +22,17 @@ interface CashEntryFormData {
   notes: string;
 }
 
-const ENTRY_TYPES: { value: CashEntryType; label: string; sub: string; icon: 'minus-circle' | 'arrow-down' | 'plus-circle'; color: string; bg: string; border: string }[] = [
+interface EntryType {
+  value: CashEntryType;
+  label: string;
+  sub: string;
+  icon: 'minus-circle' | 'arrow-down' | 'plus-circle';
+  color: string;
+  bg: string;
+  border: string;
+}
+
+const ENTRY_TYPES = [
   {
     value: 'expense',
     label: 'Gastos / Bawas (Expense)',
@@ -50,13 +60,14 @@ const ENTRY_TYPES: { value: CashEntryType; label: string; sub: string; icon: 'mi
     bg: 'bg-sage-50',
     border: 'border-sage-100',
   },
-];
+] satisfies EntryType[];
 
 export default function CashEntryScreen() {
   const router = useRouter();
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const { data: currentSession, isLoading: sessionLoading } = useCurrentSession();
+  const { data: currentSession, isLoading: sessionLoading } =
+    useCurrentSession();
   const insertCashEntryMutation = useInsertCashEntry();
 
   const {
@@ -89,7 +100,7 @@ export default function CashEntryScreen() {
           onSuccess: () => {
             router.back();
           },
-        }
+        },
       );
     } catch (err) {
       console.error(err);
@@ -108,10 +119,16 @@ export default function CashEntryScreen() {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center px-6">
         <FontAwesome name="lock" size={48} color="#A89F90" />
-        <StyledText variant="semibold" className="text-ink-800 text-lg mt-4 text-center">
+        <StyledText
+          variant="semibold"
+          className="text-ink-800 text-lg mt-4 text-center"
+        >
           Drawer is Closed
         </StyledText>
-        <StyledText variant="regular" className="text-ink-500 text-sm mt-2 text-center">
+        <StyledText
+          variant="regular"
+          className="text-ink-500 text-sm mt-2 text-center"
+        >
           You must open a cash session before recording movements.
         </StyledText>
         <TouchableOpacity
@@ -152,10 +169,16 @@ export default function CashEntryScreen() {
             </Pressable>
 
             <View className="items-center">
-              <StyledText variant="extrabold" className="text-ink-900 text-h2 font-stack-sans-bold">
+              <StyledText
+                variant="extrabold"
+                className="text-ink-900 text-h2 font-stack-sans-bold"
+              >
                 Record Cash Movement
               </StyledText>
-              <StyledText variant="medium" className="label-caps text-ink-400 mt-0.5">
+              <StyledText
+                variant="medium"
+                className="label-caps text-ink-400 mt-0.5"
+              >
                 Session: {currentSession.businessDate}
               </StyledText>
             </View>
@@ -167,7 +190,10 @@ export default function CashEntryScreen() {
         <View className="px-4">
           {/* Card 1: Movement Type */}
           <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-4">
-            <StyledText variant="black" className="label-caps text-cinnamon-500 mb-3">
+            <StyledText
+              variant="black"
+              className="label-caps text-cinnamon-500 mb-3"
+            >
               1. Select Type
             </StyledText>
 
@@ -184,29 +210,49 @@ export default function CashEntryScreen() {
                         key={typeOption.value}
                         onPress={() => onChange(typeOption.value)}
                         className={`flex-row items-center p-3.5 rounded-xl border-2 ${
-                          isSelected ? `${typeOption.bg} ${typeOption.border}` : 'bg-paper-100 border-transparent'
+                          isSelected
+                            ? `${typeOption.bg} ${typeOption.border}`
+                            : 'bg-paper-100 border-transparent'
                         }`}
                       >
                         <View className="mr-3">
                           <FontAwesome
                             name={typeOption.icon}
                             size={20}
-                            className={isSelected ? typeOption.color : 'text-ink-400'}
+                            className={
+                              isSelected ? typeOption.color : 'text-ink-400'
+                            }
                           />
                         </View>
                         <View className="flex-1">
-                          <StyledText variant="semibold" className={`text-sm ${isSelected ? 'text-ink-900' : 'text-ink-700'}`}>
+                          <StyledText
+                            variant="semibold"
+                            className={`text-sm ${isSelected ? 'text-ink-900' : 'text-ink-700'}`}
+                          >
                             {typeOption.label}
                           </StyledText>
-                          <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5">
+                          <StyledText
+                            variant="regular"
+                            className="text-ink-400 text-xs mt-0.5"
+                          >
                             {typeOption.sub}
                           </StyledText>
                         </View>
                         <View className="ml-2">
-                          <View className={`w-5 h-5 rounded-full border items-center justify-center ${
-                            isSelected ? 'bg-persimmon-500 border-persimmon-600' : 'border-ink-300 bg-white'
-                          }`}>
-                            {isSelected && <FontAwesome name="check" size={10} color="#FBF7EE" />}
+                          <View
+                            className={`w-5 h-5 rounded-full border items-center justify-center ${
+                              isSelected
+                                ? 'bg-persimmon-500 border-persimmon-600'
+                                : 'border-ink-300 bg-white'
+                            }`}
+                          >
+                            {isSelected && (
+                              <FontAwesome
+                                name="check"
+                                size={10}
+                                color="#FBF7EE"
+                              />
+                            )}
                           </View>
                         </View>
                       </TouchableOpacity>
@@ -219,13 +265,19 @@ export default function CashEntryScreen() {
 
           {/* Card 2: Details */}
           <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-6">
-            <StyledText variant="black" className="label-caps text-cinnamon-500 mb-3">
+            <StyledText
+              variant="black"
+              className="label-caps text-cinnamon-500 mb-3"
+            >
               2. Transaction Details
             </StyledText>
 
             {/* Amount Field */}
             <View className="mb-4">
-              <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-sm mb-2"
+              >
                 Amount (₱) *
               </StyledText>
               <Controller
@@ -233,19 +285,16 @@ export default function CashEntryScreen() {
                 name="amount"
                 rules={{
                   required: true,
-                  validate: (val) => {
-                    try {
-                      const num = parsePesosInput(val);
-                      return num > 0 || 'Must be greater than 0';
-                    } catch {
-                      return 'Invalid peso amount';
-                    }
-                  },
+                  validate: (val) =>
+                    val.trim().length >= 2 ||
+                    'Please enter at least 2 characters.',
                 }}
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View className="relative justify-center">
                     <View className="absolute left-4 z-10">
-                      <StyledText className="text-base font-extrabold text-ink-500">₱</StyledText>
+                      <StyledText className="text-base font-extrabold text-ink-500">
+                        ₱
+                      </StyledText>
                     </View>
                     <TextInput
                       placeholder="0.00"
@@ -276,7 +325,10 @@ export default function CashEntryScreen() {
 
             {/* Notes Field */}
             <View>
-              <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-sm mb-2"
+              >
                 Description / Notes *
               </StyledText>
               <Controller
@@ -315,11 +367,18 @@ export default function CashEntryScreen() {
             onPress={handleSubmit(onSubmit)}
             disabled={!isValid || insertCashEntryMutation.isPending}
             className={`w-full py-4 rounded-xl flex-row justify-center items-center ${
-              isValid && !insertCashEntryMutation.isPending ? 'bg-persimmon-500' : 'bg-ink-200'
+              isValid && !insertCashEntryMutation.isPending
+                ? 'bg-persimmon-500'
+                : 'bg-ink-200'
             }`}
           >
-            <StyledText variant="semibold" className={`text-base ${isValid ? 'text-paper-50' : 'text-ink-400'}`}>
-              {insertCashEntryMutation.isPending ? 'Saving entry...' : 'Save Entry'}
+            <StyledText
+              variant="semibold"
+              className={`text-base ${isValid ? 'text-paper-50' : 'text-ink-400'}`}
+            >
+              {insertCashEntryMutation.isPending
+                ? 'Saving entry...'
+                : 'Save Entry'}
             </StyledText>
           </TouchableOpacity>
         </View>

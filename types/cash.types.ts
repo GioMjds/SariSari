@@ -1,12 +1,14 @@
+import { Pesos } from '@/lib/money';
+
 export type CashSessionStatus = 'open' | 'closed';
 
 export interface CashSession {
   id: string;
   businessDate: string;
-  openingCash: number;
-  actualCash: number | null;
-  expectedCash: number | null;
-  variance: number | null;
+  openingCash: Pesos;
+  actualCash: Pesos | null;
+  expectedCash: Pesos | null;
+  variance: Pesos | null;
   status: CashSessionStatus;
   openingTimestamp: string;
   closingTimestamp: string | null;
@@ -16,12 +18,12 @@ export interface CashSession {
 
 export interface CashSessionSummary {
   session: CashSession | null;
-  expectedCash: number;
-  cashSales: number;
-  cashUtangPayments: number;
-  ownerAdditions: number;
-  expenses: number;
-  ownerDrawings: number;
+  expectedCash: Pesos;
+  cashSales: Pesos;
+  cashUtangPayments: Pesos;
+  ownerAdditions: Pesos;
+  expenses: Pesos;
+  ownerDrawings: Pesos;
 }
 
 export type CashEntryType = 'expense' | 'owner_drawing' | 'owner_addition';
@@ -30,7 +32,7 @@ export interface CashEntry {
   id: string;
   sessionId: string;
   type: CashEntryType;
-  amount: number;
+  amount: Pesos;
   notes: string;
   timestamp: string;
   createdAt: number;
@@ -38,6 +40,6 @@ export interface CashEntry {
 
 export interface NewCashEntry {
   type: CashEntryType;
-  amount: number;
+  amount: Pesos;
   notes: string;
 }

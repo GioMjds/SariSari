@@ -12,6 +12,7 @@ import { runMigrations } from '../../database/migrations';
 import { resetMockDb } from '../__setup__/expo-sqlite-mock';
 import { initCashTables, openSession, closeSession } from '../../database/cash';
 import * as Crypto from 'expo-crypto';
+import { Pesos } from '../../lib/money';
 
 describe('Closed Session Deletion Protection and Payment Method Validation', () => {
   let prodId: number;
@@ -44,12 +45,12 @@ describe('Closed Session Deletion Protection and Payment Method Validation', () 
   });
 
   test('cannot delete cash sale belonging to a closed cash session', async () => {
-    const session = await openSession(1000);
+    const session = await openSession(1000 as Pesos);
     const saleId = await insertSale(
       [{ product_id: prodId, quantity: 2, price: 1500 }],
       'cash',
     );
-    await closeSession(session.id, 1030);
+    await closeSession(session.id, 1030 as Pesos);
 
     await expect(deleteSale(saleId)).rejects.toThrow(
       'Cannot delete a sale belonging to a closed cash session',
@@ -57,13 +58,13 @@ describe('Closed Session Deletion Protection and Payment Method Validation', () 
   });
 
   test('cannot delete payment belonging to a closed cash session', async () => {
-    const session = await openSession(1000);
+    const session = await openSession(1000 as Pesos);
     const paymentId = await insertPayment({
       customer_id: sukiId,
       amount: 500,
       payment_method: 'cash',
     });
-    await closeSession(session.id, 1500);
+    await closeSession(session.id, 1500 as Pesos);
 
     await expect(deletePayment(paymentId)).rejects.toThrow(
       'Cannot delete a payment belonging to a closed cash session',

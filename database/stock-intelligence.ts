@@ -86,6 +86,7 @@ export const listReorderRecommendations = async (): Promise<
   }
 
   const recommendations: ReorderRecommendation[] = [];
+  const staleProductIds: number[] = [];
 
   for (const product of products) {
     const sales28Days = salesMap.get(product.id) ?? 0;
@@ -129,9 +130,7 @@ export const listReorderRecommendations = async (): Promise<
         savedPlanRow.last_supplier_id !== product.supplier_id;
 
       if (isStale) {
-        await db.runAsync('DELETE FROM reorder_plans WHERE product_id = ?', [
-          product.id,
-        ]);
+        staleProductIds.push(product.id);
       } else {
         savedPlan = {
           status: savedPlanRow.status,
@@ -159,6 +158,7 @@ export const listReorderRecommendations = async (): Promise<
       currentStock,
       sales28Days,
       suggestedQuantity: finalSuggested,
+      defaultSuggestedQuantity: defaultSuggested,
       estimatedSpend,
       preferredSupplierId: product.supplier_id,
       preferredSupplierName: product.supplier_name,
@@ -171,6 +171,17 @@ export const listReorderRecommendations = async (): Promise<
       isWatchItem,
       savedPlan,
     });
+  }
+
+  if (staleProductIds.length > 0) {
+    try {
+      await db.runAsync(
+        `DELETE FROM reorder_plans WHERE product_id IN (${staleProductIds.map(() => '?').join(',')})`,
+        staleProductIds,
+      );
+    } catch (err) {
+      console.warn('Failed to clean up stale reorder plans', err);
+    }
   }
 
   return recommendations;

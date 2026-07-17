@@ -4,6 +4,7 @@ import {
   getCurrentLocalTimestamp,
   getTodayDateString,
 } from '../utils/timezone';
+import { Pesos } from '../lib/money';
 import {
   CashSession,
   CashSessionSummary,
@@ -66,10 +67,10 @@ export const getCurrentSession = async (): Promise<CashSession | null> => {
   return {
     id: row.id,
     businessDate: row.business_date,
-    openingCash: row.opening_cash,
-    actualCash: row.actual_cash,
-    expectedCash: row.expected_cash,
-    variance: row.variance,
+    openingCash: row.opening_cash as Pesos,
+    actualCash: row.actual_cash as Pesos | null,
+    expectedCash: row.expected_cash as Pesos | null,
+    variance: row.variance as Pesos | null,
     status: row.status,
     openingTimestamp: row.opening_timestamp,
     closingTimestamp: row.closing_timestamp,
@@ -79,7 +80,7 @@ export const getCurrentSession = async (): Promise<CashSession | null> => {
 };
 
 export const openSession = async (
-  openingCash: number,
+  openingCash: Pesos,
 ): Promise<CashSession> => {
   const existing = await getCurrentSession();
   if (existing) {
@@ -137,10 +138,10 @@ export const getCashSessionSummary = async (
   const session: CashSession = {
     id: sessionRow.id,
     businessDate: sessionRow.business_date,
-    openingCash: sessionRow.opening_cash,
-    actualCash: sessionRow.actual_cash,
-    expectedCash: sessionRow.expected_cash,
-    variance: sessionRow.variance,
+    openingCash: sessionRow.opening_cash as Pesos,
+    actualCash: sessionRow.actual_cash as Pesos | null,
+    expectedCash: sessionRow.expected_cash as Pesos | null,
+    variance: sessionRow.variance as Pesos | null,
     status: sessionRow.status,
     openingTimestamp: sessionRow.opening_timestamp,
     closingTimestamp: sessionRow.closing_timestamp,
@@ -196,18 +197,18 @@ export const getCashSessionSummary = async (
 
   return {
     session,
-    expectedCash,
-    cashSales,
-    cashUtangPayments,
-    ownerAdditions,
-    expenses,
-    ownerDrawings,
+    expectedCash: expectedCash as Pesos,
+    cashSales: cashSales as Pesos,
+    cashUtangPayments: cashUtangPayments as Pesos,
+    ownerAdditions: ownerAdditions as Pesos,
+    expenses: expenses as Pesos,
+    ownerDrawings: ownerDrawings as Pesos,
   };
 };
 
 export const closeSession = async (
   sessionId: string,
-  actualCash: number,
+  actualCash: Pesos,
 ): Promise<void> => {
   const summary = await getCashSessionSummary(sessionId);
   if (summary.session?.status === 'closed') {
@@ -304,10 +305,10 @@ export const listCashSessions = async (): Promise<CashSession[]> => {
   return rows.map((row) => ({
     id: row.id,
     businessDate: row.business_date,
-    openingCash: row.opening_cash,
-    actualCash: row.actual_cash,
-    expectedCash: row.expected_cash,
-    variance: row.variance,
+    openingCash: row.opening_cash as Pesos,
+    actualCash: row.actual_cash as Pesos | null,
+    expectedCash: row.expected_cash as Pesos | null,
+    variance: row.variance as Pesos | null,
     status: row.status,
     openingTimestamp: row.opening_timestamp,
     closingTimestamp: row.closing_timestamp,
@@ -336,7 +337,7 @@ export const listCashEntries = async (
     id: row.id,
     sessionId: row.session_id,
     type: row.type,
-    amount: row.amount,
+    amount: row.amount as Pesos,
     notes: row.notes,
     timestamp: row.timestamp,
     createdAt: row.created_at,
