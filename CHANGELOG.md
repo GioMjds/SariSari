@@ -4,16 +4,21 @@ All notable changes to the **SariSari** project will be documented in this file.
 
 ---
 
-## [1.0.0] - 2026-07-17
+## [1.1.0-rc.1] - 2026-07-17
 
 ### Added
 
+- **Cash Session Open/Close Flow**: Added cash session open/close flow and manual cashbook entry screens with reports integration.
+- **Stock Intelligence & Planning**: Added calculations and planning operations for inventory reordering, along with query and mutation hooks.
+- **Stock Recommendations Screen**: Implemented recommendations UI with urgency-based badges, and adjust/defer/dismiss actions.
 - **Dynamic Build Badge**: Added `BuildBadge` component (`components/BuildBadge.tsx`) to display a visual header for `Dev` (Blue) and `Preview` (Amber) builds in `app/_layout.tsx`. The badge automatically hides in production.
 - **React Doctor CI Integration**: Set up `.github/workflows/react-doctor.yml` workflow pinning `millionco/react-doctor@v2.2.7` to run static analysis on UI and hook structures.
 - **CI Dependency Doctor Script**: Added `doctor` script (`npx react-doctor@0.7.8`) in `package.json` for manual performance audits.
+- **Repository Governance Files**: Added issue templates, support guides, security policy, code of conduct, and contributing instructions.
 
 ### Changed
 
+- **Code Structure Refactoring**: Reorganized form pages and hook structures under `app/(edit-forms)`, extracting subcomponents for cash entries, cash sessions, categories, and inventory ledger to improve maintainability and avoid unnecessary re-renders.
 - **EAS Build Profiles & Config Separation**:
   - Dynamic `app.config.js` variant selection via `APP_VARIANT` environment variable.
   - Distinct package/bundle identifiers for development, preview, and production builds (`com.giomjds.sarisari.dev`, `com.giomjds.sarisari.preview`, and `com.giomjds.sarisari`) allowing side-by-side installation on the same device.
@@ -23,14 +28,8 @@ All notable changes to the **SariSari** project will be documented in this file.
   - Updated test coverages (`tests/database/cash.test.ts`) to enforce casting integers to `Pesos`.
 - **Form State Reactivity**:
   - Migrated state trackers from `watch` to `useWatch` inside React Hook Form hooks to prevent unnecessary re-renders.
-  - Updated form hooks across fields in:
-    - Add Credit Form (`components/utang/add-credit/useAddCreditForm.ts`)
-    - Add Customer Form (`components/utang/add-customer/useAddCustomerForm.ts`)
-    - Add Payment Form (`components/utang/add-payment/useAddPaymentForm.ts`)
-    - Add Product & Edit Product Forms (`useAddProductForm.ts`, `useEditProductForm.ts`)
-    - Transaction Logging Form (`useLogTransactionForm.ts`)
-    - Add Sales Form (`components/sell/add-sales/useAddSalesForm.ts`)
-- **Dashboard & reports visual polish**:
+  - Updated form hooks across fields in: Add Credit Form, Add Customer Form, Add Payment Form, Add Product & Edit Product Forms, Transaction Logging Form, and Add Sales Form.
+- **Dashboard & Reports Visual Polish**:
   - Restyled variance indicator boxes in `DashboardAttentionSection.tsx` with color-coding based on the magnitude/urgency of discrepancy.
   - Updated stock alert messages and clarified "Stock Asset Value" labels in reports for better store owner tracking.
 - **Active Navigation Styles**: Streamlined active selection styles for Filter Chips and Styled Tab states (`components/layout/StyledTab.tsx`, `components/sell/FilterChips.tsx`, and `components/utang/FilterBar.tsx`).
@@ -49,3 +48,13 @@ All notable changes to the **SariSari** project will be documented in this file.
   - Re-wired the `LanguagePickerDialog` to update screen locales instantly through reactive i18n triggers without needing app restarts.
 - **Stock Intelligence & Plan Cleanups**:
   - Pruned stale stock reorder recommendations and plans during calculations to avoid duplicate inventory suggestions.
+
+---
+
+## [1.0.0] - 2026-07-17
+
+### Added
+
+- Initial release of SariSari offline-first POS, inventory management, and credit tracking.
+- Production EAS build workflow setup.
+- Styling lifecycles NativeWind components optimization.
