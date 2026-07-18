@@ -1,8 +1,6 @@
 import { db } from '../configs/sqlite';
-import beverages from '../constants/barcodes/beverages.json';
-import cannedGoods from '../constants/barcodes/canned-goods.json';
-import noodles from '../constants/barcodes/noodles.json';
-import snacks from '../constants/barcodes/snacks.json';
+import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
+import { insertCatalogProductIfMissing } from './catalog';
 import {
   MOCK_CATEGORIES,
   MOCK_PRODUCTS,
@@ -43,44 +41,31 @@ import {
  *      seed. Fixed by checking whether any rows already exist and
  *      bailing out if so.
  */
-export const seedProductCatalog = async () => {
-  const existingCatalog = await db.getFirstAsync<{ c: number }>(
-    'SELECT COUNT(*) AS c FROM product_catalog',
-  );
-  if (existingCatalog && existingCatalog.c > 0) {
-    console.log('🌱 Product catalog is already seeded.');
-    return;
+export async function seedProductCatalog(): Promise<void> {
+  try {
+    await db.withTransactionAsync(async () => {
+      for (const record of BUNDLED_CATALOG_RECORDS) {
+        await insertCatalogProductIfMissing(db, {
+          barcode: record.barcode,
+          name: record.name,
+          brand: null,
+          category: record.category,
+          unit: 'Pc',
+          imageUrl: null,
+        });
+      }
+    });
+  } catch (error) {
+    console.error(
+      'Failed to seed bundled product catalog; continuing without catalog metadata.',
+      error,
+    );
   }
-  console.log('🌱 Seeding universal product catalog from static assets...');
-
-  const combined = [
-    ...beverages.map((item) => ({ ...item, brand: 'Nestle', unit: 'Pc', imageUrl: null })),
-    ...cannedGoods.map((item) => ({ ...item, brand: 'Century', unit: 'Pc', imageUrl: null })),
-    ...noodles.map((item) => ({ ...item, brand: 'Lucky Me', unit: 'Pc', imageUrl: null })),
-    ...snacks.map((item) => ({ ...item, brand: 'Oishi', unit: 'Pc', imageUrl: null })),
-  ];
-
-  await db.withTransactionAsync(async () => {
-    for (const item of combined) {
-      await db.runAsync(
-        `INSERT OR IGNORE INTO product_catalog (barcode, name, brand, category, unit, image_url, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [item.barcode, item.name, item.brand, item.category, item.unit, item.imageUrl, Date.now()]
-      );
-    }
-  });
-  console.log(`✅ Seeded ${combined.length} universal catalog products.`);
-};
+}
 
 export const seedDatabase = async () => {
   console.log('🌱 Checking whether to seed the database...');
 
-  // Always check and seed the universal product catalog first
-  try {
-    await seedProductCatalog();
-  } catch (error) {
-    console.error('❌ Failed to seed universal product catalog:', error);
-  }
 
   // Bail out if the user has any data of their own. The seed is
   // strictly for first-run demo data; it must never overwrite

@@ -7,7 +7,7 @@ import {
   initSuppliersTable,
   runMigrations,
 } from '@/database';
-import { seedDatabase } from '@/database/seed';
+import { seedDatabase, seedProductCatalog } from '@/database/seed';
 
 let databaseInitialized = false;
 
@@ -52,6 +52,8 @@ export const initializeDatabases = async () => {
       await initSuppliersTable();
       await runMigrations();
     });
+
+    await seedProductCatalog();
 
     if (__DEV__) {
       await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data

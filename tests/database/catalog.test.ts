@@ -10,6 +10,7 @@ import {
   initSuppliersTable,
   runMigrations,
 } from '../../database';
+import { seedProductCatalog } from '../../database/seed';
 import { resetMockDb } from '../__setup__/expo-sqlite-mock';
 
 describe('Catalog Database Operations', () => {
@@ -88,5 +89,50 @@ describe('Catalog Database Operations', () => {
       imageUrl: 'local://coke',
       createdAt: 10,
     });
+  });
+
+  test('seeds only missing bundled records and preserves a merchant row', async () => {
+    await db.runAsync(
+      'INSERT INTO product_catalog (barcode, name, brand, category, unit, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['4800016551829', 'Merchant Coke', null, 'Custom', 'Bottle', null, 1],
+    );
+
+    await seedProductCatalog();
+
+    await expect(
+      getCatalogProductByBarcode(db, '4800016551829'),
+    ).resolves.toMatchObject({
+      name: 'Merchant Coke',
+      category: 'Custom',
+      unit: 'Bottle',
+    });
+
+    await expect(
+      getCatalogProductByBarcode(db, '4807770270017'),
+    ).resolves.toMatchObject({
+      name: 'Lucky Me Instant Mami Beef',
+      category: 'Noodles',
+      unit: 'Pc',
+    });
+  });
+
+  test('handles catalog seeding failures gracefully without rejecting', async () => {
+    const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    await db.execAsync(`
+      CREATE TRIGGER IF NOT EXISTS fail_catalog_insert
+      BEFORE INSERT ON product_catalog
+      BEGIN
+        SELECT RAISE(FAIL, 'Forced insert failure');
+      END;
+    `);
+
+    try {
+      await expect(seedProductCatalog()).resolves.toBeUndefined();
+      expect(consoleErrorMock).toHaveBeenCalled();
+    } finally {
+      await db.execAsync('DROP TRIGGER IF EXISTS fail_catalog_insert;');
+      consoleErrorMock.mockRestore();
+    }
   });
 });

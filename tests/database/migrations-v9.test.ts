@@ -53,4 +53,51 @@ describe('Database Migration v9 (Tingi vs Pakyaw)', () => {
     expect(tableNames).toContain('reorder_plans');
     expect(tableNames).toContain('product_catalog');
   });
+
+  test('runs migration from v10 to v11 and preserves product and sale data', async () => {
+    resetMockDb();
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        sku TEXT UNIQUE NOT NULL,
+        price INTEGER NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        retail_unit_name TEXT NOT NULL DEFAULT 'Pc'
+      );
+      CREATE TABLE IF NOT EXISTS sales (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        total INTEGER NOT NULL,
+        payment_type TEXT NOT NULL DEFAULT 'cash',
+        customer_name TEXT,
+        customer_credit_id INTEGER,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+      PRAGMA user_version = 10;
+    `);
+
+    await db.runAsync(
+      "INSERT INTO products (id, name, sku, price, quantity) VALUES (1, 'Preserved product', 'SKU-PRESERVED', 100, 5);"
+    );
+    await db.runAsync(
+      "INSERT INTO sales (id, total, payment_type) VALUES (1, 1250, 'cash');"
+    );
+
+    await runMigrations();
+
+    await expect(
+      db.getFirstAsync('SELECT name FROM products WHERE id = 1'),
+    ).resolves.toMatchObject({ name: 'Preserved product' });
+
+    await expect(
+      db.getFirstAsync('SELECT total FROM sales WHERE id = 1'),
+    ).resolves.toMatchObject({ total: 1250 });
+
+    const tables = await db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table'");
+    const tableNames = tables.map(t => t.name);
+    expect(tableNames).toContain('product_catalog');
+
+    const [{ user_version }] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version');
+    expect(user_version).toBe(11);
+  });
 });
