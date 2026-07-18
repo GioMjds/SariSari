@@ -242,9 +242,7 @@ export function useAddProductForm() {
     const skuSuffix = skuParts[skuParts.length - 1];
     const isExistingValid = skuPrefix === prefix && /^\d{4}$/.test(skuSuffix);
 
-    if (isExistingValid) {
-      return currentSku;
-    }
+    if (isExistingValid) return currentSku;
 
     const timestamp = Date.now().toString().slice(-4);
     return `${prefix}-${timestamp}`;
@@ -337,7 +335,7 @@ export function useAddProductForm() {
       const result = await resolve(barcodeValue);
 
       if (result.kind === 'resolved') {
-        setValue('barcode', barcodeValue, { shouldDirty: true });
+        setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
         setIsScannerOpen(false);
         return;
       }
@@ -348,9 +346,8 @@ export function useAddProductForm() {
           autoGenerateSku,
         });
 
-        if (patch.setAutoGenerateSku) {
-          setAutoGenerateSku(false);
-        }
+        if (patch.setAutoGenerateSku) setAutoGenerateSku(false);
+
         setValue('barcode', patch.barcode, { shouldDirty: true });
 
         if (patch.productName !== undefined) {
@@ -363,9 +360,7 @@ export function useAddProductForm() {
           setValue('retailUnitName', patch.retailUnitName, { shouldDirty: true });
         }
 
-        if (patch.toast) {
-          addToast(patch.toast);
-        }
+        if (patch.toast) addToast(patch.toast);
 
         setIsScannerOpen(false);
 
