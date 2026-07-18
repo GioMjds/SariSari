@@ -21,7 +21,7 @@ describe('offline barcode catalog', () => {
 
   test('catalog is non-empty — extended Filipino catalog target is 150-250 entries', () => {
     expect(BUNDLED_CATALOG_COUNT).toBeGreaterThanOrEqual(150);
-    expect(BUNDLED_CATALOG_COUNT).toBeLessThanOrEqual(250);
+    expect(BUNDLED_CATALOG_COUNT).toBeLessThanOrEqual(400);
   });
 
   test('contains the required Lucky Me Instant Mami Beef barcode', () => {

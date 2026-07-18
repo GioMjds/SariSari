@@ -14,34 +14,16 @@ import {
 
 /**
  * Seed the database with mock data for development.
- *
- * Three bugs lived here before this rewrite. All three are fixed:
- *
- *   1. **Manual `BEGIN TRANSACTION; ... COMMIT;` did nothing.**
- *      `expo-sqlite`'s `execAsync` runs a multi-statement batch
- *      atomically and does not keep the connection inside a user-
- *      managed transaction once it returns. Every subsequent
- *      `db.runAsync(...)` was a separate autocommit statement, which
- *      meant the seed ran as dozens of standalone writes that
- *      interleaved with anything else holding the writer lock.
- *      Fixed by using `db.withTransactionAsync`, the same primitive
- *      the migrations use.
- *
- *   2. **`execAsync` rejecting with "database is locked".** Once #1
- *      was fixed, this surfaced on cold start when the migration's
- *      `withTransactionAsync` hadn't fully released the writer lock
- *      before the seed's transaction tried to start. Fixed by
- *      awaiting init+migration synchronously in `configs/startup.ts`
- *      (done in a previous commit) and by serializing all seed
- *      writes inside one transaction here.
- *
- *   3. **Silent data wipe.** The seed used to `DELETE FROM` every
- *      table on every cold start in `__DEV__`, blowing away any
- *      product, sale, or suki the user had entered since the last
- *      seed. Fixed by checking whether any rows already exist and
- *      bailing out if so.
  */
 export async function seedProductCatalog(): Promise<void> {
+  const startedAt = Date.now();
+  if (__DEV__) {
+    console.log(
+      '[Barcode][Seed] seeding up to',
+      BUNDLED_CATALOG_RECORDS.length,
+      'bundled records...',
+    );
+  }
   try {
     await db.withTransactionAsync(async () => {
       for (const record of BUNDLED_CATALOG_RECORDS) {
@@ -55,6 +37,11 @@ export async function seedProductCatalog(): Promise<void> {
         });
       }
     });
+    if (__DEV__) {
+      console.log(
+        `[Barcode][Seed] catalog seed complete in ${Date.now() - startedAt}ms.`,
+      );
+    }
   } catch (error) {
     console.error(
       'Failed to seed bundled product catalog; continuing without catalog metadata.',
@@ -65,7 +52,6 @@ export async function seedProductCatalog(): Promise<void> {
 
 export const seedDatabase = async () => {
   console.log('🌱 Checking whether to seed the database...');
-
 
   // Bail out if the user has any data of their own. The seed is
   // strictly for first-run demo data; it must never overwrite

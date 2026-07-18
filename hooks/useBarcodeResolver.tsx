@@ -24,7 +24,20 @@ export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
   }
 
   const readyRef = useRef(false);
-  readyRef.current = getAllProductsQuery.isSuccess && !getAllProductsQuery.isFetching;
+  readyRef.current =
+    getAllProductsQuery.isSuccess && !getAllProductsQuery.isFetching;
+  if (__DEV__) {
+    console.log(
+      '[Barcode] resolver ready?',
+      readyRef.current,
+      '| isSuccess:',
+      getAllProductsQuery.isSuccess,
+      '| isFetching:',
+      getAllProductsQuery.isFetching,
+      '| productCount:',
+      productsRef.current.length,
+    );
+  }
 
   const resolver = useMemo(() => {
     return createBarcodeResolver({
@@ -35,7 +48,11 @@ export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
     });
   }, [lookupCatalogProduct, throttleMs]);
 
-  return useMemo(() => ({
-    resolve: (barcode: string, nowMs?: number) => resolver.resolve(barcode, nowMs),
-  }), [resolver]);
+  return useMemo(
+    () => ({
+      resolve: (barcode: string, nowMs?: number) =>
+        resolver.resolve(barcode, nowMs),
+    }),
+    [resolver],
+  );
 }

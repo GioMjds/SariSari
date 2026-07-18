@@ -24,10 +24,19 @@ export async function getCatalogProductByBarcode(
   const normalizedBarcode = barcode.trim();
   if (!normalizedBarcode) return null;
 
+  if (__DEV__) {
+    console.log(
+      '[Barcode][DB] SELECT product_catalog WHERE barcode =',
+      normalizedBarcode,
+    );
+  }
   const row = await database.getFirstAsync<CatalogRow>(
     'SELECT barcode, name, brand, category, unit, image_url, created_at FROM product_catalog WHERE barcode = ? LIMIT 1',
     [normalizedBarcode],
   );
+  if (__DEV__) {
+    console.log('[Barcode][DB] row found?', !!row, row ?? '(none)');
+  }
 
   return row ? rowToCatalogProduct(row) : null;
 }

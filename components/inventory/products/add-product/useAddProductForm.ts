@@ -92,6 +92,15 @@ export function useAddProductForm() {
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
+  // A scan that arrives while `getAllProductsQuery` is still on its
+  // first fetch gets `store_products_unavailable` from the resolver
+  // (it refuses to trust an empty/incomplete product list for the
+  // duplicate-barcode check). Previously that result was dropped on
+  // the floor, the scan just silently did nothing. We now stash the
+  // barcode here and replay it automatically the moment the query
+  // settles, so the user never has to notice or re-scan.
+  const pendingScanRef = useRef<string | null>(null);
+
   // Forwarded to the price TextInput so we can focus it ~250ms after
   // a successful scan (giving the scanner modal close animation time
   // to finish before the keyboard pops up).
@@ -194,7 +203,8 @@ export function useAddProductForm() {
       existingProducts.find(
         (p) =>
           (p.barcode != null && p.barcode === trimmedBarcode) ||
-          (p.wholesale_barcode != null && p.wholesale_barcode === trimmedBarcode) ||
+          (p.wholesale_barcode != null &&
+            p.wholesale_barcode === trimmedBarcode) ||
           p.sku === trimmedBarcode,
       ) ?? null
     );
@@ -332,7 +342,17 @@ export function useAddProductForm() {
 
   const handleScannedBarcode = useCallback(
     async (barcodeValue: string) => {
+      if (__DEV__) {
+        console.log('[Barcode][AddProduct] scanned:', barcodeValue);
+      }
       const result = await resolve(barcodeValue);
+      if (__DEV__) {
+        console.log(
+          '[Barcode][AddProduct] resolution kind:',
+          result.kind,
+          result,
+        );
+      }
 
       if (result.kind === 'resolved') {
         setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
@@ -357,7 +377,9 @@ export function useAddProductForm() {
           setValue('category', patch.category, { shouldDirty: true });
         }
         if (patch.retailUnitName !== undefined) {
-          setValue('retailUnitName', patch.retailUnitName, { shouldDirty: true });
+          setValue('retailUnitName', patch.retailUnitName, {
+            shouldDirty: true,
+          });
         }
 
         if (patch.toast) addToast(patch.toast);
@@ -390,11 +412,49 @@ export function useAddProductForm() {
         result.kind === 'superseded' ||
         result.kind === 'store_products_unavailable'
       ) {
+        if (result.kind === 'store_products_unavailable') {
+          if (__DEV__) {
+            console.log(
+              '[Barcode][AddProduct] products query not ready yet, queuing',
+              barcodeValue,
+              'for replay once it settles',
+            );
+          }
+          pendingScanRef.current = barcodeValue;
+        } else {
+          if (__DEV__) {
+            console.log(
+              '[Barcode][AddProduct] scan swallowed, kind:',
+              result.kind,
+            );
+          }
+        }
         return;
       }
     },
     [resolve, addToast, autoGenerateSku, setValue],
   );
+
+  // Replays a scan that arrived before `getAllProductsQuery` had
+  // settled. See the comment on `pendingScanRef` above.
+  useEffect(() => {
+    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
+      return;
+    const queued = pendingScanRef.current;
+    if (!queued) return;
+    pendingScanRef.current = null;
+    if (__DEV__) {
+      console.log(
+        '[Barcode][AddProduct] products query ready, replaying queued scan',
+        queued,
+      );
+    }
+    void handleScannedBarcode(queued);
+  }, [
+    getAllProductsQuery.isSuccess,
+    getAllProductsQuery.isFetching,
+    handleScannedBarcode,
+  ]);
 
   // ─── Prefill from route param (inventory-tab scan-to-add) ──────
   //

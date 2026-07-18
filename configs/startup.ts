@@ -37,6 +37,12 @@ export const initializeDatabases = async () => {
     return;
   }
 
+  if (__DEV__) {
+    console.log(
+      `[Barcode][Startup] initializeDatabases() starting at ${Date.now()}`,
+    );
+  }
+
   try {
     await executeWithRetry(async () => {
       // Init each table sequentially. SQLite serializes writes per
@@ -55,11 +61,14 @@ export const initializeDatabases = async () => {
 
     await seedProductCatalog();
 
-    if (__DEV__) {
-      await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
-    }
+    if (__DEV__) await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
 
     databaseInitialized = true;
+    if (__DEV__) {
+      console.log(
+        `[Barcode][Startup] initializeDatabases() finished at ${Date.now()}, catalog is ready for scans.`,
+      );
+    }
   } catch (error) {
     databaseInitialized = false;
     console.error('✗ Database initialization failed:', error);

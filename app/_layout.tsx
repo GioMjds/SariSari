@@ -93,6 +93,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded && i18nReady) {
+      if (__DEV__) {
+        console.log(
+          `[Barcode][Startup] splash hiding at ${Date.now()} (fonts+i18n ready; DB init may still be in flight)`,
+        );
+      }
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, i18nReady]);

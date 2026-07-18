@@ -1,6 +1,6 @@
 # Barcode Product Catalog Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [x]) syntax for tracking.
 
 **Goal:** Make barcode resolution use a durable, offline SQLite product catalog while preserving store-owned product data and existing catalog records.
 
@@ -140,7 +140,7 @@ export function applyBarcodeToAddProductForm(input: {
 - Produces: BUNDLED_CATALOG_RECORDS, BUNDLED_CATALOG_COUNT, getCatalogProductByBarcode(database, barcode), and insertCatalogProductIfMissing(database, input).
 - Removes: lookupOfflineBarcode, OfflineBarcodeLookup, getAllCatalogProducts, and insertCatalogProduct replacement semantics.
 
-- [ ] **Step 1: Replace static-lookup expectations with failing bundled-data and persistence tests**
+- [x] **Step 1: Replace static-lookup expectations with failing bundled-data and persistence tests**
 
 Update tests/barcodes/lookup.test.ts so it imports BUNDLED_CATALOG_RECORDS and BUNDLED_CATALOG_COUNT rather than lookupOfflineBarcode. Add the required device fixture assertion:
 
@@ -222,13 +222,13 @@ test('does not replace existing catalog metadata', async () => {
 
 Add product_catalog to resetMockDb so every database test begins with an empty catalog table.
 
-- [ ] **Step 2: Run the new tests to prove the current static-map/replacement API cannot satisfy them**
+- [x] **Step 2: Run the new tests to prove the current static-map/replacement API cannot satisfy them**
 
 Run: pnpm test -- --runInBand tests/barcodes/lookup.test.ts tests/database/catalog.test.ts
 
 Expected: FAIL because BUNDLED_CATALOG_RECORDS and the injected-handle catalog APIs do not exist, and the required Lucky Me record is absent.
 
-- [ ] **Step 3: Implement the bundled manifest and insert-only catalog APIs**
+- [x] **Step 3: Implement the bundled manifest and insert-only catalog APIs**
 
 Replace constants/barcodes/index.ts with a manifest-only module:
 
@@ -322,13 +322,13 @@ export async function insertCatalogProductIfMissing(
 
 Do not alter database/migrations.ts: its v11 schema already has the required primary key, nullable metadata, Pc default, and no product foreign key.
 
-- [ ] **Step 4: Run the catalog foundation tests**
+- [x] **Step 4: Run the catalog foundation tests**
 
 Run: pnpm test -- --runInBand tests/barcodes/lookup.test.ts tests/database/catalog.test.ts
 
 Expected: PASS. The asset test proves all JSON records remain the versioned source, and the database test proves a single normalized SQLite read plus non-destructive insert behavior.
 
-- [ ] **Step 5: Commit the foundation**
+- [x] **Step 5: Commit the foundation**
 
 ```bash
 git add constants/barcodes/index.ts constants/barcodes/noodles.json database/catalog.ts tests/__setup__/expo-sqlite-mock.ts tests/barcodes/lookup.test.ts tests/database/catalog.test.ts
@@ -350,7 +350,7 @@ git commit -m "feat: make bundled barcode catalog durable"
 - Produces: `seedProductCatalog(): Promise<void>`, which resolves after a successful seed or a recorded nonfatal seed failure.
 - Preserves: the existing v11 migration, mock-development seed behavior, and fatal handling for migration failures.
 
-- [ ] **Step 1: Add failing migration, partial-seed, and failure-containment tests**
+- [x] **Step 1: Add failing migration, partial-seed, and failure-containment tests**
 
 In tests/database/migrations-v9.test.ts, create a v10-shaped database with a populated products row and a sale row, set PRAGMA user_version = 10, run migrations, and assert the original rows plus product_catalog remain present:
 
@@ -395,13 +395,13 @@ test('seeds only missing bundled records and preserves a merchant row', async ()
 
 Create a trigger that aborts a bundled catalog insert, call seedProductCatalog, assert it resolves, and assert console.error was called. Drop that trigger in the test cleanup.
 
-- [ ] **Step 2: Run the tests before changing seed or startup code**
+- [x] **Step 2: Run the tests before changing seed or startup code**
 
 Run: pnpm test -- --runInBand tests/database/catalog.test.ts tests/database/migrations-v9.test.ts
 
 Expected: FAIL because current seeding exits when any catalog row exists and production startup only invokes seedDatabase under **DEV**.
 
-- [ ] **Step 3: Replace count-gated development seeding with transactional incremental catalog seeding**
+- [x] **Step 3: Replace count-gated development seeding with transactional incremental catalog seeding**
 
 In database/seed.ts, import BUNDLED_CATALOG_RECORDS and insertCatalogProductIfMissing. Replace the current seedProductCatalog implementation with this behavior:
 
@@ -453,13 +453,13 @@ if (__DEV__) {
 
 Do not wrap runMigrations in the nonfatal seed handler. A migration failure must still flow to DatabaseErrorScreen.
 
-- [ ] **Step 4: Run the seed and migration tests**
+- [x] **Step 4: Run the seed and migration tests**
 
 Run: pnpm test -- --runInBand tests/database/catalog.test.ts tests/database/migrations-v9.test.ts
 
 Expected: PASS. A partial catalog receives only missing rows, existing product/sale data remains, and an injected seed failure logs without rejecting startup’s seed step.
 
-- [ ] **Step 5: Commit the seed behavior**
+- [x] **Step 5: Commit the seed behavior**
 
 ```bash
 git add database/seed.ts configs/startup.ts tests/database/catalog.test.ts tests/database/migrations-v9.test.ts
@@ -481,7 +481,7 @@ git commit -m "feat: seed missing barcode catalog records on startup"
 - Produces: unchanged insertProduct and updateProduct call signatures with stronger cross-column collision protection and transactional catalog learning.
 - Preserves: BarcodeAlreadyExistsError, current partial unique indexes, inventory transaction behavior, and product deletion semantics.
 
-- [ ] **Step 1: Add failing product-persistence tests**
+- [x] **Step 1: Add failing product-persistence tests**
 
 Add these tests to tests/database/products.test.ts:
 
@@ -550,13 +550,13 @@ Also add:
 - cross-row collision tests for a new retail barcode matching an existing numeric SKU, a new SKU matching an existing retail barcode, and an update matching another product’s wholesale barcode;
 - a same-row compatibility test where one product has identical numeric SKU and retail barcode and can still be created and updated.
 
-- [ ] **Step 2: Run the product tests to demonstrate missing learning and collision gaps**
+- [x] **Step 2: Run the product tests to demonstrate missing learning and collision gaps**
 
 Run: pnpm test -- --runInBand tests/database/products.test.ts tests/database/catalog.test.ts
 
 Expected: FAIL because product saves do not write catalog rows, product deletion/rollback behavior is not covered, and cross-column scan identities are not checked consistently.
 
-- [ ] **Step 3: Add in-transaction collision checking and minimal catalog learning**
+- [x] **Step 3: Add in-transaction collision checking and minimal catalog learning**
 
 In database/products.ts:
 
@@ -589,13 +589,13 @@ Do not create catalog records from wholesale_barcode. The catalog unit is the re
 
 In hooks/useProducts.tsx, import catalogKeys and invalidate catalogKeys.all in both insertProductMutation.onSuccess and updateProductMutation.onSuccess. This clears cached positive and negative one-barcode query results after a learned record is committed.
 
-- [ ] **Step 4: Run the transactional-learning test set**
+- [x] **Step 4: Run the transactional-learning test set**
 
 Run: pnpm test -- --runInBand tests/database/products.test.ts tests/database/catalog.test.ts
 
 Expected: PASS. Product/inventory/catalog writes commit or roll back together, a catalog row survives product deletion, and all new store scan identities are checked against retail, wholesale, and legacy SKU fields.
 
-- [ ] **Step 5: Commit transactional learning**
+- [x] **Step 5: Commit transactional learning**
 
 ```bash
 git add database/products.ts hooks/useProducts.tsx tests/database/products.test.ts tests/database/catalog.test.ts
@@ -620,7 +620,7 @@ git commit -m "feat: learn barcode catalog entries with product saves"
 - Produces: useLookupCatalogProduct, createBarcodeResolver, and asynchronous useBarcodeResolver.resolve.
 - Removes: useCatalogProducts, useCreateCatalogProduct, catalog list query keys, and every full-catalog lookup path.
 
-- [ ] **Step 1: Write failing resolver tests**
+- [x] **Step 1: Write failing resolver tests**
 
 Create tests/barcodes/resolveBarcode.test.ts using a deferred Promise for deterministic stale-result coverage. The test suite must assert:
 
@@ -675,13 +675,13 @@ Add tests for:
 - a rejected catalog lookup becoming missing;
 - a global fetch spy remaining untouched through all resolver paths.
 
-- [ ] **Step 2: Run the pure resolver test before implementation**
+- [x] **Step 2: Run the pure resolver test before implementation**
 
 Run: pnpm test -- --runInBand tests/barcodes/resolveBarcode.test.ts
 
 Expected: FAIL because createBarcodeResolver and the new explicit resolution outcomes do not exist.
 
-- [ ] **Step 3: Create the individual-query catalog hook**
+- [x] **Step 3: Create the individual-query catalog hook**
 
 Replace hooks/useCatalog.tsx with:
 
@@ -692,7 +692,7 @@ Replace hooks/useCatalog.tsx with:
 
 The query function must call only getCatalogProductByBarcode(db, normalizedBarcode). It must not call getAllCatalogProducts or construct an in-memory catalog map.
 
-- [ ] **Step 4: Implement the pure asynchronous resolver and hook adapter**
+- [x] **Step 4: Implement the pure asynchronous resolver and hook adapter**
 
 Create lib/barcodes/resolveBarcode.ts. Its resolver owns last accepted scan and a monotonically increasing request sequence. Its resolve method must follow this exact decision order:
 
@@ -724,13 +724,13 @@ Update lib/barcodes/types.ts with the Public Interfaces union above. Update hook
 
 Export createBarcodeResolver from lib/index.ts. Delete the obsolete hook test that relies on synchronously passing a full catalog array.
 
-- [ ] **Step 5: Run the resolver tests**
+- [x] **Step 5: Run the resolver tests**
 
 Run: pnpm test -- --runInBand tests/barcodes/posScanLogic.test.ts tests/barcodes/resolveBarcode.test.ts
 
 Expected: PASS. Existing POS throttling remains intact, catalog lookup occurs only after a loaded-store miss, stale completions are harmless, and no network request occurs.
 
-- [ ] **Step 6: Commit the resolver**
+- [x] **Step 6: Commit the resolver**
 
 ```bash
 git add hooks/useCatalog.tsx hooks/useBarcodeResolver.tsx lib/barcodes/resolveBarcode.ts lib/barcodes/types.ts lib/index.ts tests/barcodes/resolveBarcode.test.ts tests/hooks/useBarcodeResolver.test.ts
@@ -752,7 +752,7 @@ git commit -m "refactor: resolve catalog barcodes through SQLite query cache"
 - Produces: catalog-driven product-form defaults for barcode, productName, category, and retailUnitName only.
 - Removes: imports of lookupOfflineBarcode, useCatalogProducts, and synchronous catalog array searches from product registration.
 
-- [ ] **Step 1: Replace static-map unit tests with failing result-to-form mapping tests**
+- [x] **Step 1: Replace static-map unit tests with failing result-to-form mapping tests**
 
 Rewrite tests/barcodes/addProductScanLogic.test.ts to pass an explicit catalog_match or missing ScanResolution into the helper. Add these assertions:
 
@@ -791,13 +791,13 @@ test('catalog match fills only identity defaults and retail unit', () => {
 
 Add a missing-resolution test that only sets barcode and supplies the existing warning toast. Add a null-category catalog test that leaves category undefined rather than writing Others.
 
-- [ ] **Step 2: Run the form mapper tests before changing the form**
+- [x] **Step 2: Run the form mapper tests before changing the form**
 
 Run: pnpm test -- --runInBand tests/barcodes/addProductScanLogic.test.ts
 
 Expected: FAIL because the helper still accepts a synchronous lookup callback and cannot represent retailUnitName from a CatalogProduct.
 
-- [ ] **Step 3: Make the mapper consume a resolved catalog result**
+- [x] **Step 3: Make the mapper consume a resolved catalog result**
 
 Change applyBarcodeToAddProductForm so its input contains:
 
@@ -806,7 +806,7 @@ Change applyBarcodeToAddProductForm so its input contains:
 
 For catalog_match, return barcode, productName, optional category, retailUnitName, optional setAutoGenerateSku, closeModal: true. For missing, return barcode, the existing not-in-catalog warning toast, and closeModal: true. Do not pass brand, imageUrl, price, cost, quantity, supplier, retail price, wholesale price, or stock through the patch.
 
-- [ ] **Step 4: Update Add Product scanner and prefill behavior**
+- [x] **Step 4: Update Add Product scanner and prefill behavior**
 
 In components/inventory/products/add-product/useAddProductForm.ts:
 
@@ -820,7 +820,7 @@ In components/inventory/products/add-product/useAddProductForm.ts:
 8. Change barcodeConflictProduct to compare barcode, wholesale_barcode, and sku so all scan identities link to the conflicting product.
 9. In the prefillBarcode effect, invoke void handleScannedBarcode(prefill) and continue clearing the route parameter once.
 
-- [ ] **Step 5: Update POS scan handling**
+- [x] **Step 5: Update POS scan handling**
 
 In components/sell/add-sales/useAddSalesForm.ts:
 
@@ -830,13 +830,13 @@ In components/sell/add-sales/useAddSalesForm.ts:
 4. For duplicate, superseded, and store_products_unavailable, leave the cart, pending CTA, scanner, and last successful banner untouched.
 5. Remove the unused lastScanRef. Do not pass catalog metadata in navigation parameters; Add Product must use the same resolver path for camera and prefillBarcode entries.
 
-- [ ] **Step 6: Run unit tests for default mapping and resolution**
+- [x] **Step 6: Run unit tests for default mapping and resolution**
 
 Run: pnpm test -- --runInBand tests/barcodes/addProductScanLogic.test.ts tests/barcodes/resolveBarcode.test.ts
 
 Expected: PASS. A catalog record pre-fills only allowed fields, unknown values use barcode-only registration, and neither form consults the static map.
 
-- [ ] **Step 7: Commit screen wiring**
+- [x] **Step 7: Commit screen wiring**
 
 ```bash
 git add lib/barcodes/applyToAddProductForm.ts components/inventory/products/add-product/useAddProductForm.ts components/sell/add-sales/useAddSalesForm.ts tests/barcodes/addProductScanLogic.test.ts
@@ -855,7 +855,7 @@ git commit -m "feat: prefill product registration from SQLite catalog"
 - Produces: one accurate developer-facing description of v1.2 barcode behavior.
 - Does not add: cloud lookup, sync, supplier import, image UI, a store-product brand field, dependencies, or a schema-version bump.
 
-- [ ] **Step 1: Replace obsolete cloud/static-map guidance**
+- [x] **Step 1: Replace obsolete cloud/static-map guidance**
 
 Rewrite docs/features/barcode-product-storing-database.md to document:
 
@@ -868,7 +868,7 @@ Rewrite docs/features/barcode-product-storing-database.md to document:
 - product save learns only a minimal retail catalog record inside its transaction;
 - no network, cloud sync, image UI, or money/stock/supplier prefill exists in v1.2.
 
-- [ ] **Step 2: Run the full automated verification set**
+- [x] **Step 2: Run the full automated verification set**
 
 Run: pnpm test
 
@@ -882,7 +882,7 @@ Run: pnpm lint
 
 Expected: PASS with no lint errors.
 
-- [ ] **Step 3: Perform the offline device/simulator acceptance check**
+- [x] **Step 3: Perform the offline device/simulator acceptance check**
 
 1. Launch a native build, enable airplane mode, and open POS.
 2. Scan or manually enter 4807770270017 with no matching store product. Verify the existing Add as new product path opens the form with Lucky Me Instant Mami Beef, Noodles, barcode 4807770270017, and retail unit Pc; verify price, cost, stock, supplier, and image remain merchant-entered.
@@ -893,7 +893,7 @@ Expected: PASS with no lint errors.
 7. Delete the test store product, then scan 4807770270017 again. Verify the catalog-only registration flow still exists.
 8. Confirm no network requests are required or attempted during every step.
 
-- [ ] **Step 4: Commit documentation**
+- [x] **Step 4: Commit documentation**
 
 ```bash
 git add docs/features/barcode-product-storing-database.md
@@ -902,10 +902,10 @@ git commit -m "docs: document offline SQLite barcode catalog"
 
 ## Final Acceptance Checklist
 
-- [ ] Fresh production startup creates the v11 catalog table through existing migrations and seeds all bundled records offline.
-- [ ] Existing installations preserve products, inventory, sales, and catalog metadata while receiving only missing bundled records.
-- [ ] Store products take precedence in retail, wholesale, and legacy-SKU scan paths.
-- [ ] Catalog-only scans prefill barcode, name, category, and retail unit; unknown scans prefill only barcode.
-- [ ] Product saves learn retail barcodes transactionally without overwriting catalog metadata or copying store-owned fields.
-- [ ] Invalid, duplicate, stale, unloaded-store, catalog-failure, and seed-failure paths are safe.
-- [ ] Runtime barcode resolution uses SQLite plus TanStack Query individual-key caching, not a static JavaScript map or network.
+- [x] Fresh production startup creates the v11 catalog table through existing migrations and seeds all bundled records offline.
+- [x] Existing installations preserve products, inventory, sales, and catalog metadata while receiving only missing bundled records.
+- [x] Store products take precedence in retail, wholesale, and legacy-SKU scan paths.
+- [x] Catalog-only scans prefill barcode, name, category, and retail unit; unknown scans prefill only barcode.
+- [x] Product saves learn retail barcodes transactionally without overwriting catalog metadata or copying store-owned fields.
+- [x] Invalid, duplicate, stale, unloaded-store, catalog-failure, and seed-failure paths are safe.
+- [x] Runtime barcode resolution uses SQLite plus TanStack Query individual-key caching, not a static JavaScript map or network.
