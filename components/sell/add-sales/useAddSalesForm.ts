@@ -79,10 +79,6 @@ export function useAddSalesForm() {
   // one place (the hook) and lets us swap implementations without
   // touching the screen.
   const { resolve } = useBarcodeResolver();
-  // Ref tracks accepted scans for the in-modal banner copy.
-  // The resolver has its own throttle ref internally; we keep this
-  // for the banner's `lastScanned` shape only.
-  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   // react-hook-form — search input only. Matches the field-shape
   // convention used by other edit-form routes.
@@ -279,8 +275,8 @@ export function useAddSalesForm() {
   }, []);
 
   const handleScannedBarcode = useCallback(
-    (barcode: string) => {
-      const result = resolve(barcode, Date.now());
+    async (barcode: string) => {
+      const result = await resolve(barcode, Date.now());
 
       if (result.kind === 'invalid') {
         // The resolver collapses "format error" and "duplicate-
@@ -312,7 +308,6 @@ export function useAddSalesForm() {
           Haptics.NotificationFeedbackType.Error,
         ).catch(() => {});
         setPendingAddProductBarcode(result.barcode);
-        lastScanRef.current = { barcode: result.barcode, at: Date.now() };
         setLastScanned({
           name: '',
           sku: result.barcode,
@@ -327,7 +322,6 @@ export function useAddSalesForm() {
           Haptics.NotificationFeedbackType.Error,
         ).catch(() => {});
         setPendingAddProductBarcode(result.catalogProduct.barcode);
-        lastScanRef.current = { barcode: result.catalogProduct.barcode, at: Date.now() };
         setLastScanned({
           name: result.catalogProduct.name,
           sku: result.catalogProduct.barcode,
@@ -337,26 +331,36 @@ export function useAddSalesForm() {
         return;
       }
 
-      // result.kind === 'resolved'
-      const { product, source, matchedUnit } = result;
-      handleAddItem(product, matchedUnit);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
-        () => {},
-      );
-      // A resolved scan clears any pending CTA — the user has
-      // successfully resolved the missing state by scanning again.
-      setPendingAddProductBarcode(null);
-      lastScanRef.current = { barcode: product.sku, at: Date.now() };
-      setLastScanned({
-        name: product.name,
-        sku: product.sku,
-        at: Date.now(),
-        found: true,
-      });
-      // The `source` branch is intentionally not surfaced in the
-      // banner — UI is identical regardless of which column matched.
-      // Recorded here for telemetry in a future iteration.
-      void source;
+      if (result.kind === 'resolved') {
+        const { product, source, matchedUnit } = result;
+        handleAddItem(product, matchedUnit);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
+          () => {},
+        );
+        // A resolved scan clears any pending CTA — the user has
+        // successfully resolved the missing state by scanning again.
+        setPendingAddProductBarcode(null);
+        setLastScanned({
+          name: product.name,
+          sku: product.sku,
+          at: Date.now(),
+          found: true,
+        });
+        // The `source` branch is intentionally not surfaced in the
+        // banner — UI is identical regardless of which column matched.
+        // Recorded here for telemetry in a future iteration.
+        void source;
+        return;
+      }
+
+      if (
+        result.kind === 'duplicate' ||
+        result.kind === 'superseded' ||
+        result.kind === 'store_products_unavailable'
+      ) {
+        // Leave the cart, pending CTA, scanner, and last successful banner untouched.
+        return;
+      }
     },
     [resolve, addToast, handleAddItem],
   );
