@@ -33,4 +33,13 @@ export type ScanResolution =
   | {
       kind: 'invalid';
       reason: 'empty' | 'format';
+    }
+  | {
+      kind: 'store_products_unavailable';
+    }
+  | {
+      kind: 'superseded';
+    }
+  | {
+      kind: 'duplicate';
     };

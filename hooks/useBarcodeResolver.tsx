@@ -1,151 +1,40 @@
-/**
- * useBarcodeResolver — composes `validateBarcode`, the per-barcode
- * throttle, and the catalog lookup into a single function the POS
- * and Add Product screens can call without re-implementing the chain.
- *
- * Why a hook and not just a shared lib function: the resolver reads
- * `products` from the `useProducts` cache and universal `catalogProducts`
- * from the `useCatalogProducts` cache so it can answer synchronously
- * in the common case. A pure function would have to accept both lists
- * as arguments on every call, leaking query-cache details.
- *
- * Defense layers (matches spec #4):
- *   1. `validateBarcode` — rejects invalid format.
- *   2. Per-barcode throttle at `DEFAULT_BARCODE_THROTTLE_MS` (caller-
- *      overridden). The modal has its own throttle too; this is a
- *      belt-and-suspenders layer that survives any caller.
- *   3. Catalog lookup pipeline:
- *      a. Local Store Products (`barcode` column first)
- *      b. Local Store Products (`wholesale_barcode` column second)
- *      c. Local Store Products (SKU fallback for legacy rows)
- *      d. Universal Product Catalog (`product_catalog` table match)
- *
- * The hook does NOT cache the throttle across mounts — each mount
- * owns its own ref. The expectation is that the modal owns one
- * hook instance for its lifetime.
- */
-import { useCallback, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useProducts } from '@/hooks/useProducts';
-import { useCatalogProducts } from '@/hooks/useCatalog';
-import {
-  validateBarcode,
-  DEFAULT_BARCODE_THROTTLE_MS,
-} from '@/lib/barcodes/format';
+import { useLookupCatalogProduct } from '@/hooks/useCatalog';
+import { DEFAULT_BARCODE_THROTTLE_MS } from '@/lib/barcodes/format';
+import { createBarcodeResolver } from '@/lib/barcodes/resolveBarcode';
 import type { ScanResolution } from '@/lib/barcodes/types';
 import type { Product } from '@/types';
-import type { CatalogProduct } from '@/types/catalog.types';
-
-const EMPTY_PRODUCTS: Product[] = [];
-const EMPTY_CATALOG: CatalogProduct[] = [];
-const defaultNow = () => Date.now();
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
-  now?: () => number;
-}
-
-export function resolveBarcodeAgainstProducts(
-  barcode: string,
-  products: Product[],
-  catalogProducts: CatalogProduct[] = [],
-): ScanResolution {
-  const validation = validateBarcode(barcode);
-  if (!validation.ok) {
-    return { kind: 'invalid', reason: validation.reason };
-  }
-  const validated = validation.barcode;
-
-  // Direct retail barcode match first.
-  const byBarcode = products.find(
-    (p) => p.barcode != null && p.barcode === validated,
-  );
-
-  if (byBarcode) {
-    return {
-      kind: 'resolved',
-      product: byBarcode,
-      source: 'barcode',
-      matchedUnit: 'retail',
-    };
-  }
-
-  // Direct wholesale barcode match second.
-  const byWholesaleBarcode = products.find(
-    (p) => p.wholesale_barcode != null && p.wholesale_barcode === validated,
-  );
-
-  if (byWholesaleBarcode) {
-    return {
-      kind: 'resolved',
-      product: byWholesaleBarcode,
-      source: 'wholesale_barcode',
-      matchedUnit: 'wholesale',
-    };
-  }
-
-  // SKU fallback for legacy rows.
-  const bySku = products.find((p) => p.sku === validated);
-  if (bySku) {
-    return {
-      kind: 'resolved',
-      product: bySku,
-      source: 'sku',
-      matchedUnit: 'retail',
-    };
-  }
-
-  // Universal product catalog match.
-  const byCatalog = catalogProducts.find((c) => c.barcode === validated);
-  if (byCatalog) {
-    return {
-      kind: 'catalog_match',
-      catalogProduct: byCatalog,
-    };
-  }
-
-  return { kind: 'missing', barcode: validated };
 }
 
 export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
-  resolve: (barcode: string, nowMs?: number) => ScanResolution;
+  resolve: (barcode: string, nowMs?: number) => Promise<ScanResolution>;
 } {
-  const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = defaultNow } =
-    options ?? {};
+  const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS } = options ?? {};
   const { getAllProductsQuery } = useProducts();
-  const { data: catalogProductsData } = useCatalogProducts();
+  const lookupCatalogProduct = useLookupCatalogProduct();
 
-  const products = getAllProductsQuery.data ?? EMPTY_PRODUCTS;
-  const catalogProducts = catalogProductsData ?? EMPTY_CATALOG;
+  const productsRef = useRef<ReadonlyArray<Product>>([]);
+  if (getAllProductsQuery.data) {
+    productsRef.current = getAllProductsQuery.data;
+  }
 
-  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
+  const readyRef = useRef(false);
+  readyRef.current = getAllProductsQuery.isSuccess && !getAllProductsQuery.isFetching;
 
-  const resolve = useCallback(
-    (barcode: string, nowMs?: number): ScanResolution => {
-      const validation = validateBarcode(barcode);
-      if (!validation.ok) {
-        return { kind: 'invalid', reason: validation.reason };
-      }
-      const validated = validation.barcode;
-      const nowValue = nowMs ?? now();
+  const resolver = useMemo(() => {
+    return createBarcodeResolver({
+      getProducts: () => productsRef.current,
+      isStoreProductsReady: () => readyRef.current,
+      lookupCatalogProduct,
+      throttleMs,
+    });
+  }, [lookupCatalogProduct, throttleMs]);
 
-      const last = lastScanRef.current;
-      if (
-        last &&
-        last.barcode === validated &&
-        nowValue - last.at < throttleMs
-      ) {
-        return { kind: 'invalid', reason: 'format' };
-      }
-      lastScanRef.current = { barcode: validated, at: nowValue };
-
-      return resolveBarcodeAgainstProducts(
-        validated,
-        products,
-        catalogProducts,
-      );
-    },
-    [products, catalogProducts, throttleMs, now],
-  );
-
-  return useMemo(() => ({ resolve }), [resolve]);
+  return useMemo(() => ({
+    resolve: (barcode: string, nowMs?: number) => resolver.resolve(barcode, nowMs),
+  }), [resolver]);
 }

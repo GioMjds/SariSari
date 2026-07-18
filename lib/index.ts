@@ -1,5 +1,7 @@
 export * from './barcodes/applyToAddProductForm';
 export * from './barcodes/applyToPosCart';
+export * from './barcodes/resolveBarcode';
+export * from './barcodes/types';
 export * from './creditDetails';
 export * from './money';
 export * from './units';
