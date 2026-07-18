@@ -1,5 +1,6 @@
 import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
+import { insertCatalogProductIfMissing } from './catalog';
 
 export const initProductsTable = async () => {
   // The CREATE TABLE block is the authoritative schema for fresh DBs. On
@@ -100,7 +101,8 @@ function normalizeBarcode(barcode?: string | null): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-async function checkBarcodeCollision(
+async function checkProductCollision(
+  sku: string,
   barcode: string | null,
   wholesaleBarcode: string | null,
   excludeId?: number,
@@ -109,14 +111,32 @@ async function checkBarcodeCollision(
     throw new Error('Retail barcode and wholesale barcode must be different.');
   }
 
-  const toCheck = [barcode, wholesaleBarcode].filter(
-    (b): b is string => b != null && b.length > 0,
+  const trimmedSku = sku.trim();
+  const toCheck = Array.from(
+    new Set(
+      [trimmedSku, barcode, wholesaleBarcode].filter(
+        (b): b is string => b != null && b.trim().length > 0,
+      ),
+    ),
   );
-  for (const b of toCheck) {
-    const existing = await getProductByBarcode(b);
-    if (existing && existing.id !== excludeId) {
-      throw new BarcodeAlreadyExistsError(existing);
-    }
+
+  if (toCheck.length === 0) return;
+
+  const placeholders = toCheck.map(() => '?').join(',');
+  const query = `
+    SELECT * FROM products
+    WHERE (sku IN (${placeholders}) OR barcode IN (${placeholders}) OR wholesale_barcode IN (${placeholders}))
+    ${excludeId != null ? 'AND id != ?' : ''}
+    LIMIT 1
+  `;
+  const params = [...toCheck, ...toCheck, ...toCheck];
+  if (excludeId != null) {
+    params.push(excludeId);
+  }
+
+  const existing = await db.getFirstAsync<Product>(query, params);
+  if (existing) {
+    throw new BarcodeAlreadyExistsError(existing);
   }
 }
 
@@ -140,12 +160,12 @@ export const insertProduct = async (
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
 
-  await checkBarcodeCollision(normalizedBarcode, normalizedWholesaleBarcode);
-
   let productId = 0;
 
   try {
     await db.withTransactionAsync(async () => {
+      await checkProductCollision(sku, normalizedBarcode, normalizedWholesaleBarcode);
+
       const result = await db.runAsync(
         `INSERT INTO products (
           name, sku, price, quantity, cost_price, category, barcode, supplier_id, image_uri,
@@ -176,6 +196,17 @@ export const insertProduct = async (
           'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
           [productId, 'restock', quantity, cost_price ?? null, supplier_id ?? null],
         );
+      }
+
+      if (normalizedBarcode) {
+        await insertCatalogProductIfMissing(db, {
+          barcode: normalizedBarcode,
+          name,
+          brand: null,
+          category: category ?? null,
+          unit: retail_unit_name || 'Pc',
+          imageUrl: null,
+        });
       }
     });
   } catch (err) {
@@ -215,10 +246,10 @@ export const updateProduct = async (
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
 
-  await checkBarcodeCollision(normalizedBarcode, normalizedWholesaleBarcode, id);
-
   try {
     await db.withTransactionAsync(async () => {
+      await checkProductCollision(sku, normalizedBarcode, normalizedWholesaleBarcode, id);
+
       const current = await db.getFirstAsync<{ quantity: number }>(
         'SELECT quantity FROM products WHERE id = ?',
         [id],
@@ -254,6 +285,17 @@ export const updateProduct = async (
           'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
           [id, 'restock', delta, cost_price ?? null, supplier_id ?? null],
         );
+      }
+
+      if (normalizedBarcode) {
+        await insertCatalogProductIfMissing(db, {
+          barcode: normalizedBarcode,
+          name,
+          brand: null,
+          category: category ?? null,
+          unit: retail_unit_name || 'Pc',
+          imageUrl: null,
+        });
       }
     });
   } catch (err) {
@@ -300,8 +342,8 @@ export const getProductByBarcode = async (
   barcode: string,
 ): Promise<Product | null> => {
   const result = await db.getFirstAsync<Product>(
-    'SELECT * FROM products WHERE barcode = ? OR wholesale_barcode = ? LIMIT 1',
-    [barcode, barcode],
+    'SELECT * FROM products WHERE barcode = ? OR wholesale_barcode = ? OR sku = ? LIMIT 1',
+    [barcode, barcode, barcode],
   );
   return result || null;
 };

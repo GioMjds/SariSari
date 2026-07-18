@@ -135,4 +135,21 @@ describe('Catalog Database Operations', () => {
       consoleErrorMock.mockRestore();
     }
   });
+
+  test('insertCatalogProductIfMissing handles spaces in barcodes correctly', async () => {
+    await insertCatalogProductIfMissing(db, {
+      barcode: '  4800016551829  ',
+      name: 'Spaced Product',
+      brand: null,
+      category: 'Beverages',
+      unit: 'Pc',
+      imageUrl: null,
+    });
+
+    await expect(
+      getCatalogProductByBarcode(db, '4800016551829'),
+    ).resolves.toMatchObject({
+      name: 'Spaced Product',
+    });
+  });
 });

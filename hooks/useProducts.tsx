@@ -15,6 +15,7 @@ import {
 } from '@/types/products.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveProductImageLocal, deleteLocalProductImage } from '@/lib';
+import { catalogKeys } from './useCatalog';
 
 export const productKeys = {
   all: ['products'] as const,
@@ -111,6 +112,7 @@ export function useProducts() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: catalogKeys.all });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       addToast({
         message: 'Product added successfully',
@@ -189,6 +191,7 @@ export function useProducts() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: catalogKeys.all });
       queryClient.invalidateQueries({
         queryKey: productKeys.detail(variables.id),
       });

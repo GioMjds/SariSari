@@ -13,12 +13,15 @@ import {
   initProductsTable,
   insertProduct,
   updateProduct,
+  deleteProduct,
 } from '../../database/products';
 import { initInventoryTable, getInventoryTransactions } from '../../database/inventory';
 import { initSalesTables } from '../../database/sales';
 import { initCreditsTable } from '../../database/credits';
 import { runMigrations } from '../../database/migrations';
 import { resetMockDb } from '../__setup__/expo-sqlite-mock';
+import { db } from '../../configs/sqlite';
+import { getCatalogProductByBarcode, insertCatalogProductIfMissing } from '../../database/catalog';
 
 describe('Products Database', () => {
 	beforeAll(async () => {
@@ -157,7 +160,7 @@ describe('Products Database — barcode column (v5)', () => {
 		expect(product?.name).toBe('Lookup Hit');
 	});
 
-	test('getProductByBarcode returns null for a SKU-only row (barcode IS NULL)', async () => {
+	test('getProductByBarcode resolves SKU-only rows via legacy SKU fallback', async () => {
 		await insertProduct(
 			'SKU-only',
 			'SKU-ONLY-001',
@@ -167,11 +170,9 @@ describe('Products Database — barcode column (v5)', () => {
 			undefined,
 			null,
 		);
-		// Even if we ask for the SKU value, getProductByBarcode must
-		// NOT match — it only consults the barcode column. The SKU
-		// lookup is a separate path.
 		const hit = await getProductByBarcode('SKU-ONLY-001');
-		expect(hit).toBeNull();
+		expect(hit).not.toBeNull();
+		expect(hit?.name).toBe('SKU-only');
 	});
 
 	test('getProductBySku still resolves SKU-only rows', async () => {
@@ -350,5 +351,214 @@ describe('Products Database — barcode column (v5)', () => {
 				'1111222233334' // matches Coke 1.5L Case retail barcode
 			)
 		).rejects.toThrow(BarcodeAlreadyExistsError);
+	});
+
+	test('learns a minimal retail catalog record in the product transaction', async () => {
+		await insertProduct(
+			'Merchant Mami',
+			'MAMI-001',
+			1800,
+			3,
+			1200,
+			'Noodles',
+			'4807770270017',
+			undefined,
+			null,
+			'Pack',
+		);
+
+		await expect(
+			getCatalogProductByBarcode(db, '4807770270017'),
+		).resolves.toMatchObject({
+			barcode: '4807770270017',
+			name: 'Merchant Mami',
+			brand: null,
+			category: 'Noodles',
+			unit: 'Pack',
+			imageUrl: null,
+		});
+	});
+
+	test('keeps catalog metadata when a store product uses the same barcode', async () => {
+		await insertCatalogProductIfMissing(db, {
+			barcode: '4800016551899',
+			name: 'Bundled Coke',
+			brand: null,
+			category: 'Beverages',
+			unit: 'Pc',
+			imageUrl: null,
+		});
+
+		await insertProduct(
+			'Store Coke',
+			'STORE-COKE',
+			2500,
+			1,
+			1800,
+			'Store category',
+			'4800016551899',
+		);
+
+		await expect(
+			getCatalogProductByBarcode(db, '4800016551899'),
+		).resolves.toMatchObject({
+			name: 'Bundled Coke',
+			category: 'Beverages',
+			unit: 'Pc',
+		});
+	});
+
+	test('transaction rolls back product and inventory changes if catalog insertion fails', async () => {
+		await db.execAsync(`
+			CREATE TRIGGER IF NOT EXISTS fail_catalog_insert_test
+			BEFORE INSERT ON product_catalog
+			BEGIN
+				SELECT RAISE(FAIL, 'Forced catalog insert failure');
+			END;
+		`);
+
+		const txsBefore = await db.getAllAsync('SELECT * FROM inventory_transactions');
+
+		try {
+			await expect(
+				insertProduct(
+					'Rollback Product',
+					'ROLLBACK-001',
+					1000,
+					5,
+					500,
+					'Snacks',
+					'4800000000001',
+				)
+			).rejects.toThrow();
+
+			// Assert product was not inserted
+			const product = await getProductBySku('ROLLBACK-001');
+			expect(product).toBeNull();
+
+			// Assert no inventory transactions exist for this product
+			const txsAfter = await db.getAllAsync('SELECT * FROM inventory_transactions');
+			expect(txsAfter.length).toBe(txsBefore.length);
+		} finally {
+			await db.execAsync('DROP TRIGGER IF EXISTS fail_catalog_insert_test;');
+		}
+	});
+
+	test('updates a product with a new retail barcode and creates catalog row', async () => {
+		const productId = await insertProduct(
+			'Update Unknown Barcode',
+			'UP-UNKNOWN-001',
+			1000,
+			0,
+		);
+
+		await updateProduct(
+			productId,
+			'Update Unknown Barcode',
+			'UP-UNKNOWN-001',
+			1000,
+			0,
+			undefined,
+			'Snacks',
+			'4800000000002',
+			undefined,
+			undefined,
+			'Pack'
+		);
+
+		await expect(
+			getCatalogProductByBarcode(db, '4800000000002'),
+		).resolves.toMatchObject({
+			barcode: '4800000000002',
+			name: 'Update Unknown Barcode',
+			brand: null,
+			category: 'Snacks',
+			unit: 'Pack',
+			imageUrl: null,
+		});
+	});
+
+	test('deleting a product does not remove its catalog row', async () => {
+		const productId = await insertProduct(
+			'To Be Deleted',
+			'DEL-001',
+			1000,
+			0,
+			undefined,
+			'Snacks',
+			'4800000000003',
+		);
+
+		await deleteProduct(productId);
+
+		const product = await getProduct(productId);
+		expect(product).toBeNull();
+
+		await expect(
+			getCatalogProductByBarcode(db, '4800000000003'),
+		).resolves.not.toBeNull();
+	});
+
+	test('cross-row collisions between SKU, barcode, and wholesale_barcode', async () => {
+		// 1. Existing product with numeric SKU '999111'
+		const idA = await insertProduct('Product A', '999111', 100);
+
+		// Inserting a new product with retail barcode '999111' should fail
+		await expect(
+			insertProduct('Product B', 'SKU-B', 100, 0, undefined, undefined, '999111')
+		).rejects.toBeInstanceOf(BarcodeAlreadyExistsError);
+
+		// 2. Existing product with retail barcode '999222'
+		await insertProduct('Product C', 'SKU-C', 100, 0, undefined, undefined, '999222');
+
+		// Inserting a new product with SKU '999222' should fail
+		await expect(
+			insertProduct('Product D', '999222', 100)
+		).rejects.toBeInstanceOf(BarcodeAlreadyExistsError);
+
+		// 3. Existing product with wholesale barcode '999333'
+		await insertProduct(
+			'Product E', 'SKU-E', 100, 0, undefined, undefined, '999334', undefined, undefined,
+			'Pc', 'Case', 1200, undefined, 12, '999333'
+		);
+
+		// Updating a different product's wholesale barcode to '999333' should fail
+		const idF = await insertProduct('Product F', 'SKU-F', 100);
+		await expect(
+			updateProduct(
+				idF, 'Product F', 'SKU-F', 100, 0, undefined, undefined, undefined, undefined, undefined,
+				'Pc', 'Case', 1200, undefined, 12, '999333'
+			)
+		).rejects.toBeInstanceOf(BarcodeAlreadyExistsError);
+	});
+
+	test('same-row compatibility: one product has identical SKU and retail barcode', async () => {
+		const id = await insertProduct(
+			'Same-row Product',
+			'77777777',
+			1500,
+			0,
+			undefined,
+			'Snacks',
+			'77777777'
+		);
+
+		const product = await getProduct(id);
+		expect(product?.sku).toBe('77777777');
+		expect(product?.barcode).toBe('77777777');
+
+		// Can also update it without failing
+		await expect(
+			updateProduct(
+				id,
+				'Same-row Product Updated',
+				'77777777',
+				1600,
+				0,
+				undefined,
+				'Snacks',
+				'77777777'
+			)
+		).resolves.toBeUndefined();
 	});
 });
