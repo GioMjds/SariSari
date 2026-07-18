@@ -31,7 +31,6 @@ import type { ScanResolution } from '@/lib/barcodes/types';
 import type { Product } from '@/types';
 import type { CatalogProduct } from '@/types/catalog.types';
 
-
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
   now?: () => number;
@@ -52,6 +51,7 @@ export function resolveBarcodeAgainstProducts(
   const byBarcode = products.find(
     (p) => p.barcode != null && p.barcode === validated,
   );
+
   if (byBarcode) {
     return {
       kind: 'resolved',
@@ -65,6 +65,7 @@ export function resolveBarcodeAgainstProducts(
   const byWholesaleBarcode = products.find(
     (p) => p.wholesale_barcode != null && p.wholesale_barcode === validated,
   );
+
   if (byWholesaleBarcode) {
     return {
       kind: 'resolved',
@@ -86,9 +87,7 @@ export function resolveBarcodeAgainstProducts(
   }
 
   // Universal product catalog match.
-  const byCatalog = catalogProducts.find(
-    (c) => c.barcode === validated,
-  );
+  const byCatalog = catalogProducts.find((c) => c.barcode === validated);
   if (byCatalog) {
     return {
       kind: 'catalog_match',
@@ -99,22 +98,22 @@ export function resolveBarcodeAgainstProducts(
   return { kind: 'missing', barcode: validated };
 }
 
-
-export function useBarcodeResolver(
-  options: UseBarcodeResolverOptions = {},
-): {
-  resolve: (
-    barcode: string,
-    nowMs?: number,
-  ) => ScanResolution;
+export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
+  resolve: (barcode: string, nowMs?: number) => ScanResolution;
 } {
   const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = () => Date.now() } =
     options ?? {};
   const { getAllProductsQuery } = useProducts();
-  const { data: catalogProducts = [] } = useCatalogProducts();
-  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
+  const { data: catalogProducts } = useCatalogProducts();
 
-  const products = getAllProductsQuery.data ?? [];
+  const products = getAllProductsQuery.data;
+  const productsRef = useRef(products);
+  productsRef.current = products;
+
+  const catalogProductsRef = useRef(catalogProducts);
+  catalogProductsRef.current = catalogProducts;
+
+  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   const resolve = useCallback(
     (barcode: string, nowMs?: number): ScanResolution => {
@@ -135,10 +134,14 @@ export function useBarcodeResolver(
       }
       lastScanRef.current = { barcode: validated, at: nowValue };
 
-      return resolveBarcodeAgainstProducts(validated, products, catalogProducts);
+      return resolveBarcodeAgainstProducts(
+        validated,
+        productsRef.current ?? [],
+        catalogProductsRef.current ?? [],
+      );
     },
-    [products, catalogProducts, throttleMs, now],
+    [throttleMs, now],
   );
 
   return useMemo(() => ({ resolve }), [resolve]);
-}
+}
