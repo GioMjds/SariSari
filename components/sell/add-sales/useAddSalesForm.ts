@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
-import { useBarcodeResolver, useCustomers, useProducts, useSales } from '@/hooks';
+import {
+  useBarcodeResolver,
+  useCustomers,
+  useProducts,
+  useSales,
+} from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
@@ -43,8 +48,6 @@ export interface CartItem {
  * components stay presentational.
  */
 export function useAddSalesForm() {
-
-
   const { getAllProductsQuery } = useProducts();
   const { insertSaleMutation } = useSales();
   const addToast = useToastStore((state) => state.addToast);
@@ -74,15 +77,16 @@ export function useAddSalesForm() {
   const [pendingAddProductBarcode, setPendingAddProductBarcode] = useState<
     string | null
   >(null);
+  // A scan that arrives while `getAllProductsQuery` is still on its
+  // first fetch gets `store_products_unavailable` from the resolver.
+  // Stash it here and replay it once the query settles, instead of
+  // dropping it silently (see the matching comment in useAddProductForm).
+  const pendingScanRef = useRef<string | null>(null);
   // The resolver composes validation + throttle + lookup. Reading it
   // here rather than re-implementing the chain keeps the policy in
   // one place (the hook) and lets us swap implementations without
   // touching the screen.
   const { resolve } = useBarcodeResolver();
-  // Ref tracks accepted scans for the in-modal banner copy.
-  // The resolver has its own throttle ref internally; we keep this
-  // for the banner's `lastScanned` shape only.
-  const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   // react-hook-form — search input only. Matches the field-shape
   // convention used by other edit-form routes.
@@ -97,8 +101,6 @@ export function useAddSalesForm() {
     getAllProductsQuery;
   const { data: customers = [] } = useCustomers();
 
-
-
   // ─── Derived values ────────────────────────────────────────────
 
   /** Catalog filtered by the search query. Lives here because the
@@ -108,8 +110,7 @@ export function useAddSalesForm() {
     if (!q) return products;
     return products.filter(
       (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q),
+        p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
     );
   }, [products, search]);
 
@@ -137,11 +138,7 @@ export function useAddSalesForm() {
         const currentPieces = calculateCartProductPieces(prev, product.id);
         const totalPieces =
           currentPieces +
-          calculateTotalPieces(
-            1,
-            selectedUnit,
-            product.conversion_factor,
-          );
+          calculateTotalPieces(1, selectedUnit, product.conversion_factor);
 
         if (totalPieces > product.quantity) {
           if (currentPieces === 0) {
@@ -193,7 +190,11 @@ export function useAddSalesForm() {
   );
 
   const handleUpdateQuantity = useCallback(
-    (productId: number, delta: number, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
+    (
+      productId: number,
+      delta: number,
+      selectedUnit: 'retail' | 'wholesale' = 'retail',
+    ) => {
       setCartItems((prev) => {
         const matchingItems = prev.filter(
           (item) =>
@@ -235,7 +236,8 @@ export function useAddSalesForm() {
     setCartItems((prev) =>
       prev.map((item, idx) => {
         if (idx !== index) return item;
-        const nextUnit = item.selected_unit === 'wholesale' ? 'retail' : 'wholesale';
+        const nextUnit =
+          item.selected_unit === 'wholesale' ? 'retail' : 'wholesale';
 
         if (nextUnit === 'wholesale') {
           const piecesPerUnit = item.conversion_factor ?? 1;
@@ -279,8 +281,14 @@ export function useAddSalesForm() {
   }, []);
 
   const handleScannedBarcode = useCallback(
-    (barcode: string) => {
-      const result = resolve(barcode, Date.now());
+    async (barcode: string) => {
+      if (__DEV__) {
+        console.log('[Barcode][AddSales] scanned:', barcode);
+      }
+      const result = await resolve(barcode, Date.now());
+      if (__DEV__) {
+        console.log('[Barcode][AddSales] resolution kind:', result.kind, result);
+      }
 
       if (result.kind === 'invalid') {
         // The resolver collapses "format error" and "duplicate-
@@ -308,11 +316,10 @@ export function useAddSalesForm() {
       }
 
       if (result.kind === 'missing') {
-        Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Error,
-        ).catch(() => {});
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
+          () => {},
+        );
         setPendingAddProductBarcode(result.barcode);
-        lastScanRef.current = { barcode: result.barcode, at: Date.now() };
         setLastScanned({
           name: '',
           sku: result.barcode,
@@ -322,29 +329,86 @@ export function useAddSalesForm() {
         return;
       }
 
-      // result.kind === 'resolved'
-      const { product, source, matchedUnit } = result;
-      handleAddItem(product, matchedUnit);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(
-        () => {},
-      );
-      // A resolved scan clears any pending CTA — the user has
-      // successfully resolved the missing state by scanning again.
-      setPendingAddProductBarcode(null);
-      lastScanRef.current = { barcode: product.sku, at: Date.now() };
-      setLastScanned({
-        name: product.name,
-        sku: product.sku,
-        at: Date.now(),
-        found: true,
-      });
-      // The `source` branch is intentionally not surfaced in the
-      // banner — UI is identical regardless of which column matched.
-      // Recorded here for telemetry in a future iteration.
-      void source;
+      if (result.kind === 'catalog_match') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
+          () => {},
+        );
+        setPendingAddProductBarcode(result.catalogProduct.barcode);
+        setLastScanned({
+          name: result.catalogProduct.name,
+          sku: result.catalogProduct.barcode,
+          at: Date.now(),
+          found: false,
+        });
+        return;
+      }
+
+      if (result.kind === 'resolved') {
+        const { product, source, matchedUnit } = result;
+        handleAddItem(product, matchedUnit);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        // A resolved scan clears any pending CTA — the user has
+        // successfully resolved the missing state by scanning again.
+        setPendingAddProductBarcode(null);
+        setLastScanned({
+          name: product.name,
+          sku: product.sku,
+          at: Date.now(),
+          found: true,
+        });
+        // The `source` branch is intentionally not surfaced in the
+        // banner — UI is identical regardless of which column matched.
+        // Recorded here for telemetry in a future iteration.
+        void source;
+        return;
+      }
+
+      if (
+        result.kind === 'duplicate' ||
+        result.kind === 'superseded' ||
+        result.kind === 'store_products_unavailable'
+      ) {
+        // Leave the cart, pending CTA, scanner, and last successful banner untouched.
+        if (result.kind === 'store_products_unavailable') {
+          if (__DEV__) {
+            console.log(
+              '[Barcode][AddSales] products query not ready yet, queuing',
+              barcode,
+              'for replay once it settles',
+            );
+          }
+          pendingScanRef.current = barcode;
+        } else {
+          if (__DEV__) {
+            console.log('[Barcode][AddSales] scan swallowed, kind:', result.kind);
+          }
+        }
+        return;
+      }
     },
     [resolve, addToast, handleAddItem],
   );
+
+  // Replays a scan that arrived before `getAllProductsQuery` had
+  // settled. See the comment on `pendingScanRef` above.
+  useEffect(() => {
+    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
+      return;
+    const queued = pendingScanRef.current;
+    if (!queued) return;
+    pendingScanRef.current = null;
+    if (__DEV__) {
+      console.log(
+        '[Barcode][AddSales] products query ready, replaying queued scan',
+        queued,
+      );
+    }
+    void handleScannedBarcode(queued);
+  }, [
+    getAllProductsQuery.isSuccess,
+    getAllProductsQuery.isFetching,
+    handleScannedBarcode,
+  ]);
 
   // Handler bound to the "Add as new product" CTA in the catalog.
   // Routes to the Add Product form with the barcode pre-filled.
@@ -440,13 +504,7 @@ export function useAddSalesForm() {
       }
       Alert.alert('Error', 'Failed to complete sale. Please try again.');
     }
-  }, [
-    cartItems,
-    paymentType,
-    selectedCustomer,
-    insertSaleMutation,
-    clearCart,
-  ]);
+  }, [cartItems, paymentType, selectedCustomer, insertSaleMutation, clearCart]);
 
   // ─── Cart line lookup helper for the catalog ───────────────────
 

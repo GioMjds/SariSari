@@ -3,8 +3,7 @@ import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
-import { useCategories, useProducts } from '@/hooks';
-import { lookupOfflineBarcode } from '@/constants/barcodes';
+import { useCategories, useProducts, useBarcodeResolver } from '@/hooks';
 import {
   applyBarcodeToAddProductForm,
   parsePesosInput,
@@ -86,11 +85,21 @@ export function useAddProductForm() {
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
   const addToast = useToastStore((state) => state.addToast);
+  const { resolve } = useBarcodeResolver();
 
   const [autoGenerateSku, setAutoGenerateSku] = useState<boolean>(true);
   const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+
+  // A scan that arrives while `getAllProductsQuery` is still on its
+  // first fetch gets `store_products_unavailable` from the resolver
+  // (it refuses to trust an empty/incomplete product list for the
+  // duplicate-barcode check). Previously that result was dropped on
+  // the floor, the scan just silently did nothing. We now stash the
+  // barcode here and replay it automatically the moment the query
+  // settles, so the user never has to notice or re-scan.
+  const pendingScanRef = useRef<string | null>(null);
 
   // Forwarded to the price TextInput so we can focus it ~250ms after
   // a successful scan (giving the scanner modal close animation time
@@ -194,6 +203,8 @@ export function useAddProductForm() {
       existingProducts.find(
         (p) =>
           (p.barcode != null && p.barcode === trimmedBarcode) ||
+          (p.wholesale_barcode != null &&
+            p.wholesale_barcode === trimmedBarcode) ||
           p.sku === trimmedBarcode,
       ) ?? null
     );
@@ -241,9 +252,7 @@ export function useAddProductForm() {
     const skuSuffix = skuParts[skuParts.length - 1];
     const isExistingValid = skuPrefix === prefix && /^\d{4}$/.test(skuSuffix);
 
-    if (isExistingValid) {
-      return currentSku;
-    }
+    if (isExistingValid) return currentSku;
 
     const timestamp = Date.now().toString().slice(-4);
     return `${prefix}-${timestamp}`;
@@ -332,17 +341,59 @@ export function useAddProductForm() {
   const closeScanner = useCallback(() => setIsScannerOpen(false), []);
 
   const handleScannedBarcode = useCallback(
-    (barcodeValue: string) => {
-      // Pure helper decides what to write (and whether to block).
-      // The hook composes the form writes from the returned patch.
-      // Three outcomes: apply, invalid, duplicate.
-      const result = applyBarcodeToAddProductForm({
-        barcode: barcodeValue,
-        currentProductName: productName ?? '',
-        autoGenerateSku,
-        lookup: lookupOfflineBarcode,
-        existingProducts,
-      });
+    async (barcodeValue: string) => {
+      if (__DEV__) {
+        console.log('[Barcode][AddProduct] scanned:', barcodeValue);
+      }
+      const result = await resolve(barcodeValue);
+      if (__DEV__) {
+        console.log(
+          '[Barcode][AddProduct] resolution kind:',
+          result.kind,
+          result,
+        );
+      }
+
+      if (result.kind === 'resolved') {
+        setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
+        setIsScannerOpen(false);
+        return;
+      }
+
+      if (result.kind === 'catalog_match' || result.kind === 'missing') {
+        const patch = applyBarcodeToAddProductForm({
+          resolution: result,
+          autoGenerateSku,
+        });
+
+        if (patch.setAutoGenerateSku) setAutoGenerateSku(false);
+
+        setValue('barcode', patch.barcode, { shouldDirty: true });
+
+        if (patch.productName !== undefined) {
+          setValue('productName', patch.productName, { shouldDirty: true });
+        }
+        if (patch.category !== undefined) {
+          setValue('category', patch.category, { shouldDirty: true });
+        }
+        if (patch.retailUnitName !== undefined) {
+          setValue('retailUnitName', patch.retailUnitName, {
+            shouldDirty: true,
+          });
+        }
+
+        if (patch.toast) addToast(patch.toast);
+
+        setIsScannerOpen(false);
+
+        // Focus the price field after the modal close animation settles.
+        if (typeof patch.productName === 'string') {
+          setTimeout(() => {
+            priceInputRef.current?.focus();
+          }, 250);
+        }
+        return;
+      }
 
       if (result.kind === 'invalid') {
         addToast({
@@ -352,53 +403,58 @@ export function useAddProductForm() {
               : "That doesn't look like a barcode. Digits only, 8–14 long.",
           variant: 'warning',
         });
-        // Still close the modal — a bad scan shouldn't keep the user
-        // stuck. (User can scan again or type by hand.)
         setIsScannerOpen(false);
         return;
       }
 
-      if (result.kind === 'duplicate') {
-        // Mark the conflict product for the inline error; the field
-        // effect below will detect it on the next render and light up
-        // the duplicate banner. We still close the modal so the user
-        // can address the conflict in the form.
-        setValue('barcode', barcodeValue, { shouldDirty: true });
-        setIsScannerOpen(false);
+      if (
+        result.kind === 'duplicate' ||
+        result.kind === 'superseded' ||
+        result.kind === 'store_products_unavailable'
+      ) {
+        if (result.kind === 'store_products_unavailable') {
+          if (__DEV__) {
+            console.log(
+              '[Barcode][AddProduct] products query not ready yet, queuing',
+              barcodeValue,
+              'for replay once it settles',
+            );
+          }
+          pendingScanRef.current = barcodeValue;
+        } else {
+          if (__DEV__) {
+            console.log(
+              '[Barcode][AddProduct] scan swallowed, kind:',
+              result.kind,
+            );
+          }
+        }
         return;
-      }
-
-      // result.kind === 'apply'
-      const patch = result.patch;
-      if (patch.setAutoGenerateSku) {
-        setAutoGenerateSku(false);
-      }
-      setValue('barcode', patch.barcode, { shouldDirty: true });
-
-      if (patch.productName !== undefined) {
-        setValue('productName', patch.productName, { shouldDirty: true });
-      }
-      if (patch.category !== undefined) {
-        setValue('category', patch.category, { shouldDirty: true });
-      }
-
-      if (patch.toast) {
-        addToast(patch.toast);
-      }
-
-      setIsScannerOpen(false);
-
-      // Focus the price field after the modal close animation settles.
-      // 250ms gives KeyboardAwareScrollView time to compute the new
-      // layout (it was rendered with the camera surface mounted).
-      if (typeof patch.productName === 'string') {
-        setTimeout(() => {
-          priceInputRef.current?.focus();
-        }, 250);
       }
     },
-    [addToast, autoGenerateSku, existingProducts, productName, setValue],
+    [resolve, addToast, autoGenerateSku, setValue],
   );
+
+  // Replays a scan that arrived before `getAllProductsQuery` had
+  // settled. See the comment on `pendingScanRef` above.
+  useEffect(() => {
+    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
+      return;
+    const queued = pendingScanRef.current;
+    if (!queued) return;
+    pendingScanRef.current = null;
+    if (__DEV__) {
+      console.log(
+        '[Barcode][AddProduct] products query ready, replaying queued scan',
+        queued,
+      );
+    }
+    void handleScannedBarcode(queued);
+  }, [
+    getAllProductsQuery.isSuccess,
+    getAllProductsQuery.isFetching,
+    handleScannedBarcode,
+  ]);
 
   // ─── Prefill from route param (inventory-tab scan-to-add) ──────
   //
@@ -422,7 +478,7 @@ export function useAddProductForm() {
     const prefill = params.prefillBarcode;
     if (!prefill || prefillAppliedRef.current) return;
     prefillAppliedRef.current = true;
-    handleScannedBarcode(prefill);
+    void handleScannedBarcode(prefill);
     // Clear the param without firing a navigation event so the URL
     // is consistent on a hard reload of this route. `router` from
     // expo-router is a stable module-scope handle and doesn't need

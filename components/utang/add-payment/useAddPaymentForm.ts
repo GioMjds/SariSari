@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { NewPayment, Payment } from '@/types';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { CreditTransaction } from '@/types/credits.types';
+import { useCustomer, useCustomerCredits, useInsertPayment } from '@/hooks';
 
 /**
  * Form values for the Add Payment screen.
@@ -89,7 +90,7 @@ export function useAddPaymentForm() {
   // FIFO operates oldest-to-newest; the SQL layer already orders by
   // date DESC, so reverse here for the live allocation walk.
   const unpaidCredits = useMemo(
-    () => allCredits.filter((c) => c.status !== 'paid'),
+    () => (allCredits as CreditTransaction[]).filter((c: CreditTransaction) => c.status !== 'paid'),
     [allCredits],
   );
 
@@ -102,7 +103,7 @@ export function useAddPaymentForm() {
     if (!creditId) return null;
     const parsedId = Number(creditId);
     if (!Number.isFinite(parsedId)) return null;
-    return unpaidCredits.find((c) => c.id === parsedId) ?? null;
+    return (unpaidCredits as CreditTransaction[]).find((c: CreditTransaction) => c.id === parsedId) ?? null;
   }, [creditId, unpaidCredits]);
 
 

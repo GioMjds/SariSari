@@ -13,6 +13,7 @@
  *   is for log/UI debug; the UI copy comes from i18n.
  */
 import type { Product } from '@/types/products.types';
+import type { CatalogProduct } from '@/types/catalog.types';
 
 export type ScanResolution =
   | {
@@ -22,10 +23,24 @@ export type ScanResolution =
       matchedUnit: 'retail' | 'wholesale';
     }
   | {
+      kind: 'catalog_match';
+      barcode: string;
+      catalogProduct: CatalogProduct;
+    }
+  | {
       kind: 'missing';
       barcode: string;
     }
   | {
       kind: 'invalid';
       reason: 'empty' | 'format';
-    };
+    }
+  | {
+      kind: 'store_products_unavailable';
+    }
+  | {
+      kind: 'superseded';
+    }
+  | {
+      kind: 'duplicate';
+    };

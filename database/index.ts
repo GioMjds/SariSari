@@ -8,5 +8,7 @@ export * from './suppliers';
 export * from './migrations';
 export * from './cash';
 export * from './stock-intelligence';
+export * from './catalog';
+
 
 
