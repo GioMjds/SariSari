@@ -19,8 +19,8 @@
 
 ## ✨ Core Features
 
-- **⚡ Fast Point of Sale (POS)**: Quick counter sales registering cash or credit (_utang_) transactions. Updates inventory automatically and logs movement records in real time.
-- **📦 Inventory & Category Tracker**: Complete catalog of products, categories, stock counts, selling prices, and purchase costs (calculating margin/markup). Supports low-stock thresholds and alerts. **Multi-tier pricing** is built in: items can be sold by piece (_tingi_) or by wholesale pack (_pakyaw_) with automatic unit conversion, dual barcode collision checks, and per-tier profit snapshots.
+- **⚡ Fast Point of Sale (POS)**: Quick counter sales registering cash or credit (_utang_) transactions. Supports instant barcode scanning to automatically look up products offline and add them to the sale. Updates inventory automatically and logs movement records in real time.
+- **📦 Inventory & Category Tracker**: Complete catalog of products, categories, stock counts, selling prices, and purchase costs (calculating margin/markup). Supports low-stock thresholds and alerts. Features an **offline-first product catalog** pre-loaded with over 150 common Philippine store items (Milo, Lucky Me, Coca-Cola) for instant setup, with auto-learning of custom barcodes. **Multi-tier pricing** is built in: items can be sold by piece (_tingi_) or by wholesale pack (_pakyaw_) with automatic unit conversion, dual barcode collision checks, and per-tier profit snapshots.
 - **🤝 Supplier Directory**: Track who you buy stock from, attach suppliers to products, and surface purchase-cost history inside the product details screen.
 - **📓 Suki Credit Ledger (Utang)**: Customer registry tracking outstanding suki loans. **Built today:** FIFO allocation of payments against the oldest unpaid credit per suki, with reversible payment deletions; per-suki credit limits; overdue tracking. **Planned:** automated risk/payer profiles and credit-limit enforcement at sale time.
 - **📊 Business Analytics & Reports**: Dashboard view tracking daily revenue, profitability, inventory valuation, cash vs. credit breakdowns, fast/slow-moving goods, credit aging buckets, and actionable store tips.
