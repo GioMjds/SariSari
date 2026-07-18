@@ -4,17 +4,21 @@
  * and Add Product screens can call without re-implementing the chain.
  *
  * Why a hook and not just a shared lib function: the resolver reads
- * `products` from the `useProducts` cache so it can answer
- * synchronously in the common case. A pure function would have to
- * accept the products list as an arg every call, which leaks
- * query-cache details into every caller.
+ * `products` from the `useProducts` cache and universal `catalogProducts`
+ * from the `useCatalogProducts` cache so it can answer synchronously
+ * in the common case. A pure function would have to accept both lists
+ * as arguments on every call, leaking query-cache details.
  *
- * Defense layers (matches spec §4):
+ * Defense layers (matches spec #4):
  *   1. `validateBarcode` — rejects invalid format.
  *   2. Per-barcode throttle at `DEFAULT_BARCODE_THROTTLE_MS` (caller-
  *      overridden). The modal has its own throttle too; this is a
  *      belt-and-suspenders layer that survives any caller.
- *   3. Catalog lookup: `barcode` column first, then SKU fallback.
+ *   3. Catalog lookup pipeline:
+ *      a. Local Store Products (`barcode` column first)
+ *      b. Local Store Products (`wholesale_barcode` column second)
+ *      c. Local Store Products (SKU fallback for legacy rows)
+ *      d. Universal Product Catalog (`product_catalog` table match)
  *
  * The hook does NOT cache the throttle across mounts — each mount
  * owns its own ref. The expectation is that the modal owns one
@@ -30,6 +34,9 @@ import {
 import type { ScanResolution } from '@/lib/barcodes/types';
 import type { Product } from '@/types';
 import type { CatalogProduct } from '@/types/catalog.types';
+
+const EMPTY_PRODUCTS: Product[] = [];
+const EMPTY_CATALOG: CatalogProduct[] = [];
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
@@ -104,14 +111,10 @@ export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
   const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = () => Date.now() } =
     options ?? {};
   const { getAllProductsQuery } = useProducts();
-  const { data: catalogProducts } = useCatalogProducts();
+  const { data: catalogProductsData } = useCatalogProducts();
 
-  const products = getAllProductsQuery.data;
-  const productsRef = useRef(products);
-  productsRef.current = products;
-
-  const catalogProductsRef = useRef(catalogProducts);
-  catalogProductsRef.current = catalogProducts;
+  const products = getAllProductsQuery.data ?? EMPTY_PRODUCTS;
+  const catalogProducts = catalogProductsData ?? EMPTY_CATALOG;
 
   const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
@@ -136,11 +139,11 @@ export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
 
       return resolveBarcodeAgainstProducts(
         validated,
-        productsRef.current ?? [],
-        catalogProductsRef.current ?? [],
+        products,
+        catalogProducts,
       );
     },
-    [throttleMs, now],
+    [products, catalogProducts, throttleMs, now],
   );
 
   return useMemo(() => ({ resolve }), [resolve]);
