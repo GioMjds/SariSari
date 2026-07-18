@@ -40,5 +40,10 @@
   { "barcode": "4800249031011", "name": "Quickchow Pancit Canton Original 60g", "category": "Noodles" },
   { "barcode": "4800249031028", "name": "Quickchow Pancit Canton Hot Chili 60g", "category": "Noodles" },
   { "barcode": "4800249031035", "name": "Quickchow Pancit Canton Calamansi 60g", "category": "Noodles" },
-  { "barcode": "4800249032018", "name": "Quickchow Mami Instant 60g", "category": "Noodles" }
+  { "barcode": "4800249032018", "name": "Quickchow Mami Instant 60g", "category": "Noodles" },
+  {
+    "barcode": "4807770270017",
+    "name": "Lucky Me Instant Mami Beef",
+    "category": "Noodles"
+  }
 ]

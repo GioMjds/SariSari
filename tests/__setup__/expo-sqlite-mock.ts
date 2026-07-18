@@ -72,6 +72,7 @@ export const resetMockDb = () => {
 		'sales',
 		'products',
 		'customers',
+		'product_catalog',
 	];
 	for (const table of tables) {
 		try {
