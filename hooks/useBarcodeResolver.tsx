@@ -37,6 +37,7 @@ import type { CatalogProduct } from '@/types/catalog.types';
 
 const EMPTY_PRODUCTS: Product[] = [];
 const EMPTY_CATALOG: CatalogProduct[] = [];
+const defaultNow = () => Date.now();
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
@@ -108,7 +109,7 @@ export function resolveBarcodeAgainstProducts(
 export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
   resolve: (barcode: string, nowMs?: number) => ScanResolution;
 } {
-  const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = () => Date.now() } =
+  const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = defaultNow } =
     options ?? {};
   const { getAllProductsQuery } = useProducts();
   const { data: catalogProductsData } = useCatalogProducts();
