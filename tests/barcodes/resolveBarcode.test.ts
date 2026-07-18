@@ -130,6 +130,7 @@ describe('Barcode Resolver tests', () => {
 
     await expect(resolver.resolve('4807770270017')).resolves.toEqual({
       kind: 'catalog_match',
+      barcode: '4807770270017',
       catalogProduct: catalogCoke,
     });
     expect(lookupCatalogProduct).toHaveBeenCalledTimes(1);

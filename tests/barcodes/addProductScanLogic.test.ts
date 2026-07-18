@@ -56,6 +56,7 @@ describe('applyBarcodeToAddProductForm', () => {
     const patch = applyBarcodeToAddProductForm({
       resolution: {
         kind: 'catalog_match',
+        barcode: '4807770270017',
         catalogProduct: {
           barcode: '4807770270017',
           name: 'Lucky Me Instant Mami Beef',

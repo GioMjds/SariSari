@@ -79,6 +79,7 @@ export function createBarcodeResolver(config: BarcodeResolverConfig) {
 
       return {
         kind: 'catalog_match',
+        barcode: barcodeToLookup,
         catalogProduct: catalog,
       };
     },

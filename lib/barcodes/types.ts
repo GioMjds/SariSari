@@ -24,6 +24,7 @@ export type ScanResolution =
     }
   | {
       kind: 'catalog_match';
+      barcode: string;
       catalogProduct: CatalogProduct;
     }
   | {
