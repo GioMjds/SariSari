@@ -17,7 +17,8 @@ export function useBarcodeResolver(options: UseBarcodeResolverOptions = {}): {
   const { getAllProductsQuery } = useProducts();
   const lookupCatalogProduct = useLookupCatalogProduct();
 
-  const productsRef = useRef<ReadonlyArray<Product>>([]);
+  const productsRef = useRef<readonly Product[]>([]);
+
   if (getAllProductsQuery.data) {
     productsRef.current = getAllProductsQuery.data;
   }
