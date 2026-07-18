@@ -129,7 +129,7 @@ async function checkProductCollision(
     ${excludeId != null ? 'AND id != ?' : ''}
     LIMIT 1
   `;
-  const params = [...toCheck, ...toCheck, ...toCheck];
+  const params: (string | number)[] = [...toCheck, ...toCheck, ...toCheck];
   if (excludeId != null) {
     params.push(excludeId);
   }

@@ -39,6 +39,10 @@ export function createBarcodeResolver(config: BarcodeResolverConfig) {
         return { kind: 'duplicate' };
       }
 
+      if (storeResult.kind === 'invalid') {
+        return { kind: 'invalid', reason: storeResult.reason };
+      }
+
       lastAcceptedScan = storeResult.lastScan;
       sequence += 1;
 

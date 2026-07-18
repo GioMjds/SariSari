@@ -53,7 +53,7 @@ function createDeferred<T>() {
 
 describe('Barcode Resolver tests', () => {
   test('uses a loaded store product before requesting catalog metadata', async () => {
-    const lookupCatalogProduct = jest.fn(async () => ({
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => ({
       barcode: '4800016551829',
       name: 'Catalog Coke',
       brand: null,
@@ -82,7 +82,7 @@ describe('Barcode Resolver tests', () => {
     const resolver = createBarcodeResolver({
       getProducts: () => [storeCokeWholesale, legacyProduct],
       isStoreProductsReady: () => true,
-      lookupCatalogProduct: jest.fn(async () => null),
+      lookupCatalogProduct: jest.fn(async (_barcode: string) => null),
     });
 
     // Retail match
@@ -120,7 +120,7 @@ describe('Barcode Resolver tests', () => {
       imageUrl: null,
       createdAt: 1,
     };
-    const lookupCatalogProduct = jest.fn(async () => catalogCoke);
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => catalogCoke);
 
     const resolver = createBarcodeResolver({
       getProducts: () => [],
@@ -137,7 +137,7 @@ describe('Barcode Resolver tests', () => {
   });
 
   test('catalog miss returns missing', async () => {
-    const lookupCatalogProduct = jest.fn(async () => null);
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => null);
 
     const resolver = createBarcodeResolver({
       getProducts: () => [],
@@ -155,7 +155,7 @@ describe('Barcode Resolver tests', () => {
     const resolver = createBarcodeResolver({
       getProducts: () => [storeCoke],
       isStoreProductsReady: () => true,
-      lookupCatalogProduct: jest.fn(async () => null),
+      lookupCatalogProduct: jest.fn(async (_barcode: string) => null),
       throttleMs: 1500,
     });
 
@@ -188,7 +188,7 @@ describe('Barcode Resolver tests', () => {
   });
 
   test('store_products_unavailable when products query is loading, fetching, or errored', async () => {
-    const lookupCatalogProduct = jest.fn(async () => null);
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => null);
 
     let ready = false;
     const resolver = createBarcodeResolver({
@@ -254,7 +254,7 @@ describe('Barcode Resolver tests', () => {
 
   test('a rejected catalog lookup is caught and returns missing', async () => {
     const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const lookupCatalogProduct = jest.fn(async () => {
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => {
       throw new Error('Database connection failed');
     });
 
@@ -283,7 +283,7 @@ describe('Barcode Resolver tests', () => {
       imageUrl: null,
       createdAt: 1,
     };
-    const lookupCatalogProduct = jest.fn(async () => catalogCoke);
+    const lookupCatalogProduct = jest.fn(async (_barcode: string) => catalogCoke);
 
     const resolver = createBarcodeResolver({
       getProducts: () => [storeCoke],
