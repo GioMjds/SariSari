@@ -42,4 +42,24 @@ describe('resolveBarcodeAgainstProducts', () => {
       matchedUnit: 'wholesale',
     });
   });
+
+  test('resolves barcode against universal product catalog', () => {
+    const mockCatalog = [
+      {
+        barcode: '4807770270017',
+        name: 'Instant Mami Beef',
+        brand: 'Lucky Me',
+        category: 'Snacks',
+        unit: 'Pc',
+        imageUrl: null,
+        createdAt: Date.now(),
+      },
+    ];
+    const resolution = resolveBarcodeAgainstProducts('4807770270017', mockProducts, mockCatalog);
+
+    expect(resolution).toEqual({
+      kind: 'catalog_match',
+      catalogProduct: mockCatalog[0],
+    });
+  });
 });

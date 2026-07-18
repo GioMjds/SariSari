@@ -307,5 +307,25 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 10.');
   }
+
+  if (currentVersion < 11) {
+    console.log('Running migration to version 11 (Universal Product Catalog)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS product_catalog (
+          barcode TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          brand TEXT,
+          category TEXT,
+          unit TEXT NOT NULL DEFAULT 'Pc',
+          image_url TEXT,
+          created_at INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_catalog_name ON product_catalog(name);
+      `);
+      await db.execAsync('PRAGMA user_version = 11;');
+    });
+    console.log('Database migrated to version 11.');
+  }
 }
 

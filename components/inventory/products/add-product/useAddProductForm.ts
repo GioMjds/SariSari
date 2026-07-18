@@ -3,7 +3,7 @@ import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
-import { useCategories, useProducts } from '@/hooks';
+import { useCategories, useProducts, useCatalogProducts } from '@/hooks';
 import { lookupOfflineBarcode } from '@/constants/barcodes';
 import {
   applyBarcodeToAddProductForm,
@@ -83,6 +83,7 @@ const safeTrim = (s?: string) => (s ?? '').trim();
  */
 export function useAddProductForm() {
   const { insertProductMutation, getAllProductsQuery } = useProducts();
+  const { data: catalogProducts = [] } = useCatalogProducts();
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
   const addToast = useToastStore((state) => state.addToast);
@@ -340,7 +341,13 @@ export function useAddProductForm() {
         barcode: barcodeValue,
         currentProductName: productName ?? '',
         autoGenerateSku,
-        lookup: lookupOfflineBarcode,
+        lookup: (b) => {
+          const match = catalogProducts.find((p) => p.barcode === b);
+          if (match) {
+            return { name: match.name, category: match.category || 'Others' };
+          }
+          return lookupOfflineBarcode(b);
+        },
         existingProducts,
       });
 

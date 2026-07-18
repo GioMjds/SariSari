@@ -22,12 +22,15 @@
  */
 import { useCallback, useMemo, useRef } from 'react';
 import { useProducts } from '@/hooks/useProducts';
+import { useCatalogProducts } from '@/hooks/useCatalog';
 import {
   validateBarcode,
   DEFAULT_BARCODE_THROTTLE_MS,
 } from '@/lib/barcodes/format';
 import type { ScanResolution } from '@/lib/barcodes/types';
 import type { Product } from '@/types';
+import type { CatalogProduct } from '@/types/catalog.types';
+
 
 export interface UseBarcodeResolverOptions {
   throttleMs?: number;
@@ -37,6 +40,7 @@ export interface UseBarcodeResolverOptions {
 export function resolveBarcodeAgainstProducts(
   barcode: string,
   products: Product[],
+  catalogProducts: CatalogProduct[] = [],
 ): ScanResolution {
   const validation = validateBarcode(barcode);
   if (!validation.ok) {
@@ -80,8 +84,21 @@ export function resolveBarcodeAgainstProducts(
       matchedUnit: 'retail',
     };
   }
+
+  // Universal product catalog match.
+  const byCatalog = catalogProducts.find(
+    (c) => c.barcode === validated,
+  );
+  if (byCatalog) {
+    return {
+      kind: 'catalog_match',
+      catalogProduct: byCatalog,
+    };
+  }
+
   return { kind: 'missing', barcode: validated };
 }
+
 
 export function useBarcodeResolver(
   options: UseBarcodeResolverOptions = {},
@@ -94,6 +111,7 @@ export function useBarcodeResolver(
   const { throttleMs = DEFAULT_BARCODE_THROTTLE_MS, now = () => Date.now() } =
     options ?? {};
   const { getAllProductsQuery } = useProducts();
+  const { data: catalogProducts = [] } = useCatalogProducts();
   const lastScanRef = useRef<{ barcode: string; at: number } | null>(null);
 
   const products = getAllProductsQuery.data ?? [];
@@ -117,10 +135,10 @@ export function useBarcodeResolver(
       }
       lastScanRef.current = { barcode: validated, at: nowValue };
 
-      return resolveBarcodeAgainstProducts(validated, products);
+      return resolveBarcodeAgainstProducts(validated, products, catalogProducts);
     },
-    [products, throttleMs, now],
+    [products, catalogProducts, throttleMs, now],
   );
 
   return useMemo(() => ({ resolve }), [resolve]);
-}
+}

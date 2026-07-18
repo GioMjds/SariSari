@@ -322,6 +322,21 @@ export function useAddSalesForm() {
         return;
       }
 
+      if (result.kind === 'catalog_match') {
+        Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Error,
+        ).catch(() => {});
+        setPendingAddProductBarcode(result.catalogProduct.barcode);
+        lastScanRef.current = { barcode: result.catalogProduct.barcode, at: Date.now() };
+        setLastScanned({
+          name: result.catalogProduct.name,
+          sku: result.catalogProduct.barcode,
+          at: Date.now(),
+          found: false,
+        });
+        return;
+      }
+
       // result.kind === 'resolved'
       const { product, source, matchedUnit } = result;
       handleAddItem(product, matchedUnit);
