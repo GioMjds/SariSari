@@ -1,20 +1,31 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { APP_VARIANT, IS_PRODUCTION_BUILD } from "@/constants/env";
 
 /**
  * BuildBadge — shows a subtle banner in Development and Preview builds.
  * Returns null in production so there's zero overhead.
  *
- * Usage: drop it anywhere in your root layout (e.g. above the tab bar).
+ * Uses absolute positioning with pointerEvents="none" so it overlays
+ * cleanly without shifting or compressing screen route layouts below.
  */
 export function BuildBadge() {
+  const insets = useSafeAreaInsets();
+
   if (IS_PRODUCTION_BUILD) return null;
 
   const isPreview = APP_VARIANT === "preview";
 
   return (
-    <View style={[styles.badge, isPreview ? styles.preview : styles.dev]}>
+    <View
+      pointerEvents="none"
+      style={[
+        styles.badge,
+        { top: Math.max(insets.top, 0) },
+        isPreview ? styles.preview : styles.dev,
+      ]}
+    >
       <Text style={styles.text}>
         {isPreview ? "⚠ PREVIEW BUILD" : "🛠 DEV BUILD"}
       </Text>
@@ -24,8 +35,12 @@ export function BuildBadge() {
 
 const styles = StyleSheet.create({
   badge: {
-    width: "100%",
-    paddingVertical: 3,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    elevation: 50,
+    paddingVertical: 4,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -36,9 +51,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#B45309", // amber-700 — preview
   },
   text: {
+    fontFamily: "StackSansText-Bold",
     color: "#FFFFFF",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 1.4, // Matches label token (0.14em) in DESIGN.md
   },
 });
+
