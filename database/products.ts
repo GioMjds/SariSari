@@ -199,14 +199,20 @@ export const insertProduct = async (
       }
 
       if (normalizedBarcode) {
-        await insertCatalogProductIfMissing(db, {
-          barcode: normalizedBarcode,
-          name,
-          brand: null,
-          category: category ?? null,
-          unit: retail_unit_name || 'Pc',
-          imageUrl: null,
-        });
+        try {
+          await insertCatalogProductIfMissing(db, {
+            barcode: normalizedBarcode,
+            name,
+            brand: null,
+            category: category ?? null,
+            unit: retail_unit_name || 'Pc',
+            imageUrl: null,
+          });
+        } catch (catalogErr) {
+          // Catalog writes are non-fatal per spec: a failure must not prevent
+          // saving the store product or inventory transaction.
+          console.warn('Failed to write catalog record during product save; continuing.', catalogErr);
+        }
       }
     });
   } catch (err) {
@@ -288,14 +294,20 @@ export const updateProduct = async (
       }
 
       if (normalizedBarcode) {
-        await insertCatalogProductIfMissing(db, {
-          barcode: normalizedBarcode,
-          name,
-          brand: null,
-          category: category ?? null,
-          unit: retail_unit_name || 'Pc',
-          imageUrl: null,
-        });
+        try {
+          await insertCatalogProductIfMissing(db, {
+            barcode: normalizedBarcode,
+            name,
+            brand: null,
+            category: category ?? null,
+            unit: retail_unit_name || 'Pc',
+            imageUrl: null,
+          });
+        } catch (catalogErr) {
+          // Catalog writes are non-fatal per spec: a failure must not prevent
+          // saving the store product or inventory transaction.
+          console.warn('Failed to write catalog record during product update; continuing.', catalogErr);
+        }
       }
     });
   } catch (err) {

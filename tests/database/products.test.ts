@@ -408,7 +408,9 @@ describe('Products Database — barcode column (v5)', () => {
 		});
 	});
 
-	test('transaction rolls back product and inventory changes if catalog insertion fails', async () => {
+	test('product and inventory are committed even when catalog insertion trigger fails', async () => {
+		// Per spec: "A catalog lookup or seed failure must not prevent store-product scans, a sale,
+		// or manual registration." Catalog writes are non-fatal; the product save succeeds regardless.
 		await db.execAsync(`
 			CREATE TRIGGER IF NOT EXISTS fail_catalog_insert_test
 			BEFORE INSERT ON product_catalog
@@ -417,28 +419,33 @@ describe('Products Database — barcode column (v5)', () => {
 			END;
 		`);
 
-		const txsBefore = await db.getAllAsync('SELECT * FROM inventory_transactions');
+		const txsBefore = await db.getAllAsync<{ id: number }>('SELECT * FROM inventory_transactions');
 
 		try {
-			await expect(
-				insertProduct(
-					'Rollback Product',
-					'ROLLBACK-001',
-					1000,
-					5,
-					500,
-					'Snacks',
-					'4800000000001',
-				)
-			).rejects.toThrow();
+			// insertProduct should succeed even though the catalog trigger fires
+			const productId = await insertProduct(
+				'Rollback Product',
+				'ROLLBACK-001',
+				1000,
+				5,
+				500,
+				'Snacks',
+				'4800000000001',
+			);
+			expect(productId).toBeGreaterThan(0);
 
-			// Assert product was not inserted
+			// Product is in the store
 			const product = await getProductBySku('ROLLBACK-001');
-			expect(product).toBeNull();
+			expect(product).not.toBeNull();
+			expect(product?.name).toBe('Rollback Product');
 
-			// Assert no inventory transactions exist for this product
-			const txsAfter = await db.getAllAsync('SELECT * FROM inventory_transactions');
-			expect(txsAfter.length).toBe(txsBefore.length);
+			// Inventory transaction for the opening stock was committed
+			const txsAfter = await db.getAllAsync<{ id: number }>('SELECT * FROM inventory_transactions');
+			expect(txsAfter.length).toBe(txsBefore.length + 1);
+
+			// Catalog row was NOT written (trigger prevented it), which is acceptable
+			const catalogRow = await getCatalogProductByBarcode(db, '4800000000001');
+			expect(catalogRow).toBeNull();
 		} finally {
 			await db.execAsync('DROP TRIGGER IF EXISTS fail_catalog_insert_test;');
 		}
