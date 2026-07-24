@@ -323,3 +323,22 @@ jest.mock('react-native/Libraries/Modal/Modal', () => {
     default: ModalMock,
   };
 });
+
+// Mock react-native TextInput to avoid internal mockComponent Text constructor errors
+jest.mock('react-native/Libraries/Components/TextInput/TextInput', () => {
+  const mockReact = require('react');
+  const mockRN = require('react-native');
+  const TextInputMock = mockReact.forwardRef(({ onChangeText, value, ...props }: any, ref: any) => {
+    return mockReact.createElement(mockRN.View, {
+      ...props,
+      value,
+      onChangeText,
+      ref,
+    });
+  });
+  TextInputMock.displayName = 'TextInput';
+  return {
+    __esModule: true,
+    default: TextInputMock,
+  };
+});

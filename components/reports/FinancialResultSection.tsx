@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { ReportKPIs } from '@/types/reports.types';
 import { formatPesos } from '@/lib/money';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { StyledText } from '@/components/elements';
+import { MoneyText } from '@/components/ui';
 
 interface Props {
   kpis: ReportKPIs;
@@ -14,93 +16,113 @@ export const FinancialResultSection: React.FC<Props> = ({
   onOpenLedger,
 }) => {
   return (
-    <View className="bg-white dark:bg-gray-800 rounded-2xl p-4 mb-4 shadow-sm border border-gray-100 dark:border-gray-700">
+    <View className="bg-paper-50 rounded-xl p-4 mb-4 border border-ink-200 shadow-sm">
+      {/* Section Header */}
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-base font-bold text-gray-900 dark:text-white">
+        <StyledText variant="extrabold" className="text-base text-ink-900">
           Financial Result
-        </Text>
+        </StyledText>
         <Pressable
           onPress={onOpenLedger}
-          className="flex-row items-center px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/50 rounded-full border border-emerald-200 dark:border-emerald-800"
+          accessibilityRole="button"
+          accessibilityLabel="Open Gastos and Kaha Ledger"
+          className="flex-row items-center px-3 py-1.5 bg-cinnamon-500 rounded-full active:bg-cinnamon-600 shadow-sm"
         >
-          <Text className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mr-1">
+          <StyledText variant="semibold" className="text-xs text-paper-50 mr-1.5">
             Gastos & Kaha Ledger
-          </Text>
-          <FontAwesome5 name="arrow-right" size={10} color="#047857" />
+          </StyledText>
+          <FontAwesome5 name="arrow-right" size={10} color="#FBF7EE" />
         </Pressable>
       </View>
 
-      {kpis.operatingProfit === null ? (
-        <View className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-xl mb-3 border border-amber-200 dark:border-amber-800">
-          <Text className="text-xs text-amber-800 dark:text-amber-300">
-            Record cost prices for all sold items to calculate gross and true
-            operating profit.
-          </Text>
+      {/* Warning Banner when Cost Prices are Missing */}
+      {kpis.operatingProfit === null && (
+        <View className="bg-cinnamon-50/60 p-3 rounded-lg mb-3 border border-dashed border-cinnamon-300 flex-row items-center gap-2.5">
+          <FontAwesome5 name="info-circle" size={13} color="#623418" />
+          <StyledText variant="medium" className="text-xs text-cinnamon-800 flex-1 leading-4">
+            Record cost prices for all sold items to calculate gross and true operating profit.
+          </StyledText>
         </View>
-      ) : null}
+      )}
 
-      <View className="space-y-2">
-        <View className="flex-row justify-between py-1 border-b border-gray-100 dark:border-gray-700">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
+      {/* Tally Breakdown Rows */}
+      <View className="space-y-1">
+        {/* Total Sales */}
+        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
+          <StyledText variant="medium" className="text-xs text-ink-600">
             Total Sales
-          </Text>
-          <Text className="text-sm font-semibold text-gray-900 dark:text-white">
-            {formatPesos(kpis.totalSales)}
-          </Text>
+          </StyledText>
+          <MoneyText value={kpis.totalSales} size="sm" variant="default" className="text-ink-900" />
         </View>
 
-        <View className="flex-row justify-between py-1 border-b border-gray-100 dark:border-gray-700">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Cost of Goods Sold */}
+        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
+          <StyledText variant="medium" className="text-xs text-ink-600">
             Cost of Goods Sold (COGS)
-          </Text>
-          <Text className="text-sm font-semibold text-gray-900 dark:text-white">
+          </StyledText>
+          <StyledText variant="semibold" className="text-xs text-ink-900">
             -{formatPesos(kpis.inventoryCostOut)}
-          </Text>
+          </StyledText>
         </View>
 
-        <View className="flex-row justify-between py-1 border-b border-gray-100 dark:border-gray-700">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
-            Gross Profit
-          </Text>
-          <Text className="text-sm font-semibold text-gray-900 dark:text-white">
-            {kpis.grossProfit !== null ? formatPesos(kpis.grossProfit) : '—'}
-          </Text>
+        {/* Gross Profit (Tubo Subtotal) */}
+        <View className="flex-row justify-between items-center py-2 px-2.5 bg-sage-50/60 rounded-lg my-1 border border-sage-200/50">
+          <StyledText variant="extrabold" className="text-xs text-sage-800">
+            Gross Profit (Tubo)
+          </StyledText>
+          <MoneyText
+            value={kpis.grossProfit ?? 0}
+            size="sm"
+            variant="success"
+          />
         </View>
 
-        <View className="flex-row justify-between py-1 border-b border-gray-100 dark:border-gray-700">
-          <Text className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Paid Operating Gastos */}
+        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
+          <StyledText variant="medium" className="text-xs text-ink-600">
             Paid Operating Gastos
-          </Text>
-          <Text className="text-sm font-semibold text-rose-600 dark:text-rose-400">
+          </StyledText>
+          <StyledText variant="semibold" className="text-xs text-semantic-danger">
             -{formatPesos(kpis.paidExpenses)}
-          </Text>
+          </StyledText>
         </View>
 
-        <View className="flex-row justify-between py-2 bg-emerald-50/50 dark:bg-emerald-950/20 px-2 rounded-lg">
-          <Text className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
-            True Operating Profit
-          </Text>
-          <Text className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
-            {kpis.operatingProfit !== null
-              ? formatPesos(kpis.operatingProfit)
-              : '—'}
-          </Text>
-        </View>
-
-        <View className="flex-row justify-between py-1.5 mt-1 border-t border-dashed border-gray-200 dark:border-gray-700">
+        {/* True Operating Profit (Hero Bottom-line) */}
+        <View className="flex-row justify-between items-center py-3 px-3 bg-sage-100/90 rounded-xl my-2 border border-sage-300 shadow-sm">
           <View>
-            <Text className="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Owner Drawings (Kaha)
-            </Text>
-            <Text className="text-[10px] text-gray-400 dark:text-gray-500">
-              Excluded from operating profit
-            </Text>
+            <StyledText variant="extrabold" className="text-sm text-sage-900">
+              True Operating Profit
+            </StyledText>
+            <StyledText variant="medium" className="text-[10px] text-sage-700">
+              Net store profit after operating expenses
+            </StyledText>
           </View>
-          <Text className="text-sm font-medium text-amber-700 dark:text-amber-400">
-            {formatPesos(kpis.ownerDrawings)}
-          </Text>
+          <MoneyText
+            value={kpis.operatingProfit ?? 0}
+            size="lg"
+            variant="success"
+          />
+        </View>
+
+        {/* Owner Drawings Audit Line */}
+        <View className="flex-row justify-between items-center py-2 pt-2.5 mt-1 border-t border-dashed border-ink-200">
+          <View>
+            <StyledText variant="semibold" className="text-xs text-cinnamon-800">
+              Owner Drawings (Kaha Take-out)
+            </StyledText>
+            <StyledText variant="regular" className="text-[10px] text-ink-400">
+              Excluded from operating profit
+            </StyledText>
+          </View>
+          <MoneyText
+            value={kpis.ownerDrawings}
+            size="sm"
+            variant="default"
+            className="text-cinnamon-700"
+          />
         </View>
       </View>
     </View>
   );
 };
+

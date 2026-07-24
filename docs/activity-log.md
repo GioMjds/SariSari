@@ -40,3 +40,9 @@
   - Created `components/financial/ReceiptPicker.tsx` component allowing up to 5 photo slots per expense entry.
   - Integrated `ReceiptPicker` into `components/financial/RecordEntryModal.tsx`.
   - Added unit test in `tests/components/ReceiptPicker.test.tsx`.
+- Integrated Gastos & Kaha Reconciliation UI navigation and screen linking.
+  - Exported `FinancialResultSection` component in `components/reports/index.ts`.
+  - Embedded `FinancialResultSection` in `app/(tabs)/reports/index.tsx` right below the Bento KPI grid with direct `router.push('/gastos-kaha')` navigation link.
+  - Added top navigation header with back button (`router.back()`) in `app/gastos-kaha/index.tsx`.
+  - Created unit tests in `tests/components/FinancialResultSection.test.tsx`.
+  - Added `TextInput` override in `jest.setup.ts` and updated database setup in `tests/components/GastosKahaScreen.test.tsx`.

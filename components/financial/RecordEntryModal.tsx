@@ -206,6 +206,7 @@ export const RecordEntryModal: React.FC<Props> = ({
               </Text>
             </Pressable>
             <Pressable
+              testID="save-entry-button"
               onPress={handleSave}
               disabled={loading}
               className="px-5 py-3 rounded-xl bg-emerald-600"

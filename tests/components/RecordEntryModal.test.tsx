@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { RecordEntryModal } from '@/components/financial/RecordEntryModal';
 
 describe('RecordEntryModal', () => {
@@ -11,7 +11,7 @@ describe('RecordEntryModal', () => {
   });
 
   test('renders with initial date and allows updating businessDate', async () => {
-    const { getByTestId, getByText } = await render(
+    const { getByTestId } = await render(
       <RecordEntryModal
         visible={true}
         type="expense"
@@ -26,9 +26,14 @@ describe('RecordEntryModal', () => {
 
     expect(dateInput.props.value).toBe('2026-07-20');
 
-    fireEvent.changeText(amountInput, '150');
-    fireEvent.changeText(dateInput, '2026-07-22');
-    fireEvent.press(getByText('Save Entry'));
+    await act(async () => {
+      amountInput.props.onChangeText('150');
+      dateInput.props.onChangeText('2026-07-22');
+    });
+
+    await act(async () => {
+      await getByTestId('save-entry-button').props.onPress();
+    });
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith({
