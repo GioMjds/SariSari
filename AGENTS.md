@@ -16,6 +16,7 @@ Guidance working with code in this repo.
 - Review existing files before refactor or change.
 - Markdown files use kebab naming (e.g., `some-description-changes.md`).
 - Don't auto commit activity logs and docs.
+- Do not use technobabble, use plain English.
 
 ## Code Quality
 
