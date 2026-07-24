@@ -40,13 +40,15 @@ export const getReportKPIs = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-  // Run the aggregates concurrently. We merged profit, COGS, and coverage metrics
-  // into a single optimized query joining sale_items, sales, and products.
+  const startDateStr = dateRange.startDate.toISOString().split('T')[0];
+  const endDateStr = dateRange.endDate.toISOString().split('T')[0];
+
   const [
     salesResult,
     salesMetricsResult,
     creditsIssuedResult,
     creditsCollectedResult,
+    financialTotalsResult,
   ] = await Promise.all([
     db.getFirstAsync<{ total: number }>(
       `SELECT COALESCE(SUM(total), 0) as total
@@ -55,21 +57,18 @@ export const getReportKPIs = async (
       [startDate, endDate],
     ),
     db.getFirstAsync<{
-      profit: number;
       cogs: number;
       revenue: number;
       coverage_units: number;
       total_units: number;
     }>(
       `SELECT
-         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * (si.price - COALESCE(si.cost_price, p.cost_price))), 0) as profit,
-         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * COALESCE(si.cost_price, p.cost_price)), 0) as cogs,
+         COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * si.cost_price), 0) as cogs,
          COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity) * si.price), 0) as revenue,
-         COALESCE(SUM(CASE WHEN COALESCE(si.cost_price, p.cost_price) IS NOT NULL THEN COALESCE(si.sold_unit_qty, si.quantity) ELSE 0 END), 0) as coverage_units,
+         COALESCE(SUM(CASE WHEN si.cost_price IS NOT NULL THEN COALESCE(si.sold_unit_qty, si.quantity) ELSE 0 END), 0) as coverage_units,
          COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity)), 0) as total_units
        FROM sale_items si
        JOIN sales s ON si.sale_id = s.id
-       LEFT JOIN products p ON si.product_id = p.id
        WHERE s.timestamp BETWEEN ? AND ?`,
       [startDate, endDate],
     ),
@@ -85,28 +84,53 @@ export const getReportKPIs = async (
        WHERE date BETWEEN ? AND ?`,
       [startDate, endDate],
     ),
+    db.getFirstAsync<{ paid_expenses: number; owner_drawings: number }>(
+      `SELECT
+         COALESCE(SUM(CASE WHEN entry_type = 'expense' THEN amount ELSE 0 END), 0) as paid_expenses,
+         COALESCE(SUM(CASE WHEN entry_type = 'owner_drawing' THEN amount ELSE 0 END), 0) as owner_drawings
+       FROM financial_entries
+       WHERE business_date BETWEEN ? AND ?`,
+      [startDateStr, endDateStr],
+    ),
   ]);
 
   const coverageUnits = salesMetricsResult?.coverage_units ?? 0;
   const totalUnits = salesMetricsResult?.total_units ?? 0;
+  const hasFullCostCoverage = totalUnits === 0 || coverageUnits === totalUnits;
   const profitCoverage = totalUnits > 0 ? coverageUnits / totalUnits : null;
-  const totalProfit =
-    profitCoverage === 0 ? null : (salesMetricsResult?.profit ?? 0);
-  const totalRevenue = salesMetricsResult?.revenue ?? 0;
+
+  const paidExpenses = financialTotalsResult?.paid_expenses ?? 0;
+  const ownerDrawings = financialTotalsResult?.owner_drawings ?? 0;
+  const revenue = salesResult?.total ?? 0;
+  const cogs = salesMetricsResult?.cogs ?? 0;
+
+  let grossProfit: number | null = null;
+  let operatingProfit: number | null = null;
+
+  if (totalUnits === 0) {
+    grossProfit = 0;
+    operatingProfit = 0 - paidExpenses;
+  } else if (hasFullCostCoverage) {
+    grossProfit = revenue - cogs;
+    operatingProfit = grossProfit - paidExpenses;
+  }
+
   const marginPercent =
-    profitCoverage === 0 || totalRevenue <= 0
+    operatingProfit === null || revenue <= 0
       ? null
-      : ((totalProfit ?? 0) / totalRevenue) * 100;
+      : (operatingProfit / revenue) * 100;
 
   return {
-    totalSales: salesResult?.total || 0,
-    // Profit is `null` when no sold items had cost data so the UI can show
-    // "unavailable" rather than 0.0.
-    totalProfit,
+    totalSales: revenue,
+    totalProfit: operatingProfit,
+    grossProfit,
+    operatingProfit,
+    paidExpenses,
+    ownerDrawings,
     totalCreditsIssued: creditsIssuedResult?.total || 0,
     totalCreditsCollected: creditsCollectedResult?.total || 0,
-    totalExpenses: 0, // Future scope — not in this stabilization pass.
-    inventoryCostOut: salesMetricsResult?.cogs || 0,
+    totalExpenses: paidExpenses,
+    inventoryCostOut: cogs,
     profitCoverage,
     marginPercent,
   };

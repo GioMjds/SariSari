@@ -327,5 +327,56 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 11.');
   }
+
+  if (currentVersion < 12) {
+  console.log(
+    'Running migration to version 12 (Gastos & Kaha Financial Entries)...',
+  );
+  await db.withTransactionAsync(async () => {
+    await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS financial_entries (
+          id TEXT PRIMARY KEY,
+          entry_type TEXT NOT NULL CHECK(entry_type IN ('expense', 'owner_drawing')),
+          amount INTEGER NOT NULL CHECK(amount > 0),
+          business_date TEXT NOT NULL,
+          expense_category TEXT CHECK(expense_category IN ('transport', 'utilities', 'supplies_packaging', 'rent', 'repairs', 'other')),
+          note TEXT,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          CHECK (
+            (entry_type = 'expense' AND expense_category IS NOT NULL) OR
+            (entry_type = 'owner_drawing' AND expense_category IS NULL)
+          )
+        );
+        CREATE INDEX IF NOT EXISTS idx_financial_entries_date ON financial_entries(business_date);
+      `);
+
+    const hasCashEntries = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='cash_entries'",
+    );
+
+    if (hasCashEntries) {
+      await db.execAsync(`
+          INSERT OR IGNORE INTO financial_entries (
+            id, entry_type, amount, business_date, expense_category, note, created_at, updated_at
+          )
+          SELECT
+            id,
+            type AS entry_type,
+            amount,
+            substr(timestamp, 1, 10) AS business_date,
+            CASE WHEN type = 'expense' THEN 'other' ELSE NULL END AS expense_category,
+            notes AS note,
+            created_at,
+            created_at AS updated_at
+          FROM cash_entries
+          WHERE type IN ('expense', 'owner_drawing');
+        `);
+    }
+
+    await db.execAsync('PRAGMA user_version = 12;');
+  });
+  console.log('Database migrated to version 12.');
+}
 }
 
