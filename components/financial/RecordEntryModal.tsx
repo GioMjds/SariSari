@@ -7,6 +7,7 @@ import {
 } from '@/types/financial.types';
 import { parsePesosInput } from '@/lib/money';
 import { Alert } from '@/utils';
+import { ReceiptPicker } from './ReceiptPicker';
 
 interface Props {
   visible: boolean;
@@ -40,11 +41,13 @@ export const RecordEntryModal: React.FC<Props> = ({
   const [amountStr, setAmountStr] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('other');
   const [note, setNote] = useState('');
+  const [stagedReceiptUris, setStagedReceiptUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultDate = initialBusinessDate || todayStr;
   const [businessDate, setBusinessDate] = useState(defaultDate);
+
 
   const handleSave = async () => {
     try {
@@ -168,6 +171,30 @@ export const RecordEntryModal: React.FC<Props> = ({
             placeholder="Optional note"
             className="border border-gray-300 dark:border-gray-600 rounded-xl p-3 mb-4 text-sm text-gray-900 dark:text-white"
           />
+
+          {type === 'expense' && (
+            <ReceiptPicker
+              receipts={stagedReceiptUris.map((uri, index) => ({
+                id: `staged-${index}`,
+                financialEntryId: '',
+                relativePath: uri,
+                slot: index,
+                createdAt: Date.now(),
+              }))}
+              onAddReceipt={async (uri) => {
+                if (stagedReceiptUris.length < 5) {
+                  setStagedReceiptUris([...stagedReceiptUris, uri]);
+                }
+              }}
+              onDeleteReceipt={async (id) => {
+                const index = parseInt(id.replace('staged-', ''), 10);
+                if (!isNaN(index)) {
+                  setStagedReceiptUris(stagedReceiptUris.filter((_, i) => i !== index));
+                }
+              }}
+            />
+          )}
+
 
           <View className="flex-row justify-end space-x-3">
             <Pressable

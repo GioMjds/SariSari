@@ -64,6 +64,7 @@ export const mockDb = {
 export const resetMockDb = () => {
 	const tables = [
 		'sqlite_sequence',
+		'financial_entries',
 		'inventory_transactions',
 		'payment_allocations',
 		'payments',

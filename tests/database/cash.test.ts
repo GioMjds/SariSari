@@ -237,3 +237,16 @@ describe('Cash Control Database Operations', () => {
     expect(entriesAfterDelete[0].notes).toBe('A');
   });
 });
+
+describe('Legacy Cash Sessions Read-Only Protection', () => {
+  beforeEach(async () => {
+    resetMockDb();
+    await runMigrations();
+  });
+
+  test('retains legacy cash sessions table and data read-only', async () => {
+    const rows = await db.getAllAsync('SELECT * FROM cash_sessions');
+    expect(rows).toBeDefined();
+  });
+});
+

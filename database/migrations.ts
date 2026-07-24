@@ -378,5 +378,24 @@ export async function runMigrations() {
   });
   console.log('Database migrated to version 12.');
 }
+
+  if (currentVersion < 13) {
+    console.log('Running migration to version 13 (Financial Entry Receipts)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS financial_entry_receipts (
+          id TEXT PRIMARY KEY,
+          financial_entry_id TEXT NOT NULL REFERENCES financial_entries(id) ON DELETE CASCADE,
+          relative_path TEXT NOT NULL,
+          slot INTEGER NOT NULL CHECK(slot BETWEEN 0 AND 4),
+          created_at INTEGER NOT NULL,
+          UNIQUE(financial_entry_id, slot)
+        );
+        CREATE INDEX IF NOT EXISTS idx_receipts_entry ON financial_entry_receipts(financial_entry_id);
+      `);
+      await db.execAsync('PRAGMA user_version = 13;');
+    });
+    console.log('Database migrated to version 13.');
+  }
 }
 
