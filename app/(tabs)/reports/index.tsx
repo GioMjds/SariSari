@@ -14,7 +14,9 @@ import {
   PaymentSplitStrip,
   AlmanacMasthead,
   EditorialEyebrow,
+  FinancialResultSection,
 } from '@/components/reports';
+import { router } from 'expo-router';
 import { MoneyText } from '@/components/ui';
 import {
   useAgingBuckets,
@@ -34,7 +36,7 @@ import {
   useTopSellingProducts,
 } from '@/hooks';
 import { formatPesos } from '@/lib/money';
-import { DateRange, DateRangeType } from '@/types';
+import { DateRange, DateRangeType, ReportKPIs } from '@/types';
 import {
   formatCompactCurrency,
   getDateRangeFromType,
@@ -54,14 +56,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EMPTY_ARRAY: any[] = [];
 
-const DEFAULT_KPIS = {
+const DEFAULT_KPIS: ReportKPIs = {
   totalSales: 0,
   totalProfit: null,
+  grossProfit: null,
+  operatingProfit: null,
+  paidExpenses: 0,
+  ownerDrawings: 0,
   totalCreditsIssued: 0,
   totalCreditsCollected: 0,
   totalExpenses: 0,
   inventoryCostOut: 0,
   profitCoverage: null,
+  marginPercent: null,
 };
 
 const DEFAULT_SALES_BREAKDOWN = {
@@ -358,6 +365,13 @@ export default function Reports() {
                     />
                   </View>
                 </BentoGrid>
+
+                <View className="mt-4">
+                  <FinancialResultSection
+                    kpis={kpis}
+                    onOpenLedger={() => router.push('/gastos-kaha')}
+                  />
+                </View>
               </View>
             )}
           </View>

@@ -9,6 +9,5 @@ export * from './migrations';
 export * from './cash';
 export * from './stock-intelligence';
 export * from './catalog';
-
-
-
+export * from './financial';
+export * from './receipts';
