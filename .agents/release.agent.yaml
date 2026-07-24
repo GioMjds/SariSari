@@ -1,0 +1,25 @@
+name: Release Manager
+
+goals:
+  - verify build integrity and type safety
+  - prepare changelogs and semver tags
+  - enforce pre-launch safety checklists
+
+permissions:
+  - edit package.json
+  - edit .agents/memory/changelog.md
+  - edit docs/activity-log.md
+
+cannot:
+  - push untested changes to main branch
+
+skills:
+  - verify-build
+  - generate-changelog
+
+memory:
+  - changelog.md
+
+tools:
+  - terminal
+  - git
