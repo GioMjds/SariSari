@@ -46,3 +46,32 @@
   - Added top navigation header with back button (`router.back()`) in `app/gastos-kaha/index.tsx`.
   - Created unit tests in `tests/components/FinancialResultSection.test.tsx`.
   - Added `TextInput` override in `jest.setup.ts` and updated database setup in `tests/components/GastosKahaScreen.test.tsx`.
+
+## 2026-07-25
+
+- Updated implementation plan `docs/superpowers/plans/2026-07-24-landing-screen-redesign-plan.md` with explicit, fine-grained sub-tasks and step-by-step instructions.
+- Created decomposed task breakdown files under `docs/superpowers/tasks/landing-screen-redesign/`:
+  - `task-01-home-state-resolver.md`
+  - `task-02-guided-components.md`
+  - `task-03-quick-actions-pulse.md`
+  - `task-04-home-route-integration.md`
+  - `task-05-localization-verification.md`
+- Implemented Task 01: Home State Resolver
+  - Created `components/dashboard/home-state.ts` defining `resolveHomeState` and data contracts (`HomeDestination`, `HomeGoalKind`, `HomeRecommendation`, `HomeStateInput`, `HomeState`).
+  - Added unit test suite `tests/components/dashboard/home-state.test.ts` verifying all 9 goal kinds and time-based suggestions (10/10 passed).
+- Implemented Task 03: Companion Actions and Insights
+  - Updated `components/dashboard/DashboardQuickActions.tsx` with hero "New Sale" persimmon CTA and 2-column secondary actions grid (Add Product, Add Stock, Utang / Credits, Reports).
+  - Created `components/dashboard/DashboardDailyPulse.tsx` with side-by-side metric cards for Today's Revenue and Today's Sales.
+  - Created `components/dashboard/DashboardRecentSales.tsx` with up to 3 recent transaction rows.
+  - Updated `components/dashboard/DashboardEmptyState.tsx` and `components/dashboard/DashboardSkeleton.tsx`.
+  - Added unit test suite `tests/components/dashboard/DashboardQuickActions.test.tsx`.
+- Implemented Task 04: Home Route Integration
+  - Created `components/dashboard/DashboardErrorState.tsx` inline error card with retry button.
+  - Refactored `app/(tabs)/index.tsx` orchestrator to pass `HomeStateInput` into `resolveHomeState`, map destinations to Expo Router paths, and render Store Assistant hierarchy.
+  - Deleted legacy files: `DashboardHero.tsx`, `DashboardAlertCards.tsx`, `DashboardAttentionSection.tsx`, `AlertCard.tsx`.
+  - Added integration unit test suite `tests/components/DashboardScreen.test.tsx`.
+- Implemented Task 05: Localization and Verification
+  - Added English translations under `dashboard` in `locales/en/common.json`.
+  - Added Tagalog translations under `dashboard` in `locales/tl/common.json`.
+  - Validated locale JSON formatting with Node parser.
+- Explained purpose of 'Mark All as Paid' button and removed it from `app/(edit-forms)/credit-details/[id].tsx` and `components/utang/credit-details/CustomerHeroCard.tsx` to prevent bypassing payment ledger logs.

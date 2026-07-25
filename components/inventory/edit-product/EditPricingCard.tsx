@@ -1,5 +1,5 @@
 import { Control, Controller } from 'react-hook-form';
-import { Pressable, TextInput, View } from 'react-native';
+import { LayoutAnimation, Platform, Switch, TextInput, UIManager, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import {
   calculateWholesaleSavings,
@@ -36,6 +36,15 @@ export function EditPricingCard({
   wholesalePrice = '',
   wholesaleCostPrice = '',
 }: EditPricingCardProps) {
+  // Enable LayoutAnimation on Android (no-op on iOS where it's always on).
+  if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+
+  const handleToggleWholesale = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    onToggleWholesale?.();
+  };
   const showPreview = profitPerPiece !== 0 || markupPercent !== 0;
 
   const retailPriceVal = tryParsePesosInput(price);
@@ -178,21 +187,14 @@ export function EditPricingCard({
             </StyledText>
           </View>
           {onToggleWholesale && (
-            <Pressable
-              onPress={onToggleWholesale}
-              className={`press-scale flex-row items-center border rounded-pill px-3 py-1.5 ${
-                enableWholesale
-                  ? 'bg-cinnamon-500 border-cinnamon-600'
-                  : 'bg-paper-100 border-ink-200'
-              }`}
-            >
-              <StyledText
-                variant="extrabold"
-                className={`label-caps ${enableWholesale ? 'text-white' : 'text-ink-700'}`}
-              >
-                {enableWholesale ? 'Enabled' : 'Disabled'}
-              </StyledText>
-            </Pressable>
+            <Switch
+              value={enableWholesale}
+              onValueChange={handleToggleWholesale}
+              accessibilityLabel={`Wholesale pricing: ${enableWholesale ? 'enabled' : 'disabled'}`}
+              accessibilityRole="switch"
+              trackColor={{ false: '#D6CEBF', true: '#8B3A00' }}
+              thumbColor={enableWholesale ? '#E85A1F' : '#F6F0E2'}
+            />
           )}
         </View>
 
@@ -212,6 +214,7 @@ export function EditPricingCard({
                       placeholderTextColor="#A89F90"
                       value={value}
                       onChangeText={onChange}
+                      accessibilityLabel="Retail unit name (e.g. Pc, Bottle)"
                       className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 text-ink-900 text-sm"
                     />
                   )}
@@ -230,6 +233,7 @@ export function EditPricingCard({
                       placeholderTextColor="#A89F90"
                       value={value}
                       onChangeText={onChange}
+                      accessibilityLabel="Wholesale (pakyaw) unit name (e.g. Case, Box)"
                       className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 text-ink-900 text-sm"
                     />
                   )}
@@ -251,6 +255,7 @@ export function EditPricingCard({
                     value={value}
                     onChangeText={onChange}
                     keyboardType="number-pad"
+                    accessibilityLabel="Number of pieces per wholesale unit"
                     className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 text-ink-900 text-sm"
                   />
                 )}
@@ -276,6 +281,7 @@ export function EditPricingCard({
                         value={value}
                         onChangeText={onChange}
                         keyboardType="decimal-pad"
+                        accessibilityLabel="Wholesale selling price"
                         className="flex-1 text-ink-900 text-sm"
                       />
                     )}
@@ -301,6 +307,7 @@ export function EditPricingCard({
                         value={value}
                         onChangeText={onChange}
                         keyboardType="decimal-pad"
+                        accessibilityLabel="Wholesale cost price"
                         className="flex-1 text-ink-900 text-sm"
                       />
                     )}

@@ -8,16 +8,11 @@ const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 interface DashboardEmptyStateProps {
   onAddProduct: () => void;
-  onStartFirstSale: () => void;
+  onStartFirstSale?: () => void;
 }
 
 /**
- * DashboardEmptyState — setup nudges for a brand-new store.
- *
- * Renders inside the attention-queue slot when there are no products
- * and no sales yet. Two big paper buttons: Add Product starts the
- * catalog, Start First Sale routes to the POS so the owner can begin
- * recording transactions immediately.
+ * DashboardEmptyState — setup nudges for a brand-new store catalog.
  */
 export const DashboardEmptyState = memo(function DashboardEmptyState({
   onAddProduct,
@@ -25,13 +20,12 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
 }: DashboardEmptyStateProps) {
   const { t } = useTranslation();
   return (
-    <View
-      className="bg-paper-50 mx-4 mb-4 rounded-xl border border-ink-100 p-5 items-center"
-    >
+    <View className="bg-paper-50 mx-4 mb-4 rounded-2xl border border-ink-100 p-5 items-center">
       <Image
         source={sariImage}
         style={{ width: 120, height: 120, marginBottom: 12 }}
         resizeMode="contain"
+        accessible={false}
       />
       <StyledText variant="extrabold" className="label-caps text-ink-400 mb-1 text-center">
         {t('common:emptyEyebrow')}
@@ -52,7 +46,8 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={t('common:emptyAddProduct')}
-          className="bg-persimmon-500 rounded-pill py-3 flex-row items-center justify-center mb-2.5 press-scale"
+          accessibilityHint="Navigates to product creation form"
+          className="bg-persimmon-500 rounded-xl py-3.5 flex-row items-center justify-center press-scale"
         >
           <FontAwesome name="plus" size={14} color="#FBF7EE" />
           <StyledText
@@ -63,21 +58,24 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
           </StyledText>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={onStartFirstSale}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={t('common:emptyFirstSale')}
-          className="bg-paper-100 rounded-pill py-3 flex-row items-center justify-center border border-ink-200 press-scale"
-        >
-          <FontAwesome name="shopping-cart" size={14} color="#623418" />
-          <StyledText
-            variant="extrabold"
-            className="text-cinnamon-700 text-sm ml-2"
+        {onStartFirstSale && (
+          <TouchableOpacity
+            onPress={onStartFirstSale}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('common:emptyFirstSale')}
+            accessibilityHint="Navigates to sales form"
+            className="bg-paper-100 rounded-xl py-3.5 flex-row items-center justify-center border border-ink-200 press-scale mt-2.5"
           >
-            {t('common:emptyFirstSale')}
-          </StyledText>
-        </TouchableOpacity>
+            <FontAwesome name="shopping-cart" size={14} color="#623418" />
+            <StyledText
+              variant="extrabold"
+              className="text-cinnamon-700 text-sm ml-2"
+            >
+              {t('common:emptyFirstSale')}
+            </StyledText>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

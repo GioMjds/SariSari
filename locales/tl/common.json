@@ -154,5 +154,83 @@
       "manualEntryPlaceholder": "Mag-type ng barcode",
       "cameraUnavailable": "Hindi available ang camera. Pwede mong i-type ang barcode."
     }
+  },
+
+  "dashboard": {
+    "goals": {
+      "setupCatalog": {
+        "title": "Magdagdag ng mga unang paninda",
+        "description": "Magsimula sa pagdaragdag ng mga produkto sa listahan ng paninda para masubaybayan ang stock at ma-record ang benta.",
+        "cta": "Magdagdag ng Produkto"
+      },
+      "outOfStock": {
+        "title": "Mga produktong ubos na",
+        "description": "May {{count}} paninda na ubos na ang stock. Mag-restock na para hindi mawalan ng benta.",
+        "description_other": "May {{count}} paninda na ubos na ang stock. Mag-restock na para hindi mawalan ng benta.",
+        "cta": "Mag-restock ng Stock"
+      },
+      "lowStock": {
+        "title": "Pabawas na ang stock",
+        "description": "May {{count}} paninda na paubos na ang stock.",
+        "description_other": "May {{count}} paninda na paubos na ang stock.",
+        "cta": "Suriin ang Stock"
+      },
+      "overdueCredits": {
+        "title": "Lagpas na sa araw ang utang",
+        "description": "May {{count}} suki na kailangang singilin sa utang.",
+        "description_other": "May {{count}} suki na kailangang singilin sa utang.",
+        "cta": "Singilin ang Utang"
+      },
+      "cashShortfall": {
+        "title": "May kulang sa rehistro ng pera",
+        "description": "Ang isinarang sesyon ngayong araw ay may kulang sa cash drawer.",
+        "cta": "Suriin ang Cash Session"
+      },
+      "openDrawer": {
+        "title": "Simulan ang araw ng tindahan",
+        "description": "Buksan ang cash drawer para mag-record ng mga benta at subaybayan ang pera.",
+        "cta": "Buksan ang Cash Drawer"
+      },
+      "reviewClose": {
+        "title": "Nakasara na ang cash drawer",
+        "description": "Isinara na ang cash drawer ngayong araw. Suriin ang detalye kung kailangan.",
+        "cta": "Tingnan ang Detalye"
+      },
+      "firstSale": {
+        "title": "Handa na para sa unang benta",
+        "description": "Handa na ang paninda! I-record na ang unang benta sa tindahan.",
+        "cta": "Bagong Benta"
+      },
+      "continueSelling": {
+        "title": "Aktibo ang tindahan",
+        "description": "Mag-record ng benta, suriin ang utang, o mag-restock ng paninda.",
+        "cta": "Bagong Benta"
+      }
+    },
+    "quickActions": {
+      "newSale": "Bagong Benta",
+      "addProduct": "Magdagdag ng Produkto",
+      "addStock": "Magdagdag ng Stock",
+      "credits": "Utang / Credits",
+      "reports": "Mga Ulat"
+    },
+    "suggestions": {
+      "morning": "Pagsusuri sa Umaga",
+      "afternoon": "Benta sa Hapon",
+      "evening": "Buod sa Gabi"
+    },
+    "pulse": {
+      "todayRevenue": "Benta Ngayong Araw",
+      "todaySales": "Bilang ng Benta"
+    },
+    "recentActivity": {
+      "title": "Kamakailang Gawain",
+      "empty": "Wala pang benta ngayong araw.",
+      "error": "Hindi ma-load ang mga kamakailang benta.",
+      "errorTitle": "Hindi ma-load ang dashboard",
+      "errorBody": "May naganap na problema sa pag-load ng data.",
+      "retry": "Pindutin para Subukan Muli"
+    }
   }
 }
+

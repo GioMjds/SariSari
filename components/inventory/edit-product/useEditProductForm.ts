@@ -6,14 +6,6 @@ import { useForm, useWatch } from 'react-hook-form';
 import { useCategories, useGetProduct, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 
-/**
- * Form values for the Edit Product screen.
- *
- * Money fields (`costPerPiece`, `price`) are kept as decimal strings
- * (the user's typed value) for display math — see AGENTS.md:
- * integer-pesos invariant. We parse them to integer pesos exactly
- * once, inside `submit`, via `parsePesosInput`.
- */
 export interface EditProductFormData {
   name: string;
   sku: string;
@@ -31,16 +23,6 @@ export interface EditProductFormData {
   wholesaleBarcode: string;
 }
 
-/**
- * Shared form logic + state for the Edit Product screen.
- *
- * Owns react-hook-form setup, initial hydration from `useGetProduct`,
- * category list subscription, discard/delete modal visibility, and the
- * `submit` + `confirmDelete` mutations.
- *
- * The layout component consumes the returned bundle to bind inputs
- * and render modals without any state inside JSX.
- */
 export function useEditProductForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = parseInt(id, 10);
@@ -55,9 +37,6 @@ export function useEditProductForm() {
   const [showDiscardModal, setShowDiscardModal] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
-  // react-hook-form. Defaults are seeded from the product row via the
-  // `values` option so the form hydrates once the query resolves —
-  // matches the original screen's behavior.
   const {
     control,
     handleSubmit,
@@ -89,12 +68,22 @@ export function useEditProductForm() {
           category: product.category || '',
           supplier_id: product.supplier_id || '',
           imageUri: product.image_uri || '',
-          enableWholesale: !!(product.wholesale_unit_name && product.conversion_factor && product.conversion_factor > 1),
+          enableWholesale: !!(
+            product.wholesale_unit_name &&
+            product.conversion_factor &&
+            product.conversion_factor > 1
+          ),
           retailUnitName: product.retail_unit_name || 'Pc',
           wholesaleUnitName: product.wholesale_unit_name || 'Case',
-          conversionFactor: product.conversion_factor ? product.conversion_factor.toString() : '12',
-          wholesalePrice: product.wholesale_price ? product.wholesale_price.toString() : '',
-          wholesaleCostPrice: product.wholesale_cost_price ? product.wholesale_cost_price.toString() : '',
+          conversionFactor: product.conversion_factor
+            ? product.conversion_factor.toString()
+            : '12',
+          wholesalePrice: product.wholesale_price
+            ? product.wholesale_price.toString()
+            : '',
+          wholesaleCostPrice: product.wholesale_cost_price
+            ? product.wholesale_cost_price.toString()
+            : '',
           wholesaleBarcode: product.wholesale_barcode || '',
         }
       : undefined,
@@ -143,9 +132,7 @@ export function useEditProductForm() {
           ? product.conversion_factor.toString()
           : '12') ||
       wholesalePrice !==
-        (product.wholesale_price
-          ? product.wholesale_price.toString()
-          : '') ||
+        (product.wholesale_price ? product.wholesale_price.toString() : '') ||
       wholesaleCostPrice !==
         (product.wholesale_cost_price
           ? product.wholesale_cost_price.toString()
@@ -220,7 +207,7 @@ export function useEditProductForm() {
 
   // ─── Submit ────────────────────────────────────────────────────
 
-  const submit = handleSubmit((data) => {
+  const submit = handleSubmit(async (data) => {
     if (!data.name.trim()) {
       throw new Error('Product name is required');
     }
@@ -243,33 +230,57 @@ export function useEditProductForm() {
 
     const enableWholesaleVal = data.enableWholesale;
     const retailUnitNameVal = data.retailUnitName.trim() || 'Pc';
-    const wholesaleUnitNameVal = enableWholesaleVal ? (data.wholesaleUnitName.trim() || null) : null;
-    const conversionFactorNum = enableWholesaleVal && data.conversionFactor ? parseInt(data.conversionFactor, 10) : null;
-    const wholesalePriceVal = enableWholesaleVal && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null;
-    const wholesaleCostVal = enableWholesaleVal && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null;
-    const wholesaleBarcodeVal = enableWholesaleVal && data.wholesaleBarcode ? data.wholesaleBarcode.trim() || null : null;
+    const wholesaleUnitNameVal = enableWholesaleVal
+      ? data.wholesaleUnitName.trim() || null
+      : null;
+    const conversionFactorNum =
+      enableWholesaleVal && data.conversionFactor
+        ? parseInt(data.conversionFactor, 10)
+        : null;
+    const wholesalePriceVal =
+      enableWholesaleVal && data.wholesalePrice
+        ? parsePesosInput(data.wholesalePrice)
+        : null;
+    const wholesaleCostVal =
+      enableWholesaleVal && data.wholesaleCostPrice
+        ? parsePesosInput(data.wholesaleCostPrice)
+        : null;
+    const wholesaleBarcodeVal =
+      enableWholesaleVal && data.wholesaleBarcode
+        ? data.wholesaleBarcode.trim() || null
+        : null;
 
-    updateProductMutation.mutate({
-      id: productId,
-      name: data.name.trim(),
-      sku: data.sku.trim(),
-      price: priceValue,
-      quantity: product?.quantity || 0,
-      cost_price: costPriceValue,
-      category: data.category || undefined,
-      // Preserve the existing barcode — the edit form has no barcode field,
-      // so omitting it would cause normalizeBarcode(undefined) → null and
-      // silently wipe whatever barcode was already stored.
-      barcode: product?.barcode ?? null,
-      supplier_id: data.supplier_id ? data.supplier_id : null,
-      image_uri: data.imageUri ? data.imageUri.trim() : null,
-      retail_unit_name: retailUnitNameVal,
-      wholesale_unit_name: wholesaleUnitNameVal,
-      wholesale_price: wholesalePriceVal,
-      wholesale_cost_price: wholesaleCostVal,
-      conversion_factor: conversionFactorNum && Number.isFinite(conversionFactorNum) && conversionFactorNum >= 2 ? conversionFactorNum : null,
-      wholesale_barcode: wholesaleBarcodeVal,
-    });
+    try {
+      await updateProductMutation.mutateAsync({
+        id: productId,
+        name: data.name.trim(),
+        sku: data.sku.trim(),
+        price: priceValue,
+        quantity: product?.quantity || 0,
+        cost_price: costPriceValue,
+        category: data.category || undefined,
+        // Preserve the existing barcode — the edit form has no barcode field,
+        // so omitting it would cause normalizeBarcode(undefined) → null and
+        // silently wipe whatever barcode was already stored.
+        barcode: product?.barcode ?? null,
+        supplier_id: data.supplier_id ? data.supplier_id : null,
+        image_uri: data.imageUri ? data.imageUri.trim() : null,
+        retail_unit_name: retailUnitNameVal,
+        wholesale_unit_name: wholesaleUnitNameVal,
+        wholesale_price: wholesalePriceVal,
+        wholesale_cost_price: wholesaleCostVal,
+        conversion_factor:
+          conversionFactorNum &&
+          Number.isFinite(conversionFactorNum) &&
+          conversionFactorNum >= 2
+            ? conversionFactorNum
+            : null,
+        wholesale_barcode: wholesaleBarcodeVal,
+      });
+      router.back();
+    } catch {
+      // Error is surfaced by the mutation's error state; no further action needed.
+    }
   });
 
   // ─── Delete ────────────────────────────────────────────────────

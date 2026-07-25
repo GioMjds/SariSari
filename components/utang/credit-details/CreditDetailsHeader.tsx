@@ -8,40 +8,32 @@ interface CreditDetailsHeaderProps {
   onDelete: () => void;
 }
 
-/**
- * CreditDetailsHeader — slim top bar for the Suki Ledger screen.
- *
- * Three-slot layout: circular back button on the left, "Suki Ledger"
- * eyebrow label in the center, circular trash button on the right.
- * No state of its own; receives both actions via props so the screen
- * keeps ownership of navigation and the delete-confirmation modal.
- */
-export const CreditDetailsHeader = memo(function CreditDetailsHeader({ onBack, onDelete }: CreditDetailsHeaderProps) {
+export const CreditDetailsHeader = memo(function CreditDetailsHeader({
+  onBack,
+  onDelete,
+}: CreditDetailsHeaderProps) {
   return (
     <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
       <Pressable
         onPress={onBack}
-        hitSlop={12}
+        hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Go back"
-        className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
+        className="press-scale w-11 h-11 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
       >
         <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
       </Pressable>
 
-      <StyledText
-        variant="extrabold"
-        className="label-caps text-ink-400"
-      >
+      <StyledText variant="extrabold" className="label-caps text-ink-600">
         Suki Ledger
       </StyledText>
 
       <Pressable
         onPress={onDelete}
-        hitSlop={12}
+        hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Delete customer"
-        className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
+        className="press-scale w-11 h-11 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
       >
         <FontAwesome name="trash" size={14} color="#C13030" />
       </Pressable>

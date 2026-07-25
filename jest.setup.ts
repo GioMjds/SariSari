@@ -26,6 +26,7 @@ overrideComponent('View');
 overrideComponent('Text');
 overrideComponent('TouchableOpacity');
 overrideComponent('Pressable');
+overrideComponent('Image');
 
 // Define __DEV__ for React Native environment inside Jest
 (global as any).__DEV__ = true;
@@ -340,5 +341,31 @@ jest.mock('react-native/Libraries/Components/TextInput/TextInput', () => {
   return {
     __esModule: true,
     default: TextInputMock,
+  };
+});
+
+// Mock react-native Image to avoid internal mockComponent Image constructor errors
+jest.mock('react-native/Libraries/Image/Image', () => {
+  const mockReact = require('react');
+  const mockRN = require('react-native');
+  const ImageMock = (props: any) => {
+    return mockReact.createElement(mockRN.View, props);
+  };
+  ImageMock.displayName = 'Image';
+  return {
+    __esModule: true,
+    default: ImageMock,
+  };
+});
+// Mock moti
+jest.mock('moti', () => {
+  const mockReact = require('react');
+  const mockRN = require('react-native');
+  return {
+    MotiView: ({ children, ...rest }: any) =>
+      mockReact.createElement(mockRN.View, rest, children),
+    MotiText: ({ children, ...rest }: any) =>
+      mockReact.createElement(mockRN.Text, rest, children),
+    AnimatePresence: ({ children }: any) => children,
   };
 });

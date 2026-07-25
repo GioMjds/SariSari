@@ -154,5 +154,83 @@
       "manualEntryPlaceholder": "Type barcode manually",
       "cameraUnavailable": "Camera not available. You can type the barcode instead."
     }
+  },
+
+  "dashboard": {
+    "goals": {
+      "setupCatalog": {
+        "title": "Add your first items",
+        "description": "Start by adding products to your store catalog so you can track stock and record sales.",
+        "cta": "Add Product"
+      },
+      "outOfStock": {
+        "title": "Items out of stock",
+        "description": "You have {{count}} item out of stock. Restock now to avoid lost sales.",
+        "description_other": "You have {{count}} items out of stock. Restock now to avoid lost sales.",
+        "cta": "Restock Inventory"
+      },
+      "lowStock": {
+        "title": "Low stock alert",
+        "description": "You have {{count}} item running low on stock.",
+        "description_other": "You have {{count}} items running low on stock.",
+        "cta": "Check Inventory"
+      },
+      "overdueCredits": {
+        "title": "Overdue utang accounts",
+        "description": "{{count}} customer has overdue balances.",
+        "description_other": "{{count}} customers have overdue balances.",
+        "cta": "Review Utang"
+      },
+      "cashShortfall": {
+        "title": "Cash drawer shortage recorded",
+        "description": "Today's closed session showed a cash discrepancy.",
+        "cta": "Review Cash Session"
+      },
+      "openDrawer": {
+        "title": "Start your store day",
+        "description": "Open your cash drawer to start recording transactions and tracking cash flow.",
+        "cta": "Open Cash Drawer"
+      },
+      "reviewClose": {
+        "title": "Drawer closed for today",
+        "description": "Cash drawer is closed. Review closed drawer details if needed.",
+        "cta": "View Session Details"
+      },
+      "firstSale": {
+        "title": "Ready for your first sale",
+        "description": "Catalog is ready! Record your first store transaction.",
+        "cta": "New Sale"
+      },
+      "continueSelling": {
+        "title": "Store is active",
+        "description": "Record sales, check balances, or manage restocks.",
+        "cta": "New Sale"
+      }
+    },
+    "quickActions": {
+      "newSale": "New Sale",
+      "addProduct": "Add Product",
+      "addStock": "Add Stock",
+      "credits": "Utang / Credits",
+      "reports": "Reports"
+    },
+    "suggestions": {
+      "morning": "Morning Check",
+      "afternoon": "Afternoon Rush",
+      "evening": "Evening Summary"
+    },
+    "pulse": {
+      "todayRevenue": "Today's Revenue",
+      "todaySales": "Today's Sales"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "empty": "No sales recorded yet today.",
+      "error": "Failed to load recent sales.",
+      "errorTitle": "Could not load dashboard",
+      "errorBody": "Something went wrong loading your counter data.",
+      "retry": "Tap to Retry"
+    }
   }
 }
+

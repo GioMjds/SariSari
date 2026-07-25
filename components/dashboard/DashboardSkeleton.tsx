@@ -2,69 +2,50 @@ import { View } from 'react-native';
 import { Skeleton } from '@/components/ui';
 
 /**
- * DashboardSkeleton — placeholder for the four dashboard zones:
- * hero, quick actions, alert row, and the attention queue. Mirrors
- * the final hierarchy so the transition from skeleton to live data
- * is layout-shift-free.
+ * DashboardSkeleton — layout-shift-free loading placeholder.
  */
 export function DashboardSkeleton() {
   return (
     <View className="pt-3">
-      {/* Hero placeholder */}
-      <View
-        className="bg-paper-50 rounded-3xl mx-4 mb-4 border border-ink-100"
-      >
-        {/* Cinnamon header strip */}
-        <View className="bg-cinnamon-500 rounded-t-3xl px-5 pt-5 pb-4">
-          <View className="flex-row justify-between items-center">
-            <Skeleton width={80} height={12} borderRadius={4} />
-            <Skeleton width={50} height={12} borderRadius={4} />
-          </View>
+      {/* Context Header skeleton */}
+      <View className="px-5 pb-4 bg-cinnamon-500">
+        <View className="flex-row items-center justify-between">
+          <Skeleton width={120} height={20} borderRadius={4} />
+          <Skeleton width={36} height={36} borderRadius={18} />
         </View>
-        <View className="px-5 pt-4 pb-5">
-          <View className="bg-paper-100 rounded-xl py-5 border-y border-dashed border-ink-200 items-center">
-            <Skeleton width={180} height={42} borderRadius={6} />
-          </View>
-          <View className="mt-3">
-            <Skeleton width="100%" height={14} borderRadius={4} />
-          </View>
+      </View>
+
+      {/* Goal Card placeholder */}
+      <View className="px-4 mt-3 mb-2">
+        <View className="bg-paper-50 rounded-2xl p-4 border border-ink-100">
+          <Skeleton width={180} height={20} borderRadius={4} />
           <View className="mt-2">
-            <Skeleton width="80%" height={14} borderRadius={4} />
+            <Skeleton width="90%" height={14} borderRadius={4} />
+          </View>
+          <View className="mt-4">
+            <Skeleton width="100%" height={44} borderRadius={12} />
           </View>
         </View>
       </View>
 
-      {/* Quick actions placeholder */}
+      {/* Quick Actions placeholder */}
       <View className="px-4 mb-4">
-        <Skeleton width="100%" height={56} borderRadius={16} />
+        <Skeleton width="100%" height={52} borderRadius={12} />
         <View className="flex-row gap-2.5 mt-2.5">
-          <Skeleton width={'50%'} height={56} borderRadius={16} />
-          <Skeleton width={'50%'} height={56} borderRadius={16} />
+          <Skeleton width={'50%'} height={48} borderRadius={12} />
+          <Skeleton width={'50%'} height={48} borderRadius={12} />
+        </View>
+        <View className="flex-row gap-2.5 mt-2.5">
+          <Skeleton width={'50%'} height={48} borderRadius={12} />
+          <Skeleton width={'50%'} height={48} borderRadius={12} />
         </View>
       </View>
 
-      {/* Attention-queue placeholder */}
-      <View className="px-4">
-        <View
-          className="bg-paper-50 rounded-xl border border-ink-100 mb-3"
-        >
-          <View className="px-4 pt-3 pb-3 flex-row justify-between border-b border-dashed border-ink-200">
-            <Skeleton width={90} height={14} borderRadius={4} />
-            <Skeleton width={60} height={12} borderRadius={4} />
-          </View>
-          <View className="px-4 py-3">
-            {[0, 1, 2].map((i) => (
-              <View
-                key={`row-${i}`}
-                className={`flex-row justify-between items-center py-4 ${
-                  i < 2 ? 'border-b border-dashed border-ink-200' : ''
-                }`}
-              >
-                <Skeleton width={'55%'} height={14} borderRadius={4} />
-                <Skeleton width={60} height={14} borderRadius={6} />
-              </View>
-            ))}
-          </View>
+      {/* Daily Pulse placeholder */}
+      <View className="px-4 mb-4">
+        <View className="flex-row gap-2.5">
+          <Skeleton width={'50%'} height={72} borderRadius={16} />
+          <Skeleton width={'50%'} height={72} borderRadius={16} />
         </View>
       </View>
     </View>
