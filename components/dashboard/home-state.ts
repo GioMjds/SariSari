@@ -17,7 +17,8 @@ export type HomeGoalKind =
   | 'openDrawer'
   | 'reviewClose'
   | 'firstSale'
-  | 'continueSelling';
+  | 'continueSelling'
+  | 'reviewReports';
 
 export interface HomeRecommendation {
   kind: HomeGoalKind;
@@ -89,7 +90,7 @@ export function resolveHomeState(input: HomeStateInput): HomeState {
   } else if (input.hour >= 12 && input.hour < 18) {
     timeSuggestion = { kind: 'continueSelling', destination: 'newSale' };
   } else {
-    timeSuggestion = { kind: 'continueSelling', destination: 'reports' };
+    timeSuggestion = { kind: 'reviewReports', destination: 'reports' };
   }
 
   // Omit suggestion if its destination matches the primary goal destination

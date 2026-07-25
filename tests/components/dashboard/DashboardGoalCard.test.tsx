@@ -9,7 +9,6 @@ import { HomeRecommendation } from '@/components/dashboard/home-state';
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, options?: any) => {
-      console.log('KEY:', JSON.stringify(key), 'OPTIONS:', JSON.stringify(options));
       if (typeof key === 'string' && key.includes('outOfStock.title')) return 'Items out of stock';
       if (typeof key === 'string' && key.includes('outOfStock.description')) return `You have ${options?.count || 1} items out of stock.`;
       if (typeof key === 'string' && key.includes('outOfStock.cta')) return 'Restock Inventory';

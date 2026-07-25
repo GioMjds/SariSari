@@ -14,7 +14,11 @@ export interface DashboardRecentSalesProps {
 }
 
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) {
+    return '';
+  }
+  const diff = Date.now() - parsed.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
@@ -76,7 +80,11 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
                 key={sale.id}
                 onPress={() => onOpenSale(sale.id)}
                 accessibilityRole="button"
-                accessibilityLabel={`Sale #${sale.id}, ${formatPesos(sale.total)}`}
+                accessibilityLabel={t('common:dashboard.recentActivity.saleAccessibilityLabel', {
+                  defaultValue: 'Sale #{{id}}, {{total}}',
+                  id: sale.id,
+                  total: formatPesos(sale.total),
+                })}
                 className={`flex-row items-center justify-between py-3 active:opacity-70 ${
                   !isLast ? 'border-b border-dashed border-ink-100' : ''
                 }`}
@@ -89,11 +97,19 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
                 {/* Sale info */}
                 <View className="flex-1 mr-2">
                   <StyledText variant="semibold" className="text-sm text-ink-900">
-                    Sale #{sale.id}
+                    {t('common:dashboard.recentActivity.saleLabel', {
+                      defaultValue: 'Sale #{{id}}',
+                      id: sale.id,
+                    })}
                   </StyledText>
                   <View className="flex-row items-center mt-0.5">
                     <StyledText variant="regular" className="text-xs text-ink-500">
-                      {itemCount} {itemCount === 1 ? 'item' : 'items'} ·{' '}
+                      {t('common:dashboard.recentActivity.itemCount', {
+                        defaultValue_one: '{{count}} item',
+                        defaultValue_other: '{{count}} items',
+                        defaultValue: '{{count}} items',
+                        count: itemCount,
+                      })} ·{' '}
                     </StyledText>
                     <StyledText
                       variant="extrabold"

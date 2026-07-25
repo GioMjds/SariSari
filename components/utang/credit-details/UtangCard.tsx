@@ -176,10 +176,7 @@ export const UtangCard = memo(function UtangCard({ credit, onQuickSettle, index 
             Owes {formatPesos(remaining)}
           </StyledText>
           <Pressable
-            onPress={() => {
-              Haptics.selectionAsync().catch(() => {});
-              onQuickSettle(credit);
-            }}
+            onPress={() => onQuickSettle(credit)}
             accessibilityRole="button"
             accessibilityLabel={`Quick settle ${formatPesos(remaining)} for ${credit.product_name ?? 'credit'}`}
             className="press-scale bg-sage-500 rounded-pill px-4 py-2.5 flex-row items-center justify-center min-h-[44px]"

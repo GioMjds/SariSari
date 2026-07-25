@@ -22,9 +22,10 @@ export const DashboardStockAlert = memo(function DashboardStockAlert({
   if (lowStockCount === 0) return null;
 
   const message = t('common:dashboard.stockAlert.message', {
-    defaultValue: '{{count}} {{noun}} running low',
+    defaultValue_one: '{{count}} item running low',
+    defaultValue_other: '{{count}} items running low',
+    defaultValue: '{{count}} items running low',
     count: lowStockCount,
-    noun: lowStockCount === 1 ? 'item' : 'items',
   });
   const sub = t('common:dashboard.stockAlert.sub', {
     defaultValue: 'Restock before you run out',

@@ -155,23 +155,9 @@ export const DashboardContextHeader = memo(function DashboardContextHeader({
             >
               {formatPesos(totalPesos)}
             </StyledText>
-            {hasStockRisk ? (
-              <View className="flex-row items-center mt-1.5">
-                <FontAwesome name="arrow-up" size={9} color="#4F7A24" />
-                <StyledText
-                  variant="semibold"
-                  className="text-sage-700 text-xs ml-1"
-                >
-                  {t('common:dashboard.header.sinceYesterday', {
-                    defaultValue: 'vs yesterday',
-                  })}
-                </StyledText>
-              </View>
-            ) : (
-              <StyledText variant="regular" className="text-ink-500 text-xs mt-1.5">
-                {t('common:dashboard.header.today', { defaultValue: 'today' })}
-              </StyledText>
-            )}
+            <StyledText variant="regular" className="text-ink-500 text-xs mt-1.5">
+              {t('common:dashboard.header.today', { defaultValue: 'today' })}
+            </StyledText>
           </View>
 
           {/* Card 2: Transactions / Today's Sales */}

@@ -214,10 +214,7 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
         {/* Primary CTAs — sage Add Payment, cinnamon Add Credit */}
         <View className="px-5 pb-5 pt-1 flex-row gap-2.5">
           <Pressable
-            onPress={() => {
-              Haptics.selectionAsync().catch(() => {});
-              onAddPayment();
-            }}
+            onPress={onAddPayment}
             disabled={!hasOutstanding}
             accessibilityRole="button"
             accessibilityLabel="Add payment for this suki"
@@ -253,10 +250,7 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
             </StyledText>
           </Pressable>
           <Pressable
-            onPress={() => {
-              Haptics.selectionAsync().catch(() => {});
-              onAddCredit();
-            }}
+            onPress={onAddCredit}
             accessibilityRole="button"
             accessibilityLabel="Add credit for this suki"
             className="press-scale flex-1 bg-paper-50 border border-ink-200 rounded-xl py-3 min-h-[44px] flex-row items-center justify-center"

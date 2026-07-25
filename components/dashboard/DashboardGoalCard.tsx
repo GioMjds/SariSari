@@ -20,6 +20,7 @@ const goalIcons: Record<HomeGoalKind, keyof typeof FontAwesome.glyphMap> = {
   reviewClose: 'check-square-o',
   firstSale: 'shopping-cart',
   continueSelling: 'line-chart',
+  reviewReports: 'bar-chart',
 };
 
 export const DashboardGoalCard = memo(function DashboardGoalCard({

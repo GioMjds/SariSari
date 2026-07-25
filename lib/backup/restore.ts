@@ -239,6 +239,8 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       const info = await FileSystem.getInfoAsync(targetPath);
       const backupPath = `${targetPath}.bak`;
       try {
+        // Remove any stale .bak file before creating a new one
+        await FileSystem.deleteAsync(backupPath, { idempotent: true });
         if (info.exists) {
           await FileSystem.copyAsync({ from: targetPath, to: backupPath });
         }
@@ -258,8 +260,13 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       }
     }
 
+    let dbBackupSucceeded = false;
     try {
+      // Remove any stale .bak file before creating a new one
+      await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
       await FileSystem.copyAsync({ from: dbPath, to: backupDbPath });
+      dbBackupSucceeded = true;
+
       await FileSystem.writeAsStringAsync(
         dbPath,
         Buffer.from(dbBuffer).toString('base64'),
@@ -284,11 +291,13 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       }
       return { success: true, restoredReceiptsCount: validReceipts.length };
     } catch (err) {
-      // Roll back the database first.
-      try {
-        await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
-      } catch (rollbackErr) {
-        console.error('Rollback failed for database', rollbackErr);
+      // Roll back the database only if the backup succeeded.
+      if (dbBackupSucceeded) {
+        try {
+          await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
+        } catch (rollbackErr) {
+          console.error('Rollback failed for database', rollbackErr);
+        }
       }
       // Roll back receipts: restore overwritten files, delete new ones.
       await Promise.all(

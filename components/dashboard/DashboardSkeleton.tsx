@@ -32,12 +32,20 @@ export function DashboardSkeleton() {
       <View className="px-4 mb-4">
         <Skeleton width="100%" height={52} borderRadius={12} />
         <View className="flex-row gap-2.5 mt-2.5">
-          <Skeleton width={'50%'} height={48} borderRadius={12} />
-          <Skeleton width={'50%'} height={48} borderRadius={12} />
+          <View className="flex-1">
+            <Skeleton width="100%" height={48} borderRadius={12} />
+          </View>
+          <View className="flex-1">
+            <Skeleton width="100%" height={48} borderRadius={12} />
+          </View>
         </View>
         <View className="flex-row gap-2.5 mt-2.5">
-          <Skeleton width={'50%'} height={48} borderRadius={12} />
-          <Skeleton width={'50%'} height={48} borderRadius={12} />
+          <View className="flex-1">
+            <Skeleton width="100%" height={48} borderRadius={12} />
+          </View>
+          <View className="flex-1">
+            <Skeleton width="100%" height={48} borderRadius={12} />
+          </View>
         </View>
       </View>
 

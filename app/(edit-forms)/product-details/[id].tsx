@@ -182,7 +182,7 @@ export default function ProductDetailsPage() {
   // ─── Main screen ───────────────────────────────────────────────
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-      {/* ── Slim top bar — delete action only, no back button ── */}
+      {/* ── Slim top bar — centered "Product Profile" label ── */}
       <View className="flex-row items-center justify-center px-5 pt-4 pb-2">
         <StyledText variant="extrabold" className="label-caps pb-2 text-ink-400">
           Product Profile

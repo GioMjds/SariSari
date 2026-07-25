@@ -95,7 +95,14 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
             iconBg="bg-persimmon-50"
             badge={overdueCount > 0 ? overdueCount : undefined}
             onPress={onOpenCredits}
-            accessibilityLabel={t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })}
+            accessibilityLabel={
+              overdueCount > 0
+                ? `${t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })} - ${t('common:dashboard.quickActions.overdueCount', {
+                    defaultValue: '{{count}} overdue',
+                    count: overdueCount,
+                  })}`
+                : t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })
+            }
           />
           <ActionCard
             label={t('common:dashboard.quickActions.reports', { defaultValue: 'Reports' })}

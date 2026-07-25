@@ -3,7 +3,9 @@ import { RefreshControl, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Href, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui';
+import { StyledText } from '@/components/elements';
 import {
   DashboardContextHeader,
   DashboardEmptyState,
@@ -38,6 +40,7 @@ const destinationRoutes: Record<HomeDestination, Href> = {
 export default function Dashboard() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   // ─── Data queries ─────────────────────────────────────────────
@@ -295,6 +298,14 @@ export default function Dashboard() {
               </View>
             ) : products && products.length === 0 && !hasAnySales ? (
               <DashboardEmptyState onAddProduct={handleAddProduct} />
+            ) : recentSalesList.length === 0 ? (
+              <View className="px-4 mb-4">
+                <View className="bg-paper-50 rounded-2xl p-4 border border-ink-100">
+                  <StyledText variant="regular" className="text-ink-500 text-sm text-center">
+                    {t('common:dashboard.recentActivity.empty', { defaultValue: 'No sales recorded yet today.' })}
+                  </StyledText>
+                </View>
+              </View>
             ) : (
               <DashboardRecentSales
                 sales={recentSalesList}
