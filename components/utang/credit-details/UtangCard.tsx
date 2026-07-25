@@ -2,6 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { format, isValid } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
 import { CreditTransaction } from '@/types/credits.types';
 import { formatPesos } from '@/lib/money';
@@ -178,7 +179,7 @@ export const UtangCard = memo(function UtangCard({ credit, onQuickSettle, index 
             onPress={() => onQuickSettle(credit)}
             accessibilityRole="button"
             accessibilityLabel={`Quick settle ${formatPesos(remaining)} for ${credit.product_name ?? 'credit'}`}
-            className="press-scale bg-sage-500 rounded-pill px-4 py-2 flex-row items-center"
+            className="press-scale bg-sage-500 rounded-pill px-4 py-2.5 flex-row items-center justify-center min-h-[44px]"
             style={{
               shadowColor: '#4F7A24',
               shadowOffset: { width: 0, height: 3 },

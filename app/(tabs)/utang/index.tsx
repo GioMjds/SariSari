@@ -19,7 +19,8 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { Platform, RefreshControl, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Credits() {
@@ -178,9 +179,14 @@ export default function Credits() {
           onAddCustomer={handleAddCustomer}
         />
 
-        <ScrollView
+        <KeyboardAwareScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
+          enableAutomaticScroll
+          enableOnAndroid
+          extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingBottom: 96 }}
           refreshControl={
             <RefreshControl
@@ -304,7 +310,7 @@ export default function Credits() {
               ))
             )}
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
 
         {/* Floating pagination pill */}
         {filteredCustomers.length > 0 && (

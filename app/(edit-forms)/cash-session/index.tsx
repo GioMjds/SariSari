@@ -56,20 +56,9 @@ export default function CashSessionScreen() {
   }
 
   if (!currentSession) {
-    return (
-      <OpenSessionView
-        onBack={() => router.back()}
-        openControl={openControl}
-        handleOpenSubmit={handleOpenSubmit}
-        openErrors={openErrors}
-        openIsValid={openIsValid}
-        isPending={openSessionMutation.isPending}
-        focusedField={focusedField}
-        onFocusField={setFocusedField}
-        onOpenSession={onOpenSession}
-      />
-    );
+    return <OpenSessionView onBack={() => router.back()} />;
   }
+
 
   const isOpen = currentSession.status === 'open';
 

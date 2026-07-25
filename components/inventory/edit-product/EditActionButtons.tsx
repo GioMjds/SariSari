@@ -18,7 +18,7 @@ export function EditActionButtons({
   isSubmitting,
 }: EditActionButtonsProps) {
   return (
-    <View className="gap-3 mb-8">
+    <View className="gap-3">
       {/* Save Changes */}
       <TouchableOpacity
         onPress={onSubmit}
@@ -41,9 +41,12 @@ export function EditActionButtons({
       {/* Cancel */}
       <TouchableOpacity
         onPress={onCancel}
+        disabled={isSubmitting}
         accessibilityRole="button"
         accessibilityLabel="Cancel edits"
-        className="bg-paper-100 border border-ink-200 rounded-pill py-4 items-center"
+        className={`bg-paper-100 border border-ink-200 rounded-pill py-4 items-center ${
+          isSubmitting ? 'opacity-40' : ''
+        }`}
       >
         <StyledText variant="semibold" className="text-ink-900 text-base">
           Cancel

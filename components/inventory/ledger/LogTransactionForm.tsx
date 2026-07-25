@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -15,6 +16,7 @@ import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useLogTransactionForm } from './useLogTransactionForm';
 import { formatDualStock } from '@/lib';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 interface LogTransactionFormProps {
   product: Product;
@@ -81,7 +83,7 @@ export function LogTransactionForm({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <View className="flex-1 justify-end bg-black/50">
@@ -92,7 +94,10 @@ export function LogTransactionForm({
             disabled={form.isPending}
           />
 
-          <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100 pb-10">
+          <View
+            className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100"
+            style={{ maxHeight: '88%' }}
+          >
             {/* Header */}
             <View className="flex-row items-center justify-between mb-4">
               <StyledText
@@ -111,6 +116,15 @@ export function LogTransactionForm({
                 <FontAwesome name="times" size={20} color="#7A7165" />
               </TouchableOpacity>
             </View>
+
+            <KeyboardAwareScrollView
+              showsVerticalScrollIndicator={false}
+              enableAutomaticScroll
+              enableOnAndroid
+              extraScrollHeight={Platform.OS === 'ios' ? 140 : 120}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
 
             {/* Product context block */}
             <View className="bg-paper-100 border border-ink-100 rounded-xl p-4 mb-4">
@@ -502,6 +516,7 @@ export function LogTransactionForm({
                 </TouchableOpacity>
               </MotiView>
             </View>
+            </KeyboardAwareScrollView>
           </View>
         </View>
       </KeyboardAvoidingView>

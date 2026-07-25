@@ -1,28 +1,19 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { CashSessionHeader } from './CashSessionHeader';
-import { LegacyCashSessionBanner } from './ActiveSessionSummaryCard';
+import { LegacyCashSessionBanner } from './LegacyCashSessionBanner';
 
 interface OpenSessionViewProps {
   onBack: () => void;
-  openControl?: any;
-  handleOpenSubmit?: any;
-  openErrors?: any;
-  openIsValid?: boolean;
-  isPending?: boolean;
-  focusedField?: string | null;
-  onFocusField?: (field: string | null) => void;
-  onOpenSession?: (data: any) => void;
 }
 
 export function OpenSessionView({ onBack }: OpenSessionViewProps) {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <KeyboardAwareScrollView
+      <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
@@ -58,7 +49,7 @@ export function OpenSessionView({ onBack }: OpenSessionViewProps) {
             </View>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

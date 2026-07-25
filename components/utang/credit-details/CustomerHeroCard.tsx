@@ -2,6 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { memo } from 'react';
 import { MotiView } from 'moti';
 import { Pressable, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { t } from 'i18next';
 import { dialPhone, smsPhone } from '@/utils';
 import {
@@ -42,7 +43,6 @@ interface CustomerHeroCardProps {
   activeCreditCount: number;
   onAddPayment: () => void;
   onAddCredit: () => void;
-  onMarkAllPaid: () => void;
 }
 
 /**
@@ -68,7 +68,6 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
   activeCreditCount,
   onAddPayment,
   onAddCredit,
-  onMarkAllPaid,
 }: CustomerHeroCardProps) {
   const trustTags = deriveTrustTags(customer, credits, payments, {
     daysOverdue: customer.days_overdue,
@@ -219,7 +218,7 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
             disabled={!hasOutstanding}
             accessibilityRole="button"
             accessibilityLabel="Add payment for this suki"
-            className={`press-scale flex-1 rounded-xl py-3 flex-row items-center justify-center ${
+            className={`press-scale flex-1 rounded-xl py-3 min-h-[44px] flex-row items-center justify-center ${
               hasOutstanding
                 ? 'bg-sage-500'
                 : 'bg-paper-200 border border-ink-200 opacity-50'
@@ -254,7 +253,7 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
             onPress={onAddCredit}
             accessibilityRole="button"
             accessibilityLabel="Add credit for this suki"
-            className="press-scale flex-1 bg-paper-50 border border-ink-200 rounded-xl py-3 flex-row items-center justify-center"
+            className="press-scale flex-1 bg-paper-50 border border-ink-200 rounded-xl py-3 min-h-[44px] flex-row items-center justify-center"
           >
             <FontAwesome name="plus" size={14} color="#623418" />
             <StyledText
@@ -265,26 +264,6 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
             </StyledText>
           </Pressable>
         </View>
-
-        {/* Mark-all-paid — only when there's something to settle */}
-        {hasOutstanding && (
-          <View className="border-t border-dashed border-ink-200 px-5 py-3">
-            <Pressable
-              onPress={onMarkAllPaid}
-              accessibilityRole="button"
-              accessibilityLabel="Mark all credits as paid"
-              className="press-scale bg-paper-100 border border-ink-200 rounded-xl py-2.5 flex-row items-center justify-center"
-            >
-              <FontAwesome name="check-circle" size={12} color="#623418" />
-              <StyledText
-                variant="extrabold"
-                className="text-cinnamon-700 text-xs ml-2"
-              >
-                {t('common:markAllAsPaid', 'Mark All as Paid')}
-              </StyledText>
-            </Pressable>
-          </View>
-        )}
 
         <Perforations negativeBottom />
       </View>

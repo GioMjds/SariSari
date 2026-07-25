@@ -1,6 +1,7 @@
 import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useCallback, useRef, useState, memo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
 
 export type CreditDetailTab = 'credits' | 'payments' | 'history';
@@ -94,7 +95,10 @@ export const TabNavigation = memo(function TabNavigation({
             <Pressable
               key={tab.key}
               onLayout={getTabLayoutHandler(tab.key)}
-              onPress={() => onChange(tab.key)}
+              onPress={() => {
+                Haptics.selectionAsync().catch(() => {});
+                onChange(tab.key);
+              }}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={`${tab.label} tab`}
@@ -117,13 +121,13 @@ export const TabNavigation = memo(function TabNavigation({
                 </StyledText>
                 {typeof count === 'number' && count > 0 && (
                   <View
-                    className={`ml-1.5 px-1.5 py-0.5 rounded-pill ${
+                    className={`ml-1.5 px-2 py-0.5 rounded-pill ${
                       isActive ? 'bg-paper-50/20' : 'bg-paper-200'
                     }`}
                   >
                     <StyledText
                       variant="extrabold"
-                      className={`text-[10px] ${
+                      className={`text-xs ${
                         isActive ? 'text-paper-50' : 'text-ink-700'
                       }`}
                     >

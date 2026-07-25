@@ -57,7 +57,8 @@ export function SearchBar({
       <FontAwesome
         name="search"
         size={14}
-        className="absolute left-3 text-primary-500 z-10"
+        color="#E85A1F"
+        style={{ position: 'absolute', left: 12, zIndex: 10 }}
       />
       <TextInput
         value={local}
@@ -70,6 +71,7 @@ export function SearchBar({
         placeholder={placeholder}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="search"
+        returnKeyType="search"
         className={`w-full bg-surface-subtle border ${
           focused ? 'border-persimmon-300' : 'border-warm-100'
         } rounded-xl px-4 py-3 pl-11 text-warm-900 placeholder-warm-500`}
@@ -82,7 +84,7 @@ export function SearchBar({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.85 }}
             transition={{ type: 'timing', duration: 140 }}
-            className="absolute right-3"
+            className="absolute right-2"
           >
             <TouchableOpacity
               onPress={() => {
@@ -91,10 +93,10 @@ export function SearchBar({
               }}
               accessibilityLabel="Clear search"
               accessibilityRole="button"
-              hitSlop={8}
-              className="press-scale active:opacity-70"
+              hitSlop={10}
+              className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200"
             >
-              <FontAwesome name="times" size={12} className="text-warm-500" />
+              <FontAwesome name="times" size={12} color="#564E45" />
             </TouchableOpacity>
           </MotiView>
         )}

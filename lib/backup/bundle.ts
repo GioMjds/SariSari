@@ -1,4 +1,5 @@
 import * as fflate from 'fflate';
+import { canonicalReceiptPathOrThrow } from '@/lib/receipt-storage';
 
 export interface ManifestFileItem {
   relativePath: string;
@@ -16,6 +17,10 @@ export interface ReceiptFileItem {
   content: Uint8Array;
 }
 
+const assertCanonicalReceiptPath = (relativePath: string): void => {
+  canonicalReceiptPathOrThrow(relativePath);
+};
+
 export async function createBackupBundle(
   dbBuffer: Uint8Array,
   receipts: ReceiptFileItem[],
@@ -25,10 +30,13 @@ export async function createBackupBundle(
     createdAt: Date.now(),
     files: [
       { relativePath: 'sarisari.db', byteSize: dbBuffer.byteLength },
-      ...receipts.map((r) => ({
-        relativePath: r.relativePath,
-        byteSize: r.content.byteLength,
-      })),
+      ...receipts.map((r) => {
+        assertCanonicalReceiptPath(r.relativePath);
+        return {
+          relativePath: r.relativePath,
+          byteSize: r.content.byteLength,
+        };
+      }),
     ],
   };
 
@@ -39,6 +47,7 @@ export async function createBackupBundle(
   };
 
   for (const r of receipts) {
+    assertCanonicalReceiptPath(r.relativePath);
     zipData[r.relativePath] = r.content;
   }
 
@@ -74,6 +83,11 @@ export async function extractBackupBundle(
       const receipts: ReceiptFileItem[] = [];
       for (const key of Object.keys(unzipped)) {
         if (key.startsWith('receipts/')) {
+          try {
+            assertCanonicalReceiptPath(key);
+          } catch {
+            continue;
+          }
           receipts.push({
             relativePath: key,
             content: unzipped[key],

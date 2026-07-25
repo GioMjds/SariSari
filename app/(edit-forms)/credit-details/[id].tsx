@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { Platform, RefreshControl, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -8,7 +9,6 @@ import {
   useCreditHistory,
   useCustomerDetails,
   useDeleteCustomer,
-  useMarkAllCreditsAsPaid,
   useProfile,
 } from '@/hooks';
 import { useModalStore } from '@/stores';
@@ -44,7 +44,6 @@ export default function CustomerDetails() {
   const { data: history = [] } = useCreditHistory(id);
   const { profile } = useProfile();
 
-  const markAllPaidMutation = useMarkAllCreditsAsPaid();
   const deleteCustomerMutation = useDeleteCustomer();
 
   const [activeTab, setActiveTab] = useState<CreditDetailTab>('credits');
@@ -66,24 +65,6 @@ export default function CustomerDetails() {
     Haptics.selectionAsync().catch(() => {});
     router.back();
   }, []);
-
-  const handleMarkAllPaid = useCallback(() => {
-    if (!customer) return;
-    openModal({
-      title: 'Mark All as Paid',
-      description: `Mark all credits for ${customer.name} as paid?`,
-      variant: 'warning',
-      icon: 'check-circle',
-      buttons: [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          style: 'default',
-          onPress: () => markAllPaidMutation.mutate(customer.id),
-        },
-      ],
-    });
-  }, [customer, openModal, markAllPaidMutation]);
 
   const handleDeleteCustomer = useCallback(() => {
     if (!customer) return;
@@ -190,9 +171,14 @@ export default function CustomerDetails() {
         onDelete={handleDeleteCustomer}
       />
 
-      <ScrollView
+      <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
+        enableAutomaticScroll
+        enableOnAndroid
+        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={SCROLL_CONTENT_STYLE}
         refreshControl={
           <RefreshControl
@@ -213,7 +199,6 @@ export default function CustomerDetails() {
             activeCreditCount={activeCreditCount}
             onAddPayment={handleAddPayment}
             onAddCredit={handleAddCredit}
-            onMarkAllPaid={handleMarkAllPaid}
           />
         </View>
 
@@ -254,7 +239,7 @@ export default function CustomerDetails() {
             />
           )}
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

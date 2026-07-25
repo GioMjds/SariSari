@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,7 +26,7 @@ import { InventoryActionModal } from '@/components/inventory/InventoryActionModa
 import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 
-const SCROLL_CONTENT_STYLE = { paddingBottom: 110 } as const;
+const SCROLL_CONTENT_STYLE = { paddingBottom: 32 } as const;
 
 export default function ProductDetailsPage() {
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
@@ -121,18 +121,7 @@ export default function ProductDetailsPage() {
   // ─── Loading state ─────────────────────────────────────────────
   if (productQuery.isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <View className="flex-row items-center px-5 pt-3 pb-2">
-          <Pressable
-            onPress={handleBack}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
-          >
-            <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
-          </Pressable>
-        </View>
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
         <View className="flex-1 justify-center items-center">
           <View
             className="w-12 h-12 rounded-full border-2 border-ink-200"
@@ -149,18 +138,7 @@ export default function ProductDetailsPage() {
   // ─── Not-found state ───────────────────────────────────────────
   if (!product) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <View className="flex-row items-center px-5 pt-3 pb-2">
-          <Pressable
-            onPress={handleBack}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
-          >
-            <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
-          </Pressable>
-        </View>
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
         <View className="flex-1 justify-center items-center px-6">
           <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100 items-center shadow-paper">
             <View className="w-14 h-14 rounded-full bg-paper-100 border border-ink-200 items-center justify-center">
@@ -181,7 +159,7 @@ export default function ProductDetailsPage() {
             <Pressable
               onPress={handleBack}
               accessibilityRole="button"
-              accessibilityLabel="Go back"
+              accessibilityLabel="Dismiss"
               className="mt-5 bg-persimmon-500 rounded-pill px-6 py-3 active:opacity-80"
               style={{
                 shadowColor: '#E85A1F',
@@ -192,7 +170,7 @@ export default function ProductDetailsPage() {
               }}
             >
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                Go Back
+                Dismiss
               </StyledText>
             </Pressable>
           </View>
@@ -203,32 +181,22 @@ export default function ProductDetailsPage() {
 
   // ─── Main screen ───────────────────────────────────────────────
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* ── Slim 3-slot top bar ─────────────────────────────── */}
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+      {/* ── Top bar with Back button & title ── */}
       <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
         <Pressable
           onPress={handleBack}
-          hitSlop={12}
+          hitSlop={{ top: 16, bottom: 16, left: 20, right: 8 }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
+          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-100 border border-ink-100 active:opacity-70"
         >
-          <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
+          <Ionicons name="arrow-back" size={18} color="#0E0C0A" />
         </Pressable>
-
         <StyledText variant="extrabold" className="label-caps text-ink-400">
           Product Profile
         </StyledText>
-
-        <Pressable
-          onPress={handleDelete}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Delete product"
-          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
-        >
-          <FontAwesome name="trash" size={14} color="#C13030" />
-        </Pressable>
+        <View className="w-10 h-10" />
       </View>
 
       {/* ── Scrollable body (hero + tabs + content) ──────────── */}

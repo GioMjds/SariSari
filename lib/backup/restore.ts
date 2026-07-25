@@ -30,6 +30,7 @@ import {
   findLatestSafetyCopy,
 } from './snapshots';
 import type { BackupError } from './types';
+import { canonicalReceiptPathOrThrow } from '@/lib/receipt-storage';
 
 /** Tagged error so callers can branch on cause. */
 export class RestoreError extends Error {
@@ -218,16 +219,63 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
     const dbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db`;
     const backupDbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db.bak`;
 
+    // Receipts already validated by extractBackupBundle; revalidate before
+    // staging to defend against manifest tampering and path collisions.
+    const validReceipts = receipts.map((r) => ({
+      ...r,
+      relativePath: canonicalReceiptPathOrThrow(r.relativePath),
+    }));
+
+    // Back up any pre-existing receipt files that the restore will overwrite,
+    // so we can restore them if a subsequent write fails. Receipts with no
+    // prior file are tracked so we can delete them on rollback.
+    const priorReceipts: Array<{
+      relativePath: string;
+      backupPath: string;
+      existed: boolean;
+    }> = [];
+    for (const r of validReceipts) {
+      const targetPath = `${FileSystem.documentDirectory}${r.relativePath}`;
+      const info = await FileSystem.getInfoAsync(targetPath);
+      const backupPath = `${targetPath}.bak`;
+      try {
+        // Remove any stale .bak file before creating a new one
+        await FileSystem.deleteAsync(backupPath, { idempotent: true });
+        if (info.exists) {
+          await FileSystem.copyAsync({ from: targetPath, to: backupPath });
+        }
+        priorReceipts.push({ relativePath: r.relativePath, backupPath, existed: info.exists });
+      } catch (err) {
+        // Preserve the original failure but roll back any backups we already made.
+        await Promise.all(
+          priorReceipts
+            .filter((p) => p.existed)
+            .map((p) =>
+              FileSystem.deleteAsync(p.backupPath, { idempotent: true }).catch(
+                () => undefined,
+              ),
+            ),
+        );
+        throw err;
+      }
+    }
+
+    let dbBackupSucceeded = false;
     try {
+      // Remove any stale .bak file before creating a new one
+      await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
       await FileSystem.copyAsync({ from: dbPath, to: backupDbPath });
+      dbBackupSucceeded = true;
+
       await FileSystem.writeAsStringAsync(
         dbPath,
         Buffer.from(dbBuffer).toString('base64'),
         { encoding: FileSystem.EncodingType.Base64 },
       );
 
-      for (const r of receipts) {
+      for (const r of validReceipts) {
         const targetPath = `${FileSystem.documentDirectory}${r.relativePath}`;
+        canonicalReceiptPathOrThrow(r.relativePath);
         await FileSystem.writeAsStringAsync(
           targetPath,
           Buffer.from(r.content).toString('base64'),
@@ -236,9 +284,37 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       }
 
       await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
-      return { success: true, restoredReceiptsCount: receipts.length };
+      for (const p of priorReceipts) {
+        if (p.existed) {
+          await FileSystem.deleteAsync(p.backupPath, { idempotent: true });
+        }
+      }
+      return { success: true, restoredReceiptsCount: validReceipts.length };
     } catch (err) {
-      await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
+      // Roll back the database only if the backup succeeded.
+      if (dbBackupSucceeded) {
+        try {
+          await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
+        } catch (rollbackErr) {
+          console.error('Rollback failed for database', rollbackErr);
+        }
+      }
+      // Roll back receipts: restore overwritten files, delete new ones.
+      await Promise.all(
+        priorReceipts.map(async (p) => {
+          const targetPath = `${FileSystem.documentDirectory}${p.relativePath}`;
+          try {
+            if (p.existed) {
+              await FileSystem.copyAsync({ from: p.backupPath, to: targetPath });
+              await FileSystem.deleteAsync(p.backupPath, { idempotent: true });
+            } else {
+              await FileSystem.deleteAsync(targetPath, { idempotent: true });
+            }
+          } catch (rollbackErr) {
+            console.error(`Rollback failed for receipt ${p.relativePath}`, rollbackErr);
+          }
+        }),
+      );
       throw err;
     }
   } else {

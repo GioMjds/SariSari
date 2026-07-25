@@ -18,21 +18,6 @@ import {
   useEditProductForm,
 } from '@/components/inventory/edit-product';
 
-/**
- * EditProduct — thin orchestrator for the Edit Product modal.
- *
- * Composes the focused sub-components under `components/inventory/edit-product/`
- * and delegates all form state, derived math, and submit/delete
- * pipelines to `useEditProductForm`. Mirrors the layered pattern
- * established by the add-product / add-sales / add-credit bundles
- * and the freshly-redesigned credit-details screen.
- *
- * Three render branches:
- *   1. `EditProductSkeleton` — while the product query is in flight.
- *   2. `ProductNotFound` — when the query resolves to nothing.
- *   3. The form — Header → BasicInfo → Pricing → Meta → Actions →
- *      Danger Zone, plus the discard and delete confirmation modals.
- */
 export default function EditProduct() {
   const form = useEditProductForm();
 
@@ -51,7 +36,7 @@ export default function EditProduct() {
 
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
           showsVerticalScrollIndicator={false}
         >
           <EditBasicInfoCard
@@ -89,15 +74,21 @@ export default function EditProduct() {
             />
           </View>
 
-          <View className="mt-6">
+          <View className="mt-6 mb-2">
+            <EditDangerZone onDelete={form.openDeleteModal} />
+          </View>
+        </ScrollView>
+
+        {/* Sticky footer — always reachable without scrolling */}
+        <SafeAreaView edges={['bottom']} className="bg-background border-t border-ink-100">
+          <View className="px-4 pt-3 pb-2">
             <EditActionButtons
               onSubmit={form.submit}
               onCancel={form.handleBack}
               isSubmitting={form.updateProductMutation.isPending}
             />
-            <EditDangerZone onDelete={form.openDeleteModal} />
           </View>
-        </ScrollView>
+        </SafeAreaView>
       </KeyboardAvoidingView>
 
       {/* Discard-changes confirmation */}
@@ -110,7 +101,7 @@ export default function EditProduct() {
         icon="exclamation-triangle"
         buttons={[
           { text: "Don't Leave", style: 'cancel', onPress: form.cancelDiscard },
-          { text: 'Discard', style: 'destructive', onPress: form.confirmDiscard },
+          { text: 'Discard Changes', style: 'destructive', onPress: form.confirmDiscard },
         ]}
       />
 
@@ -122,12 +113,12 @@ export default function EditProduct() {
         title="Delete Product?"
         description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
         buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: form.cancelDelete },
           {
             text: 'Yes, Delete Product',
             style: 'destructive',
             onPress: form.confirmDelete,
           },
-          { text: 'Cancel', style: 'cancel', onPress: form.cancelDelete },
         ]}
         loading={form.deleteProductMutation.isPending}
       />

@@ -141,20 +141,12 @@ export function EditBasicInfoCard({
                   accessibilityRole="button"
                   accessibilityLabel={`Select category ${category.name}`}
                   accessibilityState={{ selected: isActive }}
-                  className={`press-scale px-4 py-2 rounded-pill border ${
+                  className={`press-scale px-4 py-3 rounded-pill border ${
                     isActive
                       ? 'bg-persimmon-500 border-persimmon-500'
                       : 'bg-paper-100 border-ink-200'
                   }`}
-                  style={({ pressed }) => ({
-                    backgroundColor: pressed
-                      ? isActive
-                        ? '#C8460F'
-                        : '#EFE6D2'
-                      : isActive
-                        ? '#E85A1F'
-                        : '#F6F0E2',
-                  })}
+                  style={{ minHeight: 44, justifyContent: 'center' }}
                 >
                   <StyledText
                     variant="extrabold"
@@ -196,6 +188,12 @@ export function EditBasicInfoCard({
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setShowSupplierPicker(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    currentSupplier
+                      ? `Supplier: ${currentSupplier.name}. Tap to change`
+                      : 'Select a supplier. Tap to open picker'
+                  }
                   className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
                 >
                   <StyledText
