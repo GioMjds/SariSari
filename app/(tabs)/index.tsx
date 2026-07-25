@@ -182,24 +182,38 @@ export default function Dashboard() {
               </View>
             </View>
 
-            {/* Row 2: Title + Settings Button */}
+            {/* Row 2: Title + Subtitle + Drawer Badge + Settings Button */}
             <View className="flex-row items-start justify-between mb-4">
-              <Skeleton width={180} height={32} borderRadius={6} />
+              <View className="flex-1 mr-3">
+                <View className="flex-row items-center gap-2">
+                  <Skeleton width={180} height={32} borderRadius={6} />
+                  <Skeleton width={96} height={24} borderRadius={12} />
+                </View>
+                <View className="mt-1">
+                  <Skeleton width={180} height={14} borderRadius={4} />
+                </View>
+              </View>
               <Skeleton width={44} height={44} borderRadius={22} />
             </View>
 
-            {/* Row 3: Metric blocks */}
-            <View className="flex-row pt-3 border-t border-cinnamon-400/40">
-              <View className="flex-1 mr-4">
+            {/* Row 3: Cohesive Metric Cards Skeleton */}
+            <View className="flex-row gap-3 pt-3 border-t border-cinnamon-400/40">
+              <View className="flex-1 bg-paper-50/20 rounded-2xl p-3.5 border border-paper-50/30">
                 <Skeleton width={90} height={10} borderRadius={4} />
                 <View className="mt-1">
-                  <Skeleton width={110} height={32} borderRadius={4} />
+                  <Skeleton width={110} height={28} borderRadius={4} />
+                </View>
+                <View className="mt-1.5">
+                  <Skeleton width={70} height={14} borderRadius={4} />
                 </View>
               </View>
-              <View className="flex-1">
+              <View className="flex-1 bg-paper-50/20 rounded-2xl p-3.5 border border-paper-50/30">
                 <Skeleton width={90} height={10} borderRadius={4} />
                 <View className="mt-1">
-                  <Skeleton width={60} height={32} borderRadius={4} />
+                  <Skeleton width={50} height={28} borderRadius={4} />
+                </View>
+                <View className="mt-1.5">
+                  <Skeleton width={60} height={14} borderRadius={4} />
                 </View>
               </View>
             </View>

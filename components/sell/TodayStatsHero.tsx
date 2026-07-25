@@ -25,20 +25,6 @@ interface TodayStatsHeroProps {
   creditsLabel: string;
 }
 
-/**
- * TodayStatsHero — today's-stats card that sits at the top of the
- * sales-history FlatList.
- *
- * Layout (inside the ReceiptHero):
- *   • Eyebrow strip with calendar icon + sub-label on the left,
- *     mono counter on the right.
- *   • ReceiptHeroDivider with the amount-due label.
- *   • Oversized MoneyText total.
- *   • Meta rows (items sold, credits) via ReceiptHeroMeta.
- *
- * Wrapped in a MotiView stagger so it fades in after the header.
- * Pure presentational — receives every rendered string as a prop.
- */
 export const TodayStatsHero = React.memo(function TodayStatsHero({
   stats,
   headerLabel,

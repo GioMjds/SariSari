@@ -7,6 +7,7 @@ import { StyledText } from '@/components/elements';
 import { formatPesos } from '@/lib/money';
 
 export interface DashboardContextHeaderProps {
+  subtitle?: string;
   hasStockRisk: boolean;
   cashSession: { status: 'open' | 'closed'; variance: number | null } | null;
   totalPesos: number;
@@ -17,6 +18,7 @@ export interface DashboardContextHeaderProps {
 }
 
 export const DashboardContextHeader = memo(function DashboardContextHeader({
+  subtitle,
   hasStockRisk,
   cashSession,
   totalPesos,
@@ -31,6 +33,9 @@ export const DashboardContextHeader = memo(function DashboardContextHeader({
     defaultValue: 'GOOD MORNING',
   });
   const title = t('common:dashboardTitle', { defaultValue: 'Counter Command' });
+  const defaultSubtitle = t('common:dashboardSubtitle', {
+    defaultValue: 'Daily sales & store counter overview',
+  });
 
   return (
     <MotiView
@@ -53,29 +58,62 @@ export const DashboardContextHeader = memo(function DashboardContextHeader({
           >
             <StyledText
               variant="black"
-              className="text-paper-50 text-xl font-extrabold"
+              className="text-paper-50 text-lg font-extrabold"
             >
               ₱
             </StyledText>
           </View>
           <StyledText
             variant="extrabold"
-            className="label-caps text-paper-200 opacity-80"
-            style={{ letterSpacing: 1.4 }}
+            className="label-caps text-paper-100 tracking-[0.14em]"
           >
             {eyebrow}
           </StyledText>
         </View>
 
-        {/* Row 2: Title + Settings Action */}
+        {/* Row 2: Title + Subtitle + Drawer Status Badge + Settings Action */}
         <View className="flex-row items-start justify-between mb-4">
           <View className="flex-1 mr-3">
+            <View className="flex-row items-center flex-wrap gap-2">
+              <StyledText
+                variant="extrabold"
+                className="text-h1 text-paper-50 text-3xl tracking-tight"
+              >
+                {title}
+              </StyledText>
+              {cashSession && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    cashSession.status === 'open'
+                      ? t('common:cashSession.open', { defaultValue: 'Drawer Open' })
+                      : t('common:cashSession.closed', { defaultValue: 'Drawer Closed' })
+                  }
+                  onPress={onOpenCashSession}
+                  className={`flex-row items-center px-2.5 py-1 rounded-full ${
+                    cashSession.status === 'open'
+                      ? 'bg-sage-500/25 border border-sage-400/50'
+                      : 'bg-persimmon-500/20 border border-persimmon-400/40'
+                  } active:opacity-75`}
+                >
+                  <View
+                    className={`w-2 h-2 rounded-full mr-1.5 ${
+                      cashSession.status === 'open' ? 'bg-sage-300' : 'bg-persimmon-400'
+                    }`}
+                  />
+                  <StyledText variant="extrabold" className="text-paper-100 text-xs">
+                    {cashSession.status === 'open'
+                      ? t('common:cashSession.open', { defaultValue: 'Drawer Open' })
+                      : t('common:cashSession.closed', { defaultValue: 'Drawer Closed' })}
+                  </StyledText>
+                </Pressable>
+              )}
+            </View>
             <StyledText
-              variant="extrabold"
-              className="text-h1 text-paper-50 text-3xl"
-              style={{ letterSpacing: -0.28 }}
+              variant="regular"
+              className="text-sm text-paper-200 mt-1"
             >
-              {title}
+              {subtitle || defaultSubtitle}
             </StyledText>
           </View>
 
@@ -85,72 +123,85 @@ export const DashboardContextHeader = memo(function DashboardContextHeader({
               defaultValue: 'Settings',
             })}
             onPress={onOpenSettings}
-            className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15 active:opacity-70"
+            className="w-14 h-14 rounded-full items-center justify-center bg-paper-50/15 active:bg-paper-50/25"
           >
-            <FontAwesome name="cog" size={18} color="#FBF7EE" />
+            <FontAwesome name="cog" size={22} color="#FBF7EE" />
           </Pressable>
         </View>
 
-        {/* Row 3: Metric blocks (revenue + transactions) */}
-        <View className="flex-row pt-3 border-t border-cinnamon-400/40">
-          {/* Today's Revenue */}
+        {/* Row 3: Cohesive Twin Metric Paper Cards (Revenue + Transactions) */}
+        <View className="flex-row gap-3 pt-3">
+          {/* Card 1: Today's Revenue */}
           <View
             accessibilityLabel="Today's Revenue"
-            className="flex-1 mr-4 active:opacity-80"
+            className="flex-1 bg-paper-50 rounded-2xl p-3.5 border border-paper-300 shadow-sm"
           >
-            <StyledText
-              variant="extrabold"
-              className="text-paper-300 opacity-80"
-              style={{ fontSize: 10, letterSpacing: 1.2 }}
-            >
-              {t('common:dashboard.pulse.todayRevenue', {
-                defaultValue: "TODAY'S REVENUE",
-              }).toUpperCase()}
-            </StyledText>
+            <View className="flex-row items-center mb-1">
+              <View className="w-1.5 h-1.5 rounded-full bg-persimmon-500 mr-1.5" />
+              <StyledText
+                variant="extrabold"
+                className="text-cinnamon-800 text-[10px] tracking-wider"
+              >
+                {t('common:dashboard.pulse.todayRevenue', {
+                  defaultValue: "TODAY'S REVENUE",
+                }).toUpperCase()}
+              </StyledText>
+            </View>
             <StyledText
               variant="black"
-              className="text-paper-50 text-3xl mt-0.5"
-              style={{ letterSpacing: -0.5 }}
+              className="text-cinnamon-950 text-2xl sm:text-3xl tracking-tight"
               numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {formatPesos(totalPesos)}
             </StyledText>
-            {hasStockRisk && (
-              <View className="flex-row items-center mt-1">
-                <FontAwesome name="arrow-up" size={9} color="#92B662" />
+            {hasStockRisk ? (
+              <View className="flex-row items-center mt-1.5">
+                <FontAwesome name="arrow-up" size={9} color="#4F7A24" />
                 <StyledText
                   variant="semibold"
-                  className="text-sage-300 text-xs ml-1"
+                  className="text-sage-700 text-xs ml-1"
                 >
                   {t('common:dashboard.header.sinceYesterday', {
                     defaultValue: 'vs yesterday',
                   })}
                 </StyledText>
               </View>
+            ) : (
+              <StyledText variant="regular" className="text-ink-500 text-xs mt-1.5">
+                {t('common:dashboard.header.today', { defaultValue: 'today' })}
+              </StyledText>
             )}
           </View>
 
-          {/* Transactions */}
-          <View className="flex-1">
-            <StyledText
-              variant="extrabold"
-              className="text-paper-300 opacity-80"
-              style={{ fontSize: 10, letterSpacing: 1.2 }}
-            >
-              {t('common:dashboard.pulse.todaySales', {
-                defaultValue: 'TRANSACTIONS',
-              }).toUpperCase()}
-            </StyledText>
+          {/* Card 2: Transactions / Today's Sales */}
+          <View
+            accessibilityLabel="Today's Sales"
+            className="flex-1 bg-paper-50 rounded-2xl p-3.5 border border-paper-300 shadow-sm"
+          >
+            <View className="flex-row items-center mb-1">
+              <View className="w-1.5 h-1.5 rounded-full bg-sage-500 mr-1.5" />
+              <StyledText
+                variant="extrabold"
+                className="text-cinnamon-800 text-[10px] tracking-wider"
+              >
+                {t('common:dashboard.pulse.todaySales', {
+                  defaultValue: 'TRANSACTIONS',
+                }).toUpperCase()}
+              </StyledText>
+            </View>
             <StyledText
               variant="black"
-              className="text-paper-50 text-3xl mt-0.5"
-              style={{ letterSpacing: -0.5 }}
+              className="text-cinnamon-950 text-2xl sm:text-3xl tracking-tight"
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {transactionCount}
             </StyledText>
             <StyledText
               variant="regular"
-              className="text-paper-300 opacity-70 text-xs mt-1"
+              className="text-ink-500 text-xs mt-1.5"
+              numberOfLines={1}
             >
               {sessionStartTime
                 ? t('common:dashboard.header.since', {

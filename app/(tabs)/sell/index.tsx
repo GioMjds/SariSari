@@ -45,22 +45,6 @@ const SALE_ITEM_TRANSITIONS = Array.from({ length: 5 }, (_, i) => ({
   delay: 200 + i * 50,
 }));
 
-/**
- * Sell tab — Sales History & Reports hub.
- *
- * The POS checkout flow used to live here as an in-tab "Record Sale"
- * segment; it has been extracted into its own modal route at
- * `app/(edit-forms)/add-sales/`. This screen now owns only:
- *   • Header (cinnamon hero with monogram + title + [+] entry point).
- *   • Sales history list (paginated, filterable, pull-to-refresh).
- *   • Today's stats hero.
- *   • Filter chips + advanced filter modal.
- *   • Empty state with a "New Sale" CTA.
- *
- * Every visual block is delegated to a presentational subcomponent
- * under `components/sell/`. The screen only handles data fetching,
- * filtering/pagination state, navigation, and animations.
- */
 export default function Sell() {
   const router = useRouter();
   const { t } = useTranslation('sales');
