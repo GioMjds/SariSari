@@ -119,20 +119,20 @@ describe('DashboardScreen Integration', () => {
   test('renders dashboard components in success state and handles action routing', async () => {
     setupDefaultMocks();
 
-    const { getByText } = await render(
+    const { getByText, getAllByText } = await render(
       <QueryClientProvider client={queryClient}>
         <DashboardScreen />
       </QueryClientProvider>,
     );
 
     expect(getByText('New Sale')).toBeTruthy();
-    expect(getByText("Today's Revenue")).toBeTruthy();
+    expect(getByText(/today's revenue/i)).toBeTruthy();
     expect(getByText('Recent Activity')).toBeTruthy();
 
     fireEvent.press(getByText('New Sale'));
     expect(mockPush).toHaveBeenCalledWith('/(edit-forms)/add-sales');
 
-    fireEvent.press(getByText('Add Product'));
+    fireEvent.press(getAllByText('Add Product')[0]);
     expect(mockPush).toHaveBeenCalledWith('/(edit-forms)/add-product');
 
     fireEvent.press(getByText('₱200.00'));

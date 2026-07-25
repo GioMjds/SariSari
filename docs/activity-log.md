@@ -75,3 +75,6 @@
   - Added Tagalog translations under `dashboard` in `locales/tl/common.json`.
   - Validated locale JSON formatting with Node parser.
 - Explained purpose of 'Mark All as Paid' button and removed it from `app/(edit-forms)/credit-details/[id].tsx` and `components/utang/credit-details/CustomerHeroCard.tsx` to prevent bypassing payment ledger logs.
+- Configured full-screen `card` presentation for `product-details`, `edit-product`, `credit-details`, `sale-details`, and `inventory-ledger` in `app/(edit-forms)/_layout.tsx` so detail and edit screens push as standard cards instead of formSheet modals.
+- Added a back navigation button in `app/(edit-forms)/product-details/[id].tsx` header top bar.
+

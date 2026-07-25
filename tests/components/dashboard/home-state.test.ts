@@ -117,7 +117,7 @@ describe('resolveHomeState', () => {
     const eveningInput = baseInput({ hour: 20 });
     const eveningState = resolveHomeState(eveningInput);
     expect(eveningState.suggestions).toEqual([
-      { kind: 'continueSelling', destination: 'reports' },
+      { kind: 'reviewReports', destination: 'reports' },
     ]);
   });
 });

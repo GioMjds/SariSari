@@ -182,11 +182,21 @@ export default function ProductDetailsPage() {
   // ─── Main screen ───────────────────────────────────────────────
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-      {/* ── Slim top bar — centered "Product Profile" label ── */}
-      <View className="flex-row items-center justify-center px-5 pt-4 pb-2">
-        <StyledText variant="extrabold" className="label-caps pb-2 text-ink-400">
+      {/* ── Top bar with Back button & title ── */}
+      <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
+        <Pressable
+          onPress={handleBack}
+          hitSlop={{ top: 16, bottom: 16, left: 20, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-100 border border-ink-100 active:opacity-70"
+        >
+          <Ionicons name="arrow-back" size={18} color="#0E0C0A" />
+        </Pressable>
+        <StyledText variant="extrabold" className="label-caps text-ink-400">
           Product Profile
         </StyledText>
+        <View className="w-10 h-10" />
       </View>
 
       {/* ── Scrollable body (hero + tabs + content) ──────────── */}
