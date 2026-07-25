@@ -1,0 +1,48 @@
+# Activity Log
+
+## 2026-07-24
+
+- Fixed formatting corruptions in `docs/superpowers/specs/2026-07-11-gastos-kaha-design.md`.
+- Removed diff prefixes (`1 +`, `2 +`, etc.) and line numbers that were pasted into document text.
+- Fixed broken code block syntax (```ts).
+- Restored missing header `## Release 2: Receipt Attachments and Backup Bundles` and section `### Storage and receipt limits`.
+- Ensured clean GFM markdown adhering to project AGENTS.md rules.
+- Created implementation plan `docs/superpowers/plans/2026-07-24-gastos-kaha.md` covering Release 1 (Financial Ledger & Reports) and Release 2 (Receipt Attachments & ZIP Backup Bundles).
+- Decomposed implementation plan into 11 sub-feature task files under `docs/superpowers/tasks/gastos-kaha/`.
+- Fixed TypeScript errors in `database/financial.ts` for `updateFinancialEntry` and added `initFinancialEntriesTable`.
+- Exported `financial` module in `database/index.ts`.
+- Created comprehensive unit tests in `tests/database/financial.test.ts`.
+- Implemented Task 4: Report KPIs & True Operating Profit Calculation Rules in `database/reports.ts` and `tests/database/reports.test.ts`.
+  - Updated `getReportKPIs` to calculate `grossProfit` and `operatingProfit` (`sales - COGS - paid operating expenses`).
+  - Excluded owner drawings from profit calculation.
+  - Handled cost price snapshot coverage check (returns `null` when cost price is missing for sold items in the date range).
+  - Evaluated `grossProfit = 0` and `operatingProfit = -paidExpenses` when there are zero sales in period.
+- Updated `components/financial/RecordEntryModal.tsx` to utilize `setBusinessDate` by adding a Date (YYYY-MM-DD) text input field, date format validation, and optional `initialBusinessDate` prop.
+- Added unit tests in `tests/components/RecordEntryModal.test.tsx` verifying business date editing and submission.
+- Fixed TypeScript type mismatch in `app/gastos-kaha/index.tsx` by updating `NewFinancialEntry` interface in `types/financial.types.ts` (`note?: string | null`) and using `NewFinancialEntry` in `RecordEntryModal` `onSubmit` prop interface.
+- Implemented Task 7: Retire Active Cash Session Creation & Mark Historical Sessions Read-Only.
+  - Added unit test in `tests/database/cash.test.ts` verifying legacy cash sessions table and records remain read-only for audit protection.
+  - Added `LegacyCashSessionBanner` in `components/dashboard/DashboardAlertCards.tsx` and `components/cash-session/ActiveSessionSummaryCard.tsx` pointing owners to Gastos & Kaha Ledger for expenses and drawings.
+  - Updated `components/cash-session/OpenSessionView.tsx` to display legacy read-only notice instead of active drawer creation form.
+- Implemented Task 08: Migration 13 & Receipt Storage Layer.
+  - Extended `database/migrations.ts` with Migration 13 for `financial_entry_receipts` table with slot 0-4 constraints.
+  - Created `database/receipts.ts` for receipt database CRUD (enforcing expense-only receipt restriction).
+  - Created `lib/receipt-storage.ts` for local document directory file handling.
+  - Added unit test in `tests/database/receipts.test.ts`.
+- Implemented Task 09: ZIP Backup Bundle Packaging Service using fflate.
+  - Added `fflate` dependency.
+  - Created `lib/backup/bundle.ts` with `createBackupBundle` and `extractBackupBundle`.
+  - Added unit test in `tests/backup/bundle.test.ts`.
+- Implemented Task 10: Receipt-Aware Backup & Restore Integration with Rollback Protection.
+  - Updated `lib/backup/restore.ts` with `performRestore` handling dual format detection (.zip vs .db) and atomic rollback.
+  - Added unit test in `tests/backup/restore-receipts.test.ts`.
+- Implemented Task 11: Receipt Photo Attachment Picker & Gallery UI.
+  - Created `components/financial/ReceiptPicker.tsx` component allowing up to 5 photo slots per expense entry.
+  - Integrated `ReceiptPicker` into `components/financial/RecordEntryModal.tsx`.
+  - Added unit test in `tests/components/ReceiptPicker.test.tsx`.
+- Integrated Gastos & Kaha Reconciliation UI navigation and screen linking.
+  - Exported `FinancialResultSection` component in `components/reports/index.ts`.
+  - Embedded `FinancialResultSection` in `app/(tabs)/reports/index.tsx` right below the Bento KPI grid with direct `router.push('/gastos-kaha')` navigation link.
+  - Added top navigation header with back button (`router.back()`) in `app/gastos-kaha/index.tsx`.
+  - Created unit tests in `tests/components/FinancialResultSection.test.tsx`.
+  - Added `TextInput` override in `jest.setup.ts` and updated database setup in `tests/components/GastosKahaScreen.test.tsx`.

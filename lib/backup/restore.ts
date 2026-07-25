@@ -23,6 +23,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Updates from 'expo-updates';
 import { db } from '@/configs/sqlite';
 import { validate } from './integrity';
+import { extractBackupBundle } from './bundle';
 import {
   DB_PATH,
   createPreRestoreSafetyCopy,
@@ -198,3 +199,56 @@ export const restoreFromCloud = async (_fileId: string): Promise<void> => {
     }
   }
 };
+
+export async function performRestore(inputBuffer: Uint8Array): Promise<{
+  success: boolean;
+  restoredReceiptsCount: number;
+}> {
+  const isZip =
+
+    inputBuffer.length > 4 &&
+    inputBuffer[0] === 0x50 &&
+    inputBuffer[1] === 0x4b &&
+    inputBuffer[2] === 0x03 &&
+    inputBuffer[3] === 0x04;
+
+  if (isZip) {
+    const { dbBuffer, receipts } = await extractBackupBundle(inputBuffer);
+
+    const dbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db`;
+    const backupDbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db.bak`;
+
+    try {
+      await FileSystem.copyAsync({ from: dbPath, to: backupDbPath });
+      await FileSystem.writeAsStringAsync(
+        dbPath,
+        Buffer.from(dbBuffer).toString('base64'),
+        { encoding: FileSystem.EncodingType.Base64 },
+      );
+
+      for (const r of receipts) {
+        const targetPath = `${FileSystem.documentDirectory}${r.relativePath}`;
+        await FileSystem.writeAsStringAsync(
+          targetPath,
+          Buffer.from(r.content).toString('base64'),
+          { encoding: FileSystem.EncodingType.Base64 },
+        );
+      }
+
+      await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
+      return { success: true, restoredReceiptsCount: receipts.length };
+    } catch (err) {
+      await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
+      throw err;
+    }
+  } else {
+    const dbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db`;
+    await FileSystem.writeAsStringAsync(
+      dbPath,
+      Buffer.from(inputBuffer).toString('base64'),
+      { encoding: FileSystem.EncodingType.Base64 },
+    );
+    return { success: true, restoredReceiptsCount: 0 };
+  }
+}
+

@@ -11,3 +11,4 @@ export * from './ReportKPICard';
 export * from './SectionHeader';
 export * from './SimpleBarChart';
 export * from './TopProductsList';
+export * from './FinancialResultSection';

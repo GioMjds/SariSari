@@ -8,17 +8,15 @@ export type DateRangeType = 'today' | 'yesterday' | 'last7days' | 'thisMonth' | 
 
 export interface ReportKPIs {
 	totalSales: number;
-	// Profit is nullable: when no sold units in the range have a recorded
-	// cost_price, profit is unknown (not zero). The UI must render null as
-	// "unavailable" or "add cost prices to see profit".
 	totalProfit: number | null;
+	grossProfit: number | null;
+	operatingProfit: number | null;
+	paidExpenses: number;
+	ownerDrawings: number;
 	totalCreditsIssued: number;
 	totalCreditsCollected: number;
 	totalExpenses: number;
 	inventoryCostOut: number;
-	// Fraction of sold units in the range that had a recorded cost_price.
-	// 0 means profit was definitely 0; null means there were no sales to
-	// measure coverage against.
 	profitCoverage: number | null;
 	marginPercent: number | null;
 }

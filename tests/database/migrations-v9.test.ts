@@ -44,7 +44,7 @@ describe('Database Migration v9 (Tingi vs Pakyaw)', () => {
     expect(saleItemColNames).toContain('cost_price');
 
     const [{ user_version }] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version');
-    expect(user_version).toBe(11);
+    expect(user_version).toBe(12);
 
     const tables = await db.getAllAsync<{ name: string }>("SELECT name FROM sqlite_master WHERE type='table'");
     const tableNames = tables.map(t => t.name);
@@ -98,6 +98,6 @@ describe('Database Migration v9 (Tingi vs Pakyaw)', () => {
     expect(tableNames).toContain('product_catalog');
 
     const [{ user_version }] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version');
-    expect(user_version).toBe(11);
+    expect(user_version).toBe(12);
   });
 });

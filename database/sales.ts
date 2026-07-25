@@ -63,6 +63,7 @@ export interface InsertSaleItemInput {
   sold_unit_name?: string;
   sold_unit_qty?: number;
   conversion_factor?: number | null;
+  cost_price?: number | null;
 }
 
 /**
@@ -177,9 +178,12 @@ export const insertSale = async (
       const conversionFactor = isWholesale
         ? productRow?.conversion_factor
         : null;
-      const costPriceSnapshot = isWholesale
-        ? (productRow?.wholesale_cost_price ?? null)
-        : (productRow?.cost_price ?? null);
+      const costPriceSnapshot =
+        item.cost_price !== undefined
+          ? item.cost_price
+          : isWholesale
+            ? (productRow?.wholesale_cost_price ?? null)
+            : (productRow?.cost_price ?? null);
 
       await db.runAsync(
         `INSERT INTO sale_items (
