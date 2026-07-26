@@ -103,7 +103,7 @@ export default function RootLayout() {
   }, [fontsLoaded, i18nReady]);
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync('#EFE6D2');
+    void NavigationBar.setButtonStyleAsync('dark').catch(() => {});
   }, []);
 
   // Backup scheduler wiring — spec §3.6 (triggers). Runs once on mount

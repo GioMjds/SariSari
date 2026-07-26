@@ -10,9 +10,10 @@ export interface Tab {
 
 export const PRIMARY_TAB_PATHS = [
   '/',
-  '/inventory',
+  '/sell',
   '/utang',
   '/reports',
+  '/inventory',
 ] as const;
 
 export function isPrimaryTabPath(path: string): boolean {
@@ -21,6 +22,7 @@ export function isPrimaryTabPath(path: string): boolean {
 
 export const getTabs = (t: TFunction): Tab[] => [
   { name: t('common:dashboardTitle'), href: '/', icon: 'area-chart' },
+  { name: t('common:salesTitle'), href: '/sales', icon: 'shopping-cart' },
   { name: t('common:inventoryTitle'), href: '/inventory', icon: 'cube' },
   { name: t('common:utangTitle'), href: '/utang', icon: 'credit-card' },
   { name: t('common:reportsTitle'), href: '/reports', icon: 'bar-chart' },

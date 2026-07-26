@@ -1,5 +1,6 @@
 import { StyledTab } from '@/components/layout';
-import { Tabs, usePathname } from 'expo-router';
+import { TopTabs } from '@/components/navigation/top-tabs';
+import { usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { BackHandler, View, Image } from 'react-native';
@@ -47,12 +48,18 @@ export default function ScreensLayout() {
   return (
     <>
       <StatusBar style="light" backgroundColor="#623418" />
-      <Tabs
+      <TopTabs
         screenOptions={{
-          headerShown: false,
           tabBarStyle: { display: 'none' },
+          swipeEnabled: true,
         }}
-      />
+      >
+        <TopTabs.Screen name="index" />
+        <TopTabs.Screen name="sales/index" />
+        <TopTabs.Screen name="inventory/index" />
+        <TopTabs.Screen name="utang/index" />
+        <TopTabs.Screen name="reports/index" />
+      </TopTabs>
       <StyledTab />
 
       <CustomModal
