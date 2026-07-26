@@ -19,47 +19,25 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-/**
- * Static fallback kept for backward compatibility with non-hook consumers.
- * Prefer `useTabBarBottomOffset()` in scrollable screens for a value that
- * adapts to gesture vs. three-button navigation at runtime.
- */
 export const TAB_BAR_TOTAL_OFFSET = 80;
 
-/** Visible pill height: py-2 (8px * 2) + icon row (~46px). */
-const TAB_BAR_HEIGHT = 62;
+export const TAB_BAR_RAIL_HEIGHT = 66;
+export const TAB_BAR_ACTION_OVERHANG = 28;
+export const TAB_BAR_MARGIN = 16;
 
-/**
- * Minimum margin between the pill bottom edge and the screen/app-window edge.
- * Applied regardless of navigation mode so the bar never hugs the very bottom.
- */
-const TAB_BAR_MARGIN = 16;
-
-/**
- * Returns the total vertical space (in dp) consumed by the tab bar from the
- * bottom of the screen, accounting for the system navigation mode:
- *
- * - **Gesture navigation** (Android / iOS home-indicator): `insets.bottom` is
- *   non-zero (16–34dp). The app window extends to the physical edge, so the
- *   pill must sit above the gesture strip → offset = height + margin + inset.
- *
- * - **Three-button navigation** (Android, non-edge-to-edge): `insets.bottom`
- *   is 0 because the app window ends at the top of the nav button bar. The
- *   pill only needs its own height plus a small visual margin.
- *
- * Use this as `bottomOffset` in `<FlatList>` / `<Pagination>` so list content
- * scrolls fully clear of the floating tab bar.
- */
-export function useTabBarBottomOffset(): number {
-  const insets = useSafeAreaInsets();
-  // On Android three-button nav the window excludes the nav bar, so
-  // insets.bottom is 0. We only need height + visual margin.
-  // On gesture nav (Android / iOS) insets.bottom is the strip height and
-  // must be added so the pill clears the system affordance.
-  return TAB_BAR_HEIGHT + TAB_BAR_MARGIN + Math.max(insets.bottom, 0);
+export function getTabBarBottomOffset(bottomInset: number): number {
+  return (
+    TAB_BAR_RAIL_HEIGHT +
+    TAB_BAR_ACTION_OVERHANG +
+    Math.max(bottomInset, TAB_BAR_MARGIN)
+  );
 }
 
-// Mirrors persimmon-500 / paper-50 / ink-300 from tailwind.config.js.
+export function useTabBarBottomOffset(): number {
+  const insets = useSafeAreaInsets();
+  return getTabBarBottomOffset(insets.bottom);
+}
+
 const ICON_ACTIVE = '#FBF7EE';
 const ICON_INACTIVE = '#A89F90';
 
@@ -76,10 +54,6 @@ interface TabButtonProps {
   onLayoutMeasured: (key: string, focused: boolean, layout: TabLayout) => void;
 }
 
-/**
- * TabButton is memoized to avoid redundant renders of inactive buttons.
- * Delegates layout event to the parent through a stable callback.
- */
 const TabButton = memo(
   ({
     tab,

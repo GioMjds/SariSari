@@ -8,19 +8,26 @@ export interface Tab {
   icon: keyof typeof FontAwesome.glyphMap;
 }
 
-/**
- * Bottom-tab definitions: Dashboard is home base, Sell is POS,
- * Inventory is product catalog + restock, Utang tracks loans, and
- * Reports handles metrics.
- *
- * `name` is translated via the `common` namespace so the tab labels
- * follow the app's active language. Pass `t` from a `useTranslation()`
- * hook in the consumer.
- */
+export const PRIMARY_TAB_PATHS = [
+  '/',
+  '/inventory',
+  '/utang',
+  '/reports',
+] as const;
+
+export function isPrimaryTabPath(path: string): boolean {
+  return PRIMARY_TAB_PATHS.some((p) => p === path);
+}
+
 export const getTabs = (t: TFunction): Tab[] => [
   { name: t('common:dashboardTitle'), href: '/', icon: 'area-chart' },
-  { name: t('common:sellTitle'), href: '/sell', icon: 'shopping-cart' },
   { name: t('common:inventoryTitle'), href: '/inventory', icon: 'cube' },
   { name: t('common:utangTitle'), href: '/utang', icon: 'credit-card' },
   { name: t('common:reportsTitle'), href: '/reports', icon: 'bar-chart' },
 ];
+
+export const getSellAction = (t: TFunction): Tab => ({
+  name: t('common:sellAction'),
+  href: '/(edit-forms)/add-sales',
+  icon: 'shopping-cart',
+});

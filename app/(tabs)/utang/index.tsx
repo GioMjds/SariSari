@@ -1,5 +1,5 @@
 import { StyledText } from '@/components/elements';
-import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
+import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination, SearchBar } from '@/components/ui';
 import {
   CompactLedgerMetrics,
@@ -104,11 +104,13 @@ export default function Credits() {
     return t('subtitleLedgerClear');
   }, [kpis?.overdueCount, filteredCustomers.length, priorityCustomer, t]);
 
+  const tabBarBottomOffset = useTabBarBottomOffset();
+
   const handleRefresh = () => {
     refetch();
     queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
   };
-
+  
   const handleFilterChange = (filter: CreditFilter) => {
     setActiveFilter(filter);
   };
@@ -130,7 +132,7 @@ export default function Credits() {
       params: { id: customer.id },
     });
   };
-
+  
   const handleAddCredit = (customer: Customer) => {
     router.push({
       pathname: '/(edit-forms)/add-credit/[id]',
@@ -171,6 +173,7 @@ export default function Credits() {
   // ── Render: no customers at all ─────────────────────────────
   const noCustomersAtAll = customers.length === 0 && !searchQuery.trim();
 
+
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
       <View className="flex-1 bg-background">
@@ -187,7 +190,7 @@ export default function Credits() {
           extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: 96 }}
+          contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -320,7 +323,7 @@ export default function Credits() {
             onPageChange={setCurrentPage}
             totalItems={filteredCustomers.length}
             itemsPerPage={ITEMS_PER_PAGE}
-            bottomOffset={TAB_BAR_TOTAL_OFFSET}
+            bottomOffset={tabBarBottomOffset}
           />
         )}
       </View>

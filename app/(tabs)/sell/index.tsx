@@ -7,7 +7,7 @@ import {
   SellHeader,
   TodayStatsHero,
 } from '@/components/sell';
-import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
+import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination } from '@/components/ui';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
@@ -258,6 +258,8 @@ export default function Sell() {
     );
   }, [isLoading, handleOpenAddSales, sales.length]);
 
+  const tabBarBottomOffset = useTabBarBottomOffset();
+
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
       <View className="flex-1 bg-background">
@@ -278,7 +280,7 @@ export default function Sell() {
             data={paginatedSales}
             renderItem={renderSaleItem}
             keyExtractor={keyExtractor}
-            contentContainerStyle={{ paddingBottom: 120 }}
+            contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -304,7 +306,7 @@ export default function Sell() {
               onPageChange={setCurrentPage}
               totalItems={filteredSales.length}
               itemsPerPage={ITEMS_PER_PAGE}
-              bottomOffset={TAB_BAR_TOTAL_OFFSET}
+              bottomOffset={tabBarBottomOffset}
             />
           )}
         </View>

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { BackHandler, View, Image } from 'react-native';
 import { useDialogStore } from '@/stores';
 import { Modal as CustomModal } from '@/components/ui';
+import { isPrimaryTabPath } from '@/constants';
 
 const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
 
@@ -24,8 +25,7 @@ export default function ScreensLayout() {
   useEffect(() => {
     const backAction = () => {
       // Check if current route is a top-level tab
-      const isTopLevelTab = ['/', '/sell', '/inventory', '/utang', '/reports'].includes(pathname);
-      if (isTopLevelTab) {
+      if (isPrimaryTabPath(pathname)) {
         showDialog({
           title: 'Exit App',
           message: 'Are you sure you want to exit the app?',

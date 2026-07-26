@@ -54,6 +54,7 @@
   "attentionSukis": "Utang",
   "attentionSales": "Mga Kamakailang Benta",
   "viewAll": "Tingnan lahat",
+  "viewAllSales": "Tingnan lahat ng benta",
   "viewAllA11y": "Tingnan lahat ng {{label}}",
 
   "settingsTitle": "Mga Setting",

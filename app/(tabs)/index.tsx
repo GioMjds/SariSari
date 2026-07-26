@@ -27,6 +27,7 @@ import {
   useRecentSales,
   useSales,
 } from '@/hooks';
+import { useTabBarBottomOffset } from '@/components/layout';
 
 const destinationRoutes: Record<HomeDestination, Href> = {
   addProduct: '/(edit-forms)/add-product',
@@ -57,18 +58,11 @@ export default function Dashboard() {
     isLoading: productsLoading,
     isError: productsError,
   } = getAllProductsQuery;
-  const {
-    data: hasAnySales = false,
-    isLoading: hasSalesLoading,
-  } = hasSalesQuery;
-  const {
-    data: stats,
-    isLoading: statsLoading,
-  } = getTodayStatsQuery;
-  const {
-    data: recentSalesList = [],
-    isLoading: recentSalesLoading,
-  } = recentSalesQuery;
+  const { data: hasAnySales = false, isLoading: hasSalesLoading } =
+    hasSalesQuery;
+  const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
+  const { data: recentSalesList = [], isLoading: recentSalesLoading } =
+    recentSalesQuery;
 
   // Granular loading & error evaluation: only block on critical empty product state error
   const isCriticalError = productsError && !products;
@@ -80,7 +74,10 @@ export default function Dashboard() {
       hasAnySales: !!hasAnySales,
       overdueCount: kpis?.overdueCount ?? 0,
       cashSession: currentSession
-        ? { status: currentSession.status, variance: currentSession.variance ?? null }
+        ? {
+            status: currentSession.status,
+            variance: currentSession.variance ?? null,
+          }
         : null,
       hour: new Date().getHours(),
     }),
@@ -94,7 +91,9 @@ export default function Dashboard() {
 
   const lowStockCount = useMemo(() => {
     if (!products) return 0;
-    return products.filter((p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD).length;
+    return products.filter(
+      (p) => p.quantity > 0 && p.quantity < LOW_STOCK_THRESHOLD,
+    ).length;
   }, [products]);
 
   const hasStockRisk = lowStockCount > 0;
@@ -170,6 +169,8 @@ export default function Dashboard() {
     },
     [router],
   );
+  
+  const tabBarBottomOffset = useTabBarBottomOffset();
 
   return (
     <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
@@ -226,7 +227,10 @@ export default function Dashboard() {
             hasStockRisk={hasStockRisk}
             cashSession={
               currentSession
-                ? { status: currentSession.status, variance: currentSession.variance ?? null }
+                ? {
+                    status: currentSession.status,
+                    variance: currentSession.variance ?? null,
+                  }
                 : null
             }
             totalPesos={stats?.total ?? 0}
@@ -241,7 +245,7 @@ export default function Dashboard() {
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 96 }}
+            contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -301,8 +305,13 @@ export default function Dashboard() {
             ) : recentSalesList.length === 0 ? (
               <View className="px-4 mb-4">
                 <View className="bg-paper-50 rounded-2xl p-4 border border-ink-100">
-                  <StyledText variant="regular" className="text-ink-500 text-sm text-center">
-                    {t('common:dashboard.recentActivity.empty', { defaultValue: 'No sales recorded yet today.' })}
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-500 text-sm text-center"
+                  >
+                    {t('common:dashboard.recentActivity.empty', {
+                      defaultValue: 'No sales recorded yet today.',
+                    })}
                   </StyledText>
                 </View>
               </View>

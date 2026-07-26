@@ -1,5 +1,5 @@
 import { StyledText } from '@/components/elements';
-import { TAB_BAR_TOTAL_OFFSET } from '@/components/layout';
+import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination } from '@/components/ui';
 import { ITEMS_PER_PAGE, LOW_STOCK_THRESHOLD, SortOption } from '@/constants';
 import { useCategories, useProducts } from '@/hooks';
@@ -71,6 +71,8 @@ export const ProductsTab = memo(function ProductsTab({
   const router = useRouter();
   const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const { getCategoriesWithCountQuery } = useCategories();
+
+  const tabBarBottomOffset = useTabBarBottomOffset()
 
   // Synchronize filterCategory prop (from deep links) with state
   useEffect(() => {
@@ -258,9 +260,7 @@ export const ProductsTab = memo(function ProductsTab({
     [viewMode, onRestock, onMore],
   );
 
-  if (isLoading) {
-    return <ProductsSkeleton />;
-  }
+  if (isLoading) return <ProductsSkeleton />;
 
   // Determine empty state variant
   const hasProductsInDb = products.length > 0;
@@ -307,9 +307,6 @@ export const ProductsTab = memo(function ProductsTab({
           renderItem={renderProductItem}
           contentContainerStyle={{
             paddingTop: 4,
-            // Reserve room for the floating pagination pill (paper
-            // surface, ~52px tall) plus the safe-area inset baked
-            // into the pill itself.
             paddingBottom: 96,
             paddingHorizontal: viewMode === 'grid' ? 8 : 0,
           }}
@@ -332,7 +329,7 @@ export const ProductsTab = memo(function ProductsTab({
           onPageChange={setCurrentPage}
           totalItems={filteredProducts.length}
           itemsPerPage={ITEMS_PER_PAGE}
-          bottomOffset={TAB_BAR_TOTAL_OFFSET}
+          bottomOffset={tabBarBottomOffset}
         />
       )}
 

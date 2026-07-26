@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-
 import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
@@ -15,9 +14,7 @@ export interface DashboardRecentSalesProps {
 
 function timeAgo(dateStr: string): string {
   const parsed = new Date(dateStr);
-  if (isNaN(parsed.getTime())) {
-    return '';
-  }
+  if (isNaN(parsed.getTime())) return '';
   const diff = Date.now() - parsed.getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
@@ -27,10 +24,6 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-/**
- * DashboardRecentSales — up to 3 recent transactions with "See all" header link.
- * Payment type shown as inline badge (CASH = sage green, CREDIT = persimmon).
- */
 export const DashboardRecentSales = memo(function DashboardRecentSales({
   sales,
   onOpenSale,
@@ -43,7 +36,7 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
   }
 
   const title = t('common:dashboard.recentActivity.title', { defaultValue: 'Recent Activity' });
-  const seeAll = t('common:dashboard.recentActivity.seeAll', { defaultValue: 'See all' });
+  const viewAllSales = t('common:dashboard.recentActivity.viewAllSales', { defaultValue: 'View all sales' });
 
   return (
     <View testID="recent-sales" className="px-4 mb-4">
@@ -58,11 +51,11 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
             <Pressable
               onPress={onSeeAll}
               accessibilityRole="button"
-              accessibilityLabel={seeAll}
+              accessibilityLabel={viewAllSales}
               className="active:opacity-60"
             >
               <StyledText variant="semibold" className="text-sm text-persimmon-500">
-                {seeAll}
+                {viewAllSales}
               </StyledText>
             </Pressable>
           )}
