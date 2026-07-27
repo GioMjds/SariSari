@@ -73,12 +73,7 @@ export const INVENTORY_SUB_TABS = [
   'expiry',
   'stock-in',
 ] as const;
-export const CUSTOMERS_SUB_TABS = [
-  'list',
-  'ledger',
-  'due-today',
-  'history',
-] as const;
+export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
 export const MORE_SUB_TABS = [
   'reports',
   'insights',

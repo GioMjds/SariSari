@@ -1,11 +1,11 @@
 import {
-  CreditFilter,
   CreditHistory,
   CreditKPIs,
   CreditSort,
   CreditTransaction,
   Customer,
   CustomerWithDetails,
+  ExtendedCreditFilter,
   NewCredit,
   NewCustomer,
   NewPayment,
@@ -22,6 +22,8 @@ export const initCreditsTable = async () => {
 			name TEXT NOT NULL,
 			phone TEXT,
 			address TEXT,
+      birthday TEXT,
+      photo_uri TEXT,
 			notes TEXT,
 			credit_limit INTEGER,
 			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -65,6 +67,13 @@ export const initCreditsTable = async () => {
 		CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);
 		CREATE INDEX IF NOT EXISTS idx_customer_name ON customers (name);
 	`);
+
+  try {
+    await db.execAsync(`ALTER TABLE customers ADD COLUMN birthday TEXT;`);
+  } catch {}
+  try {
+    await db.execAsync(`ALTER TABLE customers ADD COLUMN photo_uri TEXT;`);
+  } catch {}
 };
 
 // ==================== CUSTOMER OPERATIONS ====================
@@ -92,12 +101,14 @@ export const insertCustomer = async (
   customer: NewCustomer,
 ): Promise<number> => {
   const result = await db.runAsync(
-    `INSERT INTO customers (name, phone, address, notes, credit_limit) 
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO customers (name, phone, address, birthday, photo_uri, notes, credit_limit) 
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       customer.name,
       customer.phone || null,
       customer.address || null,
+      customer.birthday || null,
+      customer.photo_uri || null,
       customer.notes || null,
       customer.credit_limit || null,
     ],
@@ -111,12 +122,14 @@ export const updateCustomer = async (
 ): Promise<void> => {
   await db.runAsync(
     `UPDATE customers 
-     SET name = ?, phone = ?, address = ?, notes = ?, credit_limit = ?, updated_at = CURRENT_TIMESTAMP 
+     SET name = ?, phone = ?, address = ?, birthday = ?, photo_uri = ?, notes = ?, credit_limit = ?, updated_at = CURRENT_TIMESTAMP 
      WHERE id = ?`,
     [
       customer.name,
       customer.phone || null,
       customer.address || null,
+      customer.birthday || null,
+      customer.photo_uri || null,
       customer.notes || null,
       customer.credit_limit || null,
       id,
@@ -156,7 +169,7 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
 };
 
 export const getAllCustomers = async (
-  filter: CreditFilter = 'all',
+  filter: ExtendedCreditFilter = 'all',
   sort: CreditSort = 'name_asc',
 ): Promise<Customer[]> => {
   let whereClause = '';
@@ -433,7 +446,9 @@ export const deletePayment = async (id: number): Promise<void> => {
       [payment.date, payment.date],
     );
     if (isLocked) {
-      throw new Error('Cannot delete a payment belonging to a closed cash session');
+      throw new Error(
+        'Cannot delete a payment belonging to a closed cash session',
+      );
     }
 
     // Reverse every allocation recorded for this payment. If there are no
@@ -442,14 +457,23 @@ export const deletePayment = async (id: number): Promise<void> => {
     const allocations = await db.getAllAsync<{
       credit_transaction_id: number;
       amount: number;
-    }>('SELECT credit_transaction_id, amount FROM payment_allocations WHERE payment_id = ?', [id]);
+    }>(
+      'SELECT credit_transaction_id, amount FROM payment_allocations WHERE payment_id = ?',
+      [id],
+    );
 
     if (allocations.length > 0) {
       for (const alloc of allocations) {
-        await applyPaymentAllocation(alloc.credit_transaction_id, -alloc.amount);
+        await applyPaymentAllocation(
+          alloc.credit_transaction_id,
+          -alloc.amount,
+        );
       }
     } else if (payment.credit_transaction_id) {
-      await applyPaymentAllocation(payment.credit_transaction_id, -payment.amount);
+      await applyPaymentAllocation(
+        payment.credit_transaction_id,
+        -payment.amount,
+      );
     }
 
     // Cascade on payment_allocations cleans up the slice rows when we
