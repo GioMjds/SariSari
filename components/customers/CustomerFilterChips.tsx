@@ -15,12 +15,11 @@ interface CustomerFilterChipsProps {
 
 const FILTER_OPTIONS = [
   { key: 'all', label: 'All' },
-  { key: 'recent', label: 'Recent' },
   { key: 'with_balance', label: 'With Credit' },
-  { key: 'paid', label: 'Fully Paid' },
   { key: 'loyal', label: 'Loyal' },
+  { key: 'recent', label: 'Recent' },
+  { key: 'paid', label: 'Fully Paid' },
   { key: 'new', label: 'New' },
-  { key: 'inactive', label: 'Inactive' },
 ] satisfies FilterChipOption[];
 
 export const CustomerFilterChips: React.FC<CustomerFilterChipsProps> = ({
@@ -28,7 +27,7 @@ export const CustomerFilterChips: React.FC<CustomerFilterChipsProps> = ({
   onSelectFilter,
 }) => {
   return (
-    <View className="my-2">
+    <View className="mb-3">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -41,15 +40,15 @@ export const CustomerFilterChips: React.FC<CustomerFilterChipsProps> = ({
               key={item.key}
               activeOpacity={0.8}
               onPress={() => onSelectFilter(item.key)}
-              className={`mr-2 px-3 py-1.5 rounded-full border ${
+              className={`mr-2.5 px-4 py-2 rounded-full border ${
                 isActive
-                  ? 'bg-cinnamon-500 border-cinnamon-500'
-                  : 'bg-paper-100 border-paper-300'
+                  ? 'bg-ink-900 border-ink-900 shadow-sm'
+                  : 'bg-paper-100 border-paper-200'
               }`}
             >
               <StyledText
-                variant={isActive ? 'semibold' : 'regular'}
-                className={`text-xs ${isActive ? 'text-white' : 'text-ink-500'}`}
+                variant={isActive ? 'extrabold' : 'semibold'}
+                className={`text-xs ${isActive ? 'text-white' : 'text-ink-700'}`}
               >
                 {item.label}
               </StyledText>

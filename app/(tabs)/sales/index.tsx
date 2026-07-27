@@ -261,7 +261,7 @@ export default function Sell() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-background">
         <SellHeader
           eyebrow={t('eyebrow')}
@@ -319,6 +319,6 @@ export default function Sell() {
           onApplyFilters={handleApplyFilters}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

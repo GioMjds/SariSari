@@ -10,6 +10,7 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
   Redirect: () => null,
   Href: {},
+  withLayoutContext: (comp: any) => comp,
 }));
 
 jest.mock('@/hooks/useHomeDashboardData', () => ({

@@ -8,6 +8,7 @@ import {
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn() }),
+  withLayoutContext: (comp: any) => comp,
 }));
 
 describe('Home Sub-Tab Loading Skeletons', () => {

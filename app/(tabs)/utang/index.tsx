@@ -158,7 +158,7 @@ export default function Credits() {
   // ── Render: loading skeleton ────────────────────────────────
   if (isLoading) {
     return (
-      <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+      <View className="flex-1 bg-paper-200">
         <View className="flex-1 bg-background">
           <CreditsHeader
             subtitle={t('subtitleLoading')}
@@ -166,7 +166,7 @@ export default function Credits() {
           />
           <CreditsSkeleton />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -175,7 +175,7 @@ export default function Credits() {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-background">
         <CreditsHeader
           subtitle={headerSubtitle}
@@ -327,6 +327,6 @@ export default function Credits() {
           />
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

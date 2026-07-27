@@ -7,3 +7,6 @@ export * from './CustomersEmptyState';
 export * from './AllCustomersTab';
 export * from './CreditLedgerTab';
 export * from './CustomerInsightsTab';
+export * from './CustomersHeader';
+export * from './CustomersFloatingNav';
+

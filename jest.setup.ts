@@ -183,7 +183,12 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
   useGlobalSearchParams: () => ({}),
   usePathname: () => '/',
+  withLayoutContext: (component: any) => component,
+  Tabs: ({ children }: any) => children,
+  Stack: ({ children }: any) => children,
+  Slot: ({ children }: any) => children,
 }));
+
 
 // Mock expo-haptics — both `stores/ToastStore.ts` and the new barcode
 // scanner code import this module. Tests don't assert haptic side

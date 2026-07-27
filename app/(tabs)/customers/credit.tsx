@@ -1,16 +1,15 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AllCustomersTab } from '@/components/customers';
-import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
+import { CreditLedgerTab } from '@/components/customers';
+import { useCustomers } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Customer } from '@/types/credits.types';
 
-export default function AllCustomersScreen() {
+export default function CreditLedgerScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const { data: customers = [] } = useCustomers();
-  const { data: kpis } = useCreditKPIs();
 
   const handleSelectCustomer = (customer: Customer) => {
     router.push({
@@ -19,20 +18,14 @@ export default function AllCustomersScreen() {
     });
   };
 
-  const handleAddCustomer = () => {
-    router.push('/(edit-forms)/add-customer');
-  };
-
   return (
     <View
       className="flex-1 bg-paper-200"
       style={{ paddingBottom: tabBarBottomOffset }}
     >
-      <AllCustomersTab
+      <CreditLedgerTab
         customers={customers}
-        totalCredit={kpis?.totalOutstanding || 0}
         onSelectCustomer={handleSelectCustomer}
-        onAddCustomer={handleAddCustomer}
       />
     </View>
   );

@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { SearchBar } from '@/components/ui';
-import { CustomerSummaryCards } from './CustomerSummaryCards';
 import { CustomerFilterChips } from './CustomerFilterChips';
 import { CustomerCard } from './CustomerCard';
 import { CustomersEmptyState } from './CustomersEmptyState';
 import { Customer, ExtendedCreditFilter } from '@/types/credits.types';
-import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import * as Haptics from 'expo-haptics';
 
 interface AllCustomersTabProps {
   customers: Customer[];
@@ -18,15 +17,15 @@ interface AllCustomersTabProps {
 
 export const AllCustomersTab: React.FC<AllCustomersTabProps> = ({
   customers,
-  totalCredit,
   onSelectCustomer,
   onAddCustomer,
 }) => {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<ExtendedCreditFilter>('all');
+  const [sortAsc, setSortAsc] = useState(true);
 
   const filtered = useMemo(() => {
-    return customers.filter((c) => {
+    let result = customers.filter((c) => {
       const matchSearch =
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         (c.phone && c.phone.includes(search));
@@ -40,38 +39,55 @@ export const AllCustomersTab: React.FC<AllCustomersTabProps> = ({
       if (activeFilter === 'new') return c.loyalty_tier === 'new';
       return true;
     });
-  }, [customers, search, activeFilter]);
 
-  const loyalCount = useMemo(
-    () =>
-      customers.filter(
-        (c) => c.loyalty_tier === 'loyal' || c.loyalty_tier === 'vip',
-      ).length,
-    [customers],
-  );
+    result.sort((a, b) => {
+      return sortAsc
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    });
+
+    return result;
+  }, [customers, search, activeFilter, sortAsc]);
+
+  const toggleSort = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setSortAsc((prev) => !prev);
+  };
 
   return (
-    <View className="flex-1">
-      <CustomerSummaryCards
-        totalCustomers={customers.length}
-        totalCredit={totalCredit}
-        loyalCount={loyalCount}
-        activeThisWeek={Math.ceil(customers.length * 0.4)}
-      />
-
-      <View className="px-4 mt-2">
+    <View className="flex-1 bg-paper-200">
+      {/* Search Input Bar */}
+      <View className="px-4 mt-1 mb-2">
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Search customers by name or phone..."
+          placeholder="Search customer name..."
         />
       </View>
 
+      {/* Filter Chips Row */}
       <CustomerFilterChips
         activeFilter={activeFilter}
         onSelectFilter={setActiveFilter}
       />
 
+      {/* Directory Section Header */}
+      <View className="px-4 py-2 flex-row justify-between items-center mb-1">
+        <StyledText variant="extrabold" className="text-ink-900 text-lg">
+          Directory
+        </StyledText>
+        <TouchableOpacity
+          onPress={toggleSort}
+          activeOpacity={0.7}
+          className="flex-row items-center py-1 px-2"
+        >
+          <StyledText variant="extrabold" className="text-cinnamon-500 text-xs mr-1">
+            SORT {sortAsc ? '▲' : '▼'}
+          </StyledText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Customer List */}
       {filtered.length === 0 ? (
         <CustomersEmptyState onAddCustomer={onAddCustomer} />
       ) : (
@@ -82,19 +98,9 @@ export const AllCustomersTab: React.FC<AllCustomersTabProps> = ({
             <CustomerCard customer={item} onPress={onSelectCustomer} />
           )}
           contentContainerStyle={{ paddingBottom: 80 }}
+          showsVerticalScrollIndicator={false}
         />
       )}
-
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={onAddCustomer}
-        className="absolute bottom-6 right-6 bg-cinnamon-500 px-4 py-3 rounded-full flex-row items-center shadow-lg active:scale-95"
-      >
-        <FontAwesome name="plus" size={16} color="#FFFFFF" />
-        <StyledText variant="extrabold" className="text-white text-sm ml-2">
-          Add Customer
-        </StyledText>
-      </TouchableOpacity>
     </View>
   );
 };

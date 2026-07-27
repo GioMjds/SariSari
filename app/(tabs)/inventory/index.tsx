@@ -250,7 +250,7 @@ export default function Products() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-background">
         {/* Dynamic Redesigned Header Block (Cinnamon bg) */}
         <View className="bg-cinnamon-500 pt-3">
@@ -533,6 +533,6 @@ export default function Products() {
           onScan={handleScannedBarcode}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

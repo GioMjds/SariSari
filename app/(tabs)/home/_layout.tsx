@@ -39,12 +39,13 @@ export default function HomeLayout() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <DashboardHeader
         storeName={storeName}
         ownerInitials={ownerInitials}
         activeTab={getCurrentTab()}
         alertCount={alertCount}
+        showTopHeader={false}
         onTabPress={handleTabPress}
         onNotificationPress={handleNotificationPress}
       />
@@ -60,6 +61,6 @@ export default function HomeLayout() {
           <TopTabs.Screen name="alerts" />
         </TopTabs>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

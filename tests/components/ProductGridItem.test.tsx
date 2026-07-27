@@ -11,6 +11,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),
   }),
+  withLayoutContext: (comp: any) => comp,
 }));
 
 // Mock expo-image

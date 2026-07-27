@@ -52,7 +52,6 @@ import {
   View,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EMPTY_ARRAY: any[] = [];
 
@@ -198,7 +197,7 @@ export default function Reports() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-paper-200">
         <AlmanacMasthead
           dateRange={dateRange}
@@ -695,7 +694,7 @@ export default function Reports() {
           </View>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

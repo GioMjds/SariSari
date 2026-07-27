@@ -3,7 +3,6 @@ import { Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -143,12 +142,6 @@ export function DashboardKPIGrid({
               style={animatedStyle}
               accessibilityRole="button"
               accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
-              onPressIn={() => {
-                scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
-              }}
-              onPressOut={() => {
-                scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-              }}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
                   () => {},

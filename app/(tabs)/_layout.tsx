@@ -1,8 +1,9 @@
-import { StyledTab } from '@/components/layout';
+import { StyledTab, StoreHeader } from '@/components/layout';
 import { Tabs, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { BackHandler, View, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDialogStore } from '@/stores';
 import { Modal as CustomModal } from '@/components/ui';
 import { isPrimaryTabPath } from '@/constants';
@@ -12,6 +13,12 @@ const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png
 export default function ScreensLayout() {
   const pathname = usePathname();
   const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
+
+  const isDetailScreen =
+    pathname.includes('[detail]') ||
+    pathname.includes('/sale-details/') ||
+    pathname.includes('/credit-details/');
+  const showHeader = isPrimaryTabPath(pathname) && !isDetailScreen;
 
   const handleExitApp = () => {
     hideDialog();
@@ -24,6 +31,11 @@ export default function ScreensLayout() {
 
   useEffect(() => {
     const backAction = () => {
+      // If exit dialog is already visible, dismiss it on hardware back press
+      if (dialogVisible) {
+        hideDialog();
+        return true;
+      }
       // Check if current route is a top-level tab
       if (isPrimaryTabPath(pathname)) {
         showDialog({
@@ -42,11 +54,13 @@ export default function ScreensLayout() {
     );
 
     return () => backHandler.remove();
-  }, [pathname, showDialog]);
+  }, [pathname, showDialog, hideDialog, dialogVisible]);
+
 
   return (
-    <>
+    <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
       <StatusBar style="dark" backgroundColor="#F7F6F2" />
+      {showHeader && <StoreHeader />}
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -82,6 +96,6 @@ export default function ScreensLayout() {
           />
         </View>
       </CustomModal>
-    </>
+    </SafeAreaView>
   );
 }

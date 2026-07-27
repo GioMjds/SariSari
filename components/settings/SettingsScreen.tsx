@@ -44,7 +44,7 @@ export const SettingsScreen = () => {
       : t('common:languageEnglish');
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-paper-200">
         {/* Header */}
         <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
@@ -143,7 +143,7 @@ export const SettingsScreen = () => {
         visible={languagePickerOpen}
         onClose={() => setLanguagePickerOpen(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
