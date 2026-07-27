@@ -13,7 +13,8 @@ import { useTabBarBottomOffset } from '@/components/layout';
 export default function TodayScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
-  const { stats, currentSession, isLoading } = useHomeDashboardData();
+  const { stats, currentSession, isLoading, hourlySales, recentSales } =
+    useHomeDashboardData();
 
   if (isLoading) {
     return <TodaySnapshotSkeleton />;
@@ -40,12 +41,13 @@ export default function TodayScreen() {
           router.push('/(edit-forms)/cash-session' as Href)
         }
       />
-      <HourlySalesTimeline hourlyData={[]} />
+      <HourlySalesTimeline hourlyData={hourlySales} />
       <TodayTransactionLog
-        sales={[]}
+        sales={recentSales}
         onOpenSale={(id) =>
           router.push(`/(edit-forms)/sale-details/${id}` as Href)
         }
+        onSeeAll={() => router.push('/sales' as Href)}
       />
     </ScrollView>
   );

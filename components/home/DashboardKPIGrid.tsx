@@ -20,6 +20,7 @@ export interface DashboardKPIGridProps {
   totalCredits: number;
   creditCustomersCount?: number;
   onDetailsPress?: () => void;
+  onKpiPress?: (target: 'reports' | 'cash' | 'inventory' | 'utang') => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -34,20 +35,28 @@ export function DashboardKPIGrid({
   totalCredits,
   creditCustomersCount = 3,
   onDetailsPress,
+  onKpiPress,
 }: DashboardKPIGridProps) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  // Replace with original data (to be remove)
-  const kpis = [
+  const kpis: {
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: string;
+    topBorder: string;
+    target: 'reports' | 'cash' | 'inventory' | 'utang';
+  }[] = [
     {
-      title: 'MARGIN',
+      title: 'EST. PROFIT',
       value: formatCurrency(profitMargin),
-      subtitle: '+25.7% today',
-      icon: 'arrow-up',
+      subtitle: 'Net income',
+      icon: 'chart-line',
       topBorder: 'border-t-4 border-cinnamon-500',
+      target: 'reports',
     },
     {
       title: 'CASH SESSION',
@@ -55,13 +64,15 @@ export function DashboardKPIGrid({
       subtitle: `Float ${formatCurrency(startingFloat)}`,
       icon: 'wallet',
       topBorder: 'border-t-4 border-sage-600',
+      target: 'cash',
     },
     {
       title: 'LOW STOCK',
       value: `${lowStockCount} items`,
-      subtitle: 'Needs restock',
+      subtitle: lowStockCount > 0 ? 'Needs restock' : 'Stock healthy',
       icon: 'box-open',
       topBorder: 'border-t-4 border-amber-500',
+      target: 'inventory',
     },
     {
       title: 'CREDITS DUE',
@@ -69,6 +80,7 @@ export function DashboardKPIGrid({
       subtitle: `${creditCustomersCount} customers`,
       icon: 'user-clock',
       topBorder: 'border-t-4 border-rose-600',
+      target: 'utang',
     },
   ];
 
@@ -89,14 +101,14 @@ export function DashboardKPIGrid({
         </View>
         <View className="flex-row items-center gap-2 mt-1">
           <StyledText variant="regular" className="text-ink-500 text-xs">
-            {transactionCount} transactions
+            {transactionCount} transactions today
           </StyledText>
           <View className="bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
             <StyledText
               variant="extrabold"
-              className="text-emerald-700 text-[11px]"
+              className="text-emerald-800 text-[11px]"
             >
-              +12% vs yesterday
+              RECORDED
             </StyledText>
           </View>
         </View>
@@ -108,22 +120,29 @@ export function DashboardKPIGrid({
           variant="extrabold"
           className="text-ink-500 text-xs tracking-wider uppercase"
         >
-          KPIS
+          STORE SUMMARY
         </StyledText>
-        <Pressable onPress={onDetailsPress} hitSlop={8}>
+        <Pressable
+          onPress={onDetailsPress}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="View details report"
+        >
           <StyledText variant="extrabold" className="text-cinnamon-600 text-xs">
             Details &gt;
           </StyledText>
         </Pressable>
       </View>
 
-      {/* 2x2 KPI Cards Grid with Reanimated Press Feedback */}
+      {/* 2x2 KPI Cards Grid */}
       <View className="flex-row flex-wrap gap-3 px-4">
         {kpis.map((kpi, index) => {
           return (
             <AnimatedPressable
               key={index}
               style={animatedStyle}
+              accessibilityRole="button"
+              accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
               onPressIn={() => {
                 scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
               }}
@@ -134,9 +153,13 @@ export function DashboardKPIGrid({
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
                   () => {},
                 );
-                onDetailsPress?.();
+                if (onKpiPress) {
+                  onKpiPress(kpi.target);
+                } else {
+                  onDetailsPress?.();
+                }
               }}
-              className={`w-[48%] bg-paper-50 p-3.5 rounded-2xl border border-ink-100 shadow-sm ${kpi.topBorder}`}
+              className={`w-[48%] bg-paper-50 p-3.5 rounded-2xl border border-ink-100 shadow-sm min-h-[96px] ${kpi.topBorder}`}
             >
               <View className="flex-row items-center justify-between mb-1">
                 <StyledText
@@ -159,7 +182,7 @@ export function DashboardKPIGrid({
                 <FontAwesome5
                   name={kpi.icon as any}
                   size={11}
-                  className="text-ink-400 opacity-60"
+                  color="#A89F90"
                 />
               </View>
             </AnimatedPressable>

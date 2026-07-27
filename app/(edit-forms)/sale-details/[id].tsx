@@ -4,7 +4,7 @@ import {
   SaleDetailsHeader,
   SaleDetailsHero,
   SaleDetailsItemList,
-} from '@/components/sell';
+} from '@/components/sales';
 import { useDeleteSale, useGetSale } from '@/hooks';
 import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
@@ -14,22 +14,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Hoisted to module scope — stable reference, no inline object re-allocation on re-render.
 const SCROLL_CONTENT_STYLE = { paddingTop: 16, paddingBottom: 140 } as const;
 
-/**
- * SaleDetails — orchestrator for the Sale Details (resibo) screen.
- *
- * Owns only:
- *   • Loading state.
- *   • Data fetching via `useGetSale(id)` + `useDeleteSale()`.
- *   • Local date/number formatting (`dateLine`, `dateShort`, etc.) — memoised.
- *   • The Alert.alert delete confirmation flow — stable via useCallback.
- *   • Navigation (router.back).
- *
- * Every visual block — header, hero, item list, footer — is delegated
- * to a presentational subcomponent under `components/sell/sale-details/`.
- */
 export default function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();

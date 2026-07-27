@@ -86,7 +86,9 @@ export function DashboardHeader({
           <Pressable
             onPress={handleNotificationSelect}
             hitSlop={8}
-            className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center border border-ink-100 relative shadow-sm"
+            accessibilityRole="button"
+            accessibilityLabel={`Notifications, ${alertCount} active alerts`}
+            className="w-11 h-11 rounded-full bg-paper-50 items-center justify-center border border-ink-100 relative shadow-sm"
           >
             <FontAwesome5 name="bell" size={16} color="#44403C" />
             {alertCount > 0 ? (
@@ -97,14 +99,20 @@ export function DashboardHeader({
       </View>
 
       {/* Segmented Sub-Tab Control Container */}
-      <View className="flex-row bg-paper-100 p-1 rounded-2xl border border-ink-100">
+      <View
+        accessibilityRole="tablist"
+        className="flex-row bg-paper-100 p-1 rounded-2xl border border-ink-100"
+      >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <Pressable
               key={tab.key}
               onPress={() => handleTabSelect(tab.key)}
-              className={`flex-1 py-2 rounded-xl flex-row items-center justify-center border ${
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${tab.label} tab`}
+              className={`flex-1 min-h-[44px] py-2.5 rounded-xl flex-row items-center justify-center border ${
                 isActive
                   ? 'bg-paper-50 shadow-sm border-ink-100/50'
                   : 'bg-transparent border-transparent shadow-none'
@@ -117,10 +125,10 @@ export function DashboardHeader({
                 {tab.label}
               </StyledText>
               {tab.key === 'alerts' && alertCount > 0 ? (
-                <View className="ml-1.5 bg-cinnamon-500 rounded-full w-4 h-4 items-center justify-center">
+                <View className="ml-1.5 bg-cinnamon-500 rounded-full w-6 h-6 items-center justify-center">
                   <StyledText
                     variant="extrabold"
-                    className="text-paper-50 text-[10px]"
+                    className="text-paper-50 text-sm"
                   >
                     {alertCount}
                   </StyledText>

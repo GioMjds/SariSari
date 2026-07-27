@@ -83,7 +83,9 @@ export function AlertCardItem({
 
       <Pressable
         onPress={handleAction}
-        className="bg-cinnamon-500 px-3.5 py-2 rounded-xl items-center justify-center"
+        accessibilityRole="button"
+        accessibilityLabel={`${actionLabel} for ${title}`}
+        className="bg-cinnamon-500 px-4 min-h-[44px] rounded-xl items-center justify-center"
       >
         <StyledText variant="extrabold" className="text-paper-50 text-xs">
           {actionLabel}

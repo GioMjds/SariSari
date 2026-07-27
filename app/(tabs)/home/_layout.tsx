@@ -1,5 +1,6 @@
 import { DashboardHeader, HomeSubTab } from '@/components/home';
 import { TopTabs } from '@/components/navigation/top-tabs';
+import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +8,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function HomeLayout() {
   const router = useRouter();
   const pathname = usePathname();
+  const { profile, alertCount } = useHomeDashboardData();
+
+  const storeName = profile?.storeName || "Juan's Store";
+  const ownerName = profile?.ownerName || 'Maria';
+  const ownerInitials =
+    ownerName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'AN';
 
   const getCurrentTab = (): HomeSubTab => {
     if (pathname.includes('today')) return 'today';
@@ -15,7 +27,11 @@ export default function HomeLayout() {
   };
 
   const handleTabPress = (tab: HomeSubTab) => {
-    router.push(`/(tabs)/home/${tab}` as Href);
+    if (tab === 'index') {
+      router.push('/(tabs)/home' as Href);
+    } else {
+      router.push(`/(tabs)/home/${tab}` as Href);
+    }
   };
 
   const handleNotificationPress = () => {
@@ -25,8 +41,10 @@ export default function HomeLayout() {
   return (
     <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
       <DashboardHeader
+        storeName={storeName}
+        ownerInitials={ownerInitials}
         activeTab={getCurrentTab()}
-        alertCount={2}
+        alertCount={alertCount}
         onTabPress={handleTabPress}
         onNotificationPress={handleNotificationPress}
       />

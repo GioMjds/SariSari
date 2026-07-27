@@ -240,8 +240,10 @@
   - Created `HomeAlertsSkeleton` for `app/(tabs)/home/alerts.tsx` matching alert filter pills and alert card items.
   - Exported skeleton components in `components/home/index.ts` and integrated `isLoading` state handling across all home sub-tab routes.
   - Added unit test suite in `tests/components/HomeSkeletons.test.tsx`.
-- Resolved require cycle and CssInterop upgrade warnings:
-  - Fixed require cycle warning by replacing barrel import `import { DashboardRecentSales } from '@/components/home'` with relative import `./DashboardRecentSales` in `components/home/TodayTransactionLog.tsx`.
-  - Fixed NativeWind / CssInterop upgrade warning in `components/home/DashboardHeader.tsx` by setting base `border` and `border-transparent shadow-none` on non-active tabs to initialize border/shadow CSS variables on mount, and using ternary `: null` instead of boolean `&&` to avoid passing `false` to React children.
-  - Added `Easing.bezier`, `useAnimatedReaction`, `useDerivedValue`, and `interpolateColor` mocks in `jest.setup.ts`.
-  - Updated `tests/components/DashboardScreen.test.tsx` to mock `useHomeDashboardData` and verify skeleton vs loaded content states.
+- Executed Impeccable design refactoring pipeline (`adapt`, `clarify`, `harden`, `optimize`, `polish`) on `app/(tabs)/home`:
+  - **ADAPT**: Expanded touch target heights to minimum 44px on `DashboardHeader` sub-tab pills (`min-h-[44px]`), `AlertFilterPills` category buttons (`px-4 min-h-[44px]`), and `AlertCardItem` action buttons (`px-4 min-h-[44px]`).
+  - **CLARIFY**: Removed static hardcoded percentage badges (`+25.7% today`, `+12% vs yesterday`) in `DashboardKPIGrid.tsx`, replaced corporate labels (`"KPIS"` → `"STORE SUMMARY"`, `"MARGIN"` → `"EST. PROFIT"`), and connected target-specific routes for each card (`/reports`, `/(edit-forms)/cash-session`, `/inventory`, `/utang`).
+  - **HARDEN**: Added ARIA accessibility attributes (`accessibilityRole="tablist"`, `accessibilityRole="tab"`, `accessibilityState={{ selected }}`) and descriptive accessibility labels across header elements and alert action buttons.
+  - **OPTIMIZE & DISTILL**: Added `useMemo` for category filter computations in `alerts.tsx`, boosted empty alert text contrast to `text-ink-600` for WCAG AA compliance on cream paper backgrounds, removed duplicate nested section titles in `TodayTransactionLog.tsx`, and wired `onSeeAll={() => router.push('/sales')}` on the Today snapshot log.
+- Fixed Overview top-tab routing bug in `app/(tabs)/home/_layout.tsx`: changed `handleTabPress` to push `/(tabs)/home` instead of `/(tabs)/home/index` when selecting the Overview sub-tab to prevent `not-found` route errors.
+

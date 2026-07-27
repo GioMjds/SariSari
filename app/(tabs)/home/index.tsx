@@ -13,7 +13,15 @@ import { useTabBarBottomOffset } from '@/components/layout';
 export default function OverviewScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
-  const { stats, refreshing, refetchAll, isLoading } = useHomeDashboardData();
+  const {
+    stats,
+    recentSales,
+    topProduct,
+    currentSession,
+    refreshing,
+    refetchAll,
+    isLoading,
+  } = useHomeDashboardData();
 
   if (isLoading) {
     return <HomeOverviewSkeleton />;
@@ -37,15 +45,28 @@ export default function OverviewScreen() {
     >
       {/* Total Sales Hero & 2x2 KPI Grid */}
       <DashboardKPIGrid
-        totalSales={stats.todaySalesTotal || 3840}
-        transactionCount={stats.transactionCount || 24}
-        profitMargin={912}
-        cashSessionStatus="Open"
-        startingFloat={500}
-        lowStockCount={7}
-        totalCredits={stats.overdueAmount || 1250}
-        creditCustomersCount={stats.overdueCount || 3}
+        totalSales={stats.todaySalesTotal}
+        transactionCount={stats.transactionCount}
+        profitMargin={stats.profitMargin}
+        cashSessionStatus={
+          currentSession?.status === 'closed' ? 'Closed' : 'Open'
+        }
+        startingFloat={
+          currentSession?.startingFloat
+            ? currentSession.startingFloat / 100
+            : 500
+        }
+        lowStockCount={stats.lowStockCount}
+        totalCredits={stats.overdueAmount}
+        creditCustomersCount={stats.overdueCount}
         onDetailsPress={() => router.push('/reports' as any)}
+        onKpiPress={(target) => {
+          if (target === 'inventory') router.push('/inventory' as any);
+          else if (target === 'utang') router.push('/utang' as any);
+          else if (target === 'cash')
+            router.push('/(edit-forms)/cash-session' as any);
+          else router.push('/reports' as any);
+        }}
       />
 
       {/* Hero CTA & Quick Action Grid */}
@@ -60,7 +81,7 @@ export default function OverviewScreen() {
 
       {/* Recent Activity Feed */}
       <DashboardRecentSales
-        sales={[]}
+        sales={recentSales}
         onOpenSale={(id) =>
           router.push(`/(edit-forms)/sale-details/${id}` as any)
         }
@@ -69,8 +90,8 @@ export default function OverviewScreen() {
 
       {/* Dark Espresso Top Seller Banner */}
       <MiniInsightsCard
-        topProductName="Palmolive 12ml"
-        unitsSold={18}
+        topProductName={topProduct.name}
+        unitsSold={topProduct.unitsSold}
       />
     </ScrollView>
   );

@@ -33,14 +33,20 @@ export function AlertFilterPills({
       showsHorizontalScrollIndicator={false}
       className="px-4 mb-4 flex-row"
     >
-      <View className="flex-row gap-2">
+      <View
+        accessibilityRole="tablist"
+        className="flex-row gap-2"
+      >
         {categories.map((cat) => {
           const isActive = activeCategory === cat.key;
           return (
             <Pressable
               key={cat.key}
               onPress={() => onSelectCategory(cat.key)}
-              className={`px-3.5 py-2 rounded-full border ${
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${cat.label} filter`}
+              className={`px-4 min-h-[44px] justify-center rounded-full border ${
                 isActive
                   ? 'bg-cinnamon-500 border-cinnamon-600'
                   : 'bg-paper-50 border-ink-200'

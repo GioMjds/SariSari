@@ -5,21 +5,18 @@ import { View } from 'react-native';
 export function TodayTransactionLog({
   sales,
   onOpenSale,
+  onSeeAll,
 }: {
   sales: any[];
   onOpenSale: (id: number) => void;
+  onSeeAll?: () => void;
 }) {
   return (
     <View className="mb-4">
-      <View className="px-4 mb-2">
-        <StyledText variant="extrabold" className="text-ink-900 text-base">
-          Today&apos;s Transactions Log
-        </StyledText>
-      </View>
       <DashboardRecentSales
         sales={sales}
         onOpenSale={onOpenSale}
-        onSeeAll={() => {}}
+        onSeeAll={onSeeAll}
       />
     </View>
   );

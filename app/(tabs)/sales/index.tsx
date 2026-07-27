@@ -6,7 +6,7 @@ import {
   SalesSkeleton,
   SellHeader,
   TodayStatsHero,
-} from '@/components/sell';
+} from '@/components/sales';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination } from '@/components/ui';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';

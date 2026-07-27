@@ -266,6 +266,12 @@ export const MOCK_PAYMENTS = [
   },
 ];
 
+const getTodayISO = (hour = 8, min = 0): string => {
+  const d = new Date();
+  d.setHours(hour, min, 0, 0);
+  return d.toISOString();
+};
+
 export const MOCK_SALES = [
   {
     id: 1,
@@ -273,7 +279,7 @@ export const MOCK_SALES = [
     payment_type: 'cash',
     customer_name: null,
     customer_credit_id: null,
-    timestamp: '2026-06-18T08:00:00Z',
+    timestamp: getTodayISO(8, 15),
   },
   {
     id: 2,
@@ -281,7 +287,7 @@ export const MOCK_SALES = [
     payment_type: 'cash',
     customer_name: null,
     customer_credit_id: null,
-    timestamp: '2026-06-18T09:30:00Z',
+    timestamp: getTodayISO(9, 30),
   },
   {
     id: 3,
@@ -289,7 +295,7 @@ export const MOCK_SALES = [
     payment_type: 'credit',
     customer_name: 'Sarah',
     customer_credit_id: 1,
-    timestamp: '2026-05-01T10:00:00Z',
+    timestamp: getTodayISO(11, 45),
   },
   {
     id: 4,
@@ -297,7 +303,7 @@ export const MOCK_SALES = [
     payment_type: 'credit',
     customer_name: 'Mang Jose',
     customer_credit_id: 2,
-    timestamp: '2026-06-01T08:00:00Z',
+    timestamp: getTodayISO(14, 20),
   },
 ];
 
