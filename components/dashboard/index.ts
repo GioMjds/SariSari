@@ -10,3 +10,5 @@ export * from './DashboardEmptyState';
 export * from './DashboardSkeleton';
 export * from './DashboardErrorState';
 export * from './DashboardHeader';
+export * from './DashboardKPIGrid';
+export * from './MiniInsightsCard';

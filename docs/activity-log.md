@@ -194,3 +194,6 @@
 - Created validated design specification document `docs/superpowers/specs/2026-07-26-more-tab-ui-revamp-design.md`.
 - Evaluated release manager audit for major release `v2.0.0` covering Gastos & Kaha, receipt attachments, ZIP backups, Store Assistant dashboard, offline SQLite barcode search, and tab/swipe navigation architecture specs.
 
+## 2026-07-27
+
+- Added missing barrel re-exports (`useAppInfo`, `useFinancial`, `useFindProductByBarcode`, `useHomeDashboardData`, `useReducedMotion`) to `hooks/index.ts`.

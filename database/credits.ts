@@ -511,12 +511,19 @@ export const getCreditKPIs = async (): Promise<CreditKPIs> => {
      WHERE status != 'paid' AND due_date < date('now')`,
   );
 
+  const overdueAmount = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
+     FROM credit_transactions 
+     WHERE status != 'paid' AND due_date < date('now')`,
+  );
+
   return {
     totalOutstanding: totalOutstanding?.total || 0,
     totalCustomersWithBalance: customersWithBalance?.count || 0,
     mostOwedCustomer: mostOwed || null,
     totalCollectedToday: collectedToday?.total || 0,
     totalCreditsToday: creditsToday?.total || 0,
+    totalOverdueAmount: overdueAmount?.total || 0,
     overdueCount: overdueCount?.count || 0,
   };
 };
