@@ -3,4 +3,7 @@ export * from './CustomerFilterChips';
 export * from './CustomerSummaryCards';
 export * from './LoyaltyBadge';
 export * from './CustomerCard';
-export * from './CustomerEmptyState';
+export * from './CustomersEmptyState';
+export * from './AllCustomersTab';
+export * from './CreditLedgerTab';
+export * from './CustomerInsightsTab';
