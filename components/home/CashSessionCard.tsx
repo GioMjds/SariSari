@@ -6,7 +6,7 @@ import { formatCurrency } from '@/utils';
 
 export interface CashSessionCardProps {
   status?: 'open' | 'closed';
-  startingFloat?: number;
+  startingFloat?: number | null;
   expectedCash?: number | null;
   variance?: number | null;
   onSessionAction: () => void;
@@ -64,7 +64,7 @@ export function CashSessionCard({
                 variant="extrabold"
                 className="text-ink-800 text-sm mt-0.5"
               >
-                {formatCurrency(startingFloat)}
+                {formatCurrency(startingFloat ?? 0)}
               </StyledText>
             </View>
             <View>
@@ -75,7 +75,7 @@ export function CashSessionCard({
                 variant="extrabold"
                 className="text-ink-800 text-sm mt-0.5"
               >
-                {expectedCash != null ? formatCurrency(expectedCash) : '—'}
+                {formatCurrency(expectedCash ?? 0)}
               </StyledText>
             </View>
           </View>

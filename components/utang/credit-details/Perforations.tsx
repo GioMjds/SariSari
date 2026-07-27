@@ -8,7 +8,7 @@ export function Perforations({
   negativeBottom?: boolean;
 }) {
   const PERF_COUNT = 22;
-  const PERF_BG = '#EFE6D2';
+  const PERF_BG = '#F7F6F2';
   return (
     <View
       className="relative h-0"

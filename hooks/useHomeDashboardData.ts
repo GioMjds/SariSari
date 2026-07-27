@@ -1,11 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  useCreditKPIs,
-  useCurrentSession,
-  useProducts,
-  useSales,
-} from '@/hooks';
+import { useCurrentSession } from './useCash';
+import { useCreditKPIs } from './useCredits';
+import { useProducts } from './useProducts';
+import { useSales } from './useSales';
 
 export interface DashboardStatsSummary {
   todaySalesTotal: number;

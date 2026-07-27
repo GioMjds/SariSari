@@ -65,13 +65,12 @@ module.exports = {
         'ink-900': '#0E0C0A', // ★ Ink (near-black)
 
         // ─── Paper (surfaces) ──────────────────────────────────────
-        // The "paper" palette the receipt lives on. Cream is the page,
-        // parchment is a slightly darker card surface.
-        'paper-50': '#FBF7EE', // ★ Brightest paper
-        'paper-100': '#F6F0E2',
-        'paper-200': '#EFE6D2', // ★ Cream / page background
-        'paper-300': '#E5D8BC',
-        'paper-400': '#D4C39E',
+        // Base page background is paper-200, elevated cards paper-50.
+        'paper-50': '#FAFAF7', // ★ Brightest paper / card surface
+        'paper-100': '#F2F0E8', // ★ Subtle surface / active state
+        'paper-200': '#F7F6F2', // ★ Clean off-white page background
+        'paper-300': '#E6E3D8', // ★ Warm grey border / divider
+        'paper-400': '#D8D4C7', // ★ Deeper surface / border
 
         // ─── Semantic ──────────────────────────────────────────────
         'semantic-success': '#4F7A24', // aligned with sage-500
@@ -166,8 +165,8 @@ module.exports = {
           900: '#0E0C0A',
         },
         'surface-warm': '#FFE0D1',
-        background: '#EFE6D2',
-        'surface-subtle': '#FBF7EE',
+        background: '#F7F6F2',
+        'surface-subtle': '#FAFAF7',
       },
       fontFamily: {
         'stack-sans': ['StackSansText-Regular'],

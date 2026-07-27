@@ -1,9 +1,12 @@
 import { Pressable, View } from 'react-native';
+import { MotiView } from 'moti';
+import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { AlertCategory } from './AlertFilterPills';
 
 export interface AlertCardItemProps {
+  index?: number;
   type: Exclude<AlertCategory, 'all'>;
   title: string;
   subtitle: string;
@@ -12,6 +15,7 @@ export interface AlertCardItemProps {
 }
 
 export function AlertCardItem({
+  index = 0,
   type,
   title,
   subtitle,
@@ -37,8 +41,18 @@ export function AlertCardItem({
     unsynced: { icon: 'sync-alt', color: 'text-sky-600', bg: 'bg-sky-50' },
   }[type];
 
+  const handleAction = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    onAction();
+  };
+
   return (
-    <View className="bg-paper-50 p-4 rounded-2xl border border-ink-100 mb-3 shadow-sm flex-row items-center justify-between">
+    <MotiView
+      from={{ opacity: 0, translateY: 15 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'spring', damping: 15, delay: index * 60 }}
+      className="bg-paper-50 p-4 rounded-2xl border border-ink-100 mb-3 shadow-sm flex-row items-center justify-between"
+    >
       <View className="flex-row items-center flex-1 mr-3">
         <View
           className={`w-10 h-10 rounded-full ${iconConfig.bg} items-center justify-center mr-3`}
@@ -68,13 +82,13 @@ export function AlertCardItem({
       </View>
 
       <Pressable
-        onPress={onAction}
+        onPress={handleAction}
         className="bg-cinnamon-500 px-3.5 py-2 rounded-xl items-center justify-center"
       >
         <StyledText variant="extrabold" className="text-paper-50 text-xs">
           {actionLabel}
         </StyledText>
       </Pressable>
-    </View>
+    </MotiView>
   );
 }

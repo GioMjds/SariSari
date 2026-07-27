@@ -58,3 +58,37 @@ export async function insertCatalogProductIfMissing(
     ],
   );
 }
+
+export async function insertCatalogProductsBatch(
+  database: SQLiteDatabase,
+  inputs: NewCatalogProduct[],
+): Promise<void> {
+  if (inputs.length === 0) return;
+
+  const chunkSize = 50;
+  const now = Date.now();
+
+  await database.withTransactionAsync(async () => {
+    for (let i = 0; i < inputs.length; i += chunkSize) {
+      const chunk = inputs.slice(i, i + chunkSize);
+      const placeholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const sql = `INSERT OR IGNORE INTO product_catalog (barcode, name, brand, category, unit, image_url, created_at) VALUES ${placeholders}`;
+
+      const params: (string | number | null)[] = [];
+      for (const item of chunk) {
+        params.push(
+          item.barcode.trim(),
+          item.name,
+          item.brand,
+          item.category,
+          item.unit || 'Pc',
+          item.imageUrl,
+          now,
+        );
+      }
+
+      await database.runAsync(sql, params);
+    }
+  });
+}
+

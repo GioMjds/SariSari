@@ -8,7 +8,7 @@ interface SalesEmptyStateProps {
 }
 
 const PERFORATION_COUNT = 22;
-const PERFORATION_BG = '#EFE6D2';
+const PERFORATION_BG = '#F7F6F2';
 
 /**
  * SalesEmptyState — Sari mascot on a torn paper card. Lives where the

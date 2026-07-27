@@ -290,6 +290,7 @@ jest.mock('expo-linear-gradient', () => {
 jest.mock('react-native-reanimated', () => {
   const mockReact = require('react');
   const mockRN = require('react-native');
+  const createAnimatedComponent = (comp: any) => comp;
   return {
     __esModule: true,
     default: {
@@ -297,15 +298,24 @@ jest.mock('react-native-reanimated', () => {
       Text: mockRN.Text,
       Image: mockRN.View,
       ScrollView: mockRN.ScrollView,
+      createAnimatedComponent,
     },
+    createAnimatedComponent,
     useSharedValue: (initial: any) => ({ value: initial }),
     useAnimatedStyle: (fn: any) => fn() || {},
+    useAnimatedReaction: (prepare: any, react: any) => {
+      if (prepare && react) react(prepare(), prepare());
+    },
+    useDerivedValue: (fn: any) => ({ value: fn() }),
+    interpolateColor: (_val: any, _input: any, output: any) => output?.[0] || '#EAE6DF',
+    withSpring: (toValue: any) => toValue,
     withTiming: (toValue: any) => toValue,
     withRepeat: (animation: any) => animation,
     Easing: {
       inOut: (fn: any) => fn,
       ease: (x: any) => x,
       linear: (x: any) => x,
+      bezier: () => (x: any) => x,
     },
   };
 });

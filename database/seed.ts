@@ -1,6 +1,9 @@
 import { db } from '../configs/sqlite';
 import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
-import { insertCatalogProductIfMissing } from './catalog';
+import {
+  insertCatalogProductIfMissing,
+  insertCatalogProductsBatch,
+} from './catalog';
 import {
   MOCK_CATEGORIES,
   MOCK_PRODUCTS,
@@ -25,18 +28,15 @@ export async function seedProductCatalog(): Promise<void> {
     );
   }
   try {
-    await db.withTransactionAsync(async () => {
-      for (const record of BUNDLED_CATALOG_RECORDS) {
-        await insertCatalogProductIfMissing(db, {
-          barcode: record.barcode,
-          name: record.name,
-          brand: null,
-          category: record.category,
-          unit: 'Pc',
-          imageUrl: null,
-        });
-      }
-    });
+    const productsToInsert = BUNDLED_CATALOG_RECORDS.map((record) => ({
+      barcode: record.barcode,
+      name: record.name,
+      brand: null,
+      category: record.category,
+      unit: 'Pc',
+      imageUrl: null,
+    }));
+    await insertCatalogProductsBatch(db, productsToInsert);
     if (__DEV__) {
       console.log(
         `[Barcode][Seed] catalog seed complete in ${Date.now() - startedAt}ms.`,

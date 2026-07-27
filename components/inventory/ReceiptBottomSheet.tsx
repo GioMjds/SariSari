@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Pressable, View } from 'react-native';
 
 const SHEET_PERFORATION_COUNT = 22;
-const SHEET_PERFORATION_BG = '#EFE6D2'; // paper-200 — the page bg
+const SHEET_PERFORATION_BG = '#F7F6F2'; // paper-200 — the page bg
 
 interface ReceiptBottomSheetProps {
   visible: boolean;

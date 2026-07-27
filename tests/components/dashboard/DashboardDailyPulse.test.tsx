@@ -1,5 +1,5 @@
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import { DashboardDailyPulse } from '@/components/dashboard/DashboardDailyPulse';
+import { DashboardDailyPulse } from '@/components/home/DashboardDailyPulse';
 
 describe('DashboardDailyPulse', () => {
   test('renders revenue and sales cards and handles navigation', async () => {

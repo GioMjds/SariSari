@@ -1,7 +1,6 @@
-import React from 'react';
-import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
-import { DashboardRecentSales } from '@/components/dashboard/DashboardRecentSales';
+import { DashboardRecentSales } from './DashboardRecentSales';
+import { View } from 'react-native';
 
 export function TodayTransactionLog({
   sales,

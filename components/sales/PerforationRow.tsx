@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
 const PERFORATION_COUNT = 22;
-const PERFORATION_BG = '#EFE6D2'; // page bg = paper-200, so circles look bitten out
+const PERFORATION_BG = '#F7F6F2'; // page bg = paper-200, so circles look bitten out
 
 export function PerforationRow({ side }: { side: 'top' | 'bottom' }) {
   return (

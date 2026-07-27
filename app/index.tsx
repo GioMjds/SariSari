@@ -30,14 +30,14 @@ export default function EntryGate() {
 
 				if (!isMounted) return;
 
-				let targetRoute: '/onboarding' | '/(tabs)' = '/onboarding';
+				let targetRoute: '/onboarding' | '/home' = '/onboarding';
 				let reason = 'onboarding_incomplete';
 
 				if (process.env.EXPO_PUBLIC_FORCE_ONBOARDING === 'true') {
 					targetRoute = '/onboarding';
 					reason = 'force_onboarding';
 				} else if (state?.completed) {
-					targetRoute = '/(tabs)';
+					targetRoute = '/home';
 					reason = 'onboarding_completed';
 				}
 

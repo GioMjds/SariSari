@@ -1,11 +1,8 @@
+import { DashboardHeader, HomeSubTab } from '@/components/home';
+import { TopTabs } from '@/components/navigation/top-tabs';
+import { Href, usePathname, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, usePathname, Href } from 'expo-router';
-import { TopTabs } from '@/components/navigation';
-import {
-  DashboardHeader,
-  HomeSubTab,
-} from '@/components/dashboard';
 
 export default function HomeLayout() {
   const router = useRouter();
@@ -14,24 +11,24 @@ export default function HomeLayout() {
   const getCurrentTab = (): HomeSubTab => {
     if (pathname.includes('today')) return 'today';
     if (pathname.includes('alerts')) return 'alerts';
-    return 'overview';
+    return 'index';
   };
 
   const handleTabPress = (tab: HomeSubTab) => {
     router.push(`/(tabs)/home/${tab}` as Href);
   };
 
-  const handleSettingsPress = () => {
-    router.push('/settings' as Href);
+  const handleNotificationPress = () => {
+    router.push('/(tabs)/home/alerts' as Href);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
       <DashboardHeader
         activeTab={getCurrentTab()}
         alertCount={2}
         onTabPress={handleTabPress}
-        onSettingsPress={handleSettingsPress}
+        onNotificationPress={handleNotificationPress}
       />
       <View className="flex-1 bg-paper-200">
         <TopTabs
@@ -40,7 +37,7 @@ export default function HomeLayout() {
             swipeEnabled: true,
           }}
         >
-          <TopTabs.Screen name="overview" />
+          <TopTabs.Screen name="index" />
           <TopTabs.Screen name="today" />
           <TopTabs.Screen name="alerts" />
         </TopTabs>

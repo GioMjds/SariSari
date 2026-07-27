@@ -286,10 +286,10 @@ export function BasicInfoCard({
                     backgroundColor: pressed
                       ? isActive
                         ? '#C8460F'
-                        : '#EFE6D2'
+                        : '#E6E3D8'
                       : isActive
                         ? '#E85A1F'
-                        : '#F6F0E2',
+                        : '#F2F0E8',
                   })}
                 >
                   <StyledText

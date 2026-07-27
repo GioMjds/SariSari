@@ -1,18 +1,23 @@
 import { ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Href } from 'expo-router';
 import {
   SalesTargetCard,
+  CashSessionCard,
   HourlySalesTimeline,
   TodayTransactionLog,
-  CashSessionCard,
-} from '@/components/dashboard';
-import { useHomeDashboardData } from '@/hooks';
+  TodaySnapshotSkeleton,
+} from '@/components/home';
+import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabBarBottomOffset } from '@/components/layout';
 
-export default function Today() {
+export default function TodayScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
-  const { stats, currentSession } = useHomeDashboardData();
+  const { stats, currentSession, isLoading } = useHomeDashboardData();
+
+  if (isLoading) {
+    return <TodaySnapshotSkeleton />;
+  }
 
   return (
     <ScrollView
@@ -31,13 +36,15 @@ export default function Today() {
         startingFloat={currentSession?.startingFloat}
         expectedCash={currentSession?.expectedCash}
         variance={currentSession?.variance}
-        onSessionAction={() => router.push('/(edit-forms)/cash-session' as any)}
+        onSessionAction={() =>
+          router.push('/(edit-forms)/cash-session' as Href)
+        }
       />
       <HourlySalesTimeline hourlyData={[]} />
       <TodayTransactionLog
         sales={[]}
         onOpenSale={(id) =>
-          router.push(`/(edit-forms)/sale-details/${id}` as any)
+          router.push(`/(edit-forms)/sale-details/${id}` as Href)
         }
       />
     </ScrollView>

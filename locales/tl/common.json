@@ -136,8 +136,11 @@
   "shareAsText": "I-share bilang Text (SMS/Chat)",
   "shareAsPdf": "I-share bilang PDF Resibo",
 
+  "homeTitle": "Home",
   "salesTitle": "Benta",
   "inventoryTitle": "Imbentaryo",
+  "customersTitle": "Mga Suki",
+  "moreTitle": "Iba Pa",
   "utangTitle": "Utang",
   "reportsTitle": "Mga Ulat",
 

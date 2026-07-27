@@ -10,3 +10,10 @@
 import * as SQLite from 'expo-sqlite';
 
 export const db = SQLite.openDatabaseSync('sarisari.db');
+
+try {
+  db.execSync('PRAGMA journal_mode = WAL;');
+  db.execSync('PRAGMA busy_timeout = 5000;');
+} catch (error) {
+  console.warn('Failed to configure SQLite pragmas:', error);
+}

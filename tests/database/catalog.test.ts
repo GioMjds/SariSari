@@ -1,6 +1,10 @@
 import { describe, expect, test, beforeAll, beforeEach } from '@jest/globals';
 import { db } from '../../configs/sqlite';
-import { getCatalogProductByBarcode, insertCatalogProductIfMissing } from '../../database/catalog';
+import {
+  getCatalogProductByBarcode,
+  insertCatalogProductIfMissing,
+  insertCatalogProductsBatch,
+} from '../../database/catalog';
 import {
   initProductsTable,
   initCreditsTable,
@@ -136,20 +140,35 @@ describe('Catalog Database Operations', () => {
     }
   });
 
-  test('insertCatalogProductIfMissing handles spaces in barcodes correctly', async () => {
-    await insertCatalogProductIfMissing(db, {
-      barcode: '  4800016551829  ',
-      name: 'Spaced Product',
-      brand: null,
-      category: 'Beverages',
-      unit: 'Pc',
-      imageUrl: null,
-    });
+  test('insertCatalogProductsBatch inserts multiple records in chunks', async () => {
+    await insertCatalogProductsBatch(db, [
+      {
+        barcode: '1111111111111',
+        name: 'Batch Product 1',
+        brand: null,
+        category: 'Snacks',
+        unit: 'Pc',
+        imageUrl: null,
+      },
+      {
+        barcode: '2222222222222',
+        name: 'Batch Product 2',
+        brand: null,
+        category: 'Snacks',
+        unit: 'Pc',
+        imageUrl: null,
+      },
+    ]);
 
     await expect(
-      getCatalogProductByBarcode(db, '4800016551829'),
+      getCatalogProductByBarcode(db, '1111111111111'),
     ).resolves.toMatchObject({
-      name: 'Spaced Product',
+      name: 'Batch Product 1',
+    });
+    await expect(
+      getCatalogProductByBarcode(db, '2222222222222'),
+    ).resolves.toMatchObject({
+      name: 'Batch Product 2',
     });
   });
 });

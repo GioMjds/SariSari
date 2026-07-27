@@ -25,11 +25,11 @@ a[target="_blank"]::after {
 	--color-sage-500: #4F7A24;
 	--color-sage-600: #3D5E1B;
 
-	/* Paper surfaces */
-	--color-paper-50: #FBF7EE;
-	--color-paper-100: #F6F0E2;
-	--color-paper-200: #EFE6D2;
-	--color-paper-300: #E5D8BC;
+	/* Paper surfaces — Option 1 (Clean Thermal Paper off-white) */
+	--color-paper-50: #FAFAF7;
+	--color-paper-100: #F2F0E8;
+	--color-paper-200: #F7F6F2;
+	--color-paper-300: #E6E3D8;
 
 	/* Ink (text) */
 	--color-ink-500: #564E45;
@@ -42,8 +42,8 @@ a[target="_blank"]::after {
 	--color-secondary-50: #EEF4E5;
 	--color-secondary-600: #3D5E1B;
 	--color-surface-warm: #FFE0D1;
-	--color-background: #EFE6D2;
-	--color-surface-subtle: #FBF7EE;
+	--color-background: #F7F6F2;
+	--color-surface-subtle: #FAFAF7;
 	--color-warm-900: #0E0C0A;
 	--color-warm-700: #28231D;
 	--color-warm-500: #564E45;

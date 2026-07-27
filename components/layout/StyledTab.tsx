@@ -23,7 +23,7 @@ import * as Haptics from 'expo-haptics';
 
 export const TAB_BAR_TOTAL_OFFSET = 72;
 
-export const TAB_BAR_RAIL_HEIGHT = 56;
+export const TAB_BAR_RAIL_HEIGHT = 72;
 export const TAB_BAR_ACTION_OVERHANG = 0;
 export const TAB_BAR_MARGIN = 16;
 
@@ -111,12 +111,12 @@ const TabButton = memo(
         >
           <FontAwesome
             name={tab.icon}
-            size={18}
+            size={26}
             color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
           />
           <Text
             numberOfLines={1}
-            className="text-[10px] font-bold mt-0.5 text-center"
+            className="text-sm font-bold mt-0.5 text-center"
             style={{ color: isFocused ? ICON_ACTIVE : ICON_INACTIVE }}
           >
             {tab.name}
@@ -198,8 +198,12 @@ export const StyledTab = memo(() => {
 
   const isRouteFocused = useCallback((hrefString: string) => {
     const currentPath = pathnameRef.current;
-    return hrefString === '/'
-      ? currentPath === '/' || currentPath === ''
+    return hrefString === '/' || hrefString === '/home'
+      ? currentPath === '/' ||
+          currentPath === '' ||
+          currentPath === '/home' ||
+          currentPath.startsWith('/home/') ||
+          currentPath.startsWith('/(tabs)/home')
       : currentPath === hrefString || currentPath.startsWith(`${hrefString}/`);
   }, []);
 
@@ -297,11 +301,7 @@ export const StyledTab = memo(() => {
 
         {visibleRoutes.map((tab: Tab) => {
           const hrefString = getHrefString(tab.href);
-          const isFocused =
-            hrefString === '/'
-              ? pathname === '/' || pathname === ''
-              : pathname === hrefString ||
-                pathname.startsWith(`${hrefString}/`);
+          const isFocused = isRouteFocused(hrefString);
 
           return (
             <TabButton

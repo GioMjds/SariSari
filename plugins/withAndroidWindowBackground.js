@@ -17,10 +17,10 @@ module.exports = function withAndroidWindowBackground(config) {
         (i) => i.$.name !== 'android:windowBackground',
       );
 
-      // Set it to your paper color
+      // Set it to your paper color (Option 1 off-white)
       appTheme.item.push({
         $: { name: 'android:windowBackground' },
-        _: '#EFE6D2',
+        _: '#F7F6F2',
       });
     }
 

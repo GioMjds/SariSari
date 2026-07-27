@@ -1,6 +1,6 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 import { SaleWithItems } from '@/types/sales.types';
+import { fireEvent, render } from '@testing-library/react-native';
+import React from 'react';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -8,7 +8,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import { DashboardRecentSales } from '@/components/dashboard/DashboardRecentSales';
+import { DashboardRecentSales } from '@/components/home/DashboardRecentSales';
 
 describe('DashboardRecentSales', () => {
   test('returns null when sales list is empty', async () => {
