@@ -56,6 +56,7 @@ export interface CreditKPIs {
 	} | null;
 	totalCollectedToday: number;
 	totalCreditsToday: number;
+	totalOverdueAmount: number;
 	overdueCount: number;
 }
 
