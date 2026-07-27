@@ -12,6 +12,7 @@ export interface CashSession {
   status: CashSessionStatus;
   openingTimestamp: string;
   closingTimestamp: string | null;
+  startingFloat: Pesos;
   createdAt: number;
   updatedAt: number;
 }

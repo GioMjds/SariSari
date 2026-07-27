@@ -1,6 +1,3 @@
-import { createRequire as _createRequire } from 'node:module';
-const _require = _createRequire(import.meta.url);
-
 export default {
 	preset: 'react-native',
 	testMatch: [
@@ -15,7 +12,7 @@ export default {
 	// clearMocksOnScope) added in jest 30, so jest-runtime 30.4.2 crashes on
 	// the first test with "clearMocksOnScope is not a function". Pointing
 	// testEnvironment at the top-level copy makes the whole chain line up.
-	testEnvironment: _require.resolve('jest-environment-node'),
+	testEnvironment: require.resolve('jest-environment-node'),
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/$1',
 	},

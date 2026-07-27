@@ -196,4 +196,8 @@
 
 ## 2026-07-27
 
-- Added missing barrel re-exports (`useAppInfo`, `useFinancial`, `useFindProductByBarcode`, `useHomeDashboardData`, `useReducedMotion`) to `hooks/index.ts`.
+- Added missing barrel re-exports (`useAppInfo`, `useFinancial`, `useHomeDashboardData`, `useReducedMotion`) to `hooks/index.ts`.
+- Added missing `totalOverdueAmount` property query to `getCreditKPIs` in `database/credits.ts`.
+- Fixed `CashSession` interface in `types/cash.types.ts` (`expectedCash: Pesos | null`) and added `startingFloat` mapping in `database/cash.ts` across `getCurrentSession`, `openSession`, `getCashSessionSummary`, and `listCashSessions`.
+- Implemented Task 4 Today Tab Screen (`app/(tabs)/home/today.tsx`), `SalesTargetCard`, `CashSessionCard`, `HourlySalesTimeline`, and `TodayTransactionLog`.
+
