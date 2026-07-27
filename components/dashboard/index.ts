@@ -9,3 +9,4 @@ export * from './DashboardRecentSales';
 export * from './DashboardEmptyState';
 export * from './DashboardSkeleton';
 export * from './DashboardErrorState';
+export * from './DashboardHeader';
