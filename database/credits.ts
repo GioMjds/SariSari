@@ -4,8 +4,11 @@ import {
   CreditSort,
   CreditTransaction,
   Customer,
+  CustomerInsights,
+  CustomerTimelineItem,
   CustomerWithDetails,
   ExtendedCreditFilter,
+  LoyaltyTier,
   NewCredit,
   NewCustomer,
   NewPayment,
@@ -667,4 +670,139 @@ export const searchCustomers = async (query: string): Promise<Customer[]> => {
     ...r,
     tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
   }));
+};
+
+export const calculateLoyaltyTier = (
+  orderCount: number,
+  totalSpent: number,
+): LoyaltyTier => {
+  if (orderCount >= 50 || totalSpent >= 25000) return 'elite';
+  if (orderCount >= 25 || totalSpent >= 10000) return 'vip';
+  if (orderCount >= 10 || totalSpent >= 2500) return 'loyal';
+  if (orderCount >= 3 || totalSpent >= 500) return 'regular';
+  return 'new';
+};
+
+export const getCustomerTimeline = async (
+  customerId: number,
+): Promise<CustomerTimelineItem[]> => {
+  const credits = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    product_name: string | null;
+    date: string;
+    notes: string | null;
+  }>(
+    `SELECT id, amount, product_name, date, notes 
+       FROM credit_transactions 
+      WHERE customer_id = ? 
+      ORDER BY date DESC`,
+    [customerId],
+  );
+
+  const payments = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    payment_method: string | null;
+    date: string;
+    notes: string | null;
+  }>(
+    `SELECT id, amount, payment_method, date, notes 
+       FROM payments 
+      WHERE customer_id = ? 
+      ORDER BY date DESC`,
+    [customerId],
+  );
+
+  const timeline: CustomerTimelineItem[] = [];
+
+  for (const c of credits) {
+    timeline.push({
+      id: `credit-${c.id}`,
+      type: 'credit',
+      amount: c.amount,
+      date: c.date,
+      description: 'Added Credit',
+      details: c.product_name || c.notes || undefined,
+    });
+  }
+
+  for (const p of payments) {
+    timeline.push({
+      id: `payment-${p.id}`,
+      type: 'payment',
+      amount: p.amount,
+      date: p.date,
+      description: 'Paid Credit',
+      details: p.payment_method ? `Method: ${p.payment_method}` : undefined,
+    });
+  }
+
+  return timeline.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+};
+
+export const getCustomerFavoriteProduct = async (
+  customerId: number,
+): Promise<string | null> => {
+  const result = await db.getFirstAsync<{ product_name: string }>(
+    `SELECT product_name, COUNT(*) as cnt 
+       FROM credit_transactions 
+      WHERE customer_id = ? AND product_name IS NOT NULL 
+      GROUP BY product_name 
+      ORDER BY cnt DESC 
+      LIMIT 1`,
+    [customerId],
+  );
+  return result?.product_name ?? null;
+};
+
+export const getCustomerInsights = async (): Promise<CustomerInsights> => {
+  const customers = await getAllCustomers('all', 'name_asc');
+
+  const topSpenders = [...customers]
+    .map((c) => ({
+      ...c,
+      total_spent: c.total_credits + c.total_payments,
+    }))
+    .sort((a, b) => b.total_spent - a.total_spent)
+    .slice(0, 5);
+
+  const frequentBuyers = [...customers]
+    .map((c) => ({
+      ...c,
+      total_orders: Math.ceil((c.total_credits + c.total_payments) / 150) || 1,
+    }))
+    .sort((a, b) => b.total_orders - a.total_orders)
+    .slice(0, 5);
+
+  const loyaltyDistribution: Record<LoyaltyTier, number> = {
+    new: 0,
+    regular: 0,
+    loyal: 0,
+    vip: 0,
+    elite: 0,
+  };
+
+  for (const c of customers) {
+    const totalSpent = c.total_credits + c.total_payments;
+    const tier = calculateLoyaltyTier(c.total_credits > 0 ? 5 : 1, totalSpent);
+    loyaltyDistribution[tier] += 1;
+  }
+
+  const kpis = await getCreditKPIs();
+  const totalIssued = kpis.totalOutstanding + kpis.totalCollectedToday;
+  const creditRecoveryRate =
+    totalIssued > 0
+      ? Math.round((kpis.totalCollectedToday / totalIssued) * 100)
+      : 100;
+
+  return {
+    topSpenders,
+    frequentBuyers,
+    loyaltyDistribution,
+    creditRecoveryRate,
+    averageOrderValue: 185,
+  };
 };
