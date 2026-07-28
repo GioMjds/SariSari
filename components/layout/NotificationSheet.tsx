@@ -1,5 +1,5 @@
-import { useMemo, useEffect } from 'react';
-import { Modal, Pressable, View, StyleSheet } from 'react-native';
+import { useMemo, useEffect, useCallback, useRef } from 'react';
+import { Modal, Pressable, View, Dimensions } from 'react-native';
 import { MotiView } from 'moti';
 import { BlurView } from 'expo-blur';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -8,17 +8,25 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
-  useReducedMotion
+  interpolate,
+  Extrapolation,
+  useReducedMotion,
 } from 'react-native-reanimated';
-import { runOnJS } from 'react-native-worklets';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { AlertCardItem } from '@/components/home';
 import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
 
+const TAG = '[NotificationSheet]';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAX_ALERTS = 3;
-const DISMISS_TRANSLATE_THRESHOLD = 80;
-const DISMISS_VELOCITY_THRESHOLD = 500;
+const DISMISS_THRESHOLD = 100;
+const DISMISS_VELOCITY = 600;
+const OVERSCROLL_CAP = 44;
+const SPRING_SNAP_BACK = { damping: 22, stiffness: 300, mass: 0.7 };
+const SPRING_DISMISS = { damping: 26, stiffness: 240, mass: 0.8 };
 
 export interface NotificationSheetProps {
   visible: boolean;
@@ -39,199 +47,318 @@ export function NotificationSheet({
 }: NotificationSheetProps) {
   const shouldReduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
-
   const visibleAlerts = useMemo(() => alerts.slice(0, MAX_ALERTS), [alerts]);
-  const topOffset = insets.top + 12;
+  const topOffset = insets.top + 10;
+
   const translateY = useSharedValue(0);
+  const isDismissing = useSharedValue(0);
+  const sheetOpacity = useSharedValue(1);
+
+  const prevVisible = useRef(visible);
+  useEffect(() => {
+    if (prevVisible.current !== visible) {
+      console.log(
+        `${TAG} visible changed: ${prevVisible.current} -> ${visible}`,
+      );
+      prevVisible.current = visible;
+    }
+  }, [visible]);
 
   useEffect(() => {
-    if (!visible) {
+    if (visible) {
       translateY.value = 0;
+      isDismissing.value = 0;
+      sheetOpacity.value = 1;
     }
-  }, [visible, translateY]);
+  }, [visible, translateY, isDismissing, sheetOpacity]);
 
-  const swipeGesture = useMemo(
+  const dismiss = useCallback(() => {
+    console.log(`${TAG} dismiss() called -> invoking onClose()`);
+    onClose();
+  }, [onClose]);
+
+  const handleClose = useCallback(() => {
+    if (isDismissing.value === 1) return;
+    console.log(`${TAG} handleClose() called -> triggering exit transition`);
+    isDismissing.value = 1;
+    const exitDuration = shouldReduceMotion ? 0 : 200;
+    sheetOpacity.value = withTiming(0, { duration: exitDuration });
+    translateY.value = withTiming(-24, { duration: exitDuration }, (finished) => {
+      if (finished) {
+        scheduleOnRN(dismiss);
+      }
+    });
+  }, [shouldReduceMotion, dismiss, translateY, isDismissing, sheetOpacity]);
+
+  const resistedTranslate = (raw: number): number => {
+    'worklet';
+    if (raw <= 0) return 0;
+    if (raw <= OVERSCROLL_CAP) return raw;
+    return OVERSCROLL_CAP + Math.sqrt(raw - OVERSCROLL_CAP) * 7;
+  };
+
+  const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        .activeOffsetY([8, 9999])
-        .failOffsetY([-8, -9999])
+        .activeOffsetY([6, 9999])
+        .failOffsetY([-6, -9999])
+        .onBegin(() => {
+          scheduleOnRN(() => {
+            console.log(
+              `${TAG} gesture BEGAN (finger down, threshold not yet crossed)`,
+            );
+          });
+        })
+        .onStart(() => {
+          scheduleOnRN(() => {
+            console.log(
+              `${TAG} gesture START (activeOffsetY crossed — gesture active)`,
+            );
+          });
+        })
         .onUpdate((event) => {
-          if (shouldReduceMotion) return;
-          translateY.value = Math.max(0, event.translationY);
+          if (shouldReduceMotion || isDismissing.value === 1) return;
+          translateY.value = resistedTranslate(event.translationY);
         })
         .onEnd((event) => {
-          if (shouldReduceMotion) {
-            runOnJS(onClose)();
-            return;
-          }
+          const { translationY, velocityY } = event;
           const shouldDismiss =
-            event.translationY > DISMISS_TRANSLATE_THRESHOLD ||
-            event.velocityY > DISMISS_VELOCITY_THRESHOLD;
+            translationY > DISMISS_THRESHOLD || velocityY > DISMISS_VELOCITY;
+
+          scheduleOnRN(() => {
+            console.log(
+              `${TAG} gesture END — translationY: ${translationY.toFixed(1)}px, ` +
+                `velocityY: ${velocityY.toFixed(1)}px/s, ` +
+                `decision: ${shouldDismiss ? 'DISMISS' : 'SNAP BACK'} ` +
+                `(thresholds: distance>${DISMISS_THRESHOLD} or velocity>${DISMISS_VELOCITY})`,
+            );
+          });
+
+          if (isDismissing.value === 1) return;
+
           if (shouldDismiss) {
-            translateY.value = withTiming(220, { duration: 180 }, () => {
-              runOnJS(onClose)();
-            });
+            isDismissing.value = 1;
+            const exitDuration = shouldReduceMotion ? 0 : 220;
+            sheetOpacity.value = withTiming(0, { duration: exitDuration });
+            translateY.value = withSpring(
+              SCREEN_HEIGHT * 0.7,
+              SPRING_DISMISS,
+              (finished) => {
+                if (finished) {
+                  scheduleOnRN(dismiss);
+                }
+              },
+            );
           } else {
-            translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
+            translateY.value = withSpring(0, SPRING_SNAP_BACK);
+          }
+        })
+        .onFinalize((event) => {
+          scheduleOnRN(() => {
+            console.log(
+              `${TAG} gesture FINALIZE — state: ${event.state}, ` +
+                `isDismissing: ${isDismissing.value}`,
+            );
+          });
+
+          if (isDismissing.value !== 1) {
+            translateY.value = withSpring(0, SPRING_SNAP_BACK);
           }
         }),
-    [onClose, shouldReduceMotion, translateY],
+    [shouldReduceMotion, translateY, isDismissing, sheetOpacity, dismiss],
   );
 
-  const sheetAnimatedStyle = useAnimatedStyle(() => ({
+  const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
+    opacity: sheetOpacity.value,
   }));
 
-  const enterDuration = shouldReduceMotion ? 0 : 220;
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity:
+      interpolate(
+        translateY.value,
+        [0, DISMISS_THRESHOLD],
+        [1, 0],
+        Extrapolation.CLAMP,
+      ) * sheetOpacity.value,
+  }));
+
+  const handleStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scaleX: interpolate(
+          translateY.value,
+          [0, DISMISS_THRESHOLD],
+          [1, 1.7],
+          Extrapolation.CLAMP,
+        ),
+      },
+    ],
+    opacity: interpolate(
+      translateY.value,
+      [0, DISMISS_THRESHOLD * 0.4, DISMISS_THRESHOLD],
+      [0.4, 0.75, 0.25],
+      Extrapolation.CLAMP,
+    ),
+  }));
+
+  const enterDuration = shouldReduceMotion ? 0 : 230;
   const sheetFrom = shouldReduceMotion
     ? { opacity: 1, translateY: 0 }
-    : { opacity: 0, translateY: -16 };
-  const sheetEnter = shouldReduceMotion
-    ? { opacity: 1, translateY: 0 }
-    : { opacity: 1, translateY: 0 };
+    : { opacity: 0, translateY: -18 };
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <View
-        style={[StyleSheet.absoluteFill, { paddingTop: topOffset }]}
-        pointerEvents="box-none"
-      >
-        <BlurView
-          intensity={40}
-          tint="dark"
-          style={StyleSheet.absoluteFill}
+      <View style={{ flex: 1, paddingTop: topOffset }} pointerEvents="box-none">
+        {/* Backdrop */}
+        <AnimatedView
+          className="absolute inset-0"
+          style={backdropStyle}
           pointerEvents="none"
-        />
+        >
+          <BlurView intensity={38} tint="dark" className="absolute inset-0" />
+          <View
+            className="absolute inset-0 bg-ink-900/30"
+            pointerEvents="none"
+          />
+        </AnimatedView>
+
+        {/* Tap-outside dismiss */}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Dismiss notifications"
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
+          onPress={() => {
+            console.log(`${TAG} backdrop tap -> handleClose()`);
+            handleClose();
+          }}
+          className="absolute inset-0"
         />
 
-        <AnimatedView style={sheetAnimatedStyle}>
-          <MotiView
-            from={sheetFrom}
-            animate={sheetEnter}
-            transition={{ type: 'timing', duration: enterDuration }}
-            style={{
-              marginHorizontal: 12,
-              borderRadius: 16,
-              backgroundColor: '#FBF7EE',
-              borderWidth: 1,
-              borderColor: '#EFE6D2',
-              overflow: 'hidden',
-              maxHeight: '60%',
-              shadowColor: '#0E0C0A',
-              shadowOpacity: 0.18,
-              shadowRadius: 24,
-              shadowOffset: { width: 0, height: 12 },
-              elevation: 16,
-            }}
-          >
-            <GestureDetector gesture={swipeGesture}>
-              <View
-                accessibilityRole="header"
+        <AnimatedView style={sheetStyle}>
+          <GestureDetector gesture={panGesture}>
+            <Animated.View>
+              <MotiView
+                from={sheetFrom}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ type: 'timing', duration: enterDuration }}
+                className="mx-3 rounded-2xl bg-paper-50 border border-paper-300 overflow-hidden"
                 style={{
-                  paddingHorizontal: 16,
-                  paddingTop: 12,
-                  paddingBottom: 8,
-                  borderBottomWidth: 1,
-                  borderBottomColor: '#EFE6D2',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  maxHeight: SCREEN_HEIGHT * 0.62,
+                  shadowColor: '#0E0C0A',
+                  shadowOpacity: 0.2,
+                  shadowRadius: 28,
+                  shadowOffset: { width: 0, height: 14 },
+                  elevation: 18,
                 }}
               >
-                <View style={{ flex: 1 }}>
-                  <StyledText
-                    variant="extrabold"
-                    className="text-ink-900 text-base"
-                    numberOfLines={1}
-                  >
-                    Notifications
-                  </StyledText>
-                  <StyledText
-                    variant="regular"
-                    className="text-ink-500 text-xs"
-                    numberOfLines={1}
-                  >
-                    {alerts.length === 0
-                      ? 'Nothing needs your attention'
-                      : `${alerts.length} active alert${alerts.length === 1 ? '' : 's'}`}
-                  </StyledText>
+                {/* Drag handle */}
+                <View className="items-center pt-2.5 pb-1" pointerEvents="none">
+                  <AnimatedView
+                    className="w-9 h-1 rounded-full bg-ink-200"
+                    style={handleStyle}
+                  />
                 </View>
+
+                {/* Header */}
+                <View className="flex-row items-center justify-between px-4 pt-1 pb-2.5">
+                  <View className="flex-1 mr-3">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-ink-900 text-base"
+                      numberOfLines={1}
+                    >
+                      Notifications
+                    </StyledText>
+                    <StyledText
+                      variant="regular"
+                      className="text-ink-400 text-xs"
+                      numberOfLines={1}
+                    >
+                      {alerts.length === 0
+                        ? 'Nothing needs your attention'
+                        : `${alerts.length} active alert${alerts.length === 1 ? '' : 's'}`}
+                    </StyledText>
+                  </View>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Close notifications"
+                    onPress={() => {
+                      console.log(`${TAG} close button (✕) tapped`);
+                      handleClose();
+                    }}
+                    hitSlop={10}
+                    className="w-8 h-8 rounded-full bg-paper-200 active:bg-paper-300 items-center justify-center"
+                  >
+                    <StyledText
+                      variant="extrabold"
+                      className="text-ink-600 text-xs"
+                      style={{ lineHeight: 14 }}
+                    >
+                      ✕
+                    </StyledText>
+                  </Pressable>
+                </View>
+
+                {/* Divider */}
+                <View className="h-px bg-paper-300" />
+
+                {/* Content */}
+                {visibleAlerts.length === 0 ? (
+                  <View className="px-4 py-6 items-center">
+                    <StyledText
+                      variant="medium"
+                      className="text-ink-400 text-sm text-center"
+                    >
+                      Store is operating smoothly. No alerts right now.
+                    </StyledText>
+                  </View>
+                ) : (
+                  <View className="px-4 pt-1">
+                    {visibleAlerts.map((alert) => (
+                      <AlertCardItem
+                        key={alert.id}
+                        type={alert.type}
+                        title={alert.title}
+                        subtitle={alert.subtitle}
+                        actionLabel={alert.actionLabel}
+                        onAction={() => {
+                          console.log(
+                            `${TAG} alert action tapped: id=${alert.id}`,
+                          );
+                          onAlertAction(alert);
+                        }}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {/* CTA */}
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Close notifications"
-                  onPress={onClose}
-                  hitSlop={8}
-                  className="w-11 h-11 rounded-full bg-paper-200 items-center justify-center"
+                  accessibilityLabel="See all alerts"
+                  onPress={() => {
+                    console.log(`${TAG} see-all CTA tapped`);
+                    onSeeAll();
+                  }}
+                  className="mx-4 my-3 min-h-[44px] rounded-xl bg-persimmon-500 active:bg-persimmon-600 items-center justify-center"
                 >
                   <StyledText
                     variant="extrabold"
-                    className="text-ink-700 text-base"
+                    className="text-paper-50 text-sm"
                   >
-                    x
+                    See all alerts
                   </StyledText>
                 </Pressable>
-              </View>
-            </GestureDetector>
-
-            <View
-              style={{
-                alignSelf: 'center',
-                width: 40,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: '#EFE6D2',
-                marginTop: 4,
-              }}
-              pointerEvents="none"
-            />
-
-            {visibleAlerts.length === 0 ? (
-              <View className="px-4 py-6 items-center">
-                <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-sm text-center"
-                >
-                  Store is operating smoothly. No alerts right now.
-                </StyledText>
-              </View>
-            ) : (
-              <View className="px-4 pt-1">
-                {visibleAlerts.map((alert, index) => (
-                  <AlertCardItem
-                    key={alert.id}
-                    index={index}
-                    type={alert.type}
-                    title={alert.title}
-                    subtitle={alert.subtitle}
-                    actionLabel={alert.actionLabel}
-                    onAction={() => onAlertAction(alert)}
-                  />
-                ))}
-              </View>
-            )}
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="See all alerts"
-              onPress={onSeeAll}
-              className="mx-4 my-3 min-h-[44px] rounded-xl bg-cinnamon-500 items-center justify-center"
-            >
-              <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                See all alerts
-              </StyledText>
-            </Pressable>
-          </MotiView>
+              </MotiView>
+            </Animated.View>
+          </GestureDetector>
         </AnimatedView>
       </View>
     </Modal>

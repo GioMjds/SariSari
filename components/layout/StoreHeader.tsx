@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -12,7 +12,9 @@ export interface StoreHeaderProps {
   isOnline?: boolean;
 }
 
-export function StoreHeader({ isOnline = true }: StoreHeaderProps) {
+export const StoreHeader = memo(function StoreHeader({
+  isOnline = true,
+}: StoreHeaderProps) {
   const router = useRouter();
   const { profile } = useProfile();
   const { alertCount, alerts } = useHomeDashboardData();
@@ -113,4 +115,6 @@ export function StoreHeader({ isOnline = true }: StoreHeaderProps) {
       />
     </View>
   );
-}
+});
+
+StoreHeader.displayName = 'StoreHeader';

@@ -14,8 +14,8 @@ export default function AllCustomersScreen() {
 
   const handleSelectCustomer = (customer: Customer) => {
     router.push({
-      pathname: '/(tabs)/customers/[detail]',
-      params: { detail: customer.id },
+      pathname: '/(edit-forms)/credit-details/[id]',
+      params: { id: customer.id },
     });
   };
 

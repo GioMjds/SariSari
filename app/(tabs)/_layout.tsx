@@ -14,12 +14,6 @@ export default function ScreensLayout() {
   const pathname = usePathname();
   const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
 
-  const isDetailScreen =
-    pathname.includes('[detail]') ||
-    pathname.includes('/sale-details/') ||
-    pathname.includes('/credit-details/');
-  const showHeader = isPrimaryTabPath(pathname) && !isDetailScreen;
-
   const handleExitApp = () => {
     hideDialog();
     BackHandler.exitApp();
@@ -56,11 +50,10 @@ export default function ScreensLayout() {
     return () => backHandler.remove();
   }, [pathname, showDialog, hideDialog, dialogVisible]);
 
-
   return (
     <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
       <StatusBar style="dark" backgroundColor="#F7F6F2" />
-      {showHeader && <StoreHeader />}
+      <StoreHeader />
       <Tabs
         screenOptions={{
           headerShown: false,
