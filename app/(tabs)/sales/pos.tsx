@@ -5,7 +5,9 @@ import * as Haptics from 'expo-haptics';
 import {
   ProductSearchCatalog,
   CustomerPickerModal,
-} from '@/components/sales/add-sales';
+  FloatingCheckoutButton,
+  CheckoutModal,
+} from '@/components/sales/pos';
 import { BarcodeScannerModal, MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { useCart } from '@/components/sales/pos/useCart';
@@ -20,6 +22,7 @@ export default function POSScreen() {
   const cart = useCart();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const { control, watch } = useForm<SearchFormData>({
     defaultValues: { search: '' },
@@ -37,9 +40,7 @@ export default function POSScreen() {
   }, [cart.products, search]);
 
   const quickProducts = useMemo(() => {
-    return cart.products
-      .filter((p) => p.quantity > 0)
-      .slice(0, 8);
+    return cart.products.filter((p) => p.quantity > 0).slice(0, 8);
   }, [cart.products]);
 
   const handleQuickAdd = (product: Product) => {
@@ -129,8 +130,14 @@ export default function POSScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Product Search Catalog (sits below quick grid) */}
-      <View className="absolute inset-x-0" style={{ top: search.trim() === '' && quickProducts.length > 0 ? 140 : 0, bottom: 0 }}>
+      {/* Product Search Catalog */}
+      <View
+        className="absolute inset-x-0"
+        style={{
+          top: search.trim() === '' && quickProducts.length > 0 ? 140 : 0,
+          bottom: 0,
+        }}
+      >
         <ProductSearchCatalog
           control={control}
           filteredProducts={filteredProducts}
@@ -150,6 +157,18 @@ export default function POSScreen() {
           onDismissPendingAddProduct={cart.dismissPendingAddProduct}
         />
       </View>
+
+      {/* Floating Checkout Button */}
+      <FloatingCheckoutButton
+        itemCount={cart.itemCount}
+        onPress={() => setCheckoutOpen(true)}
+      />
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        visible={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+      />
 
       <CustomerPickerModal
         visible={showCustomerPicker}

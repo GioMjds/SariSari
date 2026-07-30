@@ -72,7 +72,7 @@ export function formatDualPrice(
  */
 export function calculateTotalPieces(
   unitQty: number,
-  selectedUnit: 'retail' | 'wholesale',
+  selectedUnit: 'retail' | 'wholesale' = 'retail',
   conversionFactor?: number | null,
 ): number {
   const qty = Math.max(0, Math.floor(unitQty));
