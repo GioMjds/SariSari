@@ -60,13 +60,13 @@ export const getTabs = (t: TFunction): Tab[] => [
 
 export const getSellAction = (t: TFunction): Tab => ({
   name: t('common:sellAction', { defaultValue: 'Sell' }),
-  href: '/(edit-forms)/add-sales',
+  href: '/(tabs)/sales',
   icon: 'shopping-cart',
 });
 
 // Sub-Tab Swipe Routes per FUTURE_REVAMP.md
 export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
-export const SALES_SUB_TABS = ['pos', 'cart', 'checkout', 'receipts'] as const;
+export const SALES_SUB_TABS = ['pos', 'history', 'returns'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
   'low-stock',

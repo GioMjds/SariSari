@@ -22,6 +22,15 @@ export interface DashboardKPIGridProps {
   onKpiPress?: (target: 'reports' | 'cash' | 'inventory' | 'utang') => void;
 }
 
+type KPIItem = {
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: string;
+  topBorder: string;
+  target: 'reports' | 'cash' | 'inventory' | 'utang';
+};
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function DashboardKPIGrid({
@@ -41,28 +50,21 @@ export function DashboardKPIGrid({
     transform: [{ scale: scale.value }],
   }));
 
-  const kpis: {
-    title: string;
-    value: string;
-    subtitle: string;
-    icon: string;
-    topBorder: string;
-    target: 'reports' | 'cash' | 'inventory' | 'utang';
-  }[] = [
+  const kpis = [
     {
       title: 'EST. PROFIT',
       value: formatCurrency(profitMargin),
       subtitle: 'Net income',
       icon: 'chart-line',
-      topBorder: 'border-t-4 border-cinnamon-500',
+      topBorder: 'border-t-[3px] border-cinnamon-500',
       target: 'reports',
     },
     {
       title: 'CASH SESSION',
       value: cashSessionStatus,
-      subtitle: `Float ${formatCurrency(startingFloat)}`,
+      subtitle: `${formatCurrency(startingFloat)}`,
       icon: 'wallet',
-      topBorder: 'border-t-4 border-sage-600',
+      topBorder: 'border-t-[3px] border-sage-600',
       target: 'cash',
     },
     {
@@ -70,7 +72,7 @@ export function DashboardKPIGrid({
       value: `${lowStockCount} items`,
       subtitle: lowStockCount > 0 ? 'Needs restock' : 'Stock healthy',
       icon: 'box-open',
-      topBorder: 'border-t-4 border-amber-500',
+      topBorder: 'border-t-[3px] border-amber-500',
       target: 'inventory',
     },
     {
@@ -78,27 +80,30 @@ export function DashboardKPIGrid({
       value: formatCurrency(totalCredits),
       subtitle: `${creditCustomersCount} customers`,
       icon: 'user-clock',
-      topBorder: 'border-t-4 border-rose-600',
+      topBorder: 'border-t-[3px] border-rose-600',
       target: 'utang',
     },
-  ];
+  ] satisfies KPIItem[];
 
   return (
-    <View className="mb-4">
+    <View className="mb-6">
       {/* Hero Total Sales Block */}
-      <View className="px-4 mb-4">
+      <View className="px-4 mb-5">
         <StyledText
           variant="extrabold"
           className="text-ink-500 text-xs tracking-wider uppercase"
         >
           TOTAL SALES TODAY
         </StyledText>
-        <View className="flex-row items-baseline gap-3 mt-1">
-          <StyledText variant="extrabold" className="text-ink-900 text-4xl">
+        <View className="flex-row items-baseline gap-3 mt-1.5">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-hero"
+          >
             {formatCurrency(totalSales)}
           </StyledText>
         </View>
-        <View className="flex-row items-center gap-2 mt-1">
+        <View className="flex-row items-center gap-2 mt-2">
           <StyledText variant="regular" className="text-ink-500 text-xs">
             {transactionCount} transactions today
           </StyledText>
@@ -114,7 +119,7 @@ export function DashboardKPIGrid({
       </View>
 
       {/* KPIS Section Header */}
-      <View className="px-4 flex-row items-center justify-between mb-2">
+      <View className="px-4 flex-row items-center justify-between mb-3">
         <StyledText
           variant="extrabold"
           className="text-ink-500 text-xs tracking-wider uppercase"
@@ -152,9 +157,9 @@ export function DashboardKPIGrid({
                   onDetailsPress?.();
                 }
               }}
-              className={`w-[48%] bg-paper-50 p-3.5 rounded-2xl border border-ink-100 shadow-sm min-h-[96px] ${kpi.topBorder}`}
+              className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px] ${kpi.topBorder}`}
             >
-              <View className="flex-row items-center justify-between mb-1">
+              <View className="flex-row items-center justify-between mb-2">
                 <StyledText
                   variant="extrabold"
                   className="text-ink-400 text-[11px] tracking-wider uppercase"
@@ -165,7 +170,7 @@ export function DashboardKPIGrid({
               <StyledText variant="extrabold" className="text-ink-900 text-xl">
                 {kpi.value}
               </StyledText>
-              <View className="flex-row items-center justify-between mt-1">
+              <View className="flex-row items-center justify-between mt-1.5">
                 <StyledText
                   variant="regular"
                   className="text-ink-500 text-[11px]"

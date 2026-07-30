@@ -34,31 +34,22 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 300, delay: 100 }}
     >
-      <View className="px-4 mb-4">
-        {/* New Sale — full-width persimmon hero */}
-        <TouchableOpacity
-          onPress={onNewSale}
-          activeOpacity={0.88}
-          accessibilityRole="button"
-          accessibilityLabel={t('common:dashboard.quickActions.newSale', { defaultValue: 'New Sale' })}
-          accessibilityHint="Navigates directly to sale checkout screen"
-          className="bg-persimmon-500 rounded-xl py-4 px-5 flex-row items-center justify-between press-scale mb-3"
-        >
-          <View className="flex-row items-center">
-            <FontAwesome name="plus-circle" size={20} color="#FBF7EE" />
-            <StyledText
-              variant="black"
-              className="text-paper-50 text-lg ml-2.5"
-              style={{ letterSpacing: 0.2 }}
-            >
-              {t('common:dashboard.quickActions.newSale', { defaultValue: 'New Sale' })}
-            </StyledText>
-          </View>
-          <FontAwesome name="arrow-right" size={16} color="#FBF7EE" />
-        </TouchableOpacity>
+      <View className="px-4 mb-6">
+        {/* Hero New Sale CTA */}
+        <NewSaleHero onPress={onNewSale} />
 
-        {/* 2x2 Action grid */}
-        <View className="flex-row gap-2.5 mb-2.5">
+        {/* Section header for secondary actions */}
+        <View className="flex-row items-center justify-between mb-3">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-500 text-xs tracking-wider uppercase"
+          >
+            QUICK ACTIONS
+          </StyledText>
+        </View>
+
+        {/* 2x2 secondary action grid */}
+        <View className="flex-row gap-3 mb-3">
           <ActionCard
             label={t('common:dashboard.quickActions.addProduct', { defaultValue: 'Add Product' })}
             subtitle={t('common:dashboard.quickActions.addProductSub', { defaultValue: 'New catalog item' })}
@@ -79,7 +70,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
           />
         </View>
 
-        <View className="flex-row gap-2.5">
+        <View className="flex-row gap-3">
           <ActionCard
             label={t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })}
             subtitle={
@@ -119,6 +110,43 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
   );
 });
 
+function NewSaleHero({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
+  const label = t('common:dashboard.quickActions.newSale', {
+    defaultValue: 'New Sale',
+  });
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.9}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="bg-persimmon-500 rounded-2xl p-4 mb-5 flex-row items-center border border-persimmon-600 press-scale"
+      style={{ minHeight: 64 }}
+    >
+      <View className="w-10 h-10 rounded-xl bg-persimmon-600 items-center justify-center mr-3">
+        <FontAwesome name="plus" size={18} color="#FFFFFF" />
+      </View>
+      <View className="flex-1">
+        <StyledText
+          variant="extrabold"
+          className="text-paper-50 text-base uppercase tracking-wider"
+        >
+          {label}
+        </StyledText>
+        <StyledText
+          variant="regular"
+          className="text-persimmon-100 text-xs mt-0.5"
+          numberOfLines={1}
+        >
+          Start a new transaction
+        </StyledText>
+      </View>
+      <FontAwesome name="chevron-right" size={13} color="#FFE0D1" />
+    </TouchableOpacity>
+  );
+}
+
 function ActionCard({
   label,
   subtitle,
@@ -144,8 +172,8 @@ function ActionCard({
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      className="flex-1 bg-paper-50 rounded-xl p-3.5 border border-ink-100 press-scale"
-      style={{ minHeight: 96 }}
+      className="flex-1 bg-paper-50 rounded-2xl p-3 border border-ink-100 press-scale"
+      style={{ minHeight: 92 }}
     >
       {/* Icon row with optional badge */}
       <View className="flex-row items-start justify-between mb-3">

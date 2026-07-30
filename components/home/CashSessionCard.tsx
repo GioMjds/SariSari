@@ -13,7 +13,7 @@ export interface CashSessionCardProps {
 }
 
 export function CashSessionCard({
-  status = 'closed',
+  status,
   startingFloat = 0,
   expectedCash = 0,
   variance = 0,

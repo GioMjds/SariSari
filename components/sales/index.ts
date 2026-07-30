@@ -5,6 +5,7 @@ export * from './SalesFilterModal';
 export * from './SalesSkeleton';
 export * from './PerforationRow';
 export * from './SellHeader';
+export * from './SalesHeader';
 export * from './TodayStatsHero';
 export * from './add-sales';
 export * from './sale-details';

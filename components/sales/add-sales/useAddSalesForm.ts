@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Customer, NewSaleItem, Product } from '@/types';
 import {
@@ -15,47 +14,20 @@ import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
 import { useToastStore } from '@/stores';
 
-/**
- * Form data for the Add Sales screen.
- *
- * The POS only has one true input — the product search query — which
- * is bound through react-hook-form so the field participates in the
- * same reset/dispatch plumbing as the rest of the app's edit forms.
- * The cart, payment type, and selected customer are local React state
- * because they're UI-shaped, not field-shaped.
- */
 export interface AddSalesFormData {
   search: string;
 }
 
-/**
- * Cart line item used inside `useAddSalesForm()`.
- */
 export interface CartItem {
   product: Product;
   quantity: number;
 }
 
-/**
- * `useAddSalesForm()` — owns the Add Sales (POS) screen's state.
- *
- * Encapsulates react-hook-form setup, cart manipulation (add, increment,
- * decrement, set quantity, remove), stock validation (`calculateCartProductPieces`),
- * payment-type/customer selection, barcode processing via `useBarcodeResolver()`,
- * and the final transaction submission through `useSales()`.
- *
- * This hook is the single place where business logic lives; the screen and its
- * components stay presentational.
- */
 export function useAddSalesForm() {
   const { getAllProductsQuery } = useProducts();
   const { insertSaleMutation } = useSales();
   const addToast = useToastStore((state) => state.addToast);
 
-  // Local UI state — the cart, payment mode, search query, and suki picker.
-  // `selectedCustomer` accepts either a registered Customer object (when
-  // picking from the suki list) or a plain string for one-off custom names
-  // typed during cash checkout. `null` means no buyer was captured.
   const [cartItems, setCartItems] = useState<NewSaleItem[]>([]);
   const [paymentType, setPaymentType] = useState<'cash' | 'credit'>('cash');
   const [selectedCustomer, setSelectedCustomer] = useState<
@@ -63,7 +35,6 @@ export function useAddSalesForm() {
   >(null);
   const [showCustomerPicker, setShowCustomerPicker] = useState<boolean>(false);
 
-  // Barcode scanner state.
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
   const [lastScanned, setLastScanned] = useState<{
     name: string;
@@ -71,40 +42,23 @@ export function useAddSalesForm() {
     at: number;
     found: boolean;
   } | null>(null);
-  // v5: when a scan misses the catalog, surface the barcode so the
-  // catalog can render the "Add as new product" CTA. The route push
-  // happens from the catalog via `onPressAddNewProduct`.
+
   const [pendingAddProductBarcode, setPendingAddProductBarcode] = useState<
     string | null
   >(null);
-  // A scan that arrives while `getAllProductsQuery` is still on its
-  // first fetch gets `store_products_unavailable` from the resolver.
-  // Stash it here and replay it once the query settles, instead of
-  // dropping it silently (see the matching comment in useAddProductForm).
   const pendingScanRef = useRef<string | null>(null);
-  // The resolver composes validation + throttle + lookup. Reading it
-  // here rather than re-implementing the chain keeps the policy in
-  // one place (the hook) and lets us swap implementations without
-  // touching the screen.
   const { resolve } = useBarcodeResolver();
 
-  // react-hook-form — search input only. Matches the field-shape
-  // convention used by other edit-form routes.
   const { control, reset } = useForm<AddSalesFormData>({
     defaultValues: { search: '' },
   });
 
   const search = useWatch({ control, name: 'search' }) || '';
 
-  // Domain queries.
   const { data: products = [], isLoading: isProductsLoading } =
     getAllProductsQuery;
   const { data: customers = [] } = useCustomers();
 
-  // ─── Derived values ────────────────────────────────────────────
-
-  /** Catalog filtered by the search query. Lives here because the
-   * filter is a UI concern over the products query cache. */
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return products;
@@ -124,8 +78,6 @@ export function useAddSalesForm() {
     insertSaleMutation.isPending ||
     cartItems.length === 0 ||
     (paymentType === 'credit' && !selectedCustomer);
-
-  // ─── Cart handlers ────────────────────────────────────────────
 
   const handleAddItem = useCallback(
     (product: Product, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
@@ -270,8 +222,6 @@ export function useAddSalesForm() {
     reset({ search: '' });
   }, [reset]);
 
-  // ─── Barcode scanner ───────────────────────────────────────────
-
   const openScanner = useCallback(() => {
     setIsScannerOpen(true);
   }, []);
@@ -282,22 +232,9 @@ export function useAddSalesForm() {
 
   const handleScannedBarcode = useCallback(
     async (barcode: string) => {
-      if (__DEV__) {
-        console.log('[Barcode][AddSales] scanned:', barcode);
-      }
       const result = await resolve(barcode, Date.now());
-      if (__DEV__) {
-        console.log('[Barcode][AddSales] resolution kind:', result.kind, result);
-      }
 
       if (result.kind === 'invalid') {
-        // The resolver collapses "format error" and "duplicate-
-        // throttle drop" into a single 'invalid' result. In either
-        // case the modal's banner copy is the same — we surface a
-        // toast for malformed input and silently swallow drops.
-        // We can't easily distinguish them here, so we toast
-        // conservatively; duplicate drops end up as harmless toasts
-        // that the throttle itself prevents from firing.
         addToast({
           message:
             result.reason === 'empty'
@@ -347,8 +284,6 @@ export function useAddSalesForm() {
         const { product, source, matchedUnit } = result;
         handleAddItem(product, matchedUnit);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        // A resolved scan clears any pending CTA — the user has
-        // successfully resolved the missing state by scanning again.
         setPendingAddProductBarcode(null);
         setLastScanned({
           name: product.name,
@@ -356,9 +291,6 @@ export function useAddSalesForm() {
           at: Date.now(),
           found: true,
         });
-        // The `source` branch is intentionally not surfaced in the
-        // banner — UI is identical regardless of which column matched.
-        // Recorded here for telemetry in a future iteration.
         void source;
         return;
       }
@@ -368,20 +300,8 @@ export function useAddSalesForm() {
         result.kind === 'superseded' ||
         result.kind === 'store_products_unavailable'
       ) {
-        // Leave the cart, pending CTA, scanner, and last successful banner untouched.
         if (result.kind === 'store_products_unavailable') {
-          if (__DEV__) {
-            console.log(
-              '[Barcode][AddSales] products query not ready yet, queuing',
-              barcode,
-              'for replay once it settles',
-            );
-          }
           pendingScanRef.current = barcode;
-        } else {
-          if (__DEV__) {
-            console.log('[Barcode][AddSales] scan swallowed, kind:', result.kind);
-          }
         }
         return;
       }
@@ -389,20 +309,11 @@ export function useAddSalesForm() {
     [resolve, addToast, handleAddItem],
   );
 
-  // Replays a scan that arrived before `getAllProductsQuery` had
-  // settled. See the comment on `pendingScanRef` above.
   useEffect(() => {
-    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
-      return;
+    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching) return;
     const queued = pendingScanRef.current;
     if (!queued) return;
     pendingScanRef.current = null;
-    if (__DEV__) {
-      console.log(
-        '[Barcode][AddSales] products query ready, replaying queued scan',
-        queued,
-      );
-    }
     void handleScannedBarcode(queued);
   }, [
     getAllProductsQuery.isSuccess,
@@ -410,21 +321,16 @@ export function useAddSalesForm() {
     handleScannedBarcode,
   ]);
 
-  // Handler bound to the "Add as new product" CTA in the catalog.
-  // Routes to the Add Product form with the barcode pre-filled.
   const handlePressAddNewProduct = useCallback(() => {
     if (!pendingAddProductBarcode) return;
     const barcode = pendingAddProductBarcode;
     setPendingAddProductBarcode(null);
     setIsScannerOpen(false);
     router.push(
-      `/(edit-forms)/add-product?prefillBarcode=${encodeURIComponent(barcode)}` as any,
+      `/(edit-forms)/add-product?prefillBarcode=${encodeURIComponent(barcode)}` as Href,
     );
   }, [pendingAddProductBarcode]);
 
-  // Handler bound to the modal's "Done" button — clear pending CTA.
-  // (Modal exposes its own close; this is a thin wrapper for the
-  // explicit cancel path.)
   const dismissPendingAddProduct = useCallback(() => {
     setPendingAddProductBarcode(null);
   }, []);
@@ -434,10 +340,6 @@ export function useAddSalesForm() {
   const handlePaymentTypeChange = useCallback(
     (type: 'cash' | 'credit') => {
       setPaymentType(type);
-      // Credit sales require a registered suki — clear any plain string
-      // (one-off name) so the user can't submit a typed buyer as a Suki
-      // for an utang record. Switching back to cash preserves whatever
-      // was captured, so the user can toggle modes without re-entering.
       if (type === 'credit' && typeof selectedCustomer === 'string') {
         setSelectedCustomer(null);
       }
@@ -450,20 +352,12 @@ export function useAddSalesForm() {
     setShowCustomerPicker(false);
   }, []);
 
-  /**
-   * Accepts a typed one-off name (from the customer picker's "Use 'X'
-   * as a one-off name" action). Treated as a string in selectedCustomer
-   * so we can distinguish it from a registered Customer object during
-   * submission — string means "no customer_credit_id; just record a name".
-   */
   const handleSelectOneOffName = useCallback((name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     setSelectedCustomer(trimmed);
     setShowCustomerPicker(false);
   }, []);
-
-  // ─── Submission pipeline ───────────────────────────────────────
 
   const submit = useCallback(async () => {
     if (cartItems.length === 0 || insertSaleMutation.isPending) {
@@ -479,9 +373,6 @@ export function useAddSalesForm() {
           selected_unit: item.selected_unit,
         })),
         payment_type: paymentType,
-        // Map the hybrid selectedCustomer shape into the two columns:
-        //   • string  → typed one-off name; no Suki link.
-        //   • Customer object → registered Suki; save both columns.
         customer_name:
           typeof selectedCustomer === 'string'
             ? selectedCustomer
@@ -505,8 +396,6 @@ export function useAddSalesForm() {
       Alert.alert('Error', 'Failed to complete sale. Please try again.');
     }
   }, [cartItems, paymentType, selectedCustomer, insertSaleMutation, clearCart]);
-
-  // ─── Cart line lookup helper for the catalog ───────────────────
 
   const getCartLine = useCallback(
     (productId: number): NewSaleItem | undefined =>

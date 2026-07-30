@@ -31,7 +31,7 @@ export default function AlertsScreen() {
     <ScrollView
       className="flex-1 bg-paper-200"
       contentContainerStyle={{
-        paddingVertical: 16,
+        paddingTop: 8,
         paddingBottom: tabBarBottomOffset + 24,
       }}
       showsVerticalScrollIndicator={false}

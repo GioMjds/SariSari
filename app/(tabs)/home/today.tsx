@@ -16,15 +16,13 @@ export default function TodayScreen() {
   const { stats, currentSession, isLoading, hourlySales, recentSales } =
     useHomeDashboardData();
 
-  if (isLoading) {
-    return <TodaySnapshotSkeleton />;
-  }
+  if (isLoading) return <TodaySnapshotSkeleton />;
 
   return (
     <ScrollView
       className="flex-1 bg-paper-200"
       contentContainerStyle={{
-        paddingVertical: 16,
+        paddingTop: 8,
         paddingBottom: tabBarBottomOffset + 24,
       }}
     >
@@ -33,7 +31,7 @@ export default function TodayScreen() {
         targetSales={5000}
       />
       <CashSessionCard
-        status={currentSession?.status}
+        status={currentSession?.status ?? "closed"}
         startingFloat={currentSession?.startingFloat}
         expectedCash={currentSession?.expectedCash}
         variance={currentSession?.variance}

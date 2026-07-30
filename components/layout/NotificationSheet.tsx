@@ -1,22 +1,22 @@
-import { useMemo, useEffect, useCallback, useRef } from 'react';
-import { Modal, Pressable, View, Dimensions } from 'react-native';
-import { MotiView } from 'moti';
-import { BlurView } from 'expo-blur';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  interpolate,
-  Extrapolation,
-  useReducedMotion,
-} from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { AlertCardItem } from '@/components/home';
 import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
+import { BlurView } from 'expo-blur';
+import { MotiView } from 'moti';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, Modal, Pressable, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 const TAG = '[NotificationSheet]';
 
@@ -57,9 +57,6 @@ export function NotificationSheet({
   const prevVisible = useRef(visible);
   useEffect(() => {
     if (prevVisible.current !== visible) {
-      console.log(
-        `${TAG} visible changed: ${prevVisible.current} -> ${visible}`,
-      );
       prevVisible.current = visible;
     }
   }, [visible]);
@@ -69,25 +66,31 @@ export function NotificationSheet({
       translateY.value = 0;
       isDismissing.value = 0;
       sheetOpacity.value = 1;
+    } else {
+      translateY.value = 0;
+      isDismissing.value = 0;
+      sheetOpacity.value = 0;
     }
   }, [visible, translateY, isDismissing, sheetOpacity]);
 
   const dismiss = useCallback(() => {
-    console.log(`${TAG} dismiss() called -> invoking onClose()`);
     onClose();
   }, [onClose]);
 
   const handleClose = useCallback(() => {
     if (isDismissing.value === 1) return;
-    console.log(`${TAG} handleClose() called -> triggering exit transition`);
     isDismissing.value = 1;
     const exitDuration = shouldReduceMotion ? 0 : 200;
     sheetOpacity.value = withTiming(0, { duration: exitDuration });
-    translateY.value = withTiming(-24, { duration: exitDuration }, (finished) => {
-      if (finished) {
-        scheduleOnRN(dismiss);
-      }
-    });
+    translateY.value = withTiming(
+      -24,
+      { duration: exitDuration },
+      (finished) => {
+        if (finished) {
+          scheduleOnRN(dismiss);
+        }
+      },
+    );
   }, [shouldReduceMotion, dismiss, translateY, isDismissing, sheetOpacity]);
 
   const resistedTranslate = (raw: number): number => {
@@ -102,20 +105,6 @@ export function NotificationSheet({
       Gesture.Pan()
         .activeOffsetY([6, 9999])
         .failOffsetY([-6, -9999])
-        .onBegin(() => {
-          scheduleOnRN(() => {
-            console.log(
-              `${TAG} gesture BEGAN (finger down, threshold not yet crossed)`,
-            );
-          });
-        })
-        .onStart(() => {
-          scheduleOnRN(() => {
-            console.log(
-              `${TAG} gesture START (activeOffsetY crossed — gesture active)`,
-            );
-          });
-        })
         .onUpdate((event) => {
           if (shouldReduceMotion || isDismissing.value === 1) return;
           translateY.value = resistedTranslate(event.translationY);
@@ -124,15 +113,6 @@ export function NotificationSheet({
           const { translationY, velocityY } = event;
           const shouldDismiss =
             translationY > DISMISS_THRESHOLD || velocityY > DISMISS_VELOCITY;
-
-          scheduleOnRN(() => {
-            console.log(
-              `${TAG} gesture END — translationY: ${translationY.toFixed(1)}px, ` +
-                `velocityY: ${velocityY.toFixed(1)}px/s, ` +
-                `decision: ${shouldDismiss ? 'DISMISS' : 'SNAP BACK'} ` +
-                `(thresholds: distance>${DISMISS_THRESHOLD} or velocity>${DISMISS_VELOCITY})`,
-            );
-          });
 
           if (isDismissing.value === 1) return;
 
@@ -154,13 +134,6 @@ export function NotificationSheet({
           }
         })
         .onFinalize((event) => {
-          scheduleOnRN(() => {
-            console.log(
-              `${TAG} gesture FINALIZE — state: ${event.state}, ` +
-                `isDismissing: ${isDismissing.value}`,
-            );
-          });
-
           if (isDismissing.value !== 1) {
             translateY.value = withSpring(0, SPRING_SNAP_BACK);
           }
@@ -240,21 +213,28 @@ export function NotificationSheet({
           className="absolute inset-0"
         />
 
-        <AnimatedView style={sheetStyle}>
+        <AnimatedView
+          style={[
+            sheetStyle,
+            {
+              shadowColor: '#0E0C0A',
+              shadowOpacity: 0.2,
+              shadowRadius: 28,
+              shadowOffset: { width: 0, height: 14 },
+              elevation: 18,
+            },
+          ]}
+        >
           <GestureDetector gesture={panGesture}>
             <Animated.View>
               <MotiView
                 from={sheetFrom}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{ type: 'timing', duration: enterDuration }}
+                exit={{ opacity: 0, translateY: 18 }}
                 className="mx-3 rounded-2xl bg-paper-50 border border-paper-300 overflow-hidden"
                 style={{
                   maxHeight: SCREEN_HEIGHT * 0.62,
-                  shadowColor: '#0E0C0A',
-                  shadowOpacity: 0.2,
-                  shadowRadius: 28,
-                  shadowOffset: { width: 0, height: 14 },
-                  elevation: 18,
                 }}
               >
                 {/* Drag handle */}

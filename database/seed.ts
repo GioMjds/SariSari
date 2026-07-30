@@ -1,9 +1,6 @@
 import { db } from '../configs/sqlite';
 import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
-import {
-  insertCatalogProductIfMissing,
-  insertCatalogProductsBatch,
-} from './catalog';
+import { insertCatalogProductsBatch } from './catalog';
 import {
   MOCK_CATEGORIES,
   MOCK_PRODUCTS,
@@ -15,9 +12,6 @@ import {
   MOCK_INVENTORY_TRANSACTIONS,
 } from '@/scripts/sample-mock-datas';
 
-/**
- * Seed the database with mock data for development.
- */
 export async function seedProductCatalog(): Promise<void> {
   const startedAt = Date.now();
   if (__DEV__) {
@@ -53,9 +47,6 @@ export async function seedProductCatalog(): Promise<void> {
 export const seedDatabase = async () => {
   console.log('🌱 Checking whether to seed the database...');
 
-  // Bail out if the user has any data of their own. The seed is
-  // strictly for first-run demo data; it must never overwrite
-  // anything the user has entered.
   const existingProduct = await db.getFirstAsync<{ c: number }>(
     'SELECT COUNT(*) AS c FROM products',
   );

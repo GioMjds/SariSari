@@ -1,5 +1,5 @@
 import { RefreshControl, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import {
   DashboardKPIGrid,
   DashboardQuickActions,
@@ -23,15 +23,13 @@ export default function OverviewScreen() {
     isLoading,
   } = useHomeDashboardData();
 
-  if (isLoading) {
-    return <HomeOverviewSkeleton />;
-  }
+  if (isLoading) return <HomeOverviewSkeleton />;
 
   return (
     <ScrollView
       className="flex-1 bg-paper-200"
       contentContainerStyle={{
-        paddingVertical: 16,
+        paddingTop: 8,
         paddingBottom: tabBarBottomOffset + 24,
       }}
       refreshControl={
@@ -59,23 +57,23 @@ export default function OverviewScreen() {
         lowStockCount={stats.lowStockCount}
         totalCredits={stats.overdueAmount}
         creditCustomersCount={stats.overdueCount}
-        onDetailsPress={() => router.push('/reports' as any)}
+        onDetailsPress={() => router.push('/reports' as Href)}
         onKpiPress={(target) => {
-          if (target === 'inventory') router.push('/inventory' as any);
-          else if (target === 'utang') router.push('/utang' as any);
+          if (target === 'inventory') router.push('/inventory' as Href);
+          else if (target === 'utang') router.push('/utang' as Href);
           else if (target === 'cash')
-            router.push('/(edit-forms)/cash-session' as any);
-          else router.push('/reports' as any);
+            router.push('/(edit-forms)/cash-session' as Href);
+          else router.push('/reports' as Href);
         }}
       />
 
       {/* Hero CTA & Quick Action Grid */}
       <DashboardQuickActions
-        onNewSale={() => router.push('/(edit-forms)/add-sales' as any)}
+        onNewSale={() => router.push('/(tabs)/sales/pos' as Href)}
         onAddProduct={() => router.push('/(edit-forms)/add-product' as any)}
-        onAddStock={() => router.push('/inventory' as any)}
-        onOpenCredits={() => router.push('/utang' as any)}
-        onOpenReports={() => router.push('/reports' as any)}
+        onAddStock={() => router.push('/inventory' as Href)}
+        onOpenCredits={() => router.push('/utang' as Href)}
+        onOpenReports={() => router.push('/reports' as Href)}
         overdueCount={stats.overdueCount}
       />
 
@@ -83,9 +81,9 @@ export default function OverviewScreen() {
       <DashboardRecentSales
         sales={recentSales}
         onOpenSale={(id) =>
-          router.push(`/(edit-forms)/sale-details/${id}` as any)
+          router.push(`/(edit-forms)/sale-details/${id}` as Href)
         }
-        onSeeAll={() => router.push('/sales' as any)}
+        onSeeAll={() => router.push('/sales' as Href)}
       />
 
       {/* Dark Espresso Top Seller Banner */}

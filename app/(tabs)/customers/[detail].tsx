@@ -72,7 +72,7 @@ export default function CustomerDetailScreen() {
       </ScrollView>
 
       <CustomerQuickActionsFooter
-        onSell={() => router.push('/(edit-forms)/add-sales')}
+        onSell={() => router.push('/(tabs)/sales/pos')}
         onAddCredit={() =>
           router.push({
             pathname: '/(edit-forms)/add-credit/[id]',

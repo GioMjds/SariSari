@@ -96,7 +96,7 @@ describe('DashboardScreen Integration', () => {
     expect(getByText(/TOTAL SALES TODAY/i)).toBeTruthy();
 
     fireEvent.press(getByText('New Sale'));
-    expect(mockPush).toHaveBeenCalledWith('/(edit-forms)/add-sales');
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/sales/pos');
 
     fireEvent.press(getAllByText('Add Product')[0]);
     expect(mockPush).toHaveBeenCalledWith('/(edit-forms)/add-product');
