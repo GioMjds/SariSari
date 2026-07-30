@@ -9,24 +9,21 @@ import {
 } from 'react-native';
 import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
-import { AddSalesFormData } from './useAddSalesForm';
+import { AddSalesFormData } from '../add-sales/useAddSalesForm';
 import { ProductRow } from './ProductRow';
 
 interface ProductSearchCatalogProps {
   control: Control<AddSalesFormData>;
   filteredProducts: Product[];
   isLoading: boolean;
-  /** Lookup the current cart line for a product, or `undefined`. */
   getCartLine: (productId: number) => NewSaleItem | undefined;
   onAdd: (product: Product, selectedUnit?: 'retail' | 'wholesale') => void;
-  /** Delta is +/-1. Decrementing past zero removes the line. */
   onUpdateQuantity: (
     productId: number,
     delta: number,
     selectedUnit?: 'retail' | 'wholesale',
   ) => void;
   onToggleUnit?: (productId: number) => void;
-  /** Opens the camera scanner modal — the primary POS scanning entry. */
   onPressScan: () => void;
   pendingAddProductBarcode?: string | null;
   onPressAddNewProduct?: () => void;
@@ -92,9 +89,6 @@ export function ProductSearchCatalog({
         </Pressable>
       </View>
 
-      {/* v5: inline CTA card for missing barcodes. Hidden when no
-          pending barcode is set. Sits between the search bar and the
-          catalog list so the user sees it immediately after a miss. */}
       {pendingAddProductBarcode ? (
         <View className="mx-4 mb-3 bg-semantic-danger-50 border border-semantic-danger/30 rounded-2xl p-4 shadow-paper">
           <View className="flex-row items-start">
@@ -131,10 +125,7 @@ export function ProductSearchCatalog({
               accessibilityLabel="Add as new product from scanned barcode"
               className="press-scale mt-3 rounded-xl py-2.5 bg-persimmon-500 shadow-persimmon-glow items-center"
             >
-              <StyledText
-                variant="extrabold"
-                className="text-paper-50 text-sm"
-              >
+              <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Add as new product
               </StyledText>
             </Pressable>

@@ -1,8 +1,7 @@
 export { AddSalesHeader } from './AddSalesHeader';
-export { ProductSearchCatalog } from './ProductSearchCatalog';
 export { CartSummaryTray } from './CartSummaryTray';
-export { CustomerPickerModal } from './CustomerPickerModal';
+export { CustomerPickerModal } from '../pos/CustomerPickerModal';
 export { useAddSalesForm } from './useAddSalesForm';
 export type { AddSalesFormData } from './useAddSalesForm';
-export { ProductRow } from './ProductRow';
+export { ProductRow } from '../pos/ProductRow';
 export { StepperStamp } from './StepperStamp';

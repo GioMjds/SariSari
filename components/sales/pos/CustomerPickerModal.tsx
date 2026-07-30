@@ -14,35 +14,12 @@ import { StyledText } from '@/components/elements';
 interface CustomerPickerModalProps {
   visible: boolean;
   customers: Customer[];
-  /**
-   * Indicates whether the picker is being opened during a cash sale —
-   * shifts the header copy from "Credit checkout" to "Cash checkout
-   * (optional)" and surfaces the one-off-name action.
-   */
   paymentType: 'cash' | 'credit';
   onClose: () => void;
   onSelect: (customer: Customer) => void;
-  /**
-   * Called with the typed query string when the owner wants to record
-   * a one-off buyer name (e.g. "Anak ni Maria") without creating a
-   * customer profile.
-   */
   onSelectOneOffName: (name: string) => void;
 }
 
-/**
- * CustomerPickerModal — slide-up bottom modal for picking a suki or
- * recording a one-off buyer name during checkout.
- *
- * Layout:
- *   • Header (title + sub-eyebrow that flips for cash vs credit).
- *   • Search field.
- *   • "Use 'X' as a one-off name" action — only shown when the search
- *     query is non-empty. The action only commits the typed name;
- *     it does NOT create a customer row.
- *   • Customer list (search-filtered), each row showing name + outstanding
- *     balance.
- */
 export function CustomerPickerModal({
   visible,
   customers,
@@ -124,10 +101,6 @@ export function CustomerPickerModal({
             )}
           </View>
 
-          {/* One-off name action — appears as soon as the owner types
-              a query. Always commits the typed string, never creates a
-              customer row. Only meaningful for cash sales, but harmless
-              on credit (the form will clear it on toggle). */}
           {trimmedQuery.length > 0 && (
             <Pressable
               onPress={() => onSelectOneOffName(trimmedQuery)}

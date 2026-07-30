@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import { PerforationRow } from '../PerforationRow';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
-import { StepperStamp } from './StepperStamp';
+import { StepperStamp } from '../add-sales/StepperStamp';
 import { Image } from 'expo-image';
 import { getProductImageUri } from '@/lib';
 
@@ -19,9 +19,6 @@ interface ProductRowProps {
   onToggleUnit?: (productId: number) => void;
 }
 
-/**
- * ProductRow — a resibo-style "torn paper stub" for each catalog item.
- */
 export function ProductRow({
   product,
   cartLine,
@@ -35,7 +32,6 @@ export function ProductRow({
   const activeUnit = cartLine?.selected_unit || 'retail';
   const displayPrice = inCart ? cartLine!.price : product.price;
 
-  // Stock dot color: red-600 / orange-600 / sage-500.
   const dotColor = isOutOfStock
     ? '#C13030'
     : isLowStock
@@ -45,7 +41,6 @@ export function ProductRow({
     ? 'Out of stock'
     : `${product.quantity} in stock`;
 
-  // Placeholder design: First letter of name capitalized.
   const placeholderText = product.name ? product.name.trim().charAt(0).toUpperCase() : '?';
   const displayImageUri = getProductImageUri(product.image_uri);
 
@@ -53,10 +48,6 @@ export function ProductRow({
     <Pressable
       onPress={() => {
         if (isOutOfStock) return;
-        // If already in cart, tap on the body still opens the stepper
-        // path — increment via the cart path keeps the existing line
-        // and respects stock caps. The + button on the stepper does
-        // the same thing, so tap-to-add is just the simpler gesture.
         if (!inCart) onAdd(product);
       }}
       disabled={isOutOfStock}

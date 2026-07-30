@@ -21,13 +21,9 @@ export const PRIMARY_TAB_PATHS = [
 ] as const;
 
 export function isPrimaryTabPath(path: string): boolean {
-  return (
-    path === '/' ||
-    path === '' ||
-    PRIMARY_TAB_PATHS.some(
-      (p) => p === path || (p !== '/' && path.startsWith(`${p}/`)),
-    )
-  );
+  if (!path) return true;
+  const cleanPath = path.split('?')[0].replace(/\/$/, '') || '/';
+  return PRIMARY_TAB_PATHS.some((p) => p === cleanPath);
 }
 
 export const getTabs = (t: TFunction): Tab[] => [
@@ -66,7 +62,7 @@ export const getSellAction = (t: TFunction): Tab => ({
 
 // Sub-Tab Swipe Routes per FUTURE_REVAMP.md
 export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
-export const SALES_SUB_TABS = ['pos', 'history', 'returns'] as const;
+export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
   'low-stock',
