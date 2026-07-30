@@ -68,12 +68,6 @@ export default function RootLayout() {
     }
   }, []);
 
-  /**
-   * Initialize i18n separately from the DB so a malformed locale JSON
-   * never surfaces as a "Database Error" screen. If i18n init fails for
-   * any reason we log and continue — `react-i18next` falls back to its
-   * `fallbackLng: 'en'` so the user still sees English.
-   */
   const runI18nInit = useCallback(async () => {
     try {
       await initI18n();
@@ -145,9 +139,6 @@ export default function RootLayout() {
     },
   };
 
-  // When the DB fails to initialize, fail loud. Don't render the Stack —
-  // a partially-mounted navigator on top of a broken DB would render
-  // empty screens that look "fine" until the user tries an action.
   if (dbInitError) {
     return (
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>

@@ -14,16 +14,9 @@ interface SaleRowProps {
 }
 
 /**
- * SaleRow — a perforated paper-receipt row in the resibo book.
- *
- * Buyer chip is shown for ALL sales with a captured `customer_name`:
- *   • Credit  → warm orange paper-200 chip with a user glyph (matches
- *               the historical "Bill to" reading on the receipt).
- *   • Cash    → neutral ink chip with a user-o glyph so the buyer
- *               doesn't compete with the primary CASH status stamp.
- *
- * No business logic, no animation — kept pure so the parent FlatList
- * can wrap it in MotiView with a per-row stagger.
+ * SaleRow — modern thermal receipt card in the sales ledger.
+ * High visual contrast, structured item previews, clear buyer attribution,
+ * and tactile perforated receipt edges.
  */
 export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowProps) {
   const isCredit = sale.payment_type === 'credit';
@@ -34,11 +27,15 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
   const itemsLabel = `${sale.items_count} ${sale.items_count === 1 ? 'item' : 'items'}`;
   const buyerName = sale.customer_name?.trim();
   const showBuyerChip = !!buyerName;
+  const receiptRef = `#SR-${String(sale.id).padStart(4, '0')}`;
+
+  const previewItems = sale.items?.slice(0, 3) || [];
+  const remainingCount = (sale.items_count || sale.items?.length || 0) - previewItems.length;
 
   return (
     <Pressable
       onPress={() => onPress(sale.id)}
-      className="mx-4 mb-4 rounded-3xl overflow-hidden bg-paper-50 border border-ink-100"
+      className="mx-4 mb-4 rounded-3xl overflow-hidden bg-paper-50 border border-ink-200/80 active:scale-[0.98] active:opacity-95"
       style={{
         shadowColor: '#564E45',
         shadowOffset: { width: 0, height: 6 },
@@ -50,20 +47,12 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
       <PerforationRow side="top" />
 
       <View className="paper-texture px-5 pt-4 pb-5">
-        {/* Top row — date & stamp */}
-        <View className="flex-row items-start justify-between mb-1">
-          <View className="flex-1 mr-3">
-            <StyledText
-              variant="semibold"
-              className="text-ink-900 text-base mt-0.5"
-            >
-              {format(timestamp, 'MMM dd, yyyy')}
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-xs mt-0.5"
-            >
-              {format(timestamp, 'hh:mm a')}
+        {/* Receipt Serial & Status Stamp Row */}
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center bg-paper-100/90 border border-ink-200 px-2.5 py-1 rounded-lg">
+            <FontAwesome name="ticket" size={11} color="#564E45" style={{ marginRight: 6 }} />
+            <StyledText variant="bold" className="text-mono text-ink-700 text-xs">
+              {receiptRef}
             </StyledText>
           </View>
 
@@ -75,67 +64,114 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
           />
         </View>
 
-        {/* Buyer chip — credit (warm) or cash (neutral). Always shown
-            when a name was captured, so the sales history doubles as a
-            lookup tool for "who bought this?" at the counter. */}
-        {showBuyerChip && (
-          <View
-            className={`self-start flex-row items-center rounded-pill px-3 py-1 mt-2 ${
-              isCredit
-                ? 'bg-paper-200'
-                : 'bg-ink-100'
-            }`}
-          >
-            <FontAwesome
-              name={isCredit ? 'user' : 'user-o'}
-              size={11}
-              color={isCredit ? '#564E45' : '#7A7165'}
-            />
-            <StyledText
-              variant="medium"
-              className={`text-xs ml-1.5 ${
-                isCredit ? 'text-ink-700' : 'text-ink-500'
-              }`}
-              numberOfLines={1}
-            >
-              {buyerName}
+        {/* Date, Time & Buyer Info */}
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-1 mr-2">
+            <StyledText variant="extrabold" className="text-ink-900 text-base">
+              {format(timestamp, 'MMM dd, yyyy')}
             </StyledText>
-            {!isCredit && sale.customer_credit_id == null && (
+            <StyledText variant="medium" className="text-ink-500 text-xs mt-0.5">
+              {format(timestamp, 'hh:mm a')}
+            </StyledText>
+          </View>
+
+          {showBuyerChip && (
+            <View
+              className={`flex-row items-center rounded-pill px-3 py-1.5 border ${
+                isCredit
+                  ? 'bg-persimmon-100 border-persimmon-300'
+                  : 'bg-paper-100 border-ink-200'
+              }`}
+            >
+              <FontAwesome
+                name={isCredit ? 'user' : 'user-o'}
+                size={11}
+                color={isCredit ? '#A1370C' : '#564E45'}
+              />
               <StyledText
-                variant="medium"
-                className="text-[10px] label-caps text-ink-400 ml-1.5"
+                variant="extrabold"
+                className={`text-xs ml-1.5 ${
+                  isCredit ? 'text-persimmon-900' : 'text-ink-800'
+                }`}
+                numberOfLines={1}
               >
-                · one-off
+                {buyerName}
               </StyledText>
+            </View>
+          )}
+        </View>
+
+        {/* Line Items Preview Card */}
+        {previewItems.length > 0 && (
+          <View className="bg-paper-100/90 border border-ink-200/70 rounded-2xl p-3 my-1">
+            {previewItems.map((item, idx) => (
+              <View
+                key={item.id || idx}
+                className={`flex-row items-center justify-between py-1 ${
+                  idx > 0 ? 'border-t border-ink-100/60' : ''
+                }`}
+              >
+                <View className="flex-row items-center flex-1 mr-2">
+                  <View className="bg-persimmon-100 border border-persimmon-200/80 px-1.5 py-0.5 rounded-md mr-2">
+                    <StyledText variant="extrabold" className="text-persimmon-800 text-[11px]">
+                      {item.quantity}x
+                    </StyledText>
+                  </View>
+                  <StyledText
+                    variant="semibold"
+                    className="text-ink-900 text-xs flex-1"
+                    numberOfLines={1}
+                  >
+                    {item.product_name}
+                  </StyledText>
+                </View>
+                <StyledText variant="bold" className="text-mono text-ink-700 text-xs">
+                  ₱{(item.price * item.quantity).toFixed(2)}
+                </StyledText>
+              </View>
+            ))}
+
+            {remainingCount > 0 && (
+              <View className="pt-1.5 mt-1 border-t border-ink-100/60 flex-row items-center justify-between">
+                <StyledText variant="semibold" className="text-ink-500 text-[11px] italic">
+                  + {remainingCount} more {remainingCount === 1 ? 'item' : 'items'}
+                </StyledText>
+                <FontAwesome name="ellipsis-h" size={10} color="#7A7165" />
+              </View>
             )}
           </View>
         )}
 
         {/* Dotted divider */}
-        <View className="divider-dotted-thin my-4" />
+        <View className="divider-dotted-thin my-3" />
 
-        {/* Total + items */}
-        <View className="flex-row items-end justify-between">
-          <View className="flex-row items-baseline">
-            <MoneyText value={sale.total} size="xl" className="text-ink-900" />
+        {/* Total & Detail Action */}
+        <View className="flex-row items-center justify-between">
+          <View>
+            <StyledText variant="extrabold" className="label-caps text-ink-400 text-[10px]">
+              Total Paid
+            </StyledText>
+            <MoneyText value={sale.total} size="xl" className="text-ink-900 font-extrabold" />
           </View>
 
-          <View className="items-end">
-            <StyledText variant="extrabold" className="label-caps text-ink-400">
-              Qty
-            </StyledText>
-            <StyledText
-              variant="semibold"
-              className="text-mono text-ink-700 mt-0.5"
-            >
-              {itemsLabel}
-            </StyledText>
+          <View className="flex-row items-center">
+            <View className="items-end mr-3">
+              <StyledText variant="extrabold" className="label-caps text-ink-400 text-[10px]">
+                Items
+              </StyledText>
+              <StyledText variant="extrabold" className="text-mono text-ink-800 text-xs">
+                {itemsLabel}
+              </StyledText>
+            </View>
+            <View className="w-9 h-9 rounded-full bg-persimmon-50 border border-persimmon-200 items-center justify-center shadow-sm">
+              <FontAwesome name="chevron-right" size={12} color="#E85A1F" />
+            </View>
           </View>
         </View>
       </View>
 
       <PerforationRow side="bottom" />
-      <View className="h-3" />
+      <View className="h-2" />
     </Pressable>
   );
-})
+});

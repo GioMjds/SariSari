@@ -63,6 +63,8 @@ export default function CustomersLayout() {
           screenOptions={{
             tabBarStyle: { display: 'none' },
             swipeEnabled: true,
+            lazy: true,
+            lazyPreloadDistance: 0,
           }}
         >
           <TopTabs.Screen name="index" />

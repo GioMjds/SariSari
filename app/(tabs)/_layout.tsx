@@ -99,6 +99,7 @@ export default function ScreensLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: { display: 'none' },
+          lazy: true,
         }}
       />
       <StyledTab />

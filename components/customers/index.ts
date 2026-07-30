@@ -9,4 +9,6 @@ export * from './CreditLedgerTab';
 export * from './CustomerInsightsTab';
 export * from './CustomersHeader';
 export * from './CustomersFloatingNav';
+export * from './CustomersSkeleton';
+export * from './CustomerInsightsSkeleton';
 

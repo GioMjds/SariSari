@@ -43,7 +43,7 @@ export const TodayStatsHero = React.memo(function TodayStatsHero({
     >
       <View className="px-4 mt-2 mb-4">
         <ReceiptHero tone="persimmon" headerLabel={headerLabel}>
-          <View className="px-5 pt-5 pb-1 flex-row items-center justify-between">
+          <View className="px-5 pt-5 pb-2 flex-row items-center justify-between">
             <View className="flex-row items-center">
               <FontAwesome
                 name="calendar"
@@ -58,17 +58,19 @@ export const TodayStatsHero = React.memo(function TodayStatsHero({
                 {headerSubLabel}
               </StyledText>
             </View>
-            <StyledText
-              variant="medium"
-              className="text-mono text-paper-50 opacity-80"
-            >
-              {txnCount}
-            </StyledText>
+            <View className="bg-persimmon-600/60 px-2 py-0.5 rounded-full border border-paper-50/20">
+              <StyledText
+                variant="semibold"
+                className="text-mono text-paper-50 text-xs"
+              >
+                #{txnCount}
+              </StyledText>
+            </View>
           </View>
 
           <ReceiptHeroDivider label={amountDueLabel} tone="persimmon" />
 
-          <View className="px-5">
+          <View className="px-5 py-1">
             <MoneyText
               value={stats.total}
               size="display"
@@ -92,4 +94,4 @@ export const TodayStatsHero = React.memo(function TodayStatsHero({
       </View>
     </MotiView>
   );
-})
+});

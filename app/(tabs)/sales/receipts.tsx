@@ -4,18 +4,17 @@ import {
   SalesEmptyState,
   SalesFilterModal,
   SalesSkeleton,
-  TodayStatsHero,
 } from '@/components/sales';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination } from '@/components/ui';
+import { StyledText } from '@/components/elements';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
 import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
-import { MotiView } from 'moti';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import {
   endOfDay,
@@ -26,30 +25,15 @@ import {
   subMonths,
 } from 'date-fns';
 
-// Static animation targets to prevent garbage collection and animation re-triggering on reference updates.
-const FILTER_CHIPS_FROM = { opacity: 0 };
-const FILTER_CHIPS_ANIMATE = { opacity: 1 };
-const FILTER_CHIPS_TRANSITION = {
-  type: 'timing' as const,
-  duration: 360,
-  delay: 160,
-};
-
-const SALE_ITEM_FROM = { opacity: 0, translateY: 12 };
-const SALE_ITEM_ANIMATE = { opacity: 1, translateY: 0 };
-const SALE_ITEM_TRANSITIONS = Array.from({ length: 5 }, (_, i) => ({
-  type: 'timing' as const,
-  duration: 400,
-  delay: 200 + i * 50,
-}));
-
 export default function Receipts() {
   const router = useRouter();
   const { t } = useTranslation('sales');
+  const flatListRef = useRef<FlatList<SaleWithItems>>(null);
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [filters, setFilters] = useState<SalesFilterState>({
     paymentType: 'all',
     dateRange: 'all',
@@ -57,7 +41,7 @@ export default function Receipts() {
 
   const { getTodayStatsQuery, getAllSalesQuery } = useSales();
 
-  const { data: stats, refetch: refetchStats } = getTodayStatsQuery;
+  const { refetch: refetchStats } = getTodayStatsQuery;
 
   const {
     data: sales = [],
@@ -67,10 +51,31 @@ export default function Receipts() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [filters, searchQuery]);
 
   const filteredSales = useMemo(() => {
     let filtered = [...sales];
+
+    // Search query filter
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((sale) => {
+        // Match customer name
+        if (sale.customer_name?.toLowerCase().includes(q)) return true;
+        // Match receipt serial ref (e.g. #SR-0042 or 42)
+        const refStr = `#sr-${String(sale.id).padStart(4, '0')}`;
+        if (refStr.includes(q) || String(sale.id) === q) return true;
+        // Match any item product name inside receipt
+        if (
+          sale.items?.some((item) =>
+            item.product_name.toLowerCase().includes(q),
+          )
+        )
+          return true;
+        return false;
+      });
+    }
 
     if (filters.paymentType !== 'all') {
       filtered = filtered.filter(
@@ -117,13 +122,17 @@ export default function Receipts() {
       });
     }
 
-    // Sort by timestamp descending (newest first) — optimized string comparison avoids Date parsing overhead.
+    // Sort by timestamp descending (newest first)
     return filtered.sort((a, b) => {
       const tsA = a.timestamp || '';
       const tsB = b.timestamp || '';
       return tsA < tsB ? 1 : tsA > tsB ? -1 : 0;
     });
-  }, [sales, filters]);
+  }, [sales, filters, searchQuery]);
+
+  const filteredTotalAmount = useMemo(() => {
+    return filteredSales.reduce((acc, sale) => acc + (sale.total || 0), 0);
+  }, [filteredSales]);
 
   const paginatedSales = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -133,12 +142,18 @@ export default function Receipts() {
 
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
 
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.paymentType !== 'all') count++;
-    if (filters.dateRange !== 'all') count++;
-    return count;
-  }, [filters]);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setSearchQuery('');
+    setFilters({
+      paymentType: 'all',
+      dateRange: 'all',
+    });
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -169,19 +184,9 @@ export default function Receipts() {
     setFilterModalVisible(false);
   }, []);
 
-  const showHero = (stats !== undefined && stats !== null) || sales.length > 0;
-
   const renderSaleItem = useCallback(
-    ({ item, index }: { item: SaleWithItems; index: number }) => {
-      return (
-        <MotiView
-          from={SALE_ITEM_FROM}
-          animate={SALE_ITEM_ANIMATE}
-          transition={SALE_ITEM_TRANSITIONS[index % 5]}
-        >
-          <SaleRow sale={item} onPress={handleSalePress} />
-        </MotiView>
-      );
+    ({ item }: { item: SaleWithItems }) => {
+      return <SaleRow sale={item} onPress={handleSalePress} />;
     },
     [handleSalePress],
   );
@@ -194,31 +199,46 @@ export default function Receipts() {
   const listHeader = useMemo(() => {
     return (
       <View>
-        {showHero && stats && (
-          <TodayStatsHero
-            stats={stats}
-            headerLabel={t('todaySlip')}
-            headerSubLabel={t('todaySlipSub')}
-            amountDueLabel={t('amountDue')}
-            itemsSoldLabel={t('itemsSold')}
-            creditsLabel={t('credits')}
-          />
-        )}
+        <FilterChips
+          filters={filters}
+          onChange={setFilters}
+          onOpenMore={handleOpenFilters}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onResetFilters={handleResetFilters}
+        />
 
-        <MotiView
-          from={FILTER_CHIPS_FROM}
-          animate={FILTER_CHIPS_ANIMATE}
-          transition={FILTER_CHIPS_TRANSITION}
-        >
-          <FilterChips
-            filters={filters}
-            onChange={setFilters}
-            onOpenMore={handleOpenFilters}
-          />
-        </MotiView>
+        {filteredSales.length > 0 && (
+          <View className="px-4 pt-1 pb-3 flex-row items-center justify-between">
+            <StyledText variant="extrabold" className="label-caps text-ink-400">
+              {filteredSales.length}{' '}
+              {filteredSales.length === 1 ? 'Receipt' : 'Receipts'} Found
+            </StyledText>
+            <View className="flex-row items-baseline">
+              <StyledText variant="regular" className="text-ink-500 text-xs mr-1">
+                Sum:
+              </StyledText>
+              <StyledText variant="bold" className="text-persimmon-600 text-xs">
+                ₱
+                {filteredTotalAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </StyledText>
+            </View>
+          </View>
+        )}
       </View>
     );
-  }, [showHero, stats, filters, t, setFilters, handleOpenFilters]);
+  }, [
+    filters,
+    searchQuery,
+    filteredSales.length,
+    filteredTotalAmount,
+    setFilters,
+    handleOpenFilters,
+    handleResetFilters,
+  ]);
 
   const listEmpty = useMemo(() => {
     if (isLoading) {
@@ -229,10 +249,11 @@ export default function Receipts() {
         <SalesEmptyState
           onNewSale={handleOpenAddSales}
           hasSales={sales.length > 0}
+          onClearFilters={handleResetFilters}
         />
       </View>
     );
-  }, [isLoading, handleOpenAddSales, sales.length]);
+  }, [isLoading, handleOpenAddSales, sales.length, handleResetFilters]);
 
   const tabBarBottomOffset = useTabBarBottomOffset();
 
@@ -240,6 +261,7 @@ export default function Receipts() {
     <View className="flex-1 bg-paper-200">
       <View className="flex-1">
         <FlatList
+          ref={flatListRef}
           data={paginatedSales}
           renderItem={renderSaleItem}
           keyExtractor={keyExtractor}
@@ -255,9 +277,9 @@ export default function Receipts() {
           }
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={3}
+          initialNumToRender={ITEMS_PER_PAGE}
+          maxToRenderPerBatch={ITEMS_PER_PAGE}
+          windowSize={5}
           removeClippedSubviews={true}
         />
 
@@ -265,7 +287,7 @@ export default function Receipts() {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
             totalItems={filteredSales.length}
             itemsPerPage={ITEMS_PER_PAGE}
             bottomOffset={tabBarBottomOffset}

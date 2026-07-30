@@ -3,7 +3,6 @@ import { TopTabs } from '@/components/navigation/top-tabs';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeLayout() {
   const router = useRouter();
@@ -54,6 +53,8 @@ export default function HomeLayout() {
           screenOptions={{
             tabBarStyle: { display: 'none' },
             swipeEnabled: true,
+            lazy: true,
+            lazyPreloadDistance: 0,
           }}
         >
           <TopTabs.Screen name="index" />

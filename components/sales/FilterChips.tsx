@@ -7,27 +7,15 @@ import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
-
-/**
- * FilterChips — inline chip strip that lives directly above the receipt
- * list. One-tap access to common filters; the "More" chip opens the
- * full SalesFilterModal for the long-tail options.
- *
- * Active states are colour-coded by category so the eye can scan:
- *   date    → cinnamon
- *   cash    → sage
- *   utang   → persimmon
- *
- * NOTE: class names are assembled via the lookup tables `BASE_CHIP` /
- * `DATE_ACTIVE` / `PAY_ACTIVE` so NativeWind's static-analysis compiler
- * can pick them up reliably. Dynamic template-literal classNames are
- * known to silently drop classes that aren't seen at build time.
- */
+import { SearchBar } from '@/components/ui';
 
 interface FilterChipsProps {
   filters: SalesFilterState;
   onChange: (next: SalesFilterState) => void;
   onOpenMore: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  onResetFilters?: () => void;
 }
 
 interface DateChipDef {
@@ -57,9 +45,6 @@ const PAYMENT_CHIPS: PaymentChipDef[] = [
   { value: 'credit', label: 'Utang', icon: 'credit-card' },
 ];
 
-// Static class strings — keep all possible classes present somewhere in
-// source so NativeWind's compiler emits them. The component then picks
-// one of these strings at render time.
 const CHIP_BASE = 'mr-2 px-4 py-2 rounded-pill border';
 const CHIP_INACTIVE = 'bg-paper-50 border-ink-200';
 
@@ -67,8 +52,6 @@ const DATE_CHIP_ACTIVE = 'bg-persimmon-500 border-persimmon-500';
 const DATE_CHIP_TEXT_ACTIVE = 'text-paper-50';
 const DATE_CHIP_TEXT_INACTIVE = 'text-ink-700';
 
-// All payment-type chips use the same persimmon active state for consistency.
-// (The icon color already distinguishes cash vs. utang when active.)
 const PAY_CHIP_ACTIVE = 'bg-persimmon-500 border-persimmon-500';
 
 const PAY_CHIP_BASE =
@@ -86,17 +69,45 @@ export const FilterChips = React.memo(function FilterChips({
   filters,
   onChange,
   onOpenMore,
+  searchQuery = '',
+  onSearchChange,
+  onResetFilters,
 }: FilterChipsProps) {
-  const hasActive =
-    filters.paymentType !== 'all' || filters.dateRange !== 'all';
+  const hasActiveFilters =
+    filters.paymentType !== 'all' || filters.dateRange !== 'all' || searchQuery.trim() !== '';
 
   return (
     <View className="mb-3">
+      {/* ─── Search input row ─── */}
+      {onSearchChange && (
+        <View className="px-4 mb-3">
+          <SearchBar
+            value={searchQuery}
+            onChange={onSearchChange}
+            placeholder="Search buyer, item, or receipt #..."
+            accessibilityLabel="Search receipts"
+            debounceMs={150}
+          />
+        </View>
+      )}
+
       {/* ─── When eyebrow ─── */}
-      <View className="px-4 mb-1.5">
+      <View className="px-4 mb-1.5 flex-row items-center justify-between">
         <StyledText variant="extrabold" className="label-caps text-ink-400">
           When
         </StyledText>
+        {hasActiveFilters && onResetFilters && (
+          <TouchableOpacity
+            onPress={onResetFilters}
+            activeOpacity={0.7}
+            className="flex-row items-center"
+          >
+            <FontAwesome name="undo" size={10} color="#E85A1F" style={{ marginRight: 4 }} />
+            <StyledText variant="bold" className="text-persimmon-600 text-xs">
+              Reset filters
+            </StyledText>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView
@@ -200,7 +211,7 @@ export const FilterChips = React.memo(function FilterChips({
           >
             More
           </StyledText>
-          {hasActive ? (
+          {hasActiveFilters ? (
             <View className="ml-2 w-2 h-2 rounded-full bg-persimmon-500" />
           ) : null}
         </TouchableOpacity>

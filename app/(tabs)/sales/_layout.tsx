@@ -33,6 +33,8 @@ export default function SalesLayout() {
           screenOptions={{
             tabBarStyle: { display: 'none' },
             swipeEnabled: true,
+            lazy: true,
+            lazyPreloadDistance: 0,
           }}
           initialRouteName="pos"
         >

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AllCustomersTab } from '@/components/customers';
+import { AllCustomersTab, CustomersSkeleton } from '@/components/customers';
 import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Customer } from '@/types/credits.types';
@@ -9,7 +9,7 @@ import { Customer } from '@/types/credits.types';
 export default function AllCustomersScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
-  const { data: customers = [] } = useCustomers();
+  const { data: customers = [], isLoading } = useCustomers();
   const { data: kpis } = useCreditKPIs();
 
   const handleSelectCustomer = (customer: Customer) => {
@@ -22,6 +22,17 @@ export default function AllCustomersScreen() {
   const handleAddCustomer = () => {
     router.push('/(edit-forms)/add-customer');
   };
+
+  if (isLoading) {
+    return (
+      <View
+        className="flex-1 bg-paper-200"
+        style={{ paddingBottom: tabBarBottomOffset }}
+      >
+        <CustomersSkeleton />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -37,3 +48,4 @@ export default function AllCustomersScreen() {
     </View>
   );
 }
+

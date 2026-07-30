@@ -5,6 +5,7 @@ import { StyledText } from '@/components/elements';
 interface SalesEmptyStateProps {
   onNewSale: () => void;
   hasSales: boolean;
+  onClearFilters?: () => void;
 }
 
 const PERFORATION_COUNT = 22;
@@ -15,12 +16,16 @@ const PERFORATION_BG = '#F7F6F2';
  * receipt list would be. Title flips between "no sales yet" and
  * "no matches" depending on whether the user has any sales at all.
  */
-export function SalesEmptyState({ onNewSale, hasSales }: SalesEmptyStateProps) {
+export function SalesEmptyState({
+  onNewSale,
+  hasSales,
+  onClearFilters,
+}: SalesEmptyStateProps) {
   const title = hasSales ? 'Walang nagmamatch' : 'Wala pang resibo';
   const subtitle = hasSales
-    ? 'Try adjusting your filters to see more sales.'
-    : 'Start by recording your first transaction.';
-  const eyebrow = hasSales ? 'No matches' : 'Empty ledger';
+    ? 'Subukang i-adjust ang search o filters para lumabas ang iba pang resibo.'
+    : 'Simulan sa pag-record ng unang transaction sa POS.';
+  const eyebrow = hasSales ? 'No matches found' : 'Empty ledger';
 
   return (
     <View
@@ -50,34 +55,51 @@ export function SalesEmptyState({ onNewSale, hasSales }: SalesEmptyStateProps) {
       </View>
       <View className="h-3" />
 
-      <View className="paper-texture items-center px-6 pt-2 pb-8">
+      <View className="paper-texture items-center px-6 pt-4 pb-8">
+        <View className="w-12 h-12 rounded-2xl bg-persimmon-100 border border-persimmon-200 items-center justify-center mb-3">
+          <FontAwesome
+            name={hasSales ? 'search-minus' : 'file-text-o'}
+            size={22}
+            color="#E85A1F"
+          />
+        </View>
+
         <StyledText
           variant="extrabold"
-          className="label-caps text-persimmon-600 mb-4"
+          className="label-caps text-persimmon-600 mb-2"
         >
           {eyebrow}
         </StyledText>
 
-        {/* Sari error state image */}
-        {/* <Image
-					source={sariImage}
-					style={{ width: 180, height: 180 }}
-					resizeMode="contain"
-				/> */}
-
         <StyledText
           variant="black"
-          className="text-ink-900 text-h2 mt-2 text-center"
+          className="text-ink-900 text-h2 text-center"
         >
           {title}
         </StyledText>
 
         <StyledText
           variant="regular"
-          className="text-ink-500 text-body mt-1.5 text-center"
+          className="text-ink-500 text-body mt-1.5 text-center px-2"
         >
           {subtitle}
         </StyledText>
+
+        {hasSales && onClearFilters && (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onClearFilters}
+            className="mt-5 bg-paper-200 border border-ink-200 rounded-pill px-6 py-2.5 flex-row items-center"
+          >
+            <FontAwesome name="undo" size={12} color="#E85A1F" />
+            <StyledText
+              variant="extrabold"
+              className="text-persimmon-600 text-sm ml-2"
+            >
+              Clear filters
+            </StyledText>
+          </TouchableOpacity>
+        )}
 
         {!hasSales && (
           <TouchableOpacity

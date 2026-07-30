@@ -225,49 +225,43 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
           ) : (
             /* Default Checkout Form State */
             <>
-              <ScrollView
-                className="flex-1"
-                showsVerticalScrollIndicator={false}
-              >
-                {/* Resibo Hero */}
-                <View className="m-4 p-4 rounded-2xl bg-warm-100 border border-dashed border-warm-300">
-                  <View className="flex-row justify-between items-start mb-2">
-                    <View>
-                      <StyledText
-                        variant="extrabold"
-                        className="text-warm-700 text-[10px] tracking-wider uppercase mb-1"
-                      >
-                        TOTAL
-                      </StyledText>
-                      <MoneyText
-                        value={cart.total}
-                        size="xl"
-                        className="text-ink-900 font-extrabold"
-                      />
-                    </View>
-
-                    <View className="px-3 py-1 rounded-full bg-persimmon-500">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-white text-xs uppercase"
-                      >
-                        {paymentType}
-                      </StyledText>
-                    </View>
+              {/* Customer & Payment Bar */}
+              <View className="px-4 py-3 bg-paper-100 border-b border-paper-200">
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="flex-row items-center">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-ink-500 text-[10px] uppercase tracking-wider"
+                    >
+                      SUKI / CUSTOMER
+                    </StyledText>
+                    {isCredit && !selectedCustomer && (
+                      <View className="bg-persimmon-500 rounded-md px-1.5 py-0.5 ml-2">
+                        <StyledText
+                          variant="extrabold"
+                          className="text-white text-[9px]"
+                        >
+                          Required
+                        </StyledText>
+                      </View>
+                    )}
                   </View>
 
                   <StyledText
-                    variant="medium"
-                    className="text-warm-700 text-xs mb-3"
+                    variant="extrabold"
+                    className="text-ink-500 text-[10px] uppercase tracking-wider"
                   >
-                    {cart.itemCount} items ({totalPieces} pcs total)
+                    PAYMENT TYPE
                   </StyledText>
+                </View>
 
+                <View className="flex-row items-center justify-between space-x-2">
+                  {/* Customer Picker Button */}
                   <Pressable
                     onPress={() => setShowCustomerPicker(true)}
-                    className="flex-row items-center bg-paper-50 rounded-xl p-2.5 border border-warm-200"
+                    className="flex-1 flex-row items-center bg-paper-50 rounded-xl px-3 py-2 border border-ink-150"
                   >
-                    <View className="w-7 h-7 rounded-full bg-sage-500 items-center justify-center mr-2.5">
+                    <View className="w-6 h-6 rounded-full bg-sage-500 items-center justify-center mr-2">
                       <StyledText
                         variant="extrabold"
                         className="text-white text-xs"
@@ -277,99 +271,116 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
                           : 'S'}
                       </StyledText>
                     </View>
-                    <View className="flex-1">
+                    <View className="flex-1 mr-1">
                       <StyledText
                         variant="semibold"
                         className="text-ink-900 text-xs"
+                        numberOfLines={1}
                       >
                         {customerName || 'Walk-in Customer'}
                       </StyledText>
-                      <StyledText
-                        variant="regular"
-                        className="text-warm-600 text-[10px]"
-                      >
-                        Tap to change suki
-                      </StyledText>
                     </View>
-                    {isCredit && !selectedCustomer && (
-                      <View className="bg-persimmon-500 rounded-md px-1.5 py-0.5 mr-1">
-                        <StyledText
-                          variant="extrabold"
-                          className="text-white text-[9px]"
-                        >
-                          Required
-                        </StyledText>
-                      </View>
-                    )}
                     <FontAwesome
-                      name="chevron-right"
-                      size={12}
+                      name="chevron-down"
+                      size={10}
                       color="#7A7165"
                     />
                   </Pressable>
-                </View>
 
-                {/* Payment Type Toggle */}
-                <View className="px-4 mb-4 flex-row items-center">
-                  <StyledText
-                    variant="extrabold"
-                    className="text-ink-900 text-sm mr-3"
-                  >
-                    Payment:
-                  </StyledText>
-                  <Pressable
-                    onPress={() => setPaymentType('cash')}
-                    className={`px-4 py-2 rounded-full mr-2 border ${
-                      paymentType === 'cash'
-                        ? 'bg-persimmon-500 border-persimmon-500'
-                        : 'bg-paper-200 border-ink-150'
-                    }`}
-                  >
-                    <StyledText
-                      variant="extrabold"
-                      className={`text-xs ${paymentType === 'cash' ? 'text-white' : 'text-ink-700'}`}
+                  {/* Payment Type Toggle */}
+                  <View className="flex-row bg-paper-200 p-1 rounded-xl border border-ink-150">
+                    <Pressable
+                      onPress={() => setPaymentType('cash')}
+                      className={`px-3 py-1.5 rounded-lg ${
+                        paymentType === 'cash' ? 'bg-persimmon-500' : ''
+                      }`}
                     >
-                      Cash
-                    </StyledText>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setPaymentType('credit')}
-                    className={`px-4 py-2 rounded-full border ${
-                      paymentType === 'credit'
-                        ? 'bg-persimmon-500 border-persimmon-500'
-                        : 'bg-paper-200 border-ink-150'
-                    }`}
-                  >
-                    <StyledText
-                      variant="extrabold"
-                      className={`text-xs ${paymentType === 'credit' ? 'text-white' : 'text-ink-700'}`}
+                      <StyledText
+                        variant="extrabold"
+                        className={`text-xs ${
+                          paymentType === 'cash' ? 'text-white' : 'text-ink-700'
+                        }`}
+                      >
+                        Cash
+                      </StyledText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setPaymentType('credit')}
+                      className={`px-3 py-1.5 rounded-lg ${
+                        paymentType === 'credit' ? 'bg-persimmon-500' : ''
+                      }`}
                     >
-                      Credit
-                    </StyledText>
-                  </Pressable>
+                      <StyledText
+                        variant="extrabold"
+                        className={`text-xs ${
+                          paymentType === 'credit' ? 'text-white' : 'text-ink-700'
+                        }`}
+                      >
+                        Credit
+                      </StyledText>
+                    </Pressable>
+                  </View>
                 </View>
+              </View>
 
-                {/* Line Items List */}
-                <View className="mb-6">
-                  <StyledText
-                    variant="extrabold"
-                    className="text-ink-500 text-xs px-4 mb-2 label-caps"
-                  >
-                    Line Items
-                  </StyledText>
-                  {cartItems.map((item, index) => (
-                    <CheckoutLineRow
-                      key={`${item.product_id}-${item.selected_unit || 'retail'}-${index}`}
-                      item={item}
-                      onUpdateQuantity={updateQuantity}
-                      onRemove={handleRemoveItem}
-                    />
-                  ))}
-                </View>
+              {/* Line Items Header */}
+              <View className="px-4 py-2 flex-row justify-between items-center bg-paper-200 border-b border-paper-300">
+                <StyledText
+                  variant="extrabold"
+                  className="text-ink-700 text-[11px] uppercase tracking-wider"
+                >
+                  PURCHASED PRODUCTS ({cart.itemCount})
+                </StyledText>
+                <StyledText
+                  variant="medium"
+                  className="text-ink-500 text-xs"
+                >
+                  {totalPieces} pcs total
+                </StyledText>
+              </View>
+
+              {/* Line Items List - Front and Center */}
+              <ScrollView
+                className="flex-1 bg-paper-50"
+                showsVerticalScrollIndicator={true}
+              >
+                {cartItems.map((item, index) => (
+                  <CheckoutLineRow
+                    key={`${item.product_id}-${item.selected_unit || 'retail'}-${index}`}
+                    item={item}
+                    onUpdateQuantity={updateQuantity}
+                    onRemove={handleRemoveItem}
+                  />
+                ))}
               </ScrollView>
 
-              {/* Sticky Footer */}
+              {/* Sticky Footer with Receipt Summary */}
               <View className="p-4 border-t border-paper-200 bg-paper-50">
+                <View className="flex-row items-center justify-between mb-3 bg-warm-100 p-3.5 rounded-2xl border border-dashed border-warm-300">
+                  <View>
+                    <StyledText
+                      variant="extrabold"
+                      className="text-warm-700 text-[10px] tracking-wider uppercase"
+                    >
+                      TOTAL AMOUNT ({paymentType.toUpperCase()})
+                    </StyledText>
+                    <StyledText
+                      variant="medium"
+                      className="text-ink-600 text-xs mt-0.5"
+                    >
+                      {isCredit && customerName
+                        ? `Credit sale for ${customerName}`
+                        : `${cart.itemCount} items · ${totalPieces} pcs`}
+                    </StyledText>
+                  </View>
+
+                  <MoneyText
+                    value={cart.total}
+                    size="xl"
+                    className="text-ink-900 font-extrabold"
+                  />
+                </View>
+
                 <Pressable
                   onPress={handleConfirmSubmit}
                   disabled={isSubmitDisabled}
