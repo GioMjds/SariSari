@@ -20,9 +20,11 @@ export const PRIMARY_TAB_PATHS = [
   '/sell',
 ] as const;
 
-export function isPrimaryTabPath(path: string): boolean {
-  if (!path) return true;
-  const cleanPath = path.split('?')[0].replace(/\/$/, '') || '/';
+export function isPrimaryTabPath(path: Href): boolean {
+  const pathname = typeof path == 'string' ? path : path.pathname;
+  if (!pathname) return false;
+
+  const cleanPath = pathname.replace(/\/$/, '');
   return PRIMARY_TAB_PATHS.some((p) => p === cleanPath);
 }
 
@@ -65,9 +67,9 @@ export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
-  'low-stock',
-  'expiry',
-  'stock-in',
+  'stock',
+  'movements',
+  'analytics',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
 export const MORE_SUB_TABS = [

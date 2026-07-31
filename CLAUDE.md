@@ -1,4 +1,4 @@
-# AGENTS.md
+# CLAUDE.md
 
 Concise entry point for Claude Code. Guidance working with code in this repo.
 

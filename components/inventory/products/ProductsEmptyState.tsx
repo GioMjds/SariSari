@@ -11,7 +11,6 @@ interface ProductsEmptyStateProps {
 }
 
 const PERFORATION_COUNT = 22;
-const PERFORATION_BG = '#F7F6F2';
 const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 export function ProductsEmptyState({
@@ -55,8 +54,7 @@ export function ProductsEmptyState({
           {Array.from({ length: PERFORATION_COUNT }).map((_, i) => (
             <View
               key={`e-top-${i}`}
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: PERFORATION_BG }}
+              className="w-3 h-3 rounded-full bg-paper-200"
             />
           ))}
         </View>
@@ -149,8 +147,7 @@ export function ProductsEmptyState({
           {Array.from({ length: PERFORATION_COUNT }).map((_, i) => (
             <View
               key={`e-bot-${i}`}
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: PERFORATION_BG }}
+              className="w-3 h-3 rounded-full bg-paper-200"
             />
           ))}
         </View>

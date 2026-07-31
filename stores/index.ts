@@ -4,5 +4,4 @@ export * from './ModalStore';
 export * from './ScrollStore';
 export * from './ToastStore';
 export * from './TooltipStore';
-export * from './InventoryViewStore';
 export * from './CartStore';

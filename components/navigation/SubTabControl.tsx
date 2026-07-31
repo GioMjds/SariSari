@@ -52,14 +52,14 @@ export function SubTabControl<T extends string>({
             {tab.icon ? (
               <FontAwesome
                 name={tab.icon}
-                size={14}
-                color={isActive ? '#E85A1F' : '#6B7280'}
-                style={{ marginRight: 6 }}
+                size={12}
+                color={isActive ? '#E85A1F' : '#7A7165'}
+                style={{ marginRight: 5 }}
               />
             ) : null}
             <StyledText
-              variant={isActive ? 'extrabold' : 'medium'}
-              className={`text-sm ${
+              variant={isActive ? 'extrabold' : 'semibold'}
+              className={`text-xs uppercase tracking-wider ${
                 isActive ? 'text-ink-900' : 'text-ink-500'
               }`}
             >

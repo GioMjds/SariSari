@@ -1,119 +1,63 @@
-import { memo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { MotiView } from 'moti';
-import { FontAwesome } from '@expo/vector-icons';
-import { StyledText } from '@/components/elements';
+import { View } from 'react-native';
+import type { FontAwesome } from '@expo/vector-icons';
+import { SearchBar } from '@/components/ui';
+import { SubTabControl, type SubTabItem } from '@/components/navigation';
+import { INVENTORY_SUB_TABS, InventorySubTab } from '@/constants/tabs';
+import { InventoryAlertPills } from './InventoryAlertPills';
+import { InventoryHeroCard } from './InventoryHeroCard';
+import { useInventoryOverview } from '@/hooks/useInventoryOverview';
 
-interface InventoryHeaderProps {
-  subtitle: string;
-  onOpenGuide: () => void;
-  onOpenFilter: () => void;
-  onAddProduct: () => void;
-  activeFilterCount: number;
+export interface InventoryHeaderProps {
+  active: InventorySubTab;
+  search: string;
+  onSearchChange: (s: string) => void;
+  onOpenScanner: () => void;
+  onTabChange: (t: InventorySubTab) => void;
+  onPillPress: (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => void;
 }
 
-export const InventoryHeader = memo(function InventoryHeader({
-  subtitle,
-  onOpenGuide,
-  onOpenFilter,
-  onAddProduct,
-  activeFilterCount,
-}: InventoryHeaderProps) {
+const INVENTORY_TAB_META: Record<
+  InventorySubTab,
+  { icon: keyof typeof FontAwesome.glyphMap; label: string }
+> = {
+  products: { icon: 'cube', label: 'PRODUCTS' },
+  stock: { icon: 'archive', label: 'STOCK' },
+  movements: { icon: 'exchange', label: 'MOVEMENTS' },
+  analytics: { icon: 'line-chart', label: 'ANALYTICS' },
+};
+
+export function InventoryHeader(props: InventoryHeaderProps) {
+  const overview = useInventoryOverview();
+  const tabs = INVENTORY_SUB_TABS.map((t) => ({
+    key: t,
+    label: INVENTORY_TAB_META[t].label,
+    icon: INVENTORY_TAB_META[t].icon,
+  })) satisfies SubTabItem<InventorySubTab>[];
+
   return (
-    <MotiView
-      from={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ type: 'timing', duration: 320 }}
-    >
-      <View className="bg-cinnamon-500 px-5 pt-5 pb-6">
-        {/* Monogram dot and Eyebrow */}
-        <View className="flex-row items-center mb-3">
-          <View
-            className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2"
-            style={{
-              shadowColor: '#564E45',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.06,
-              shadowRadius: 6,
-              elevation: 2,
-            }}
-          >
-            <StyledText
-              variant="black"
-              className="text-paper-50 text-xl font-extrabold"
-            >
-              ₱
-            </StyledText>
-          </View>
-          <StyledText
-            variant="extrabold"
-            className="text-label text-paper-200 opacity-80"
-            style={{ letterSpacing: 1.4 }}
-          >
-            STOCK HOME
-          </StyledText>
-        </View>
+    <View className="bg-paper-200 px-4 pt-1 pb-3 gap-y-2">
+      <SearchBar
+        value={props.search}
+        onChange={props.onSearchChange}
+        placeholder="Search products..."
+      />
 
-        {/* Title and Subtitle + Buttons Row */}
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <StyledText
-              variant="extrabold"
-              className="text-h1 text-paper-50"
-              style={{ letterSpacing: -0.28 }}
-            >
-              Stock
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-sm text-paper-200 opacity-90 mt-1"
-            >
-              {subtitle}
-            </StyledText>
-          </View>
+      <SubTabControl
+        tabs={tabs}
+        activeTab={props.active}
+        onTabPress={(k) => props.onTabChange(k as InventorySubTab)}
+      />
 
-          {/* Action buttons on the right */}
-          <View className="flex-row gap-2 items-center">
-            {/* Filter sliders button */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={onOpenFilter}
-              className="relative w-11 h-11 rounded-full items-center justify-center bg-paper-50/15"
-            >
-              <FontAwesome name="sliders" size={18} color="#FBF7EE" />
-              {activeFilterCount > 0 && (
-                <View className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-persimmon-500 items-center justify-center border-2 border-cinnamon-500">
-                  <StyledText
-                    variant="black"
-                    className="text-paper-50 text-[10px] font-extrabold"
-                  >
-                    {activeFilterCount}
-                  </StyledText>
-                </View>
-              )}
-            </TouchableOpacity>
+      <InventoryAlertPills
+        counts={overview.counts}
+        onPress={props.onPillPress}
+      />
 
-            {/* Guide question-circle button */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={onOpenGuide}
-              className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15"
-            >
-              <FontAwesome name="question-circle" size={18} color="#FBF7EE" />
-            </TouchableOpacity>
-
-            {/* Plus add-product button */}
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={onAddProduct}
-              className="w-11 h-11 rounded-full items-center justify-center bg-paper-50/15"
-            >
-              <FontAwesome name="plus" size={18} color="#FBF7EE" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </MotiView>
+      <InventoryHeroCard
+        totalValue={overview.totalValue}
+        productCount={overview.productCount}
+        unitCount={overview.unitCount}
+      />
+    </View>
   );
-});
-
+}

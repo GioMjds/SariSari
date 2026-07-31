@@ -1,12 +1,10 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller, useFormState } from 'react-hook-form';
 import { Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
 import { StyledText } from '@/components/elements';
 import { Category } from '@/types/categories.types';
 import type { EditProductFormData } from './useEditProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { SupplierPickerModal } from '../SupplierPickerModal';
 import { ProductImagePicker } from '../products/ProductImagePicker';
 
 interface EditBasicInfoCardProps {
@@ -16,29 +14,12 @@ interface EditBasicInfoCardProps {
   onSelectCategory: (name: string) => void;
 }
 
-/**
- * EditBasicInfoCard — the first parchment card on the Edit Product
- * screen.
- *
- * Holds:
- *   • Product Name (required, fully editable).
- *   • SKU — read-only. SKUs are server-managed identities; the
- *     original screen already locks this field and surfaces a faint
- *     "PC-001" placeholder tone to make that obvious.
- *   • Category selector — horizontal scroll of pills. Same visual
- *     pattern as add-product; tapping a pill toggles it off if
- *     already selected (so the user can clear the assignment).
- *
- * The auto-generate-SKU checkbox is intentionally absent — that
- * concern only applies at creation time.
- */
 export function EditBasicInfoCard({
   control,
   categories,
   selectedCategory,
   onSelectCategory,
 }: EditBasicInfoCardProps) {
-  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
 
@@ -187,7 +168,6 @@ export function EditBasicInfoCard({
               <>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => setShowSupplierPicker(true)}
                   accessibilityRole="button"
                   accessibilityLabel={
                     currentSupplier
@@ -204,15 +184,6 @@ export function EditBasicInfoCard({
                   </StyledText>
                   <FontAwesome name="chevron-down" size={14} color="#7A7165" />
                 </TouchableOpacity>
-
-                <SupplierPickerModal
-                  visible={showSupplierPicker}
-                  onClose={() => setShowSupplierPicker(false)}
-                  selectedSupplierId={value || null}
-                  onSelect={(supplier) => {
-                    onChange(supplier ? supplier.id : '');
-                  }}
-                />
               </>
             );
           }}

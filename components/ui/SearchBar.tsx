@@ -12,20 +12,10 @@ type SearchBarProps = {
   value: string;
   onChange: (s: string) => void;
   placeholder?: string;
-  /** Override the default 'Search' accessibility label. */
   accessibilityLabel?: string;
-  /**
-   * Debounce window for the upstream onChange callback. Local value
-   * stays in sync immediately; the parent only learns about typing
-   * after this many ms of quiet. Default 0 = no debounce.
-   */
   debounceMs?: number;
 } & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
-/**
- * SearchBar — a focusable, debounceable text input framed by a search
- * icon and a clear button. Used by the Products and Inventory tabs.
- */
 export function SearchBar({
   value,
   onChange,
@@ -35,9 +25,6 @@ export function SearchBar({
   ...props
 }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
-  // Local value is what the TextInput reads from so that we can
-  // apply debouncing to the upstream onChange without losing
-  // responsive feedback while typing.
   const [local, setLocal] = useState(value);
 
   useEffect(() => {
