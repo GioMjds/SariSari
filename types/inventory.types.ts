@@ -14,13 +14,29 @@ export interface InventoryOverviewCounts {
   overstock: number;
 }
 
+export type InventoryEventType = 'restock' | 'sale' | 'damaged' | 'adjustment';
+
 export interface InventoryTransaction {
-  type: 'restock' | 'sale' | 'adjustment';
-  adjustment_sign: 'positive' | 'negative';
+  id?: number | string;
   product_id: number;
-  timestamp: number;
-  note?: string;
+  type: InventoryEventType;
   quantity: number;
+  note?: string | null;
+  adjustment_sign?: 'positive' | 'negative' | null;
+  unit_cost?: number | null;
+  supplier_id?: number | string | null;
+  timestamp: number | string;
+  product_name?: string;
+}
+
+export interface InsertInventoryV2 {
+  product_id: number;
+  type: InventoryEventType;
+  quantity: number;
+  note?: string | null;
+  adjustment_sign?: 'positive' | 'negative' | null;
+  unit_cost?: number | null;
+  supplier_id?: number | string | null;
 }
 
 export interface ProductLike {

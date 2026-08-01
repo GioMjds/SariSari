@@ -15,7 +15,7 @@ import {
 } from '@/components/inventory/modals/';
 import { BarcodeScannerModal } from '@/components/ui';
 import type { InventorySubTab } from '@/constants/tabs';
-import { useRestockSignal } from '@/stores/useInventorySelection';
+import { useRestockSignal, useInventoryModalSignal } from '@/stores';
 
 const SUB_TAB_SEGMENTS = [
   'products',
@@ -33,7 +33,23 @@ export default function InventoryLayout() {
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  
   const restock = useRestockSignal();
+  const signal = useInventoryModalSignal();
+
+  useEffect(() => {
+    if (signal.adjustRequested) {
+      setAdjustOpen(true);
+      signal.clearAdjust();
+    }
+  }, [signal.adjustRequested, signal]);
+
+  useEffect(() => {
+    if (signal.receiveRequested) {
+      setReceiveOpen(true);
+      signal.clearReceive();
+    }
+  }, [signal.receiveRequested, signal]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;
@@ -71,6 +87,18 @@ export default function InventoryLayout() {
   const openAddProduct = useCallback(() => {
     router.push('/(edit-forms)/add-product' as Href);
   }, [router]);
+
+  const handleScanResult = useCallback(
+    (barcode: string) => {
+      setScannerOpen(false);
+      if (!barcode) return;
+      router.push({
+        pathname: '/(edit-forms)/add-product',
+        params: { prefillBarcode: barcode },
+      } as Href);
+    },
+    [router],
+  );
 
   useEffect(() => {
     if (restock.restockProductId !== null) {
@@ -133,7 +161,7 @@ export default function InventoryLayout() {
         mode="single"
         visible={scannerOpen}
         onClose={() => setScannerOpen(false)}
-        onScan={() => setScannerOpen(false)}
+        onScan={handleScanResult}
       />
     </View>
   );

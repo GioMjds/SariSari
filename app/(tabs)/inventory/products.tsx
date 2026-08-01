@@ -13,6 +13,7 @@ import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection } from '@/stores/useInventorySelection';
 import { BulkActionsToolbar } from '@/components/inventory';
+import { useInventoryModalSignal } from '@/stores';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -34,6 +35,7 @@ export default function ProductsScreen() {
 
   const params = useLocalSearchParams<{ q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
+  const signal = useInventoryModalSignal();
 
   const items = useMemo(
     () => getAllProductsQuery.data ?? [],
@@ -119,7 +121,7 @@ export default function ProductsScreen() {
           selectedCount={selectedIds.length}
           onClearSelection={selection.clear}
           onBulkDelete={handleBulkDelete}
-          onBulkAdjustStock={() => {}}
+          onBulkAdjustStock={() => signal.requestAdjust()}
           onBulkMoveCategory={() => setMoveModalOpen(true)}
         />
       ) : null}

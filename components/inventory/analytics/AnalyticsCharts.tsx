@@ -145,7 +145,7 @@ export function AnalyticsCharts() {
         <StyledText variant="extrabold" className="text-sm text-ink-900">
           Sales Velocity (30d)
         </StyledText>
-        <ChartEmptyState message="Add sales to see velocity trends." />
+        <ChartEmptyState message="No data yet" />
       </View>
     </ScrollView>
   );

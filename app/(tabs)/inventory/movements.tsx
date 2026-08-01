@@ -1,54 +1,105 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { getInventoryTransactions } from '@/database/inventory';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useGetInventoryTransactions } from '@/hooks/useInventory';
+import { LedgerList, LedgerToolbar } from '@/components/inventory/ledger';
 import {
-  MovementList,
-  MovementSkeleton,
-} from '@/components/inventory/movements';
+  isLedgerTypeFilter,
+  type LedgerTypeFilter,
+} from '@/components/inventory/ledger/types';
+import { MovementEmptyState } from '@/components/inventory/movements';
 import { InventoryErrorState } from '@/components/inventory';
+import { useInventoryModalSignal } from '@/stores';
+import type { InventoryEventType } from '@/types';
 
 export default function MovementsScreen() {
-  const [data, setData] = useState<any[] | null>(null);
-  const [error, setError] = useState<{ message: string } | null>(null);
+  const router = useRouter();
+  const params = useLocalSearchParams<{ q?: string }>();
+  const signal = useInventoryModalSignal();
 
-  const load = useCallback(() => {
-    let alive = true;
-    setError(null);
-    setData(null);
-    getInventoryTransactions()
-      .then((tx) => {
-        if (alive) setData(tx as any[]);
-      })
-      .catch((e) => {
-        if (alive) {
-          setError({
-            message:
-              e instanceof Error
-                ? e.message
-                : 'Could not read the local movements database.',
-          });
-        }
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const searchQuery = (params.q ?? '').trim();
+  const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
 
-  useEffect(() => load(), [load]);
+  const txQuery = useGetInventoryTransactions();
 
-  if (error) {
+  const transactions = useMemo(() => txQuery.data ?? [], [txQuery.data]);
+
+  const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
+    const acc: Partial<Record<InventoryEventType, number>> = {};
+    for (const tx of transactions) {
+      if (tx?.type) {
+        acc[tx.type] = (acc[tx.type] ?? 0) + 1;
+      }
+    }
+    return acc;
+  }, [transactions]);
+
+  const setSearchQuery = useCallback(
+    (next: string) => {
+      router.setParams({ q: next || undefined } as any);
+    },
+    [router],
+  );
+
+  const handleReceiveStock = useCallback(
+    () => signal.requestReceive(),
+    [signal],
+  );
+  const handleAdjustStock = useCallback(() => signal.requestAdjust(), [signal]);
+
+  if (txQuery.error) {
     return (
       <InventoryErrorState
         title="Couldn't load movements"
-        message={error.message}
-        onRetry={load}
+        message={(txQuery.error as Error)?.message ?? 'Unknown error'}
+        onRetry={() => txQuery.refetch?.()}
       />
     );
   }
-  if (!data) return <MovementSkeleton />;
+  if (txQuery.isLoading) {
+    return (
+      <View className="flex-1 bg-paper-200">
+        <LedgerToolbar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedType={selectedType}
+          setSelectedType={(t) => {
+            if (t === 'all' || isLedgerTypeFilter(t as InventoryEventType)) {
+              setSelectedType(t);
+            } else {
+              setSelectedType('all');
+            }
+          }}
+          counts={counts}
+        />
+      </View>
+    );
+  }
+  if (transactions.length === 0) {
+    return (
+      <View className="flex-1 bg-paper-200">
+        <MovementEmptyState
+          onReceiveStock={handleReceiveStock}
+          onAdjustStock={handleAdjustStock}
+        />
+      </View>
+    );
+  }
   return (
     <View className="flex-1 bg-paper-200">
-      <MovementList movements={data} />
+      <LedgerToolbar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        counts={counts}
+      />
+      <LedgerList
+        transactions={transactions}
+        currentStock={0}
+        searchQuery={searchQuery}
+        selectedType={selectedType}
+      />
     </View>
   );
 }
