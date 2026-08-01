@@ -299,6 +299,24 @@ export const deleteProduct = async (id: number) => {
   await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
 };
 
+/**
+ * Bulk-move helper used by `BulkMoveCategoryModal`. Skips the
+ * barcode collision check and inventory-transaction side effect of
+ * `updateProduct` so we can patch `category` on N selected rows in
+ * parallel without rewriting every required column or flooding the
+ * ledger with restock rows. Caller must invalidate
+ * `productKeys.list()` once the batch resolves.
+ */
+export const updateProductCategory = async (
+  id: number,
+  category: string | null,
+): Promise<void> => {
+  await db.runAsync(
+    'UPDATE products SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [category, id],
+  );
+};
+
 export const getProduct = async (id: number): Promise<Product | null> => {
   const result = await db.getFirstAsync<Product>(
     'SELECT * FROM products WHERE id = ?',

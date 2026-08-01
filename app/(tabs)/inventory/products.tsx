@@ -13,7 +13,7 @@ import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection } from '@/stores/useInventorySelection';
 import { BulkActionsToolbar } from '@/components/inventory';
-import { useInventoryModalSignal } from '@/stores';
+import { useInventoryModalSignal, useToastStore } from '@/stores';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -29,7 +29,8 @@ function getEmptyVariant(
 export default function ProductsScreen() {
   const router = useRouter();
   const selection = useInventorySelection();
-  const { getAllProductsQuery, deleteProductMutation } = useProducts();
+  const { getAllProductsQuery, bulkDeleteProductsMutation } = useProducts();
+  const addToast = useToastStore((s) => s.addToast);
   const [filter, setFilter] = useState<ProductsFilter>('all');
   const [moveModalOpen, setMoveModalOpen] = useState(false);
 
@@ -84,12 +85,25 @@ export default function ProductsScreen() {
     router.setParams({ q: undefined });
   }, [router]);
 
-  const handleBulkDelete = useCallback(() => {
+  const handleBulkDelete = useCallback(async () => {
     if (selectedIds.length === 0) return;
-    Promise.all(
-      selectedIds.map((id) => deleteProductMutation.mutateAsync(id)),
-    ).then(() => selection.clear());
-  }, [selectedIds, deleteProductMutation, selection]);
+    try {
+      await Promise.all(
+        selectedIds.map((id) => bulkDeleteProductsMutation.mutateAsync(id)),
+      );
+      addToast({
+        message: `Deleted ${selectedIds.length} ${
+          selectedIds.length === 1 ? 'product' : 'products'
+        }`,
+        variant: 'success',
+        duration: 4000,
+      });
+      selection.clear();
+    } catch {
+      // Per-row failure toast comes from the mutation; keep selection
+      // intact so the user can retry the survivors.
+    }
+  }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
 
   if (getAllProductsQuery.isLoading) return <ProductsSkeleton />;
   if (getAllProductsQuery.error) {
@@ -125,12 +139,12 @@ export default function ProductsScreen() {
           onBulkMoveCategory={() => setMoveModalOpen(true)}
         />
       ) : null}
-      
-      <BulkMoveCategoryModal 
+
+      <BulkMoveCategoryModal
         visible={moveModalOpen}
         productIds={selectedIds}
         onClose={() => {
-          setMoveModalOpen(false)
+          setMoveModalOpen(false);
           selection.clear();
         }}
       />

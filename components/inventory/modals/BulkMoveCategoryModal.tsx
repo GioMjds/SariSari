@@ -12,6 +12,8 @@ import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useCategories, useProducts } from '@/hooks';
+import { useToastStore } from '@/stores';
+import type { Category } from '@/types/categories.types';
 
 interface Props {
   visible: boolean;
@@ -21,26 +23,35 @@ interface Props {
 
 export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
   const { getAllCategoriesQuery } = useCategories();
-  const { updateProductMutation } = useProducts();
+  const { updateProductCategoryMutation } = useProducts();
+  const addToast = useToastStore((s) => s.addToast);
   const [picked, setPicked] = useState<string>('');
   const categories = useMemo(
     () => getAllCategoriesQuery.data ?? [],
     [getAllCategoriesQuery.data],
   );
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (productIds.length === 0 || picked === '') return;
-    Promise.all(
-      productIds.map((id) =>
-        updateProductMutation.mutateAsync({
-          id,
-          category: picked === '__none__' ? null : picked,
-        } as any),
-      ),
-    ).then(() => {
+    const nextCategory = picked === '__none__' ? null : picked;
+    try {
+      await Promise.all(
+        productIds.map((id) =>
+          updateProductCategoryMutation.mutateAsync({ id, category: nextCategory }),
+        ),
+      );
+      addToast({
+        message: `Moved ${productIds.length} ${
+          productIds.length === 1 ? 'product' : 'products'
+        } to ${nextCategory ?? 'Uncategorized'}`,
+        variant: 'success',
+        duration: 4000,
+      });
       setPicked('');
       onClose();
-    });
+    } catch {
+      // mutation's onError already toasted the failure
+    }
   };
 
   return (
@@ -73,7 +84,7 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
               active={picked === '__none__'}
               onPress={() => setPicked('__none__')}
             />
-            {categories.map((c: any) => (
+            {categories.map((c: Category) => (
               <Row
                 key={c.id ?? c.name}
                 label={c.name}
@@ -97,12 +108,12 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleConfirm}
-              disabled={!picked || updateProductMutation.isPending}
+              disabled={!picked || updateProductCategoryMutation.isPending}
               accessibilityRole="button"
               accessibilityLabel="Confirm bulk move"
               accessibilityState={{ disabled: !picked }}
               className={`flex-1 min-h-[44px] rounded-xl items-center justify-center ${
-                picked && !updateProductMutation.isPending
+                picked && !updateProductCategoryMutation.isPending
                   ? 'bg-persimmon-500'
                   : 'bg-paper-300'
               }`}

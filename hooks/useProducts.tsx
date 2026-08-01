@@ -7,6 +7,7 @@ import {
   getProductByBarcode,
   insertProduct,
   updateProduct,
+  updateProductCategory,
 } from '@/database/products';
 import { useToastStore } from '@/stores/ToastStore';
 import {
@@ -247,6 +248,61 @@ export function useProducts() {
     },
   });
 
+  // Mutation: Bulk-move single product's category. Used by
+  // `BulkMoveCategoryModal` to patch `category` on N rows without
+  // re-asserting every required column. The modal calls `mutateAsync`
+  // per row, then posts a single aggregate success toast outside of
+  // this hook (so the user gets one toast for the batch, not N).
+  const updateProductCategoryMutation = useMutation({
+    mutationFn: async ({
+      id,
+      category,
+    }: {
+      id: number;
+      category: string | null;
+    }) => updateProductCategory(id, category),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (error: Error) => {
+      addToast({
+        message: error.message || 'Failed to move category',
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
+  });
+
+  // Mutation: Bulk delete — same image-cleanup + row deletion as
+  // `deleteProductMutation`, but suppresses the per-row success toast.
+  // The bulk handler in `app/(tabs)/inventory/products.tsx` posts a
+  // single aggregate toast after `Promise.all` resolves.
+  const bulkDeleteProductsMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const existingProduct = await getProduct(id);
+      const result = await deleteProduct(id);
+      if (existingProduct?.image_uri) {
+        await deleteLocalProductImage(existingProduct.image_uri);
+      }
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    },
+    onError: (error: Error) => {
+      // Keep the per-row failure toast so the user sees which
+      // product couldn't be deleted; the bulk handler also posts a
+      // summary failure toast. Dedupe at the handler level if needed.
+      addToast({
+        message: error.message || 'Failed to delete product',
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
+  });
+
   return {
     // Queries
     getAllProductsQuery,
@@ -254,6 +310,8 @@ export function useProducts() {
     // Mutations
     insertProductMutation,
     updateProductMutation,
+    updateProductCategoryMutation,
     deleteProductMutation,
+    bulkDeleteProductsMutation,
   };
 }
