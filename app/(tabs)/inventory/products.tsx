@@ -9,8 +9,10 @@ import {
   ProductsEmptyState,
   type ProductsFilter,
 } from '@/components/inventory/products';
+import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection } from '@/stores/useInventorySelection';
+import { BulkActionsToolbar } from '@/components/inventory';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -25,9 +27,11 @@ function getEmptyVariant(
 
 export default function ProductsScreen() {
   const router = useRouter();
-  const { getAllProductsQuery } = useProducts();
   const selection = useInventorySelection();
+  const { getAllProductsQuery, deleteProductMutation } = useProducts();
   const [filter, setFilter] = useState<ProductsFilter>('all');
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+
   const params = useLocalSearchParams<{ q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
 
@@ -54,6 +58,11 @@ export default function ProductsScreen() {
     });
   }, [items, filter, searchTerm]);
 
+  const selectedIds = useMemo(
+    () => Array.from(selection.selectedIds),
+    [selection.selectedIds],
+  );
+
   const emptyVariant = getEmptyVariant(searchTerm, filter);
 
   const handlePress = useCallback(
@@ -72,6 +81,13 @@ export default function ProductsScreen() {
   const handleClearSearch = useCallback(() => {
     router.setParams({ q: undefined });
   }, [router]);
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    Promise.all(
+      selectedIds.map((id) => deleteProductMutation.mutateAsync(id)),
+    ).then(() => selection.clear());
+  }, [selectedIds, deleteProductMutation, selection]);
 
   if (getAllProductsQuery.isLoading) return <ProductsSkeleton />;
   if (getAllProductsQuery.error) {
@@ -98,6 +114,24 @@ export default function ProductsScreen() {
           onLongPress={handleLongPress}
         />
       )}
+      {selection.selectMode ? (
+        <BulkActionsToolbar
+          selectedCount={selectedIds.length}
+          onClearSelection={selection.clear}
+          onBulkDelete={handleBulkDelete}
+          onBulkAdjustStock={() => {}}
+          onBulkMoveCategory={() => setMoveModalOpen(true)}
+        />
+      ) : null}
+      
+      <BulkMoveCategoryModal 
+        visible={moveModalOpen}
+        productIds={selectedIds}
+        onClose={() => {
+          setMoveModalOpen(false)
+          selection.clear();
+        }}
+      />
     </View>
   );
 }
