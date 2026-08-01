@@ -14,6 +14,15 @@ export interface InventoryOverviewCounts {
   overstock: number;
 }
 
+export interface InventoryTransaction {
+  type: 'restock' | 'sale' | 'adjustment';
+  adjustment_sign: 'positive' | 'negative';
+  product_id: number;
+  timestamp: number;
+  note?: string;
+  quantity: number;
+}
+
 export interface ProductLike {
   quantity: number;
   expiry_date?: number | string | null;

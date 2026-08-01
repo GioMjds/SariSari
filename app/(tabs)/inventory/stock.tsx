@@ -6,21 +6,27 @@ import {
   StockList,
   StockSkeleton,
   StockFilterChips,
+  StockEmptyState,
   type StockFilter,
 } from '@/components/inventory/stock';
-import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
-import { StockEmptyState } from '@/components/inventory/stock/StockEmptyState';
+import { InventoryErrorState } from '@/components/inventory';
 import { useRestockSignal } from '@/stores/useInventorySelection';
 
 export default function StockScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ filter?: StockFilter }>();
+  const params = useLocalSearchParams<{ filter?: StockFilter; q?: string }>();
+  const searchTerm = (params.q ?? '').trim().toLowerCase();
   const { getAllProductsQuery } = useProducts();
   const restock = useRestockSignal();
 
   const filter: StockFilter = useMemo(() => {
     const fromParams = params.filter;
-    if (fromParams && ['all', 'critical', 'low', 'out', 'overstock', 'near_expiry'].includes(fromParams)) {
+    if (
+      fromParams &&
+      ['all', 'critical', 'low', 'out', 'overstock', 'near_expiry'].includes(
+        fromParams,
+      )
+    ) {
       return fromParams;
     }
     return 'all';
@@ -35,22 +41,35 @@ export default function StockScreen() {
     return items.filter((p: any) => {
       switch (filter) {
         case 'critical':
-          return p.quantity > 0 && p.quantity <= 3;
+          if (!(p.quantity > 0 && p.quantity <= 3)) return false;
+          break;
         case 'low':
-          return p.quantity > 0 && p.quantity <= 5;
+          if (!(p.quantity > 0 && p.quantity <= 5)) return false;
+          break;
         case 'out':
-          return p.quantity === 0;
+          if (p.quantity !== 0) return false;
+          break;
         case 'overstock':
-          return p.quantity >= 100;
+          if (p.quantity < 100) return false;
+          break;
         case 'near_expiry':
           if (!p.expiry_date) return false;
           const days = (p.expiry_date - Date.now()) / 86400_000;
-          return days >= 0 && days <= 7;
+          if (!(days >= 0 && days <= 7)) return false;
+          break;
         default:
-          return true;
+          break;
       }
+      if (searchTerm) {
+        const haystack = [p.name, p.sku, p.barcode, p.category]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(searchTerm)) return false;
+      }
+      return true;
     });
-  }, [items, filter]);
+  }, [items, filter, searchTerm]);
 
   const handlePress = useCallback(
     (id: number) => router.push(`/(edit-forms)/product-details/${id}`),
@@ -69,7 +88,10 @@ export default function StockScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <StockFilterChips value={filter} onChange={(v) => router.setParams({ filter: v })} />
+      <StockFilterChips
+        value={filter}
+        onChange={(v) => router.setParams({ filter: v })}
+      />
       {filtered.length === 0 ? (
         <StockEmptyState filter={filter} />
       ) : (

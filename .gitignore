@@ -46,9 +46,6 @@ app-example
 /.superpowers/
 /.impeccable/
 
-# docs/
+docs/
 design-system/
 /.vscode
-
-# git worktrees
-/.worktrees/

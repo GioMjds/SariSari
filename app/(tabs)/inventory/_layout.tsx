@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Href, Stack, useRouter, useSegments } from 'expo-router';
-import { TopTabs } from '@/components/navigation/top-tabs';
+import {
+  Href,
+  Stack,
+  useLocalSearchParams,
+  useRouter,
+  useSegments,
+} from 'expo-router';
+import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
 import {
   ReceiveStockModal,
@@ -21,8 +27,9 @@ const SUB_TAB_SEGMENTS = [
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
+  const searchParams = useLocalSearchParams<{ q?: string }>();
+  const search = searchParams.q as string;
 
-  const [search, setSearch] = useState('');
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -43,6 +50,13 @@ export default function InventoryLayout() {
   const handleTabChange = useCallback(
     (t: InventorySubTab) => {
       router.push(`/(tabs)/inventory/${t}` as Href);
+    },
+    [router],
+  );
+
+  const handleSearchChange = useCallback(
+    (next: string) => {
+      router.setParams({ q: next });
     },
     [router],
   );
@@ -71,7 +85,7 @@ export default function InventoryLayout() {
         <InventoryHeader
           active={activeTab}
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
           onOpenScanner={() => setScannerOpen(true)}
           onTabChange={handleTabChange}
           onPillPress={handlePillPress}
