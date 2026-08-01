@@ -18,7 +18,7 @@
 - Don't auto-push any branch (CLAUDE.md). Commit incrementally; user reviews and pushes.
 - Tests live under `tests/` and follow the existing `@testing-library/react-native` + manual jest-mock pattern. No new test deps.
 - File paths with parens (e.g. `app/(tabs)/home/index.tsx`) require escaping in shell commands.
-- `tsc --noEmit -p .` MUST be clean (zero new errors) for every home tab file at the end of each task. Pre-existing 418 errors in `tests/database/*`, `tests/onboarding/*`, `tests/components/utang/*`, and `utils/alert.ts` are out of scope and remain unchanged.
+- `tsc --noEmit -p .` MUST be clean (zero new errors) for every home tab file **after Task 05** (the milestone where all dependent tasks are in place). Earlier tasks may introduce transient errors in dependent files that get fixed later in the same plan. Pre-existing 418 errors in `tests/database/*`, `tests/onboarding/*`, `tests/components/utang/*`, and `utils/alert.ts` are out of scope and remain unchanged.
 
 ---
 
