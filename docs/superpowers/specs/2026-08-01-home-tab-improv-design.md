@@ -7,6 +7,7 @@
 ## Context
 
 The Home tab currently has 3 sub-tabs (Overview, Today, Alerts) with substantial dead code:
+
 - `DashboardGoalCard`, `DashboardSuggestions`, `DashboardStockAlert`, `DashboardEmptyState`, `DashboardErrorState`, `DashboardContextHeader` are all built but never rendered in any current Home page.
 - The Alerts sub-tab duplicates notification functionality already in `NotificationSheet`, and the Reports tab already has a "Dispatch from the counter" insight block plus an inline Low Stock alert in the Stock Levels section.
 - `useHomeDashboardData.ts:135` hardcodes `profitMargin: 912`, which renders fake data on the Overview's "Est. Profit" KPI tile.

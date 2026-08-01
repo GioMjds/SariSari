@@ -16,7 +16,7 @@ export function TodayTransactionLog({
       <DashboardRecentSales
         sales={sales}
         onOpenSale={onOpenSale}
-        onSeeAll={onSeeAll}
+        {...(onSeeAll ? { onSeeAll } : {})}
       />
     </View>
   );

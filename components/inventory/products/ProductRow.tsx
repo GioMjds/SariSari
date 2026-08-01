@@ -57,7 +57,7 @@ function ProductRowImpl({ product, onPress, onLongPress }: Props) {
         >
           {product.name}
         </StyledText>
-        <StyledText className="text-ink-500 text-[11px]">
+        <StyledText variant="medium" className="text-ink-600 text-[11px]">
           {product.category ?? 'Uncategorized'} · {product.unitSize ?? '1 pc'}
         </StyledText>
       </View>

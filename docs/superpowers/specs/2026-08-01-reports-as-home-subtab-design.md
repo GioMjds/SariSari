@@ -21,11 +21,11 @@
 
 ## Decisions Locked With User
 
-| # | Decision | Choice |
-|---|----------|--------|
-| Q1 | What happens to Today? | **Drop Today entirely.** Home sub-tabs become `['overview', 'reports']`. |
-| Q2 | What happens to `app/more/reports.tsx`? | **Delete it.** More loses its Reports sub-route. |
-| Q3 | Where does the Reports screen file live? | **Move it to `app/(tabs)/home/reports.tsx`.** |
+| #   | Decision                                 | Choice                                                                   |
+| --- | ---------------------------------------- | ------------------------------------------------------------------------ |
+| Q1  | What happens to Today?                   | **Drop Today entirely.** Home sub-tabs become `['overview', 'reports']`. |
+| Q2  | What happens to `app/more/reports.tsx`?  | **Delete it.** More loses its Reports sub-route.                         |
+| Q3  | Where does the Reports screen file live? | **Move it to `app/(tabs)/home/reports.tsx`.**                            |
 
 ## File Map
 
@@ -121,6 +121,7 @@ The More tab now has 3 sub-tabs (`app/more/insights.tsx`, `sync.tsx`, `settings.
 Every existing `router.push('/reports' as Href)` (or the `/reports` map value in `home-state.ts`) becomes `router.push('/(tabs)/home/reports' as Href)`. Both paths resolve to the same screen via expo-router, but the explicit `(tabs)` form keeps the navigation tree readable.
 
 Affected sites (per grep evidence):
+
 - `app/(tabs)/home/index.tsx` — `handleGoalAction` map (the map from `HomeRecommendation.destination` to a URL lives in the Overview screen), `handleSuggestionPress` map, `DashboardKPIGrid` `onDetailsPress`, `onKpiPress('reports')`, `DashboardQuickActions` `onOpenReports`.
 - `components/layout/StoreHeader.tsx:47` — `handleSeeAll`.
 

@@ -24,7 +24,7 @@
 
 ## File Map
 
-```
+```folder
 app/(tabs)/home/
   _layout.tsx                       [modify — render 2 sub-tabs, simplify getCurrentTab]
   index.tsx                         [rewrite — single-column layout, gate on error/empty]
@@ -308,14 +308,23 @@ return (
             </StyledText>
           </View>
           <View className="flex-1">
-            <StyledText variant="extrabold" className="text-ink-900 text-lg" numberOfLines={1}>
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-lg"
+              numberOfLines={1}
+            >
               {storeName}
             </StyledText>
           </View>
         </View>
       </View>
     )}
-    <SubTabControl tabs={tabs} activeTab={activeTab} onTabPress={onTabPress} containerClassName="mb-0" />
+    <SubTabControl
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabPress={onTabPress}
+      containerClassName="mb-0"
+    />
   </View>
 );
 ```
@@ -415,7 +424,10 @@ import { getDateRangeFromType } from '@/utils';
 import { groupSalesByHour, HourlySalesGroup } from '@/utils';
 import { SaleWithItems } from '@/types/sales.types';
 import { formatPesos } from '@/lib/money';
-import { HomeRecommendation, resolveHomeState } from '@/components/home/home-state';
+import {
+  HomeRecommendation,
+  resolveHomeState,
+} from '@/components/home/home-state';
 ```
 
 - [ ] **Step 2: Replace the `stats.profitMargin: 912` literal**
@@ -503,8 +515,7 @@ const homeStateInput = useMemo(
     cashSession: currentSession
       ? {
           status: (currentSession.status === 'closed' ? 'closed' : 'open') as
-            | 'open'
-            | 'closed',
+            'open' | 'closed',
           variance: currentSession.variance ?? null,
         }
       : null,
@@ -541,7 +552,7 @@ Actually a cleaner formulation uses the underlying query booleans:
 const isError =
   !!getTodayStatsQuery.error ||
   !!getAllProductsQuery.error ||
-  !!recentSalesData === false && recentLoading === false; // no-op fallback
+  (!!recentSalesData === false && recentLoading === false); // no-op fallback
 ```
 
 The pragmatic version:
@@ -550,7 +561,7 @@ The pragmatic version:
 const isError =
   !!getTodayStatsQuery.error ||
   !!getAllProductsQuery.error ||
-  !!creditKpis === false && !creditKpisLoading;
+  (!!creditKpis === false && !creditKpisLoading);
 ```
 
 Simplify to:
@@ -798,7 +809,9 @@ export default function OverviewScreen() {
           {/* Empty state — zero products + zero sales */}
           {products.length === 0 && stats.transactionCount === 0 ? (
             <DashboardEmptyState
-              onAddProduct={() => router.push('/(edit-forms)/add-product' as Href)}
+              onAddProduct={() =>
+                router.push('/(edit-forms)/add-product' as Href)
+              }
               onStartFirstSale={() => router.push('/(tabs)/sales/pos' as Href)}
             />
           ) : (
@@ -812,16 +825,25 @@ export default function OverviewScreen() {
                   TOTAL SALES TODAY
                 </StyledText>
                 <View className="flex-row items-baseline gap-3 mt-1.5">
-                  <StyledText variant="extrabold" className="text-ink-900 text-hero">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-900 text-hero"
+                  >
                     {formatCurrency(stats.todaySalesTotal)}
                   </StyledText>
                 </View>
                 <View className="flex-row items-center gap-2 mt-2">
-                  <StyledText variant="regular" className="text-ink-500 text-xs">
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-500 text-xs"
+                  >
                     {stats.transactionCount} transactions today
                   </StyledText>
                   <View className="bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
-                    <StyledText variant="extrabold" className="text-emerald-800 text-[11px]">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-emerald-800 text-[11px]"
+                    >
                       RECORDED
                     </StyledText>
                   </View>
@@ -871,7 +893,9 @@ export default function OverviewScreen() {
               {/* 5. Quick Actions */}
               <DashboardQuickActions
                 onNewSale={() => router.push('/(tabs)/sales/pos' as Href)}
-                onAddProduct={() => router.push('/(edit-forms)/add-product' as any)}
+                onAddProduct={() =>
+                  router.push('/(edit-forms)/add-product' as any)
+                }
                 onAddStock={() => router.push('/inventory' as Href)}
                 onOpenCredits={() => router.push('/utang' as Href)}
                 onOpenReports={() => router.push('/reports' as Href)}
@@ -1263,10 +1287,7 @@ import {
 with:
 
 ```ts
-import {
-  HomeOverviewSkeleton,
-  TodaySnapshotSkeleton,
-} from '@/components/home';
+import { HomeOverviewSkeleton, TodaySnapshotSkeleton } from '@/components/home';
 ```
 
 Delete the third test inside `describe('Home Sub-Tab Loading Skeletons', ...)`:
@@ -1505,20 +1526,20 @@ git commit -m "chore(home): apply review fixes from smoke test"
 
 ## Task Index
 
-| #   | Task                                                       | File(s)                                                                                       |
-| --- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 01  | Narrow `HOME_SUB_TABS` const and `HomeSubTab` type         | `constants/tabs.ts`                                                                           |
-| 02  | Update `DashboardHeader` to render 2 tabs                  | `components/home/DashboardHeader.tsx`                                                         |
-| 03  | Simplify `home/_layout.tsx`                                | `app/(tabs)/home/_layout.tsx`                                                                 |
-| 04  | Strip bell + handlers from `DashboardHeader`               | `components/home/DashboardHeader.tsx`                                                         |
-| 05  | Re-route `StoreHeader.handleSeeAll` to `/reports`          | `components/layout/StoreHeader.tsx`                                                           |
-| 06  | Extend `useHomeDashboardData` with goal/suggestions/error  | `hooks/useHomeDashboardData.ts`                                                               |
-| 07  | Slim `DashboardKPIGrid` and accept nullable profit         | `components/home/DashboardKPIGrid.tsx`                                                        |
-| 08  | Rewrite `home/index.tsx` as new single-column layout       | `app/(tabs)/home/index.tsx`                                                                   |
-| 09  | Slim `home/today.tsx` and add `RefreshControl`             | `app/(tabs)/home/today.tsx`                                                                   |
-| 10  | Update `HomeOverviewSkeleton` layout for new sections      | `components/home/HomeOverviewSkeleton.tsx`                                                    |
+| #   | Task                                                       | File(s)                                                                                                                         |
+| --- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | Narrow `HOME_SUB_TABS` const and `HomeSubTab` type         | `constants/tabs.ts`                                                                                                             |
+| 02  | Update `DashboardHeader` to render 2 tabs                  | `components/home/DashboardHeader.tsx`                                                                                           |
+| 03  | Simplify `home/_layout.tsx`                                | `app/(tabs)/home/_layout.tsx`                                                                                                   |
+| 04  | Strip bell + handlers from `DashboardHeader`               | `components/home/DashboardHeader.tsx`                                                                                           |
+| 05  | Re-route `StoreHeader.handleSeeAll` to `/reports`          | `components/layout/StoreHeader.tsx`                                                                                             |
+| 06  | Extend `useHomeDashboardData` with goal/suggestions/error  | `hooks/useHomeDashboardData.ts`                                                                                                 |
+| 07  | Slim `DashboardKPIGrid` and accept nullable profit         | `components/home/DashboardKPIGrid.tsx`                                                                                          |
+| 08  | Rewrite `home/index.tsx` as new single-column layout       | `app/(tabs)/home/index.tsx`                                                                                                     |
+| 09  | Slim `home/today.tsx` and add `RefreshControl`             | `app/(tabs)/home/today.tsx`                                                                                                     |
+| 10  | Update `HomeOverviewSkeleton` layout for new sections      | `components/home/HomeOverviewSkeleton.tsx`                                                                                      |
 | 11  | Delete Alerts sub-tab and unused components                | `app/(tabs)/home/alerts.tsx`, `components/home/AlertCardItem.tsx`, `AlertFilterPills.tsx`, `HomeAlertsSkeleton.tsx`, `index.ts` |
-| 12  | Drop `HomeAlertsSkeleton` from skeletons test              | `tests/components/HomeSkeletons.test.tsx`                                                     |
-| 13  | Add focused test for the `profitMargin` bug fix            | `tests/hooks/useHomeDashboardData.test.tsx`                                                   |
-| 14  | Update `DashboardScreen.test.tsx` mocks for new hook shape | `tests/components/DashboardScreen.test.tsx`                                                   |
-| 15  | Manual smoke test checklist                                | —                                                                                             |
+| 12  | Drop `HomeAlertsSkeleton` from skeletons test              | `tests/components/HomeSkeletons.test.tsx`                                                                                       |
+| 13  | Add focused test for the `profitMargin` bug fix            | `tests/hooks/useHomeDashboardData.test.tsx`                                                                                     |
+| 14  | Update `DashboardScreen.test.tsx` mocks for new hook shape | `tests/components/DashboardScreen.test.tsx`                                                                                     |
+| 15  | Manual smoke test checklist                                | —                                                                                                                               |

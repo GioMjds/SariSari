@@ -18,7 +18,7 @@
 - Don't auto-push any branch (CLAUDE.md). Commit incrementally; user reviews and pushes.
 - Tests live under `tests/` and follow the existing `@testing-library/react-native` + manual jest-mock pattern. No new test deps.
 - File paths with parens (e.g. `app/(tabs)/home/index.tsx`) require escaping in shell commands.
-- `tsc --noEmit -p .` MUST be clean (zero new errors) for every home tab file **after Task 05** (the milestone where all dependent tasks are in place). Earlier tasks may introduce transient errors in dependent files that get fixed later in the same plan. Pre-existing 418 errors in `tests/database/*`, `tests/onboarding/*`, `tests/components/utang/*`, and `utils/alert.ts` are out of scope and remain unchanged.
+- `tsc --noEmit -p .` MUST be clean (zero new errors) for every home tab file at the end of each task. Pre-existing 418 errors in `tests/database/*`, `tests/onboarding/*`, `tests/components/utang/*`, and `utils/alert.ts` are out of scope and remain unchanged.
 
 ---
 
@@ -62,15 +62,18 @@ app/(tabs)/home/index.tsx           [modify — sweep 5 '/reports' route strings
 ## Task 01: Narrow `HOME_SUB_TABS` and `MORE_SUB_TABS`; drop `/reports` from `PRIMARY_TAB_PATHS`
 
 **Files:**
+
 - Modify: `constants/tabs.ts:11-21, 66, 75-80`
 
 **Interfaces:**
+
 - Consumes: existing `HOME_SUB_TABS`, `MORE_SUB_TABS`, `PRIMARY_TAB_PATHS`.
 - Produces: `HOME_SUB_TABS = ['overview', 'reports'] as const`; `MORE_SUB_TABS = ['insights', 'sync', 'settings'] as const`; `PRIMARY_TAB_PATHS` no longer contains `'/reports'`. `HomeSubTab` and `MoreSubTab` unions follow automatically.
 
 - [ ] **Step 1: Open `constants/tabs.ts` and locate the three ranges**
 
 At the top (lines 11-21):
+
 ```ts
 export const PRIMARY_TAB_PATHS = [
   '/',
@@ -86,11 +89,13 @@ export const PRIMARY_TAB_PATHS = [
 ```
 
 At line 66:
+
 ```ts
 export const HOME_SUB_TABS = ['overview', 'today'] as const;
 ```
 
 At lines 75-80:
+
 ```ts
 export const MORE_SUB_TABS = [
   'reports',
@@ -103,6 +108,7 @@ export const MORE_SUB_TABS = [
 - [ ] **Step 2: Remove `'/reports'` from `PRIMARY_TAB_PATHS`**
 
 Delete the line `'/reports',` from the array. Result:
+
 ```ts
 export const PRIMARY_TAB_PATHS = [
   '/',
@@ -149,20 +155,24 @@ git commit -m "feat(home): narrow HOME_SUB_TABS to overview and reports"
 ## Task 02: Update `DashboardHeader` to render 2 chips (`Overview`, `Reports`)
 
 **Files:**
+
 - Modify: `components/home/DashboardHeader.tsx:5, 22-25`
 
 **Interfaces:**
+
 - Consumes: narrowed `HomeSubTab = 'index' | 'reports'` from Task 01.
 - Produces: `tabs` array has only two entries — `index` (Overview, `th-large` icon) and `reports` (Reports, `bar-chart` icon). `HomeSubTab` export reflects the narrower union.
 
 - [ ] **Step 1: Locate the `HomeSubTab` type and the `tabs` array**
 
 At line 5:
+
 ```ts
 export type HomeSubTab = 'index' | 'today';
 ```
 
 Inside the component body (lines 22-25):
+
 ```ts
 const tabs = [
   { key: 'index', label: 'Overview', icon: 'th-large' },
@@ -202,15 +212,18 @@ git commit -m "feat(home): replace today tab with reports in dashboard header"
 ## Task 03: Register `reports` sub-tab in `app/(tabs)/home/_layout.tsx`
 
 **Files:**
+
 - Modify: `app/(tabs)/home/_layout.tsx:22-25, 53-54`
 
 **Interfaces:**
+
 - Consumes: narrowed `HomeSubTab` from Task 02 (already `'index' | 'reports'`).
 - Produces: `getCurrentTab` switches on `'reports'`. The `<TopTabs.Screen name="today" />` becomes `<TopTabs.Screen name="reports" />`.
 
 - [ ] **Step 1: Replace `getCurrentTab`**
 
 Inside the file, replace:
+
 ```ts
 const getCurrentTab = (): HomeSubTab => {
   if (pathname.includes('today')) return 'today';
@@ -219,6 +232,7 @@ const getCurrentTab = (): HomeSubTab => {
 ```
 
 with:
+
 ```ts
 const getCurrentTab = (): HomeSubTab => {
   if (pathname.includes('reports')) return 'reports';
@@ -229,12 +243,14 @@ const getCurrentTab = (): HomeSubTab => {
 - [ ] **Step 2: Swap the `TopTabs.Screen`**
 
 Replace:
+
 ```tsx
         <TopTabs.Screen name="index" />
         <TopTabs.Screen name="today" />
 ```
 
 with:
+
 ```tsx
         <TopTabs.Screen name="index" />
         <TopTabs.Screen name="reports" />
@@ -257,17 +273,21 @@ git commit -m "feat(home): swap today sub-tab for reports in home layout"
 ## Task 04: Move `app/(tabs)/reports/index.tsx` to `app/(tabs)/home/reports.tsx`
 
 **Files:**
+
 - Create: `app/(tabs)/home/reports.tsx`
 - Delete: `app/(tabs)/reports/index.tsx` (and the empty parent directory `app/(tabs)/reports/` if it becomes empty)
 
 **Interfaces:**
+
 - Consumes: the existing `app/(tabs)/reports/index.tsx` content (841 lines).
 - Produces: a new file at `app/(tabs)/home/reports.tsx` with the same imports and JSX, except the outer `<View className="flex-1 bg-paper-200">` and its closing `</View>` are removed (the Home layout already wraps the body in `<View className="flex-1 bg-paper-200">`).
 
 - [ ] **Step 1: Read `app/(tabs)/reports/index.tsx` carefully**
 
 Specifically note:
+
 - The current wrapping is:
+
   ```tsx
   return (
     <View className="flex-1 bg-paper-200">
@@ -280,15 +300,18 @@ Specifically note:
     </View>
   );
   ```
+
   That's **two nested `<View className="flex-1 bg-paper-200">`** wrappers (lines 200 and 201).
 
 - [ ] **Step 2: Create `app/(tabs)/home/reports.tsx` with the same content minus the wrappers**
 
 The new file is identical to `app/(tabs)/reports/index.tsx` EXCEPT:
+
 - The outer two `<View>` wrappers and their closing `</View>` tags are removed.
 - The `default export function Reports()` becomes `default export function ReportsScreen()` (purely a name change; the file name is `reports.tsx`, but the component name being `Reports` would conflict with the export). Actually — keep the name `Reports` to minimize the diff and avoid unused name churn. The Home `_layout.tsx` uses `<TopTabs.Screen name="reports" />` which doesn't care about the export name.
 
   Final structure:
+
   ```tsx
   import { StyledText } from '@/components/elements';
   import {
@@ -338,9 +361,11 @@ The new file is identical to `app/(tabs)/reports/index.tsx` EXCEPT:
 - [ ] **Step 3: Verify both files exist briefly before deleting**
 
 Run:
+
 ```bash
 ls -la 'D:\giomj\Projects\sarisari\app\(tabs)\home\reports.tsx'
 ```
+
 Expected: file exists.
 
 - [ ] **Step 4: Verify `tsc` is clean for the new file**
@@ -356,9 +381,11 @@ rmdir "app/(tabs)/reports" 2>/dev/null || true
 ```
 
 If `rmdir` fails because the directory is non-empty, leave it. Verify:
+
 ```bash
 ls 'D:\giomj\Projects\sarisari\app\(tabs)\reports' 2>/dev/null && echo "STILL EXISTS" || echo "REMOVED"
 ```
+
 Expected: `REMOVED`.
 
 - [ ] **Step 6: Verify the full typecheck filter**
@@ -380,12 +407,14 @@ git commit -m "feat(home): move reports screen into home sub-tab"
 ## Task 05: Delete `app/(tabs)/today.tsx` and orphaned `Today`-related components
 
 **Files:**
+
 - Delete: `app/(tabs)/today.tsx` (file is from the previous home-tab-improv plan; if it doesn't exist, skip)
 - Delete: `components/home/HourlySalesTimeline.tsx`
 - Delete: `components/home/TodayTransactionLog.tsx`
 - Modify: `components/home/index.ts` (drop the re-exports)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: those files no longer exist. `components/home/index.ts` no longer re-exports `HourlySalesTimeline`, `TodayTransactionLog`, `TodaySnapshotSkeleton`, `SalesTargetCard`, `CashSessionCard`, `DashboardDailyPulse`, `DashboardContextHeader`, `DashboardSkeleton`.
 
@@ -394,17 +423,21 @@ git commit -m "feat(home): move reports screen into home sub-tab"
 - [ ] **Step 1: Verify no remaining importers of soon-to-be-deleted files**
 
 Run:
+
 ```bash
 grep -rn "HourlySalesTimeline\|TodayTransactionLog\|TodaySnapshotSkeleton\|SalesTargetCard\|CashSessionCard" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 'D:\giomj\Projects\sarisari\tests' 2>&1 | head -20
 ```
+
 Expected: zero hits outside the files about to be deleted.
 
 - [ ] **Step 2: Verify `DashboardDailyPulse`, `DashboardContextHeader`, `DashboardSkeleton` are not used by Overview**
 
 Run:
+
 ```bash
 grep -rn "DashboardDailyPulse\|DashboardContextHeader\|DashboardSkeleton" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 2>&1 | head -20
 ```
+
 Expected: zero hits. These are orphans from the previous plan's spec ("DashboardContextHeader and DashboardDailyPulse stay exported even though they remain orphaned"). Per the spec, **keep them** in `index.ts` for now. Only delete the Today-related re-exports.
 
 - [ ] **Step 3: Delete the files**
@@ -415,6 +448,7 @@ rm "components/home/TodayTransactionLog.tsx"
 ```
 
 If `app/(tabs)/today.tsx` exists:
+
 ```bash
 rm "app/(tabs)/today.tsx"
 ```
@@ -424,6 +458,7 @@ If `app/(tabs)/today.tsx` does not exist (already deleted): silently skip.
 - [ ] **Step 4: Update `components/home/index.ts`**
 
 Replace the current contents (lines 1-20):
+
 ```ts
 export * from './home-state';
 export * from './DashboardContextHeader';
@@ -448,6 +483,7 @@ export * from './TodaySnapshotSkeleton';
 ```
 
 with:
+
 ```ts
 export * from './home-state';
 export * from './DashboardContextHeader';
@@ -487,18 +523,22 @@ git commit -m "feat(home): delete today sub-tab and orphaned components"
 ## Task 06: Delete `app/more/reports.tsx`
 
 **Files:**
+
 - Delete: `app/more/reports.tsx`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `app/more/reports.tsx` no longer exists. The More tab's sub-tab list shrinks from 4 to 3 entries.
 
 - [ ] **Step 1: Verify no remaining importers**
 
 Run:
+
 ```bash
 grep -rn "app/more/reports\|more/reports" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 2>&1 | head -20
 ```
+
 Expected: zero hits outside the file to delete.
 
 - [ ] **Step 2: Delete the file**
@@ -515,9 +555,11 @@ Expected: zero errors. The More tab is mounted via `app/more/_layout.tsx` (which
 - [ ] **Step 4: Confirm `MORE_SUB_TABS` is used somewhere or stays orphaned**
 
 Run:
+
 ```bash
 grep -rn "MORE_SUB_TABS\|MoreSubTab" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 2>&1 | head -20
 ```
+
 Expected: zero hits (the const may be unused — that's pre-existing, not introduced by this plan). If `MORE_SUB_TABS` is truly unused, leave it as-is; per the spec, the focus is on the Home sub-tab change, not refactoring the More tab.
 
 - [ ] **Step 5: Commit**
@@ -534,32 +576,39 @@ git commit -m "feat(more): delete duplicate reports screen"
 ## Task 07: Sweep `router.push('/reports')` callers to `/(tabs)/home/reports`
 
 **Files:**
+
 - Modify: `components/layout/StoreHeader.tsx:47`
 - Modify: `app/(tabs)/home/index.tsx:48, 60, 136, 141, 165`
 
 **Interfaces:**
+
 - Consumes: nothing from earlier tasks.
 - Produces: every `router.push('/reports' as Href)` becomes `router.push('/(tabs)/home/reports' as Href)`. Both URLs resolve to the same screen via expo-router, but the explicit `(tabs)` form keeps the navigation tree readable.
 
 - [ ] **Step 1: Locate all `/reports` push calls**
 
 Run:
+
 ```bash
 grep -rn "router.push.*'/reports'\|router.push.*\"/reports\"" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 2>&1 | head -20
 ```
+
 Expected: 6 hits — `StoreHeader.tsx:47` and 5 in `app/(tabs)/home/index.tsx` (lines 48, 60, 136, 141, 165).
 
 - [ ] **Step 2: Update `StoreHeader.tsx`**
 
 Replace:
+
 ```ts
-    router.push('/reports' as Href);
+router.push('/reports' as Href);
 ```
+
 (line 47, inside `handleSeeAll`)
 
 with:
+
 ```ts
-    router.push('/(tabs)/home/reports' as Href);
+router.push('/(tabs)/home/reports' as Href);
 ```
 
 - [ ] **Step 3: Update `app/(tabs)/home/index.tsx`**
@@ -567,46 +616,61 @@ with:
 There are 5 `'/reports'` literals. **All become `'/reports' as Href` → `'(tabs)/home/reports' as Href`**:
 
 - Line 48 (in `handleGoalAction` map):
+
   ```ts
       reports: '/reports',
   ```
+
   becomes:
+
   ```ts
       reports: '/(tabs)/home/reports',
   ```
 
 - Line 60 (in `handleSuggestionPress` map):
+
   ```ts
       reports: '/reports',
   ```
+
   becomes:
+
   ```ts
       reports: '/(tabs)/home/reports',
   ```
 
 - Line 136 (`DashboardKPIGrid` `onDetailsPress`):
+
   ```ts
             onDetailsPress={() => router.push('/reports' as Href)}
   ```
+
   becomes:
+
   ```ts
             onDetailsPress={() => router.push('/(tabs)/home/reports' as Href)}
   ```
 
 - Line 141 (`DashboardKPIGrid` `onKpiPress` else branch):
+
   ```ts
               else router.push('/reports' as Href);
   ```
+
   becomes:
+
   ```ts
               else router.push('/(tabs)/home/reports' as Href);
   ```
 
 - Line 165 (`DashboardQuickActions` `onOpenReports`):
+
   ```ts
             onOpenReports={() => router.push('/reports' as Href)}
   ```
+
   becomes:
+
   ```ts
             onOpenReports={() => router.push('/(tabs)/home/reports' as Href)}
   ```
@@ -614,9 +678,11 @@ There are 5 `'/reports'` literals. **All become `'/reports' as Href` → `'(tabs
 - [ ] **Step 4: Verify the sweep is complete**
 
 Run:
+
 ```bash
 grep -rn "router.push.*'/reports'\|router.push.*\"/reports\"\|reports: '/reports'" 'D:\giomj\Projects\sarisari\app' 'D:\giomj\Projects\sarisari\components' 'D:\giomj\Projects\sarisari\hooks' 2>&1 | head -20
 ```
+
 Expected: zero hits.
 
 - [ ] **Step 5: Verify the typecheck is still clean**
@@ -636,9 +702,11 @@ git commit -m "feat(home): route '/reports' callers to '/(tabs)/home/reports'"
 ## Task 08: Verify `tests/components/DashboardScreen.test.tsx` mock shape
 
 **Files:**
+
 - Modify: `tests/components/DashboardScreen.test.tsx` (only if the mock still references the old `HomeSubTab` union or `'today'`)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: the test file passes the typecheck (or stays as-is if it doesn't reference the changed shape).
 
@@ -647,6 +715,7 @@ git commit -m "feat(home): route '/reports' callers to '/(tabs)/home/reports'"
 Run: `Read 'D:\giomj\Projects\sarisari\tests\components\DashboardScreen.test.tsx'`
 
 Look for:
+
 - Any reference to `'today'` or `'alerts'`.
 - Any use of `HomeSubTab` from `@/components/home`.
 - Any `useHomeDashboardData` mock that hardcodes the old union.
@@ -745,9 +814,11 @@ git commit -m "chore(home): apply review fixes from smoke test"
 - [ ] **Step 1: Run the full typecheck and count errors**
 
 Run:
+
 ```bash
 npx tsc --noEmit -p . 2>&1 | tee /tmp/tsc-after.txt | wc -l
 ```
+
 Expected: still 418 lines (the pre-existing errors in `tests/database/*`, `tests/onboarding/*`, `tests/components/utang/*`, and `utils/alert.ts` are unchanged). Zero new errors in any home tab file.
 
 - [ ] **Step 2: Verify zero new errors in the changed files**
@@ -763,12 +834,15 @@ Expected: same pre-existing `expo-blur` / `EventEmitter` failure (out of scope).
 - [ ] **Step 4: Summary report**
 
 Print the final commit log:
+
 ```bash
 git log --oneline -10
 ```
+
 Expected: the commits from Tasks 01-09 appear at the top of the log, on `revamp/more-tabs`.
 
 If the user asks, push the branch (do not auto-push):
+
 ```bash
 git push origin revamp/more-tabs
 ```
@@ -777,15 +851,15 @@ git push origin revamp/more-tabs
 
 ## Task Index
 
-| # | Task | Files |
-|---|------|-------|
-| 01 | Narrow `HOME_SUB_TABS` and `MORE_SUB_TABS`; drop `/reports` from `PRIMARY_TAB_PATHS` | `constants/tabs.ts` |
-| 02 | Update `DashboardHeader` to render 2 chips (`Overview`, `Reports`) | `components/home/DashboardHeader.tsx` |
-| 03 | Register `reports` sub-tab in `app/(tabs)/home/_layout.tsx` | `app/(tabs)/home/_layout.tsx` |
-| 04 | Move `app/(tabs)/reports/index.tsx` → `app/(tabs)/home/reports.tsx` | `app/(tabs)/home/reports.tsx`, `app/(tabs)/reports/index.tsx` |
-| 05 | Delete `app/(tabs)/today.tsx` and orphaned `Today`-related components | `app/(tabs)/today.tsx`, `components/home/HourlySalesTimeline.tsx`, `components/home/TodayTransactionLog.tsx`, `components/home/index.ts` |
-| 06 | Delete `app/more/reports.tsx` | `app/more/reports.tsx` |
-| 07 | Sweep `router.push('/reports')` callers to `/(tabs)/home/reports` | `components/layout/StoreHeader.tsx`, `app/(tabs)/home/index.tsx` |
-| 08 | Verify `tests/components/DashboardScreen.test.tsx` mock shape | `tests/components/DashboardScreen.test.tsx` |
-| 09 | Manual smoke test checklist | — |
-| 10 | Final typecheck and report | — |
+| #   | Task                                                                                 | Files                                                                                                                                    |
+| --- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 01  | Narrow `HOME_SUB_TABS` and `MORE_SUB_TABS`; drop `/reports` from `PRIMARY_TAB_PATHS` | `constants/tabs.ts`                                                                                                                      |
+| 02  | Update `DashboardHeader` to render 2 chips (`Overview`, `Reports`)                   | `components/home/DashboardHeader.tsx`                                                                                                    |
+| 03  | Register `reports` sub-tab in `app/(tabs)/home/_layout.tsx`                          | `app/(tabs)/home/_layout.tsx`                                                                                                            |
+| 04  | Move `app/(tabs)/reports/index.tsx` → `app/(tabs)/home/reports.tsx`                  | `app/(tabs)/home/reports.tsx`, `app/(tabs)/reports/index.tsx`                                                                            |
+| 05  | Delete `app/(tabs)/today.tsx` and orphaned `Today`-related components                | `app/(tabs)/today.tsx`, `components/home/HourlySalesTimeline.tsx`, `components/home/TodayTransactionLog.tsx`, `components/home/index.ts` |
+| 06  | Delete `app/more/reports.tsx`                                                        | `app/more/reports.tsx`                                                                                                                   |
+| 07  | Sweep `router.push('/reports')` callers to `/(tabs)/home/reports`                    | `components/layout/StoreHeader.tsx`, `app/(tabs)/home/index.tsx`                                                                         |
+| 08  | Verify `tests/components/DashboardScreen.test.tsx` mock shape                        | `tests/components/DashboardScreen.test.tsx`                                                                                              |
+| 09  | Manual smoke test checklist                                                          | —                                                                                                                                        |
+| 10  | Final typecheck and report                                                           | —                                                                                                                                        |

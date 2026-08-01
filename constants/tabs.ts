@@ -63,7 +63,7 @@ export const getSellAction = (t: TFunction): Tab => ({
 });
 
 // Sub-Tab Swipe Routes per FUTURE_REVAMP.md
-export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
+export const HOME_SUB_TABS = ['overview', 'today'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',

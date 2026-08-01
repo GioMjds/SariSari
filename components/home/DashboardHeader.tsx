@@ -1,47 +1,33 @@
-import { Pressable, View } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
-import * as Haptics from 'expo-haptics';
 
-export type HomeSubTab = 'index' | 'today' | 'alerts';
+export type HomeSubTab = 'index' | 'today';
 
 export interface DashboardHeaderProps {
   storeName: string;
   ownerInitials: string;
   activeTab: HomeSubTab;
-  alertCount: number;
   showTopHeader: boolean;
   onTabPress: (tab: HomeSubTab) => void;
-  onNotificationPress?: () => void;
 }
 
 export function DashboardHeader({
   storeName,
   ownerInitials,
   activeTab,
-  alertCount,
   showTopHeader,
   onTabPress,
-  onNotificationPress,
 }: DashboardHeaderProps) {
   const tabs = [
     { key: 'index', label: 'Overview', icon: 'th-large' },
     { key: 'today', label: 'Today', icon: 'calendar' },
-    { key: 'alerts', label: 'Alerts', icon: 'bell', badgeCount: alertCount },
   ] satisfies SubTabItem<HomeSubTab>[];
-
-  const handleNotificationSelect = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onNotificationPress?.();
-  };
 
   return (
     <View className="bg-paper-200 px-4 pt-1 pb-3">
-      {/* Top Header Row: Owner Avatar + Store Title/Branch + Status Pill + Notification Bell */}
       {showTopHeader && (
         <View className="flex-row items-center justify-between mb-3">
-          {/* Left Group: Avatar & Store Info */}
           <View className="flex-row items-center flex-1 mr-2">
             <View className="w-10 h-10 rounded-full bg-cinnamon-500 items-center justify-center mr-3 shadow-sm">
               <StyledText
@@ -61,26 +47,8 @@ export function DashboardHeader({
               </StyledText>
             </View>
           </View>
-
-          {/* Right Group: Online Pill Badge + Notification Bell */}
-          <View className="flex-row items-center gap-2">
-            <Pressable
-              onPress={handleNotificationSelect}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`Notifications, ${alertCount} active alerts`}
-              className="w-11 h-11 rounded-full bg-paper-50 items-center justify-center border border-ink-100 relative shadow-sm"
-            >
-              <FontAwesome5 name="bell" size={16} color="#44403C" />
-              {alertCount > 0 ? (
-                <View className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-cinnamon-500 border border-paper-50" />
-              ) : null}
-            </Pressable>
-          </View>
         </View>
       )}
-
-      {/* Segmented Sub-Tab Control Container */}
       <SubTabControl
         tabs={tabs}
         activeTab={activeTab}

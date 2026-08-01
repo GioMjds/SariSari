@@ -52,13 +52,14 @@ export function BulkActionsToolbar({
             </StyledText>
           </View>
 
-          <View className="flex-row items-center gap-x-3">
+          <View className="flex-row items-center gap-x-2">
             <TouchableOpacity
               onPress={onBulkAdjustStock}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Adjust stock for selected"
-              className="px-3 py-2 rounded-lg bg-ink-700 min-h-[36px]"
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              className="px-3 py-2.5 rounded-lg bg-ink-700 min-h-[44px] items-center justify-center"
             >
               <StyledText className="text-xs font-semibold text-paper-50">
                 Adjust
@@ -69,7 +70,8 @@ export function BulkActionsToolbar({
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Move selected to another category"
-              className="px-3 py-2 rounded-lg bg-ink-700 min-h-[36px]"
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              className="px-3 py-2.5 rounded-lg bg-ink-700 min-h-[44px] items-center justify-center"
             >
               <StyledText className="text-xs font-semibold text-paper-50">
                 Move
@@ -80,7 +82,8 @@ export function BulkActionsToolbar({
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Delete selected products"
-              className="px-3 py-2 rounded-lg bg-semantic-danger min-h-[36px]"
+              hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+              className="px-3 py-2.5 rounded-lg bg-semantic-danger min-h-[44px] items-center justify-center"
             >
               <StyledText className="text-xs font-semibold text-paper-50">
                 Delete

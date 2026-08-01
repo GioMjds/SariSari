@@ -57,12 +57,12 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
         >
           {product.name}
         </StyledText>
-        <StyledText className="text-ink-500 text-[11px]">
-          {product.quantity} pcs · retail {''}
+        <StyledText variant="medium" className="text-ink-600 text-[11px]">
+          {product.quantity} pcs · retail{' '}
           <MoneyText
             value={product.price ?? 0}
             size="sm"
-            className="text-ink-700"
+            className="text-ink-700 font-semibold"
           />
         </StyledText>
       </View>
@@ -72,7 +72,8 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
           onPress={() => onRestock(product.id)}
           accessibilityRole="button"
           accessibilityLabel={`Restock ${product.name}`}
-          className="px-3 py-2 rounded-xl bg-persimmon-500 min-h-[36px] flex-row items-center gap-1"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          className="px-3 py-2.5 rounded-xl bg-persimmon-500 min-h-[44px] flex-row items-center gap-1"
         >
           <FontAwesome name="plus" size={11} color="#FFFFFF" />
           <StyledText variant="extrabold" className="text-paper-50 text-[11px]">

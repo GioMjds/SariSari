@@ -27,7 +27,7 @@ export function ProductsFilterChips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerClassName="px-4 py-2 gap-2"
+      contentContainerClassName="px-4 py-2 gap-2 items-center h-12"
     >
       {OPTIONS.map((opt) => {
         const isActive = opt.key === value;

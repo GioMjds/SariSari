@@ -144,10 +144,13 @@ export function useHomeDashboardData() {
   const topProduct = useMemo(() => {
     if (products && products.length > 0) {
       const sorted = [...products].sort((a, b) => b.quantity - a.quantity);
-      return {
-        name: sorted[0].name,
-        unitsSold: Math.max(sorted[0].quantity, 12),
-      };
+      const top = sorted[0];
+      if (top) {
+        return {
+          name: top.name,
+          unitsSold: Math.max(top.quantity, 12),
+        };
+      }
     }
     return { name: 'Palmolive 12ml', unitsSold: 18 };
   }, [products]);

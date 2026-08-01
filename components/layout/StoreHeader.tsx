@@ -44,7 +44,7 @@ export const StoreHeader = memo(function StoreHeader() {
 
   const handleSeeAll = useCallback(() => {
     setSheetVisible(false);
-    router.push('/(tabs)/home/alerts' as Href);
+    router.push('/reports' as Href);
   }, [router]);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -11,12 +11,15 @@ interface Props {
 
 export function ProductPicker({ products, selectedId, onSelect }: Props) {
   const [q, setQ] = useState('');
-  const filtered = products
-    .filter(
-      (p: any) =>
-        p.name?.toLowerCase().includes(q.toLowerCase()) || p.barcode === q,
-    )
-    .slice(0, 6);
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return products
+      .filter(
+        (p: any) =>
+          p.name?.toLowerCase().includes(query) || p.barcode === q,
+      )
+      .slice(0, 6);
+  }, [products, q]);
 
   return (
     <View className="gap-y-2">

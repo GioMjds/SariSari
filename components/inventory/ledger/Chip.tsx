@@ -24,14 +24,14 @@ export const Chip = memo(function Chip({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: active }}
-      className={`px-4 py-2 rounded-pill flex-row items-center ${
+      className={`px-4 py-2 rounded-pill flex-row items-center border ${
         active
-          ? 'bg-persimmon-500 shadow-sm'
-          : 'bg-paper-50 border border-ink-200 shadow-none'
+          ? 'bg-persimmon-500 border-persimmon-500 shadow-sm'
+          : 'bg-paper-50 border-ink-200 shadow-none'
       }`}
     >
       <StyledText
-        variant={active ? 'extrabold' : 'semibold'}
+        variant="extrabold"
         className={`text-xs ${active ? 'text-paper-50' : 'text-ink-700'}`}
       >
         {label}
