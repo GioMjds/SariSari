@@ -121,16 +121,17 @@ The More tab now has 3 sub-tabs (`app/more/insights.tsx`, `sync.tsx`, `settings.
 Every existing `router.push('/reports' as Href)` (or the `/reports` map value in `home-state.ts`) becomes `router.push('/(tabs)/home/reports' as Href)`. Both paths resolve to the same screen via expo-router, but the explicit `(tabs)` form keeps the navigation tree readable.
 
 Affected sites (per grep evidence):
-- `app/(tabs)/home/index.tsx` — `handleGoalAction` map, `handleSuggestionPress` map, `DashboardKPIGrid` `onDetailsPress`, `onKpiPress('reports')`, `DashboardQuickActions` `onOpenReports`.
-- `components/home/home-state.ts` — the `HomeDestination` map in the consumer (the type itself doesn't carry a URL — that map lives in the screen).
+- `app/(tabs)/home/index.tsx` — `handleGoalAction` map (the map from `HomeRecommendation.destination` to a URL lives in the Overview screen), `handleSuggestionPress` map, `DashboardKPIGrid` `onDetailsPress`, `onKpiPress('reports')`, `DashboardQuickActions` `onOpenReports`.
 - `components/layout/StoreHeader.tsx:47` — `handleSeeAll`.
+
+(`components/home/home-state.ts` defines the `HomeDestination` union type only. It does not carry URL strings; the URL map is owned by each consumer.)
 
 ### 7. Tests
 
 - `tests/components/DashboardScreen.test.tsx`: verify the `useHomeDashboardData` mock return shape still matches the production hook. No expected changes — the mock returns the same fields it returned last week.
 - `tests/components/HomeSkeletons.test.tsx`: unchanged from the previous plan's Task 12.
 - `tests/hooks/useHomeDashboardData.test.tsx`: unchanged from the previous plan's Task 13.
-- No new test files. The Reports screen keeps its existing tests (if any) unchanged.
+- No new test files. The Reports screen has no existing component tests; the database-level reports tests (`tests/database/reports.test.ts`, `tests/database/reports-wholesale.test.ts`) are unaffected because the production hook (`useReportKPIs` etc.) and database queries are unchanged.
 
 ### 8. Smoke test checklist
 
