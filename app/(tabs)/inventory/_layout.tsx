@@ -28,28 +28,30 @@ export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
   const searchParams = useLocalSearchParams<{ q?: string }>();
-  const search = searchParams.q as string;
+  const search = searchParams.q ?? '';
 
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
-  
+
   const restock = useRestockSignal();
-  const signal = useInventoryModalSignal();
+
+  const { adjustRequested, receiveRequested, clearAdjust, clearReceive } =
+    useInventoryModalSignal();
 
   useEffect(() => {
-    if (signal.adjustRequested) {
+    if (adjustRequested) {
       setAdjustOpen(true);
-      signal.clearAdjust();
+      clearAdjust();
     }
-  }, [signal.adjustRequested, signal]);
+  }, [adjustRequested, clearAdjust]);
 
   useEffect(() => {
-    if (signal.receiveRequested) {
+    if (receiveRequested) {
       setReceiveOpen(true);
-      signal.clearReceive();
+      clearReceive();
     }
-  }, [signal.receiveRequested, signal]);
+  }, [receiveRequested, clearReceive]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;

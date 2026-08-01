@@ -2,11 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGetInventoryTransactions } from '@/hooks/useInventory';
-import { LedgerList, LedgerToolbar } from '@/components/inventory/ledger';
-import {
-  isLedgerTypeFilter,
-  type LedgerTypeFilter,
-} from '@/components/inventory/ledger/types';
+import { LedgerList, LedgerToolbar, type LedgerTypeFilter } from '@/components/inventory/ledger';
 import { MovementEmptyState } from '@/components/inventory/movements';
 import { InventoryErrorState } from '@/components/inventory';
 import { useInventoryModalSignal } from '@/stores';
@@ -63,13 +59,7 @@ export default function MovementsScreen() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           selectedType={selectedType}
-          setSelectedType={(t) => {
-            if (t === 'all' || isLedgerTypeFilter(t as InventoryEventType)) {
-              setSelectedType(t);
-            } else {
-              setSelectedType('all');
-            }
-          }}
+          setSelectedType={setSelectedType}
           counts={counts}
         />
       </View>

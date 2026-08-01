@@ -9,7 +9,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { AnimatePresence, MotiView } from 'moti';
 
 type SearchBarProps = {
-  value: string;
+  value?: string;
   onChange: (s: string) => void;
   placeholder?: string;
   accessibilityLabel?: string;
@@ -17,7 +17,7 @@ type SearchBarProps = {
 } & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
 export function SearchBar({
-  value,
+  value = '',
   onChange,
   placeholder = 'Search...',
   accessibilityLabel = 'Search',
@@ -38,6 +38,8 @@ export function SearchBar({
     }, debounceMs);
     return () => clearTimeout(t);
   }, [local, debounceMs, onChange, value]);
+
+  const hasContent = local.length > 0;
 
   return (
     <View className="relative flex-row items-center">
@@ -65,7 +67,7 @@ export function SearchBar({
         {...props}
       />
       <AnimatePresence>
-        {local.length > 0 && (
+        {hasContent && (
           <MotiView
             from={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}

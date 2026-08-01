@@ -10,7 +10,7 @@ import {
   type StockFilter,
 } from '@/components/inventory/stock';
 import { InventoryErrorState } from '@/components/inventory';
-import { useRestockSignal } from '@/stores/useInventorySelection';
+import { useRestockSignal } from '@/stores';
 
 export default function StockScreen() {
   const router = useRouter();
