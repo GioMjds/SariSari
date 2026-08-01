@@ -8,28 +8,22 @@ import { NotificationSheet } from './NotificationSheet';
 import { useProfile } from '@/hooks/useProfile';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 
-export interface StoreHeaderProps {
-  isOnline?: boolean;
-}
-
-export const StoreHeader = memo(function StoreHeader({
-  isOnline = true,
-}: StoreHeaderProps) {
+export const StoreHeader = memo(function StoreHeader() {
   const router = useRouter();
   const { profile } = useProfile();
   const { alertCount, alerts } = useHomeDashboardData();
 
   const [isSheetVisible, setSheetVisible] = useState(false);
 
-  const storeName = profile?.storeName || "Juan's Store";
-  const ownerName = profile?.ownerName || 'Maria';
+  const storeName = profile?.storeName;
+  const ownerName = profile?.ownerName;
   const ownerInitials =
     ownerName
-      .split(' ')
+      ?.split(' ')
       .map((n) => n[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2) || 'AN';
+      .slice(0, 2);
 
   const handleNotificationSelect = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -65,32 +59,15 @@ export const StoreHeader = memo(function StoreHeader({
           <View className="flex-1">
             <StyledText
               variant="extrabold"
-              className="text-ink-900 text-lg leading-tight"
+              className="text-ink-900 text-xl leading-tight"
               numberOfLines={1}
             >
               {storeName}
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-xs"
-              numberOfLines={1}
-            >
-              {ownerName}
             </StyledText>
           </View>
         </View>
 
         <View className="flex-row items-center gap-2">
-          <View className="bg-emerald-100/80 px-2.5 py-1 rounded-full flex-row items-center border border-emerald-200">
-            <View className="w-2 h-2 rounded-full bg-emerald-600 mr-1.5" />
-            <StyledText
-              variant="extrabold"
-              className="text-emerald-800 text-[10px] tracking-wider uppercase"
-            >
-              {isOnline ? 'ONLINE' : 'OFFLINE'}
-            </StyledText>
-          </View>
-
           <Pressable
             onPress={handleNotificationSelect}
             hitSlop={8}

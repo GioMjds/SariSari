@@ -36,10 +36,6 @@ export function useTabBarBottomOffset(): number {
   return getTabBarBottomOffset(insets.bottom);
 }
 
-/**
- * Active icon uses persimmon-50 (nearly white on the persimmon pill).
- * Inactive icon uses high-contrast warm paper tone (#C8C0B2) - readable on cinnamon-900 background.
- */
 const ICON_ACTIVE = '#FFF1EA'; // persimmon-50
 const ICON_INACTIVE = '#C8C0B2'; // warm paper neutral (contrast ratio > 4.5:1 against cinnamon-900)
 const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)'; // ink-muted
@@ -284,8 +280,8 @@ export const StyledTab = memo(() => {
         accessibilityRole="tablist"
         className="bg-cinnamon-900 border border-cinnamon-800/80 rounded-[16px] flex-row justify-evenly items-center"
         style={{
-          height: 56,
-          paddingHorizontal: 4,
+          height: 64,
+          paddingHorizontal: 8,
           shadowColor: SHADOW_COLOR,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.12,

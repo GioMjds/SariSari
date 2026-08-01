@@ -1,39 +1,35 @@
 import { Pressable, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
+import * as Haptics from 'expo-haptics';
 
 export type HomeSubTab = 'index' | 'today' | 'alerts';
 
 export interface DashboardHeaderProps {
-  storeName?: string;
-  branchName?: string;
-  ownerInitials?: string;
-  isOnline?: boolean;
+  storeName: string;
+  ownerInitials: string;
   activeTab: HomeSubTab;
-  alertCount?: number;
-  showTopHeader?: boolean;
+  alertCount: number;
+  showTopHeader: boolean;
   onTabPress: (tab: HomeSubTab) => void;
   onNotificationPress?: () => void;
 }
 
 export function DashboardHeader({
-  storeName = "Aling Nena's",
-  branchName = 'Main Branch - Calauan',
-  ownerInitials = 'AN',
-  isOnline = true,
+  storeName,
+  ownerInitials,
   activeTab,
-  alertCount = 2,
-  showTopHeader = false,
+  alertCount,
+  showTopHeader,
   onTabPress,
   onNotificationPress,
 }: DashboardHeaderProps) {
-  const tabs: SubTabItem<HomeSubTab>[] = [
+  const tabs = [
     { key: 'index', label: 'Overview', icon: 'th-large' },
     { key: 'today', label: 'Today', icon: 'calendar' },
     { key: 'alerts', label: 'Alerts', icon: 'bell', badgeCount: alertCount },
-  ];
+  ] satisfies SubTabItem<HomeSubTab>[];
 
   const handleNotificationSelect = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -48,7 +44,10 @@ export function DashboardHeader({
           {/* Left Group: Avatar & Store Info */}
           <View className="flex-row items-center flex-1 mr-2">
             <View className="w-10 h-10 rounded-full bg-cinnamon-500 items-center justify-center mr-3 shadow-sm">
-              <StyledText variant="extrabold" className="text-paper-50 text-base">
+              <StyledText
+                variant="extrabold"
+                className="text-paper-50 text-base"
+              >
                 {ownerInitials}
               </StyledText>
             </View>
@@ -60,28 +59,11 @@ export function DashboardHeader({
               >
                 {storeName}
               </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-ink-500 text-xs"
-                numberOfLines={1}
-              >
-                {branchName}
-              </StyledText>
             </View>
           </View>
 
           {/* Right Group: Online Pill Badge + Notification Bell */}
           <View className="flex-row items-center gap-2">
-            <View className="bg-emerald-100/80 px-2.5 py-1 rounded-full flex-row items-center border border-emerald-200">
-              <View className="w-2 h-2 rounded-full bg-emerald-600 mr-1.5" />
-              <StyledText
-                variant="extrabold"
-                className="text-emerald-800 text-[10px] tracking-wider uppercase"
-              >
-                {isOnline ? 'ONLINE' : 'OFFLINE'}
-              </StyledText>
-            </View>
-
             <Pressable
               onPress={handleNotificationSelect}
               hitSlop={8}
@@ -108,4 +90,3 @@ export function DashboardHeader({
     </View>
   );
 }
-

@@ -33,10 +33,13 @@ export function useHomeDashboardData() {
 
   const { getAllProductsQuery } = useProducts();
   const { getTodayStatsQuery } = useSales();
-  const { data: recentSalesData, isLoading: recentLoading } = useRecentSales(10);
+  const { data: recentSalesData, isLoading: recentLoading } =
+    useRecentSales(10);
   const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
-  const { data: overdueCustomers, isLoading: customersLoading } = useCustomers('overdue');
-  const { data: currentSession, isLoading: sessionLoading } = useCurrentSession();
+  const { data: overdueCustomers, isLoading: customersLoading } =
+    useCustomers('overdue');
+  const { data: currentSession, isLoading: sessionLoading } =
+    useCurrentSession();
   const { profile, loading: profileLoading } = useProfile();
 
   const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
@@ -67,7 +70,6 @@ export function useHomeDashboardData() {
       });
     });
 
-    // Overdue debt alerts
     if (overdueCustomers && overdueCustomers.length > 0) {
       overdueCustomers.forEach((c) => {
         list.push({
@@ -97,7 +99,6 @@ export function useHomeDashboardData() {
     return groupSalesByHour(mapped);
   }, [recentSalesData]);
 
-  // Top seller info
   const topProduct = useMemo(() => {
     if (products && products.length > 0) {
       const sorted = [...products].sort((a, b) => b.quantity - a.quantity);

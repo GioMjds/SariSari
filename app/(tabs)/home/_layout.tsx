@@ -9,15 +9,15 @@ export default function HomeLayout() {
   const pathname = usePathname();
   const { profile, alertCount } = useHomeDashboardData();
 
-  const storeName = profile?.storeName || "Juan's Store";
-  const ownerName = profile?.ownerName || 'Maria';
-  const ownerInitials =
-    ownerName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'AN';
+  const storeName = profile?.storeName;
+  const ownerName = profile?.ownerName;
+
+  const ownerInitials = ownerName
+    ?.split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   const getCurrentTab = (): HomeSubTab => {
     if (pathname.includes('today')) return 'today';
@@ -40,8 +40,8 @@ export default function HomeLayout() {
   return (
     <View className="flex-1 bg-paper-200">
       <DashboardHeader
-        storeName={storeName}
-        ownerInitials={ownerInitials}
+        storeName={storeName || ''}
+        ownerInitials={ownerInitials || ''}
         activeTab={getCurrentTab()}
         alertCount={alertCount}
         showTopHeader={false}

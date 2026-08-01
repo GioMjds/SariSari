@@ -16,15 +16,17 @@ export interface InventoryHeaderProps {
   onPillPress: (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => void;
 }
 
-const INVENTORY_TAB_META: Record<
-  InventorySubTab,
-  { icon: keyof typeof FontAwesome.glyphMap; label: string }
-> = {
+type InventoryTabMeta = {
+  icon: keyof typeof FontAwesome.glyphMap;
+  label: string;
+};
+
+const INVENTORY_TAB_META = {
   products: { icon: 'cube', label: 'PRODUCTS' },
   stock: { icon: 'archive', label: 'STOCK' },
   movements: { icon: 'exchange', label: 'MOVEMENTS' },
   analytics: { icon: 'line-chart', label: 'ANALYTICS' },
-};
+} satisfies Record<InventorySubTab, InventoryTabMeta>;
 
 export function InventoryHeader(props: InventoryHeaderProps) {
   const overview = useInventoryOverview();
@@ -36,16 +38,15 @@ export function InventoryHeader(props: InventoryHeaderProps) {
 
   return (
     <View className="bg-paper-200 px-4 pt-1 pb-3 gap-y-2">
-      <SearchBar
-        value={props.search}
-        onChange={props.onSearchChange}
-        placeholder="Search products..."
-      />
-
       <SubTabControl
         tabs={tabs}
         activeTab={props.active}
         onTabPress={(k) => props.onTabChange(k as InventorySubTab)}
+      />
+      <SearchBar
+        value={props.search}
+        onChange={props.onSearchChange}
+        placeholder="Search products..."
       />
 
       <InventoryAlertPills

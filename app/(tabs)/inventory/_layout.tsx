@@ -29,10 +29,8 @@ export default function InventoryLayout() {
   const restock = useRestockSignal();
 
   const activeTab = useMemo<InventorySubTab>(() => {
-    const last = String(segments[segments.length - 1] ?? '');
-    return SUB_TAB_SEGMENTS.includes(last as InventorySubTab)
-      ? (last as InventorySubTab)
-      : 'products';
+    const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;
+    return SUB_TAB_SEGMENTS.includes(last) ? last : 'products';
   }, [segments]);
 
   const lastSegment = String(segments[segments.length - 1] ?? '');
