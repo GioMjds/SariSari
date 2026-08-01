@@ -37,19 +37,8 @@ export const initializeDatabases = async () => {
     return;
   }
 
-  if (__DEV__) {
-    console.log(
-      `[Barcode][Startup] initializeDatabases() starting at ${Date.now()}`,
-    );
-  }
-
   try {
     await executeWithRetry(async () => {
-      // Init each table sequentially. SQLite serializes writes per
-      // connection, so running these in parallel races for the writer
-      // lock and at least one of them gets a "database is locked" error
-      // on cold start. The cost of doing them serially is one round-trip
-      // per table, which is dominated by the migration that follows.
       await initProductsTable();
       await initCreditsTable();
       await initInventoryTable();
@@ -61,14 +50,9 @@ export const initializeDatabases = async () => {
 
     await seedProductCatalog();
 
-    if (__DEV__) await seedDatabase(); // comment out if building and testing apps from other devices to avoid wiping existing data
+    if (__DEV__) await seedDatabase();
 
     databaseInitialized = true;
-    if (__DEV__) {
-      console.log(
-        `[Barcode][Startup] initializeDatabases() finished at ${Date.now()}, catalog is ready for scans.`,
-      );
-    }
   } catch (error) {
     databaseInitialized = false;
     console.error('✗ Database initialization failed:', error);

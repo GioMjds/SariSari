@@ -52,7 +52,6 @@ import {
   View,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EMPTY_ARRAY: any[] = [];
 
@@ -97,17 +96,6 @@ const DEFAULT_CREDITS_OVERVIEW = {
   activeAccounts: 0,
 };
 
-/**
- * General Reports — the offline store analytics almanac.
- *
- * A redesigned analytical surface that goes beyond the old
- * "Sales Reports" page. Pulls the same data hooks as before
- * (see `useReports`) but lays them out in a deliberately
- * editorial frame: almanac masthead, asymmetric Bento KPIs,
- * tear-off-coupon collapsibles, postage-stamp aging buckets,
- * and a tally-mark bar chart. No operations buttons — this
- * is read-only.
- */
 export default function Reports() {
   const queryClient = useQueryClient();
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
@@ -209,7 +197,7 @@ export default function Reports() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
+    <View className="flex-1 bg-paper-200">
       <View className="flex-1 bg-paper-200">
         <AlmanacMasthead
           dateRange={dateRange}
@@ -706,7 +694,7 @@ export default function Reports() {
           </View>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

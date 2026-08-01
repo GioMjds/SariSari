@@ -1,0 +1,95 @@
+import { useCallback, useMemo, useState } from 'react';
+import { View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useGetInventoryTransactions } from '@/hooks/useInventory';
+import { LedgerList, LedgerToolbar, type LedgerTypeFilter } from '@/components/inventory/ledger';
+import { MovementEmptyState } from '@/components/inventory/movements';
+import { InventoryErrorState } from '@/components/inventory';
+import { useInventoryModalSignal } from '@/stores';
+import type { InventoryEventType } from '@/types';
+
+export default function MovementsScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ q?: string }>();
+  const signal = useInventoryModalSignal();
+
+  const searchQuery = (params.q ?? '').trim();
+  const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
+
+  const txQuery = useGetInventoryTransactions();
+
+  const transactions = useMemo(() => txQuery.data ?? [], [txQuery.data]);
+
+  const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
+    const acc: Partial<Record<InventoryEventType, number>> = {};
+    for (const tx of transactions) {
+      if (tx?.type) {
+        acc[tx.type] = (acc[tx.type] ?? 0) + 1;
+      }
+    }
+    return acc;
+  }, [transactions]);
+
+  const setSearchQuery = useCallback(
+    (next: string) => {
+      router.setParams({ q: next || undefined } as any);
+    },
+    [router],
+  );
+
+  const handleReceiveStock = useCallback(
+    () => signal.requestReceive(),
+    [signal],
+  );
+  const handleAdjustStock = useCallback(() => signal.requestAdjust(), [signal]);
+
+  if (txQuery.error) {
+    return (
+      <InventoryErrorState
+        title="Couldn't load movements"
+        message={(txQuery.error as Error)?.message ?? 'Unknown error'}
+        onRetry={() => txQuery.refetch?.()}
+      />
+    );
+  }
+  if (txQuery.isLoading) {
+    return (
+      <View className="flex-1 bg-paper-200">
+        <LedgerToolbar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedType={selectedType}
+          setSelectedType={setSelectedType}
+          counts={counts}
+        />
+      </View>
+    );
+  }
+  if (transactions.length === 0) {
+    return (
+      <View className="flex-1 bg-paper-200">
+        <MovementEmptyState
+          onReceiveStock={handleReceiveStock}
+          onAdjustStock={handleAdjustStock}
+        />
+      </View>
+    );
+  }
+  return (
+    <View className="flex-1 bg-paper-200">
+      <LedgerToolbar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        counts={counts}
+      />
+      <LedgerList
+        transactions={transactions}
+        currentStock={0}
+        searchQuery={searchQuery}
+        selectedType={selectedType}
+      />
+    </View>
+  );
+}

@@ -2,16 +2,16 @@
   "expo": {
     "name": "SariSari",
     "slug": "sarisari",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "sarisari",
     "userInterfaceStyle": "light",
-    "backgroundColor": "#EFE6D2",
-    "runtimeVersion": "1.2.0",
+    "backgroundColor": "#F7F6F2",
+    "runtimeVersion": "2.0.0",
     "ios": {
       "supportsTablet": true,
-      "backgroundColor": "#EFE6D2",
+      "backgroundColor": "#F7F6F2",
       "bundleIdentifier": "com.giomjds.sarisari",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#EFE6D2",
+        "backgroundColor": "#F7F6F2",
         "foregroundImage": "./assets/images/logo.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -39,9 +39,9 @@
           "image": "./assets/images/logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#EFE6D2",
+          "backgroundColor": "#F7F6F2",
           "dark": {
-            "backgroundColor": "#EFE6D2"
+            "backgroundColor": "#F7F6F2"
           }
         }
       ],
@@ -52,7 +52,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/logo.png",
-          "color": "#EFE6D2"
+          "color": "#F7F6F2"
         }
       ],
       [

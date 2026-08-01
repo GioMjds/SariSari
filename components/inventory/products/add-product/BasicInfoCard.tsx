@@ -7,13 +7,11 @@ import {
   View,
   TouchableOpacity,
 } from 'react-native';
-import { useState } from 'react';
 import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { SupplierPickerModal } from '../../SupplierPickerModal';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface BasicInfoCardProps {
@@ -24,34 +22,12 @@ interface BasicInfoCardProps {
   categories: Category[];
   selectedCategory: string;
   onSelectCategory: (name: string) => void;
-  /** Opens the camera scanner modal. Hidden when auto-SKU is on
-   *  (the form hook turns auto-gen off when a scan succeeds — the
-   *  button is the primary way to switch to "manual" SKU mode). */
   onPressScan: () => void;
-  /** Optional printed barcode (v5). When populated, rendered under SKU. */
   barcode?: string;
-  /** When another product already owns this barcode, we surface a
-   *  blocking inline error with an "Edit that product" link. */
   barcodeConflictProduct?: Product | null;
-  /** Handler for the "Edit that product" link inside the duplicate error. */
   onPressEditConflictingProduct?: (productId: number) => void;
 }
 
-/**
- * BasicInfoCard — the first parchment card on the form.
- *
- * Holds:
- *   • Product Name (required, drives auto-SKU generation).
- *   • SKU with an "Auto-generate" checkbox at the top-right of the
- *     label row. When auto is on the input is dimmed and locked.
- *   • Barcode (v5) — only rendered when populated (scan or deep-link
- *     populated it). Inline duplicate error blocks submit when another
- *     product owns this value.
- *   • Category selector — horizontal scroll of pills. Active pill
- *     uses brand persimmon; inactive uses the parchment chip. When
- *     no categories exist yet, an info banner nudges the user to
- *     the catalog to create one.
- */
 export function BasicInfoCard({
   control,
   sku,
@@ -65,7 +41,6 @@ export function BasicInfoCard({
   barcodeConflictProduct,
   onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
-  const [showSupplierPicker, setShowSupplierPicker] = useState<boolean>(false);
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
 
@@ -286,10 +261,10 @@ export function BasicInfoCard({
                     backgroundColor: pressed
                       ? isActive
                         ? '#C8460F'
-                        : '#EFE6D2'
+                        : '#E6E3D8'
                       : isActive
                         ? '#E85A1F'
-                        : '#F6F0E2',
+                        : '#F2F0E8',
                   })}
                 >
                   <StyledText
@@ -332,7 +307,6 @@ export function BasicInfoCard({
               <>
                 <TouchableOpacity
                   activeOpacity={0.8}
-                  onPress={() => setShowSupplierPicker(true)}
                   className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
                 >
                   <StyledText
@@ -347,15 +321,6 @@ export function BasicInfoCard({
                   </StyledText>
                   <FontAwesome name="chevron-down" size={14} color="#7A7165" />
                 </TouchableOpacity>
-
-                <SupplierPickerModal
-                  visible={showSupplierPicker}
-                  onClose={() => setShowSupplierPicker(false)}
-                  selectedSupplierId={value || null}
-                  onSelect={(supplier) => {
-                    onChange(supplier ? supplier.id : '');
-                  }}
-                />
               </>
             );
           }}

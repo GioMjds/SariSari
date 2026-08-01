@@ -136,11 +136,11 @@ export default function OnboardingPage() {
 			{/*
 			 * Route-scoped StatusBar — overrides the cinnamon default from
 			 * `_layout.tsx` while onboarding is mounted, so the system bar
-			 * matches the cream paper background (`background` / paper-200,
-			 * #EFE6D2) and reads dark glyphs (`style="dark"`) instead of
+			 * matches the off-white paper background (`background` / paper-200,
+			 * #F7F6F2) and reads dark glyphs (`style="dark"`) instead of
 			 * the inverted light glyphs used on dark surfaces elsewhere.
 			 */}
-			<StatusBar style="dark" backgroundColor="#EFE6D2" />
+			<StatusBar style="dark" backgroundColor="#F7F6F2" />
 			<View className="px-6 pt-4">
 				<View className="flex-row justify-between items-center">
 					<StyledText variant="extrabold" className="text-2xl text-primary">

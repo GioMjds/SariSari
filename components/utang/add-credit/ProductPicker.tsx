@@ -66,7 +66,7 @@ export function ProductPicker({
         }
         className="mt-2 rounded-xl border border-ink-100 px-3 py-3 flex-row items-center"
         style={({ pressed }) => ({
-          backgroundColor: pressed ? '#EFE6D2' : '#F6F0E2',
+          backgroundColor: pressed ? '#E6E3D8' : '#F2F0E8',
         })}
       >
         {selectedProduct ? (

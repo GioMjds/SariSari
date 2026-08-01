@@ -10,28 +10,9 @@ import {
   CustomerPickerModal,
   ProductSearchCatalog,
   useAddSalesForm,
-} from '@/components/sell/add-sales';
+} from '@/components/sales/add-sales';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
 
-/**
- * AddSales — POS checkout screen rendered as a modal form sheet.
- *
- * Composes the four pieces of `useAddSalesForm`:
- *   • AddSalesHeader — title + back button (which the dismiss guard
- *     below protects when the cart has items).
- *   • ProductSearchCatalog — search + scrollable product list with
- *     inline +/− steppers for cart lines.
- *   • CartSummaryTray — fixed-bottom tray with payment toggle,
- *     customer picker trigger, and Complete Sale CTA.
- *   • CustomerPickerModal — slide-up modal for picking a suki.
- *
- * The unsaved-cart dismiss guard uses `usePreventRemove`, which
- * intercepts every "leave the sheet" intent — the header back
- * button, the swipe-down gesture, and the Android hardware back
- * button — and prompts the user with a Cancel / Discard alert.
- * On confirm we dispatch `data.action` synchronously (deferring it
- * can leave the navigator in a bad state on iOS formSheet dismissals).
- */
 export default function AddSales() {
   const form = useAddSalesForm();
   const router = useRouter();

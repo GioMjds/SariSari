@@ -2,7 +2,7 @@ import { buildStatement } from '@/lib';
 import { CreditTransaction, CustomerWithDetails } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Share } from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
+import * as Clipboard from 'expo-clipboard';
 import { shareCreditStatementPdf } from '@/lib/pdfGenerator';
 import * as Haptics from 'expo-haptics';
 import { Alert } from '@/utils';
@@ -33,7 +33,7 @@ export function StatementShareButton({
       // User cancelled or share unavailable — fall back to clipboard so
       // the cashier can still paste into Messenger/Viber manually.
       try {
-        Clipboard.setString(text);
+        await Clipboard.setStringAsync(text);
       } catch {
         // Clipboard unavailable on this platform — nothing more we
         // can do here. The share sheet already showed the text.

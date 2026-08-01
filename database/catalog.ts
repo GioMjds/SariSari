@@ -24,19 +24,10 @@ export async function getCatalogProductByBarcode(
   const normalizedBarcode = barcode.trim();
   if (!normalizedBarcode) return null;
 
-  if (__DEV__) {
-    console.log(
-      '[Barcode][DB] SELECT product_catalog WHERE barcode =',
-      normalizedBarcode,
-    );
-  }
   const row = await database.getFirstAsync<CatalogRow>(
     'SELECT barcode, name, brand, category, unit, image_url, created_at FROM product_catalog WHERE barcode = ? LIMIT 1',
     [normalizedBarcode],
   );
-  if (__DEV__) {
-    console.log('[Barcode][DB] row found?', !!row, row ?? '(none)');
-  }
 
   return row ? rowToCatalogProduct(row) : null;
 }
@@ -58,3 +49,37 @@ export async function insertCatalogProductIfMissing(
     ],
   );
 }
+
+export async function insertCatalogProductsBatch(
+  database: SQLiteDatabase,
+  inputs: NewCatalogProduct[],
+): Promise<void> {
+  if (inputs.length === 0) return;
+
+  const chunkSize = 50;
+  const now = Date.now();
+
+  await database.withTransactionAsync(async () => {
+    for (let i = 0; i < inputs.length; i += chunkSize) {
+      const chunk = inputs.slice(i, i + chunkSize);
+      const placeholders = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const sql = `INSERT OR IGNORE INTO product_catalog (barcode, name, brand, category, unit, image_url, created_at) VALUES ${placeholders}`;
+
+      const params: (string | number | null)[] = [];
+      for (const item of chunk) {
+        params.push(
+          item.barcode.trim(),
+          item.name,
+          item.brand,
+          item.category,
+          item.unit || 'Pc',
+          item.imageUrl,
+          now,
+        );
+      }
+
+      await database.runAsync(sql, params);
+    }
+  });
+}
+

@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   View,
   ScrollView,
-  Alert,
   Pressable,
   RefreshControl,
 } from 'react-native';
@@ -12,19 +11,15 @@ import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { StyledText } from '@/components/elements';
-import { useGetProduct, useGetSupplier, useProducts } from '@/hooks';
+import { useGetProduct, useGetSupplier } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
 import {
   ProductDetailsHero,
   ProductDetailsTabs,
   ProductHistoryTab,
-  ProductOverviewTab,
   ProductSupplierTab,
   type ProductDetailTab,
 } from '@/components/inventory/products/details';
-import { InventoryActionModal } from '@/components/inventory/InventoryActionModal';
-import { Product } from '@/types/products.types';
-import { InventoryEventType } from '@/types/inventory.types';
 
 const SCROLL_CONTENT_STYLE = { paddingBottom: 32 } as const;
 
@@ -36,7 +31,6 @@ export default function ProductDetailsPage() {
   );
   const queryClient = useQueryClient();
 
-  const { deleteProductMutation } = useProducts();
   const productQuery = useGetProduct(parsedProductId);
   const transactionsQuery = useInventoryTransactionsByProduct(parsedProductId);
 
@@ -44,10 +38,6 @@ export default function ProductDetailsPage() {
   const supplierQuery = useGetSupplier(product?.supplier_id ?? '');
 
   const [activeTab, setActiveTab] = useState<ProductDetailTab>('overview');
-  const [pendingAction, setPendingAction] = useState<{
-    product: Product;
-    type: InventoryEventType;
-  } | null>(null);
 
   const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
@@ -61,31 +51,6 @@ export default function ProductDetailsPage() {
     }
   }, [product]);
 
-  const handleDelete = useCallback(() => {
-    if (!product) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.name}"? This action cannot be undone and will delete all transaction history for this item.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteProductMutation.mutateAsync(product.id);
-              router.back();
-            } catch (err) {
-              console.error('Failed to delete product:', err);
-            }
-          },
-        },
-      ],
-    );
-  }, [product, deleteProductMutation]);
-
   const handleTabChange = useCallback((next: ProductDetailTab) => {
     Haptics.selectionAsync().catch(() => {});
     setActiveTab(next);
@@ -96,20 +61,6 @@ export default function ProductDetailsPage() {
     transactionsQuery.refetch();
     queryClient.invalidateQueries({ queryKey: ['suppliers'] });
   }, [productQuery, transactionsQuery, queryClient]);
-
-  const handleRestock = useCallback(
-    () => product && setPendingAction({ product, type: 'restock' }),
-    [product],
-  );
-  const handleAdjust = useCallback(
-    () => product && setPendingAction({ product, type: 'adjustment' }),
-    [product],
-  );
-  const handleDamaged = useCallback(
-    () => product && setPendingAction({ product, type: 'damaged' }),
-    [product],
-  );
-  const handleModalClose = useCallback(() => setPendingAction(null), []);
 
   const tabCounts = useMemo<Partial<Record<ProductDetailTab, number>>>(
     () => ({
@@ -227,17 +178,6 @@ export default function ProductDetailsPage() {
 
         {/* ── Tab content ────────────────────────────────────── */}
         <View className="mt-4">
-          {activeTab === 'overview' && (
-            <ProductOverviewTab
-              product={product}
-              onEdit={handleEdit}
-              onRestock={handleRestock}
-              onAdjust={handleAdjust}
-              onDamaged={handleDamaged}
-              onDelete={handleDelete}
-            />
-          )}
-
           {activeTab === 'history' && (
             <ProductHistoryTab
               transactions={transactionsQuery.data ?? []}
@@ -255,14 +195,6 @@ export default function ProductDetailsPage() {
           )}
         </View>
       </ScrollView>
-
-      {/* ── Action Modals ──────────────────────────────────── */}
-      {pendingAction && (
-        <InventoryActionModal
-          pendingAction={pendingAction}
-          onClose={handleModalClose}
-        />
-      )}
     </SafeAreaView>
   );
 }

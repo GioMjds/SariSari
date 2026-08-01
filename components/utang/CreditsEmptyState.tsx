@@ -10,7 +10,7 @@ interface CreditsEmptyStateProps {
 }
 
 const PERFORATION_COUNT = 22;
-const PERFORATION_BG = '#EFE6D2';
+const PERFORATION_BG = '#F7F6F2';
 const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 /**

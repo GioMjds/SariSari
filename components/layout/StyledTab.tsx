@@ -5,32 +5,30 @@ import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   TouchableOpacity,
   View,
+  Text,
   Keyboard,
   Platform,
   LayoutChangeEvent,
 } from 'react-native';
-import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  withSpring,
+  useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-export const TAB_BAR_TOTAL_OFFSET = 80;
+export const TAB_BAR_TOTAL_OFFSET = 72;
 
-export const TAB_BAR_RAIL_HEIGHT = 66;
-export const TAB_BAR_ACTION_OVERHANG = 28;
+export const TAB_BAR_RAIL_HEIGHT = 72;
+export const TAB_BAR_ACTION_OVERHANG = 0;
 export const TAB_BAR_MARGIN = 16;
 
 export function getTabBarBottomOffset(bottomInset: number): number {
-  return (
-    TAB_BAR_RAIL_HEIGHT +
-    TAB_BAR_ACTION_OVERHANG +
-    Math.max(bottomInset, TAB_BAR_MARGIN)
-  );
+  return TAB_BAR_RAIL_HEIGHT + Math.max(bottomInset, TAB_BAR_MARGIN);
 }
 
 export function useTabBarBottomOffset(): number {
@@ -38,8 +36,9 @@ export function useTabBarBottomOffset(): number {
   return getTabBarBottomOffset(insets.bottom);
 }
 
-const ICON_ACTIVE = '#FBF7EE';
-const ICON_INACTIVE = '#A89F90';
+const ICON_ACTIVE = '#FFF1EA'; // persimmon-50
+const ICON_INACTIVE = '#C8C0B2'; // warm paper neutral (contrast ratio > 4.5:1 against cinnamon-900)
+const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)'; // ink-muted
 
 const getHrefString = (href: Href): string =>
   typeof href === 'object' ? href.pathname : href;
@@ -62,6 +61,13 @@ const TabButton = memo(
     onPress,
     onLayoutMeasured,
   }: TabButtonProps) => {
+    const scale = useSharedValue(1);
+    const shouldReduceMotion = useReducedMotion();
+
+    const animatedIconStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+    }));
+
     const handleLayout = useCallback(
       (e: LayoutChangeEvent) => {
         const { x, y, width, height } = e.nativeEvent.layout;
@@ -70,35 +76,48 @@ const TabButton = memo(
       [hrefString, isFocused, onLayoutMeasured],
     );
 
+    const handlePressIn = useCallback(() => {
+      if (!shouldReduceMotion) {
+        scale.value = withSpring(0.92, { damping: 16, stiffness: 350 });
+      }
+    }, [scale, shouldReduceMotion]);
+
+    const handlePressOut = useCallback(() => {
+      if (!shouldReduceMotion) {
+        scale.value = withSpring(1, { damping: 16, stiffness: 350 });
+      }
+    }, [scale, shouldReduceMotion]);
+
     return (
       <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityState={{ selected: isFocused, disabled: isFocused }}
+        accessibilityRole="tab"
+        accessibilityLabel={tab.name}
+        accessibilityState={{ selected: isFocused }}
         onPress={onPress}
-        activeOpacity={0.7}
-        disabled={isFocused}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
         onLayout={handleLayout}
-        style={{
-          paddingVertical: 4,
-          paddingHorizontal: 2,
-        }}
+        className="items-center justify-center flex-1 py-1"
+        style={{ minWidth: 48, minHeight: 48 }}
       >
-        <View className="flex-row items-center py-3 px-4 rounded-full">
+        <Animated.View
+          className="items-center justify-center px-1"
+          style={animatedIconStyle}
+        >
           <FontAwesome
             name={tab.icon}
-            size={18}
+            size={26}
             color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
           />
-          {isFocused && (
-            <StyledText
-              variant="extrabold"
-              className="text-xs text-paper-50 ml-2 font-extrabold"
-              numberOfLines={1}
-            >
-              {tab.name}
-            </StyledText>
-          )}
-        </View>
+          <Text
+            numberOfLines={1}
+            className="text-sm font-bold mt-0.5 text-center"
+            style={{ color: isFocused ? ICON_ACTIVE : ICON_INACTIVE }}
+          >
+            {tab.name}
+          </Text>
+        </Animated.View>
       </TouchableOpacity>
     );
   },
@@ -111,20 +130,17 @@ export const StyledTab = memo(() => {
   const pathname = usePathname();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const shouldReduceMotion = useReducedMotion();
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
 
-  // Keep a stable ref to the current pathname so that handlePress does not recreate
-  // on every path change, preventing all 5 TabButtons from re-rendering.
   const pathnameRef = useRef(pathname);
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  // Keep track of the active indicator layout instantly with a single shared value,
-  // snapping it on tab switches with no progress timeline animations.
   const activeLayout = useSharedValue<TabLayout>({
     x: 0,
     y: 0,
@@ -154,9 +170,10 @@ export const StyledTab = memo(() => {
   }, []);
 
   useEffect(() => {
-    translateY.value = withTiming(keyboardVisible ? 120 : 0, { duration: 250 });
-    opacity.value = withTiming(keyboardVisible ? 0 : 1, { duration: 250 });
-  }, [keyboardVisible, translateY, opacity]);
+    const duration = shouldReduceMotion ? 0 : 200;
+    translateY.value = withTiming(keyboardVisible ? 160 : 0, { duration });
+    opacity.value = withTiming(keyboardVisible ? 0 : 1, { duration });
+  }, [keyboardVisible, translateY, opacity, shouldReduceMotion]);
 
   const wrapperAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -165,7 +182,6 @@ export const StyledTab = memo(() => {
 
   const indicatorStyle = useAnimatedStyle(() => {
     const layout = activeLayout.value;
-
     return {
       transform: [{ translateX: layout.x }, { translateY: layout.y }],
       width: layout.width,
@@ -178,8 +194,12 @@ export const StyledTab = memo(() => {
 
   const isRouteFocused = useCallback((hrefString: string) => {
     const currentPath = pathnameRef.current;
-    return hrefString === '/'
-      ? currentPath === '/' || currentPath === ''
+    return hrefString === '/' || hrefString === '/home'
+      ? currentPath === '/' ||
+          currentPath === '' ||
+          currentPath === '/home' ||
+          currentPath.startsWith('/home/') ||
+          currentPath.startsWith('/(tabs)/home')
       : currentPath === hrefString || currentPath.startsWith(`${hrefString}/`);
   }, []);
 
@@ -187,14 +207,22 @@ export const StyledTab = memo(() => {
     (key: string) => {
       const layout = layouts.current[key];
       if (layout) {
-        activeLayout.value = layout;
-        indicatorOpacity.value = 1;
+        if (shouldReduceMotion) {
+          activeLayout.value = layout;
+          indicatorOpacity.value = 1;
+        } else {
+          activeLayout.value = withSpring(layout, {
+            damping: 22,
+            stiffness: 320,
+            mass: 0.5,
+          }) as unknown as TabLayout;
+          indicatorOpacity.value = withTiming(1, { duration: 100 });
+        }
       }
     },
-    [activeLayout, indicatorOpacity],
+    [activeLayout, indicatorOpacity, shouldReduceMotion],
   );
 
-  // Re-anchor the indicator whenever the focused route changes.
   useEffect(() => {
     const activeTab = visibleRoutes.find((tab) =>
       isRouteFocused(getHrefString(tab.href)),
@@ -202,7 +230,7 @@ export const StyledTab = memo(() => {
     if (activeTab) {
       moveIndicatorTo(getHrefString(activeTab.href));
     } else {
-      indicatorOpacity.value = 0;
+      indicatorOpacity.value = withTiming(0, { duration: shouldReduceMotion ? 0 : 120 });
     }
   }, [
     pathname,
@@ -210,6 +238,7 @@ export const StyledTab = memo(() => {
     isRouteFocused,
     moveIndicatorTo,
     indicatorOpacity,
+    shouldReduceMotion,
   ]);
 
   const onLayoutMeasured = useCallback(
@@ -223,19 +252,14 @@ export const StyledTab = memo(() => {
   const handlePress = useCallback(
     (href: Href) => {
       const hrefString = getHrefString(href);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       if (!isRouteFocused(hrefString)) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        router.replace(href);
+        router.navigate(href);
       }
     },
     [isRouteFocused, router],
   );
 
-  // Gesture nav (Android / iOS): insets.bottom is 16–34dp and is added so
-  // the pill clears the gesture strip or home indicator.
-  // Three-button nav (Android, non-edge-to-edge): insets.bottom is 0 because
-  // the app window already ends above the button bar — TAB_BAR_MARGIN alone
-  // is enough visual breathing room.
   const bottomInset = Math.max(insets.bottom, TAB_BAR_MARGIN);
 
   return (
@@ -253,29 +277,27 @@ export const StyledTab = memo(() => {
       pointerEvents={keyboardVisible ? 'none' : 'auto'}
     >
       <View
-        className="bg-cinnamon-900 border border-cinnamon-800 rounded-full py-2 px-2 flex-row justify-between items-center shadow-2xl"
+        accessibilityRole="tablist"
+        className="bg-cinnamon-900 border border-cinnamon-800/80 rounded-[16px] flex-row justify-evenly items-center"
         style={{
-          shadowColor: '#150903',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.35,
-          shadowRadius: 15,
-          elevation: 10,
+          height: 64,
+          paddingHorizontal: 8,
+          shadowColor: SHADOW_COLOR,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 6,
+          elevation: 3,
         }}
       >
-        {/* Sliding highlight pill, snaps instantly to the active tab layout bounds. */}
         <Animated.View
           pointerEvents="none"
-          className="absolute bg-persimmon-500 rounded-full"
+          className="absolute bg-persimmon-500 rounded-[12px]"
           style={[{ top: 0, left: 0 }, indicatorStyle]}
         />
 
         {visibleRoutes.map((tab: Tab) => {
           const hrefString = getHrefString(tab.href);
-          const isFocused =
-            hrefString === '/'
-              ? pathname === '/' || pathname === ''
-              : pathname === hrefString ||
-                pathname.startsWith(`${hrefString}/`);
+          const isFocused = isRouteFocused(hrefString);
 
           return (
             <TabButton
@@ -294,3 +316,4 @@ export const StyledTab = memo(() => {
 });
 
 StyledTab.displayName = 'StyledTab';
+

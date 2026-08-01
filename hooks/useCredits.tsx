@@ -17,6 +17,9 @@ import {
   searchCustomers,
   updateCreditStatus,
   updateCustomer,
+  getCustomerTimeline,
+  getCustomerInsights,
+  getCustomerFavoriteProduct,
 } from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import type {
@@ -31,6 +34,8 @@ import type {
   NewCustomer,
   NewPayment,
   Payment,
+  CustomerTimelineItem,
+  CustomerInsights,
 } from '@/types/credits.types';
 import { Alert } from '@/utils/alert';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -262,8 +267,7 @@ export function useInsertPayment() {
   const router = useRouter();
   const { addToast } = useToastStore();
   return useMutation({
-    mutationFn: (data: NewPayment) =>
-      insertPayment(data),
+    mutationFn: (data: NewPayment) => insertPayment(data),
     onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({
@@ -376,6 +380,33 @@ export function useUpdateCreditStatus() {
   });
 }
 
-export function useCredits() {
-  return {};
+export function useCustomerTimeline(id?: number | string, opts = {}) {
+  const parsedId = typeof id === 'string' ? parseInt(id) : id;
+  return useQuery<CustomerTimelineItem[]>({
+    queryKey: ['customer-timeline', parsedId],
+    queryFn: () =>
+      parsedId ? getCustomerTimeline(parsedId) : Promise.resolve([]),
+    enabled: !!parsedId,
+    ...opts,
+  });
+}
+
+export function useCustomerFavoriteProduct(id?: number | string, opts = {}) {
+  const parsedId = typeof id === 'string' ? parseInt(id) : id;
+  return useQuery<string | null>({
+    queryKey: ['customer-favorite-product', parsedId],
+    queryFn: () =>
+      parsedId ? getCustomerFavoriteProduct(parsedId) : Promise.resolve(null),
+    enabled: !!parsedId,
+    ...opts,
+  });
+}
+
+export function useCustomerInsights(opts = {}) {
+  return useQuery<CustomerInsights>({
+    queryKey: ['customer-insights'],
+    queryFn: getCustomerInsights,
+    staleTime: 5 * 60 * 1000,
+    ...opts,
+  });
 }

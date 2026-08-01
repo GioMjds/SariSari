@@ -84,7 +84,7 @@ export function PaymentAmountCard({
                 accessibilityLabel="Clear amount"
                 className="press-scale w-8 h-8 items-center justify-center rounded-full bg-paper-200"
                 style={({ pressed }) => ({
-                  backgroundColor: pressed ? '#E5D8BC' : '#EFE6D2',
+                  backgroundColor: pressed ? '#E6E3D8' : '#F7F6F2',
                 })}
               >
                 <FontAwesome name="times" size={14} color="#564E45" />

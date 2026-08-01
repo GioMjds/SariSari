@@ -1,4 +1,4 @@
-import { resolveHomeState, HomeStateInput } from '@/components/dashboard/home-state';
+import { HomeStateInput, resolveHomeState } from '@/components/home/home-state';
 
 describe('resolveHomeState', () => {
   const baseInput = (overrides?: Partial<HomeStateInput>): HomeStateInput => ({

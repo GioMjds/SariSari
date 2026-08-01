@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 export default function EditFormsLayout() {
   return (
     <>
-      <StatusBar style="dark" backgroundColor="#EFE6D2" />
+      <StatusBar style="dark" backgroundColor="#F7F6F2" />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -14,7 +14,7 @@ export default function EditFormsLayout() {
           sheetGrabberVisible: true,
           sheetCornerRadius: 24,
           sheetInitialDetentIndex: 'last',
-          contentStyle: { backgroundColor: '#FAF7F0' },
+          contentStyle: { backgroundColor: '#FAFAF7' },
         }}
       />
     </>

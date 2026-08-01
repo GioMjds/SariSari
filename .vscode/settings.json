@@ -3,5 +3,38 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.expo/**": true,
+    "**/.turbo/**": true,
+    "**/coverage/**": true
+  },
+
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true
+  },
+
+  "git.autorefresh": false,
+  "git.autofetch": false,
+
+  "js/ts.tsserver.automaticTypeAcquisition.enabled": true,
+  "terminal.integrated.gpuAcceleration": "on",
+  "breadcrumbs.enabled": false,
+  "editor.semanticHighlighting.enabled": false,
+  "editor.codeLens": false,
+  "explorer.decorations.badges": false,
+  "explorer.decorations.colors": false,
+  "search.followSymlinks": false,
+  "editor.quickSuggestionsDelay": 150,
+  "editor.inlineSuggest.enabled": true
 }

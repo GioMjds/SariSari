@@ -97,7 +97,7 @@ export function CreditTicketSheet({
             className="w-full bg-paper-100 border border-ink-200 rounded-xl py-2.5 items-center justify-center flex-row"
             style={({ pressed }) => ({
               transform: [{ scale: pressed ? 0.98 : 1 }],
-              backgroundColor: pressed ? '#EFE6D2' : '#F6F0E2',
+              backgroundColor: pressed ? '#E6E3D8' : '#F2F0E8',
             })}
           >
             <FontAwesome name="plus" size={12} color="#7A7165" />

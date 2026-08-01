@@ -10,24 +10,77 @@ export interface Tab {
 
 export const PRIMARY_TAB_PATHS = [
   '/',
+  '/home',
+  '/sales',
   '/inventory',
+  '/customers',
+  '/more',
   '/utang',
   '/reports',
+  '/sell',
 ] as const;
 
-export function isPrimaryTabPath(path: string): boolean {
-  return PRIMARY_TAB_PATHS.some((p) => p === path);
+export function isPrimaryTabPath(path: Href): boolean {
+  const pathname = typeof path == 'string' ? path : path.pathname;
+  if (!pathname) return false;
+
+  const cleanPath = pathname.replace(/\/$/, '');
+  return PRIMARY_TAB_PATHS.some((p) => p === cleanPath);
 }
 
 export const getTabs = (t: TFunction): Tab[] => [
-  { name: t('common:dashboardTitle'), href: '/', icon: 'area-chart' },
-  { name: t('common:inventoryTitle'), href: '/inventory', icon: 'cube' },
-  { name: t('common:utangTitle'), href: '/utang', icon: 'credit-card' },
-  { name: t('common:reportsTitle'), href: '/reports', icon: 'bar-chart' },
+  {
+    name: t('common:homeTitle', { defaultValue: 'Home' }),
+    href: '/home',
+    icon: 'home',
+  },
+  {
+    name: t('common:salesTitle', { defaultValue: 'Sales' }),
+    href: '/sales',
+    icon: 'shopping-cart',
+  },
+  {
+    name: t('common:inventoryTitle', { defaultValue: 'Inventory' }),
+    href: '/inventory',
+    icon: 'cube',
+  },
+  {
+    name: t('common:customersTitle', { defaultValue: 'Customers' }),
+    href: '/customers',
+    icon: 'users',
+  },
+  {
+    name: t('common:moreTitle', { defaultValue: 'More' }),
+    href: '/more',
+    icon: 'ellipsis-h',
+  },
 ];
 
 export const getSellAction = (t: TFunction): Tab => ({
-  name: t('common:sellAction'),
-  href: '/(edit-forms)/add-sales',
+  name: t('common:sellAction', { defaultValue: 'Sell' }),
+  href: '/(tabs)/sales',
   icon: 'shopping-cart',
 });
+
+// Sub-Tab Swipe Routes per FUTURE_REVAMP.md
+export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
+export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
+export const INVENTORY_SUB_TABS = [
+  'products',
+  'stock',
+  'movements',
+  'analytics',
+] as const;
+export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
+export const MORE_SUB_TABS = [
+  'reports',
+  'insights',
+  'sync',
+  'settings',
+] as const;
+
+export type HomeSubTab = (typeof HOME_SUB_TABS)[number];
+export type SalesSubTab = (typeof SALES_SUB_TABS)[number];
+export type InventorySubTab = (typeof INVENTORY_SUB_TABS)[number];
+export type CustomersSubTab = (typeof CUSTOMERS_SUB_TABS)[number];
+export type MoreSubTab = (typeof MORE_SUB_TABS)[number];

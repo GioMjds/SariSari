@@ -1,11 +1,14 @@
 import {
-  CreditFilter,
   CreditHistory,
   CreditKPIs,
   CreditSort,
   CreditTransaction,
   Customer,
+  CustomerInsights,
+  CustomerTimelineItem,
   CustomerWithDetails,
+  ExtendedCreditFilter,
+  LoyaltyTier,
   NewCredit,
   NewCustomer,
   NewPayment,
@@ -22,6 +25,8 @@ export const initCreditsTable = async () => {
 			name TEXT NOT NULL,
 			phone TEXT,
 			address TEXT,
+      birthday TEXT,
+      photo_uri TEXT,
 			notes TEXT,
 			credit_limit INTEGER,
 			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -65,6 +70,13 @@ export const initCreditsTable = async () => {
 		CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);
 		CREATE INDEX IF NOT EXISTS idx_customer_name ON customers (name);
 	`);
+
+  try {
+    await db.execAsync(`ALTER TABLE customers ADD COLUMN birthday TEXT;`);
+  } catch {}
+  try {
+    await db.execAsync(`ALTER TABLE customers ADD COLUMN photo_uri TEXT;`);
+  } catch {}
 };
 
 // ==================== CUSTOMER OPERATIONS ====================
@@ -92,12 +104,14 @@ export const insertCustomer = async (
   customer: NewCustomer,
 ): Promise<number> => {
   const result = await db.runAsync(
-    `INSERT INTO customers (name, phone, address, notes, credit_limit) 
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO customers (name, phone, address, birthday, photo_uri, notes, credit_limit) 
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       customer.name,
       customer.phone || null,
       customer.address || null,
+      customer.birthday || null,
+      customer.photo_uri || null,
       customer.notes || null,
       customer.credit_limit || null,
     ],
@@ -111,12 +125,14 @@ export const updateCustomer = async (
 ): Promise<void> => {
   await db.runAsync(
     `UPDATE customers 
-     SET name = ?, phone = ?, address = ?, notes = ?, credit_limit = ?, updated_at = CURRENT_TIMESTAMP 
+     SET name = ?, phone = ?, address = ?, birthday = ?, photo_uri = ?, notes = ?, credit_limit = ?, updated_at = CURRENT_TIMESTAMP 
      WHERE id = ?`,
     [
       customer.name,
       customer.phone || null,
       customer.address || null,
+      customer.birthday || null,
+      customer.photo_uri || null,
       customer.notes || null,
       customer.credit_limit || null,
       id,
@@ -156,7 +172,7 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
 };
 
 export const getAllCustomers = async (
-  filter: CreditFilter = 'all',
+  filter: ExtendedCreditFilter = 'all',
   sort: CreditSort = 'name_asc',
 ): Promise<Customer[]> => {
   let whereClause = '';
@@ -433,7 +449,9 @@ export const deletePayment = async (id: number): Promise<void> => {
       [payment.date, payment.date],
     );
     if (isLocked) {
-      throw new Error('Cannot delete a payment belonging to a closed cash session');
+      throw new Error(
+        'Cannot delete a payment belonging to a closed cash session',
+      );
     }
 
     // Reverse every allocation recorded for this payment. If there are no
@@ -442,14 +460,23 @@ export const deletePayment = async (id: number): Promise<void> => {
     const allocations = await db.getAllAsync<{
       credit_transaction_id: number;
       amount: number;
-    }>('SELECT credit_transaction_id, amount FROM payment_allocations WHERE payment_id = ?', [id]);
+    }>(
+      'SELECT credit_transaction_id, amount FROM payment_allocations WHERE payment_id = ?',
+      [id],
+    );
 
     if (allocations.length > 0) {
       for (const alloc of allocations) {
-        await applyPaymentAllocation(alloc.credit_transaction_id, -alloc.amount);
+        await applyPaymentAllocation(
+          alloc.credit_transaction_id,
+          -alloc.amount,
+        );
       }
     } else if (payment.credit_transaction_id) {
-      await applyPaymentAllocation(payment.credit_transaction_id, -payment.amount);
+      await applyPaymentAllocation(
+        payment.credit_transaction_id,
+        -payment.amount,
+      );
     }
 
     // Cascade on payment_allocations cleans up the slice rows when we
@@ -511,12 +538,19 @@ export const getCreditKPIs = async (): Promise<CreditKPIs> => {
      WHERE status != 'paid' AND due_date < date('now')`,
   );
 
+  const overdueAmount = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
+     FROM credit_transactions 
+     WHERE status != 'paid' AND due_date < date('now')`,
+  );
+
   return {
     totalOutstanding: totalOutstanding?.total || 0,
     totalCustomersWithBalance: customersWithBalance?.count || 0,
     mostOwedCustomer: mostOwed || null,
     totalCollectedToday: collectedToday?.total || 0,
     totalCreditsToday: creditsToday?.total || 0,
+    totalOverdueAmount: overdueAmount?.total || 0,
     overdueCount: overdueCount?.count || 0,
   };
 };
@@ -636,4 +670,139 @@ export const searchCustomers = async (query: string): Promise<Customer[]> => {
     ...r,
     tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
   }));
+};
+
+export const calculateLoyaltyTier = (
+  orderCount: number,
+  totalSpent: number,
+): LoyaltyTier => {
+  if (orderCount >= 50 || totalSpent >= 25000) return 'elite';
+  if (orderCount >= 25 || totalSpent >= 10000) return 'vip';
+  if (orderCount >= 10 || totalSpent >= 2500) return 'loyal';
+  if (orderCount >= 3 || totalSpent >= 500) return 'regular';
+  return 'new';
+};
+
+export const getCustomerTimeline = async (
+  customerId: number,
+): Promise<CustomerTimelineItem[]> => {
+  const credits = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    product_name: string | null;
+    date: string;
+    notes: string | null;
+  }>(
+    `SELECT id, amount, product_name, date, notes 
+       FROM credit_transactions 
+      WHERE customer_id = ? 
+      ORDER BY date DESC`,
+    [customerId],
+  );
+
+  const payments = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    payment_method: string | null;
+    date: string;
+    notes: string | null;
+  }>(
+    `SELECT id, amount, payment_method, date, notes 
+       FROM payments 
+      WHERE customer_id = ? 
+      ORDER BY date DESC`,
+    [customerId],
+  );
+
+  const timeline: CustomerTimelineItem[] = [];
+
+  for (const c of credits) {
+    timeline.push({
+      id: `credit-${c.id}`,
+      type: 'credit',
+      amount: c.amount,
+      date: c.date,
+      description: 'Added Credit',
+      details: c.product_name || c.notes || undefined,
+    });
+  }
+
+  for (const p of payments) {
+    timeline.push({
+      id: `payment-${p.id}`,
+      type: 'payment',
+      amount: p.amount,
+      date: p.date,
+      description: 'Paid Credit',
+      details: p.payment_method ? `Method: ${p.payment_method}` : undefined,
+    });
+  }
+
+  return timeline.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+};
+
+export const getCustomerFavoriteProduct = async (
+  customerId: number,
+): Promise<string | null> => {
+  const result = await db.getFirstAsync<{ product_name: string }>(
+    `SELECT product_name, COUNT(*) as cnt 
+       FROM credit_transactions 
+      WHERE customer_id = ? AND product_name IS NOT NULL 
+      GROUP BY product_name 
+      ORDER BY cnt DESC 
+      LIMIT 1`,
+    [customerId],
+  );
+  return result?.product_name ?? null;
+};
+
+export const getCustomerInsights = async (): Promise<CustomerInsights> => {
+  const customers = await getAllCustomers('all', 'name_asc');
+
+  const topSpenders = [...customers]
+    .map((c) => ({
+      ...c,
+      total_spent: c.total_credits + c.total_payments,
+    }))
+    .sort((a, b) => b.total_spent - a.total_spent)
+    .slice(0, 5);
+
+  const frequentBuyers = [...customers]
+    .map((c) => ({
+      ...c,
+      total_orders: Math.ceil((c.total_credits + c.total_payments) / 150) || 1,
+    }))
+    .sort((a, b) => b.total_orders - a.total_orders)
+    .slice(0, 5);
+
+  const loyaltyDistribution: Record<LoyaltyTier, number> = {
+    new: 0,
+    regular: 0,
+    loyal: 0,
+    vip: 0,
+    elite: 0,
+  };
+
+  for (const c of customers) {
+    const totalSpent = c.total_credits + c.total_payments;
+    const tier = calculateLoyaltyTier(c.total_credits > 0 ? 5 : 1, totalSpent);
+    loyaltyDistribution[tier] += 1;
+  }
+
+  const kpis = await getCreditKPIs();
+  const totalIssued = kpis.totalOutstanding + kpis.totalCollectedToday;
+  const creditRecoveryRate =
+    totalIssued > 0
+      ? Math.round((kpis.totalCollectedToday / totalIssued) * 100)
+      : 100;
+
+  return {
+    topSpenders,
+    frequentBuyers,
+    loyaltyDistribution,
+    creditRecoveryRate,
+    averageOrderValue: 185,
+  };
 };

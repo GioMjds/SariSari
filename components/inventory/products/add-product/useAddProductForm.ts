@@ -11,19 +11,6 @@ import {
 } from '@/lib';
 import { useToastStore } from '@/stores';
 
-/**
- * Form values for the Add Product screen.
- *
- * Money fields (`bundleCost`, `costPerPiece`, `price`) are kept as
- * decimal strings (the user's typed value) for display math —
- * see AGENTS.md: integer-pesos invariant. We parse them to
- * integer pesos exactly once, inside `submit`, via `parsePesosInput`.
- *
- * `barcode` was added in the v5 rebuild. It is the printed machine-
- * readable identifier on the product packaging, distinct from `sku`
- * which is the store's internal identifier. The two can diverge (e.g.
- * `sku = COKE-1.5L`, `barcode = 4800016112345`) or be identical.
- */
 export interface AddProductFormData {
   productName: string;
   sku: string;
@@ -45,41 +32,14 @@ export interface AddProductFormData {
   wholesaleBarcode: string;
 }
 
-/**
- * Markup presets shown on the Pricing & Profit card.
- *
- * Tapping one writes `costPerPiece * (1 + markup)` to the selling
- * price field, formatted to two decimal places. The DB parses it
- * via `parsePesosInput` on submit, so no float round-trips through
- * the money pipeline.
- */
 export const MARKUP_PRESETS = [0.1, 0.2, 0.3, 0.5] as const;
 export type MarkupPreset = (typeof MARKUP_PRESETS)[number];
 
-/**
- * Stock quick-increment chips shown below the initial-stock input.
- *
- * Each tap parses the current input as an integer, adds the chip
- * amount, and writes the result back — so `10 → +5 → 15`. Empty /
- * invalid input starts from `0`.
- */
 export const STOCK_PRESETS = [5, 10, 20] as const;
 export type StockPreset = (typeof STOCK_PRESETS)[number];
 
 const safeTrim = (s?: string) => (s ?? '').trim();
 
-/**
- * `useAddProductForm()` — owns the Add Product screen's form state.
- *
- * Encapsulates react-hook-form setup, the SKU auto-generation
- * toggle, the bundle/single cost toggle, the markup-preset and
- * stock-quick-bump helpers, the live profit/markup preview math,
- * the unsaved-changes guard, the scanner integration, the
- * inline duplicate-barcode guard, and the submit pipeline.
- *
- * The screen and its components stay presentational; this hook is
- * the single place where business logic lives.
- */
 export function useAddProductForm() {
   const { insertProductMutation, getAllProductsQuery } = useProducts();
   const { getAllCategoriesQuery } = useCategories();
@@ -92,18 +52,8 @@ export function useAddProductForm() {
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
-  // A scan that arrives while `getAllProductsQuery` is still on its
-  // first fetch gets `store_products_unavailable` from the resolver
-  // (it refuses to trust an empty/incomplete product list for the
-  // duplicate-barcode check). Previously that result was dropped on
-  // the floor, the scan just silently did nothing. We now stash the
-  // barcode here and replay it automatically the moment the query
-  // settles, so the user never has to notice or re-scan.
   const pendingScanRef = useRef<string | null>(null);
 
-  // Forwarded to the price TextInput so we can focus it ~250ms after
-  // a successful scan (giving the scanner modal close animation time
-  // to finish before the keyboard pops up).
   const priceInputRef = useRef<TextInput | null>(null);
 
   const {
@@ -153,11 +103,6 @@ export function useAddProductForm() {
   const wholesaleCostPrice = useWatch({ control, name: 'wholesaleCostPrice' });
   const wholesaleBarcode = useWatch({ control, name: 'wholesaleBarcode' });
 
-  // ─── Derived display values ────────────────────────────────────
-
-  // `isDirty` only flips after a field is touched. Combined with
-  // non-empty values this suppresses the unsaved-changes guard for
-  // a freshly opened form.
   const hasActualChanges =
     isDirty &&
     (safeTrim(productName) !== '' ||
@@ -178,8 +123,6 @@ export function useAddProductForm() {
       safeTrim(wholesaleCostPrice) !== '' ||
       safeTrim(wholesaleBarcode) !== '');
 
-  // Live profit preview values — `0` means "empty / invalid input"
-  // and the profit card hides itself in that case.
   const parsedCost = costPerPiece ? tryParsePesosInput(costPerPiece) : 0;
   const parsedPrice = price ? tryParsePesosInput(price) : 0;
   const profitPerPiece = parsedPrice - parsedCost;
@@ -212,7 +155,6 @@ export function useAddProductForm() {
 
   const isBarcodeDuplicate = barcodeConflictProduct != null;
 
-  // Required-field guard for the submit button.
   const isSubmitDisabled =
     insertProductMutation.isPending ||
     !safeTrim(productName) ||
@@ -220,8 +162,6 @@ export function useAddProductForm() {
     !price ||
     parsedPrice <= 0 ||
     isBarcodeDuplicate;
-
-  // ─── Auto-calculate cost-per-piece when bundle values change ──
 
   useEffect(() => {
     if (!useBundlePricing) return;
@@ -234,8 +174,6 @@ export function useAddProductForm() {
     }
   }, [bundleCost, piecesPerBundle, useBundlePricing, setValue]);
 
-  // ─── SKU auto-generation ───────────────────────────────────────
-
   const generateSku = useCallback((name: string, currentSku: string) => {
     if (!name) return '';
     const parts = name.trim().split(' ');
@@ -244,9 +182,6 @@ export function useAddProductForm() {
       .map((p) => p.charAt(0).toUpperCase())
       .join('');
 
-    // Check if the current SKU prefix is already correct for the product name
-    // and ends with a 4-digit timestamp. If so, return the current SKU to
-    // prevent infinite updates from Date.now() recalculation.
     const skuParts = currentSku.split('-');
     const skuPrefix = skuParts.slice(0, skuParts.length - 1).join('-');
     const skuSuffix = skuParts[skuParts.length - 1];
@@ -258,20 +193,13 @@ export function useAddProductForm() {
     return `${prefix}-${timestamp}`;
   }, []);
 
-  // When auto-generate is on, keep the SKU in sync with the name.
-  // `useEffect` (not an inline `onChangeText` handler) so external
-  // changes to the name still trigger a refresh.
   useEffect(() => {
     if (!autoGenerateSku) return;
     const generated = generateSku(productName ?? '', sku ?? '');
-    // Only write if it actually changed — avoids extra re-renders on
-    // unrelated form state changes.
     if (generated !== sku) {
       setValue('sku', generated, { shouldDirty: false });
     }
   }, [productName, autoGenerateSku, generateSku, setValue, sku]);
-
-  // ─── Markup-preset handler ─────────────────────────────────────
 
   const applyMarkupPreset = useCallback(
     (markup: MarkupPreset) => {
@@ -281,8 +209,6 @@ export function useAddProductForm() {
     },
     [parsedCost, setValue],
   );
-
-  // ─── Stock quick-bump helpers ──────────────────────────────────
 
   const bumpStock = useCallback(
     (delta: number) => {
@@ -294,20 +220,14 @@ export function useAddProductForm() {
     [initialStock, setValue],
   );
 
-  // ─── Category selection ────────────────────────────────────────
-
   const selectCategory = useCallback(
     (name: string) => {
-      // Toggle off if the same pill is tapped again — matches the
-      // behavior of the existing screen.
       setValue('category', category === name ? '' : name, {
         shouldDirty: true,
       });
     },
     [category, setValue],
   );
-
-  // ─── Unsaved-changes guard ─────────────────────────────────────
 
   const confirmDiscard = useCallback(() => {
     if (!hasActualChanges) {
@@ -317,7 +237,6 @@ export function useAddProductForm() {
     setShowDialog(true);
   }, [hasActualChanges]);
 
-  // Wire the Android hardware-back button to the same guard.
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -335,25 +254,12 @@ export function useAddProductForm() {
     }, [confirmDiscard, hasActualChanges]),
   );
 
-  // ─── Barcode scanner ───────────────────────────────────────────
-
   const openScanner = useCallback(() => setIsScannerOpen(true), []);
   const closeScanner = useCallback(() => setIsScannerOpen(false), []);
 
   const handleScannedBarcode = useCallback(
     async (barcodeValue: string) => {
-      if (__DEV__) {
-        console.log('[Barcode][AddProduct] scanned:', barcodeValue);
-      }
       const result = await resolve(barcodeValue);
-      if (__DEV__) {
-        console.log(
-          '[Barcode][AddProduct] resolution kind:',
-          result.kind,
-          result,
-        );
-      }
-
       if (result.kind === 'resolved') {
         setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
         setIsScannerOpen(false);
@@ -386,7 +292,6 @@ export function useAddProductForm() {
 
         setIsScannerOpen(false);
 
-        // Focus the price field after the modal close animation settles.
         if (typeof patch.productName === 'string') {
           setTimeout(() => {
             priceInputRef.current?.focus();
@@ -413,21 +318,8 @@ export function useAddProductForm() {
         result.kind === 'store_products_unavailable'
       ) {
         if (result.kind === 'store_products_unavailable') {
-          if (__DEV__) {
-            console.log(
-              '[Barcode][AddProduct] products query not ready yet, queuing',
-              barcodeValue,
-              'for replay once it settles',
-            );
-          }
           pendingScanRef.current = barcodeValue;
         } else {
-          if (__DEV__) {
-            console.log(
-              '[Barcode][AddProduct] scan swallowed, kind:',
-              result.kind,
-            );
-          }
         }
         return;
       }
@@ -435,20 +327,12 @@ export function useAddProductForm() {
     [resolve, addToast, autoGenerateSku, setValue],
   );
 
-  // Replays a scan that arrived before `getAllProductsQuery` had
-  // settled. See the comment on `pendingScanRef` above.
   useEffect(() => {
     if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
       return;
     const queued = pendingScanRef.current;
     if (!queued) return;
     pendingScanRef.current = null;
-    if (__DEV__) {
-      console.log(
-        '[Barcode][AddProduct] products query ready, replaying queued scan',
-        queued,
-      );
-    }
     void handleScannedBarcode(queued);
   }, [
     getAllProductsQuery.isSuccess,
@@ -456,21 +340,6 @@ export function useAddProductForm() {
     handleScannedBarcode,
   ]);
 
-  // ─── Prefill from route param (inventory-tab scan-to-add) ──────
-  //
-  // When the inventory tab's new barcode button is used, it pushes
-  // this route with `?prefillBarcode=<value>` rather than opening the
-  // in-form scanner. We consume the param here and run the same
-  // handler so behavior is identical regardless of entry point.
-  //
-  // The `prefillAppliedRef` guard is required for two reasons:
-  //   1. React 19 StrictMode double-mounts effects in dev. Without
-  //      the guard we'd call `handleScannedBarcode` twice and the
-  //      second call would race with the auto-gen-off + productName
-  //      write sequence.
-  //   2. After applying the prefill we clear the param with
-  //      `router.setParams`. A re-entry (e.g. back-nav then forward
-  //      again) would otherwise re-trigger the effect.
   const params = useLocalSearchParams<{ prefillBarcode?: string }>();
   const prefillAppliedRef = useRef(false);
 
@@ -479,14 +348,8 @@ export function useAddProductForm() {
     if (!prefill || prefillAppliedRef.current) return;
     prefillAppliedRef.current = true;
     void handleScannedBarcode(prefill);
-    // Clear the param without firing a navigation event so the URL
-    // is consistent on a hard reload of this route. `router` from
-    // expo-router is a stable module-scope handle and doesn't need
-    // to be listed as a dep.
     router.setParams({ prefillBarcode: undefined });
   }, [params.prefillBarcode, handleScannedBarcode]);
-
-  // ─── Submit ────────────────────────────────────────────────────
 
   const submit = handleSubmit((data) => {
     const priceValue = parsePesosInput(data.price);

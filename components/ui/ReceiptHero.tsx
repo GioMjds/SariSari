@@ -71,7 +71,7 @@ export function ReceiptHero({
             <View
               key={`top-${i}`}
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: '#EFE6D2' }}
+              style={{ backgroundColor: '#F7F6F2' }}
             />
           ))}
         </View>
@@ -90,7 +90,7 @@ export function ReceiptHero({
             <View
               key={`bot-${i}`}
               className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: '#EFE6D2' }}
+              style={{ backgroundColor: '#F7F6F2' }}
             />
           ))}
         </View>

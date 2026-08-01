@@ -136,8 +136,11 @@
   "shareAsText": "Share as Text (SMS/Chat)",
   "shareAsPdf": "Share as PDF Resibo",
 
-  "sellTitle": "Sell",
+  "homeTitle": "Home",
+  "salesTitle": "Sales",
   "inventoryTitle": "Inventory",
+  "customersTitle": "Customers",
+  "moreTitle": "More",
   "utangTitle": "Utang",
   "reportsTitle": "Reports",
 

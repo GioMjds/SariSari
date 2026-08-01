@@ -50,13 +50,16 @@ export default function RootLayout() {
   });
 
   const [dbInitError, setDbInitError] = useState<string | null>(null);
+  const [dbReady, setDbReady] = useState<boolean>(false);
   const [i18nReady, setI18nReady] = useState<boolean>(false);
   const schedulerInputs = useSchedulerInputs();
 
   const runDbInit = useCallback(async () => {
     setDbInitError(null);
+    setDbReady(false);
     try {
       await initializeDatabases();
+      setDbReady(true);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -65,12 +68,6 @@ export default function RootLayout() {
     }
   }, []);
 
-  /**
-   * Initialize i18n separately from the DB so a malformed locale JSON
-   * never surfaces as a "Database Error" screen. If i18n init fails for
-   * any reason we log and continue — `react-i18next` falls back to its
-   * `fallbackLng: 'en'` so the user still sees English.
-   */
   const runI18nInit = useCallback(async () => {
     try {
       await initI18n();
@@ -93,23 +90,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded && i18nReady) {
-      if (__DEV__) {
-        console.log(
-          `[Barcode][Startup] splash hiding at ${Date.now()} (fonts+i18n ready; DB init may still be in flight)`,
-        );
-      }
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, i18nReady]);
 
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync('#EFE6D2');
+    void NavigationBar.setButtonStyleAsync('dark').catch(() => {});
   }, []);
 
-  // Backup scheduler wiring — spec §3.6 (triggers). Runs once on mount
-  // after fonts + i18n are ready; never blocks the UI.
   useEffect(() => {
-    if (!fontsLoaded || !i18nReady || dbInitError) return;
+    if (!fontsLoaded || !i18nReady || !dbReady || dbInitError) return;
     void runStartupChecks(schedulerInputs);
     const unsubCounter = subscribeCounter(schedulerInputs);
     const subAppState = AppState.addEventListener('change', (state) => {
@@ -121,16 +111,11 @@ export default function RootLayout() {
       unsubCounter();
       subAppState.remove();
     };
-    // schedulerInputs is a fresh object on every render of useSchedulerInputs
-    // (it reads TanStack Query state). The effect's body is idempotent
-    // so re-subscribing is safe; we just want the latest inputs.
-  }, [fontsLoaded, i18nReady, dbInitError, schedulerInputs]);
+  }, [fontsLoaded, i18nReady, dbReady, dbInitError, schedulerInputs]);
 
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
 
   const handleBannerRestore = useCallback(() => {
-    // Open the Settings screen; the LocalSnapshotsSection there has
-    // the restore picker with the Cloud tab pre-selected via state.
     router.push('/settings');
   }, []);
 
@@ -150,18 +135,15 @@ export default function RootLayout() {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
-      background: '#EFE6D2', // Sets the fallback background for all screens
+      background: '#F7F6F2', // Sets the fallback background for all screens
     },
   };
 
-  // When the DB fails to initialize, fail loud. Don't render the Stack —
-  // a partially-mounted navigator on top of a broken DB would render
-  // empty screens that look "fine" until the user tries an action.
   if (dbInitError) {
     return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
         <SafeAreaProvider>
-          <StatusBar style="dark" backgroundColor="#EFE6D2" />
+          <StatusBar style="dark" backgroundColor="#F7F6F2" />
           <DatabaseErrorScreen message={dbInitError} onRetry={runDbInit} />
         </SafeAreaProvider>
       </GestureHandlerRootView>
@@ -170,10 +152,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={CustomTheme}>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
-            <View style={{ flex: 1, backgroundColor: '#EFE6D2' }}>
+            <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
               <BuildBadge />
               {!bannerDismissed ? (
                 <CloudNewerBanner
@@ -184,7 +166,7 @@ export default function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  contentStyle: { backgroundColor: '#EFE6D2' },
+                  contentStyle: { backgroundColor: '#F7F6F2' },
                 }}
               />
             </View>

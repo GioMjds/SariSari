@@ -71,7 +71,7 @@ export function StockCard({
               accessibilityLabel={`Add ${preset} to stock`}
               className="press-scale flex-1 items-center py-2.5 rounded-xl bg-paper-100 border border-ink-200 active:opacity-80"
               style={({ pressed }) => ({
-                backgroundColor: pressed ? '#EFE6D2' : '#F6F0E2',
+                backgroundColor: pressed ? '#E6E3D8' : '#F2F0E8',
               })}
             >
               <StyledText variant="extrabold" className="text-ink-900 text-sm">

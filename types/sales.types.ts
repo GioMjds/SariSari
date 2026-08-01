@@ -5,11 +5,6 @@ export interface Sale {
   payment_type: 'cash' | 'credit';
   customer_name?: string;
   customer_credit_id?: number;
-  /**
-   * Back-pointer to the credit_transactions row created for credit sales.
-   * Used by `deleteSale` to reverse the ledger entry transactionally.
-   * Null for cash sales or for legacy rows written before migration v3.
-   */
   credit_transaction_id?: number | null;
 }
 
@@ -56,7 +51,7 @@ export interface NewSaleItem {
   price: number;
   quantity: number;
   stock: number;
-  selected_unit?: 'retail' | 'wholesale';
+  selected_unit: 'retail' | 'wholesale';
   retail_unit_name?: string;
   wholesale_unit_name?: string | null;
   retail_price?: number;

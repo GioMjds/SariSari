@@ -1,6 +1,6 @@
 import { db } from '../configs/sqlite';
 import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
-import { insertCatalogProductIfMissing } from './catalog';
+import { insertCatalogProductsBatch } from './catalog';
 import {
   MOCK_CATEGORIES,
   MOCK_PRODUCTS,
@@ -12,9 +12,6 @@ import {
   MOCK_INVENTORY_TRANSACTIONS,
 } from '@/scripts/sample-mock-datas';
 
-/**
- * Seed the database with mock data for development.
- */
 export async function seedProductCatalog(): Promise<void> {
   const startedAt = Date.now();
   if (__DEV__) {
@@ -25,18 +22,15 @@ export async function seedProductCatalog(): Promise<void> {
     );
   }
   try {
-    await db.withTransactionAsync(async () => {
-      for (const record of BUNDLED_CATALOG_RECORDS) {
-        await insertCatalogProductIfMissing(db, {
-          barcode: record.barcode,
-          name: record.name,
-          brand: null,
-          category: record.category,
-          unit: 'Pc',
-          imageUrl: null,
-        });
-      }
-    });
+    const productsToInsert = BUNDLED_CATALOG_RECORDS.map((record) => ({
+      barcode: record.barcode,
+      name: record.name,
+      brand: null,
+      category: record.category,
+      unit: 'Pc',
+      imageUrl: null,
+    }));
+    await insertCatalogProductsBatch(db, productsToInsert);
     if (__DEV__) {
       console.log(
         `[Barcode][Seed] catalog seed complete in ${Date.now() - startedAt}ms.`,
@@ -53,9 +47,6 @@ export async function seedProductCatalog(): Promise<void> {
 export const seedDatabase = async () => {
   console.log('🌱 Checking whether to seed the database...');
 
-  // Bail out if the user has any data of their own. The seed is
-  // strictly for first-run demo data; it must never overwrite
-  // anything the user has entered.
   const existingProduct = await db.getFirstAsync<{ c: number }>(
     'SELECT COUNT(*) AS c FROM products',
   );

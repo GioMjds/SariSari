@@ -3,10 +3,6 @@ import { db } from '../configs/sqlite';
 import { insertCatalogProductIfMissing } from './catalog';
 
 export const initProductsTable = async () => {
-  // The CREATE TABLE block is the authoritative schema for fresh DBs. On
-  // an existing pre-v9 DB it is a no-op (table already exists at the old
-  // schema), so v9-only columns are missing — which is fine, the v9
-  // migration in database/migrations.ts will ALTER them in.
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,13 +28,6 @@ export const initProductsTable = async () => {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;
   `);
 
-  // The wholesale_barcode partial unique index depends on the v9 column.
-  // On a fresh DB the column was just added by CREATE TABLE above; on a
-  // pre-v9 DB the column is still missing. Creating the index on the old
-  // table throws "no such column: wholesale_barcode", which would fail
-  // the whole init block in configs/startup.ts and prevent the v9
-  // migration from ever running. Probe first; the v9 migration creates
-  // the index on the upgrade path.
   const productColumns = await db.getAllAsync<{ name: string }>(
     'PRAGMA table_info(products)',
   );
@@ -52,14 +41,6 @@ export const initProductsTable = async () => {
   }
 };
 
-/**
- * Thrown when an `insertProduct` or `updateProduct` call would land a
- * second non-null barcode on the table. Mirrors the SQLite UNIQUE
- * constraint error code 2067 (`SQLITE_CONSTRAINT_UNIQUE` on the
- * `idx_products_barcode` partial unique index). Carries the resolved
- * `existing` row so the caller can render an inline duplicate error
- * without a second roundtrip.
- */
 export class BarcodeAlreadyExistsError extends Error {
   existing: Product;
   constructor(existing: Product) {
@@ -71,13 +52,6 @@ export class BarcodeAlreadyExistsError extends Error {
   }
 }
 
-/**
- * Translate a `BarcodeAlreadyExistsError` check against the catalog
- * when the SQLite driver surfaces an INSERT/UPDATE error. The expo-
- * sqlite / better-sqlite3 drivers both expose `code` and `message`
- * on thrown errors; we look for the unique-constraint message text
- * because `code` isn't always set.
- */
 function isUniqueBarcodeError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   const anyErr = err as { code?: number | string; message?: string };
@@ -90,11 +64,6 @@ function isUniqueBarcodeError(err: unknown): boolean {
   );
 }
 
-/**
- * Normalize the optional `barcode` argument to either a non-empty
- * trimmed string or `null`. Empty/whitespace becomes `null` so the
- * partial unique index allows multiple "no barcode" rows.
- */
 function normalizeBarcode(barcode?: string | null): string | null {
   if (barcode == null) return null;
   const trimmed = barcode.trim();
@@ -328,6 +297,24 @@ export const updateProduct = async (
 
 export const deleteProduct = async (id: number) => {
   await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
+};
+
+/**
+ * Bulk-move helper used by `BulkMoveCategoryModal`. Skips the
+ * barcode collision check and inventory-transaction side effect of
+ * `updateProduct` so we can patch `category` on N selected rows in
+ * parallel without rewriting every required column or flooding the
+ * ledger with restock rows. Caller must invalidate
+ * `productKeys.list()` once the batch resolves.
+ */
+export const updateProductCategory = async (
+  id: number,
+  category: string | null,
+): Promise<void> => {
+  await db.runAsync(
+    'UPDATE products SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [category, id],
+  );
 };
 
 export const getProduct = async (id: number): Promise<Product | null> => {

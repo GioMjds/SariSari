@@ -1,5 +1,5 @@
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -7,7 +7,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-import { DashboardQuickActions } from '@/components/dashboard/DashboardQuickActions';
+import { DashboardQuickActions } from '@/components/home/DashboardQuickActions';
 
 describe('DashboardQuickActions', () => {
   test('renders hero action and 4 grid actions, firing callbacks on press', async () => {

@@ -4,6 +4,31 @@ All notable changes to the **SariSari** project will be documented in this file.
 
 ---
 
+## [2.0.0] - 2026-07-26
+
+    ### Added
+
+    - **Gastos & Kaha Ledger**: Integrated financial logging for store operating expenses (rent, electricity, shipping) and owner cash drawings with true operating profit calculations (`Sales - COGS -
+
+Operating Expenses`).
+    - **Photo Receipts Attachment**: Support for capturing up to 5 photo receipts per expense entry stored in local device documents.
+    - **ZIP Backup & Restore Engine**: Compressed `.zip`backup exporter combining SQLite databases and receipt photos with atomic rollback protection.
+    - **Store Assistant Dashboard**: Redesigned home screen powered by`resolveHomeState` for time-based operational recommendations, low-stock warnings, and overdue credit notifications. - **Daily Pulse & Recent Sales**: Added real-time revenue summary cards and recent transaction feed to the dashboard. - **Instant Offline Barcode Catalog**: Added SQLite local lookup resolving common Philippine sari-sari store products in <10ms without internet. - **Auto-Learning Barcode Pipeline**: Automatically caches newly scanned custom products into local SQLite for instant future scans. - **Feedback Survey**: Built-in modal for store owners to submit feature requests and usability notes. - **Tab & Swipe Navigation Architecture**: Prepared full route tree specifications, navigation maps, and tab/swipe screen specifications across Home, Sales, Inventory, Customers, and More tabs.
+
+    ### Changed
+
+    - **Android Navigation Bar Alignment**: Implemented automatic bottom offsets for tab navigation to support gesture and 3-button system bars seamlessly.
+    - **Card Presentation Modes**: Reconfigured product details, credit details, and sales details to present as full card stack screens instead of form sheets.
+    - **Localization**: Updated English and Tagalog translations for dashboard alerts, financial ledgers, and store assistant guidance.
+
+    ### Fixed
+
+    - **Clipboard Crash Prevention**: Replaced non-Expo native clipboard module with `expo-clipboard` to resolve TurboModule crashes when sharing customer credit statements.
+    - **Navigation Header Layouts**: Restored proper back navigation buttons and header alignment on detail pages.
+    - **Closed Session Safety**: Added strict invariants preventing deletion of transactions tied to finalized cash sessions
+
+---
+
 ## [1.2.0] - 2026-07-18
 
 ### Added

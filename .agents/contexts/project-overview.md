@@ -119,7 +119,7 @@ database/                  SQLite access. One file per domain. Plain async fns.
 hooks/                     TanStack Query hooks. One file per domain, mirrors
                            database/. Extras: useAppInfo, useBackup,
                            useBarcodeResolver, useCash, useCatalog,
-                           useCategories, useCredits, useFindProductByBarcode,
+                           useCategories, useCredits,
                            useInventory, useProducts, useProfile,
                            useReducedMotion, useReports, useSales,
                            useStockIntelligence, useSuppliers.

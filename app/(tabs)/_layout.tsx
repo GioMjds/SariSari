@@ -1,39 +1,81 @@
-import { StyledTab } from '@/components/layout';
+import { StyledTab, StoreHeader } from '@/components/layout';
+import { StyledText } from '@/components/elements';
 import { Tabs, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import { BackHandler, View, Image } from 'react-native';
-import { useDialogStore } from '@/stores';
-import { Modal as CustomModal } from '@/components/ui';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, BackHandler, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { isPrimaryTabPath } from '@/constants';
-
-const sariExitImage = require('@/assets/images/sari-emotions/sari-exit-state.png');
 
 export default function ScreensLayout() {
   const pathname = usePathname();
-  const { visible: dialogVisible, showDialog, hideDialog } = useDialogStore();
+  const [toastVisible, setToastVisible] = useState(false);
+  const lastBackPressedRef = useRef<number>(0);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const handleExitApp = () => {
-    hideDialog();
-    BackHandler.exitApp();
-  };
+  const hideExitToast = useCallback(() => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    lastBackPressedRef.current = 0;
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setToastVisible(false);
+    });
+  }, [fadeAnim]);
 
-  const handleCancelExit = () => {
-    hideDialog();
-  };
+  const showExitToast = useCallback(() => {
+    setToastVisible(true);
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      hideExitToast();
+    }, 2000);
+  }, [fadeAnim, hideExitToast]);
+
+  useEffect(() => {
+    // Reset back press state & dismiss toast whenever screen/pathname changes
+    hideExitToast();
+  }, [pathname, hideExitToast]);
 
   useEffect(() => {
     const backAction = () => {
-      // Check if current route is a top-level tab
       if (isPrimaryTabPath(pathname)) {
-        showDialog({
-          title: 'Exit App',
-          message: 'Are you sure you want to exit the app?',
-          showCloseButton: false,
-        });
-        return true; // Prevent default back behavior
+        const now = Date.now();
+        if (
+          lastBackPressedRef.current > 0 &&
+          now - lastBackPressedRef.current < 2000
+        ) {
+          if (toastTimerRef.current) {
+            clearTimeout(toastTimerRef.current);
+            toastTimerRef.current = null;
+          }
+          lastBackPressedRef.current = 0;
+          setToastVisible(false);
+          fadeAnim.setValue(0);
+          BackHandler.exitApp();
+          return true;
+        }
+
+        lastBackPressedRef.current = now;
+        showExitToast();
+        return true;
       }
-      return false; // Allow default back behavior
+      return false;
     };
 
     const backHandler = BackHandler.addEventListener(
@@ -41,47 +83,78 @@ export default function ScreensLayout() {
       backAction,
     );
 
-    return () => backHandler.remove();
-  }, [pathname, showDialog]);
+    return () => {
+      backHandler.remove();
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, [pathname, showExitToast, hideExitToast, fadeAnim]);
 
   return (
-    <>
-      <StatusBar style="light" backgroundColor="#623418" />
+    <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
+      <StatusBar style="dark" backgroundColor="#F7F6F2" />
+      <StoreHeader />
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: { display: 'none' },
+          lazy: true,
         }}
       />
       <StyledTab />
 
-      <CustomModal
-        visible={dialogVisible}
-        onClose={handleCancelExit}
-        title="Exit App"
-        description="Are you sure you want to exit the app?"
-        variant="warning"
-        buttons={[
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: handleCancelExit,
-          },
-          {
-            text: 'Exit',
-            style: 'destructive',
-            onPress: handleExitApp,
-          },
-        ]}
-      >
-        <View className="items-center mt-2 mb-1">
-          <Image
-            source={sariExitImage}
-            style={{ width: 140, height: 140 }}
-            resizeMode="contain"
-          />
-        </View>
-      </CustomModal>
-    </>
+      {toastVisible && (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.toastContainer, { opacity: fadeAnim }]}
+          className="absolute bottom-20 left-4 right-4 items-center justify-center z-50"
+        >
+          <View
+            style={styles.toastCard}
+            className="bg-ink-900/90 px-4 py-2.5 rounded-full flex-row items-center border border-paper-400/20 shadow-lg"
+          >
+            <StyledText
+              variant="medium"
+              style={styles.toastText}
+              className="text-paper-100 text-xs text-center"
+            >
+              Press back again to exit
+            </StyledText>
+          </View>
+        </Animated.View>
+      )}
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  toastContainer: {
+    position: 'absolute',
+    bottom: 80,
+    left: 16,
+    right: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+    elevation: 999,
+  },
+  toastCard: {
+    backgroundColor: 'rgba(30, 27, 24, 0.92)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  toastText: {
+    color: '#F7F6F2',
+    fontSize: 13,
+    textAlign: 'center',
+  },
+});

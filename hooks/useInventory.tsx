@@ -72,7 +72,9 @@ export function useGetInventoryTransactions(productId?: number) {
         ? inventoryKeys.byProduct(productId)
         : inventoryKeys.transactions(),
     queryFn: () => getInventoryTransactions(productId),
-    enabled: typeof productId === 'number' && !Number.isNaN(productId),
+    enabled:
+      productId === undefined ||
+      (typeof productId === 'number' && !Number.isNaN(productId)),
   });
 }
 
