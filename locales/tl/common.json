@@ -144,6 +144,27 @@
   "utangTitle": "Utang",
   "reportsTitle": "Mga Ulat",
 
+  "moreHomeTitle": "Iba pa",
+  "moreHomeSubtitle": "Tingnan, i-set up, at pangalagaan ang tindahan",
+  "moreHomeBusinessReviewSection": "Pagsusuri ng negosyo",
+  "moreHomeStoreSetupSection": "Set up ng tindahan",
+  "moreHomeDataSafetySection": "Data at kaligtasan",
+  "moreHomeAppSection": "App",
+  "moreHomeReportsLabel": "Mga ulat at insight",
+  "moreHomeReportsSub": "Benta, tubo, at takbo ng stock",
+  "moreHomeExpensesLabel": "Gastos at cash",
+  "moreHomeExpensesSub": "Gastos sa operasyon at hinihiram ng may-ari",
+  "moreHomeStoreProfileLabel": "Profile ng tindahan",
+  "moreHomeStoreProfileSub": "Pangalan ng tindahan at may-ari",
+  "moreHomeLanguageLabel": "Wika",
+  "moreHomeLanguageSub": "Ingles o Tagalog",
+  "moreHomeBackupLabel": "Backup at ibalik",
+  "moreHomeBackupSub": "Cloud backup at lokal na snapshot",
+  "moreHomeHelpLabel": "Tulong",
+  "moreHomeHelpSub": "Sales, inventory, at suki credit workflow",
+  "moreHomeAboutLabel": "Tungkol sa SariSari",
+  "moreHomeAboutSub": "Bersyon, privacy, at mga pagkilala",
+
   "barcode": {
     "invalid": "Hindi parang barcode iyan. Mga numero lang, 8-14 ang haba.",
     "cta": {
@@ -258,4 +279,3 @@
     }
   }
 }
-

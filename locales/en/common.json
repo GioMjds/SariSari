@@ -144,6 +144,27 @@
   "utangTitle": "Utang",
   "reportsTitle": "Reports",
 
+  "moreHomeTitle": "More",
+  "moreHomeSubtitle": "Review, set up, and safeguard your store",
+  "moreHomeBusinessReviewSection": "Business review",
+  "moreHomeStoreSetupSection": "Store setup",
+  "moreHomeDataSafetySection": "Data and safety",
+  "moreHomeAppSection": "App",
+  "moreHomeReportsLabel": "Reports and insights",
+  "moreHomeReportsSub": "Sales, profit, and stock trends",
+  "moreHomeExpensesLabel": "Expenses and cash",
+  "moreHomeExpensesSub": "Operating costs and owner drawings",
+  "moreHomeStoreProfileLabel": "Store profile",
+  "moreHomeStoreProfileSub": "Store name and owner details",
+  "moreHomeLanguageLabel": "Language",
+  "moreHomeLanguageSub": "English or Tagalog",
+  "moreHomeBackupLabel": "Backup and restore",
+  "moreHomeBackupSub": "Cloud backup and local snapshots",
+  "moreHomeHelpLabel": "Help",
+  "moreHomeHelpSub": "Sales, inventory, and suki credit workflows",
+  "moreHomeAboutLabel": "About SariSari",
+  "moreHomeAboutSub": "Version, privacy, and acknowledgements",
+
   "barcode": {
     "invalid": "That doesn't look like a barcode. Digits only, 8–14 long.",
     "cta": {
@@ -258,4 +279,3 @@
     }
   }
 }
-

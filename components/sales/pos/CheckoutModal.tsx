@@ -313,7 +313,9 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
                       <StyledText
                         variant="extrabold"
                         className={`text-xs ${
-                          paymentType === 'credit' ? 'text-white' : 'text-ink-700'
+                          paymentType === 'credit'
+                            ? 'text-white'
+                            : 'text-ink-700'
                         }`}
                       >
                         Credit
@@ -331,10 +333,7 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
                 >
                   PURCHASED PRODUCTS ({cart.itemCount})
                 </StyledText>
-                <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-xs"
-                >
+                <StyledText variant="medium" className="text-ink-500 text-xs">
                   {totalPieces} pcs total
                 </StyledText>
               </View>
