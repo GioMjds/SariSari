@@ -112,7 +112,7 @@ export function useHomeDashboardData() {
           title: c.name,
           subtitle: `${formatPesos(c.outstanding_balance ?? 0)} overdue`,
           actionLabel: 'Collect',
-          targetPath: '/utang',
+          targetPath: '/(tabs)/customers/credit',
         });
       });
     }

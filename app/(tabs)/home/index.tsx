@@ -42,7 +42,7 @@ export default function OverviewScreen() {
     const map: Record<HomeRecommendation['destination'], Href> = {
       addProduct: '/(edit-forms)/add-product',
       inventory: '/inventory',
-      utang: '/utang',
+      utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
       reports: '/reports',
@@ -54,7 +54,7 @@ export default function OverviewScreen() {
     const map: Record<HomeDestination, Href> = {
       addProduct: '/(edit-forms)/add-product',
       inventory: '/inventory',
-      utang: '/utang',
+      utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
       reports: '/reports',
@@ -161,7 +161,7 @@ export default function OverviewScreen() {
             onNewSale={() => router.push('/(tabs)/sales/pos' as Href)}
             onAddProduct={() => router.push('/(edit-forms)/add-product' as any)}
             onAddStock={() => router.push('/inventory' as Href)}
-            onOpenCredits={() => router.push('/utang' as Href)}
+            onOpenCredits={() => router.push('/(tabs)/customers/credit' as Href)}
             onOpenReports={() => router.push('/reports' as Href)}
             overdueCount={stats.overdueCount}
           />

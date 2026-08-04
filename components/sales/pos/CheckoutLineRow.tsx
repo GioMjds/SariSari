@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
+import { formatPesos } from '@/lib/money';
 import type { NewSaleItem } from '@/types';
 
 export interface CheckoutLineRowProps {
@@ -40,7 +41,7 @@ export function CheckoutLineRow({
           {item.product_name}
         </StyledText>
         <StyledText variant="medium" className="text-ink-500 text-xs mt-0.5">
-          {unitName} · ₱{item.price} each
+          {unitName} · {formatPesos(item.price)} each
         </StyledText>
 
         {showConfirmRemove && (
