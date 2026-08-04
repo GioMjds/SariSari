@@ -111,11 +111,17 @@ export default function GastosKahaScreen() {
             >
               <FontAwesome5 name="arrow-left" size={14} color="#FBF7EE" />
             </Pressable>
-            <StyledText variant="extrabold" className="text-paper-50 text-xl flex-1">
+            <StyledText
+              variant="extrabold"
+              className="text-paper-50 text-xl flex-1"
+            >
               Gastos & Kaha Ledger
             </StyledText>
           </View>
-          <StyledText variant="medium" className="text-paper-200/80 text-xs pl-12">
+          <StyledText
+            variant="medium"
+            className="text-paper-200/80 text-xs pl-12"
+          >
             Daily store operating expenses & owner cash withdrawals audit log
           </StyledText>
         </View>
@@ -131,7 +137,10 @@ export default function GastosKahaScreen() {
               >
                 DATE RANGE FILTER
               </StyledText>
-              <StyledText variant="regular" className="text-[11px] text-ink-400">
+              <StyledText
+                variant="regular"
+                className="text-[11px] text-ink-400"
+              >
                 Tap preset or set custom dates
               </StyledText>
             </View>
@@ -149,7 +158,9 @@ export default function GastosKahaScreen() {
                 return (
                   <Pressable
                     key={pill.type}
-                    onPress={() => handlePresetChange(pill.type as DateRangeType)}
+                    onPress={() =>
+                      handlePresetChange(pill.type as DateRangeType)
+                    }
                     accessibilityRole="button"
                     accessibilityLabel={`Filter by ${pill.label}`}
                     className={`px-3 py-1.5 rounded-full border ${
@@ -225,7 +236,10 @@ export default function GastosKahaScreen() {
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Record Expense
               </StyledText>
-              <StyledText variant="medium" className="text-paper-50/80 text-[10px] mt-0.5">
+              <StyledText
+                variant="medium"
+                className="text-paper-50/80 text-[10px] mt-0.5"
+              >
                 Store Operating Gastos
               </StyledText>
             </Pressable>
@@ -238,7 +252,10 @@ export default function GastosKahaScreen() {
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Record Drawing
               </StyledText>
-              <StyledText variant="medium" className="text-paper-50/80 text-[10px] mt-0.5">
+              <StyledText
+                variant="medium"
+                className="text-paper-50/80 text-[10px] mt-0.5"
+              >
                 Owner Cash Take-out
               </StyledText>
             </Pressable>
@@ -259,7 +276,10 @@ export default function GastosKahaScreen() {
                 size="md"
                 variant="danger"
               />
-              <StyledText variant="regular" className="text-ink-400 text-[10px] mt-1">
+              <StyledText
+                variant="regular"
+                className="text-ink-400 text-[10px] mt-1"
+              >
                 Deducted from gross profit
               </StyledText>
             </View>
@@ -277,7 +297,10 @@ export default function GastosKahaScreen() {
                 variant="default"
                 className="text-cinnamon-700"
               />
-              <StyledText variant="regular" className="text-ink-400 text-[10px] mt-1">
+              <StyledText
+                variant="regular"
+                className="text-ink-400 text-[10px] mt-1"
+              >
                 Excluded from operating profit
               </StyledText>
             </View>
@@ -301,7 +324,9 @@ export default function GastosKahaScreen() {
                   variant="medium"
                   className="text-ink-400 text-xs text-center mt-1 px-4"
                 >
-                  No gastos or owner drawings found for this period. Tap 'Record Expense' or 'Record Drawing' above to add your first entry.
+                  No gastos or owner drawings found for this period. Tap
+                  &quot;Record Expense&quot; or &quot;Record Drawing&quot; above
+                  to add your first entry.
                 </StyledText>
               </View>
             }
@@ -389,6 +414,3 @@ export default function GastosKahaScreen() {
     </SafeAreaView>
   );
 }
-
-
-

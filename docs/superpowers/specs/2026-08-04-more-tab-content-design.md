@@ -1,7 +1,8 @@
 # More Tab Content Design
 
-**Date:** 2026-08-04  
-**Status:** Approved  
+**Date:** 2026-08-04
+
+**Status:** Approved
 **Scope:** Information architecture and route ownership for the More tab.
 
 ## Decision

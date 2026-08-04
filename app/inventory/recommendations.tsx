@@ -29,7 +29,6 @@ export default function RecommendationsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
 
-  // Queries & Mutations
   const {
     data: recommendations,
     isLoading,
@@ -38,13 +37,11 @@ export default function RecommendationsScreen() {
   const savePlanMutation = useSaveReorderPlan();
   const deletePlanMutation = useDeleteReorderPlan();
 
-  // Adjust Modal state
   const [adjustingProduct, setAdjustingProduct] =
     useState<ReorderRecommendation | null>(null);
   const [adjustedQtyText, setAdjustedQtyText] = useState('');
   const [adjustError, setAdjustError] = useState('');
 
-  // Tab calculations
   const reorderList = useMemo(() => {
     if (!recommendations) return [];
     return recommendations.filter((rec) => {
@@ -171,7 +168,6 @@ export default function RecommendationsScreen() {
     } as Href);
   };
 
-  // Render Item for Reorder Tab
   const renderReorderItem = ({ item }: { item: ReorderRecommendation }) => {
     const showEstimatedSpend =
       item.costPrice !== null && item.suggestedQuantity > 0;
