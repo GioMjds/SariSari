@@ -1,5 +1,5 @@
-import { SettingsScreen } from '@/components/settings/SettingsScreen';
+import { MoreHomeScreen } from '@/components/more';
 
 export default function MoreTab() {
-  return <SettingsScreen />;
+  return <MoreHomeScreen />;
 }

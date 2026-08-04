@@ -15,9 +15,6 @@ export const PRIMARY_TAB_PATHS = [
   '/inventory',
   '/customers',
   '/more',
-  '/utang',
-  '/reports',
-  '/sell',
 ] as const;
 
 export function isPrimaryTabPath(path: Href): boolean {
@@ -72,12 +69,7 @@ export const INVENTORY_SUB_TABS = [
   'analytics',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
-export const MORE_SUB_TABS = [
-  'reports',
-  'insights',
-  'sync',
-  'settings',
-] as const;
+export const MORE_SUB_TABS = [] as const;
 
 export type HomeSubTab = (typeof HOME_SUB_TABS)[number];
 export type SalesSubTab = (typeof SALES_SUB_TABS)[number];

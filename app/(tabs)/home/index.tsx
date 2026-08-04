@@ -19,6 +19,15 @@ import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { formatCurrency } from '@/utils';
 
+const routes = {
+  addProduct: '/(edit-forms)/add-product',
+  inventory: '/inventory',
+  utang: '/(tabs)/customers/credit',
+  cashSession: '/(edit-forms)/cash-session',
+  newSale: '/(tabs)/sales/pos',
+  reports: '/(tabs)/more/reports',
+} satisfies Record<string, Href>;
+
 export default function OverviewScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
@@ -45,7 +54,7 @@ export default function OverviewScreen() {
       utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
-      reports: '/reports',
+      reports: '/(tabs)/more/reports',
     };
     router.push(map[rec.destination] as Href);
   };
@@ -57,7 +66,7 @@ export default function OverviewScreen() {
       utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
-      reports: '/reports',
+      reports: '/(tabs)/more/reports',
     };
     router.push(map[destination] as Href);
   };
@@ -82,8 +91,8 @@ export default function OverviewScreen() {
         <DashboardErrorState onRetry={refetchAll} />
       ) : products.length === 0 && stats.transactionCount === 0 ? (
         <DashboardEmptyState
-          onAddProduct={() => router.push('/(edit-forms)/add-product' as Href)}
-          onStartFirstSale={() => router.push('/(tabs)/sales/pos' as Href)}
+          onAddProduct={() => router.push(routes.addProduct)}
+          onStartFirstSale={() => router.push(routes.newSale)}
         />
       ) : (
         <>
@@ -133,12 +142,11 @@ export default function OverviewScreen() {
             lowStockCount={stats.lowStockCount}
             totalCredits={stats.overdueAmount}
             creditCustomersCount={stats.overdueCount}
-            onDetailsPress={() => router.push('/reports' as Href)}
+            onDetailsPress={() => router.push(routes.reports)}
             onKpiPress={(target) => {
-              if (target === 'inventory') router.push('/inventory' as Href);
-              else if (target === 'cash')
-                router.push('/(edit-forms)/cash-session' as Href);
-              else router.push('/reports' as Href);
+              if (target === 'inventory') router.push(routes.inventory);
+              else if (target === 'cash') router.push(routes.cashSession);
+              else router.push(routes.reports);
             }}
           />
 
@@ -152,17 +160,17 @@ export default function OverviewScreen() {
           {stats.lowStockCount > 0 && (
             <DashboardStockAlert
               lowStockCount={stats.lowStockCount}
-              onRestock={() => router.push('/inventory' as Href)}
+              onRestock={() => router.push(routes.inventory)}
             />
           )}
 
           {/* 5. Quick Actions */}
           <DashboardQuickActions
-            onNewSale={() => router.push('/(tabs)/sales/pos' as Href)}
-            onAddProduct={() => router.push('/(edit-forms)/add-product' as any)}
-            onAddStock={() => router.push('/inventory' as Href)}
-            onOpenCredits={() => router.push('/(tabs)/customers/credit' as Href)}
-            onOpenReports={() => router.push('/reports' as Href)}
+            onNewSale={() => router.push(routes.newSale)}
+            onAddProduct={() => router.push(routes.addProduct)}
+            onAddStock={() => router.push(routes.inventory)}
+            onOpenCredits={() => router.push(routes.utang)}
+            onOpenReports={() => router.push(routes.reports)}
             overdueCount={stats.overdueCount}
           />
 

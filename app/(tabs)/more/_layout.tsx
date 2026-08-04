@@ -1,2 +1,5 @@
+import { Slot } from 'expo-router';
 
-export default function MoreLayout() {}
+export default function MoreLayout() {
+  return <Slot />;
+}
