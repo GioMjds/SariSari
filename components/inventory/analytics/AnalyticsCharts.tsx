@@ -22,14 +22,6 @@ export function AnalyticsCharts() {
   const { getAllProductsQuery } = useProducts();
   const overview = useInventoryOverview();
 
-  if (overview.isLoading) {
-    return <AnalyticsSkeleton />;
-  }
-
-  if (overview.error) {
-    return <InventoryErrorState onRetry={() => overview.refetch()} />;
-  }
-
   const products = useMemo(
     () => getAllProductsQuery.data ?? [],
     [getAllProductsQuery.data],
@@ -91,6 +83,14 @@ export function AnalyticsCharts() {
       .map((c) => `${c.text}: ${formatPesos(c.value)}`)
       .join(', ');
   }, [byValue]);
+
+  if (overview.isLoading) {
+    return <AnalyticsSkeleton />;
+  }
+
+  if (overview.error) {
+    return <InventoryErrorState onRetry={() => overview.refetch()} />;
+  }
 
   return (
     <ScrollView

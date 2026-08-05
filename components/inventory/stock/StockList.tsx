@@ -53,6 +53,9 @@ export function StockList({
       data={products}
       keyExtractor={(item) => String(item.id)}
       contentContainerClassName="pt-3 pb-32"
+      contentContainerStyle={
+        products.length <= 2 ? { minHeight: 360 } : undefined
+      }
       renderItem={renderItem}
       getItemLayout={getItemLayout}
       initialNumToRender={10}

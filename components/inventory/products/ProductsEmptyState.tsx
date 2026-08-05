@@ -48,7 +48,7 @@ export function ProductsEmptyState({
       {/* Top perforation */}
       <View className="relative h-0">
         <View
-          className="absolute left-0 right-0 h-3 flex-row justify-between"
+          className="absolute left-0 right-0 h-3 flex-row justify-between px-1"
           style={{ bottom: -6 }}
         >
           {Array.from({ length: PERFORATION_COUNT }).map((_, i) => (
@@ -141,7 +141,7 @@ export function ProductsEmptyState({
       {/* Bottom perforation */}
       <View className="relative h-0">
         <View
-          className="absolute left-0 right-0 h-3 flex-row justify-between"
+          className="absolute left-0 right-0 h-3 flex-row justify-between px-1"
           style={{ top: -6 }}
         >
           {Array.from({ length: PERFORATION_COUNT }).map((_, i) => (

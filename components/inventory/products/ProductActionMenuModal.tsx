@@ -9,7 +9,6 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
-import { router } from 'expo-router';
 
 export interface ProductActionMenuModalProps {
   visible: boolean;
