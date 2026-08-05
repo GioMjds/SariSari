@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import {
   ProductsList,
   ProductsSkeleton,
@@ -35,7 +35,7 @@ function getEmptyVariant(
 export default function ProductsScreen() {
   const router = useRouter();
   const selection = useInventorySelection();
-  const { getAllProductsQuery, bulkDeleteProductsMutation } = useProducts();
+  const { bulkDeleteProductsMutation } = useProducts();
   const addToast = useToastStore((s) => s.addToast);
   const [filter, setFilter] = useState<ProductsFilter>('all');
   const [moveModalOpen, setMoveModalOpen] = useState(false);
@@ -47,29 +47,12 @@ export default function ProductsScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
 
-  const items = useMemo(
-    () => getAllProductsQuery.data ?? [],
-    [getAllProductsQuery.data],
+  const productsQuery = usePaginatedProducts(searchTerm, filter);
+
+  const products = useMemo(
+    () => productsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [productsQuery.data],
   );
-
-  const filtered = useMemo(() => {
-    return items.filter((p) => {
-      if (filter === 'in_stock') return p.quantity > 0;
-      if (filter === 'low') return p.quantity > 0 && p.quantity <= 5;
-      if (filter === 'out') return p.quantity === 0;
-      if (filter === 'new')
-        return Date.now() - new Date(p.created_at).getTime() < 7 * 86400_000;
-
-      if (searchTerm) {
-        const haystack = [p.name, p.sku, p.barcode, p.category]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(searchTerm)) return false;
-      }
-      return true;
-    });
-  }, [items, filter, searchTerm]);
 
   const selectedIds = useMemo(
     () => Array.from(selection.selectedIds),
@@ -131,22 +114,22 @@ export default function ProductsScreen() {
 
   const handleMenuAdjustStock = useCallback(
     (id: number) => {
-      const p = items.find((x) => x.id === id) ?? null;
+      const p = products.find((x) => x.id === id) ?? null;
       setMenuProduct(null);
       setFormProduct(p);
       setFormType('adjustment');
     },
-    [items],
+    [products],
   );
 
   const handleMenuMarkDamaged = useCallback(
     (id: number) => {
-      const p = items.find((x) => x.id === id) ?? null;
+      const p = products.find((x) => x.id === id) ?? null;
       setMenuProduct(null);
       setFormProduct(p);
       setFormType('damaged');
     },
-    [items],
+    [products],
   );
 
   const handleMenuViewLedger = useCallback(
@@ -174,17 +157,17 @@ export default function ProductsScreen() {
     [bulkDeleteProductsMutation, addToast],
   );
 
-  if (getAllProductsQuery.isLoading) return <ProductsSkeleton />;
-  if (getAllProductsQuery.error) {
+  if (productsQuery.isLoading) return <ProductsSkeleton />;
+  if (productsQuery.error) {
     return (
-      <InventoryErrorState onRetry={() => getAllProductsQuery.refetch?.()} />
+      <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />
     );
   }
 
   return (
     <View className="flex-1 bg-paper-200">
       <ProductsFilterChips value={filter} onChange={setFilter} />
-      {filtered.length === 0 ? (
+      {products.length === 0 ? (
         <ProductsEmptyState
           variant={emptyVariant}
           searchTerm={searchTerm}
@@ -194,10 +177,17 @@ export default function ProductsScreen() {
         />
       ) : (
         <ProductsList
-          products={filtered}
+          products={products}
           onPress={handlePress}
           onLongPress={handleLongPress}
           onActionPress={handleActionPress}
+          isFetchingNextPage={productsQuery.isFetchingNextPage}
+          hasNextPage={productsQuery.hasNextPage}
+          onEndReached={() => {
+            if (!productsQuery.isFetchingNextPage && productsQuery.hasNextPage) {
+              productsQuery.fetchNextPage();
+            }
+          }}
         />
       )}
       {selection.selectMode ? (

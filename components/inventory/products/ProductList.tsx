@@ -1,14 +1,18 @@
 import React, { useCallback } from 'react';
-import { FlatList, ListRenderItemInfo } from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItemInfo, View } from 'react-native';
 import { MotiView } from 'moti';
+import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
 import type { Product } from '@/types/products.types';
 
-interface Props {
+export interface ProductsListProps {
   products: Product[];
   onPress: (id: number) => void;
   onLongPress?: (id: number) => void;
   onActionPress?: (product: Product) => void;
+  isFetchingNextPage?: boolean;
+  hasNextPage?: boolean;
+  onEndReached?: () => void;
 }
 
 export function ProductsList({
@@ -16,7 +20,10 @@ export function ProductsList({
   onPress,
   onLongPress,
   onActionPress,
-}: Props) {
+  isFetchingNextPage,
+  hasNextPage,
+  onEndReached,
+}: ProductsListProps) {
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Product>) => (
       <MotiView
@@ -52,6 +59,29 @@ export function ProductsList({
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
+      onEndReached={() => {
+        if (!isFetchingNextPage && hasNextPage && onEndReached) {
+          onEndReached();
+        }
+      }}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View className="py-4 items-center justify-center">
+            <ActivityIndicator size="small" color="#623418" />
+            <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
+              Loading more...
+            </StyledText>
+          </View>
+        ) : !hasNextPage && products.length > 0 ? (
+          <View className="py-4 items-center justify-center">
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              End of list
+            </StyledText>
+          </View>
+        ) : null
+      }
     />
   );
 }
+
