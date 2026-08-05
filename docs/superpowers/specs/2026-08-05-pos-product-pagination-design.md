@@ -109,7 +109,9 @@ it.
 
 ### Hook layer (`hooks/useProducts.tsx`)
 
-Add a sibling query, do not remove the existing one:
+Add `productKeys.infinite` and a new hook `usePaginatedProducts(search)` that
+owns the infinite query. Do not change the existing `useProducts()` return
+shape — other callers still depend on it.
 
 ```ts
 export const productKeys = {
@@ -118,10 +120,8 @@ export const productKeys = {
     [...productKeys.all, 'infinite', search] as const,
 };
 
-export function useProducts() {
-  // ...existing code unchanged...
-
-  const getProductsInfiniteQuery = useInfiniteQuery({
+export function usePaginatedProducts(search: string) {
+  return useInfiniteQuery({
     queryKey: productKeys.infinite(search),
     initialPageParam: null as ProductsPageCursor | null,
     queryFn: ({ pageParam }) =>
@@ -129,21 +129,13 @@ export function useProducts() {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     staleTime: 60_000,
   });
-
-  return {
-    // ...existing returns...
-    getProductsInfiniteQuery,
-  };
 }
 ```
 
-Wait — `useInfiniteQuery` needs `search` passed in. The cleanest split:
-
-- `useProducts()` keeps its current shape (no `search` arg).
-- A small new hook `usePaginatedProducts(search: string)` lives in
-  `hooks/useProducts.tsx` (or a sibling file) and owns the infinite query.
-  It exposes `{ data, isLoading, isFetchingNextPage, hasNextPage,
-  fetchNextPage, error }`.
+The hook lives next to `useProducts` in `hooks/useProducts.tsx` (or a
+sibling file in `hooks/`). It exposes the standard
+`useInfiniteQuery` shape so callers can read `data`, `isLoading`,
+`isFetchingNextPage`, `hasNextPage`, `fetchNextPage`, and `error`.
 
 `useCart()` swaps `getAllProductsQuery` for `usePaginatedProducts(search)`,
 where `search` is the current search text from the screen's `useForm`.
