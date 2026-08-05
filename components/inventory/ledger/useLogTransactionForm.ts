@@ -7,6 +7,7 @@ export type AdjustmentSign = 'positive' | 'negative';
 
 interface UseLogTransactionFormOptions {
   onSuccessCallback?: () => void;
+  initialType?: InventoryEventType;
 }
 
 interface UseLogTransactionFormReturn {
@@ -29,7 +30,7 @@ interface UseLogTransactionFormReturn {
   isValid: boolean;
   isPending: boolean;
   hasError: boolean;
-  /** Bump the counter so <LogTransactionForm> can re-trigger its shake. */
+
   shakeTrigger: number;
 
   // Handlers
@@ -42,9 +43,9 @@ export function useLogTransactionForm(
   options: UseLogTransactionFormOptions = {},
 ): UseLogTransactionFormReturn {
   const insertInventory = useInsertInventory();
-  const { onSuccessCallback } = options;
+  const { onSuccessCallback, initialType = 'restock' } = options;
 
-  const [type, setType] = useState<InventoryEventType>('restock');
+  const [type, setType] = useState<InventoryEventType>(initialType);
   const [quantity, setQuantity] = useState<number>(1);
   const [note, setNote] = useState<string>('');
   const [adjustmentSign, setAdjustmentSign] =
@@ -52,8 +53,6 @@ export function useLogTransactionForm(
   const [unitMode, setUnitMode] = useState<'retail' | 'wholesale'>('retail');
 
   const [shakeTrigger, setShakeTrigger] = useState(0);
-
-  // ─── Derived values ─────────────────────────────────────────────
 
   const currentQuantity = product.quantity;
 
@@ -84,13 +83,13 @@ export function useLogTransactionForm(
   // ─── Reset on mount / when the product identity changes ─────────
 
   const reset = useCallback(() => {
-    setType('restock');
+    setType(initialType);
     setQuantity(1);
     setNote('');
     setAdjustmentSign('positive');
     setUnitMode('retail');
     setShakeTrigger(0);
-  }, []);
+  }, [initialType]);
 
   useEffect(() => {
     reset();

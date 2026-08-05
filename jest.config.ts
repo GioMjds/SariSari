@@ -4,6 +4,10 @@ export default {
 		'<rootDir>/tests/**/*.test.ts',
 		'<rootDir>/tests/**/*.test.tsx',
 		'<rootDir>/utils/__tests__/**/*.test.ts',
+		'<rootDir>/components/**/__tests__/**/*.test.ts',
+		'<rootDir>/components/**/__tests__/**/*.test.tsx',
+		'<rootDir>/app/**/__tests__/**/*.test.ts',
+		'<rootDir>/app/**/__tests__/**/*.test.tsx',
 	],
 	// Override the preset's react-native-env so we resolve jest-environment-node
 	// from the top-level node_modules. React Native 0.81 ships a nested 29.7.0
