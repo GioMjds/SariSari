@@ -54,15 +54,22 @@ export function useReceiveStock() {
   return useMutation<
     void,
     Error,
-    { productId: number; qty: number; note?: string; unitCost?: number }
+    {
+      productId: number;
+      qty: number;
+      note?: string;
+      unitCost?: number;
+      supplierId?: number | string | null;
+    }
   >({
-    mutationFn: async ({ productId, qty, note, unitCost }) => {
+    mutationFn: async ({ productId, qty, note, unitCost, supplierId }) => {
       await insertInventoryTransaction({
         product_id: productId,
         type: 'restock',
         quantity: qty,
         note: note ?? null,
         unit_cost: unitCost ?? null,
+        supplier_id: supplierId ?? null,
       });
     },
     onMutate: async ({ productId, qty }) => {
