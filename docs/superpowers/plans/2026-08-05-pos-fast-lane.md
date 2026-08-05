@@ -525,12 +525,12 @@ const styles = StyleSheet.create({
 - [ ] **Step 3: Embed `<FastLaneBar>` and `<ScanToastBanner>` in `app/(tabs)/sales/pos.tsx`**
       Connect `FastLaneBar` at the top of POS search, and trigger `ScanToastBanner` when `useBarcodeResolver` resolves scanned products.
 
-- [ ] **Step 4: Run full TypeScript check**
+- [x] **Step 4: Run full TypeScript check**
 
 Run: `npx tsc --noEmit`
 Expected: PASS with 0 errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add components/pos/ScanToastBanner.tsx components/pos/ProductSearchCatalog.tsx app/\(tabs\)/sales/pos.tsx
