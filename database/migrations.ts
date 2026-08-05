@@ -1,15 +1,19 @@
 import { db } from '../configs/sqlite';
 
 export async function runMigrations() {
-  const [{ user_version: currentVersion }] = await db.getAllAsync<{ user_version: number }>('PRAGMA user_version');
+  const [{ user_version: currentVersion }] = await db.getAllAsync<{
+    user_version: number;
+  }>('PRAGMA user_version');
   console.log(`Current database version: ${currentVersion}`);
 
   if (currentVersion < 2) {
     console.log('Running migration to version 2 (Inventory Events)...');
     await db.withTransactionAsync(async () => {
       // Check if note column already exists to prevent error
-      const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(inventory_transactions)');
-      const hasNote = columns.some(c => c.name === 'note');
+      const columns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(inventory_transactions)',
+      );
+      const hasNote = columns.some((c) => c.name === 'note');
 
       if (!hasNote && columns.length > 0) {
         // Run migration statements
@@ -38,7 +42,9 @@ export async function runMigrations() {
         `);
 
         await db.execAsync('DROP TABLE inventory_transactions;');
-        await db.execAsync('ALTER TABLE inventory_transactions_new RENAME TO inventory_transactions;');
+        await db.execAsync(
+          'ALTER TABLE inventory_transactions_new RENAME TO inventory_transactions;',
+        );
         await db.execAsync('PRAGMA foreign_keys=ON;');
       }
 
@@ -105,15 +111,33 @@ export async function runMigrations() {
   if (currentVersion < 4) {
     console.log('Running migration to version 4 (Performance Indexes)...');
     await db.withTransactionAsync(async () => {
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_customer_id ON credit_transactions(customer_id);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_date ON credit_transactions(date);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_credit_transactions_status ON credit_transactions(status);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);');
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);');
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_credit_transactions_customer_id ON credit_transactions(customer_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_credit_transactions_date ON credit_transactions(date);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_credit_transactions_status ON credit_transactions(status);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_products_quantity ON products(quantity);',
+      );
       await db.execAsync('PRAGMA user_version = 4;');
     });
     console.log('Database migrated to version 4.');
@@ -121,27 +145,16 @@ export async function runMigrations() {
 
   if (currentVersion < 5) {
     console.log('Running migration to version 5 (Product barcode column)...');
-    // The version gate is the primary safety net against running the
-    // ALTER TABLE twice. The PRAGMA probe below is a belt-and-suspenders
-    // check that runs even on a fresh DB whose `user_version` jumps
-    // straight to 5 (e.g. a developer who resets the version after a
-    // bad migration). With both guards in place, `ALTER TABLE ADD
-    // COLUMN barcode` is safe to call once.
     await db.withTransactionAsync(async () => {
       const productColumns = await db.getAllAsync<{ name: string }>(
         'PRAGMA table_info(products)',
       );
-      const hasBarcodeColumn = productColumns.some(
-        (c) => c.name === 'barcode',
-      );
+      const hasBarcodeColumn = productColumns.some((c) => c.name === 'barcode');
 
       if (!hasBarcodeColumn) {
         await db.execAsync('ALTER TABLE products ADD COLUMN barcode TEXT;');
       }
 
-      // Partial unique index: only enforced when barcode is non-null,
-      // so legacy rows with `barcode IS NULL` continue to coexist and
-      // multiple "no barcode recorded" products are allowed.
       await db.execAsync(
         'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode) WHERE barcode IS NOT NULL;',
       );
@@ -152,14 +165,10 @@ export async function runMigrations() {
   }
 
   if (currentVersion < 6) {
-    console.log('Running migration to version 6 (Aging-bucket composite index)...');
+    console.log(
+      'Running migration to version 6 (Aging-bucket composite index)...',
+    );
     await db.withTransactionAsync(async () => {
-      // The getAgingBuckets query filters on status != 'paid' then ranges on
-      // date.  A composite (status, date) index lets SQLite satisfy both
-      // predicates with a single index range scan instead of a full-table scan.
-      // Note: SQLite cannot use the plain idx_credit_transactions_date index
-      // when a CAST/julianday expression wraps the column, which is why the
-      // query was rewritten to use sargable date BETWEEN … clauses first.
       await db.execAsync(
         'CREATE INDEX IF NOT EXISTS idx_credit_transactions_status_date ON credit_transactions(status, date);',
       );
@@ -170,7 +179,9 @@ export async function runMigrations() {
   }
 
   if (currentVersion < 7) {
-    console.log('Running migration to version 7 (Supplier Directory & Purchase Costing)...');
+    console.log(
+      'Running migration to version 7 (Supplier Directory & Purchase Costing)...',
+    );
     await db.withTransactionAsync(async () => {
       // 1. Create table suppliers
       await db.execAsync(`
@@ -182,27 +193,45 @@ export async function runMigrations() {
           created_at INTEGER NOT NULL
         );
       `);
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);');
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);',
+      );
 
       // 2. Add supplier_id column to products
-      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
-      const hasSupplierId = productColumns.some(c => c.name === 'supplier_id');
+      const productColumns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(products)',
+      );
+      const hasSupplierId = productColumns.some(
+        (c) => c.name === 'supplier_id',
+      );
       if (!hasSupplierId) {
-        await db.execAsync('ALTER TABLE products ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;');
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;',
+        );
       }
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_supplier_id ON products(supplier_id);');
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_products_supplier_id ON products(supplier_id);',
+      );
 
       // 3. Add unit_cost and supplier_id columns to inventory_transactions
-      const invCols = await db.getAllAsync<{ name: string }>('PRAGMA table_info(inventory_transactions)');
-      const hasUnitCost = invCols.some(c => c.name === 'unit_cost');
+      const invCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(inventory_transactions)',
+      );
+      const hasUnitCost = invCols.some((c) => c.name === 'unit_cost');
       if (!hasUnitCost) {
-        await db.execAsync('ALTER TABLE inventory_transactions ADD COLUMN unit_cost REAL;');
+        await db.execAsync(
+          'ALTER TABLE inventory_transactions ADD COLUMN unit_cost REAL;',
+        );
       }
-      const hasTxSupplierId = invCols.some(c => c.name === 'supplier_id');
+      const hasTxSupplierId = invCols.some((c) => c.name === 'supplier_id');
       if (!hasTxSupplierId) {
-        await db.execAsync('ALTER TABLE inventory_transactions ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;');
+        await db.execAsync(
+          'ALTER TABLE inventory_transactions ADD COLUMN supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL;',
+        );
       }
-      await db.execAsync('CREATE INDEX IF NOT EXISTS idx_inventory_transactions_supplier_id ON inventory_transactions(supplier_id);');
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_inventory_transactions_supplier_id ON inventory_transactions(supplier_id);',
+      );
 
       await db.execAsync('PRAGMA user_version = 7;');
     });
@@ -212,8 +241,10 @@ export async function runMigrations() {
   if (currentVersion < 8) {
     console.log('Running migration to version 8 (Product image URI)...');
     await db.withTransactionAsync(async () => {
-      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
-      const hasImageUri = productColumns.some(c => c.name === 'image_uri');
+      const productColumns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(products)',
+      );
+      const hasImageUri = productColumns.some((c) => c.name === 'image_uri');
       if (!hasImageUri) {
         await db.execAsync('ALTER TABLE products ADD COLUMN image_uri TEXT;');
       }
@@ -223,29 +254,59 @@ export async function runMigrations() {
   }
 
   if (currentVersion < 9) {
-    console.log('Running migration to version 9 (Tingi vs. Pakyaw packaging units)...');
+    console.log(
+      'Running migration to version 9 (Tingi vs. Pakyaw packaging units)...',
+    );
     await db.withTransactionAsync(async () => {
-      const productColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
-      const hasRetailUnit = productColumns.some((c) => c.name === 'retail_unit_name');
+      const productColumns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(products)',
+      );
+      const hasRetailUnit = productColumns.some(
+        (c) => c.name === 'retail_unit_name',
+      );
       if (!hasRetailUnit) {
-        await db.execAsync("ALTER TABLE products ADD COLUMN retail_unit_name TEXT NOT NULL DEFAULT 'Pc';");
-        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_unit_name TEXT;');
-        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_price INTEGER;');
-        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_cost_price INTEGER;');
-        await db.execAsync('ALTER TABLE products ADD COLUMN conversion_factor INTEGER;');
-        await db.execAsync('ALTER TABLE products ADD COLUMN wholesale_barcode TEXT;');
         await db.execAsync(
-          'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;'
+          "ALTER TABLE products ADD COLUMN retail_unit_name TEXT NOT NULL DEFAULT 'Pc';",
+        );
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN wholesale_unit_name TEXT;',
+        );
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN wholesale_price INTEGER;',
+        );
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN wholesale_cost_price INTEGER;',
+        );
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN conversion_factor INTEGER;',
+        );
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN wholesale_barcode TEXT;',
+        );
+        await db.execAsync(
+          'CREATE UNIQUE INDEX IF NOT EXISTS idx_products_wholesale_barcode ON products(wholesale_barcode) WHERE wholesale_barcode IS NOT NULL;',
         );
       }
 
-      const saleItemColumns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(sale_items)');
-      const hasSoldUnitName = saleItemColumns.some((c) => c.name === 'sold_unit_name');
+      const saleItemColumns = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(sale_items)',
+      );
+      const hasSoldUnitName = saleItemColumns.some(
+        (c) => c.name === 'sold_unit_name',
+      );
       if (!hasSoldUnitName) {
-        await db.execAsync('ALTER TABLE sale_items ADD COLUMN sold_unit_name TEXT;');
-        await db.execAsync('ALTER TABLE sale_items ADD COLUMN sold_unit_qty INTEGER;');
-        await db.execAsync('ALTER TABLE sale_items ADD COLUMN conversion_factor INTEGER;');
-        await db.execAsync('ALTER TABLE sale_items ADD COLUMN cost_price INTEGER;');
+        await db.execAsync(
+          'ALTER TABLE sale_items ADD COLUMN sold_unit_name TEXT;',
+        );
+        await db.execAsync(
+          'ALTER TABLE sale_items ADD COLUMN sold_unit_qty INTEGER;',
+        );
+        await db.execAsync(
+          'ALTER TABLE sale_items ADD COLUMN conversion_factor INTEGER;',
+        );
+        await db.execAsync(
+          'ALTER TABLE sale_items ADD COLUMN cost_price INTEGER;',
+        );
       }
 
       await db.execAsync('PRAGMA user_version = 9;');
@@ -309,7 +370,9 @@ export async function runMigrations() {
   }
 
   if (currentVersion < 11) {
-    console.log('Running migration to version 11 (Universal Product Catalog)...');
+    console.log(
+      'Running migration to version 11 (Universal Product Catalog)...',
+    );
     await db.withTransactionAsync(async () => {
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS product_catalog (
@@ -329,11 +392,11 @@ export async function runMigrations() {
   }
 
   if (currentVersion < 12) {
-  console.log(
-    'Running migration to version 12 (Gastos & Kaha Financial Entries)...',
-  );
-  await db.withTransactionAsync(async () => {
-    await db.execAsync(`
+    console.log(
+      'Running migration to version 12 (Gastos & Kaha Financial Entries)...',
+    );
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
         CREATE TABLE IF NOT EXISTS financial_entries (
           id TEXT PRIMARY KEY,
           entry_type TEXT NOT NULL CHECK(entry_type IN ('expense', 'owner_drawing')),
@@ -351,12 +414,12 @@ export async function runMigrations() {
         CREATE INDEX IF NOT EXISTS idx_financial_entries_date ON financial_entries(business_date);
       `);
 
-    const hasCashEntries = await db.getFirstAsync<{ name: string }>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='cash_entries'",
-    );
+      const hasCashEntries = await db.getFirstAsync<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='cash_entries'",
+      );
 
-    if (hasCashEntries) {
-      await db.execAsync(`
+      if (hasCashEntries) {
+        await db.execAsync(`
           INSERT OR IGNORE INTO financial_entries (
             id, entry_type, amount, business_date, expense_category, note, created_at, updated_at
           )
@@ -372,15 +435,17 @@ export async function runMigrations() {
           FROM cash_entries
           WHERE type IN ('expense', 'owner_drawing');
         `);
-    }
+      }
 
-    await db.execAsync('PRAGMA user_version = 12;');
-  });
-  console.log('Database migrated to version 12.');
-}
+      await db.execAsync('PRAGMA user_version = 12;');
+    });
+    console.log('Database migrated to version 12.');
+  }
 
   if (currentVersion < 13) {
-    console.log('Running migration to version 13 (Financial Entry Receipts)...');
+    console.log(
+      'Running migration to version 13 (Financial Entry Receipts)...',
+    );
     await db.withTransactionAsync(async () => {
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS financial_entry_receipts (
@@ -397,5 +462,36 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 13.');
   }
-}
 
+  if (currentVersion < 14) {
+    console.log('Running migration to version 14 (POS Fast Lane)...');
+    await db.withTransactionAsync(async () => {
+      const productCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(products)',
+      );
+      const hasFavorite = productCols.some((c) => c.name === 'is_favorite');
+      const hasLastSold = productCols.some((c) => c.name === 'last_sold_at');
+
+      if (!hasFavorite) {
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;',
+        );
+      }
+      if (!hasLastSold) {
+        await db.execAsync(
+          'ALTER TABLE products ADD COLUMN last_sold_at TEXT;',
+        );
+      }
+
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_products_favorite ON products(is_favorite);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_products_last_sold ON products(last_sold_at);',
+      );
+
+      await db.execAsync('PRAGMA user_version = 14;');
+    });
+    console.log('Database migrated to version 14.');
+  }
+}

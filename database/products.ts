@@ -2,6 +2,12 @@ import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
 import { insertCatalogProductIfMissing } from './catalog';
 
+export interface FastLaneProduct extends Product {
+  is_favorite: number;
+  last_sold_at?: string | null;
+  units_sold_14d?: number;
+}
+
 export const initProductsTable = async () => {
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS products (
@@ -409,6 +415,45 @@ export const getProductsPage = async (params: {
 
   return { items: rows, nextCursor };
 };
+
+export async function getFastLaneProducts({
+  limit = 15,
+}: { limit?: number } = {}): Promise<FastLaneProduct[]> {
+  const sql = `
+    WITH favorite_items AS (
+      SELECT p.*, 1 AS is_fav_priority, 0 AS units_sold_14d
+      FROM products p
+      WHERE p.is_favorite = 1
+    ),
+    top_sold_items AS (
+      SELECT p.*, 0 AS is_fav_priority, SUM(si.quantity) AS units_sold_14d
+      FROM products p
+      JOIN sale_items si ON si.product_id = p.id
+      JOIN sales s ON s.id = si.sale_id
+      WHERE s.timestamp >= datetime('now', '-14 days')
+        AND p.is_favorite = 0
+      GROUP BY p.id
+      ORDER BY units_sold_14d DESC
+    )
+    SELECT * FROM (
+      SELECT * FROM favorite_items
+      UNION ALL
+      SELECT * FROM top_sold_items
+    )
+    LIMIT ?;
+  `;
+  return await db.getAllAsync<FastLaneProduct>(sql, [limit]);
+}
+
+export async function toggleProductFavorite(
+  productId: number,
+  isFavorite: boolean,
+): Promise<void> {
+  await db.runAsync(
+    'UPDATE products SET is_favorite = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;',
+    [isFavorite ? 1 : 0, productId],
+  );
+}
 
 export const deleteProduct = async (id: number) => {
   await db.runAsync('DELETE FROM products WHERE id = ?', [id]);

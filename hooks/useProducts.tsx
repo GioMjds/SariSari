@@ -9,8 +9,10 @@ import {
   updateProduct,
   updateProductCategory,
   getProductsPage,
+  getFastLaneProducts,
   type ProductsPageCursor,
   type ProductFilterType,
+  toggleProductFavorite,
 } from '@/database/products';
 import { useToastStore } from '@/stores/ToastStore';
 import {
@@ -37,6 +39,7 @@ export const productKeys = {
   detail: (id: number) => [...productKeys.all, 'detail', id] as const,
   infinite: (search: string = '', filter: string = 'all') =>
     [...productKeys.all, 'infinite', search, filter] as const,
+  fastLaneProducts: () => [...productKeys.all, 'fastLaneProducts'] as const,
 };
 
 export function useGetProduct(id: number) {
@@ -79,6 +82,30 @@ export function usePaginatedProducts(
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     staleTime: 60_000,
   });
+}
+
+export function useFastLaneProducts() {
+  return useQuery({
+    queryKey: productKeys.fastLaneProducts(),
+    queryFn: () => getFastLaneProducts({ limit: 15 }),
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      productId,
+      isFavorite,
+    }: {
+      productId: number;
+      isFavorite: boolean;
+    }) => toggleProductFavorite(productId, isFavorite),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productKeys.fastLaneProducts() });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+    }
+  })
 }
 
 export function useProducts() {
@@ -274,11 +301,6 @@ export function useProducts() {
     },
   });
 
-  // Mutation: Bulk-move single product's category. Used by
-  // `BulkMoveCategoryModal` to patch `category` on N rows without
-  // re-asserting every required column. The modal calls `mutateAsync`
-  // per row, then posts a single aggregate success toast outside of
-  // this hook (so the user gets one toast for the batch, not N).
   const updateProductCategoryMutation = useMutation({
     mutationFn: async ({
       id,
@@ -314,9 +336,6 @@ export function useProducts() {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
     },
     onError: (error: Error) => {
-      // Keep the per-row failure toast so the user sees which
-      // product couldn't be deleted; the bulk handler also posts a
-      // summary failure toast. Dedupe at the handler level if needed.
       addToast({
         message: error.message || 'Failed to delete product',
         variant: 'danger',

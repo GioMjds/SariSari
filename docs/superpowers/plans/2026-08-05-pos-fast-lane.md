@@ -21,10 +21,12 @@
 ### Task 1: Database Migration v14 (POS Fast Lane Schema)
 
 **Files:**
+
 - Modify: `database/migrations.ts:380-402`
 - Test: `database/migrations.ts`
 
 **Interfaces:**
+
 - Consumes: Existing SQLite database connection (`db`)
 - Produces: Updated `products` table schema with `is_favorite INTEGER DEFAULT 0` and `last_sold_at TEXT` columns, plus indexes `idx_products_favorite` and `idx_products_last_sold`.
 
@@ -34,19 +36,27 @@
 if (currentVersion < 14) {
   console.log('Running migration to version 14 (POS Fast Lane)...');
   await db.withTransactionAsync(async () => {
-    const productCols = await db.getAllAsync<{ name: string }>('PRAGMA table_info(products)');
+    const productCols = await db.getAllAsync<{ name: string }>(
+      'PRAGMA table_info(products)',
+    );
     const hasFavorite = productCols.some((c) => c.name === 'is_favorite');
     const hasLastSold = productCols.some((c) => c.name === 'last_sold_at');
 
     if (!hasFavorite) {
-      await db.execAsync('ALTER TABLE products ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;');
+      await db.execAsync(
+        'ALTER TABLE products ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0;',
+      );
     }
     if (!hasLastSold) {
       await db.execAsync('ALTER TABLE products ADD COLUMN last_sold_at TEXT;');
     }
 
-    await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_favorite ON products(is_favorite);');
-    await db.execAsync('CREATE INDEX IF NOT EXISTS idx_products_last_sold ON products(last_sold_at);');
+    await db.execAsync(
+      'CREATE INDEX IF NOT EXISTS idx_products_favorite ON products(is_favorite);',
+    );
+    await db.execAsync(
+      'CREATE INDEX IF NOT EXISTS idx_products_last_sold ON products(last_sold_at);',
+    );
 
     await db.execAsync('PRAGMA user_version = 14;');
   });
@@ -71,9 +81,11 @@ git commit -m "feat(database): add migration v14 for POS fast lane columns and i
 ### Task 2: Database Query Helper & Favorite Mutation (`database/products.ts`)
 
 **Files:**
+
 - Modify: `database/products.ts`
 
 **Interfaces:**
+
 - Consumes: `products`, `sale_items`, `sales` tables
 - Produces: `getFastLaneProducts({ limit })`, `toggleProductFavorite(productId, isFavorite)`, `FastLaneProduct` interface.
 
@@ -86,7 +98,9 @@ export interface FastLaneProduct extends Product {
   units_sold_14d?: number;
 }
 
-export async function getFastLaneProducts({ limit = 15 }: { limit?: number } = {}): Promise<FastLaneProduct[]> {
+export async function getFastLaneProducts({
+  limit = 15,
+}: { limit?: number } = {}): Promise<FastLaneProduct[]> {
   const sql = `
     WITH favorite_items AS (
       SELECT p.*, 1 AS is_fav_priority, 0 AS units_sold_14d
@@ -113,11 +127,14 @@ export async function getFastLaneProducts({ limit = 15 }: { limit?: number } = {
   return await db.getAllAsync<FastLaneProduct>(sql, [limit]);
 }
 
-export async function toggleProductFavorite(productId: number, isFavorite: boolean): Promise<void> {
-  await db.runAsync(
-    'UPDATE products SET is_favorite = ? WHERE id = ?;',
-    [isFavorite ? 1 : 0, productId]
-  );
+export async function toggleProductFavorite(
+  productId: number,
+  isFavorite: boolean,
+): Promise<void> {
+  await db.runAsync('UPDATE products SET is_favorite = ? WHERE id = ?;', [
+    isFavorite ? 1 : 0,
+    productId,
+  ]);
 }
 ```
 
@@ -138,9 +155,11 @@ git commit -m "feat(database): add getFastLaneProducts and toggleProductFavorite
 ### Task 3: Fast Lane Hooks (`hooks/useProducts.tsx`)
 
 **Files:**
+
 - Modify: `hooks/useProducts.tsx`
 
 **Interfaces:**
+
 - Consumes: `getFastLaneProducts`, `toggleProductFavorite` from `database/products.ts`
 - Produces: `useFastLaneProducts()`, `useToggleFavorite()` hooks.
 
@@ -157,8 +176,13 @@ export function useFastLaneProducts() {
 export function useToggleFavorite() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, isFavorite }: { productId: number; isFavorite: boolean }) =>
-      toggleProductFavorite(productId, isFavorite),
+    mutationFn: ({
+      productId,
+      isFavorite,
+    }: {
+      productId: number;
+      isFavorite: boolean;
+    }) => toggleProductFavorite(productId, isFavorite),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fastLaneProducts'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -184,10 +208,12 @@ git commit -m "feat(hooks): add useFastLaneProducts and useToggleFavorite TanSta
 ### Task 4: Fast Lane UI Components (`FastLaneCard` & `FastLaneBar`)
 
 **Files:**
+
 - Create: `components/pos/FastLaneCard.tsx`
 - Create: `components/pos/FastLaneBar.tsx`
 
 **Interfaces:**
+
 - Consumes: `FastLaneProduct`, `useToggleFavorite`
 - Produces: `<FastLaneBar onAddToCart={(product, qty) => void} />` component.
 
@@ -205,11 +231,17 @@ interface FastLaneCardProps {
   onAddToCart: (product: FastLaneProduct, quantity: number) => void;
 }
 
-export const FastLaneCard: React.FC<FastLaneCardProps> = ({ product, onAddToCart }) => {
+export const FastLaneCard: React.FC<FastLaneCardProps> = ({
+  product,
+  onAddToCart,
+}) => {
   const toggleFavorite = useToggleFavorite();
 
   const handleToggleFav = () => {
-    toggleFavorite.mutate({ productId: product.id, isFavorite: !product.is_favorite });
+    toggleFavorite.mutate({
+      productId: product.id,
+      isFavorite: !product.is_favorite,
+    });
   };
 
   return (
@@ -218,7 +250,10 @@ export const FastLaneCard: React.FC<FastLaneCardProps> = ({ product, onAddToCart
         <Text style={styles.name} numberOfLines={1}>
           {product.name}
         </Text>
-        <TouchableOpacity onPress={handleToggleFav} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={handleToggleFav}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <MaterialCommunityIcons
             name={product.is_favorite ? 'star' : 'star-outline'}
             size={18}
@@ -318,7 +353,8 @@ export const FastLaneBar: React.FC<FastLaneBarProps> = ({ onAddToCart }) => {
     return (
       <View style={styles.hintContainer}>
         <Text style={styles.hintText}>
-          ⚡ ⭐ Star products in catalog to populate Fast Lane for 1-tap checkout.
+          ⚡ ⭐ Star products in catalog to populate Fast Lane for 1-tap
+          checkout.
         </Text>
       </View>
     );
@@ -327,9 +363,17 @@ export const FastLaneBar: React.FC<FastLaneBarProps> = ({ onAddToCart }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>⚡ FAST LANE</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {fastLaneProducts.map((product) => (
-          <FastLaneCard key={product.id} product={product} onAddToCart={onAddToCart} />
+          <FastLaneCard
+            key={product.id}
+            product={product}
+            onAddToCart={onAddToCart}
+          />
         ))}
       </ScrollView>
     </View>
@@ -383,11 +427,13 @@ git commit -m "feat(ui): add FastLaneCard and FastLaneBar components"
 ### Task 5: POS Catalog Star Button & Barcode Scan Toast Integration
 
 **Files:**
+
 - Create: `components/pos/ScanToastBanner.tsx`
 - Modify: `components/pos/ProductSearchCatalog.tsx`
 - Modify: `app/(tabs)/sales/pos.tsx`
 
 **Interfaces:**
+
 - Consumes: `<FastLaneBar>`, `<ScanToastBanner>`, `useBarcodeResolver`
 - Produces: Integrated POS Fast Lane workflow with star button toggles and scan toasts.
 
@@ -415,9 +461,17 @@ export const ScanToastBanner: React.FC<ScanToastBannerProps> = ({
   useEffect(() => {
     if (visible) {
       Animated.sequence([
-        Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
         Animated.delay(1300),
-        Animated.timing(translateY, { toValue: -60, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: -60,
+          duration: 200,
+          useNativeDriver: true,
+        }),
       ]).start(() => onHide());
     }
   }, [visible, message]);
@@ -466,10 +520,10 @@ const styles = StyleSheet.create({
 ```
 
 - [ ] **Step 2: Add star button toggle to product rows in `components/pos/ProductSearchCatalog.tsx`**
-Add star toggle button next to each product item row using `useToggleFavorite()`.
+      Add star toggle button next to each product item row using `useToggleFavorite()`.
 
 - [ ] **Step 3: Embed `<FastLaneBar>` and `<ScanToastBanner>` in `app/(tabs)/sales/pos.tsx`**
-Connect `FastLaneBar` at the top of POS search, and trigger `ScanToastBanner` when `useBarcodeResolver` resolves scanned products.
+      Connect `FastLaneBar` at the top of POS search, and trigger `ScanToastBanner` when `useBarcodeResolver` resolves scanned products.
 
 - [ ] **Step 4: Run full TypeScript check**
 
