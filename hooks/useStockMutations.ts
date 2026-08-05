@@ -172,4 +172,49 @@ export function useDeleteProducts() {
   });
 }
 
+export function useRecordDamaged() {
+  const qc = useQueryClient();
+  const { getAllProductsQuery } = useProducts();
+  const addToast = useToastStore((s) => s.addToast);
+
+  return useMutation<
+    void,
+    Error,
+    { productId: number; qty: number; note?: string }
+  >({
+    mutationFn: async ({ productId, qty, note }) => {
+      await insertInventoryTransaction({
+        product_id: productId,
+        type: 'damaged',
+        quantity: qty,
+        note: note ?? null,
+      });
+    },
+    onMutate: async ({ productId, qty }) => {
+      await qc.cancelQueries({ queryKey: PRODUCTS_KEY });
+      return withOptimistic(qc, productId, (p) => ({
+        ...p,
+        quantity: Math.max(0, p.quantity - qty),
+      }));
+    },
+    onError: (err, _v, ctx) => {
+      rollback(qc, ctx as ProductsCacheCtx | undefined);
+      addToast({
+        message: err.message || 'Failed to mark damaged',
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
+    onSuccess: (_d, { qty }) => {
+      addToast({
+        message: `Marked ${qty} as damaged`,
+        variant: 'success',
+        duration: 4000,
+      });
+      invalidateAll(qc, () => getAllProductsQuery.refetch?.());
+    },
+  });
+}
+
 export { LOW_STOCK_THRESHOLD };
+
