@@ -37,8 +37,8 @@ export function StockList({
         <StockRow
           product={item}
           onPress={onPress}
-          onLongPress={onLongPress}
-          onRestock={onRestock}
+          {...(onLongPress ? { onLongPress } : {})}
+          {...(onRestock ? { onRestock } : {})}
         />
       </MotiView>
     ),
