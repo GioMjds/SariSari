@@ -50,7 +50,7 @@ export function RestockSheet({
   const [qty, setQty] = useState(1);
   const [unitCostText, setUnitCostText] = useState('');
   const [note, setNote] = useState('');
-  const [supplierId, setSupplierId] = useState<string | number | null>(null);
+  const [supplierId, setSupplierId] = useState<string | null>(null);
 
   // Reset when the sheet re-opens.
   useEffect(() => {
@@ -98,8 +98,8 @@ export function RestockSheet({
         productId: product.id,
         qty,
         unitCost: Number(unitCost),
-        note: note || undefined,
-        supplierId: supplierId ?? undefined,
+        ...(note ? { note } : {}),
+        ...(supplierId !== null ? { supplierId } : {}),
       },
       {
         onSuccess: () => {
@@ -141,7 +141,7 @@ export function RestockSheet({
         <QuantityStepper
           value={qty}
           onChange={setQty}
-          current={product?.quantity}
+          {...(product !== null ? { current: product.quantity } : {})}
           sign="+"
           min={1}
         />

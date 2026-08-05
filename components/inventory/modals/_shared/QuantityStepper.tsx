@@ -64,7 +64,7 @@ export function QuantityStepper({
       {!hidden && current !== undefined ? (
         <View className="items-center mt-1">
           <StyledText className="text-ink-500 text-[11px]">
-            CURRENT: {current} → NEW:{' '}
+            {'CURRENT: '}{current}{' -> NEW: '}
             <StyledText
               variant="extrabold"
               className={

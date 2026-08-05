@@ -25,7 +25,7 @@ export function SheetProductCard({ product }: Props) {
         {product.name}
       </StyledText>
       <StyledText variant="medium" className="text-ink-500 text-xs">
-        SKU: {product.sku ?? '—'}
+        SKU: {product.sku ?? '-'}
       </StyledText>
       <View className="flex-row mt-2 gap-x-8">
         <View>

@@ -59,7 +59,7 @@ export function useReceiveStock() {
       qty: number;
       note?: string;
       unitCost?: number;
-      supplierId?: number | string | null;
+      supplierId?: string | null;
     }
   >({
     mutationFn: async ({ productId, qty, note, unitCost, supplierId }) => {
