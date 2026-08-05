@@ -29,11 +29,11 @@ describe('LogTransactionForm product picker', () => {
     );
   });
 
-  it('renders ProductPicker search input when product is null', () => {
+  it('renders ProductPicker search input when product is null', async () => {
     const qc = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
-    const { getByLabelText } = render(
+    const { getByLabelText } = await render(
       <QueryClientProvider client={qc}>
         <LogTransactionForm product={null} visible onClose={() => {}} />
       </QueryClientProvider>,
@@ -41,9 +41,9 @@ describe('LogTransactionForm product picker', () => {
     expect(getByLabelText('Product picker search')).toBeTruthy();
   });
 
-  it('does not render Type chooser when initialType is damaged', () => {
+  it('does not render Type chooser when initialType is damaged', async () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const { queryByLabelText } = render(
+    const { queryByLabelText } = await render(
       <QueryClientProvider client={qc}>
         <LogTransactionForm
           product={fixture}
