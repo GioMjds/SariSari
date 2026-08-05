@@ -9,12 +9,6 @@ interface InventorySelectionState {
   clear: () => void;
 }
 
-interface RestockSignalState {
-  restockProductId: number | null;
-  requestRestock: (id: number) => void;
-  clearRestock: () => void;
-}
-
 export const useInventorySelection = create<InventorySelectionState>((set) => ({
   selectMode: false,
   selectedIds: new Set(),
@@ -32,10 +26,4 @@ export const useInventorySelection = create<InventorySelectionState>((set) => ({
     }),
   selectAll: (ids) => set({ selectMode: true, selectedIds: new Set(ids) }),
   clear: () => set({ selectMode: false, selectedIds: new Set() }),
-}));
-
-export const useRestockSignal = create<RestockSignalState>((set) => ({
-  restockProductId: null,
-  requestRestock: (id) => set({ restockProductId: id }),
-  clearRestock: () => set({ restockProductId: null }),
 }));
