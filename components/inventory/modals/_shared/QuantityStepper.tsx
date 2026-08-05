@@ -21,10 +21,9 @@ export function QuantityStepper({
   const dec = () => onChange(Math.max(min, value - 1));
   const inc = () => onChange(value + 1);
 
-  const signedDelta =
-    current === undefined ? 0 : sign === '+' ? value : value - current;
-  const newValue =
-    current === undefined ? value : current + (sign === '+' ? value : 0);
+  const delta = sign === '+' ? value : -value;
+  const newValue = current === undefined ? value : current + delta;
+  const signedDelta = current === undefined ? 0 : delta;
   const willGoNegative =
     current !== undefined && sign === 'auto' && value > current;
   const hidden = value < min;
