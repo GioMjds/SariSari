@@ -4,7 +4,5 @@ export * from './_shared/SegmentedControl';
 export * from './_shared/sheetChrome';
 
 export * from './RestockSheet';
-export * from './MarkDamagedSheet';
-export * from './AdjustStockSheet';
 export * from './ProductPicker';
 export * from './BulkMoveCategoryModal';
