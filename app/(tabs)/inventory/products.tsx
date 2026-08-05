@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 import { useProducts } from '@/hooks/useProducts';
 import {
@@ -7,13 +7,18 @@ import {
   ProductsSkeleton,
   ProductsFilterChips,
   ProductsEmptyState,
+  ProductActionMenuModal,
   type ProductsFilter,
 } from '@/components/inventory/products';
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
-import { useInventorySelection } from '@/stores/useInventorySelection';
+import {
+  useInventorySelection,
+  useStockSheetSignal,
+  useToastStore,
+} from '@/stores';
 import { BulkActionsToolbar } from '@/components/inventory';
-import { useInventoryModalSignal, useToastStore } from '@/stores';
+import type { Product } from '@/types/products.types';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -33,10 +38,11 @@ export default function ProductsScreen() {
   const addToast = useToastStore((s) => s.addToast);
   const [filter, setFilter] = useState<ProductsFilter>('all');
   const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [menuProduct, setMenuProduct] = useState<Product | null>(null);
 
   const params = useLocalSearchParams<{ q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
-  const signal = useInventoryModalSignal();
+  const signal = useStockSheetSignal();
 
   const items = useMemo(
     () => getAllProductsQuery.data ?? [],
@@ -44,11 +50,12 @@ export default function ProductsScreen() {
   );
 
   const filtered = useMemo(() => {
-    return items.filter((p: any) => {
+    return items.filter((p) => {
       if (filter === 'in_stock') return p.quantity > 0;
       if (filter === 'low') return p.quantity > 0 && p.quantity <= 5;
       if (filter === 'out') return p.quantity === 0;
-      if (filter === 'new') return Date.now() - p.created_at < 7 * 86400_000;
+      if (filter === 'new')
+        return Date.now() - new Date(p.created_at).getTime() < 7 * 86400_000;
 
       if (searchTerm) {
         const haystack = [p.name, p.sku, p.barcode, p.category]
@@ -105,6 +112,63 @@ export default function ProductsScreen() {
     }
   }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
 
+  const handleActionPress = useCallback((product: Product) => {
+    setMenuProduct(product);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setMenuProduct(null);
+  }, []);
+
+  const handleMenuEdit = useCallback(
+    (id: number) => {
+      setMenuProduct(null);
+      router.push(`/(edit-forms)/product-details/${id}`);
+    },
+    [router],
+  );
+
+  const handleMenuAdjustStock = useCallback(
+    (id: number) => {
+      setMenuProduct(null);
+      signal.requestAdjust(id);
+    },
+    [signal],
+  );
+
+  const handleMenuMarkDamaged = useCallback(
+    (id: number) => {
+      setMenuProduct(null);
+      signal.requestDamaged(id);
+    },
+    [signal],
+  );
+
+  const handleMenuViewLedger = useCallback(
+    (id: number) => {
+      setMenuProduct(null);
+      router.push(`/(edit-forms)/inventory-ledger/${id}` as Href);
+    },
+    [router],
+  );
+
+  const handleMenuDelete = useCallback(
+    async (id: number) => {
+      try {
+        await bulkDeleteProductsMutation.mutateAsync(id);
+        addToast({
+          message: 'Product deleted',
+          variant: 'success',
+          duration: 3000,
+        });
+      } catch {
+        // Mutation onError already posts a toast; keep the row closed.
+      }
+      setMenuProduct(null);
+    },
+    [bulkDeleteProductsMutation, addToast],
+  );
+
   if (getAllProductsQuery.isLoading) return <ProductsSkeleton />;
   if (getAllProductsQuery.error) {
     return (
@@ -128,6 +192,7 @@ export default function ProductsScreen() {
           products={filtered}
           onPress={handlePress}
           onLongPress={handleLongPress}
+          onActionPress={handleActionPress}
         />
       )}
       {selection.selectMode ? (
@@ -135,7 +200,7 @@ export default function ProductsScreen() {
           selectedCount={selectedIds.length}
           onClearSelection={selection.clear}
           onBulkDelete={handleBulkDelete}
-          onBulkAdjustStock={() => signal.requestAdjust()}
+          onBulkAdjustStock={() => signal.requestAdjust(null)}
           onBulkMoveCategory={() => setMoveModalOpen(true)}
         />
       ) : null}
@@ -148,6 +213,18 @@ export default function ProductsScreen() {
           selection.clear();
         }}
       />
+
+      <ProductActionMenuModal
+        visible={Boolean(menuProduct)}
+        product={menuProduct}
+        onClose={handleMenuClose}
+        onEdit={handleMenuEdit}
+        onAdjustStock={handleMenuAdjustStock}
+        onMarkDamaged={handleMenuMarkDamaged}
+        onViewLedger={handleMenuViewLedger}
+        onDelete={handleMenuDelete}
+      />
     </View>
   );
 }
+
