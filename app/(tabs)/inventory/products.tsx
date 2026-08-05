@@ -14,11 +14,12 @@ import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import {
   useInventorySelection,
-  useStockSheetSignal,
   useToastStore,
 } from '@/stores';
 import { BulkActionsToolbar } from '@/components/inventory';
 import type { Product } from '@/types/products.types';
+import type { InventoryEventType } from '@/types/inventory.types';
+import { LogTransactionForm } from '@/components/inventory/ledger';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -40,9 +41,11 @@ export default function ProductsScreen() {
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
 
+  const [formProduct, setFormProduct] = useState<Product | null>(null);
+  const [formType, setFormType] = useState<InventoryEventType | null>(null);
+
   const params = useLocalSearchParams<{ q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
-  const signal = useStockSheetSignal();
 
   const items = useMemo(
     () => getAllProductsQuery.data ?? [],
@@ -128,18 +131,22 @@ export default function ProductsScreen() {
 
   const handleMenuAdjustStock = useCallback(
     (id: number) => {
+      const p = items.find((x) => x.id === id) ?? null;
       setMenuProduct(null);
-      signal.requestAdjust(id);
+      setFormProduct(p);
+      setFormType('adjustment');
     },
-    [signal],
+    [items],
   );
 
   const handleMenuMarkDamaged = useCallback(
     (id: number) => {
+      const p = items.find((x) => x.id === id) ?? null;
       setMenuProduct(null);
-      signal.requestDamaged(id);
+      setFormProduct(p);
+      setFormType('damaged');
     },
-    [signal],
+    [items],
   );
 
   const handleMenuViewLedger = useCallback(
@@ -198,7 +205,10 @@ export default function ProductsScreen() {
           selectedCount={selectedIds.length}
           onClearSelection={selection.clear}
           onBulkDelete={handleBulkDelete}
-          onBulkAdjustStock={() => signal.requestAdjust(null)}
+          onBulkAdjustStock={() => {
+            setFormProduct(null);
+            setFormType('adjustment');
+          }}
           onBulkMoveCategory={() => setMoveModalOpen(true)}
         />
       ) : null}
@@ -222,7 +232,16 @@ export default function ProductsScreen() {
         onViewLedger={handleMenuViewLedger}
         onDelete={handleMenuDelete}
       />
+
+      <LogTransactionForm
+        product={formProduct}
+        initialType={formType ?? 'restock'}
+        visible={formType !== null}
+        onClose={() => {
+          setFormProduct(null);
+          setFormType(null);
+        }}
+      />
     </View>
   );
 }
-
