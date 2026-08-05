@@ -9,8 +9,10 @@ import {
 } from 'expo-router';
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
+import { LogTransactionForm } from '@/components/inventory/ledger';
 import { useStockSheetSignal } from '@/stores';
 import type { InventorySubTab } from '@/constants/tabs';
+import type { InventoryEventType } from '@/types/inventory.types';
 import { InventoryModalsHost } from './modals';
 
 const SUB_TAB_SEGMENTS = [
@@ -31,6 +33,13 @@ export default function InventoryLayout() {
   const search = searchParams.q ?? '';
   const signal = useStockSheetSignal();
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [fabForm, setFabForm] = useState<{
+    visible: boolean;
+    type: InventoryEventType;
+  }>({
+    visible: false,
+    type: 'adjustment',
+  });
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -103,11 +112,19 @@ export default function InventoryLayout() {
           <InventorySpeedDialFab
             onAddProduct={openAddProduct}
             onReceiveStock={() => signal.requestRestock(null)}
-            onMarkDamaged={() => signal.requestDamaged(null)}
-            onStockAdjustment={() => signal.requestAdjust(null)}
+            onMarkDamaged={() => setFabForm({ visible: true, type: 'damaged' })}
+            onStockAdjustment={() =>
+              setFabForm({ visible: true, type: 'adjustment' })
+            }
             onScanBarcode={() => setScannerOpen(true)}
           />
         ) : null}
+
+        <LogTransactionForm
+          initialType={fabForm.type}
+          visible={fabForm.visible}
+          onClose={() => setFabForm({ visible: false, type: fabForm.type })}
+        />
       </View>
 
       <InventoryModalsHost
