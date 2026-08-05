@@ -1,13 +1,17 @@
 import React, { useCallback } from 'react';
-import { FlatList, ListRenderItemInfo } from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItemInfo, View } from 'react-native';
 import { MotiView } from 'moti';
+import { StyledText } from '@/components/elements';
 import { StockRow } from './StockRow';
 
-interface Props {
+export interface StockListProps {
   products: any[];
   onPress: (id: number) => void;
   onLongPress?: (id: number) => void;
   onRestock?: (id: number) => void;
+  isFetchingNextPage?: boolean;
+  hasNextPage?: boolean;
+  onEndReached?: () => void;
 }
 
 export function StockList({
@@ -15,7 +19,10 @@ export function StockList({
   onPress,
   onLongPress,
   onRestock,
-}: Props) {
+  isFetchingNextPage,
+  hasNextPage,
+  onEndReached,
+}: StockListProps) {
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<any>) => (
       <MotiView
@@ -62,6 +69,29 @@ export function StockList({
       maxToRenderPerBatch={10}
       windowSize={5}
       removeClippedSubviews={true}
+      onEndReached={() => {
+        if (!isFetchingNextPage && hasNextPage && onEndReached) {
+          onEndReached();
+        }
+      }}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View className="py-4 items-center justify-center">
+            <ActivityIndicator size="small" color="#623418" />
+            <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
+              Loading more...
+            </StyledText>
+          </View>
+        ) : !hasNextPage && products.length > 0 ? (
+          <View className="py-4 items-center justify-center">
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              End of list
+            </StyledText>
+          </View>
+        ) : null
+      }
     />
   );
 }
+

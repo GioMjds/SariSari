@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useProducts } from '@/hooks/useProducts';
+import { usePaginatedProducts } from '@/hooks/useProducts';
 import {
   StockList,
   StockSkeleton,
@@ -16,7 +16,6 @@ export default function StockScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: StockFilter; q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
-  const { getAllProductsQuery } = useProducts();
   const signal = useStockSheetSignal();
 
   const filter: StockFilter = useMemo(() => {
@@ -32,44 +31,12 @@ export default function StockScreen() {
     return 'all';
   }, [params.filter]);
 
-  const items = useMemo(
-    () => getAllProductsQuery.data ?? [],
-    [getAllProductsQuery.data],
-  );
+  const productsQuery = usePaginatedProducts(searchTerm, filter);
 
-  const filtered = useMemo(() => {
-    return items.filter((p: any) => {
-      switch (filter) {
-        case 'critical':
-          if (!(p.quantity > 0 && p.quantity <= 3)) return false;
-          break;
-        case 'low':
-          if (!(p.quantity > 0 && p.quantity <= 5)) return false;
-          break;
-        case 'out':
-          if (p.quantity !== 0) return false;
-          break;
-        case 'overstock':
-          if (p.quantity < 100) return false;
-          break;
-        case 'near_expiry':
-          if (!p.expiry_date) return false;
-          const days = (p.expiry_date - Date.now()) / 86400_000;
-          if (!(days >= 0 && days <= 7)) return false;
-          break;
-        default:
-          break;
-      }
-      if (searchTerm) {
-        const haystack = [p.name, p.sku, p.barcode, p.category]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(searchTerm)) return false;
-      }
-      return true;
-    });
-  }, [items, filter, searchTerm]);
+  const products = useMemo(
+    () => productsQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [productsQuery.data],
+  );
 
   const handlePress = useCallback(
     (id: number) => router.push(`/(edit-forms)/product-details/${id}`),
@@ -80,10 +47,10 @@ export default function StockScreen() {
     [signal],
   );
 
-  if (getAllProductsQuery.isLoading) return <StockSkeleton />;
-  if (getAllProductsQuery.error)
+  if (productsQuery.isLoading) return <StockSkeleton />;
+  if (productsQuery.error)
     return (
-      <InventoryErrorState onRetry={() => getAllProductsQuery.refetch?.()} />
+      <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />
     );
 
   return (
@@ -92,15 +59,23 @@ export default function StockScreen() {
         value={filter}
         onChange={(v) => router.setParams({ filter: v })}
       />
-      {filtered.length === 0 ? (
+      {products.length === 0 ? (
         <StockEmptyState filter={filter} />
       ) : (
         <StockList
-          products={filtered}
+          products={products}
           onPress={handlePress}
           onRestock={handleRestock}
+          isFetchingNextPage={productsQuery.isFetchingNextPage}
+          hasNextPage={productsQuery.hasNextPage}
+          onEndReached={() => {
+            if (!productsQuery.isFetchingNextPage && productsQuery.hasNextPage) {
+              productsQuery.fetchNextPage();
+            }
+          }}
         />
       )}
     </View>
   );
 }
+
