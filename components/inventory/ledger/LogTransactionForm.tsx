@@ -20,19 +20,19 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useProducts } from '@/hooks/useProducts';
 import { ProductPicker } from '@/components/inventory/modals';
 
-const titleMap: Record<InventoryEventType, string> = {
+const titleMap = {
   restock: 'Restock Product',
   sale: 'Record Sale',
   damaged: 'Mark Damaged',
   adjustment: 'Adjust Stock',
-};
+} satisfies Record<InventoryEventType, string>;
 
-const confirmLabels: Record<InventoryEventType, string> = {
+const confirmLabels = {
   restock: 'Restock',
   sale: 'Record sale',
   damaged: 'Mark damaged',
   adjustment: 'Adjust stock',
-};
+} satisfies Record<InventoryEventType, string>;
 
 function typeIconFor(
   t: InventoryEventType,
