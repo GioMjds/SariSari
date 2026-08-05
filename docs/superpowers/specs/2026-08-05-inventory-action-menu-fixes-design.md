@@ -37,14 +37,14 @@ interface AdjustStockSheetProps {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, newQty: number) => void;
-  lockedProduct: Product | null;   // replaces initialProductId
+  lockedProduct: Product | null; // replaces initialProductId
 }
 
 interface MarkDamagedSheetProps {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, qty: number) => void;
-  lockedProduct: Product | null;   // replaces initialProductId
+  lockedProduct: Product | null; // replaces initialProductId
 }
 ```
 

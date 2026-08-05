@@ -17,14 +17,14 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, newQty: number) => void;
-  initialProductId: number | null;
+  lockedProduct: Product | null;
 }
 
 export function AdjustStockSheet({
   visible,
   onClose,
   onSubmitted,
-  initialProductId,
+  lockedProduct,
 }: Props) {
   const { getAllProductsQuery } = useProducts();
   const adjust = useAdjustStock();
@@ -33,25 +33,24 @@ export function AdjustStockSheet({
     [getAllProductsQuery.data],
   );
 
-  const [pickedId, setPickedId] = useState<number | null>(initialProductId);
   const [direction, setDirection] = useState<Direction>('increase');
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState('');
+  const [pickedId, setPickedId] = useState<number | null>(
+    lockedProduct?.id ?? null,
+  );
 
   useEffect(() => {
     if (visible) {
-      setPickedId(initialProductId);
       setDirection('increase');
       setQty(1);
       setNote('');
+      setPickedId(lockedProduct?.id ?? null);
     }
-  }, [visible, initialProductId]);
+  }, [visible, lockedProduct?.id]);
 
-  const product = useMemo(
-    () => products.find((p) => p.id === pickedId) ?? null,
-    [products, pickedId],
-  );
-
+  const product =
+    lockedProduct ?? products.find((p) => p.id === pickedId) ?? null;
   const newQty = product
     ? direction === 'increase'
       ? product.quantity + qty
@@ -106,26 +105,15 @@ export function AdjustStockSheet({
       )}
 
       <View className="gap-y-1">
-        <View className="flex-row items-center justify-between">
-          <StyledText className="text-ink-500 text-xs">
-            ADJUSTMENT DIRECTION
-          </StyledText>
-          <Pressable
-            onPress={() => setDirection('increase')}
-            accessibilityRole="button"
-            accessibilityLabel="Reset direction to increase"
-          >
-            <StyledText className="text-persimmon-600 text-xs">
-              Reset Type
-            </StyledText>
-          </Pressable>
-        </View>
+        <StyledText className="text-ink-500 text-xs">
+          ADJUSTMENT DIRECTION
+        </StyledText>
         <SegmentedControl<Direction>
           value={direction}
           onChange={setDirection}
           options={[
-            { label: '+ Increase (+)', value: 'increase' },
-            { label: '- Decrease (-)', value: 'decrease' },
+            { label: 'Add (+)', value: 'increase' },
+            { label: 'Remove (-)', value: 'decrease' },
           ]}
         />
       </View>
@@ -136,7 +124,7 @@ export function AdjustStockSheet({
           value={qty}
           onChange={setQty}
           {...(product ? { current: product.quantity } : {})}
-          sign="auto"
+          sign={direction === 'increase' ? '+' : '-'}
           min={1}
         />
       </View>

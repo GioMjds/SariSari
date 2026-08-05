@@ -22,6 +22,7 @@
 ## File Structure
 
 **Modify**
+
 - `app/(tabs)/inventory/products.tsx` — `handleMenuEdit` route; nothing else.
 - `app/(tabs)/inventory/_layout.tsx` — read the signal's `productId` to feed the sheets, pass it down to a new `lockedProduct` prop.
 - `components/inventory/modals/AdjustStockSheet.tsx` — replace `initialProductId` with `lockedProduct`; drop `pickedId` and picker when locked.
@@ -34,12 +35,15 @@
 ## Task 1: Lock `AdjustStockSheet` to a single product
 
 **Files:**
+
 - Modify: `components/inventory/modals/AdjustStockSheet.tsx`
 - No new tests (existing sheet tests do not cover this component; manual smoke covered in Task 5).
 
 **Interfaces:**
+
 - Consumes: existing exports from `@/hooks/useProducts` and `@/hooks/useStockMutations`; `Product` from `@/types/products.types`.
 - Produces: new prop signature on `AdjustStockSheet`:
+
   ```ts
   interface AdjustStockSheetProps {
     visible: boolean;
@@ -122,31 +126,35 @@ The `useProducts()` call and `products` memo are still needed for the `ProductPi
 In the JSX, replace the conditional:
 
 ```tsx
-{product ? (
-  <SheetProductCard product={product} />
-) : (
-  <ProductPicker
-    products={products}
-    selectedId={pickedId}
-    onSelect={setPickedId}
-  />
-)}
+{
+  product ? (
+    <SheetProductCard product={product} />
+  ) : (
+    <ProductPicker
+      products={products}
+      selectedId={pickedId}
+      onSelect={setPickedId}
+    />
+  );
+}
 ```
 
 with:
 
 ```tsx
-{lockedProduct ? (
-  <SheetProductCard product={lockedProduct} />
-) : (
-  <ProductPicker
-    products={products}
-    selectedId={null}
-    onSelect={() => {
-      /* bulk path: selection handled inside ProductPicker */
-    }}
-  />
-)}
+{
+  lockedProduct ? (
+    <SheetProductCard product={lockedProduct} />
+  ) : (
+    <ProductPicker
+      products={products}
+      selectedId={null}
+      onSelect={() => {
+        /* bulk path: selection handled inside ProductPicker */
+      }}
+    />
+  );
+}
 ```
 
 Note: `ProductPicker`'s `onSelect` signature is `(id: number) => void`. Read the current `ProductPicker` props (in `components/inventory/modals/ProductPicker.tsx`) before editing — if it accepts a stable callback with no other side effects, the no-op arrow is fine. If it expects a real setter, pass a no-op `() => {}` and leave a TODO in the next task. (This task is about locking, not picker wiring.)
@@ -172,10 +180,13 @@ git commit -m "refactor(inventory): lock AdjustStockSheet to a single product"
 ## Task 2: Lock `MarkDamagedSheet` to a single product
 
 **Files:**
+
 - Modify: `components/inventory/modals/MarkDamagedSheet.tsx`
 
 **Interfaces:**
+
 - Produces: new prop signature on `MarkDamagedSheet`:
+
   ```ts
   interface MarkDamagedSheetProps {
     visible: boolean;
@@ -234,29 +245,29 @@ const product = lockedProduct;
 In the JSX, replace the conditional:
 
 ```tsx
-{product ? (
-  <SheetProductCard product={product} />
-) : (
-  <ProductPicker
-    products={products}
-    selectedId={pickedId}
-    onSelect={setPickedId}
-  />
-)}
+{
+  product ? (
+    <SheetProductCard product={product} />
+  ) : (
+    <ProductPicker
+      products={products}
+      selectedId={pickedId}
+      onSelect={setPickedId}
+    />
+  );
+}
 ```
 
 with:
 
 ```tsx
-{lockedProduct ? (
-  <SheetProductCard product={lockedProduct} />
-) : (
-  <ProductPicker
-    products={products}
-    selectedId={null}
-    onSelect={() => {}}
-  />
-)}
+{
+  lockedProduct ? (
+    <SheetProductCard product={lockedProduct} />
+  ) : (
+    <ProductPicker products={products} selectedId={null} onSelect={() => {}} />
+  );
+}
 ```
 
 - [ ] **Step 5: Type-check**
@@ -276,9 +287,11 @@ git commit -m "refactor(inventory): lock MarkDamagedSheet to a single product"
 ## Task 3: Thread the signal's productId into the layout's sheet mounts
 
 **Files:**
+
 - Modify: `app/(tabs)/inventory/_layout.tsx`
 
 **Interfaces:**
+
 - Consumes: `useStockSheetSignal` (unchanged API), `useProducts` from `@/hooks/useProducts` (already used elsewhere).
 - Produces: each sheet receives `lockedProduct={matchedProduct}` where `matchedProduct` is the product resolved from the signal's `productId` plus the products list.
 
@@ -296,7 +309,7 @@ Then inside the component:
 const { getAllProductsQuery } = useProducts();
 const products = getAllProductsQuery.data ?? [];
 const resolveProduct = (id: number | null) =>
-  id == null ? null : products.find((p) => p.id === id) ?? null;
+  id == null ? null : (products.find((p) => p.id === id) ?? null);
 ```
 
 - [ ] **Step 2: Open the sheets with the resolved product**
@@ -381,9 +394,11 @@ git commit -m "feat(inventory): thread signal productId into stock sheet mounts"
 ## Task 4: Fix the Edit Product route
 
 **Files:**
+
 - Modify: `app/(tabs)/inventory/products.tsx:123-129`
 
 **Interfaces:**
+
 - Consumes: `useRouter` from `expo-router` (already in scope).
 - Produces: `handleMenuEdit` pushes `/(edit-forms)/edit-product/${id}`.
 
@@ -422,10 +437,12 @@ git commit -m "fix(inventory): route Edit Product to the edit form"
 ## Task 5: Add a regression test for the Edit Product route
 
 **Files:**
+
 - Create: `tests/app/inventory/products.test.tsx` (path mirrors `app/(tabs)/inventory/products.tsx`)
 - Reference: existing test setup at `jest.setup.ts` and any sibling test in `tests/app/` for the test harness conventions (mock `expo-router`, `useProducts`, store hooks, modal components).
 
 **Interfaces:**
+
 - Consumes: `useRouter().push` mock; `useProducts().getAllProductsQuery` mock returns a single product; `useInventorySelection()` and `useToastStore()` mocks.
 - Produces: a test that asserts `router.push` is called with `/(edit-forms)/edit-product/{id}` after the menu's Edit Product is fired.
 
@@ -552,11 +569,13 @@ git commit -m "test(inventory): assert Edit Product routes to edit form"
 ## Task 6: Add a regression test for the locked sheet
 
 **Files:**
+
 - Create: `tests/components/inventory/modals/AdjustStockSheet.locked.test.tsx`
 - Create: `tests/components/inventory/modals/MarkDamagedSheet.locked.test.tsx`
 - Reference: `jest.setup.ts` and any sibling test under `tests/components/inventory/` for the test harness.
 
 **Interfaces:**
+
 - Consumes: `AdjustStockSheet` / `MarkDamagedSheet` with a `lockedProduct` set; mocked `useProducts` and `useAdjustStock` / `useRecordDamaged`.
 - Produces: asserts that `ProductPicker` is NOT rendered when `lockedProduct` is non-null.
 
@@ -684,6 +703,7 @@ Expected: PASS (typecheck + all tests).
 - [ ] **Step 2: Manual smoke (document in `docs/activity-log.md`)**
 
 If you can run the app, verify the per-row action menu:
+
 1. Open the Products tab.
 2. Long-press a row, tap the menu button.
 3. Tap "Mark Damaged" — confirm the sheet shows only that product's card (no picker).

@@ -107,8 +107,6 @@ export default function ProductsScreen() {
       });
       selection.clear();
     } catch {
-      // Per-row failure toast comes from the mutation; keep selection
-      // intact so the user can retry the survivors.
     }
   }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
 
@@ -123,7 +121,7 @@ export default function ProductsScreen() {
   const handleMenuEdit = useCallback(
     (id: number) => {
       setMenuProduct(null);
-      router.push(`/(edit-forms)/product-details/${id}`);
+      router.push(`/(edit-forms)/edit-product/${id}`);
     },
     [router],
   );

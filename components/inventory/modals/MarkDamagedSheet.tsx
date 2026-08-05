@@ -14,14 +14,14 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, qty: number) => void;
-  initialProductId: number | null;
+  lockedProduct: Product | null;
 }
 
 export function MarkDamagedSheet({
   visible,
   onClose,
   onSubmitted,
-  initialProductId,
+  lockedProduct,
 }: Props) {
   const { getAllProductsQuery } = useProducts();
   const damaged = useRecordDamaged();
@@ -30,22 +30,17 @@ export function MarkDamagedSheet({
     [getAllProductsQuery.data],
   );
 
-  const [pickedId, setPickedId] = useState<number | null>(initialProductId);
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState('');
 
   useEffect(() => {
     if (visible) {
-      setPickedId(initialProductId);
       setQty(1);
       setNote('');
     }
-  }, [visible, initialProductId]);
+  }, [visible]);
 
-  const product = useMemo(
-    () => products.find((p) => p.id === pickedId) ?? null,
-    [products, pickedId],
-  );
+  const product = lockedProduct;
 
   const wouldGoNegative = !!product && qty > product.quantity;
   const valid = !!product && qty >= 1 && !wouldGoNegative;
@@ -88,8 +83,8 @@ export function MarkDamagedSheet({
       ) : (
         <ProductPicker
           products={products}
-          selectedId={pickedId}
-          onSelect={setPickedId}
+          selectedId={null}
+          onSelect={() => {}}
         />
       )}
 
@@ -99,7 +94,7 @@ export function MarkDamagedSheet({
           value={qty}
           onChange={setQty}
           {...(product ? { current: product.quantity } : {})}
-          sign="auto"
+          sign="-"
           min={1}
         />
       </View>

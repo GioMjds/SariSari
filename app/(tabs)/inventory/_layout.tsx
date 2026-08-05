@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import {
   Href,
@@ -9,14 +9,9 @@ import {
 } from 'expo-router';
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
-import {
-  RestockSheet,
-  MarkDamagedSheet,
-  AdjustStockSheet,
-} from '@/components/inventory/modals/';
-import { BarcodeScannerModal } from '@/components/ui';
-import type { InventorySubTab } from '@/constants/tabs';
 import { useStockSheetSignal } from '@/stores';
+import type { InventorySubTab } from '@/constants/tabs';
+import { InventoryModalsHost } from './modals';
 
 const SUB_TAB_SEGMENTS = [
   'products',
@@ -25,30 +20,29 @@ const SUB_TAB_SEGMENTS = [
   'analytics',
 ] satisfies InventorySubTab[];
 
+function isInventorySubTab(segment: string): segment is InventorySubTab {
+  return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
+}
+
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
   const searchParams = useLocalSearchParams<{ q?: string }>();
   const search = searchParams.q ?? '';
-
-  const [scannerOpen, setScannerOpen] = useState(false);
-  const [restockOpen, setRestockOpen] = useState(false);
-  const [damagedOpen, setDamagedOpen] = useState(false);
-  const [adjustOpen, setAdjustOpen] = useState(false);
-
   const signal = useStockSheetSignal();
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const activeTab = useMemo<InventorySubTab>(() => {
-    const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;
-    return SUB_TAB_SEGMENTS.includes(last) ? last : 'products';
+    const last = segments[segments.length - 1] ?? '';
+    return isInventorySubTab(last) ? last : 'products';
   }, [segments]);
 
-  const lastSegment = String(segments[segments.length - 1] ?? '');
+  const lastSegment = segments[segments.length - 1] ?? '';
   const isDetail =
     segments.length > 0 &&
     lastSegment !== '(tabs)' &&
     lastSegment !== 'inventory' &&
-    !SUB_TAB_SEGMENTS.includes(lastSegment as InventorySubTab);
+    !isInventorySubTab(lastSegment);
 
   const handleTabChange = useCallback(
     (t: InventorySubTab) => {
@@ -74,39 +68,6 @@ export default function InventoryLayout() {
   const openAddProduct = useCallback(() => {
     router.push('/(edit-forms)/add-product' as Href);
   }, [router]);
-
-  const handleScanResult = useCallback(
-    (barcode: string) => {
-      setScannerOpen(false);
-      if (!barcode) return;
-      router.push({
-        pathname: '/(edit-forms)/add-product',
-        params: { prefillBarcode: barcode },
-      } as Href);
-    },
-    [router],
-  );
-
-  useEffect(() => {
-    if (signal.adjust.productId !== null) {
-      setAdjustOpen(true);
-      signal.clearAdjust();
-    }
-  }, [signal.adjust.productId, signal]);
-
-  useEffect(() => {
-    if (signal.restock.productId !== null) {
-      setRestockOpen(true);
-      signal.clearRestock();
-    }
-  }, [signal.restock.productId, signal]);
-
-  useEffect(() => {
-    if (signal.damaged.productId !== null) {
-      setDamagedOpen(true);
-      signal.clearDamaged();
-    }
-  }, [signal.damaged.productId, signal]);
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -149,26 +110,9 @@ export default function InventoryLayout() {
         />
       ) : null}
 
-      <RestockSheet
-        visible={restockOpen}
-        initialProductId={null}
-        onClose={() => setRestockOpen(false)}
-      />
-      <MarkDamagedSheet
-        visible={damagedOpen}
-        initialProductId={null}
-        onClose={() => setDamagedOpen(false)}
-      />
-      <AdjustStockSheet
-        visible={adjustOpen}
-        initialProductId={null}
-        onClose={() => setAdjustOpen(false)}
-      />
-      <BarcodeScannerModal
-        mode="single"
-        visible={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={handleScanResult}
+      <InventoryModalsHost
+        scannerOpen={scannerOpen}
+        onCloseScanner={() => setScannerOpen(false)}
       />
     </View>
   );

@@ -23,7 +23,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, qty: number) => void;
-  initialProductId: number | null;
+  initialProductId: Product | null;
 }
 
 export function RestockSheet({
@@ -46,7 +46,9 @@ export function RestockSheet({
     [getAllSuppliersQuery.data],
   );
 
-  const [pickedId, setPickedId] = useState<number | null>(initialProductId);
+  const [pickedId, setPickedId] = useState<number | null>(
+    initialProductId?.id ?? null,
+  );
   const [qty, setQty] = useState(1);
   const [unitCostText, setUnitCostText] = useState('');
   const [note, setNote] = useState('');
@@ -55,7 +57,7 @@ export function RestockSheet({
   // Reset when the sheet re-opens.
   useEffect(() => {
     if (visible) {
-      setPickedId(initialProductId);
+      setPickedId(initialProductId?.id ?? null);
       setQty(1);
       setUnitCostText('');
       setNote('');

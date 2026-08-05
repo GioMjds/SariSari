@@ -7,7 +7,7 @@ interface Props {
   value: number;
   onChange: (next: number) => void;
   current?: number;
-  sign?: '+' | 'auto';
+  sign?: '+' | '-';
   min?: number;
 }
 
@@ -15,7 +15,7 @@ export function QuantityStepper({
   value,
   onChange,
   current,
-  sign = 'auto',
+  sign = '+',
   min = 1,
 }: Props) {
   const dec = () => onChange(Math.max(min, value - 1));
@@ -25,7 +25,7 @@ export function QuantityStepper({
   const newValue = current === undefined ? value : current + delta;
   const signedDelta = current === undefined ? 0 : delta;
   const willGoNegative =
-    current !== undefined && sign === 'auto' && value > current;
+    current !== undefined && sign === '-' && value > current;
   const hidden = value < min;
 
   return (
@@ -64,7 +64,9 @@ export function QuantityStepper({
       {!hidden && current !== undefined ? (
         <View className="items-center mt-1">
           <StyledText className="text-ink-500 text-[11px]">
-            {'CURRENT: '}{current}{' -> NEW: '}
+            {'CURRENT: '}
+            {current}
+            {' -> NEW: '}
             <StyledText
               variant="extrabold"
               className={
