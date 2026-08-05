@@ -8,7 +8,7 @@ import { MotiView } from 'moti';
 export interface InventorySpeedDialFabProps {
   onAddProduct: () => void;
   onReceiveStock: () => void;
-  onMarkDamaged?: () => void;
+  onMarkDamaged: () => void;
   onStockAdjustment: () => void;
   onScanBarcode: () => void;
 }
@@ -16,6 +16,7 @@ export interface InventorySpeedDialFabProps {
 export function InventorySpeedDialFab({
   onAddProduct,
   onReceiveStock,
+  onMarkDamaged,
   onStockAdjustment,
   onScanBarcode,
 }: InventorySpeedDialFabProps) {
@@ -40,6 +41,15 @@ export function InventorySpeedDialFab({
       onPress: () => {
         setExpanded(false);
         onStockAdjustment();
+      },
+    },
+    {
+      id: 'mark_damaged',
+      label: 'Mark Damaged',
+      icon: 'ban' as const,
+      onPress: () => {
+        setExpanded(false);
+        onMarkDamaged();
       },
     },
     {
