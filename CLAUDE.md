@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+- Concise entry point for Claude Code. Guidance working code with this repo.
 
 ## Project
 
@@ -27,8 +27,8 @@ npm doctor                   # react-doctor diagnostics
 To run a single Jest test:
 
 ```bash
-pnpm test -- tests/sqlite/single-handle.test.ts
-pnpm test -- -t "pattern from describe/it"
+npm test -- tests/sqlite/single-handle.test.ts
+npm test -- -t "pattern from describe/it"
 ```
 
 Jest uses `better-sqlite3` to mock `expo-sqlite` (see `jest.setup.ts`). The test environment override to top-level `jest-environment-node` exists because RN 0.81 ships a nested jest 29.7.0 that crashes on `clearMocksOnScope` — do not remove that override.
@@ -56,7 +56,7 @@ Hard rules:
 
 These are not stylistic preferences — they prevent real bugs and are enforced in tests.
 
-1. **Money is integer pesos in SQLite.** `₱12.50` is stored as `1250` (`INTEGER`). ALL parsing on input and formatting on display must go through `lib/money.ts` (`parsePesosInput`, `formatPesos`). No other code path should parse or format money. Avoids float drift over thousands of sales.
+1. **Money is integer pesos in SQLite.** All monetary columns are `INTEGER` and store whole pesos with up to two decimal places — `₱12.50` is stored as `12.5`, not `1250`. `parsePesosInput` rounds input to at most two decimals so the integer-pesos invariant is preserved. ALL parsing on input and formatting on display must go through `lib/money.ts` (`parsePesosInput`, `formatPesos`). No other code path should parse or format money. Avoids float drift over thousands of sales.
 2. **Multi-statement writes that touch the ledger use `db.withTransactionAsync`** so partial failure cannot leave balances out of sync.
 3. **Suki balance is computed live** from transactions (`SUM(amount) - SUM(amount_paid)` over unpaid credits). Payment allocations are FIFO in `payment_allocations` and are reversible when the payment is deleted.
 

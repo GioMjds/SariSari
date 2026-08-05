@@ -40,8 +40,8 @@ export function StockList({
 
   const getItemLayout = useCallback(
     (_data: any, index: number) => ({
-      length: 60,
-      offset: 60 * index,
+      length: 72,
+      offset: 72 * index,
       index,
     }),
     [],
@@ -49,6 +49,7 @@ export function StockList({
 
   return (
     <FlatList
+      testID="stock-flat-list"
       data={products}
       keyExtractor={(item) => String(item.id)}
       contentContainerClassName="pt-3 pb-32"

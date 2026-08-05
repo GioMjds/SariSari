@@ -12,26 +12,22 @@ import {
 export type ScrollbarVariant = 'paper' | 'persimmon' | 'cinnamon' | 'minimal';
 
 export interface CustomScrollViewProps extends ScrollViewProps {
-  /** Tailwind class for the scrollbar track container */
   trackClassName?: string;
-  /** Tailwind class for the scrollbar thumb indicator */
   thumbClassName?: string;
-  /** Palette theme variant matching SariSari design tokens */
   variant?: ScrollbarVariant;
-  /** Tailwind width class for the scrollbar capsule (default: 'w-1.5') */
   barWidth?: string;
-  /** Automatically fade out scrollbar when idle (default: true) */
   autoHide?: boolean;
-  /** Minimum thumb height in pixels (default: 36) */
   minThumbHeight?: number;
-  /** Distance from right container edge in pixels (default: 3) */
   rightOffset?: number;
+  onContent: (width: number, height: number) => void;
 }
 
-const VARIANT_STYLES: Record<
-  ScrollbarVariant,
-  { track: string; thumb: string }
-> = {
+type VariantStyle = {
+  track: string;
+  thumb: string;
+};
+
+const VARIANT_STYLES = {
   paper: {
     track: 'bg-ink-100/60 rounded-full',
     thumb: 'bg-ink-400 rounded-full',
@@ -48,7 +44,7 @@ const VARIANT_STYLES: Record<
     track: 'bg-transparent',
     thumb: 'bg-ink-300/70 rounded-full',
   },
-};
+} satisfies Record<ScrollbarVariant, VariantStyle>;
 
 export const CustomScrollView: React.FC<CustomScrollViewProps> = ({
   children,
@@ -60,6 +56,7 @@ export const CustomScrollView: React.FC<CustomScrollViewProps> = ({
   minThumbHeight = 36,
   rightOffset = 3,
   onScroll: userOnScroll,
+  onContent: userOnContentSizeChange,
   ...scrollViewProps
 }) => {
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -107,9 +104,10 @@ export const CustomScrollView: React.FC<CustomScrollViewProps> = ({
   }, []);
 
   // Capture total scrollable content height
-  const onContentSizeChange = useCallback((_width: number, height: number) => {
+  const onContentSizeChange = useCallback((width: number, height: number) => {
     setContentHeight(height);
-  }, []);
+    userOnContentSizeChange?.(width, height);
+  }, [userOnContentSizeChange]);
 
   // Preserve latest reference to userOnScroll prop
   const userOnScrollRef = useRef(userOnScroll);
@@ -119,18 +117,15 @@ export const CustomScrollView: React.FC<CustomScrollViewProps> = ({
 
   // Native animated event driver with scroll listener
   const scrollHandler = useRef(
-    Animated.event(
-      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-      {
-        useNativeDriver: true,
-        listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-          triggerFade();
-          if (userOnScrollRef.current) {
-            userOnScrollRef.current(e);
-          }
-        },
+    Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+      useNativeDriver: true,
+      listener: (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        triggerFade();
+        if (userOnScrollRef.current) {
+          userOnScrollRef.current(e);
+        }
       },
-    ),
+    }),
   ).current;
 
   // Determine if scrolling is required
@@ -196,4 +191,3 @@ export const CustomScrollView: React.FC<CustomScrollViewProps> = ({
     </View>
   );
 };
-

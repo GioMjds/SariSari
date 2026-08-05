@@ -20,7 +20,7 @@ import { useCartStore } from '@/stores/CartStore';
 import { useCart } from '@/components/sales/pos/useCart';
 import { CheckoutLineRow } from './CheckoutLineRow';
 import { CustomerPickerModal } from './CustomerPickerModal';
-import { calculateTotalPieces } from '@/lib';
+import { calculateTotalPieces, formatPesos } from '@/lib';
 
 export interface CheckoutModalProps {
   visible: boolean;
@@ -215,12 +215,11 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
               onPress={handleClose}
               hitSlop={12}
               accessibilityRole="button"
-              accessibilityLabel="Back to catalog"
+              accessibilityLabel="Close checkout"
               className="w-10 h-10 items-center justify-center rounded-full active:bg-paper-200"
             >
-              <FontAwesome name="chevron-left" size={16} color="#0E0C0A" />
+              <FontAwesome name="chevron-left" size={16} color="`#0E0C0A`" />
             </Pressable>
-
             <View className="items-center flex-1 mx-2">
               <StyledText
                 variant="extrabold"
@@ -229,7 +228,6 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
                 {isSuccess ? 'Sale Recorded' : 'Checkout'}
               </StyledText>
             </View>
-
             <Pressable
               onPress={handleClose}
               hitSlop={12}
@@ -237,7 +235,7 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
               accessibilityLabel="Close checkout"
               className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center active:bg-paper-200"
             >
-              <FontAwesome name="times" size={14} color="#0E0C0A" />
+              <FontAwesome name="times" size={14} color="`#0E0C0A`" />
             </Pressable>
           </View>
 
@@ -471,7 +469,7 @@ function CheckoutForm({
               ? 'Cart is empty'
               : customerMissing
                 ? 'Select a customer to confirm credit sale'
-                : `Confirm sale for ${cart.total}`
+                : `Confirm sale for ${formatPesos(cart.total)}`
           }
           accessibilityState={{
             disabled: isSubmitDisabled,
