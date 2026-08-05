@@ -1,94 +1,51 @@
-# 16. Shift Tracking on One Device
+# 16. Pagtala ng Shift sa Iisang Aparato (Shift Tracking on One Device)
 
-> Phase: Later
+> Phase: Sa Haharapin (Later)
 
-## Problem
+## Problema
 
-The store is run by one person on one device, but in many households
-there is a daytime owner and an evening helper, or a spouse who
-covers the morning. When cash variances show up at close-out
-(feature 3) or when a void (feature 7) needs investigating, the
-owner has no idea whose shift it was. Blame drifts to whichever
-helper was around most recently, which is unfair and unhelpful.
-Multi-device accounts are overkill; on one device, a lightweight
-shift model is enough.
+Ang tindahan ay pinapatakbo ng isang tao sa iisang aparato, ngunit sa maraming kabahayan mayroong may-ari sa umaga at katulong sa gabi, o kasama na nagbabantay sa umaga. Kapag may lumabas na variance sa pera sa pagsasara (tampok 3) o kapag may kailangang imbestigahang void (tampok 7), walang ideya ang may-ari kung kaninong shift iyon. Ang sisi ay napupunta sa kung sinong katulong ang pinakahuling naroon, na hindi patas at hindi nakatutulong. Ang multi-device accounts ay labis; sa iisang aparato, ang magaan na shift model ay sapat na.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want to mark which cashier is at the register
-for the current shift, so cash variances and corrections have a
-person attached.
+Bilang may-ari ng tindahan, gusto kong markahan kung sinong cashier ang nasa register para sa kasalukuyang shift, upang ang mga variance sa pera at mga pagtatama ay may kaugnay na tao.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A small list of "Cashiers" the owner adds (name + optional
-  short PIN — different from the owner PIN, scoped to the
-  cashier's actions only).
-- An "Active cashier" indicator on the POS tab; one tap to switch
-  active cashier (or sign out to a generic "owner direct" state).
-- A "Shift open" / "Shift close" pair of actions. Opening records
-  the active cashier and the opening float. Closing records the
-  closing float and the variance.
-- All voids (feature 7), stock adjustments (feature 4), and cash
-  ledger entries (feature 3) record the active cashier at the
-  time, so corrections and variances have attribution.
-- A "Shifts" report listing recent shifts with their variance.
+- Isang maliit na listahan ng "Cashiers" na idinaragdag ng may-ari (pangalan + opsyonal na maikling PIN — hiwalay sa PIN ng may-ari, nakatutok lamang sa aksyon ng cashier).
+- Isang "Active cashier" indicator sa POS tab; isang tap upang lumipat ng active cashier (o mag-sign out sa isang pangkalahatang "owner direct" state).
+- Isang "Shift open" / "Shift close" pair ng mga aksyon. Ang pagbubukas ay nagtatala ng active cashier at opening float. Ang pagsasara ay nagtatala ng closing float at variance.
+- Lahat ng voids (tampok 7), stock adjustments (tampok 4), at cash ledger entries (tampok 3) ay nagtatala ng active cashier sa oras na iyon.
+- Isang "Shifts" report na naglilista ng mga kamakailang shift kasama ang kanilang variance.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Multi-device accounts. One device, one store, one or two people
-  sharing the register.
-- Payroll, scheduling, or attendance. The shift is just a label
-  for attribution.
-- Cashier-specific permissions beyond a per-cashier PIN for "I am
-  this person" identification. Sensitive actions remain owner-
-  PIN-gated (feature 11).
+- Multi-device accounts. Isang aparato, isang tindahan, isa o dalawang taong nagbabahagi ng register.
+- Payroll, scheduling, o attendance. Ang shift ay label lamang para sa attribution.
+- Cashier-specific permissions lampas sa per-cashier PIN para sa pagkakakilanlan. Ang mga maselang aksyon ay nananatiling gated ng PIN ng may-ari (tampok 11).
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `cashiers`: `id`, `name`, `pin_hash` TEXT, `pin_salt`
-  TEXT, `is_active` INTEGER, `created_at` TEXT.
-- New table `shifts`: `id`, `cashier_id` (FK), `opened_at` TEXT,
-  `closed_at` TEXT, `opening_float` INTEGER, `closing_count`
-  INTEGER, `variance` INTEGER, `variance_reason_code` TEXT.
-- Add `cashier_id` column to `sale_corrections` (feature 7),
-  `inventory_transactions` (already has a `note`; add a nullable
-  `actor_cashier_id` column), and `cash_ledger_entries`
-  (feature 3) for attribution.
-- New functions in a new `database/shifts.ts`:
-  `openShift({ cashierId, openingFloat })`,
-  `closeShift({ closingCount, varianceReason })`,
-  `getActiveShift()`,
-  `listShifts({ from, to })`.
-- New hook in a new `hooks/useShifts.tsx`.
-- New migration bumping `user_version` past 9.
+- Bagong talahanayan na `cashiers`: `id`, `name`, `pin_hash` TEXT, `pin_salt` TEXT, `is_active` INTEGER, `created_at` TEXT.
+- Bagong talahanayan na `shifts`: `id`, `cashier_id` (FK), `opened_at` TEXT, `closed_at` TEXT, `opening_float` INTEGER, `closing_count` INTEGER, `variance` INTEGER, `variance_reason_code` TEXT.
+- Magdagdag ng `cashier_id` column sa `sale_corrections` (tampok 7), `inventory_transactions` (dagdagan ng nullable `actor_cashier_id` column), at `cash_ledger_entries` (tampok 3).
+- Bagong mga function sa `database/shifts.ts`: `openShift({ cashierId, openingFloat })`, `closeShift({ closingCount, varianceReason })`, `getActiveShift()`, `listShifts({ from, to })`.
+- Bagong hook sa `hooks/useShifts.tsx`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Builds on feature 3 (daily cash close-out) — a shift close is
-  effectively a per-shift close-out, with the daily close-out
-  rolling up the active shift(s) for that day.
-- Builds on feature 7 (voids/refunds) — `sale_corrections` needs
-  to capture cashier_id.
-- Shares the hashing model with feature 11 (owner PIN).
+- Nagtatayo sa tampok 3 (daily cash close-out) — ang shift close ay kapareho ng per-shift close-out.
+- Nagtatayo sa tampok 7 (voids/refunds) — ang `sale_corrections` ay kailangang kumuha ng cashier_id.
+- Nagbabahagi ng hashing model sa tampok 11 (owner PIN).
 
-## Open Questions
+## Mga Open Question
 
-- Is the cashier PIN really needed, or is selecting a name from a
-  list enough? A name-only list is faster but anyone can claim
-  any name.
-- How do shifts cross midnight? A "shift" is anchored to the
-  person, not the calendar day; the daily close-out (feature 3)
-  rolls up whatever shifts were open that day.
-- Is there a "no active cashier" mode for the owner working solo?
-  Recommend yes — an explicit "Owner direct" pseudo-cashier.
+- Kailangan ba talaga ang cashier PIN, o sapat na ang pagpili ng pangalan sa listahan?
+- Paano tumatawid ang mga shift sa hatinggabi? Ang "shift" ay nakakabit sa tao, hindi sa araw ng kalendaryo.
+- Mayroon bang "no active cashier" mode para sa may-ari kapag nagtatrabaho nang mag-isa? Inirerekomenda: oo — isang malinaw na "Owner direct" pseudo-cashier.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- The data model is small. The risk is creep: this feature could
-  grow into a full HR system. The brief's scope check (above) is
-  the guardrail.
-- Money: opening and closing floats are integer-pesos; no money
-  parsing outside `lib/money.ts`.
-- Hashing of cashier PINs should use the same vetted algorithm as
-  feature 11 to keep the security model consistent.
+- Ang data model ay maliit. Ang panganib ay ang paglaki: ang tampok na ito ay maaaring lumaki sa isang buong HR system. Ang saklaw sa itaas ang proteksyon.
+- Pera: ang opening at closing floats ay integer-pesos; walang money parsing sa labas ng `lib/money.ts`.

@@ -1,99 +1,54 @@
-# 11. Owner PIN for Sensitive Actions
+# 11. PIN ng May-ari para sa Maselang Aksyon (Owner PIN for Sensitive Actions)
 
-> Phase: Next
+> Phase: Susunod (Next)
 
-## Problem
+## Problema
 
-A sari-sari store is a shared device. A helper, a relative, a child
-helping out, or a suki handling their own cart may all pick up the
-phone. Some actions — voiding a sale, applying a discount, extending
-credit past a suki's limit, adjusting stock — can lose real money
-quickly if done casually or maliciously. There is no gate.
+Ang sari-sari store ay may shared device. Ang isang katulong, kamag-anak, anak na tumutulong, o suki na humahawak ng kanilang sariling cart ay maaaring humawak ng telepono. Ang ilang aksyon — pag-void ng benta, paglalagay ng discount, pagpapalawig ng utang lagpas sa limit ng suki, pag-adjust ng stock — ay maaaring mabilis na makawala ng totoong pera kung casually o malisyosong ginawa. Walang harang.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want a PIN that gates the most consequential
-actions, so my staff and family can use the register without being
-able to make changes that hurt the business.
+Bilang may-ari ng tindahan, gusto ko ng PIN na nagha-harang sa mga pinakamahahalagang aksyon, upang magamit ng aking staff at pamilya ang register nang hindi nakakagawa ng mga pagbabagong nakakasama sa negosyo.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A 4-6 digit owner PIN, set up once on first sensitive action or
-  in Settings, stored locally (hashed, not plaintext) and never
-  uploaded.
-- A PIN prompt that intercepts the following actions:
-  - Voids, refunds, price corrections (feature 7).
-  - Manual stock adjustments outside the stocktake flow.
-  - Credit-limit override (feature 5).
-  - Large discounts (threshold defined per owner, e.g. > 10% or >
-    50 pesos).
-  - Database reset / seed in `app/(tabs)/dev/reset.tsx`.
-- A short lockout window after N failed attempts (e.g. 3 attempts,
-  60-second cooldown). Lockout state is in-memory and resets on
-  app restart.
-- "Forgot PIN" flow that uses a separate owner-only recovery code
-  generated at setup; the recovery code is shown once and never
-  re-displayed.
+- Isang 4-6 digit na PIN ng may-ari, na naka-set up nang minsan sa unang maselang aksyon o sa Settings, nakaimbak nang lokal (hashed, hindi plain text) at hindi kailanman ini-upload.
+- Isang PIN prompt na humaharang sa mga sumusunod na aksyon:
+  - Voids, refunds, price corrections (tampok 7).
+  - Manual stock adjustments sa labas ng stocktake flow.
+  - Credit-limit override (tampok 5).
+  - Malalaking discounts (threshold na tinukoy bawat may-ari, hal. > 10% o > 50 pesos).
+  - Database reset / seed sa `app/(tabs)/dev/reset.tsx`.
+- Isang maikling lockout window pagkatapos ng N na nabigong subok (hal. 3 subok, 60-segundong cooldown). Ang lockout state ay in-memory at nagre-reset kapag nag-restart ang app.
+- "Forgot PIN" flow na gumagamit ng hiwalay na owner-only recovery code na ginawa sa setup; ang recovery code ay ipinapakita nang minsan at hindi na muling ipinapakita.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Biometric unlock. The store phone may not have reliable
-  biometrics and the owner may not trust them; a PIN is enough.
-- Per-user PINs. Single-owner model; feature 16 (shift tracking)
-  is the place where per-cashier attribution would be added if
-  ever.
-- Server-side PIN validation. There is no server.
+- Biometric unlock (ang telepono ng tindahan ay maaaring walang maaasahang biometrics; ang PIN ay sapat na).
+- Per-user PINs. Single-owner model; ang tampok 16 (shift tracking) ang lugar kung saan idadagdag ang per-cashier attribution kung kinakailangan.
+- Server-side PIN validation. Walang server.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `auth_settings`: `id` (singleton row, id = 1),
-  `pin_hash` TEXT (Argon2 or scrypt hash; do not roll our own),
-  `pin_salt` TEXT, `recovery_code_hash` TEXT, `failed_attempts`
-  INTEGER, `lockout_until` INTEGER (epoch), `set_at` TEXT,
-  `updated_at` TEXT.
-- Lockout state (in-memory cooldown) lives in a small Zustand
-  store under `stores/auth.ts`. Per CLAUDE.md, this is UI state,
-  not business state — Zustand is the right home.
-- New functions in a new `database/auth.ts`:
-  `isPinConfigured()`,
-  `setPin(pin)`,
-  `verifyPin(pin)`,
-  `verifyRecoveryCode(code)`.
-- New hook in a new `hooks/useAuth.tsx` exposing the prompt and
-  verification helpers.
-- New migration bumping `user_version` past 9.
+- Bagong talahanayan na `auth_settings`: `id` (singleton row, id = 1), `pin_hash` TEXT (Argon2 o scrypt hash), `pin_salt` TEXT, `recovery_code_hash` TEXT, `failed_attempts` INTEGER, `lockout_until` INTEGER, `set_at` TEXT, `updated_at` TEXT.
+- Ang lockout state (in-memory cooldown) ay nakatira sa isang maliit na Zustand store sa ilalim ng `stores/auth.ts`.
+- Bagong mga function sa `database/auth.ts`: `isPinConfigured()`, `setPin(pin)`, `verifyPin(pin)`, `verifyRecoveryCode(code)`.
+- Bagong hook sa `hooks/useAuth.tsx`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Required by feature 5 (credit override), feature 7
-  (voids/refunds), feature 4 (manual stock adjustments). The
-  underlying features can ship without PIN, but the
-  control value of the feature is much lower without it.
-- Should be designed alongside feature 16 (shift tracking) so
-  the two do not collide on how they identify "who did this."
+- Kinakailangan ng tampok 5 (credit override), tampok 7 (voids/refunds), at tampok 4 (manual stock adjustments).
+- Dapat idisenyo kasabay ng tampok 16 (shift tracking).
 
-## Open Questions
+## Mga Open Question
 
-- Hashing algorithm: Argon2 is the modern choice; scrypt is
-  acceptable on resource-constrained devices. Choose one and pin
-  it; do not switch later without a migration.
-- How many failed attempts before lockout? 3 is friendly, 5 is
-  safer. Default 3.
-- Is the PIN prompted only on the action, or also as a session
-  unlock (i.e. on app open)? Session unlock is friendlier but
-  heavier. Recommend action-level only for v1.
+- Hashing algorithm: Argon2 ang modernong piliin; ang scrypt ay katanggap-tanggap sa resource-constrained devices.
+- Ilang failed attempts bago mag-lockout? Default ay 3.
+- Ang PIN ba ay hihilingin lamang sa aksyon, o bilang session unlock din? Inirerekomenda ang action-level lamang para sa v1.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- The project's security model is local-only: the threat model
-  is "someone picked up the unlocked phone," not "an attacker
-  with a dump of the database." Argon2 still adds real value
-  against the latter, but is not a substitute for device-level
-  lock.
-- Use a vetted library for hashing; do not hand-roll. Confirm
-  any new dependency is added to `package.json` and follows the
-  project's "no external libraries unless absolutely necessary"
-  rule.
-- The recovery code is shown once and never again; document the
-  flow clearly so a forgetful owner is not locked out of their
-  own store.
+- Ang security model ng proyekto ay local-only.
+- Gumamit ng vetted library para sa hashing; huwag mag-hand-roll.
+- Ang recovery code ay ipinapakita nang minsan lamang.

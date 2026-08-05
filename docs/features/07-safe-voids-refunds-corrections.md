@@ -1,110 +1,56 @@
-# 07. Safe Voids, Refunds, and Corrections
+# 07. Ligtas na Pagbawi, Pag-refund, at Pagtatama (Safe Voids, Refunds, and Corrections)
 
-> Phase: Next
+> Phase: Susunod (Next)
 
-## Problem
+## Problema
 
-Mistakes happen. The cashier miscounts change, the suki returns a
-dud, the price was wrong on the shelf. Today the only way to "fix" a
-sale is to delete the row, which erases the audit trail, leaves
-inventory quantity out of sync, and silently breaks the daily cash
-close-out math. The owner ends up with cash on hand that does not
-match the books, and no way to know why.
+Nangyayari ang mga pagkakamali. Nagkamali ang cashier sa sukli, nagbalik ang suki ng sirang item, o mali ang presyo sa estante. Ngayon, ang tanging paraan upang "iayos" ang benta ay burahin ang row, na nagtatanggal sa audit trail, nag-iiwan sa dami ng imbentaryo na hindi tugma, at tahimik na nagwawasak sa kalkulasyon ng pang-araw-araw na pagre-reconcile ng kaha. Ang may-ari ay nagtatapos sa pagkakaroon ng cash sa kamay na hindi tumutugma sa libro, at walang paraan upang malaman kung bakit.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want to void or refund a sale through a clear,
-auditable flow that restores the right quantities and adjusts cash or
-utang correctly, so I can correct mistakes without losing the
-history.
+Bilang may-ari ng tindahan, gusto kong i-void o i-refund ang isang benta sa pamamagitan ng isang malinaw at maiimbestigahang flow na nagbabalik ng tamang dami ng paninda at nag-aayos ng cash o utang nang tama, upang maiwasto ko ang mga pagkakamali nang hindi nawawala ang kasaysayan.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Void" action on a recently completed sale (within an owner-
-  configurable window, default 24h) that:
-  - Restores the sold quantities to `products.quantity` and writes
-    the reversal as a `type = 'adjustment'` row in
-    `inventory_transactions` with a reason code of `void`.
-  - Reverses the cash side: if the sale was cash, the cash amount
-    is logged as a `direction = 'out'` row in the cash ledger
-    (feature 3).
-  - Reverses the credit side: the linked `credit_transactions` row
-    is marked `status = 'cancelled'` rather than deleted, so the
-    suki's balance returns to the previous value without breaking
-    the audit trail.
-  - Requires an owner PIN (feature 11) to confirm.
-- A "Refund" action that behaves like a void but with a
-  `reason_code = 'returned_damaged'` or `'returned_other'` recorded
-  on the inventory adjustment.
-- A "Price correction" action that edits the line item's unit price
-  (and recomputes the sale total) without touching quantity, again
-  PIN-gated and reason-coded.
-- An auditable log of all corrections visible on the sale detail
-  screen and on a Corrections report.
+- Isang "Void" action sa isang kamakailang nabuo na benta (nasa loob ng pwedeng i-configure na time window ng may-ari, default 24h) na:
+  - Nagbabalik ng mga nabentang dami sa `products.quantity` at nagsusulat ng reversal bilang `type = 'adjustment'` row sa `inventory_transactions` na may reason code na `void`.
+  - Nag-i-reverse sa panig ng cash: kung cash ang benta, ang halaga ng cash ay itinatala bilang `direction = 'out'` row sa cash ledger (tampok 3).
+  - Nag-i-reverse sa panig ng utang: ang nakaugnay na `credit_transactions` row ay pinalalabas na `status = 'cancelled'` sa halip na burahin, upang ang balanse ng suki ay bumalik sa nakaraang halaga nang hindi nasisira ang audit trail.
+  - Nangangailangan ng Owner PIN (tampok 11) upang kumpirmahin.
+- Isang "Refund" action na kumikilos tulad ng void ngunit may `reason_code = 'returned_damaged'` o `'returned_other'` na naitala sa inventory adjustment.
+- Isang "Price correction" action na nag-e-edit sa unit price ng line item (at muling nagkakalpula sa kabuuan ng benta) nang hindi ginagalaw ang dami, na muling naka-gate sa PIN at may reason code.
+- Isang auditable log ng lahat ng mga pagtatama na makikita sa sale detail screen at sa isang Corrections report.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Partial refunds where only some line items are returned (initial
-  cut is whole-sale void/refund; partial can be added once the
-  whole-sale flow is stable).
-- Cross-day voids/refunds (the time window is intentionally tight
-  to keep the close-out math simple).
-- Refund-to-utang (refunding as a credit to the suki's account) —
-  not in scope; refunds go back to cash.
+- Partial refunds kung saan ilang line items lamang ang ibinabalik (sa simula ay buong sale void/refund).
+- Cross-day voids/refunds (ang time window ay sadyang mahigpit upang panatilihing simple ang kalkulasyon sa pagsasara).
+- Refund-to-utang (pag-refund bilang credit sa account ng suki) — hindi kasama sa saklaw; ang mga refund ay bumabalik sa cash.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New columns on `sales`: `cancelled_at` TEXT (nullable),
-  `cancelled_by_reason_code` TEXT (nullable),
-  `cancelled_by_note` TEXT (nullable).
-- New column on `credit_transactions`: `cancelled_at` TEXT
-  (nullable). The `status` column already supports a 'cancelled'
-  value semantically; the schema just needs a CHECK constraint
-  update or a dedicated `cancelled_at` marker to make queries easy.
-- New table `sale_corrections`: `id`, `sale_id` (FK), `kind`
-  ('void' | 'refund' | 'price_correction'), `actor_reason_code`
-  TEXT, `actor_note` TEXT, `actor_user` TEXT (for feature 16 shift
-  tracking), `created_at` TEXT.
-- All corrections wrap their inventory, cash, and (when relevant)
-  credit writes in a single `db.withTransactionAsync` block. The
-  CLAUDE.md multi-statement write rule applies here in full.
-- New functions in `database/sales.ts` and
-  `database/credits.ts` (or a new `database/corrections.ts`):
-  `voidSale(saleId, reason)`,
-  `refundSale(saleId, reason)`,
-  `correctSalePrice(saleId, newLineTotals, reason)`.
-- New hooks in `hooks/useSales.tsx` and `hooks/useCredits.tsx`.
-- New migration bumping `user_version` past 9.
+- Bagong columns sa `sales`: `cancelled_at` TEXT (nullable), `cancelled_by_reason_code` TEXT (nullable), `cancelled_by_note` TEXT (nullable).
+- Bagong column sa `credit_transactions`: `cancelled_at` TEXT (nullable). Ang column na `status` ay sumusuporta na sa 'cancelled' value.
+- Bagong talahanayan na `sale_corrections`: `id`, `sale_id` (FK), `kind` ('void' | 'refund' | 'price_correction'), `actor_reason_code` TEXT, `actor_note` TEXT, `actor_user` TEXT (para sa tampok 16 shift tracking), `created_at` TEXT.
+- Lahat ng pagtatama ay nagbabalot sa kanilang inventory, cash, at (kapag may kaugnayan) credit writes sa loob ng isang solong `db.withTransactionAsync` block.
+- Bagong mga function sa `database/sales.ts` at `database/credits.ts`: `voidSale(saleId, reason)`, `refundSale(saleId, reason)`, `correctSalePrice(saleId, newLineTotals, reason)`.
+- Bagong hooks sa `hooks/useSales.tsx` at `hooks/useCredits.tsx`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Feature 3 (daily cash close-out) — voids/refunds flow through
-  the cash ledger; the close-out math assumes it.
-- Feature 11 (owner PIN) — voids and price corrections must be PIN-
-  gated to be useful as a control.
-- Feature 13 (expiry/damaged tracking) — refund reason codes
-  overlap with damaged-goods reason codes. Use the same code set
-  where possible.
+- Tampok 3 (daily cash close-out) — ang mga void/refund ay dumadaloy sa cash ledger.
+- Tampok 11 (owner PIN) — ang mga void at price correction ay kailangang i-gate ng PIN.
+- Tampok 13 (expiry/damaged tracking) — ang mga refund reason code ay may pagkakapareho sa damaged-goods reason codes.
 
-## Open Questions
+## Mga Open Question
 
-- Should the void window be configurable per owner, or hard-coded
-  at 24h?
-- Does a void require the cashier to be physically present with the
-  cash, or just the PIN? A void that records cash-out without
-  confirming the cash left the drawer could mask theft.
-- How are partial refunds staged in (deferred to v2)?
+- Ang void window ba ay dapat pwedeng baguhin bawat may-ari, o naka-hard-code sa 24h?
+- Ang void ba ay nangangailangan na ang cashier ay pisikal na naroroon kasama ang cash, o ang PIN lamang?
+- Paano itatayo ang mga partial refund sa hinaharap?
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- Inventory restoration reuses the existing
-  `inventory_transactions` write path (migration v2 added the
-  constraints we need). No new inventory schema.
-- Money is integer-pesos end to end. Void amounts are stored as
-  positive integers in the cash ledger with a `direction`, never
-  as negatives.
-- The audit log in `sale_corrections` is append-only; corrections
-  cannot be deleted, only reversed with a new correction row.
-- This is the foundation for "Stock movement timeline" (feature
-  10) — once corrections exist, the timeline has something rich
-  to show.
+- Ang pagbabalik ng imbentaryo ay muling gumagamit ng umiiral na `inventory_transactions` write path.
+- Ang pera ay integer-pesos mula sa umpisa hanggang dulo. Ang mga void amount ay nakaimbak bilang mga positibong integer sa cash ledger na may `direction`, hindi kailanman bilang negatibo.
+- Ang audit log sa `sale_corrections` ay append-only.

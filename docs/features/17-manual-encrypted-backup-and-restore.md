@@ -1,101 +1,50 @@
-# 17. Manual Encrypted Backup and Restore
+# 17. Manwal at Nakatagong Backup at Restore (Manual Encrypted Backup and Restore)
 
-> Phase: Later
+> Phase: Sa Haharapin (Later)
 
-## Problem
+## Problema
 
-The store's entire business lives on one phone. If the phone is
-lost, broken, stolen, or upgraded, everything is gone: catalog,
-sales history, suki balances, all of it. The owner has heard
-horror stories from other store owners who lost their books. They
-want a way to back up, but they do not want to create a cloud
-account, do not want their sales data uploaded to a server they
-cannot see, and do not want auto-sync they did not ask for.
+Ang buong negosyo ng tindahan ay nakatira sa iisang telepono. Kapag ang telepono ay nawala, nasira, nanakaw, o pinalitan, mawawala ang lahat: catalog, kasaysayan ng benta, mga balanse ng suki, lahat nito. Ang may-ari ay nakarinig ng mga kwento ng takot mula sa ibang may-ari ng tindahan na nawalan ng kanilang mga libro. Gusto nila ng paraan upang mag-back up, ngunit ayaw nilang gumawa ng cloud account, ayaw nilang ang kanilang sales data ay ma-upload sa server na hindi nila nakikita, at ayaw nila ng auto-sync na hindi nila hiningi.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want to manually back up the entire local
-database to a file I control, and restore from that file on a new
-device, so my business survives a phone loss without giving up
-control of my data.
+Bilang may-ari ng tindahan, gusto kong manwal na mag-back up ng buong lokal na database sa isang file na kontrolado ko, at mag-restore mula sa file na iyon sa bagong aparato, upang ang aking negosyo ay mabuhay sa pagkawala ng telepono nang hindi isinusuko ang kontrol sa aking data.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Backup" action in Settings that produces a single encrypted
-  file containing the full SQLite database.
-- The file is exported through the device's native share / Files
-  flow (so the owner can save it to local storage, a USB drive, or
-  any cloud destination they already trust).
-- The encryption key is derived from a passphrase the owner sets
-  at backup time (and re-enters at restore time). No key escrow,
-  no server-side recovery.
-- A "Restore" action that reads a backup file, validates the
-  encryption, and replaces the current database. Restore is
-  destructive; the owner must confirm.
-- A "Restore to new device" onboarding path for a new device that
-  has no existing data — it skips the destructive step and just
-  imports.
+- Isang "Backup" action sa Settings na gumagawa ng iisang encrypted file na naglalaman ng buong SQLite database.
+- Ang file ay ina-export sa pamamagitan ng native share / Files flow ng aparato (upang mai-save ng may-ari sa lokal na storage, USB drive, o anumang cloud destination na pinagkakatiwalaan na nila).
+- Ang encryption key ay nagmumula sa passphrase na itinatakda ng may-ari sa oras ng backup (at muling ipinapasok sa oras ng restore). Walang key escrow, walang server-side recovery.
+- Isang "Restore" action na nagbabasa ng backup file, nagva-validate ng encryption, at nagpapalit sa kasalukuyang database. Ang restore ay destructive; kailangang kumpirmahin ng may-ari.
+- Isang "Restore to new device" onboarding path para sa bagong aparato na wala pang umiiral na data — inilalaktawan nito ang destructive step at nag-i-import lamang.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Automatic or scheduled backups. Manual only.
-- Cloud sync, account-based recovery, or any server component.
-- Incremental or differential backups. The first cut is a full
-  snapshot each time. The file should be small enough that the
-  overhead of full-snapshot is acceptable.
-- Backup of `inventory_events`-style audit tables is in scope as
-  part of "the full database," but the implementation should be
-  clear that historical performance data is included.
+- Automatic o scheduled backups. Manual lamang.
+- Cloud sync, account-based recovery, o anumang server component.
+- Incremental o differential backups. Ang unang bersyon ay buong snapshot bawat pagkakataon.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- The backup is the SQLite file. No new tables. A new module
-  (e.g. `lib/backup.ts`) handles file packaging, encryption, and
-  decryption.
-- The encryption must use a vetted algorithm (AES-GCM with a
-  passphrase-derived key via Argon2 or scrypt). Pin the choices;
-  do not change them later without a migration path for existing
-  backups.
-- The SQLite file's WAL and SHM side-files must be checkpointed
-  before backup, otherwise the export can be inconsistent. This
-  is a code-path concern, not a schema one.
-- Restore: the import must run on a quiet database (no open
-  transactions, no in-flight queries). The implementation should
-  document the "stop the app and replace" semantics clearly.
-- No migration on the database. The backup is opaque.
+- Ang backup ay ang SQLite file. Walang bagong talahanayan. Ang bagong module (hal. `lib/backup.ts`) ang humahawak sa packaging ng file, encryption, at decryption.
+- Ang encryption ay kailangang gumamit ng vetted algorithm (AES-GCM na may passphrase-derived key via Argon2 o scrypt).
+- Ang WAL at SHM side-files ng SQLite file ay kailangang i-checkpoint bago mag-backup upang maiwasan ang hindi tugmang export.
+- Restore: ang import ay kailangang tumakbo sa isang tahimik na database (walang bukas na transaksyon, walang in-flight queries).
+- Walang migration sa database. Ang backup ay opaque.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- None on the data layer. The feature is orthogonal to the rest
-  of the schema.
-- Should be designed alongside the dev reset path
-  (`app/(tabs)/dev/reset.tsx`) so the two do not step on each
-  other.
+- Wala sa data layer.
+- Dapat idisenyo kasabay ng dev reset path (`app/(tabs)/dev/reset.tsx`).
 
-## Open Questions
+## Mga Open Question
 
-- Where does the encryption happen — in JS or in a native module?
-  JS is simpler but slower for a multi-MB database. Decide based
-  on acceptable backup time on a low-end Android.
-- What is the backup file format? A single encrypted file
-  containing a SQLite snapshot, plus a small unencrypted header
-  with version and schema version (so the restore can warn if the
-  backup is from a newer app version).
-- Is "Restore" idempotent? Replacing the active database is
-  destructive; if the owner has made new sales since the backup
-  was taken, those sales are lost on restore.
+- Saan nangyayari ang encryption — sa JS o sa native module?
+- Ano ang format ng backup file? Isang encrypted file na naglalaman ng SQLite snapshot, plus maliit na unencrypted header na may bersyon at schema version.
+- Ang "Restore" ba ay idempotent? Ang pagpapalit sa active database ay destructive.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- This is a security-sensitive feature. The encryption choice
-  should follow the same "use a vetted library, do not hand-roll"
-  rule as feature 11.
-- A passphrase-derived key is the right model: the owner
-  controls who can read the backup. There is no recovery if the
-  passphrase is lost; document this clearly.
-- Performance: a year of sari-sari data is small (low MBs);
-  encryption time is acceptable. Document the worst case at the
-  time of design.
-- Test the restore path end to end: backup on device A, restore
-  on device B, verify catalog, sales, and suki balances are
-  intact.
+- Ito ay isang security-sensitive na tampok. Ang pagpili ng encryption ay dapat sumunod sa patakarang "gumamit ng vetted library, huwag mag-hand-roll".
+- Ang passphrase-derived key ang tamang modelo: ang may-ari ang nagkokontrol kung sino ang makakabasa sa backup. Walang recovery kung mawala ang passphrase.
+- Performance: ang isang taong data ng sari-sari store ay maliit (ilang MBs lamang); ang oras ng encryption ay katanggap-tanggap.

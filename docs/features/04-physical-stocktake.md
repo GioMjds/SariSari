@@ -1,98 +1,49 @@
-# 04. Physical Stocktake
+# 04. Pag-imbentaryo sa Estante (Physical Stocktake)
 
-> Phase: Now
+> Phase: Kasalukuyan (Now)
 
-## Problem
+## Problema
 
-The catalog quantity drifts away from what's actually on the shelf.
-Shrinkage happens: shoplifting, spoilage that wasn't logged, free
-"paminsu" to neighbors, a child helping themselves, counting errors
-at restock, or a sale that didn't go through cleanly. Without a
-guided, periodic count, the owner discovers the discrepancy only when
-they open a box of something and find it empty — too late to
-reconcile against a specific event.
+Ang dami sa catalog ay unti-unting nag-iiba mula sa kung ano ang aktwal na nasa estante. Nangyayari ang shrinkage: shoplifting, nasirang paninda na hindi naitala, libreng "paminsu" sa kapitbahay, anak na kumuha para sa sarili, maling pagbilang sa pag-restock, o benta na hindi dumaan nang maayos. Kapag walang guided at regular na pagbilang, natutuklasan lamang ng may-ari ang pagkakaiba kapag nagbukas sila ng kahon at nakitang walang laman — huli na upang i-reconcile sa isang partikular na kaganapan.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want a guided, category-by-category count of what
-is physically on my shelf, compared to what the catalog says I should
-have, so I can record the variance and explain each gap.
+Bilang may-ari ng tindahan, gusto ko ng guided, category-by-category na pagbilang ng kung ano ang pisikal na nasa aking estante, ikinukumpara sa kung ano ang sinasabi ng catalog na dapat naroroon, upang maitala ko ang variance at maipaliwanag ang bawat kulang o sobra.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Stocktake" mode that walks the owner through products grouped by
-  category (existing `categories` table).
-- A counted-quantity input per product with quick-quantity chips
-  (the same bulk unit, dozen, etc. as the product supports).
-- A variance summary at the end: per-category and per-product
-  expected vs. counted, with the delta and the implied money impact
-  using `cost_price`.
-- A reason-coded adjustment flow on the variance summary: each
-  variance line gets a reason (shrinkage, spoilage, miscount, free
-  to neighbor, return) and writes through the existing
-  `inventory_transactions` table as a `type = 'adjustment'` row.
-- The mode locks the rest of the app from logging conflicting
-  changes during the count (a banner is enough; full lockout is
-  not required for an offline single-device app).
+- Isang "Stocktake" mode na gumagabay sa may-ari sa mga produkto na nakapangkat ayon sa kategorya (umiiral na `categories` table).
+- Isang counted-quantity input bawat produkto na may quick-quantity chips (parehong bulk unit, dozzina, atbp. na kinabibilangan ng produkto).
+- Isang variance summary sa dulo: per-category at per-product expected vs. counted, kasama ang delta at ang implikasyon sa pera gamit ang `cost_price`.
+- Isang reason-coded adjustment flow sa variance summary: bawat linya ng variance ay nakakatanggap ng dahilan (shrinkage, spoilage, miscount, libre sa kapitbahay, return) at nagsusulat sa umiiral na `inventory_transactions` table bilang `type = 'adjustment'` row.
+- Kino-kontra o pinala-lock ng mode ang natitirang bahagi ng app mula sa pag-log ng magkakasalungat na pagbabago habang nagbibilang (ang banner ay sapat na).
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Continuous cycle counting automation (this is a manual, periodic
-  exercise).
-- Multi-device collaboration on a single count.
-- Barcode-driven scanning during the count (the owner can already
-  use `expo-barcode-scanner` from feature 1; this feature is
-  keyboard/numeric input only).
+- Continuous cycle counting automation (ito ay isang manual at periodic na gawain).
+- Multi-device collaboration sa isang pagbilang.
+- Barcode-driven scanning habang nagbibilang (keyboard/numeric input lamang para sa tampok na ito).
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `stocktake_sessions`: `id`, `started_at`, `ended_at`,
-  `status` ('in_progress' | 'completed' | 'abandoned'), `note` TEXT.
-- New table `stocktake_counts`: `id`, `session_id` (FK), `product_id`
-  (FK), `expected_qty` INTEGER, `counted_qty` INTEGER, `reason_code`
-  TEXT, `note` TEXT, `committed_at` TEXT (null while in progress).
-- On commit, each committed count row produces a single
-  `inventory_transactions` insert (`type = 'adjustment'`,
-  `adjustment_sign` matches the variance direction, `note` carries
-  the reason). Done inside a single `withTransactionAsync` block so
-  partial commits cannot desync catalog quantity from the audit
-  trail.
-- New functions in `database/inventory.ts`:
-  `startStocktakeSession()`,
-  `upsertStocktakeCount({ sessionId, productId, countedQty })`,
-  `listStocktakeVariance(sessionId)`,
-  `commitStocktake(sessionId, reasonPerLine)`.
-- New hook in `hooks/useInventory.tsx`.
-- New migration bumping `user_version` past 9.
+- Bagong talahanayan na `stocktake_sessions`: `id`, `started_at`, `ended_at`, `status` ('in_progress' | 'completed' | 'abandoned'), `note` TEXT.
+- Bagong talahanayan na `stocktake_counts`: `id`, `session_id` (FK), `product_id` (FK), `expected_qty` INTEGER, `counted_qty` INTEGER, `reason_code` TEXT, `note` TEXT, `committed_at` TEXT.
+- Sa pag-commit, ang bawat committed count row ay gumagawa ng isang `inventory_transactions` insert (`type = 'adjustment'`, ang `adjustment_sign` ay tumutugma sa direksyon ng variance, ang `note` ay nagdadala ng dahilan). Ginagawa sa loob ng isang `withTransactionAsync` block.
+- Bagong mga function sa `database/inventory.ts`: `startStocktakeSession()`, `upsertStocktakeCount({ sessionId, productId, countedQty })`, `listStocktakeVariance(sessionId)`, `commitStocktake(sessionId, reasonPerLine)`.
+- Bagong hook sa `hooks/useInventory.tsx`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- None — independent. Reason codes overlap with feature 13
-  (expiry/damaged tracking) but the stocktake reason code is
-  separate from the goods-tracking reason code.
+- Wala — malaya. Ang mga reason code ay may pagkakapareho sa tampok 13 (expiry/damaged tracking) ngunit ang stocktake reason code ay hiwalay.
 
-## Open Questions
+## Mga Open Question
 
-- What is the default cadence? Weekly? Monthly? Configurable per
-  owner, or simply "on demand" with a soft prompt after N days
-  since the last stocktake?
-- Do reason codes carry a `cost_price` snapshot at stocktake time,
-  or do they use the live `cost_price`? Snapshotting is safer if a
-  restock lands between count and commit.
-- Can a stocktake be paused and resumed across app restarts?
-  (Recommended yes; the table schema already supports it.)
+- Ano ang default na dalas ng pag-imbentaryo? Lingguhan? Buwanan?
+- Ang mga reason code ba ay nagdadala ng `cost_price` snapshot sa oras ng stocktake, o ginagamit ang live `cost_price`? Mas ligtas ang snapshotting.
+- Maaari bang i-pause at i-resume ang stocktake kapag nag-restart ang app? (Inirerekomenda: oo).
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- Existing `inventory_transactions` already accepts
-  `type = 'adjustment'` rows with a `note`, and the migration to v2
-  added the `adjustment_sign` constraint — so the audit trail is
-  ready. This feature mainly adds the workflow on top.
-- Money: variance impact uses `cost_price` from `products` or
-  `inventory_transactions.unit_cost`. Both are integer-pesos. The
-  computed money figure is display-only, never stored as money
-  again.
-- Performance: for catalogs in the low thousands of products, a
-  single `SELECT … GROUP BY category` is enough; no need to add
-  pagination. If counts grow, the stocktake screen can paginate by
-  category.
+- Ang umiiral na `inventory_transactions` ay tumatanggap na ng `type = 'adjustment'` rows na may `note` — kaya handa na ang audit trail.
+- Pera: ang epekto ng variance ay gumagamit ng `cost_price` mula sa `products` o `inventory_transactions.unit_cost`. Parehong integer-pesos.

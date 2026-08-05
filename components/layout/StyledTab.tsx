@@ -5,7 +5,6 @@ import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   TouchableOpacity,
   View,
-  Text,
   Keyboard,
   Platform,
   LayoutChangeEvent,
@@ -20,6 +19,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { StyledText } from '../elements';
 
 export const TAB_BAR_TOTAL_OFFSET = 72;
 
@@ -110,13 +110,14 @@ const TabButton = memo(
             size={26}
             color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
           />
-          <Text
+          <StyledText
             numberOfLines={1}
-            className="text-sm font-bold mt-0.5 text-center"
+            variant="light"
+            className="text-md mt-0.5 text-center"
             style={{ color: isFocused ? ICON_ACTIVE : ICON_INACTIVE }}
           >
             {tab.name}
-          </Text>
+          </StyledText>
         </Animated.View>
       </TouchableOpacity>
     );
@@ -125,7 +126,10 @@ const TabButton = memo(
 
 TabButton.displayName = 'TabButton';
 
-export function isPathFocused(targetHref: string, currentPathname: string): boolean {
+export function isPathFocused(
+  targetHref: string,
+  currentPathname: string,
+): boolean {
   const normalize = (p: string) => {
     let clean = p.replace(/^\/\(tabs\)/, '');
     if (!clean || clean === '/' || clean === '/index') {
@@ -140,9 +144,7 @@ export function isPathFocused(targetHref: string, currentPathname: string): bool
   const normCurrent = normalize(currentPathname);
   const normTarget = normalize(targetHref);
 
-  return (
-    normCurrent === normTarget || normCurrent.startsWith(`${normTarget}/`)
-  );
+  return normCurrent === normTarget || normCurrent.startsWith(`${normTarget}/`);
 }
 
 export const StyledTab = memo(() => {
@@ -239,7 +241,9 @@ export const StyledTab = memo(() => {
     if (activeTab) {
       moveIndicatorTo(getHrefString(activeTab.href));
     } else {
-      indicatorOpacity.value = withTiming(0, { duration: shouldReduceMotion ? 0 : 120 });
+      indicatorOpacity.value = withTiming(0, {
+        duration: shouldReduceMotion ? 0 : 120,
+      });
     }
   }, [
     pathname,
@@ -325,4 +329,3 @@ export const StyledTab = memo(() => {
 });
 
 StyledTab.displayName = 'StyledTab';
-

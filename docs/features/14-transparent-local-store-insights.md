@@ -1,89 +1,50 @@
-# 14. Transparent Local Store Insights
+# 14. Malinaw at Lokal na Pagsusuri ng Tindahan (Transparent Local Store Insights)
 
-> Phase: Later
+> Phase: Sa Haharapin (Later)
 
-## Problem
+## Problema
 
-The owner accumulates a year of sales data, restock data, and suki
-history, and has no time to mine it. They suspect patterns
-("Coke always runs out by Friday," "Mang Jose's account is
-trouble") but cannot confirm them. External analytics tools ask for
-their data; the owner does not want to upload it. The data is right
-there on the device, unused.
+Nakaipon ang may-ari ng isang taong data sa benta, restock, at kasaysayan ng suki, ngunit wala silang oras upang minahin ito. Naghihinala sila ng mga poll ("Palaging naubos ang Coke kapag Biyernes," "Problema ang account ni Mang Jose") ngunit hindi ito makumpirma. Ang mga external analytics tools ay naghihingi ng kanilang data; ayaw ng may-ari na i-upload ito. Ang data ay naroon mismo sa aparato, hindi nagagamit.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want a small set of plain-language insights
-derived from my own store's history, so I can act on the patterns
-without a spreadsheet.
+Bilang may-ari ng tindahan, gusto ko ng maliit na hanay ng mga simpleng pahiwatig (insights) sa malinaw na wika na nanggagaling sa kasaysayan ng aking sariling tindahan, upang makakilos ako sa mga pola nang hindi gumagamit ng spreadsheet.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Tips" surface in the app, computing on-device only, showing a
-  short list of actionable observations:
-  - Items that repeatedly stock out (negative shelf days in the
-    last 60 days, based on `inventory_transactions` and current
-    `products.quantity`).
-  - Dead stock (no sales in the last 90 days, occupying capital and
-    shelf).
-  - Margin changes where `cost_price` rose or fell materially over
-    the last 30 days.
-  - Suki payment patterns: which suki pay on time, which are late,
-    which have ballooning balances.
-- Each tip is explainable: tapping it shows the underlying numbers
-  (period, products, suki, sums) so the owner trusts the tip.
-- Tips regenerate nightly and on demand. No background work that
-  the user did not ask for.
+- Isang "Tips" surface sa app, na nagkakalpula sa aparato lamang, na nagpapakita ng maikling listahan ng mga nakikitang obserbasyon:
+  - Mga item na paulit-ulit na nawawalan ng stock (mga negatibong shelf days sa nakaraang 60 araw, batay sa `inventory_transactions` at kasalukuyang `products.quantity`).
+  - Dead stock (walang benta sa nakaraang 90 araw, kumukuha ng kapital at lugar sa estante).
+  - Mga pagbabago sa margin kung saan ang `cost_price` ay tumaas o bumaba nang malaki sa nakaraang 30 araw.
+  - Pola ng pagbabayad ng suki: sinong suki ang nagbabayad sa oras, sino ang huli, at sino ang may lumalaking balanse.
+- Bawat tip ay maipapaliwanag: ang pag-tap dito ay nagpapakita ng mga numerong nasa ilalim (panahon, mga produkto, suki, kabuuan) upang magtiwala ang may-ari sa tip.
+- Ang mga tip ay nagre-regenerate sa gabi at kapag hiningi. Walang background work na hindi hiningi ng user.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Cross-store comparisons, benchmarks, or anything that needs data
-  from outside this device.
-- Predictive or ML-based recommendations. "Insight" here means a
-  derived fact, not a model output.
-- Push notifications for new tips.
+- Cross-store comparisons, benchmarks, o anumang nangangailangan ng data mula sa labas ng aparatong ito.
+- Predictive o ML-based recommendations. Ang "Insight" dito ay nangangahulugang nagmula na katotohanan (derived fact), hindi output ng modelo.
+- Push notifications para sa mga bagong tip.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- No new tables. All signals are derivable from existing tables
-  (`sales`, `sale_items`, `inventory_transactions`, `products`,
-  `credit_transactions`, `payment_allocations`).
-- A computed view in `database/stock-intelligence.ts` (or a new
-  `database/insights.ts`): `getStoreTips()` returning a small list
-  of typed tip objects. Each tip is fully self-describing so the UI
-  can render its explainer without a second query.
-- The existing `useStockIntelligence` hook can be extended, or a
-  new `hooks/useInsights.tsx` can be added.
-- No migration.
+- Walang bagong talahanayan. Lahat ng signal ay nakukuha mula sa umiiral na mga talahanayan (`sales`, `sale_items`, `inventory_transactions`, `products`, `credit_transactions`, `payment_allocations`).
+- Isang computed view sa `database/stock-intelligence.ts` (o bagong `database/insights.ts`): `getStoreTips()` na nagbabalik ng maliit na listahan ng typed tip objects.
+- Ang umiiral na `useStockIntelligence` hook ay maaaring palawakin, o magdagdag ng bagong `hooks/useInsights.tsx`.
+- Walang migration.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Shares velocity and signal math with feature 9 (reorder
-  suggestions) and feature 10 (stock movement timeline). The three
-  should agree on a common "what is a stockout" / "what is dead
-  stock" definition; coordinate early to avoid drift.
-- Feature 15 (smarter credit profiles) shares the suki payment
-  pattern computation.
+- Nagbabahagi ng velocity at signal math sa tampok 9 (reorder suggestions) at tampok 10 (stock movement timeline).
+- Tampok 15 (smarter credit profiles) ay nagbabahagi ng kalkulasyon sa pola ng pagbabayad ng suki.
 
-## Open Questions
+## Mga Open Question
 
-- How often does the tips list regenerate? On every app open is
-  fine, but a heavy regeneration could be jarring. A nightly
-  cache plus on-demand "refresh" is friendlier.
-- What is the max number of tips shown? Five to seven is a
-  reasonable cap; more becomes noise.
-- Can the owner dismiss a tip ("I already know this")? Dismissal
-  is a UI preference, not a domain fact; recommend not persisting
-  it for v1.
+- Gaano kadalas nagre-regenerate ang listahan ng tips? Sa bawat pagbukas ng app.
+- Ano ang maximum na bilang ng tips na ipinapakita? Limang hanggang pitong tip.
+- Maaari bang i-dismiss ng may-ari ang tip ("Alam ko na ito")?
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- Every computation is local and reproducible from the data. This
-  is the single most important property of the feature: trust
-  comes from "I can tap and see the numbers," not from the tip
-  being right.
-- Money: any money-bearing tip (margin change, dead stock capital
-  tied up) uses integer-pesos and `formatPesos` for display.
-- Performance: a single device with a year of data is still a
-  small dataset for SQLite. The existing indexes from migration
-  v4 are sufficient for v1.
+- Bawat kalkulasyon ay lokal at pwedeng muling buuin mula sa data.
+- Pera: Anumang tip na may hawak na pera (pagbabago sa margin, kapital sa dead stock) ay gumagamit ng integer-pesos at `formatPesos` para sa pagpapakita.

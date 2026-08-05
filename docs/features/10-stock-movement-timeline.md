@@ -1,87 +1,49 @@
-# 10. Stock Movement Timeline
+# 10. Timeline ng Paggalaw ng Imbentaryo (Stock Movement Timeline)
 
-> Phase: Next
+> Phase: Susunod (Next)
 
-## Problem
+## Problema
 
-The owner looks at a product, sees that the quantity on hand is X, and
-asks "why isn't it Y?" Today the answer is hidden. They can scroll
-through `inventory_transactions` if they know SQL, but no surface
-exists to walk the human through the trail. When a discrepancy
-surfaces during a stocktake (feature 4) or a restock, the owner has no
-quick way to trace it back to the event that caused it.
+Tinitingnan ng may-ari ang isang produkto, nakikitang ang dami sa kamay ay X, at nagtatanong "bakit hindi ito Y?" Ngayon, ang sagot ay nakatago. Pwede silang mag-scroll sa `inventory_transactions` kung marunong sila sa SQL, ngunit walang surface na umiiral upang gabayan ang tao sa bakas nito. Kapag nagkaroon ng pagkakaiba sa panahon ng stocktake (tampok 4) o restock, walang mabilis na paraan ang may-ari upang i-trace ito pabalik sa kaganapan na nagdulot nito.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner looking at a product, I want to see a simple
-timeline of every quantity change — what happened, when, and why — so
-I can answer "why is this number what it is?" without leaving the app.
+Bilang may-ari ng tindahan na nakatingin sa isang produkto, gusto kong makita ang simpleng timeline ng bawat pagbabago sa dami — ano ang nangyari, kailan, at bakit — upang masagot ko ang "bakit ganito ang numerong ito?" nang hindi lumalabas sa app.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A per-product timeline screen, reachable from any product row,
-  listing every `inventory_transactions` row for that product,
-  newest first.
-- Each timeline entry shows: timestamp, event type (sale, restock,
-  damaged, adjustment, void reversal from feature 7), quantity
-  delta, and the human-readable reason / note.
-- A short period summary at the top: net change in the last 7 and
-  30 days, broken down by event type.
-- A "Linked sale" affordance on entries that come from a sale or a
-  void, opening the existing sale detail screen.
-- Filter by event type (e.g. "show me only adjustments") for
-  debugging a specific concern.
+- Isang per-product timeline screen, na naaabot mula sa anumang row ng produkto, na naglilista ng bawat `inventory_transactions` row para sa produktong iyon, pinakabago muna.
+- Bawat timeline entry ay nagpapakita ng: timestamp, uri ng kaganapan (sale, restock, damaged, adjustment, void reversal mula sa tampok 7), quantity delta, at ang madaling basahing dahilan / note.
+- Isang maikling summary ng panahon sa itaas: net change sa nakaraang 7 at 30 araw, na nakahiwalay ayon sa uri ng kaganapan.
+- Isang "Linked sale" affordance sa mga entry na nanggagaling sa benta o void, na nagbubukas sa umiiral na sale detail screen.
+- Filter ayon sa uri ng kaganapan (hal. "ipakita lamang sa akin ang mga adjustment") para sa pag-debug ng isang partikular na alalahanin.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Editing or deleting timeline entries. The timeline is read-only
-  and append-only.
-- A global timeline across all products. Per-product is enough for
-  v1.
-- Predictive or projected future quantity.
+- Pag-edit o pagbura ng mga timeline entry. Ang timeline ay read-only at append-only.
+- Isang global timeline sa lahat ng produkto. Ang per-product ay sapat na para sa v1.
+- Predictive o projected na hinaharap na dami.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- No new tables. `inventory_transactions` is already the source of
-  truth (migration v2 added `note` and `adjustment_sign`).
-- New function in `database/inventory.ts`:
-  `getProductTimeline(productId, { from, to, eventType })`
-  returning rows enriched with the linked sale/void details.
-- New hook in `hooks/useInventory.tsx`.
-- No migration needed for the data layer. UI only.
-- The reason text on each entry should be human-readable; some
-  normalization may be needed in the SQL so that `note` values
-  from the various writers (stocktake, void, manual adjustment)
-  read consistently on the timeline.
+- Walang bagong talahanayan. Ang `inventory_transactions` na ang source of truth.
+- Bagong function sa `database/inventory.ts`: `getProductTimeline(productId, { from, to, eventType })` na nagbabalik ng mga row na pinalawak ng mga detalye ng nakakabit na sale/void.
+- Bagong hook sa `hooks/useInventory.tsx`.
+- Walang migration na kailangan para sa data layer. UI lamang.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Feature 4 (physical stocktake) populates the timeline with
-  adjustment rows.
-- Feature 7 (safe voids/refunds) populates the timeline with
-  reversal rows.
-- Feature 13 (expiry/damaged tracking) populates damaged rows.
-- The timeline is most useful once all three populate it; the
-  first cut can ship with whatever already writes to
-  `inventory_transactions` (restock, sale, manual adjustment).
+- Tampok 4 (physical stocktake) ay naglalagay ng mga adjustment row sa timeline.
+- Tampok 7 (safe voids/refunds) ay naglalagay ng mga reversal row sa timeline.
+- Tampok 13 (expiry/damaged tracking) ay naglalagay ng mga damaged row.
 
-## Open Questions
+## Mga Open Question
 
-- Pagination: a busy product can have hundreds of timeline entries
-  in a year. The timeline should paginate, probably cursor-based
-  to match the POS pagination plan.
-- Grouping: do we collapse identical events happening back-to-back
-  (e.g. three sales of the same product in two minutes) into one
-  row, or keep them as discrete entries? Recommend keeping them
-  discrete for audit; show a "+N more" chip if the page is full.
+- Pagination: ang isang mabilis mabentang produkto ay maaaring magkaroon ng daan-daang timeline entry sa isang taon. Dapat magkaroon ng pagination ang timeline.
+- Grouping: idi-discount ba natin ang mga kaparehong kaganapan na nangyayari nang magkakasunod? Inirerekomenda na panatilihin silang hiwalay para sa audit.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- Read-only, single-table query; the existing
-  `idx_inventory_transactions` (if present) or the primary key
-  range scan is enough. The migration v4 performance indexes did
-  not include this table — adding one is a small follow-up if
-  the timeline proves slow on a real catalog.
-- Money is not on the timeline; only quantity and reason.
-- This is a low-cost, high-trust feature: it does not introduce
-  any new state, only reveals what is already there.
+- Read-only, single-table query.
+- Walang pera sa timeline; dami lamang at dahilan.
+- Ito ay isang mababang-gastos ngunit mataas-ang-tiwala na tampok: hindi ito nagpapakilala ng bagong state, ipinapakita lamang kung ano na ang naroon.

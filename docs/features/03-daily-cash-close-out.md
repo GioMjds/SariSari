@@ -1,91 +1,49 @@
-# 03. Daily Cash Close-Out
+# 03. Pang-araw-araw na Pagre-reconcile ng Kaha (Daily Cash Close-Out)
 
-> Phase: Now
+> Phase: Kasalukuyan (Now)
 
-## Problem
+## Problema
 
-At the end of the day the owner needs to reconcile the till. They open
-the drawer, count what is actually there, and compare it to what the
-register says should be there. Today this is a mental exercise against
-an Excel sheet or a notebook. Cash that disappears into the
-household budget, into suki change, or into a counting mistake is
-invisible. Over a month that can be a meaningful amount, and the
-owner has no audit trail to investigate.
+Sa katapusan ng araw, kailangang i-reconcile ng may-ari ang kaha. Binubuksan nila ang drawer, binibilang ang aktwal na pera, at ikinukumpara sa sinasabi ng register na dapat naroroon. Ngayon, ito ay isang mental na ehersisyo lamang laban sa Excel sheet o kuwaderno. Ang perang nawawala sa badyet ng bahay, sa sukli ng suki, o sa mali sa pagbilang ay hindi nakikita. Sa loob ng isang buwan, maaari itong maging malaking halaga, at walang audit trail ang may-ari upang imbestigahan.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner closing up for the night, I want to record the day's
-opening float, every cash-in and cash-out, the counted drawer, and the
-expected vs. actual variance with a reason, so I can spot and stop
-silent cash loss.
+Bilang may-ari ng tindahan na nagsasara sa gabi, gusto kong maitala ang opening cash sa araw na iyon, bawat cash-in at cash-out, ang nabiling pera sa kaha, at ang inaasahan laban sa aktwal na variance na may dahilan, upang makita at mapatigil ko ang tahimik na pagkawala ng pera.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A daily close-out record capturing: opening float, total cash sales
-  (computed from `sales`), total cash refunds/voids (when feature 7
-  lands), total cash received for utang payments, total cash paid out
-  (gastos, owner cash draws), closing count, and variance.
-- A "Cash In / Cash Out" log for non-sale cash movements
-  (withdrawals, supplier cash purchases, change brought in from
-  home), each with a reason code and optional note.
-- Variance reason codes (counting error, suki change, suspect, etc.)
-  that surface in a simple monthly summary.
-- A "Close day" confirmation that locks the record and shows it on a
-  history list.
+- Isang daily close-out record na nagtatala ng: opening float, kabuuang cash sales (mula sa `sales`), kabuuang cash refunds/voids (kapag dumating ang tampok 7), kabuuang cash na natanggap para sa utang, kabuuang cash na ibinayad (gastos, kuha ng may-ari), closing count, at variance.
+- Isang "Cash In / Cash Out" log para sa mga paggalaw ng pera na hindi benta (pagkuha ng pera, pagbili sa supplier gamit ang cash, sukli na dinala mula sa bahay), bawat isa ay may reason code at opsyonal na note.
+- Variance reason codes (mali sa pagbilang, sukli ng suki, pinaghihinalaan, atbp.) na lumalabas sa simpleng monthly summary.
+- Isang "Close day" confirmation na nag-lo-lock sa rekord at nagpapakita nito sa history list.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Real-time cash-register tracking. Counts only happen at close.
-- Multi-shift handover (this is single-owner; shift tracking is
-  feature 16).
-- Bank reconciliation, deposit tracking, or any banking integration.
+- Real-time cash-register tracking. Ang pagbilang ay nangyayari lamang sa pagsasara.
+- Multi-shift handover (ito ay single-owner; ang shift tracking ay tampok 16).
+- Bank reconciliation, deposit tracking, o anumang banking integration.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `cash_ledger_entries`: `id`, `date`, `direction` ('in' /
-  'out'), `amount` INTEGER, `reason_code` TEXT, `note` TEXT, `sale_id`
-  (nullable FK to `sales`), `created_at`. Backfill from existing
-  `sales` so the close-out math is reproducible.
-- New table `daily_close_outs`: `id`, `date` (UNIQUE), `opening_float`
-  INTEGER, `closing_count` INTEGER, `expected_cash` INTEGER,
-  `variance` INTEGER, `variance_reason_code` TEXT, `variance_note`
-  TEXT, `closed_at` TEXT.
-- New functions in `database/cash.ts` (which already exists):
-  `getCashMovementForDate(date)`,
-  `insertCashLedgerEntry(entry)`,
-  `closeDay({ date, openingFloat, closingCount, varianceReason })`.
-- New hook in `hooks/useCash.tsx` for the close-out screen.
-- The "expected cash" is computed at close time from
-  `opening_float + SUM(cash_in) - SUM(cash_out)`, all integer
-  arithmetic. The new code path must go through `lib/money.ts` for
-  any input/display formatting.
-- New migration bumping `user_version` past 9.
+- Bagong talahanayan na `cash_ledger_entries`: `id`, `date`, `direction` ('in' / 'out'), `amount` INTEGER, `reason_code` TEXT, `note` TEXT, `sale_id` (nullable FK sa `sales`), `created_at`.
+- Bagong talahanayan na `daily_close_outs`: `id`, `date` (UNIQUE), `opening_float` INTEGER, `closing_count` INTEGER, `expected_cash` INTEGER, `variance` INTEGER, `variance_reason_code` TEXT, `variance_note` TEXT, `closed_at` TEXT.
+- Bagong mga function sa `database/cash.ts`: `getCashMovementForDate(date)`, `insertCashLedgerEntry(entry)`, `closeDay({ date, openingFloat, closingCount, varianceReason })`.
+- Bagong hook sa `hooks/useCash.tsx` para sa close-out screen.
+- Ang "expected cash" ay kinakalkula sa oras ng pagsasara mula sa `opening_float + SUM(cash_in) - SUM(cash_out)`, lahat sa integer arithmetic. Ang bagong code path ay dapat dumating sa `lib/money.ts` para sa anumang input/display formatting.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Feature 7 (safe voids/refunds) — voids and refunds need to flow
-  into the daily cash movement so the close-out math stays correct.
-  For the initial cut, the close-out can assume no voids and
-  document the dependency for later.
+- Tampok 7 (safe voids/refunds) — ang mga void at refund ay kailangang pumasok sa daily cash movement upang manatiling tama ang kalkulasyon sa pagsasara.
 
-## Open Questions
+## Mga Open Question
 
-- Does the owner need to be able to edit a previous close-out (in
-  case of a miscount they discover the next morning)? If so, edits
-  must be append-only with a `corrected_by` row rather than
-  overwriting.
-- What is the retention policy for cash ledger entries? Indefinite
-  on-device is fine until feature 17 (backup) ships; after that,
-  consider a "compact after N years" path.
-- How do we handle a day that was never closed? The dashboard should
-  surface a stale-day warning, not invent a close-out.
+- Kailangan bang ma-edit ng may-ari ang nakaraang close-out (kung may maling bilang na natuklasan kinaumagahan)? Kung oo, ang mga edit ay dapat append-only na may `corrected_by` row sa halip na i-overwrite.
+- Ano ang retention policy para sa cash ledger entries?
+- Paano natin hahawakan ang araw na hindi naisara? Ang dashboard ay dapat magpakita ng stale-day warning.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- All data is local SQLite, fits the offline-first model.
-- Money flows only through integer-pesos columns and `lib/money.ts`.
-- A close-out is a single multi-statement transaction wrapping the
-  close-out row insert and the variance calculation; existing
-  `db.withTransactionAsync` covers it.
-- The close-out screen becomes the natural anchor for the existing
-  `app/gastos-kaha/` flow (gastos) — they can share the cash ledger.
+- Lahat ng data ay lokal na SQLite, angkop sa offline-first model.
+- Ang pera ay dumadaloy lamang sa integer-pesos columns at `lib/money.ts`.
+- Ang close-out ay isang solong multi-statement transaction gamit ang `db.withTransactionAsync`.

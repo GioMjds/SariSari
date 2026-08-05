@@ -1,101 +1,51 @@
-# 08. Supplier Delivery Receiving
+# 08. Pagtanggap ng Delivery mula sa Supplier (Supplier Delivery Receiving)
 
-> Phase: Next
+> Phase: Susunod (Next)
 
-## Problem
+## Problema
 
-When a delivery arrives, the owner matches it to the shelf in their
-head: which boxes came, which were short, which price changed, which
-invoice line to record. They rarely write it down. So when margin
-moves unexpectedly, or stock runs low faster than expected, the cause
-is invisible. The data needed to debug it — actual purchase cost,
-shortage quantity, supplier identity — was lost at the doorstep.
+Kapag dumating ang isang delivery, ikinukumpara ito ng may-ari sa estante sa pamamagitan ng isip: aling mga kahon ang dumating, alin ang kulang, aling presyo ang nagbago, aling linya ng resibo ang itatala. Bihira nilang isulat ito. Kaya kapag nagbago ang margin nang hindi inaasahan, o mabilis na naubos ang stock kaysa sa inaasahan, ang dahilan ay hindi nakikita. Ang data na kailangan upang maiwasto ito — aktwal na puhunan, dami ng kulang (shortage), pagkakakilanlan ng supplier — ay nawala sa pintuan pa lamang.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner accepting a supplier delivery, I want to record what
-actually arrived, at what cost, with which shortages, so the catalog
-and the cost basis stay accurate.
+Bilang may-ari ng tindahan na tumatanggap ng delivery ng supplier, gusto kong maitala kung ano ang aktwal na dumating, sa anong puhunan, at ano ang mga kulang, upang manatiling tumpak ang catalog at ang batayan ng puhunan.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Receive delivery" flow that lets the owner pick a supplier
-  (existing `suppliers` table, added in migration v7) and then a list
-  of products expected on the delivery.
-- Per-line actual quantity received vs. quantity expected
-  (shortage detection), actual unit cost (vs. expected cost in
-  `products.cost_price` or the supplier's last cost).
-- A supplier invoice number and optional photo of the paper invoice
-  (saved as a URI on the device, not uploaded).
-- Commit writes through the existing
-  `inventory_transactions` path as `type = 'restock'`, with
-  `unit_cost` set to the actual cost. Catalog `quantity` and
-  `cost_price` update accordingly.
-- Shortages are stored separately so a "shortages by supplier"
-  report can rank suppliers by reliability.
+- Isang "Receive delivery" flow na nagpapahintulot sa may-ari na pumili ng supplier (umiiral na `suppliers` table) at pagkatapos ay ang listahan ng mga produktong inaasahan sa delivery.
+- Per-line actual quantity received vs. quantity expected (shortage detection), actual unit cost (vs. expected cost sa `products.cost_price` o huling cost ng supplier).
+- Isang supplier invoice number at opsyonal na larawan ng papel na resibo (na-save bilang URI sa aparato, hindi ini-upload).
+- Ang commit writes ay dumadaan sa umiiral na `inventory_transactions` path bilang `type = 'restock'`, kung saan ang `unit_cost` ay naka-set sa aktwal na puhunan. Ang catalog `quantity` at `cost_price` ay nag-u-update ayon dito.
+- Ang mga shortage ay nakaimbak nang hiwalay upang ang "shortages by supplier" report ay makapag-rank sa mga supplier ayon sa pagiging maaasahan.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Purchase orders or pre-arrival documents. The flow is
-  post-delivery only.
-- Multi-supplier consolidation of a single delivery (one delivery
-  = one supplier for now).
-- Auto-emailing or auto-uploading the invoice photo. The photo URI
-  is local.
+- Purchase orders o pre-arrival documents. Ang flow ay post-delivery lamang.
+- Multi-supplier consolidation sa iisang delivery (isang delivery = isang supplier sa ngayon).
+- Auto-emailing o auto-uploading ng larawan ng resibo. Ang photo URI ay lokal.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `delivery_receipts`: `id`, `supplier_id` (FK), `invoice_no`
-  TEXT, `invoice_photo_uri` TEXT, `received_at` TEXT, `note` TEXT,
-  `created_at` TEXT.
-- New table `delivery_receipt_lines`: `id`, `receipt_id` (FK),
-  `product_id` (FK), `expected_qty` INTEGER, `received_qty` INTEGER,
-  `expected_unit_cost` INTEGER, `actual_unit_cost` INTEGER,
-  `shortage_qty` INTEGER (computed column or maintained on write).
-- The commit path writes both the `inventory_transactions` row
-  (per CLAUDE.md rules, inside `withTransactionAsync`) and updates
-  `products.quantity` and `products.cost_price` if the actual
-  cost differs from the current one. Decide policy: latest-cost
-  wins, or weighted average? Recommend latest-cost for simplicity;
-  make the choice a follow-up decision if not the recommended
-  default.
-- New functions in `database/suppliers.ts` and
-  `database/inventory.ts`:
-  `createDeliveryReceipt(header, lines)`,
-  `listDeliveryReceipts({ supplierId, since })`,
-  `getDeliveryShortageReport({ since })`.
-- New hook in `hooks/useSuppliers.tsx` and
-  `hooks/useInventory.tsx`.
-- New migration bumping `user_version` past 9.
+- Bagong talahanayan na `delivery_receipts`: `id`, `supplier_id` (FK), `invoice_no` TEXT, `invoice_photo_uri` TEXT, `received_at` TEXT, `note` TEXT, `created_at` TEXT.
+- Bagong talahanayan na `delivery_receipt_lines`: `id`, `receipt_id` (FK), `product_id` (FK), `expected_qty` INTEGER, `received_qty` INTEGER, `expected_unit_cost` INTEGER, `actual_unit_cost` INTEGER, `shortage_qty` INTEGER.
+- Ang commit path ay nagsusulat pareho sa `inventory_transactions` row (sa loob ng `withTransactionAsync`) at nag-u-update sa `products.quantity` at `products.cost_price` kung ang aktwal na puhunan ay iba sa kasalukuyan.
+- Bagong mga function sa `database/suppliers.ts` at `database/inventory.ts`: `createDeliveryReceipt(header, lines)`, `listDeliveryReceipts({ supplierId, since })`, `getDeliveryShortageReport({ since })`.
+- Bagong hooks sa `hooks/useSuppliers.tsx` at `hooks/useInventory.tsx`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Feature 9 (offline reorder suggestions) builds on the delivery
-  history. Reorder math benefits from actual restock cost, not just
-  list cost.
-- Feature 14 (local store insights) can derive "supplier
-  reliability" from the shortages once they exist.
+- Tampok 9 (offline reorder suggestions) ay nagtatayo sa kasaysayan ng delivery.
+- Tampok 14 (local store insights) ay makakakuha ng "supplier reliability" mula sa mga shortage kapag umiiral na ang mga ito.
 
-## Open Questions
+## Mga Open Question
 
-- Cost basis policy: latest cost vs. weighted average. Sari-sari
-  operations are usually simple enough that latest cost is fine,
-  but a small subset of owners may want weighted average.
-- Is the delivery receipt the source of truth for the restock, or
-  is it a record of something that was already manually entered?
-  Strongly recommend "the receipt is the source of truth" — no
-  duplicate entry, no drift.
-- What happens if a delivery is for a product not yet in the
-  catalog? Support quick-add-from-delivery.
+- Patakaran sa cost basis: latest cost vs. weighted average. Inirerekomenda ang latest cost para sa pagiging simple.
+- Ang delivery receipt ba ang source of truth para sa restock? Inirerekomenda: oo — walang duplicate entry, walang drift.
+- Ano ang mangyayari kung ang delivery ay para sa produktong wala pa sa catalog? Sumuporta sa quick-add-from-delivery.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- `suppliers` and `products.supplier_id` already exist (migration
-  v7). The receiving flow plugs into that.
-- Money: `unit_cost` and `cost_price` are already integer-pesos.
-  No money parsing outside `lib/money.ts`.
-- The `withTransactionAsync` rule is critical here: a partial
-  commit (receipt line written but catalog not updated) would
-  desync the very thing this feature is meant to keep accurate.
-- Performance: a single delivery has tens of lines, not thousands.
-  No pagination needed.
+- Umiiral na ang `suppliers` at `products.supplier_id` (migration v7). Ang receiving flow ay nakakabit doon.
+- Pera: ang `unit_cost` at `cost_price` ay integer-pesos na.
+- Ang patakaran ng `withTransactionAsync` ay kritikal dito.

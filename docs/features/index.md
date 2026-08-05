@@ -1,72 +1,67 @@
-# Future Feature Roadmap
+# Hinaharap na Roadmap ng mga Tampok
 
-Each item below is a short pointer to a detailed brief. Read the
-brief before scoping work; the brief captures the problem, scope,
-data implications, dependencies, open questions, and feasibility
-notes that the one-liner below does not.
+Ang bawat item sa ibaba ay isang maikling gabay patungo sa detalyadong dokumento. Basahin ang
+dokumento bago simulan ang gawain; inilalarawan nito ang problema, saklaw,
+mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagiging posible na wala sa maikling buod sa ibaba.
 
-## Now — highest daily value
+## Kasalukuyan (Now) — Pinakamataas na Halaga sa Araw-araw
 
-1. [POS fast lane](01-pos-fast-lane.md) — favorites, recently
-   sold items, common quantities, faster search, and barcode
+1. [Mabilisang Pag-checkout sa POS](01-pos-fast-lane.md) — mga paborito, kamakailang
+   nabentang paninda, karaniwang dami, mas mabilis na paghahanap, at barcode
    scanning.
-2. [Parked sales](02-parked-sales.md) — set aside one customer's
-   cart and resume it later without losing items.
-3. [Daily cash close-out](03-daily-cash-close-out.md) — record
-   opening cash, cash in/out, counted cash, expected cash, and
-   the variance with a reason.
-4. [Physical stocktake](04-physical-stocktake.md) — guided count
-   by category, variance review, and reason-coded inventory
-   adjustments.
-5. [Utang guardrails at checkout](05-utang-guardrails-at-checkout.md) —
-   show live balance, available credit, overdue status, and
-   enforce the suki's limit or require an owner override.
-6. [Collection queue](06-collection-queue.md) — a clear list of
-   overdue and near-limit suki, with one-tap partial/full payment
-   recording and an optional local follow-up date.
+2. [Pag-ihinto o Pag-iimbak ng Cart](02-parked-sales.md) — itabi muna ang cart ng isang
+   customer at balikan ito mamaya nang hindi nawawala ang mga paninda.
+3. [Pang-araw-araw na Pagre-reconcile ng Kaha](03-daily-cash-close-out.md) — itala ang
+   opening float, pumasok/lumabas na pera, nabiling pera, expected cash, at
+   variance kasama ang dahilan.
+4. [Pag-imbentaryo sa Estante](04-physical-stocktake.md) — guided na pagbilang ayon sa
+   kategorya, pagsusuri ng variance, at pag-adjust sa imbentaryo na may reason code.
+5. [Mga Proteksyon sa Utang sa Checkout](05-utang-guardrails-at-checkout.md) —
+   ipakita ang live balance, natitirang credit, status ng overdue, at
+   ipatupad ang limit ng suki o hilingin ang override ng may-ari.
+6. [Pila ng Paniningil ng Utang](06-collection-queue.md) — malinaw na listahan ng mga
+   overdue at malapit sa limit na suki, na may isang-tap na pagtala ng buo o bahagyang bayad
+   at opsyonal na petsa ng follow-up.
 
-## Next — strengthen control and replenishment
+## Susunod (Next) — Pagpapatibay ng Kontrol at Pagre-stock
 
-7. [Safe voids, refunds, and corrections](07-safe-voids-refunds-corrections.md) —
-   reverse a sale through an auditable workflow that restores
-   stock and correctly adjusts cash or utang.
-8. [Supplier delivery receiving](08-supplier-delivery-receiving.md) —
-   record delivered quantities, actual purchase costs, shortages,
-   and supplier invoices when restocking.
-9. [Offline reorder suggestions](09-offline-reorder-suggestions.md) —
-   create a supplier-grouped shopping list from low stock, sales
-   history, and target stock levels; the owner always confirms
-   it.
-10. [Stock movement timeline](10-stock-movement-timeline.md) — a
-    simple "why did this quantity change?" view across sales,
-    restocks, spoilage, returns, and manual adjustments.
-11. [Owner PIN for sensitive actions](11-owner-pin-for-sensitive-actions.md) —
-    protect price overrides, large discounts, voids, stock
-    adjustments, and debt-limit exceptions on the shared device.
-12. [Customer credit statements](12-customer-credit-statements.md) —
-    generate an offline receipt or PDF statement showing
-    purchases, payments, and remaining utang.
+7. [Ligtas na Pagbawi, Pag-refund, at Pagtatama](07-safe-voids-refunds-corrections.md) —
+   i-reverse ang benta sa pamamagitan ng auditable na workflow na nagbabalik ng
+   stock at tama ang pag-adjust sa cash o utang.
+8. [Pagtanggap ng Delivery mula sa Supplier](08-supplier-delivery-receiving.md) —
+   itala ang dumating na dami, aktwal na puhunan, mga kulang (shortages),
+   at resibo ng supplier kapag nagre-restock.
+9. [Offline na Mungkahi sa Pagre-stock](09-offline-reorder-suggestions.md) —
+   gumawa ng listahan ng bibilhin na nakapangkat sa supplier mula sa mababang stock,
+   kasaysayan ng benta, at target stock level; ang may-ari ang laging nagkokonpirma.
+10. [Timeline ng Paggalaw ng Imbentaryo](10-stock-movement-timeline.md) — simpleng
+    pagtingin kung "bakit nagbago ang dami?" sa mga benta, restock, spoilage,
+    returns, at manual adjustments.
+11. [PIN ng May-ari para sa Maselang Aksyon](11-owner-pin-for-sensitive-actions.md) —
+    protektahan ang price overrides, malalaking discount, voids, stock
+    adjustments, at debt-limit exceptions sa shared na aparato.
+12. [Pahayag ng Utang ng Suki (Credit Statements)](12-customer-credit-statements.md) —
+    gumawa ng offline na resibo o PDF statement na nagpapakita ng
+    mga binili, bayad, at natitirang utang.
 
-## Later — useful once the fundamentals are reliable
+## Sa Haharapin (Later) — Kapaki-pakinabang Kapag Matatag na ang Pundasyon
 
-13. [Expiry and damaged-goods tracking](13-expiry-and-damaged-goods-tracking.md) —
-    only for products where it matters, with near-expiry and
-    write-off reasons to make losses visible.
-14. [Transparent local store insights](14-transparent-local-store-insights.md) —
-    practical tips derived solely from on-device history: items
-    that repeatedly stock out, dead stock, margin changes, and
-    suki payment patterns.
-15. [Smarter but explainable credit profiles](15-smarter-but-explainable-credit-profiles.md) —
-    suggest — not silently decide — credit limits from payment
-    timeliness, balance, and overdue history. Builds on the
-    README's planned risk/payer profiles.
-16. [Shift tracking on one device](16-shift-tracking-on-one-device.md) —
-    local cashier profiles or shift handovers so cash variances
-    and corrections have attribution without introducing
-    multi-device accounts.
-17. [Manual encrypted backup and restore](17-manual-encrypted-backup-and-restore.md) —
-    export/import the SQLite data through the device's Files /
-    share flow. No cloud account or automatic syncing required.
-18. [Offline price-label and barcode sheets](18-offline-price-label-and-barcode-sheets.md) —
-    generate printable labels from the existing catalog for
-    shelves and repacked tingi items.
+13. [Pagtala ng Panindang Pasado sa Expiry at Nasira](13-expiry-and-damaged-goods-tracking.md) —
+    para lamang sa mga produktong kailangan ito, na may near-expiry at
+    write-off reasons para makita ang mga lugi.
+14. [Malinaw at Lokal na Pagsusuri ng Tindahan](14-transparent-local-store-insights.md) —
+    mga praktikal na tip mula lamang sa kasaysayan sa aparato: mga panindang
+    paulit-ulit na nawawalan ng stock, dead stock, pagbabago sa margin, at
+    pola ng pagbabayad ng suki.
+15. [Mas Matalino ngunit Naipapaliwanag na Credit Profile](15-smarter-but-explainable-credit-profiles.md) —
+    magmungkahi — hindi tahimik na magdesisyon — ng credit limit mula sa
+    kabilisan ng pagbabayad, balanse, at kasaysayan ng overdue.
+16. [Pagtala ng Shift sa Iisang Aparato](16-shift-tracking-on-one-device.md) —
+    lokal na cashier profile o shift handover upang ang mga variance at
+    corrections sa kaha ay may kaugnay na tao nang walang multi-device account.
+17. [Manwal at Nakatagong Backup at Restore](17-manual-encrypted-backup-and-restore.md) —
+    i-export/import ang SQLite data gamit ang Files / share flow ng aparato.
+    Walang cloud account o awtomatikong syncing na kailangan.
+18. [Printable na Price Label at Barcode Sheet](18-offline-price-label-and-barcode-sheets.md) —
+    gumawa ng mai-print na labels mula sa umiiral na catalog para sa
+    mga estante at repacked tingi items.

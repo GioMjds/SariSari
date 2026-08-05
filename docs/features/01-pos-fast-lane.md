@@ -1,79 +1,50 @@
-# 01. POS Fast Lane
+# 01. Mabilisang Pag-checkout sa POS (POS Fast Lane)
 
-> Phase: Now
+> Phase: Kasalukuyan (Now)
 
-## Problem
+## Problema
 
-During peak hours the cashier is racing the queue. Today's POS list
-(`app/(tabs)/sales/pos.tsx` plus the `ProductSearchCatalog` component)
-treats every product equally, so the most common sales — the same 8-15
-items every shift — are buried in a long list behind search keystrokes.
-On a small phone the cashier's eye has to travel, the thumb has to
-scroll, and the suki in front of them waits. Slow checkout loses sales
-and erodes trust.
+Sa oras ng dagsa ng customer, nakikipag-unahan ang tindero sa pila. Ang listahan ng POS ngayon (`app/(tabs)/sales/pos.tsx` kasama ang `ProductSearchCatalog` component) ay pantay-pantay ang pagtrato sa bawat produkto, kaya ang mga pinakakaraniwang benta — ang parehong 8-15 paninda bawat shift — ay nabaon sa mahabang listahan sa likod ng paghahanap. Sa maliit na telepono, kailangang maghanap ng mata ng cashier, mag-scroll ng daliri, at naghihintay ang suki sa harap nila. Ang mabagal na checkout ay nakakabawas ng benta at nakakasira ng tiwala.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner at the register, I want the items I actually sell
-every day to be one tap away, so I can ring up a typical transaction
-without typing or scrolling.
+Bilang may-ari ng tindahan sa register, gusto ko na ang mga panindang totoong nabebenta ko araw-araw ay isang tap lang ang layo, upang maiproseso ko ang karaniwang transaksyon nang hindi nagta-type o nag-i-scroll.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Favorites" surface on the POS screen, populated by marking
-  products as favorite (long-press or star icon on the product row).
-- A "Recently sold" strip driven by `sale_items` history — the most
-  frequently sold products in the last 14 days.
-- Common-quantity chips for each fast-lane item (e.g. 1, 2, 5, 1 dozen)
-  so the cashier can add with one tap and skip the quantity step.
-- Faster search: case-insensitive prefix match on name and
-  `wholesale_barcode` / `barcode` with debounced input.
-- Barcode scan support that lands the matched product directly in the
-  cart. A scanner hardware or camera scan via `expo-barcode-scanner`
-  falls into the same code path as a search hit.
+- Isang "Favorites" surface sa POS screen, na napupuno sa pamamagitan ng pagmamarka ng produkto bilang paborito (long-press o star icon sa row ng produkto).
+- Isang "Recently sold" strip na pinapatakbo ng kasaysayan sa `sale_items` — ang pinakamabentang mga produkto sa nakaraang 14 araw.
+- Mabilisang pindutan ng dami (common-quantity chips) para sa bawat fast-lane item (hal. 1, 2, 5, 1 dozzina) upang maidagdag agad ng cashier sa isang tap at laktawan ang hakbang ng pagpili ng dami.
+- Mas mabilis na paghahanap: case-insensitive prefix match sa pangalan at `wholesale_barcode` / `barcode` na may debounced input.
+- Suporta sa pag-scan ng barcode na direktang naglalagay ng katugmang produkto sa cart. Ang scanner hardware o camera scan sa pamamanan ng `expo-barcode-scanner` ay pumapasok sa parehong code path bilang isang search hit.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Personalized recommendations or ML-based ranking.
-- Multi-register / multi-user preferences.
-- Online catalog syncing — favorites stay on-device.
+- Personal na rekomendasyon o ML-based ranking.
+- Preferensya sa maraming register / maraming user.
+- Online catalog syncing — ang mga paborito ay mananatili sa aparato.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New columns on `products`: `is_favorite INTEGER NOT NULL DEFAULT 0`,
-  `last_sold_at TEXT` (optional, derived from sales but cheap to
-  materialize for the strip).
-- New SQL view or function in `database/products.ts`:
-  `getFastLaneProducts({ limit })` returning the union of favorites
-  and top-N most-sold-in-14-days, deduped.
-- New hook `useFastLaneProducts()` in `hooks/useProducts.tsx` backed by
-  TanStack Query so it re-runs on cart change (to bump `last_sold_at`)
-  and on favorite toggle.
-- Barcode resolution already exists via `useBarcodeResolver`; this
-  feature wires the resolver to the POS, not the resolution itself.
-- New migration bumping `user_version` past 9.
+- Bagong columns sa `products`: `is_favorite INTEGER NOT NULL DEFAULT 0`, `last_sold_at TEXT` (opsyonal, nanggagaling sa benta ngunit mabilis i-materialize para sa strip).
+- Bagong SQL view o function sa `database/products.ts`: `getFastLaneProducts({ limit })` na nagbabalik ng pinagsamang favorites at top-N pinakamabenta sa 14 araw, na walang duplicate.
+- Bagong hook na `useFastLaneProducts()` sa `hooks/useProducts.tsx` na nakabakod sa TanStack Query para muling gumana kapag nagbago ang cart at kapag nag-toggle ng favorite.
+- Ang pagresolba sa barcode ay umiiral na sa pamamagitan ng `useBarcodeResolver`; ikinokonekta ng tampok na ito ang resolver sa POS.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- Feature 18 (offline price-label/barcode sheets) would benefit from
-  the same barcode plumbing but is not required.
+- Ang Tampok 18 (printable price-label/barcode sheets) ay makikinabang sa parehong barcode plumbing ngunit hindi kinakailangan.
 
-## Open Questions
+## Mga Open Question
 
-- Where do common quantities come from? Per-product owner-defined, or
-  derived from the 25th/50th/75th percentile of past sales quantities?
-- Does the fast-lane strip show even when the user is searching, or
-  does searching replace it with results?
-- Does a barcode scan add directly to cart, or pause for quantity
-  confirmation?
+- Saan nanggagaling ang karaniwang dami (common quantities)? Naka-define ba bawat produkto ng may-ari, o kinuha mula sa 25th/50th/75th percentile ng mga nakaraang benta?
+- Lalabas ba ang fast-lane strip kahit naghahanap ang user, o napapalitan ito ng mga resulta kapag naghanap?
+- Ang pag-scan ba ng barcode ay direktang nagdaragdag sa cart, o humihinto muna para sa kumpirmasyon ng dami?
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- All data is local. No backend, no sync — matches the project's
-  offline-first model.
-- "Recently sold" requires reading `sale_items` aggregated by product;
-  the existing `idx_sale_items_product_id` index keeps it cheap.
-- Integer-pesos rule still applies for any totals surfaced in the
-  fast-lane strip; favorites and quantities do not touch money.
-- No new libraries required for the strip; `expo-barcode-scanner` is
-  optional and can be added only if the owner has a scanner.
+- Lahat ng data ay lokal. Walang backend, walang sync — angkop sa offline-first model ng proyekto.
+- Ang "Recently sold" ay nangangailangan ng pagbasa sa `sale_items` na naka-aggregate ayon sa produkto; ang umiiral na `idx_sale_items_product_id` index ay nagpapanatili nitong mabilis.
+- Ang patakaran sa integer-pesos ay nag-aaplay pa rin para sa anumang kabuuan na lumalabas sa fast-lane strip; ang favorites at quantities ay hindi humahawak ng pera.
+- Walang bagong library na kailangan para sa strip; ang `expo-barcode-scanner` ay opsyonal.

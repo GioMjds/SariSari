@@ -1,94 +1,48 @@
-# 18. Offline Price-Label and Barcode Sheets
+# 18. Printable na Price Label at Barcode Sheet (Offline Price-Label and Barcode Sheets)
 
-> Phase: Later
+> Phase: Sa Haharapin (Later)
 
-## Problem
+## Problema
 
-Most sari-sari products are bought loose or repacked: a sack of
-candy split into per-piece packs, detergent refilled into smaller
-sachets, rice scooped into half-kilo bags. The shelf price is
-handwritten on a scrap of paper, the barcode is whatever the owner
-generated (or not at all). When prices change, every label has to
-be redone. Stockouts happen because the price on the shelf does
-not match the price at the register, and the cashier has to argue
-the difference at the till.
+Karamihan sa mga produkto sa sari-sari store ay binibili nang tingi o repacked: ang isang sako ng kendi ay hinahati sa bawat pirasong pakete, ang sabon ay isinasalin sa maliliit na sachet, ang bigas ay isinasandok sa kalahating kilong bag. Ang presyo sa estante ay isinusulat lamang sa piraso ng papel, at ang barcode ay kung ano man ang ginawa ng may-ari (o wala man lang). Kapag nagbago ang mga presyo, bawat label ay kailangang ulitin. Nangyayari ang mga stockout dahil ang presyo sa estante ay hindi tumutugma sa presyo sa register, at kailangang magtalo ng cashier at customer sa till.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want to print small, clean price labels and
-barcode sheets from my catalog, so the shelf matches the register
-and I can stop rewriting prices by hand.
+Bilang may-ari ng tindahan, gusto kong mag-print ng malinis na maliliit na price label at barcode sheet mula sa aking catalog, upang ang estante ay tumugma sa register at makapagtigil ako sa kamay na pagsusulat ng mga presyo.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Labels" action in Inventory that generates a printable PDF of
-  small price labels for selected products.
-- Each label shows: product name, retail price, retail unit
-  (e.g. "Pc", "Sachet"), and optionally the wholesale price on a
-  second line.
-- A "Barcodes" action that generates a printable sheet of
-  barcodes for products the owner has flagged as needing one
-  (typically the repacked tingi items where the supplier's barcode
-  is not at the unit the store sells).
-- The PDF is shareable / printable through the device's native
-  share sheet (same pattern as feature 12's statement).
-- A per-product "show wholesale bar" toggle so labels can be
-  generated for either the retail unit or the wholesale unit
-  (existing `wholesale_barcode` and `wholesale_price` columns from
-  migration v9).
+- Isang "Labels" action sa Inventory na gumagawa ng printable PDF ng maliliit na price labels para sa mga napiling produkto.
+- Bawat label ay nagpapakita ng: pangalan ng produkto, retail price, retail unit (hal. "Pc", "Sachet"), at opsyonal na wholesale price sa ikalawang linya.
+- Isang "Barcodes" action na gumagawa ng printable sheet ng barcodes para sa mga produktong minarkahan ng may-ari na nangangailangan nito (karaniwan ay ang mga repacked tingi items kung saan ang barcode ng supplier ay wala sa unit na ibinebenta ng tindahan).
+- Ang PDF ay mai-share / mai-print sa pamamagitan ng native share sheet ng aparato (parehong pattern sa statement sa tampok 12).
+- Isang per-product "show wholesale bar" toggle upang ang mga label ay magawa alinman para sa retail unit o wholesale unit.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- In-app thermal printer integration. The share sheet routes to
-  any printer the device knows about.
-- Auto-replacement of shelf labels (there is no way to know what
-  is on the shelf).
-- Bulk price-change workflows. This feature prints labels, it does
-  not change prices.
+- In-app thermal printer integration. Ang share sheet ay nag-u-route sa anumang printer na kilala ng aparato.
+- Awtomatikong pagpapalit ng mga shelf label.
+- Bulk price-change workflows. Ang tampok na ito ay nagpi-print ng mga label, hindi ito nagpapalit ng mga presyo.
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- No new tables. The data is in `products` (existing columns:
-  `name`, `price`, `wholesale_price`, `barcode`, `wholesale_barcode`,
-  `retail_unit_name`, `wholesale_unit_name`).
-- New function in a new `lib/labels.ts` or extension to
-  `lib/pdfGenerator.ts`: `renderPriceLabels(productIds, options)`
-  and `renderBarcodeSheet(productIds, options)`.
-- No hook changes; the Inventory tab surfaces the action and
-  passes the selection to the PDF module.
-- No migration.
+- Walang bagong talahanayan. Ang data ay nasa `products` na (`name`, `price`, `wholesale_price`, `barcode`, `wholesale_barcode`, `retail_unit_name`, `wholesale_unit_name`).
+- Bagong function sa bagong `lib/labels.ts` o extension sa `lib/pdfGenerator.ts`: `renderPriceLabels(productIds, options)` at `renderBarcodeSheet(productIds, options)`.
+- Walang pagbabago sa hook; ang Inventory tab ang nagpapakita ng action at nagpasa ng selection sa PDF module.
+- Walang migration.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- The PDF generator (existing `lib/pdfGenerator.ts`) must support
-  the small label layout. If it does not, expand the module
-  first; feature 12 (customer credit statements) and this feature
-  are the two primary consumers.
-- The barcode rendering requires a font or library that can draw
-  the chosen barcode symbology (CODE-128 is typical for sari-sari
-  repacks). Confirm whether a library is already in the project;
-  if not, this is the point where a new dependency may be
-  justified.
+- Ang PDF generator (umiiral na `lib/pdfGenerator.ts`) ay dapat sumusuporta sa small label layout.
+- Ang barcode rendering ay nangangailangan ng font o library na makakapagguhit ng napiling barcode symbology (CODE-128 ang karaniwan para sa sari-sari repacks).
 
-## Open Questions
+## Mga Open Question
 
-- Label size: what are the common label dimensions in the
-  market? 30x20mm? 50x25mm? Multi-size support is friendly but
-  adds layout work.
-- Per-label quantity: does the owner want to print 1 label per
-  product, or 5 (so the shelf stays labeled for a while)? A
-  per-product count picker is enough.
-- Does the sheet auto-sort by category? Helpful for the owner
-  walking the shelf; recommend yes with a sort toggle.
+- Laki ng label: ano ang mga karaniwang sukat ng label sa merkado? 30x20mm? 50x25mm?
+- Dami ng label bawat produkto: gusto ba ng may-ari mag-print ng 1 label bawat produkto, o 5?
+- Naka-auto-sort ba ang sheet ayon sa kategorya?
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- The data needed is already on the product. The only hard part
-  is the barcode rendering. Use a vetted library; do not
-  hand-roll a barcode encoder.
-- Money display is `formatPesos`. The integer-pesos rule applies;
-  the PDF stores the formatted string, never the raw integer
-  alongside a decimal that could drift.
-- This is the lowest-risk feature in the Later phase: it is
-  read-only on the data, generates a print artifact, and has no
-  audit-trail implications.
+- Ang kailangang data ay nasa produkto na. Ang mahirap na bahagi lamang ay ang rendering ng barcode. Gumamit ng vetted library; huwag mag-hand-roll ng barcode encoder.
+- Ang pagpapakita ng pera ay `formatPesos`. Ang patakaran sa integer-pesos ay nag-aaplay.

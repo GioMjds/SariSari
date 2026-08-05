@@ -1,86 +1,49 @@
-# 02. Parked Sales
+# 02. Pag-ihinto o Pag-iimbak ng Cart (Parked Sales)
 
-> Phase: Now
+> Phase: Kasalukuyan (Now)
 
-## Problem
+## Problema
 
-A suki steps away mid-cart to grab a sibling, the line is getting long,
-or the cashier needs to switch context (answer a question, check stock,
-take a quick payment for someone else). Today the only options are ring
-it up incomplete or back out of the cart and lose everything. Both
-encourage the cashier to memorize or handwrite the items, which is
-error-prone and breaks the audit trail of what was sold.
+Ang isang suki ay umaalis sandali mid-cart upang kumuha ng iba pang paninda, humahaba ang pila, o kailangang mag-iba ng konteksto ang cashier (sumagot sa tanong, mag-check ng stock, mag-receive ng mabilis na bayad para sa iba). Ngayon, ang tanging pagpipilian ay i-ring up nang hindi kumpleto o lumabas sa cart at mawala ang lahat. Parehong nag-uudyok sa cashier na isaulo o isulat sa papel ang mga paninda, na madaling magkaroon ng mali at nakakasira sa audit trail ng nabenta.
 
-## User Story
+## Kuwento ng Gumagamit (User Story)
 
-As a store owner, I want to set a customer's cart aside when
-interrupted and bring it back exactly as it was, so I can serve
-whoever is in front of me without losing the first suki's selections.
+Bilang may-ari ng tindahan, gusto kong maitabi muna ang cart ng isang customer kapag naantala at maibalik ito nang eksakto kung ano ito, upang makapaglingkod ako sa sinumang nasa harap ko nang hindi nawawala ang mga pinili ng unang suki.
 
-## In Scope
+## Kasama sa Saklaw (In Scope)
 
-- A "Park cart" action on the POS screen that snapshots the current
-  cart to a named slot.
-- A small, visible list of parked carts (one is usually enough, but
-  support up to 3) accessible from the POS tab.
-- A "Resume" action that loads the parked cart back into the active
-  cart, including line items, quantities, sold-unit metadata, and any
-  selected customer for credit.
-- Automatic discard of the parked cart after a configurable retention
-  window (default: until end of day), with a manual "Discard" option.
+- Isang "Park cart" action sa POS screen na nag-o-snapshot ng kasalukuyang cart sa isang may-pangalang slot.
+- Isang maliit at nakikitang listahan ng mga naka-park na cart (karaniwan ay isa lang, ngunit sumusuporta hanggang 3) na naa-access mula sa POS tab.
+- Isang "Resume" action na naglo-load ng naka-park na cart pabalik sa active cart, kabilang ang line items, quantities, sold-unit metadata, at anumang napiling customer para sa utang.
+- Awtomatikong pagtapon ng naka-park na cart pagkatapos ng pwedeng i-configure na retention window (default: hanggang sa katapusan ng araw), na may manual na "Discard" option.
 
-## Out of Scope
+## Hindi Kasama sa Saklaw (Out of Scope)
 
-- Cross-device sync of parked carts (single-device, offline-only).
-- Notifications or reminders for parked carts that have been sitting.
-- Persisting a parked cart across app uninstalls (would require
-  backup, which is feature 17).
+- Cross-device sync ng mga naka-park na cart (single-device, offline-only).
+- Mga notification o paalala para sa mga naka-park na cart na matagal nang nakatengga.
+- Pagpapanatili ng naka-park na cart sa kabila ng pag-uninstall ng app (nangangailangan ng backup, na tampok 17).
 
-## Data Implications
+## Mga Implikasyon sa Data (Data Implications)
 
-- New table `parked_carts` with: `id`, `label` (suki name or
-  auto-generated "Cart 1"), `customer_id` (nullable FK to
-  `customers`), `created_at`, `expires_at`, `payload_json` (the
-  serialized cart line items).
-- New table `parked_cart_items` if we want first-class queryability,
-  but a JSON column is sufficient since carts are short-lived and
-  never aggregated. Prefer JSON for simplicity.
-- New functions in `database/sales.ts`:
-  `parkCart(cart, meta)`, `listParkedCarts()`,
-  `resumeParkedCart(id)`, `discardParkedCart(id)`.
-- New hook in `hooks/useSales.tsx`: `useParkedCarts()` and a
-  `useParkCart()` / `useResumeCart()` mutation pair.
-- New migration bumping `user_version` past 9.
-- A small store flag in `stores/pos.ts` (or equivalent) for
-  "active parked cart id" so the resume flow restores without an
-  extra query.
+- Bagong talahanayan na `parked_carts` na may: `id`, `label` (pangalan ng suki o auto-generated na "Cart 1"), `customer_id` (nullable FK sa `customers`), `created_at`, `expires_at`, `payload_json` (ang serialized cart line items).
+- Bagong talahanayan na `parked_cart_items` kung gusto natin ng first-class queryability, ngunit sapat na ang JSON column dahil ang mga cart ay panandalian lamang at hindi ini-aggregate. Mas gusto ang JSON para sa pagiging simple.
+- Bagong mga function sa `database/sales.ts`: `parkCart(cart, meta)`, `listParkedCarts()`, `resumeParkedCart(id)`, `discardParkedCart(id)`.
+- Bagong hook sa `hooks/useSales.tsx`: `useParkedCarts()` at mutation pair na `useParkCart()` / `useResumeCart()`.
+- Bagong migration na nagtataas ng `user_version` lampas sa 9.
+- Isang maliit na store flag sa `stores/pos.ts` (o katumbas) para sa "active parked cart id" upang maibalik ang flow nang walang extra query.
 
-## Dependencies
+## Mga Dependency (Dependencies)
 
-- None — fully independent. Builds on the existing `useCart` hook
-  (recently refactored to handle paginated products) but does not
-  require any other roadmap feature.
+- Wala — ganap na malaya. Nagtatayo sa umiiral na `useCart` hook ngunit hindi nangangailangan ng iba pang tampok sa roadmap.
 
-## Open Questions
+## Mga Open Question
 
-- Should parked carts include the customer name, or only an auto
-  label? Owner might want a quick way to remember "the one with the
-  toddler."
-- Is one parked cart enough, or do real workflows need 2-3
-  concurrent ones (one suki stepping away, one being tallied for
-  later)?
-- What happens to a parked cart if the product it contains is
-  deleted, restocked at a new price, or run through a wholesale
-  re-pack? Resume needs a clear policy (resume with stale price,
-  prompt to re-price, or refuse).
+- Dapat bang isama sa naka-park na cart ang pangalan ng suki, o auto label lamang? Maaaring gusto ng may-ari ng mabilis na paraan para matandaan "ang may dalang bata."
+- Sapat na ba ang isang naka-park na cart, o kailangan sa totoong workflow ang 2-3 sabay-sabay?
+- Ano ang mangyayari sa naka-park na cart kung ang produktong naroon ay nabura, nabago ang presyo sa restock, o dumaan sa wholesale re-pack? Kailangan ng malinaw na policy sa Resume.
 
-## Feasibility Notes
+## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
-- Single-device, local SQLite — trivial to implement.
-- A parked cart is just a row; the existing `useCart` already holds
-  the state we need to serialize.
-- Money invariant: parked carts store integer pesos only; never
-  re-parse on resume. Display-only formatting goes through
-  `lib/money.ts`.
-- If a parked cart expires while the app is closed, the cleanup
-  runs on next app open.
+- Single-device, lokal na SQLite — napakadaling ipatupad.
+- Ang naka-park na cart ay isang row lamang; hawak na ng umiiral na `useCart` ang state na kailangan nating i-serialize.
+- Patakaran sa pera: ang mga naka-park na cart ay nag-iimbak lamang ng integer pesos; hindi muling nagpo-parse sa resume. Ang formatting para sa display ay dumadaan sa `lib/money.ts`.
