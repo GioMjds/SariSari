@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, Modal, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import Animated, {
   interpolate,
   Extrapolation,
   SharedValue,
+  runOnJS,
 } from 'react-native-reanimated';
 import { useTabBarBottomOffset } from '@/components/layout';
 
@@ -110,12 +111,18 @@ export function InventorySpeedDialFab({
   const bottomOffset = tabBarBottomOffset + 16;
   const expandProgress = useSharedValue(0);
 
-  const handleToggleExpand = useCallback(() => {
+  const handleOpen = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setExpanded((prev) => {
-      const next = !prev;
-      expandProgress.value = withSpring(next ? 1 : 0, SPRING_CONFIG);
-      return next;
+    setExpanded(true);
+    expandProgress.value = withSpring(1, SPRING_CONFIG);
+  }, [expandProgress]);
+
+  const handleClose = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    expandProgress.value = withSpring(0, SPRING_CONFIG, (finished) => {
+      if (finished) {
+        runOnJS(setExpanded)(false);
+      }
     });
   }, [expandProgress]);
 
@@ -127,7 +134,7 @@ export function InventorySpeedDialFab({
       isPrimary: true,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        handleToggleExpand();
+        handleClose();
         onAddProduct();
       },
     },
@@ -138,11 +145,15 @@ export function InventorySpeedDialFab({
       isPrimary: false,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        handleToggleExpand();
+        handleClose();
         onScanBarcode();
       },
     },
   ] as const;
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: expandProgress.value,
+  }));
 
   const ellipsisStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -199,63 +210,94 @@ export function InventorySpeedDialFab({
   }));
 
   return (
-    <View
-      className="absolute right-5 items-end z-50 pointer-events-box-none"
-      style={{ bottom: bottomOffset }}
-      pointerEvents="box-none"
-    >
-        {/* Actions Menu */}
-        <View
-          className="mb-3 items-end gap-y-3"
-          pointerEvents={expanded ? 'auto' : 'none'}
-        >
-          {actions.map((action, index) => (
-            <SpeedDialItem
-              key={action.id}
-              label={action.label}
-              icon={action.icon}
-              isPrimary={action.isPrimary}
-              onPress={action.onPress}
-              index={index}
-              total={actions.length}
-              expandProgress={expandProgress}
-            />
-          ))}
-        </View>
-
-        {/* Main 3-Dot FAB Trigger Button with smooth rotation and icon morphing */}
+    <>
+      {/* Collapsed FAB Trigger Button (on main screen) */}
+      <View
+        className="absolute right-5 items-end z-50 pointer-events-box-none"
+        style={{ bottom: bottomOffset }}
+        pointerEvents="box-none"
+      >
         <Pressable
-          onPress={handleToggleExpand}
+          onPress={handleOpen}
           accessibilityRole="button"
-          accessibilityLabel={
-            expanded ? 'Close actions menu' : 'Inventory actions menu'
-          }
-          accessibilityState={{ expanded }}
-          className={`w-16 h-16 rounded-full items-center justify-center shadow-xl border active:scale-95 ${
-            expanded
-              ? 'bg-ink-900 border-ink-700'
-              : 'bg-persimmon-500 border-persimmon-400'
-          }`}
+          accessibilityLabel="Inventory actions menu"
+          accessibilityState={{ expanded: false }}
+          className="w-16 h-16 rounded-full bg-persimmon-500 items-center justify-center shadow-xl border border-persimmon-400 active:scale-95"
         >
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              ellipsisStyle,
-              { alignItems: 'center', justifyContent: 'center' },
-            ]}
-          >
-            <FontAwesome name="ellipsis-v" size={24} color="#FAFAF7" />
-          </Animated.View>
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              closeStyle,
-              { alignItems: 'center', justifyContent: 'center' },
-            ]}
-          >
-            <FontAwesome name="close" size={20} color="#FAFAF7" />
-          </Animated.View>
+          <FontAwesome name="ellipsis-v" size={24} color="#FAFAF7" />
         </Pressable>
       </View>
+
+      {/* Expanded Speed Dial Full-Screen Modal Backdrop & Animated Menu */}
+      <Modal
+        visible={expanded}
+        transparent
+        animationType="none"
+        onRequestClose={handleClose}
+      >
+        <View style={StyleSheet.absoluteFill} className="relative">
+          {/* 100% Full-Screen Backdrop Overlay */}
+          <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={handleClose}
+              className="bg-ink-900/60"
+            />
+          </Animated.View>
+
+          {/* Speed Dial Actions & Interactive Toggle FAB inside Modal */}
+          <View
+            className="absolute right-5 items-end z-50 pointer-events-box-none"
+            style={{ bottom: bottomOffset }}
+            pointerEvents="box-none"
+          >
+            {/* Actions Menu */}
+            <View className="mb-3 items-end gap-y-3">
+              {actions.map((action, index) => (
+                <SpeedDialItem
+                  key={action.id}
+                  label={action.label}
+                  icon={action.icon}
+                  isPrimary={action.isPrimary}
+                  onPress={action.onPress}
+                  index={index}
+                  total={actions.length}
+                  expandProgress={expandProgress}
+                />
+              ))}
+            </View>
+
+            {/* Close Toggle Button inside Modal with icon morphing */}
+            <Pressable
+              onPress={handleClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close actions menu"
+              accessibilityState={{ expanded: true }}
+              className="w-16 h-16 rounded-full bg-ink-900 items-center justify-center shadow-xl border border-ink-700 active:scale-95"
+            >
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  ellipsisStyle,
+                  { alignItems: 'center', justifyContent: 'center' },
+                ]}
+              >
+                <FontAwesome name="ellipsis-v" size={24} color="#FAFAF7" />
+              </Animated.View>
+              <Animated.View
+                style={[
+                  StyleSheet.absoluteFill,
+                  closeStyle,
+                  { alignItems: 'center', justifyContent: 'center' },
+                ]}
+              >
+                <FontAwesome name="close" size={20} color="#FAFAF7" />
+              </Animated.View>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
+
