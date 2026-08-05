@@ -37,7 +37,8 @@ describe('useLogTransactionForm initialType', () => {
 
   it('seeds type from initialType on mount', async () => {
     const { result } = await renderHook(
-      ({ initialType }) => useLogTransactionForm(fixture, { initialType }),
+      ({ initialType }: { initialType: 'damaged' | 'restock' | 'adjustment' }) =>
+        useLogTransactionForm(fixture, { initialType }),
       {
         wrapper: createWrapper(),
         initialProps: { initialType: 'damaged' as const },
