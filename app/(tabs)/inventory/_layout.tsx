@@ -10,12 +10,13 @@ import {
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
 import {
-  ReceiveStockModal,
-  AdjustStockModal,
+  RestockSheet,
+  MarkDamagedSheet,
+  AdjustStockSheet,
 } from '@/components/inventory/modals/';
 import { BarcodeScannerModal } from '@/components/ui';
 import type { InventorySubTab } from '@/constants/tabs';
-import { useRestockSignal, useInventoryModalSignal } from '@/stores';
+import { useStockSheetSignal } from '@/stores';
 
 const SUB_TAB_SEGMENTS = [
   'products',
@@ -30,28 +31,12 @@ export default function InventoryLayout() {
   const searchParams = useLocalSearchParams<{ q?: string }>();
   const search = searchParams.q ?? '';
 
-  const [receiveOpen, setReceiveOpen] = useState(false);
-  const [adjustOpen, setAdjustOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [restockOpen, setRestockOpen] = useState(false);
+  const [damagedOpen, setDamagedOpen] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
 
-  const restock = useRestockSignal();
-
-  const { adjustRequested, receiveRequested, clearAdjust, clearReceive } =
-    useInventoryModalSignal();
-
-  useEffect(() => {
-    if (adjustRequested) {
-      setAdjustOpen(true);
-      clearAdjust();
-    }
-  }, [adjustRequested, clearAdjust]);
-
-  useEffect(() => {
-    if (receiveRequested) {
-      setReceiveOpen(true);
-      clearReceive();
-    }
-  }, [receiveRequested, clearReceive]);
+  const signal = useStockSheetSignal();
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;
@@ -103,10 +88,25 @@ export default function InventoryLayout() {
   );
 
   useEffect(() => {
-    if (restock.restockProductId !== null) {
-      setReceiveOpen(true);
+    if (signal.adjust.productId !== null) {
+      setAdjustOpen(true);
+      signal.clearAdjust();
     }
-  }, [restock.restockProductId]);
+  }, [signal.adjust.productId, signal]);
+
+  useEffect(() => {
+    if (signal.restock.productId !== null) {
+      setRestockOpen(true);
+      signal.clearRestock();
+    }
+  }, [signal.restock.productId, signal]);
+
+  useEffect(() => {
+    if (signal.damaged.productId !== null) {
+      setDamagedOpen(true);
+      signal.clearDamaged();
+    }
+  }, [signal.damaged.productId, signal]);
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -142,21 +142,26 @@ export default function InventoryLayout() {
       {!isDetail ? (
         <InventorySpeedDialFab
           onAddProduct={openAddProduct}
-          onReceiveStock={() => setReceiveOpen(true)}
-          onStockAdjustment={() => setAdjustOpen(true)}
+          onReceiveStock={() => signal.requestRestock(null)}
+          onMarkDamaged={() => signal.requestDamaged(null)}
+          onStockAdjustment={() => signal.requestAdjust(null)}
           onScanBarcode={() => setScannerOpen(true)}
         />
       ) : null}
 
-      <ReceiveStockModal
-        visible={receiveOpen}
-        onClose={() => {
-          setReceiveOpen(false);
-          restock.clearRestock();
-        }}
+      <RestockSheet
+        visible={restockOpen}
+        initialProductId={null}
+        onClose={() => setRestockOpen(false)}
       />
-      <AdjustStockModal
+      <MarkDamagedSheet
+        visible={damagedOpen}
+        initialProductId={null}
+        onClose={() => setDamagedOpen(false)}
+      />
+      <AdjustStockSheet
         visible={adjustOpen}
+        initialProductId={null}
         onClose={() => setAdjustOpen(false)}
       />
       <BarcodeScannerModal

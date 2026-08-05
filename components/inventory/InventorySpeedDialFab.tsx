@@ -8,6 +8,7 @@ import { MotiView } from 'moti';
 export interface InventorySpeedDialFabProps {
   onAddProduct: () => void;
   onReceiveStock: () => void;
+  onMarkDamaged?: () => void;
   onStockAdjustment: () => void;
   onScanBarcode: () => void;
 }
