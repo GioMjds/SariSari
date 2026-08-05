@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -7,6 +8,7 @@ import { MotiView } from 'moti';
 export interface InventorySpeedDialFabProps {
   onAddProduct: () => void;
   onReceiveStock: () => void;
+  onMarkDamaged: () => void;
   onStockAdjustment: () => void;
   onScanBarcode: () => void;
 }
@@ -14,21 +16,15 @@ export interface InventorySpeedDialFabProps {
 export function InventorySpeedDialFab({
   onAddProduct,
   onReceiveStock,
+  onMarkDamaged,
   onStockAdjustment,
   onScanBarcode,
 }: InventorySpeedDialFabProps) {
   const [expanded, setExpanded] = useState(false);
+  const insets = useSafeAreaInsets();
+  const bottomOffset = Math.max(24, insets.bottom + 16);
 
   const actions = [
-    {
-      id: 'add_product',
-      label: 'Add Product',
-      icon: 'plus' as const,
-      onPress: () => {
-        setExpanded(false);
-        onAddProduct();
-      },
-    },
     {
       id: 'receive_stock',
       label: 'Receive Stock',
@@ -48,6 +44,15 @@ export function InventorySpeedDialFab({
       },
     },
     {
+      id: 'mark_damaged',
+      label: 'Mark Damaged',
+      icon: 'ban' as const,
+      onPress: () => {
+        setExpanded(false);
+        onMarkDamaged();
+      },
+    },
+    {
       id: 'scan_barcode',
       label: 'Scan Barcode',
       icon: 'barcode' as const,
@@ -59,7 +64,10 @@ export function InventorySpeedDialFab({
   ] as const;
 
   return (
-    <View className="absolute bottom-6 right-6 items-end z-50">
+    <View
+      className="absolute right-5 items-end z-50"
+      style={{ bottom: bottomOffset }}
+    >
       {expanded && (
         <Pressable
           onPress={() => setExpanded(false)}
@@ -88,7 +96,7 @@ export function InventorySpeedDialFab({
                   {action.label}
                 </StyledText>
               </View>
-              <View className="w-10 h-10 rounded-full bg-persimmon-500 items-center justify-center shadow-lg">
+              <View className="w-10 h-10 rounded-full bg-cinnamon-500 items-center justify-center shadow-lg">
                 <FontAwesome name={action.icon} size={16} color="#FAFAF7" />
               </View>
             </TouchableOpacity>
@@ -96,22 +104,37 @@ export function InventorySpeedDialFab({
         </MotiView>
       )}
 
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => setExpanded(!expanded)}
-        accessibilityRole="button"
-        accessibilityLabel={
-          expanded ? 'Close inventory quick actions' : 'Inventory Quick Actions'
-        }
-        accessibilityState={{ expanded }}
-        className="w-14 h-14 rounded-full bg-persimmon-500 items-center justify-center shadow-xl active:scale-95"
-      >
-        <FontAwesome
-          name={expanded ? 'close' : 'plus'}
-          size={22}
-          color="#FAFAF7"
-        />
-      </TouchableOpacity>
+      <View className="flex-row items-center gap-x-2">
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => setExpanded(!expanded)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            expanded ? 'Close extra quick actions' : 'More quick actions'
+          }
+          accessibilityState={{ expanded }}
+          className="w-11 h-11 rounded-full bg-ink-900 items-center justify-center shadow-lg border border-ink-700 active:scale-95"
+        >
+          <FontAwesome
+            name={expanded ? 'close' : 'ellipsis-v'}
+            size={16}
+            color="#FAFAF7"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={onAddProduct}
+          accessibilityRole="button"
+          accessibilityLabel="Add New Product"
+          className="h-14 px-5 rounded-full bg-persimmon-500 flex-row items-center justify-center shadow-xl active:scale-95 gap-x-2 border border-persimmon-400"
+        >
+          <FontAwesome name="plus" size={18} color="#FAFAF7" />
+          <StyledText variant="extrabold" className="text-paper-50 text-sm">
+            Add Product
+          </StyledText>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

@@ -1,7 +1,7 @@
 import React, { ComponentProps } from 'react';
 import { ScrollView, View } from 'react-native';
 import Skeleton from 'react-native-reanimated-skeleton';
-import { useTabBarBottomOffset } from '@/components/layout';
+import { useTabBarBottomOffset } from '@/components/layout/StyledTab';
 
 const BONE_COLOR = '#EAE6DF';
 const HIGHLIGHT_COLOR = '#FAFAF7';
@@ -11,27 +11,48 @@ type SkeletonLayout = NonNullable<ComponentProps<typeof Skeleton>['layout']>;
 export function HomeOverviewSkeleton() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
-  const layout: SkeletonLayout = [
+  const layout = [
     {
       key: 'hero-kpi-card',
       width: '100%',
-      height: 250,
-      borderRadius: 24,
-      marginBottom: 16,
+      height: 110,
+      borderRadius: 16,
+      marginBottom: 12,
+    },
+    {
+      key: 'kpi-grid',
+      width: '100%',
+      height: 220,
+      borderRadius: 20,
+      marginBottom: 12,
+    },
+    {
+      key: 'goal-card',
+      width: '100%',
+      height: 160,
+      borderRadius: 20,
+      marginBottom: 12,
     },
     {
       key: 'quick-actions-card',
       width: '100%',
       height: 180,
-      borderRadius: 24,
-      marginBottom: 16,
+      borderRadius: 20,
+      marginBottom: 12,
+    },
+    {
+      key: 'suggestions-card',
+      width: '100%',
+      height: 56,
+      borderRadius: 14,
+      marginBottom: 12,
     },
     {
       key: 'recent-sales-card',
       width: '100%',
-      height: 180,
-      borderRadius: 24,
-      marginBottom: 16,
+      height: 220,
+      borderRadius: 20,
+      marginBottom: 12,
     },
     {
       key: 'mini-insights-card',
@@ -40,7 +61,7 @@ export function HomeOverviewSkeleton() {
       borderRadius: 20,
       marginBottom: 16,
     },
-  ];
+  ] satisfies SkeletonLayout;
 
   return (
     <ScrollView

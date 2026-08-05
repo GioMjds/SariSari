@@ -3,7 +3,6 @@ import { useProfile } from '@/hooks/useProfile';
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SupportedLanguage } from '@/lib/i18n';
@@ -13,30 +12,11 @@ import {
   LocalSnapshotsSection,
 } from './backup';
 
-/**
- * SettingsScreen — what the app actually does today, plus the shape of
- * features coming next.
- *
- * Sections:
- *   1. Store           — store name + owner name (live, from onboarding profile).
- *   2. Language        — opens the language picker dialog so the owner can
- *                        switch between English and Tagalog live.
- *   3. Database        — Cloud Backup (Phase 1 stub when OAuth client ID is
- *                        empty; Phase 2 wires the Drive UI) + Local Snapshots
- *                        (rolling 7-deep backup history, with restore picker).
- *
- * This component is rendered by both `/settings` (the regular route) and
- * `/(edit-forms)/settings` (the modal route), so the visual layer lives
- * here and the route folders decide presentation (modal vs full screen).
- */
 export const SettingsScreen = () => {
   const { profile, loading: profileLoading } = useProfile();
   const { t, i18n } = useTranslation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
 
-  // Use i18n.language from the hook — this is reactive and re-renders the
-  // component whenever changeAppLanguage() fires, unlike getCurrentLanguage()
-  // which reads the singleton synchronously and never triggers a re-render.
   const activeLang = i18n.language as SupportedLanguage;
   const languageValue =
     activeLang === 'tl'

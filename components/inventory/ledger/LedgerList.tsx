@@ -33,7 +33,7 @@ interface LedgerListProps {
   ListHeaderComponent?: React.ReactElement | null;
 }
 
-const LIST_CONTAINER_STYLE = { paddingBottom: 140 } as const;
+const LIST_CONTAINER_STYLE = { paddingBottom: 140, minHeight: 280 } as const;
 
 type LedgerRowData = InventoryTransaction & { runningBalance: number };
 
@@ -253,13 +253,15 @@ const DaySeparator = memo(function DaySeparator({ label, count }: { label: strin
       </StyledText>
       {/* Spacer pushes the count to the far right edge. */}
       <View style={{ flex: 1 }} />
-      <StyledText
-        variant="medium"
-        className="text-mono text-ink-500"
-        style={{ fontSize: 11 }}
-      >
-        {count} {count === 1 ? 'entry' : 'entries'}
-      </StyledText>
+      <View className="bg-paper-50 border border-ink-200 rounded-md px-1.5 py-0.5">
+        <StyledText
+          variant="extrabold"
+          className="text-mono text-ink-600"
+          style={{ fontSize: 11 }}
+        >
+          {count} {count === 1 ? 'entry' : 'entries'}
+        </StyledText>
+      </View>
     </View>
   );
 });

@@ -19,6 +19,8 @@ export const DashboardSuggestions = memo(function DashboardSuggestions({
   if (!suggestions || suggestions.length === 0) return null;
 
   const suggestion = suggestions[0];
+  if (!suggestion) return null;
+
   const ctaText = t(`common:dashboard.goals.${suggestion.kind}.cta`, {
     defaultValue: 'Open',
   });

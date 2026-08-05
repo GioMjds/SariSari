@@ -3,3 +3,4 @@ export * from './ProductsSkeleton';
 export * from './ProductImagePicker';
 export * from './ProductList';
 export * from './ProductFilterChips';
+export * from './ProductActionMenuModal';

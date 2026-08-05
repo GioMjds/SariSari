@@ -21,12 +21,11 @@ export function InventoryHeroCard({
       from={{ opacity: 0, translateY: 8 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 240 }}
-      className="bg-cinnamon-500 rounded-3xl p-5 mb-1 shadow-md relative overflow-hidden border border-cinnamon-600"
+      accessible={true}
+      accessibilityRole="summary"
+      accessibilityLabel={`Total inventory value ₱${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}, ${productCount} products, ${unitCount.toLocaleString()} total units`}
+      className="bg-cinnamon-500 rounded-2xl p-4 mb-2 shadow-md relative overflow-hidden border border-cinnamon-600"
     >
-      <View className="absolute -right-4 -top-4 opacity-10" pointerEvents="none">
-        <FontAwesome name="cube" size={120} color="#FAFAF7" />
-      </View>
-
       <StyledText
         variant="extrabold"
         className="text-paper-200 text-[10px] uppercase tracking-widest"
@@ -42,13 +41,13 @@ export function InventoryHeroCard({
       />
 
       <View className="flex-row items-center gap-2.5 mt-2.5 pt-2.5 border-t border-cinnamon-400/30">
-        <View className="bg-cinnamon-700/40 px-2.5 py-1 rounded-full border border-cinnamon-400/20">
-          <StyledText variant="semibold" className="text-paper-100 text-[11px]">
+        <View className="bg-cinnamon-800/60 px-3 py-1 rounded-full border border-cinnamon-300/30">
+          <StyledText variant="semibold" className="text-paper-50 text-[11px]">
             {productCount} {productCount === 1 ? 'product' : 'products'}
           </StyledText>
         </View>
-        <View className="bg-cinnamon-700/40 px-2.5 py-1 rounded-full border border-cinnamon-400/20">
-          <StyledText variant="semibold" className="text-paper-100 text-[11px]">
+        <View className="bg-cinnamon-800/60 px-3 py-1 rounded-full border border-cinnamon-300/30">
+          <StyledText variant="semibold" className="text-paper-50 text-[11px]">
             {unitCount.toLocaleString()} {unitCount === 1 ? 'unit' : 'units'}
           </StyledText>
         </View>

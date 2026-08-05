@@ -218,6 +218,7 @@ export function Modal({
           opacity: 0,
           scale: reducedMotion ? 1 : 0.95,
         }}
+        transition={{ type: 'timing', duration: 200 }}
         className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
         style={{ zIndex: 1 }}
         accessibilityLabel={finalTitle || 'Dialog'}

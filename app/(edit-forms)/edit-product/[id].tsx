@@ -1,10 +1,5 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Modal } from '@/components/ui';
 import {
   EditActionButtons,
@@ -80,7 +75,10 @@ export default function EditProduct() {
         </ScrollView>
 
         {/* Sticky footer — always reachable without scrolling */}
-        <SafeAreaView edges={['bottom']} className="bg-background border-t border-ink-100">
+        <SafeAreaView
+          edges={['bottom']}
+          className="bg-background border-t border-ink-100"
+        >
           <View className="px-4 pt-3 pb-2">
             <EditActionButtons
               onSubmit={form.submit}
@@ -101,7 +99,11 @@ export default function EditProduct() {
         icon="exclamation-triangle"
         buttons={[
           { text: "Don't Leave", style: 'cancel', onPress: form.cancelDiscard },
-          { text: 'Discard Changes', style: 'destructive', onPress: form.confirmDiscard },
+          {
+            text: 'Discard Changes',
+            style: 'destructive',
+            onPress: form.confirmDiscard,
+          },
         ]}
       />
 

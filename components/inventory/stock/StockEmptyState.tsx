@@ -56,7 +56,7 @@ export function StockEmptyState({ filter }: StockEmptyStateProps) {
     >
       <View className="relative h-0">
         <View
-          className="absolute left-0 right-0 h-3 flex-row justify-between"
+          className="absolute left-0 right-0 h-3 flex-row justify-between px-1"
           style={{ bottom: -6 }}
         >
           {perforations.map((_, i) => (
@@ -86,7 +86,7 @@ export function StockEmptyState({ filter }: StockEmptyStateProps) {
 
       <View className="relative h-0">
         <View
-          className="absolute left-0 right-0 h-3 flex-row justify-between"
+          className="absolute left-0 right-0 h-3 flex-row justify-between px-1"
           style={{ top: -6 }}
         >
           {perforations.map((_, i) => (

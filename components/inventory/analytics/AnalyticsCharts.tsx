@@ -3,8 +3,12 @@ import { ScrollView, View } from 'react-native';
 import { BarChart, PieChart } from 'react-native-gifted-charts';
 import { StyledText } from '@/components/elements';
 import { ValuationSummaryCard } from '@/components/inventory/ValuationSummaryCard';
+import { InventoryHeroCard } from '@/components/inventory/InventoryHeroCard';
+import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
+import { useInventoryOverview } from '@/hooks/useInventoryOverview';
 import { useChartPalette } from './useChartPalette';
 import { useProducts } from '@/hooks/useProducts';
+import { AnalyticsSkeleton } from './AnalyticsSkeleton';
 import { ChartEmptyState } from './ChartEmptyState';
 
 function formatPesos(n: number) {
@@ -16,6 +20,7 @@ function formatPesos(n: number) {
 
 export function AnalyticsCharts() {
   const { getAllProductsQuery } = useProducts();
+  const overview = useInventoryOverview();
 
   const products = useMemo(
     () => getAllProductsQuery.data ?? [],
@@ -79,11 +84,25 @@ export function AnalyticsCharts() {
       .join(', ');
   }, [byValue]);
 
+  if (overview.isLoading) {
+    return <AnalyticsSkeleton />;
+  }
+
+  if (overview.error) {
+    return <InventoryErrorState onRetry={() => overview.refetch()} />;
+  }
+
   return (
     <ScrollView
       className="flex-1 bg-paper-50"
       contentContainerClassName="p-4 gap-y-4 pb-32"
     >
+      <InventoryHeroCard
+        totalValue={overview.totalValue ?? 0}
+        productCount={overview.productCount ?? 0}
+        unitCount={overview.unitCount ?? 0}
+      />
+
       <ValuationSummaryCard
         totalCostValue={totals.cost}
         totalRetailValue={totals.retail}
@@ -94,7 +113,7 @@ export function AnalyticsCharts() {
         accessible
         accessibilityRole="image"
         accessibilityLabel={`Stock by category. ${categoryLabel}`}
-        className="bg-paper-50 rounded-3xl p-4 border border-paper-300 gap-y-2"
+        className="bg-paper-50 rounded-2xl p-4 border border-paper-300 gap-y-2"
       >
         <StyledText variant="extrabold" className="text-sm text-ink-900">
           Stock by Category
@@ -117,7 +136,7 @@ export function AnalyticsCharts() {
         accessible
         accessibilityRole="image"
         accessibilityLabel={`Stock value distribution. ${valueLabel}`}
-        className="bg-paper-50 rounded-3xl p-4 border border-paper-300 gap-y-2"
+        className="bg-paper-50 rounded-2xl p-4 border border-paper-300 gap-y-2"
       >
         <StyledText variant="extrabold" className="text-sm text-ink-900">
           Stock Value Distribution
@@ -134,18 +153,6 @@ export function AnalyticsCharts() {
             ) : null}
           </>
         )}
-      </View>
-
-      <View
-        accessible
-        accessibilityRole="image"
-        accessibilityLabel="Sales velocity for the last 30 days. No data yet."
-        className="bg-paper-50 rounded-3xl p-4 border border-paper-300 gap-y-2"
-      >
-        <StyledText variant="extrabold" className="text-sm text-ink-900">
-          Sales Velocity (30d)
-        </StyledText>
-        <ChartEmptyState message="No data yet" />
       </View>
     </ScrollView>
   );

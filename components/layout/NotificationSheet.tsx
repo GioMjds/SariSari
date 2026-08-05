@@ -1,5 +1,4 @@
 import { StyledText } from '@/components/elements';
-import { AlertCardItem } from '@/components/home';
 import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
@@ -37,6 +36,70 @@ export interface NotificationSheetProps {
 }
 
 const AnimatedView = Animated.createAnimatedComponent(View);
+
+interface AlertCardItemProps {
+  type: DynamicHomeAlert['type'];
+  title: string;
+  subtitle: string;
+  actionLabel: string;
+  onAction: () => void;
+}
+
+function AlertCardItem({
+  type,
+  title,
+  subtitle,
+  actionLabel,
+  onAction,
+}: AlertCardItemProps) {
+  const iconMap: Record<DynamicHomeAlert['type'], string> = {
+    low_stock: '!',
+    expiring: '~',
+    overdue_debts: '$',
+  };
+  const colorMap: Record<DynamicHomeAlert['type'], string> = {
+    low_stock: 'bg-persimmon-100',
+    expiring: 'bg-amber-100',
+    overdue_debts: 'bg-red-100',
+  };
+  return (
+    <View className="flex-row items-start py-2.5 border-b border-paper-200 last:border-b-0">
+      <View
+        className={`w-8 h-8 rounded-full ${colorMap[type]} items-center justify-center mr-3 mt-0.5 flex-shrink-0`}
+      >
+        <StyledText variant="extrabold" className="text-ink-700 text-xs">
+          {iconMap[type]}
+        </StyledText>
+      </View>
+      <View className="flex-1 mr-2">
+        <StyledText
+          variant="semibold"
+          className="text-ink-900 text-sm"
+          numberOfLines={1}
+        >
+          {title}
+        </StyledText>
+        <StyledText
+          variant="regular"
+          className="text-ink-500 text-xs mt-0.5"
+          numberOfLines={2}
+        >
+          {subtitle}
+        </StyledText>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onAction}
+        hitSlop={8}
+        className="min-h-[32px] px-3 rounded-lg bg-paper-200 active:bg-paper-300 items-center justify-center flex-shrink-0"
+      >
+        <StyledText variant="semibold" className="text-ink-700 text-xs">
+          {actionLabel}
+        </StyledText>
+      </Pressable>
+    </View>
+  );
+}
 
 export function NotificationSheet({
   visible,

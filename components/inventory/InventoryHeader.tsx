@@ -4,7 +4,6 @@ import { SearchBar } from '@/components/ui';
 import { SubTabControl, type SubTabItem } from '@/components/navigation';
 import { INVENTORY_SUB_TABS, InventorySubTab } from '@/constants/tabs';
 import { InventoryAlertPills } from './InventoryAlertPills';
-import { InventoryHeroCard } from './InventoryHeroCard';
 import { useInventoryOverview } from '@/hooks/useInventoryOverview';
 
 export interface InventoryHeaderProps {
@@ -37,7 +36,7 @@ export function InventoryHeader(props: InventoryHeaderProps) {
   })) satisfies SubTabItem<InventorySubTab>[];
 
   return (
-    <View className="bg-paper-200 px-4 pt-1 pb-3 gap-y-2">
+    <View className="bg-paper-200 px-4 pt-1 pb-2 gap-y-2">
       <SubTabControl
         tabs={tabs}
         activeTab={props.active}
@@ -52,12 +51,6 @@ export function InventoryHeader(props: InventoryHeaderProps) {
       <InventoryAlertPills
         counts={overview.counts}
         onPress={props.onPillPress}
-      />
-
-      <InventoryHeroCard
-        totalValue={overview.totalValue}
-        productCount={overview.productCount}
-        unitCount={overview.unitCount}
       />
     </View>
   );

@@ -15,9 +15,6 @@ export const PRIMARY_TAB_PATHS = [
   '/inventory',
   '/customers',
   '/more',
-  '/utang',
-  '/reports',
-  '/sell',
 ] as const;
 
 export function isPrimaryTabPath(path: Href): boolean {
@@ -63,7 +60,7 @@ export const getSellAction = (t: TFunction): Tab => ({
 });
 
 // Sub-Tab Swipe Routes per FUTURE_REVAMP.md
-export const HOME_SUB_TABS = ['overview', 'today', 'alerts'] as const;
+export const HOME_SUB_TABS = ['overview', 'today'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
@@ -72,12 +69,7 @@ export const INVENTORY_SUB_TABS = [
   'analytics',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
-export const MORE_SUB_TABS = [
-  'reports',
-  'insights',
-  'sync',
-  'settings',
-] as const;
+export const MORE_SUB_TABS = [] as const;
 
 export type HomeSubTab = (typeof HOME_SUB_TABS)[number];
 export type SalesSubTab = (typeof SALES_SUB_TABS)[number];
