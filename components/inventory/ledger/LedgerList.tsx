@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, memo } from 'react';
-import { View, SectionList, RefreshControl } from 'react-native';
+import { View, SectionList, RefreshControl, ActivityIndicator } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { format, isToday, isYesterday, isValid } from 'date-fns';
@@ -31,6 +31,9 @@ interface LedgerListProps {
   isRefetching?: boolean;
   onRefresh?: () => void;
   ListHeaderComponent?: React.ReactElement | null;
+  isFetchingNextPage?: boolean;
+  hasNextPage?: boolean;
+  onEndReached?: () => void;
 }
 
 const LIST_CONTAINER_STYLE = { paddingBottom: 140, minHeight: 280 } as const;
@@ -56,6 +59,9 @@ export const LedgerList = memo(function LedgerList({
   isRefetching,
   onRefresh,
   ListHeaderComponent,
+  isFetchingNextPage,
+  hasNextPage,
+  onEndReached,
 }: LedgerListProps) {
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -151,6 +157,28 @@ export const LedgerList = memo(function LedgerList({
       contentContainerStyle={LIST_CONTAINER_STYLE}
       showsVerticalScrollIndicator={false}
       keyExtractor={keyExtractor}
+      onEndReached={() => {
+        if (!isFetchingNextPage && hasNextPage && onEndReached) {
+          onEndReached();
+        }
+      }}
+      onEndReachedThreshold={0.4}
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View className="py-4 items-center justify-center">
+            <ActivityIndicator size="small" color="#623418" />
+            <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
+              Loading more...
+            </StyledText>
+          </View>
+        ) : !hasNextPage && transactions.length > 0 ? (
+          <View className="py-4 items-center justify-center">
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              End of list
+            </StyledText>
+          </View>
+        ) : null
+      }
       refreshControl={
         onRefresh ? (
           <RefreshControl

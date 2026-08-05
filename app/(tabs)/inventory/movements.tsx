@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGetInventoryTransactions } from '@/hooks/useInventory';
+import { usePaginatedInventoryTransactions } from '@/hooks/useInventory';
 import { LedgerList, LedgerToolbar, type LedgerTypeFilter } from '@/components/inventory/ledger';
 import { MovementEmptyState } from '@/components/inventory/movements';
 import { InventoryErrorState } from '@/components/inventory';
@@ -16,9 +16,12 @@ export default function MovementsScreen() {
   const searchQuery = (params.q ?? '').trim();
   const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
 
-  const txQuery = useGetInventoryTransactions();
+  const txQuery = usePaginatedInventoryTransactions(searchQuery, selectedType);
 
-  const transactions = useMemo(() => txQuery.data ?? [], [txQuery.data]);
+  const transactions = useMemo(
+    () => txQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [txQuery.data],
+  );
 
   const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
     const acc: Partial<Record<InventoryEventType, number>> = {};
@@ -89,6 +92,13 @@ export default function MovementsScreen() {
         currentStock={0}
         searchQuery={searchQuery}
         selectedType={selectedType}
+        isFetchingNextPage={txQuery.isFetchingNextPage}
+        hasNextPage={txQuery.hasNextPage}
+        onEndReached={() => {
+          if (!txQuery.isFetchingNextPage && txQuery.hasNextPage) {
+            txQuery.fetchNextPage();
+          }
+        }}
       />
     </View>
   );
