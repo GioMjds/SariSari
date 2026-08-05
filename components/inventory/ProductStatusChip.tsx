@@ -68,12 +68,12 @@ export function ProductStatusChip({ status }: ProductStatusChipProps) {
     <View
       accessibilityRole="text"
       accessibilityLabel={cfg.label}
-      className={`flex-row items-center gap-x-1 px-2 h-6 rounded-pill border ${cfg.bg} ${cfg.border}`}
+      className={`flex-row items-center gap-x-1 px-2.5 h-6.5 rounded-pill border ${cfg.bg} ${cfg.border}`}
     >
       <FontAwesome name={cfg.icon} size={11} color={cfg.iconColor} />
       <StyledText
         variant="extrabold"
-        className={`text-[10px] uppercase tracking-wider ${cfg.text}`}
+        className={`text-xs ${cfg.text}`}
       >
         {cfg.label}
       </StyledText>

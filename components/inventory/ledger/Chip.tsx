@@ -24,7 +24,7 @@ export const Chip = memo(function Chip({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ selected: active }}
-      className={`px-4 py-2 rounded-pill flex-row items-center border ${
+      className={`px-4 py-2.5 min-h-[44px] justify-center rounded-pill flex-row items-center border ${
         active
           ? 'bg-persimmon-500 border-persimmon-500 shadow-sm'
           : 'bg-paper-50 border-ink-200 shadow-none'
@@ -37,13 +37,13 @@ export const Chip = memo(function Chip({
         {label}
       </StyledText>
       <View
-        className={`ml-1.5 px-1.5 rounded-pill ${
+        className={`ml-1.5 px-2 py-0.5 rounded-pill ${
           active ? 'bg-paper-50/25' : 'bg-paper-200'
         }`}
       >
         <StyledText
           variant="extrabold"
-          className={`text-[10px] ${active ? 'text-paper-50' : 'text-ink-700'}`}
+          className={`text-xs ${active ? 'text-paper-50' : 'text-ink-700'}`}
           style={{ fontVariant: ['tabular-nums'] }}
         >
           {count}

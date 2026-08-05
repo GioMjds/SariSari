@@ -70,7 +70,7 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
           from={{ translateY: 600 }}
           animate={{ translateY: 0 }}
           transition={{ type: 'timing', duration: 250 }}
-          className="bg-paper-50 rounded-t-3xl p-5 border-t border-paper-300 gap-y-4"
+          className="bg-paper-50 rounded-t-2xl p-5 border-t border-paper-300 gap-y-4"
         >
           <StyledText variant="extrabold" className="text-base text-ink-900">
             Move {productIds.length} product{productIds.length === 1 ? '' : 's'}{' '}

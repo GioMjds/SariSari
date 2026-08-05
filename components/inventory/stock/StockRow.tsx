@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { View, Image, Pressable, TouchableOpacity } from 'react-native';
+import { View, Pressable, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui/MoneyText';
@@ -41,6 +42,8 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
       {displayImageUri ? (
         <Image
           source={{ uri: displayImageUri }}
+          contentFit="cover"
+          transition={150}
           className="w-11 h-11 rounded-xl bg-paper-100"
         />
       ) : (
@@ -59,11 +62,11 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
         >
           {product.name}
         </StyledText>
-        <View className="flex-row items-center mt-0.5">
+        <View className="flex-row items-center mt-0.5" style={{ fontVariant: ['tabular-nums'] }}>
           <StyledText
             variant="medium"
             numberOfLines={1}
-            className="text-ink-600 text-[11px]"
+            className="text-ink-600 text-xs"
           >
             {product.quantity} pcs ·{' '}
             <MoneyText
@@ -81,12 +84,12 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
             onPress={() => onRestock(product.id)}
             accessibilityRole="button"
             accessibilityLabel={`Restock ${product.name}`}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            className="px-2.5 py-1.5 rounded-lg bg-persimmon-500 flex-row items-center gap-1"
-            style={{ minHeight: 28 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            className="px-3 py-1.5 rounded-lg bg-persimmon-500 flex-row items-center gap-1.5 active:bg-persimmon-600"
+            style={{ minHeight: 32 }}
           >
-            <FontAwesome name="plus" size={10} color="#FFFFFF" />
-            <StyledText variant="extrabold" className="text-paper-50 text-[11px]">
+            <FontAwesome name="plus" size={11} color="#FFFFFF" />
+            <StyledText variant="extrabold" className="text-paper-50 text-xs">
               Restock
             </StyledText>
           </TouchableOpacity>

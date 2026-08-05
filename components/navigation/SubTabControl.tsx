@@ -59,7 +59,7 @@ export function SubTabControl<T extends string>({
             ) : null}
             <StyledText
               variant="extrabold"
-              className={`text-xs uppercase tracking-wider ${
+              className={`text-xs ${
                 isActive ? 'text-ink-900' : 'text-ink-500'
               }`}
             >
@@ -69,7 +69,7 @@ export function SubTabControl<T extends string>({
               <View className="ml-1.5 bg-cinnamon-500 rounded-full w-5 h-5 items-center justify-center">
                 <StyledText
                   variant="extrabold"
-                  className="text-paper-50 text-[11px]"
+                  className="text-paper-50 text-xs"
                 >
                   {tab.badgeCount}
                 </StyledText>

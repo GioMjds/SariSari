@@ -6,3 +6,5 @@ export * from './CheckoutLineRow';
 export * from './CheckoutModal';
 export * from './FloatingCheckoutButton';
 export * from './useCart';
+export * from './FastLaneBar';
+export * from './ScanToastBanner';

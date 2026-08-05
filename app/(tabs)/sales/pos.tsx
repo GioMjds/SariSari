@@ -57,6 +57,7 @@ export default function POSScreen() {
       {/* Floating Checkout Button */}
       <FloatingCheckoutButton
         itemCount={cart.itemCount}
+        total={cart.total}
         onPress={() => setCheckoutOpen(true)}
       />
 

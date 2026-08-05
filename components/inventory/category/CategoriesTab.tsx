@@ -245,7 +245,7 @@ function CategoriesTabComponent() {
           style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <Pressable
-            className="bg-white rounded-t-3xl p-6 pb-10"
+            className="bg-paper-50 rounded-t-2xl p-6 pb-10 border-t border-ink-100"
             onPress={(e) => e.stopPropagation()}
           >
             <View className="items-center mb-4">
@@ -369,7 +369,7 @@ function CategoriesTabComponent() {
             style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
+              className="bg-paper-50 rounded-t-2xl p-6 max-h-[80%] w-full border-t border-ink-100"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText
@@ -457,7 +457,7 @@ function CategoriesTabComponent() {
             style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
           >
             <Pressable
-              className="bg-white rounded-t-3xl p-6 max-h-[80%] w-full border-t border-ink-100"
+              className="bg-paper-50 rounded-t-2xl p-6 max-h-[80%] w-full border-t border-ink-100"
               onPress={(e) => e.stopPropagation()}
             >
               <StyledText

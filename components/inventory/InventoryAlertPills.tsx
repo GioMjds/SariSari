@@ -137,13 +137,14 @@ export function InventoryAlertPills({
               <FontAwesome name={pill.icon} size={12} color={pill.iconColor} />
               <StyledText
                 variant="extrabold"
-                className={`text-[12px] ${pill.text}`}
+                className={`text-xs ${pill.text}`}
+                style={{ fontVariant: ['tabular-nums'] }}
               >
                 {count}
               </StyledText>
               <StyledText
                 variant="medium"
-                className={`text-[11px] uppercase tracking-wider ${pill.text}`}
+                className={`text-xs ${pill.text}`}
               >
                 {pill.label}
               </StyledText>

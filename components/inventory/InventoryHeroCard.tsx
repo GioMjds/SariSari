@@ -28,7 +28,7 @@ export function InventoryHeroCard({
     >
       <StyledText
         variant="extrabold"
-        className="text-paper-200 text-[10px] uppercase tracking-widest"
+        className="text-paper-200 text-xs"
       >
         Total Inventory Value
       </StyledText>
@@ -38,16 +38,17 @@ export function InventoryHeroCard({
         size="hero"
         className="text-white mt-1"
         currency="₱"
+        style={{ letterSpacing: -0.02 }}
       />
 
       <View className="flex-row items-center gap-2.5 mt-2.5 pt-2.5 border-t border-cinnamon-400/30">
         <View className="bg-cinnamon-800/60 px-3 py-1 rounded-full border border-cinnamon-300/30">
-          <StyledText variant="semibold" className="text-paper-50 text-[11px]">
+          <StyledText variant="semibold" className="text-paper-50 text-xs" style={{ fontVariant: ['tabular-nums'] }}>
             {productCount} {productCount === 1 ? 'product' : 'products'}
           </StyledText>
         </View>
         <View className="bg-cinnamon-800/60 px-3 py-1 rounded-full border border-cinnamon-300/30">
-          <StyledText variant="semibold" className="text-paper-50 text-[11px]">
+          <StyledText variant="semibold" className="text-paper-50 text-xs" style={{ fontVariant: ['tabular-nums'] }}>
             {unitCount.toLocaleString()} {unitCount === 1 ? 'unit' : 'units'}
           </StyledText>
         </View>

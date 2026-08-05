@@ -30,7 +30,7 @@ export function Sheet({ visible, onClose, children }: Props) {
           from={{ translateY: 600 }}
           animate={{ translateY: 0 }}
           transition={{ type: 'timing', duration: 250 }}
-          className="bg-paper-50 rounded-t-3xl p-5 border-t border-paper-300 gap-y-4"
+          className="bg-paper-50 rounded-t-2xl p-5 border-t border-paper-300 gap-y-4"
         >
           {children}
         </MotiView>

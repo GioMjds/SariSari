@@ -21,7 +21,7 @@ export function MovementRow({ transaction }: MovementRowProps) {
         <StyledText variant="extrabold" className="text-sm text-ink-900">
           {transaction.productName || `Product #${transaction.product_id}`}
         </StyledText>
-        <StyledText variant="medium" className="text-[11px] text-ink-500 uppercase tracking-wider mt-0.5">
+        <StyledText variant="medium" className="text-xs text-ink-600 mt-0.5">
           {transaction.type} •{' '}
           {new Date(transaction.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
@@ -35,7 +35,11 @@ export function MovementRow({ transaction }: MovementRowProps) {
         ) : null}
       </View>
 
-      <StyledText variant="extrabold" className={`text-base ${qtyColor}`}>
+      <StyledText
+        variant="extrabold"
+        className={`text-base ${qtyColor}`}
+        style={{ fontVariant: ['tabular-nums'] }}
+      >
         {qtyPrefix}
         {transaction.quantity}
       </StyledText>

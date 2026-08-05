@@ -109,26 +109,11 @@ export const LedgerList = memo(function LedgerList({
   }, [groups]);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: LedgerRowData; index: number }) => {
-      // Stagger animation delay per item within its section to prevent lag
-      const delay = (index % 8) * 40;
-      return (
-        <View className="px-4">
-          <MotiView
-            from={{ opacity: 0, translateX: -8 }}
-            animate={{ opacity: 1, translateX: 0 }}
-            transition={{
-              type: 'timing',
-              duration: 280,
-              delay,
-            }}
-            className="mb-2.5"
-          >
-            <LedgerRow row={item} />
-          </MotiView>
-        </View>
-      );
-    },
+    ({ item }: { item: LedgerRowData }) => (
+      <View className="px-4 mb-2.5">
+        <LedgerRow row={item} />
+      </View>
+    ),
     [],
   );
 
@@ -165,16 +150,15 @@ export const LedgerList = memo(function LedgerList({
       onEndReachedThreshold={0.4}
       ListFooterComponent={
         isFetchingNextPage ? (
-          <View className="py-4 items-center justify-center">
-            <ActivityIndicator size="small" color="#623418" />
-            <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
-              Loading more...
+          <View className="py-4 items-center justify-center flex-row gap-x-2">
+            <StyledText variant="medium" className="text-cinnamon-500 text-xs">
+              Loading more movements...
             </StyledText>
           </View>
         ) : !hasNextPage && transactions.length > 0 ? (
           <View className="py-4 items-center justify-center">
-            <StyledText variant="medium" className="text-ink-500 text-xs">
-              End of list
+            <StyledText variant="medium" className="text-ink-400 text-xs">
+              End of movements
             </StyledText>
           </View>
         ) : null
@@ -184,7 +168,7 @@ export const LedgerList = memo(function LedgerList({
           <RefreshControl
             refreshing={!!isRefetching}
             onRefresh={onRefresh}
-            tintColor="#623418"
+            tintColor="#E85A1F"
             colors={['#E85A1F']}
           />
         ) : undefined

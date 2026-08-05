@@ -1,6 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { FC, useEffect, useRef } from 'react';
-import { Animated, Text, StyleSheet } from 'react-native';
+import { Animated, StyleSheet } from 'react-native';
 
 interface ScanToastBannerProps {
   visible: boolean;

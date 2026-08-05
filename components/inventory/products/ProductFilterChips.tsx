@@ -37,8 +37,9 @@ export function ProductsFilterChips({
             key={opt.key}
             onPress={() => onChange(opt.key)}
             accessibilityRole="button"
+            accessibilityState={{ selected: isActive }}
             accessibilityLabel={`${opt.label} filter`}
-            className={`px-3 py-2 rounded-pill border min-h-[36px] justify-center ${
+            className={`px-3.5 py-2 rounded-pill border min-h-[44px] justify-center ${
               isActive
                 ? 'bg-cinnamon-500 border-cinnamon-500'
                 : 'bg-paper-50 border-paper-300'

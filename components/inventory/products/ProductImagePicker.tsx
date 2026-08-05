@@ -89,8 +89,8 @@ export function ProductImagePicker({
           )}
 
           {displayUri && (
-            <View className="absolute inset-0 bg-black/5 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-              <Ionicons name="create" size={20} color="#FFF" />
+            <View className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-2xl">
+              <Ionicons name="camera" size={20} color="#FFF" />
             </View>
           )}
         </TouchableOpacity>
@@ -129,7 +129,7 @@ export function ProductImagePicker({
           style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
         >
           <Pressable
-            className="bg-white rounded-t-3xl p-6"
+            className="bg-paper-50 rounded-t-2xl p-6 border-t border-ink-100"
             onPress={(e) => e.stopPropagation()}
           >
             {/* Center drag handle */}

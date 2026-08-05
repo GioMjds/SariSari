@@ -83,7 +83,7 @@ function SpeedDialItem({
         className="flex-row items-center gap-x-3 active:scale-95"
       >
         <View className="bg-ink-900 px-3.5 py-2 rounded-xl shadow-md border border-ink-700">
-          <StyledText variant="extrabold" className="text-paper-50 text-md">
+          <StyledText variant="extrabold" className="text-paper-50 text-base">
             {label}
           </StyledText>
         </View>

@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller, useFormState } from 'react-hook-form';
-import { Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
+import { Modal, Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Category } from '@/types/categories.types';
 import type { EditProductFormData } from './useEditProductForm';
@@ -165,30 +166,106 @@ export function EditBasicInfoCard({
           render={({ field: { value, onChange } }) => {
             const currentSupplier = suppliers.find((s) => s.id === value);
             return (
-              <>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    currentSupplier
-                      ? `Supplier: ${currentSupplier.name}. Tap to change`
-                      : 'Select a supplier. Tap to open picker'
-                  }
-                  className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
-                >
-                  <StyledText
-                    variant={currentSupplier ? 'semibold' : 'regular'}
-                    className={currentSupplier ? 'text-ink-900 text-base' : 'text-ink-400 text-base'}
-                  >
-                    {currentSupplier ? currentSupplier.name : 'Select Supplier'}
-                  </StyledText>
-                  <FontAwesome name="chevron-down" size={14} color="#7A7165" />
-                </TouchableOpacity>
-              </>
+              <SupplierPickerControl
+                suppliers={suppliers}
+                value={value}
+                currentSupplier={currentSupplier}
+                onChange={onChange}
+              />
             );
           }}
         />
       </View>
     </View>
+  );
+}
+
+function SupplierPickerControl({
+  suppliers,
+  value,
+  currentSupplier,
+  onChange,
+}: {
+  suppliers: Array<{ id: number; name: string }>;
+  value: number | null | undefined;
+  currentSupplier: { id: number; name: string } | undefined;
+  onChange: (id: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={
+          currentSupplier
+            ? `Supplier: ${currentSupplier.name}. Tap to change`
+            : 'Select a supplier. Tap to open picker'
+        }
+        onPress={() => setOpen(true)}
+        className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center justify-between"
+      >
+        <StyledText
+          variant={currentSupplier ? 'semibold' : 'regular'}
+          className={currentSupplier ? 'text-ink-900 text-base' : 'text-ink-400 text-base'}
+        >
+          {currentSupplier ? currentSupplier.name : 'Select Supplier'}
+        </StyledText>
+        <FontAwesome name="chevron-down" size={14} color="#7A7165" />
+      </TouchableOpacity>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+          className="flex-1 bg-ink-900/50 justify-end"
+        >
+          <TouchableOpacity activeOpacity={1} className="bg-paper-50 rounded-t-2xl p-5 max-h-[70%]">
+            <View className="flex-row items-center justify-between pb-3 border-b border-ink-100 mb-3">
+              <StyledText variant="bold" className="text-ink-900 text-lg">
+                Select Supplier
+              </StyledText>
+              <TouchableOpacity onPress={() => setOpen(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <FontAwesome name="times" size={18} color="#78716C" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView className="max-h-80">
+              <TouchableOpacity
+                onPress={() => {
+                  onChange(null);
+                  setOpen(false);
+                }}
+                className={`p-3.5 rounded-xl mb-1.5 flex-row items-center justify-between ${
+                  value == null ? 'bg-cinnamon-50 border border-cinnamon-200' : 'bg-paper-100'
+                }`}
+              >
+                <StyledText variant="medium" className="text-ink-700 text-sm">
+                  None (No supplier)
+                </StyledText>
+                {value == null ? <FontAwesome name="check" size={14} color="#E85A1F" /> : null}
+              </TouchableOpacity>
+              {suppliers.map((s) => (
+                <TouchableOpacity
+                  key={s.id}
+                  onPress={() => {
+                    onChange(s.id);
+                    setOpen(false);
+                  }}
+                  className={`p-3.5 rounded-xl mb-1.5 flex-row items-center justify-between ${
+                    value === s.id ? 'bg-cinnamon-50 border border-cinnamon-200' : 'bg-paper-100'
+                  }`}
+                >
+                  <StyledText variant="semibold" className="text-ink-900 text-base">
+                    {s.name}
+                  </StyledText>
+                  {value === s.id ? <FontAwesome name="check" size={14} color="#E85A1F" /> : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }

@@ -27,13 +27,14 @@ export function DayHeader({
     <View className="px-4 pt-4 pb-2 flex-row items-center justify-between">
       <StyledText
         variant="extrabold"
-        className="text-[10px] tracking-[0.14em] uppercase text-ink-400"
+        className="text-xs text-ink-600"
       >
         {fmt(date)}
       </StyledText>
       <StyledText
         variant="semibold"
-        className={`text-[11px] ${positive ? 'text-sage-700' : 'text-rose-700'}`}
+        className={`text-xs ${positive ? 'text-sage-700' : 'text-rose-700'}`}
+        style={{ fontVariant: ['tabular-nums'] }}
       >
         {positive ? '+' : ''}
         {netChange} net · {inCount} in · {outCount} out

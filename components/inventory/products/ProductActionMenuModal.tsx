@@ -48,7 +48,7 @@ export function ProductActionMenuModal({
           accessibilityLabel="Close menu"
         />
         {visible && product ? (
-          <View className="bg-paper-50 rounded-t-3xl p-5 border-t border-paper-300">
+          <View className="bg-paper-50 rounded-t-2xl p-5 border-t border-paper-300">
             {/* Header */}
             <View className="flex-row items-center justify-between pb-3 border-b border-paper-200">
               <View className="flex-1 pr-3">
@@ -72,7 +72,7 @@ export function ProductActionMenuModal({
                 accessibilityLabel={`Close actions for ${product.name}`}
                 className="min-w-[44px] min-h-[44px] rounded-full bg-paper-100 items-center justify-center active:bg-paper-200"
               >
-                <FontAwesome name="times" size={16} className="text-ink-700" />
+                <FontAwesome name="times" size={16} color="#564E45" />
               </Pressable>
             </View>
 
@@ -80,7 +80,7 @@ export function ProductActionMenuModal({
             <View className="gap-y-1 mt-2">
               <ActionRow
                 icon="ban"
-                iconClass="text-semantic-danger"
+                iconColor="#C22D2D"
                 label="Mark Damaged"
                 onPress={() => {
                   onClose();
@@ -89,7 +89,7 @@ export function ProductActionMenuModal({
               />
               <ActionRow
                 icon="sliders"
-                iconClass="text-ink-700"
+                iconColor="#564E45"
                 label="Adjust Stock"
                 onPress={() => {
                   onClose();
@@ -98,7 +98,7 @@ export function ProductActionMenuModal({
               />
               <ActionRow
                 icon="book"
-                iconClass="text-ink-700"
+                iconColor="#564E45"
                 label="View Ledger"
                 onPress={() => {
                   onClose();
@@ -112,7 +112,7 @@ export function ProductActionMenuModal({
             {/* Edit */}
             <ActionRow
               icon="pencil"
-              iconClass="text-persimmon-600"
+              iconColor="#E85A1F"
               label="Edit Product"
               onPress={() => {
                 onClose();
@@ -135,7 +135,7 @@ export function ProductActionMenuModal({
               <FontAwesome
                 name="trash"
                 size={16}
-                className="text-semantic-danger"
+                color="#C22D2D"
               />
               <StyledText
                 variant="extrabold"
@@ -153,12 +153,12 @@ export function ProductActionMenuModal({
 
 interface ActionRowProps {
   icon: React.ComponentProps<typeof FontAwesome>['name'];
-  iconClass: string;
+  iconColor?: string;
   label: string;
   onPress: () => void;
 }
 
-function ActionRow({ icon, iconClass, label, onPress }: ActionRowProps) {
+function ActionRow({ icon, iconColor = '#564E45', label, onPress }: ActionRowProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -166,7 +166,7 @@ function ActionRow({ icon, iconClass, label, onPress }: ActionRowProps) {
       accessibilityLabel={label}
       className="min-h-[44px] px-3 rounded-xl flex-row items-center gap-x-3 active:bg-paper-100"
     >
-      <FontAwesome name={icon} size={16} className={iconClass} />
+      <FontAwesome name={icon} size={16} color={iconColor} />
       <StyledText variant="extrabold" className="text-base text-ink-800">
         {label}
       </StyledText>

@@ -10,12 +10,14 @@ export type SalesSubTab = 'pos' | 'cart' | 'checkout' | 'receipts';
 export interface SalesHeaderProps {
   activeTab: SalesSubTab;
   todayTotal?: number;
+  transactionCount?: number;
   onTabPress: (tab: SalesSubTab) => void;
 }
 
 export function SalesHeader({
   activeTab,
   todayTotal = 0,
+  transactionCount,
   onTabPress,
 }: SalesHeaderProps) {
   const tabs = [
@@ -23,50 +25,97 @@ export function SalesHeader({
     { key: 'receipts', label: 'RECEIPTS', icon: 'list-alt' },
   ] satisfies SubTabItem<SalesSubTab>[];
 
+  const todayFormatted = new Date()
+    .toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    })
+    .toUpperCase();
+
   return (
-    <View className="bg-paper-200 px-4 pt-1 pb-1">
+    <View className="bg-paper-200 px-4 pt-2 pb-1">
       <SubTabControl
         tabs={tabs}
         activeTab={activeTab}
         onTabPress={onTabPress}
-        containerClassName="mb-3"
+        containerClassName="mb-3.5 rounded-3xl shadow-sm border-paper-300"
       />
 
-      <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-md relative overflow-hidden">
-        <View className="absolute -right-4 -bottom-4 opacity-20">
-          <FontAwesome name="shopping-cart" size={130} color="#FFFFFF" />
+      <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-lg border border-cinnamon-400/40 relative overflow-hidden">
+        <View className="absolute -right-4 -bottom-4 opacity-15">
+          <FontAwesome name="shopping-bag" size={140} color="#FFFFFF" />
         </View>
 
-        <View className="flex-row items-center mb-2">
-          <FontAwesome
-            name="calendar"
-            size={13}
-            color="#FFFFFF"
-            style={{ opacity: 0.9, marginRight: 6 }}
-          />
-          <StyledText
-            variant="extrabold"
-            className="text-white/90 text-[11px] tracking-wider uppercase"
-          >
-            TODAY&apos;S SALES
-          </StyledText>
+        <View className="flex-row items-center justify-between mb-2.5">
+          <View className="flex-row items-center bg-white/20 px-3 py-1 rounded-full border border-white/25">
+            <FontAwesome
+              name="calendar-check-o"
+              size={12}
+              color="#FFFFFF"
+              style={{ marginRight: 6 }}
+            />
+            <StyledText
+              variant="extrabold"
+              className="text-white text-[11px] tracking-wider uppercase"
+            >
+              TODAY&apos;S SALES
+            </StyledText>
+          </View>
+
+          <View className="bg-white/15 px-2.5 py-1 rounded-full border border-white/20 flex-row items-center">
+            <FontAwesome
+              name="clock-o"
+              size={10}
+              color="#FFFFFF"
+              style={{ marginRight: 4, opacity: 0.9 }}
+            />
+            <StyledText
+              variant="extrabold"
+              className="text-white/95 text-[10px] tracking-wider"
+            >
+              {todayFormatted}
+            </StyledText>
+          </View>
         </View>
 
         <View className="flex-row items-baseline mb-3">
           <StyledText
             variant="extrabold"
-            className="text-white/90 text-2xl mr-1"
-          >
-            ₱
-          </StyledText>
-          <StyledText
-            variant="extrabold"
             className="text-white text-4xl tracking-tight"
           >
-            {formatPesos(todayTotal).replace('₱', '')}
+            {formatPesos(todayTotal)}
           </StyledText>
+        </View>
+
+        <View className="flex-row items-center gap-2">
+          <View className="bg-white/20 px-3 py-1 rounded-full flex-row items-center border border-white/30">
+            <FontAwesome
+              name="bolt"
+              size={10}
+              color="#FFFFFF"
+              style={{ marginRight: 5 }}
+            />
+            <StyledText variant="extrabold" className="text-white text-xs">
+              Live POS Session
+            </StyledText>
+          </View>
+
+          {transactionCount !== undefined ? (
+            <View className="bg-white/20 px-3 py-1 rounded-full flex-row items-center border border-white/30">
+              <FontAwesome
+                name="file-text-o"
+                size={10}
+                color="#FFFFFF"
+                style={{ marginRight: 5 }}
+              />
+              <StyledText variant="extrabold" className="text-white text-xs">
+                {transactionCount} {transactionCount === 1 ? 'Txn' : 'Txns'}
+              </StyledText>
+            </View>
+          ) : null}
         </View>
       </View>
     </View>
   );
 }
+

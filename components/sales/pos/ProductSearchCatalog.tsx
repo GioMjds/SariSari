@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  ScrollView,
   TextInput,
   View,
 } from 'react-native';
@@ -11,6 +12,8 @@ import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
 import { AddSalesFormData } from '../add-sales/useAddSalesForm';
 import { ProductRow } from './ProductRow';
+import { useFastLaneProducts } from '@/hooks/useProducts';
+import { formatPesos } from '@/lib';
 
 interface ProductSearchCatalogProps {
   control: Control<AddSalesFormData>;
@@ -51,10 +54,12 @@ export function ProductSearchCatalog({
   onEndReached,
   onRetryFetchNext,
 }: ProductSearchCatalogProps) {
+  const { data: fastLaneProducts = [] } = useFastLaneProducts();
+
   return (
     <View className="flex-1">
       {/* Search Bar */}
-      <View className="bg-paper-50 mx-4 mt-2 mb-3 rounded-2xl px-4 py-3 flex-row items-center border border-ink-100 shadow-paper">
+      <View className="bg-paper-100 mx-4 mt-2 mb-3 rounded-2xl px-3.5 py-2 flex-row items-center border border-paper-300">
         <FontAwesome name="search" size={16} color="#623418" />
         <Controller
           control={control}
@@ -67,22 +72,22 @@ export function ProductSearchCatalog({
                 onBlur={onBlur}
                 placeholder="Search products..."
                 placeholderTextColor="#7A7165"
-                className="flex-1 ml-3 text-ink-900 font-stack-sans-medium"
+                className="flex-1 ml-3 text-ink-900 font-stack-sans-medium text-sm py-1.5 min-h-[44px]"
                 returnKeyType="search"
                 autoCorrect={false}
                 autoCapitalize="none"
               />
-              {value.length > 0 && (
+              {value && value.length > 0 ? (
                 <Pressable
                   onPress={() => onChange('')}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Clear search"
-                  className="active:opacity-50"
+                  className="w-11 h-11 items-center justify-center active:opacity-50"
                 >
                   <FontAwesome name="times-circle" size={16} color="#623418" />
                 </Pressable>
-              )}
+              ) : null}
             </>
           )}
         />
@@ -91,11 +96,66 @@ export function ProductSearchCatalog({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Scan barcode"
-          className="active:opacity-50 ml-3"
+          className="bg-cinnamon-500 active:bg-cinnamon-600 w-11 h-11 rounded-xl items-center justify-center ml-2 min-w-[44px] min-h-[44px]"
         >
-          <FontAwesome name="barcode" size={18} color="#623418" />
+          <FontAwesome name="barcode" size={18} color="#FAFAF7" />
         </Pressable>
       </View>
+
+      {/* Fast Lane Pills */}
+      {fastLaneProducts.length > 0 ? (
+        <View className="mb-3 px-4">
+          <View className="flex-row items-center mb-1.5">
+            <FontAwesome name="bolt" size={12} color="#E85A1F" />
+            <StyledText
+              variant="extrabold"
+              className="text-persimmon-600 text-xs tracking-wider uppercase ml-1.5"
+            >
+              Fast Lane
+            </StyledText>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingRight: 16 }}
+          >
+            {fastLaneProducts.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => onAdd(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Add ${item.name} fast lane product to cart`}
+                className="bg-paper-100 border border-paper-300 rounded-2xl px-3 py-2 flex-row items-center mr-2 min-h-[44px] active:bg-paper-200"
+              >
+                <FontAwesome
+                  name="bolt"
+                  size={12}
+                  color="#E85A1F"
+                  style={{ marginRight: 6 }}
+                />
+                <View className="mr-2">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-900 text-xs"
+                    numberOfLines={1}
+                  >
+                    {item.name}
+                  </StyledText>
+                  <StyledText
+                    variant="medium"
+                    className="text-sage-700 text-[10px]"
+                  >
+                    {formatPesos(item.price)}
+                  </StyledText>
+                </View>
+                <View className="bg-cinnamon-500 rounded-lg w-6 h-6 items-center justify-center ml-1">
+                  <FontAwesome name="plus" size={10} color="#FAFAF7" />
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      ) : null}
 
       {pendingAddProductBarcode ? (
         <View className="mx-4 mb-3 bg-semantic-danger-50 border border-semantic-danger/30 rounded-2xl p-4 shadow-paper">
@@ -120,7 +180,7 @@ export function ProductSearchCatalog({
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Dismiss not in inventory card"
-                className="active:opacity-50"
+                className="w-11 h-11 items-center justify-center active:opacity-50"
               >
                 <FontAwesome name="times" size={16} color="#623418" />
               </Pressable>
@@ -131,7 +191,7 @@ export function ProductSearchCatalog({
               onPress={onPressAddNewProduct}
               accessibilityRole="button"
               accessibilityLabel="Add as new product from scanned barcode"
-              className="press-scale mt-3 rounded-xl py-2.5 bg-persimmon-500 shadow-persimmon-glow items-center"
+              className="press-scale mt-3 rounded-xl py-2.5 bg-persimmon-500 shadow-persimmon-glow items-center min-h-[44px] justify-center"
             >
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Add as new product

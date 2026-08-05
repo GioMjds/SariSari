@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { View, Image, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { Image } from 'expo-image';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui/MoneyText';
 import { ProductStatusChip } from '@/components/inventory/ProductStatusChip';
@@ -39,6 +40,8 @@ function ProductRowImpl({
       {displayImageUri ? (
         <Image
           source={{ uri: displayImageUri }}
+          contentFit="cover"
+          transition={150}
           className="w-11 h-11 rounded-xl bg-paper-100"
         />
       ) : (
@@ -61,13 +64,13 @@ function ProductRowImpl({
           variant="medium"
           numberOfLines={1}
           ellipsizeMode="tail"
-          className="text-ink-600 text-[11px] mt-0.5"
+          className="text-ink-600 text-xs mt-0.5"
         >
           {product.category ?? 'Uncategorized'} · {product.retail_unit_name ?? 'Pc'}
         </StyledText>
       </View>
       <View className="flex-row items-center gap-2">
-        <View className="items-end gap-1 shrink-0">
+        <View className="items-end gap-1 shrink-0" style={{ fontVariant: ['tabular-nums'] }}>
           <MoneyText
             value={product.price ?? 0}
             size="sm"
@@ -80,10 +83,10 @@ function ProductRowImpl({
             onPress={() => onActionPress(product)}
             accessibilityLabel={`Actions for ${product.name}`}
             accessibilityRole="button"
-            hitSlop={8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="w-8 h-8 rounded-full items-center justify-center active:bg-paper-200"
           >
-            <FontAwesome name="ellipsis-v" size={16} color="#78716C" />
+            <FontAwesome name="ellipsis-v" size={16} color="#7A7165" />
           </Pressable>
         ) : null}
       </View>

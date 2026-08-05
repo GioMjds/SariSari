@@ -1,11 +1,9 @@
 import type { NewSaleItem, Product } from '@/types';
 import { Pressable, View } from 'react-native';
-import { PerforationRow } from '../PerforationRow';
 import { StyledText } from '@/components/elements';
-import { MoneyText } from '@/components/ui';
-import { StepperStamp } from '../add-sales/StepperStamp';
 import { Image } from 'expo-image';
-import { getProductImageUri } from '@/lib';
+import { formatPesos, getProductImageUri } from '@/lib';
+import { FontAwesome } from '@expo/vector-icons';
 
 interface ProductRowProps {
   product: Product;
@@ -32,17 +30,18 @@ export function ProductRow({
   const activeUnit = cartLine?.selected_unit || 'retail';
   const displayPrice = inCart ? cartLine!.price : product.price;
 
-  const dotColor = isOutOfStock
-    ? '#C13030'
-    : isLowStock
-      ? '#C77B0E'
-      : '#4F7A24';
-  const stockLabel = isOutOfStock
-    ? 'Out of stock'
-    : `${product.quantity} in stock`;
-
-  const placeholderText = product.name ? product.name.trim().charAt(0).toUpperCase() : '?';
+  const placeholderText = product.name
+    ? product.name.trim().charAt(0).toUpperCase()
+    : '?';
   const displayImageUri = getProductImageUri(product.image_uri);
+
+  const hasWholesale =
+    product.wholesale_price != null &&
+    product.conversion_factor != null &&
+    product.conversion_factor >= 2;
+
+  const retailUnitLabel = product.retail_unit_name || 'PC';
+  const wholesaleUnitLabel = product.wholesale_unit_name || 'PK';
 
   return (
     <Pressable
@@ -57,188 +56,213 @@ export function ProductRow({
           ? `${product.name} out of stock`
           : `Add ${product.name} to cart`
       }
-      className={`mx-4 mb-4 rounded-3xl overflow-hidden bg-paper-50 border border-ink-100 ${
-        isOutOfStock ? 'opacity-60' : 'active:opacity-90'
+      className={`mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card ${
+        isOutOfStock ? 'opacity-60' : 'active:opacity-95'
       }`}
-      style={{
-        shadowColor: '#564E45',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
-      }}
     >
-      <PerforationRow side="top" />
-
-      <View className="paper-texture px-5 pt-3 pb-3">
-        {/* Header: Image (left) + Name & SKU (right) */}
-        <View className="flex-row items-start mb-2">
-          {/* Image box */}
-          <View className="w-12 h-12 rounded-xl bg-paper-100 border border-ink-150 overflow-hidden mr-3 items-center justify-center">
-            {displayImageUri ? (
-              <Image
-                source={{ uri: displayImageUri }}
-                className="w-full h-full"
-                contentFit="cover"
-              />
-            ) : (
-              <View className="w-full h-full bg-persimmon-50 items-center justify-center">
-                <StyledText variant="black" className="text-persimmon-600 text-base">
-                  {placeholderText}
-                </StyledText>
-              </View>
-            )}
-          </View>
-
-          {/* Name & SKU */}
-          <View className="flex-1 mr-2">
+      {/* Top Header Row: Thumbnail + Details (Title, Category, SKU) */}
+      <View className="flex-row items-start mb-2.5">
+        {/* Soft Surface Thumbnail Container */}
+        <View className="w-14 h-14 rounded-xl bg-paper-200 border border-paper-300/60 overflow-hidden mr-3 items-center justify-center">
+          {displayImageUri ? (
+            <Image
+              source={{ uri: displayImageUri }}
+              className="w-full h-full"
+              contentFit="cover"
+            />
+          ) : (
             <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-h2 mb-1"
-              numberOfLines={2}
+              variant="black"
+              className="text-persimmon-600 text-lg"
             >
-              {product.name}
+              {placeholderText}
             </StyledText>
-            <View className="self-start bg-paper-100 border border-dashed border-ink-200 rounded-md px-2 py-0.5">
-              <StyledText
-                variant="medium"
-                className="text-mono text-ink-500 text-[10px]"
-              >
-                SKU {product.sku}
-              </StyledText>
-            </View>
-          </View>
+          )}
         </View>
 
-        {/* Dotted divider */}
-        <View className="divider-dotted-thin mb-3" />
+        {/* Title, Category Badge & SKU */}
+        <View className="flex-1">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-base leading-tight mb-1"
+            numberOfLines={2}
+          >
+            {product.name}
+          </StyledText>
 
-        {product.wholesale_price != null &&
-          product.conversion_factor != null &&
-          product.conversion_factor >= 2 && (
-            <View className="flex-row items-center mb-3 bg-paper-100 rounded-xl p-1 border border-ink-100">
-              <Pressable
-                onPress={() => {
-                  if (inCart && cartLine?.selected_unit !== 'retail') {
-                    onToggleUnit?.(product.id);
-                  } else if (!inCart) {
-                    onAdd(product, 'retail');
-                  }
-                }}
-                className={`flex-1 py-1.5 rounded-lg items-center ${
-                  !inCart || cartLine?.selected_unit === 'retail'
-                    ? 'bg-cinnamon-500 border border-cinnamon-600'
-                    : ''
-                }`}
+          <View className="flex-row items-center flex-wrap gap-1.5">
+            {/* Category Tag Badge */}
+            <View className="bg-paper-200 rounded-md px-2 py-0.5 self-start">
+              <StyledText
+                variant="medium"
+                className="text-ink-600 text-[11px] uppercase tracking-wider"
               >
-                <StyledText
-                  variant="extrabold"
-                  className={`text-xs ${
-                    !inCart || cartLine?.selected_unit === 'retail'
-                      ? 'text-paper-50'
-                      : 'text-ink-700'
-                  }`}
-                >
-                  Tingi ({product.retail_unit_name || 'Pc'})
-                </StyledText>
-              </Pressable>
+                {product.category || 'General'}
+              </StyledText>
+            </View>
 
-              <Pressable
-                onPress={() => {
-                  if (inCart && cartLine?.selected_unit !== 'wholesale') {
-                    onToggleUnit?.(product.id);
-                  } else if (!inCart) {
-                    onAdd(product, 'wholesale');
-                  }
-                }}
-                className={`flex-1 py-1.5 rounded-lg items-center ${
-                  inCart && cartLine?.selected_unit === 'wholesale'
-                    ? 'bg-cinnamon-500 border border-cinnamon-600'
-                    : ''
-                }`}
-              >
+            {/* SKU Badge */}
+            {product.sku ? (
+              <View className="bg-paper-200/60 border border-dashed border-paper-300 rounded-md px-1.5 py-0.5 self-start">
                 <StyledText
-                  variant="extrabold"
-                  className={`text-xs ${
-                    inCart && cartLine?.selected_unit === 'wholesale'
-                      ? 'text-paper-50'
-                      : 'text-ink-700'
-                  }`}
+                  variant="medium"
+                  className="text-ink-500 font-mono text-[10px]"
                 >
-                  Pakyaw ({product.wholesale_unit_name || 'Case'})
+                  SKU {product.sku}
                 </StyledText>
-              </Pressable>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </View>
+
+      {/* Unit Toggle Badge (PC vs PK) */}
+      {hasWholesale ? (
+        <View className="flex-row items-center mb-3 bg-paper-200/80 rounded-xl p-1 border border-paper-300/60">
+          <Pressable
+            onPress={() => {
+              if (inCart && cartLine?.selected_unit !== 'retail') {
+                onToggleUnit?.(product.id);
+              } else if (!inCart) {
+                onAdd(product, 'retail');
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Select ${retailUnitLabel} unit`}
+            className={`flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center ${
+              !inCart || cartLine?.selected_unit === 'retail'
+                ? 'bg-cinnamon-500 shadow-sm border border-cinnamon-600'
+                : ''
+            }`}
+          >
+            <StyledText
+              variant="extrabold"
+              className={`text-xs ${
+                !inCart || cartLine?.selected_unit === 'retail'
+                  ? 'text-paper-50'
+                  : 'text-ink-700'
+              }`}
+            >
+              PC ({retailUnitLabel})
+            </StyledText>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              if (inCart && cartLine?.selected_unit !== 'wholesale') {
+                onToggleUnit?.(product.id);
+              } else if (!inCart) {
+                onAdd(product, 'wholesale');
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Select ${wholesaleUnitLabel} unit`}
+            className={`flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center ${
+              inCart && cartLine?.selected_unit === 'wholesale'
+                ? 'bg-cinnamon-500 shadow-sm border border-cinnamon-600'
+                : ''
+            }`}
+          >
+            <StyledText
+              variant="extrabold"
+              className={`text-xs ${
+                inCart && cartLine?.selected_unit === 'wholesale'
+                  ? 'text-paper-50'
+                  : 'text-ink-700'
+              }`}
+            >
+              PK ({wholesaleUnitLabel})
+            </StyledText>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {/* Bottom Section: Stock Status Pill, Price in Pesos, Action Button/Stepper */}
+      <View className="flex-row items-center justify-between pt-1 border-t border-paper-300/40">
+        <View className="flex-col items-start gap-1">
+          {/* Stock status indicator pill */}
+          {isOutOfStock ? (
+            <View className="bg-semantic-danger-50 border border-semantic-danger/20 px-2.5 py-0.5 rounded-full flex-row items-center">
+              <FontAwesome name="times-circle" size={10} color="#C13030" />
+              <StyledText
+                variant="semibold"
+                className="text-semantic-danger text-[11px] ml-1"
+              >
+                Out of stock
+              </StyledText>
+            </View>
+          ) : isLowStock ? (
+            <View className="bg-semantic-warning-50 border border-semantic-warning-100 px-2.5 py-0.5 rounded-full flex-row items-center">
+              <FontAwesome name="exclamation-triangle" size={10} color="#C77B0E" />
+              <StyledText
+                variant="semibold"
+                className="text-semantic-warning text-[11px] ml-1"
+              >
+                {product.quantity} in stock (Low)
+              </StyledText>
+            </View>
+          ) : (
+            <View className="bg-sage-50 border border-sage-200 px-2.5 py-0.5 rounded-full flex-row items-center">
+              <FontAwesome name="check-circle" size={10} color="#4F7A24" />
+              <StyledText
+                variant="semibold"
+                className="text-sage-700 text-[11px] ml-1"
+              >
+                {product.quantity} in stock
+              </StyledText>
             </View>
           )}
 
-        {/* Body: price + stock indicator (or stepper when in cart) */}
+          {/* Formatted Price Display in Pesos */}
+          <StyledText variant="extrabold" className="text-ink-900 text-lg leading-tight">
+            {formatPesos(displayPrice)}
+          </StyledText>
+        </View>
+
+        {/* Action: Tactile + Add button or Quantity adjuster pill */}
         {inCart && cartLine ? (
-          <View className="flex-row items-center justify-between">
-            <MoneyText
-              value={displayPrice}
-              size="lg"
-              className="text-ink-700"
-            />
-            <StepperStamp
-              quantity={cartLine.quantity}
-              onDecrement={() => onUpdateQuantity(product.id, -1, activeUnit)}
-              onIncrement={() => onUpdateQuantity(product.id, 1, activeUnit)}
-              max={
-                activeUnit === 'wholesale' && product.conversion_factor
-                  ? Math.floor(product.quantity / product.conversion_factor)
-                  : product.quantity
-              }
-            />
+          <View className="flex-row items-center bg-paper-200 border border-paper-300 rounded-xl p-1">
+            <Pressable
+              onPress={() => onUpdateQuantity(product.id, -1, activeUnit)}
+              accessibilityRole="button"
+              accessibilityLabel={`Decrease quantity for ${product.name}`}
+              className="w-10 h-10 rounded-lg bg-paper-100 items-center justify-center border border-paper-300 active:bg-paper-300 min-h-[44px] min-w-[44px]"
+            >
+              <FontAwesome name="minus" size={12} color="#4D2810" />
+            </Pressable>
+
+            <StyledText variant="extrabold" className="text-ink-900 text-sm px-3">
+              {cartLine.quantity}
+            </StyledText>
+
+            <Pressable
+              onPress={() => onUpdateQuantity(product.id, 1, activeUnit)}
+              accessibilityRole="button"
+              accessibilityLabel={`Increase quantity for ${product.name}`}
+              className="w-10 h-10 rounded-lg bg-cinnamon-500 items-center justify-center active:bg-cinnamon-600 min-h-[44px] min-w-[44px]"
+            >
+              <FontAwesome name="plus" size={12} color="#FAFAF7" />
+            </Pressable>
           </View>
         ) : (
-          <View className="flex-row items-end justify-between">
-            <View>
-              <StyledText
-                variant="medium"
-                className="label-caps text-ink-400 mb-0.5"
-              >
-                Price
-              </StyledText>
-              <MoneyText
-                value={displayPrice}
-                size="xl"
-                className="text-ink-900"
-              />
-            </View>
-            <View className="items-end pb-0.5">
-              <View className="flex-row items-center">
-                <View
-                  className="w-2.5 h-2.5 rounded-full mr-2"
-                  style={{ backgroundColor: dotColor }}
-                />
-                <StyledText
-                  variant="semibold"
-                  className={`text-xs ${
-                    isOutOfStock
-                      ? 'text-semantic-danger'
-                      : isLowStock
-                        ? 'text-semantic-warning'
-                        : 'text-ink-700'
-                  }`}
-                >
-                  {stockLabel}
-                </StyledText>
-              </View>
-              {isLowStock && (
-                <StyledText
-                  variant="medium"
-                  className="label-caps text-semantic-warning mt-1"
-                >
-                  Low stock
-                </StyledText>
-              )}
-            </View>
-          </View>
+          <Pressable
+            onPress={() => {
+              if (!isOutOfStock) onAdd(product);
+            }}
+            disabled={isOutOfStock}
+            accessibilityRole="button"
+            accessibilityLabel={`Add ${product.name} to cart`}
+            className={`bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm ${
+              isOutOfStock ? 'opacity-40' : ''
+            }`}
+          >
+            <FontAwesome name="plus" size={12} color="#FAFAF7" />
+            <StyledText variant="extrabold" className="text-paper-50 text-sm ml-1.5">
+              Add
+            </StyledText>
+          </Pressable>
         )}
       </View>
-
-      <PerforationRow side="bottom" />
-      <View className="h-3" />
     </Pressable>
   );
 }

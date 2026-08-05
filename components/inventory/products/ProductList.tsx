@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItemInfo, View } from 'react-native';
-import { MotiView } from 'moti';
+import { FlatList, ListRenderItemInfo, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
 import type { Product } from '@/types/products.types';
@@ -25,23 +24,13 @@ export function ProductsList({
   onEndReached,
 }: ProductsListProps) {
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<Product>) => (
-      <MotiView
-        from={{ opacity: 0, translateY: 6 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{
-          type: 'timing',
-          duration: 180,
-          delay: Math.min(index, 8) * 30,
-        }}
-      >
-        <ProductRow
-          product={item}
-          onPress={onPress}
-          {...(onLongPress ? { onLongPress } : {})}
-          {...(onActionPress ? { onActionPress } : {})}
-        />
-      </MotiView>
+    ({ item }: ListRenderItemInfo<Product>) => (
+      <ProductRow
+        product={item}
+        onPress={onPress}
+        {...(onLongPress ? { onLongPress } : {})}
+        {...(onActionPress ? { onActionPress } : {})}
+      />
     ),
     [onPress, onLongPress, onActionPress],
   );
@@ -67,16 +56,15 @@ export function ProductsList({
       onEndReachedThreshold={0.4}
       ListFooterComponent={
         isFetchingNextPage ? (
-          <View className="py-4 items-center justify-center">
-            <ActivityIndicator size="small" color="#623418" />
-            <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
-              Loading more...
+          <View className="py-4 items-center justify-center flex-row gap-x-2">
+            <StyledText variant="medium" className="text-cinnamon-500 text-xs">
+              Loading more products...
             </StyledText>
           </View>
         ) : !hasNextPage && products.length > 0 ? (
           <View className="py-4 items-center justify-center">
-            <StyledText variant="medium" className="text-ink-500 text-xs">
-              End of list
+            <StyledText variant="medium" className="text-ink-400 text-xs">
+              End of products
             </StyledText>
           </View>
         ) : null

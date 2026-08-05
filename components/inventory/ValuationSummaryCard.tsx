@@ -24,22 +24,22 @@ export function ValuationSummaryCard({
         <View>
           <StyledText
             variant="medium"
-            className="text-[11px] uppercase tracking-wider text-ink-500 mb-1"
+            className="text-xs text-ink-600 mb-1"
           >
             Total Cost Value
           </StyledText>
-          <StyledText variant="extrabold" className="text-lg text-ink-900">
+          <StyledText variant="extrabold" className="text-lg text-ink-900" style={{ fontVariant: ['tabular-nums'] }}>
             {formatPesos(totalCostValue)}
           </StyledText>
         </View>
         <View className="items-end">
           <StyledText
             variant="medium"
-            className="text-[11px] uppercase tracking-wider text-ink-500 mb-1"
+            className="text-xs text-ink-600 mb-1"
           >
             Total Retail Value
           </StyledText>
-          <StyledText variant="extrabold" className="text-lg text-sage-700">
+          <StyledText variant="extrabold" className="text-lg text-sage-700" style={{ fontVariant: ['tabular-nums'] }}>
             {formatPesos(totalRetailValue)}
           </StyledText>
         </View>
@@ -48,11 +48,11 @@ export function ValuationSummaryCard({
       <View className="pt-3 border-t border-paper-200 flex-row justify-between items-center">
         <StyledText
           variant="semibold"
-          className="text-xs uppercase tracking-wider text-ink-700"
+          className="text-xs text-ink-700"
         >
           Potential Profit
         </StyledText>
-        <StyledText variant="extrabold" className="text-base text-sage-700">
+        <StyledText variant="extrabold" className="text-base text-sage-700" style={{ fontVariant: ['tabular-nums'] }}>
           {formatPesos(potentialProfit)}
         </StyledText>
       </View>
