@@ -3,13 +3,6 @@ import { View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { APP_VARIANT, IS_PRODUCTION_BUILD } from "@/constants/env";
 
-/**
- * BuildBadge — shows a subtle banner in Development and Preview builds.
- * Returns null in production so there's zero overhead.
- *
- * Uses absolute positioning with pointerEvents="none" so it overlays
- * cleanly without shifting or compressing screen route layouts below.
- */
 export function BuildBadge() {
   const insets = useSafeAreaInsets();
 

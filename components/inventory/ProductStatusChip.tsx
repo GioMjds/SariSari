@@ -13,6 +13,7 @@ export interface ProductStatusChipProps {
 interface StatusConfig {
   label: string;
   icon: keyof typeof FontAwesome.glyphMap;
+  iconColor: string;
   bg: string;
   border: string;
   text: string;
@@ -22,6 +23,7 @@ const STATUS_CONFIG = {
   healthy: {
     label: 'Healthy',
     icon: 'check-circle',
+    iconColor: '#2D6A4F',
     bg: 'bg-sage-50',
     border: 'border-sage-500',
     text: 'text-sage-700',
@@ -29,6 +31,7 @@ const STATUS_CONFIG = {
   low_stock: {
     label: 'Low Stock',
     icon: 'exclamation-triangle',
+    iconColor: '#B45309',
     bg: 'bg-amber-50',
     border: 'border-amber-500',
     text: 'text-amber-700',
@@ -36,6 +39,7 @@ const STATUS_CONFIG = {
   out_of_stock: {
     label: 'Out of Stock',
     icon: 'times-circle',
+    iconColor: '#BE123C',
     bg: 'bg-rose-50',
     border: 'border-rose-500',
     text: 'text-rose-700',
@@ -43,6 +47,7 @@ const STATUS_CONFIG = {
   near_expiry: {
     label: 'Near Expiry',
     icon: 'clock-o',
+    iconColor: '#C2410C',
     bg: 'bg-persimmon-50',
     border: 'border-persimmon-500',
     text: 'text-persimmon-700',
@@ -50,6 +55,7 @@ const STATUS_CONFIG = {
   newly_added: {
     label: 'Newly Added',
     icon: 'star',
+    iconColor: '#78350F',
     bg: 'bg-paper-100',
     border: 'border-cinnamon-500',
     text: 'text-cinnamon-700',
@@ -64,7 +70,7 @@ export function ProductStatusChip({ status }: ProductStatusChipProps) {
       accessibilityLabel={cfg.label}
       className={`flex-row items-center gap-x-1 px-2 h-6 rounded-pill border ${cfg.bg} ${cfg.border}`}
     >
-      <FontAwesome name={cfg.icon} size={11} color="currentColor" />
+      <FontAwesome name={cfg.icon} size={11} color={cfg.iconColor} />
       <StyledText
         variant="extrabold"
         className={`text-[10px] uppercase tracking-wider ${cfg.text}`}

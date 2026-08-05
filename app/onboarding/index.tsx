@@ -23,23 +23,6 @@ import { useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-/**
- * OnboardingPage — 7-step first-run flow:
- *
- *   profile → tour (dashboard → sell → inventory → utang → reports) → ready
- *
- * Step state is a discriminated union held in `useState`; ordinal
- * conversion lives in `lib/onboardingStepMachine.ts`. Profile state
- * is local until the user taps "Open my store" on the ready screen —
- * nothing is persisted mid-tour, so a kill-and-reopen returns the user
- * to the start. The `maxReachableIndex` tracks the furthest step
- * reached so the dot pagination can offer a back-step shortcut.
- *
- * The header title, button labels, toasts, and accessibility strings
- * are translated through the `onboarding` namespace. The first-step
- * language picker lives inside `ProfileStep` so it can switch language
- * live and immediately re-render every translated string below it.
- */
 export default function OnboardingPage() {
 	const [step, setStep] = useState<Step>({ kind: 'profile' });
 	const [maxIndex, setMaxIndex] = useState<number>(0);
@@ -100,7 +83,6 @@ export default function OnboardingPage() {
 	const isFirstTour = step.kind === 'tour' && step.tab === TOUR_ORDER[0];
 	const isLastTour = step.kind === 'tour' && step.tab === TOUR_ORDER[TOUR_ORDER.length - 1];
 
-	// Names are required before the user can leave the profile step.
 	const isProfileComplete =
 		profile.ownerName.trim().length > 0 &&
 		profile.storeName.trim().length > 0;
@@ -110,12 +92,10 @@ export default function OnboardingPage() {
 		advance(next(step));
 	};
 	const handleSkip = () => {
-		// Skip tour can never bypass the profile gate.
 		if (!isProfileComplete) return;
 		advance(skipToReady());
 	};
 	const handleJump = (target: number) => {
-		// Until names are filled, only the profile dot is reachable.
 		const effectiveMax = isProfileComplete ? maxIndex : PROFILE_INDEX;
 		setStep(jumpTo(target, effectiveMax));
 	};
@@ -133,13 +113,6 @@ export default function OnboardingPage() {
 
 	return (
 		<SafeAreaView className="flex-1 bg-background">
-			{/*
-			 * Route-scoped StatusBar — overrides the cinnamon default from
-			 * `_layout.tsx` while onboarding is mounted, so the system bar
-			 * matches the off-white paper background (`background` / paper-200,
-			 * #F7F6F2) and reads dark glyphs (`style="dark"`) instead of
-			 * the inverted light glyphs used on dark surfaces elsewhere.
-			 */}
 			<StatusBar style="dark" backgroundColor="#F7F6F2" />
 			<View className="px-6 pt-4">
 				<View className="flex-row justify-between items-center">

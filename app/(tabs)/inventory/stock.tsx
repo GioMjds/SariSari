@@ -10,14 +10,14 @@ import {
   type StockFilter,
 } from '@/components/inventory/stock';
 import { InventoryErrorState } from '@/components/inventory';
-import { useRestockSignal } from '@/stores';
+import { useStockSheetSignal } from '@/stores';
 
 export default function StockScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: StockFilter; q?: string }>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
   const { getAllProductsQuery } = useProducts();
-  const restock = useRestockSignal();
+  const signal = useStockSheetSignal();
 
   const filter: StockFilter = useMemo(() => {
     const fromParams = params.filter;
@@ -76,8 +76,8 @@ export default function StockScreen() {
     [router],
   );
   const handleRestock = useCallback(
-    (id: number) => restock.requestRestock(id),
-    [restock],
+    (id: number) => signal.requestRestock(id),
+    [signal],
   );
 
   if (getAllProductsQuery.isLoading) return <StockSkeleton />;

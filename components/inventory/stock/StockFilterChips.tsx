@@ -29,7 +29,8 @@ export function StockFilterChips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerClassName="px-4 py-2 gap-2"
+      contentContainerClassName="px-4 py-2 gap-2 items-stretch"
+      style={{ flexGrow: 0, minHeight: 44 }}
     >
       {OPTIONS.map((opt) => {
         const isActive = opt.key === value;
@@ -39,7 +40,7 @@ export function StockFilterChips({
             onPress={() => onChange(opt.key)}
             accessibilityRole="button"
             accessibilityLabel={`${opt.label} filter`}
-            className={`px-3 py-2 rounded-pill border min-h-[36px] ${
+            className={`px-3 py-2 rounded-pill border min-h-[36px] justify-center ${
               isActive
                 ? 'bg-cinnamon-500 border-cinnamon-500'
                 : 'bg-paper-50 border-paper-300'

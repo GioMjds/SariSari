@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';

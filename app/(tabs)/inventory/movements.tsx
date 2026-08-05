@@ -5,13 +5,13 @@ import { useGetInventoryTransactions } from '@/hooks/useInventory';
 import { LedgerList, LedgerToolbar, type LedgerTypeFilter } from '@/components/inventory/ledger';
 import { MovementEmptyState } from '@/components/inventory/movements';
 import { InventoryErrorState } from '@/components/inventory';
-import { useInventoryModalSignal } from '@/stores';
+import { useStockSheetSignal } from '@/stores';
 import type { InventoryEventType } from '@/types';
 
 export default function MovementsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ q?: string }>();
-  const signal = useInventoryModalSignal();
+  const signal = useStockSheetSignal();
 
   const searchQuery = (params.q ?? '').trim();
   const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
@@ -38,10 +38,10 @@ export default function MovementsScreen() {
   );
 
   const handleReceiveStock = useCallback(
-    () => signal.requestReceive(),
+    () => signal.requestRestock(null),
     [signal],
   );
-  const handleAdjustStock = useCallback(() => signal.requestAdjust(), [signal]);
+  const handleAdjustStock = useCallback(() => signal.requestAdjust(null), [signal]);
 
   if (txQuery.error) {
     return (

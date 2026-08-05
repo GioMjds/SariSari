@@ -125,6 +125,26 @@ const TabButton = memo(
 
 TabButton.displayName = 'TabButton';
 
+export function isPathFocused(targetHref: string, currentPathname: string): boolean {
+  const normalize = (p: string) => {
+    let clean = p.replace(/^\/\(tabs\)/, '');
+    if (!clean || clean === '/' || clean === '/index') {
+      return '/home';
+    }
+    if (!clean.startsWith('/')) {
+      clean = '/' + clean;
+    }
+    return clean;
+  };
+
+  const normCurrent = normalize(currentPathname);
+  const normTarget = normalize(targetHref);
+
+  return (
+    normCurrent === normTarget || normCurrent.startsWith(`${normTarget}/`)
+  );
+}
+
 export const StyledTab = memo(() => {
   const router = useRouter();
   const pathname = usePathname();
@@ -135,11 +155,6 @@ export const StyledTab = memo(() => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
-
-  const pathnameRef = useRef(pathname);
-  useEffect(() => {
-    pathnameRef.current = pathname;
-  }, [pathname]);
 
   const activeLayout = useSharedValue<TabLayout>({
     x: 0,
@@ -192,16 +207,10 @@ export const StyledTab = memo(() => {
 
   const visibleRoutes = useMemo<Tab[]>(() => getTabs(t).slice(0, 5), [t]);
 
-  const isRouteFocused = useCallback((hrefString: string) => {
-    const currentPath = pathnameRef.current;
-    return hrefString === '/' || hrefString === '/home'
-      ? currentPath === '/' ||
-          currentPath === '' ||
-          currentPath === '/home' ||
-          currentPath.startsWith('/home/') ||
-          currentPath.startsWith('/(tabs)/home')
-      : currentPath === hrefString || currentPath.startsWith(`${hrefString}/`);
-  }, []);
+  const isRouteFocused = useCallback(
+    (hrefString: string) => isPathFocused(hrefString, pathname),
+    [pathname],
+  );
 
   const moveIndicatorTo = useCallback(
     (key: string) => {

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { initializeDatabases } from '@/configs';
 import { initI18n } from '@/lib/i18n';
 import { useFonts } from 'expo-font';
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
@@ -17,8 +17,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { consumeQueue, runStartupChecks, subscribeCounter } from '@/lib/backup';
 import { useSchedulerInputs } from '@/hooks/useBackup';
+import { safeNavigate } from '@/lib/navigation';
 import { CloudNewerBanner } from '@/components/settings/backup';
-import { BuildBadge } from '@/components/BuildBadge';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -116,7 +116,7 @@ export default function RootLayout() {
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
 
   const handleBannerRestore = useCallback(() => {
-    router.push('/settings');
+    safeNavigate.push('/settings');
   }, []);
 
   const handleBannerDismiss = useCallback(async () => {
@@ -156,19 +156,18 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
             <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
-              <BuildBadge />
-              {!bannerDismissed ? (
-                <CloudNewerBanner
-                  onRestorePress={handleBannerRestore}
-                  onDismiss={handleBannerDismiss}
-                />
-              ) : null}
               <Stack
                 screenOptions={{
                   headerShown: false,
                   contentStyle: { backgroundColor: '#F7F6F2' },
                 }}
               />
+              {fontsLoaded && i18nReady && !bannerDismissed ? (
+                <CloudNewerBanner
+                  onRestorePress={handleBannerRestore}
+                  onDismiss={handleBannerDismiss}
+                />
+              ) : null}
             </View>
             <Toast />
             <GlobalModal />

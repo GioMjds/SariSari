@@ -12,14 +12,14 @@ import { formatCurrency } from '@/utils';
 export interface DashboardKPIGridProps {
   totalSales: number;
   transactionCount: number;
-  profitMargin: number;
+  profitMargin: number | null;
   cashSessionStatus?: 'Open' | 'Closed';
   startingFloat?: number;
   lowStockCount: number;
   totalCredits: number;
   creditCustomersCount?: number;
   onDetailsPress?: () => void;
-  onKpiPress?: (target: 'reports' | 'cash' | 'inventory' | 'utang') => void;
+  onKpiPress?: (target: 'reports' | 'cash' | 'inventory' | 'customers') => void;
 }
 
 type KPIItem = {
@@ -28,7 +28,7 @@ type KPIItem = {
   subtitle: string;
   icon: string;
   topBorder: string;
-  target: 'reports' | 'cash' | 'inventory' | 'utang';
+  target: 'reports' | 'cash' | 'inventory' | 'customers';
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -53,7 +53,7 @@ export function DashboardKPIGrid({
   const kpis = [
     {
       title: 'EST. PROFIT',
-      value: formatCurrency(profitMargin),
+      value: profitMargin === null ? '-' : formatCurrency(profitMargin),
       subtitle: 'Net income',
       icon: 'chart-line',
       topBorder: 'border-t-[3px] border-cinnamon-500',
@@ -81,63 +81,12 @@ export function DashboardKPIGrid({
       subtitle: `${creditCustomersCount} customers`,
       icon: 'user-clock',
       topBorder: 'border-t-[3px] border-rose-600',
-      target: 'utang',
+      target: 'customers',
     },
   ] satisfies KPIItem[];
 
   return (
     <View className="mb-6">
-      {/* Hero Total Sales Block */}
-      <View className="px-4 mb-5">
-        <StyledText
-          variant="extrabold"
-          className="text-ink-500 text-xs tracking-wider uppercase"
-        >
-          TOTAL SALES TODAY
-        </StyledText>
-        <View className="flex-row items-baseline gap-3 mt-1.5">
-          <StyledText
-            variant="extrabold"
-            className="text-ink-900 text-hero"
-          >
-            {formatCurrency(totalSales)}
-          </StyledText>
-        </View>
-        <View className="flex-row items-center gap-2 mt-2">
-          <StyledText variant="regular" className="text-ink-500 text-xs">
-            {transactionCount} transactions today
-          </StyledText>
-          <View className="bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
-            <StyledText
-              variant="extrabold"
-              className="text-emerald-800 text-[11px]"
-            >
-              RECORDED
-            </StyledText>
-          </View>
-        </View>
-      </View>
-
-      {/* KPIS Section Header */}
-      <View className="px-4 flex-row items-center justify-between mb-3">
-        <StyledText
-          variant="extrabold"
-          className="text-ink-500 text-xs tracking-wider uppercase"
-        >
-          STORE SUMMARY
-        </StyledText>
-        <Pressable
-          onPress={onDetailsPress}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="View details report"
-        >
-          <StyledText variant="extrabold" className="text-cinnamon-600 text-xs">
-            Details &gt;
-          </StyledText>
-        </Pressable>
-      </View>
-
       {/* 2x2 KPI Cards Grid */}
       <View className="flex-row flex-wrap gap-3 px-4">
         {kpis.map((kpi, index) => {

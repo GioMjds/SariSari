@@ -1,7 +1,7 @@
 import React, { ComponentProps } from 'react';
 import { ScrollView, View } from 'react-native';
 import Skeleton from 'react-native-reanimated-skeleton';
-import { useTabBarBottomOffset } from '@/components/layout';
+import { useTabBarBottomOffset } from '@/components/layout/StyledTab';
 
 const BONE_COLOR = '#EAE6DF';
 const HIGHLIGHT_COLOR = '#FAFAF7';

@@ -58,7 +58,7 @@ export function SubTabControl<T extends string>({
               />
             ) : null}
             <StyledText
-              variant={isActive ? 'extrabold' : 'semibold'}
+              variant="extrabold"
               className={`text-xs uppercase tracking-wider ${
                 isActive ? 'text-ink-900' : 'text-ink-500'
               }`}

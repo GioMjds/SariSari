@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import {
   Href,
@@ -9,13 +9,9 @@ import {
 } from 'expo-router';
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
-import {
-  ReceiveStockModal,
-  AdjustStockModal,
-} from '@/components/inventory/modals/';
-import { BarcodeScannerModal } from '@/components/ui';
+import { useStockSheetSignal } from '@/stores';
 import type { InventorySubTab } from '@/constants/tabs';
-import { useRestockSignal, useInventoryModalSignal } from '@/stores';
+import { InventoryModalsHost } from './modals';
 
 const SUB_TAB_SEGMENTS = [
   'products',
@@ -24,46 +20,29 @@ const SUB_TAB_SEGMENTS = [
   'analytics',
 ] satisfies InventorySubTab[];
 
+function isInventorySubTab(segment: string): segment is InventorySubTab {
+  return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
+}
+
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
   const searchParams = useLocalSearchParams<{ q?: string }>();
   const search = searchParams.q ?? '';
-
-  const [receiveOpen, setReceiveOpen] = useState(false);
-  const [adjustOpen, setAdjustOpen] = useState(false);
+  const signal = useStockSheetSignal();
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  const restock = useRestockSignal();
-
-  const { adjustRequested, receiveRequested, clearAdjust, clearReceive } =
-    useInventoryModalSignal();
-
-  useEffect(() => {
-    if (adjustRequested) {
-      setAdjustOpen(true);
-      clearAdjust();
-    }
-  }, [adjustRequested, clearAdjust]);
-
-  useEffect(() => {
-    if (receiveRequested) {
-      setReceiveOpen(true);
-      clearReceive();
-    }
-  }, [receiveRequested, clearReceive]);
-
   const activeTab = useMemo<InventorySubTab>(() => {
-    const last = String(segments[segments.length - 1] ?? '') as InventorySubTab;
-    return SUB_TAB_SEGMENTS.includes(last) ? last : 'products';
+    const last = segments[segments.length - 1] ?? '';
+    return isInventorySubTab(last) ? last : 'products';
   }, [segments]);
 
-  const lastSegment = String(segments[segments.length - 1] ?? '');
+  const lastSegment = segments[segments.length - 1] ?? '';
   const isDetail =
     segments.length > 0 &&
     lastSegment !== '(tabs)' &&
     lastSegment !== 'inventory' &&
-    !SUB_TAB_SEGMENTS.includes(lastSegment as InventorySubTab);
+    !isInventorySubTab(lastSegment);
 
   const handleTabChange = useCallback(
     (t: InventorySubTab) => {
@@ -89,24 +68,6 @@ export default function InventoryLayout() {
   const openAddProduct = useCallback(() => {
     router.push('/(edit-forms)/add-product' as Href);
   }, [router]);
-
-  const handleScanResult = useCallback(
-    (barcode: string) => {
-      setScannerOpen(false);
-      if (!barcode) return;
-      router.push({
-        pathname: '/(edit-forms)/add-product',
-        params: { prefillBarcode: barcode },
-      } as Href);
-    },
-    [router],
-  );
-
-  useEffect(() => {
-    if (restock.restockProductId !== null) {
-      setReceiveOpen(true);
-    }
-  }, [restock.restockProductId]);
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -142,28 +103,16 @@ export default function InventoryLayout() {
       {!isDetail ? (
         <InventorySpeedDialFab
           onAddProduct={openAddProduct}
-          onReceiveStock={() => setReceiveOpen(true)}
-          onStockAdjustment={() => setAdjustOpen(true)}
+          onReceiveStock={() => signal.requestRestock(null)}
+          onMarkDamaged={() => signal.requestDamaged(null)}
+          onStockAdjustment={() => signal.requestAdjust(null)}
           onScanBarcode={() => setScannerOpen(true)}
         />
       ) : null}
 
-      <ReceiveStockModal
-        visible={receiveOpen}
-        onClose={() => {
-          setReceiveOpen(false);
-          restock.clearRestock();
-        }}
-      />
-      <AdjustStockModal
-        visible={adjustOpen}
-        onClose={() => setAdjustOpen(false)}
-      />
-      <BarcodeScannerModal
-        mode="single"
-        visible={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        onScan={handleScanResult}
+      <InventoryModalsHost
+        scannerOpen={scannerOpen}
+        onCloseScanner={() => setScannerOpen(false)}
       />
     </View>
   );

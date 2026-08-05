@@ -274,10 +274,6 @@ export function useProducts() {
     },
   });
 
-  // Mutation: Bulk delete — same image-cleanup + row deletion as
-  // `deleteProductMutation`, but suppresses the per-row success toast.
-  // The bulk handler in `app/(tabs)/inventory/products.tsx` posts a
-  // single aggregate toast after `Promise.all` resolves.
   const bulkDeleteProductsMutation = useMutation({
     mutationFn: async (id: number) => {
       const existingProduct = await getProduct(id);

@@ -5,14 +5,20 @@ import { useCreditKPIs, useCustomers } from './useCredits';
 import { useProducts } from './useProducts';
 import { useRecentSales, useSales } from './useSales';
 import { useProfile } from './useProfile';
-import { groupSalesByHour, HourlySalesGroup } from '@/utils';
+import { useReportKPIs } from './useReports';
+import {
+  groupSalesByHour,
+  HourlySalesGroup,
+  getDateRangeFromType,
+} from '@/utils';
 import { SaleWithItems } from '@/types/sales.types';
 import { formatPesos } from '@/lib/money';
+import { resolveHomeState } from '@/components/home/home-state';
 
 export interface DashboardStatsSummary {
   todaySalesTotal: number;
   transactionCount: number;
-  profitMargin: number;
+  profitMargin: number | null;
   lowStockCount: number;
   overdueCount: number;
   overdueAmount: number;
@@ -45,17 +51,45 @@ export function useHomeDashboardData() {
   const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
   const { data: products, isLoading: productsLoading } = getAllProductsQuery;
 
-  // Filter low stock and out of stock products
+  const todayRange = useMemo(() => getDateRangeFromType('today'), []);
+  const { data: todayKpisData, error: todayKpisError } =
+    useReportKPIs(todayRange);
+
+  const profitMargin = useMemo(() => {
+    return todayKpisData?.totalProfit ?? null;
+  }, [todayKpisData]);
+
+  const homeStateInput = useMemo(
+    () => ({
+      productQuantities: (products ?? []).map((p) => p.quantity ?? 0),
+      hasAnySales: (stats?.transaction_count ?? 0) > 0,
+      overdueCount: creditKpis?.overdueCount ?? 0,
+      cashSession: currentSession
+        ? {
+            status: (currentSession.status === 'closed'
+              ? 'closed'
+              : 'open') as 'open' | 'closed',
+            variance: currentSession.variance ?? null,
+          }
+        : null,
+      hour: new Date().getHours(),
+    }),
+    [products, stats, creditKpis, currentSession],
+  );
+
+  const { goal, suggestions } = useMemo(
+    () => resolveHomeState(homeStateInput),
+    [homeStateInput],
+  );
+
   const lowStockProducts = useMemo(() => {
     if (!products) return [];
     return products.filter((p) => p.quantity <= 5);
   }, [products]);
 
-  // Compute dynamic home alerts
   const alerts = useMemo<DynamicHomeAlert[]>(() => {
     const list: DynamicHomeAlert[] = [];
 
-    // Stock alerts
     lowStockProducts.forEach((p) => {
       list.push({
         id: `stock-${p.id}`,
@@ -78,13 +112,21 @@ export function useHomeDashboardData() {
           title: c.name,
           subtitle: `${formatPesos(c.outstanding_balance ?? 0)} overdue`,
           actionLabel: 'Collect',
-          targetPath: '/utang',
+          targetPath: '/(tabs)/customers/credit',
         });
       });
     }
 
     return list;
   }, [lowStockProducts, overdueCustomers]);
+
+  const isError = useMemo(
+    () =>
+      !!getTodayStatsQuery.error ||
+      !!getAllProductsQuery.error ||
+      !!todayKpisError,
+    [getTodayStatsQuery.error, getAllProductsQuery.error, todayKpisError],
+  );
 
   // Hourly sales timeline
   const hourlySales = useMemo<HourlySalesGroup[]>(() => {
@@ -102,10 +144,13 @@ export function useHomeDashboardData() {
   const topProduct = useMemo(() => {
     if (products && products.length > 0) {
       const sorted = [...products].sort((a, b) => b.quantity - a.quantity);
-      return {
-        name: sorted[0].name,
-        unitsSold: Math.max(sorted[0].quantity, 12),
-      };
+      const top = sorted[0];
+      if (top) {
+        return {
+          name: top.name,
+          unitsSold: Math.max(top.quantity, 12),
+        };
+      }
     }
     return { name: 'Palmolive 12ml', unitsSold: 18 };
   }, [products]);
@@ -120,6 +165,7 @@ export function useHomeDashboardData() {
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] }),
         queryClient.invalidateQueries({ queryKey: ['customers'] }),
         queryClient.invalidateQueries({ queryKey: ['cash'] }),
+        queryClient.invalidateQueries({ queryKey: ['report-kpis'] }),
       ]);
     } finally {
       setRefreshing(false);
@@ -132,7 +178,7 @@ export function useHomeDashboardData() {
     stats: {
       todaySalesTotal: stats?.total ?? 0,
       transactionCount: stats?.transaction_count ?? 0,
-      profitMargin: 912,
+      profitMargin,
       lowStockCount: lowStockProducts.length,
       overdueCount: creditKpis?.overdueCount ?? 0,
       overdueAmount: creditKpis?.totalOverdueAmount ?? 0,
@@ -143,6 +189,9 @@ export function useHomeDashboardData() {
     topProduct,
     alerts,
     alertCount: alerts.length,
+    goal,
+    suggestions,
+    isError,
     profile,
     currentSession,
     isLoading:

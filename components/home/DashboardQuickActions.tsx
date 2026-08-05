@@ -84,7 +84,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
             icon="credit-card"
             iconColor="#C8460F"
             iconBg="bg-persimmon-50"
-            badge={overdueCount > 0 ? overdueCount : undefined}
+            {...(overdueCount > 0 ? { badge: overdueCount } : {})}
             onPress={onOpenCredits}
             accessibilityLabel={
               overdueCount > 0
