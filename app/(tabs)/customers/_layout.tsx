@@ -73,7 +73,6 @@ export default function CustomersLayout() {
         </TopTabs>
 
         {!isDetailScreen && (
-          /* Floating Add Customer FAB */
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={handleAddCustomer}

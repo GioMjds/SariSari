@@ -98,17 +98,17 @@ export default function InventoryLayout() {
           <TopTabs.Screen name="movements" />
           <TopTabs.Screen name="analytics" />
         </TopTabs>
-      </View>
 
-      {!isDetail ? (
-        <InventorySpeedDialFab
-          onAddProduct={openAddProduct}
-          onReceiveStock={() => signal.requestRestock(null)}
-          onMarkDamaged={() => signal.requestDamaged(null)}
-          onStockAdjustment={() => signal.requestAdjust(null)}
-          onScanBarcode={() => setScannerOpen(true)}
-        />
-      ) : null}
+        {!isDetail ? (
+          <InventorySpeedDialFab
+            onAddProduct={openAddProduct}
+            onReceiveStock={() => signal.requestRestock(null)}
+            onMarkDamaged={() => signal.requestDamaged(null)}
+            onStockAdjustment={() => signal.requestAdjust(null)}
+            onScanBarcode={() => setScannerOpen(true)}
+          />
+        ) : null}
+      </View>
 
       <InventoryModalsHost
         scannerOpen={scannerOpen}

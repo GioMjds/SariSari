@@ -86,10 +86,10 @@ Per-row triple-dot menu actions:
 - Add `formProduct: Product | null` and `formType: InventoryEventType | null`.
 - `handleMenuAdjustStock(id)` → resolve the product from `items` via
   `items.find(p => p.id === id) ?? null`, set `formProduct` + `formType =
-  'adjustment'`, then `setMenuProduct(null)`.
+'adjustment'`, then `setMenuProduct(null)`.
 - `handleMenuMarkDamaged(id)` → same with `formType = 'damaged'`.
 - Render `<LogTransactionForm product={formProduct} initialType={formType}
-  visible={formProduct !== null && formType !== null} onClose={...} />`.
+visible={formProduct !== null && formType !== null} onClose={...} />`.
 - `handleMenuEdit`, `handleMenuViewLedger`, `handleMenuDelete` unchanged.
 
 Drop the now-unused `useStockSheetSignal` import. The triple-dot menu's
@@ -107,12 +107,13 @@ FAB actions:
 - `Receive Stock` → unchanged (`signal.requestRestock(null)` opens the
   existing `RestockSheet`).
 - Render `<LogTransactionForm initialType={fabForm.type}
-  visible={fabForm.visible} onClose={...} />` with no `product` — the
+visible={fabForm.visible} onClose={...} />` with no `product` — the
   in-sheet picker shows.
 
 ## Files touched
 
 **Modified**
+
 - `components/inventory/ledger/LogTransactionForm.tsx` — add `product?`
   and `initialType?` props, render picker when product missing, hide Type
   chooser when `initialType` is set.
@@ -126,6 +127,7 @@ FAB actions:
   for the deleted sheets.
 
 **Deleted**
+
 - `components/inventory/modals/AdjustStockSheet.tsx`
 - `components/inventory/modals/MarkDamagedSheet.tsx`
 - `app/(tabs)/inventory/modals.tsx` (already deleted in working tree —
@@ -162,7 +164,7 @@ the screens.
 - New unit test: `<LogTransactionForm product={null} visible />` renders
   the in-sheet picker without crashing.
 - New unit test: `<LogTransactionForm product={fixture}
-  initialType='damaged' visible />` does NOT render the Type chooser.
+initialType='damaged' visible />` does NOT render the Type chooser.
 - Existing tests that reference `AdjustStockSheet` /
   `MarkDamagedSheet` / `useStockSheetSignal.requestAdjust` /
   `requestDamaged` from the products screen are deleted.

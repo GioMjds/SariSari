@@ -26,6 +26,7 @@
 ## File map
 
 **Modified**
+
 - `components/inventory/ledger/LogTransactionForm.tsx` — accept optional `product?` and `initialType?`, render `ProductPicker` when product missing, hide Type chooser when `initialType` set.
 - `components/inventory/ledger/useLogTransactionForm.ts` — accept `initialType` option, seed `type` from it on reset.
 - `app/(tabs)/inventory/products.tsx` — wire per-row menu to `LogTransactionForm` with locked product + type. Remove `useStockSheetSignal` import.
@@ -33,10 +34,12 @@
 - `components/inventory/modals/index.ts` — drop the two `export *` lines for the deleted sheets.
 
 **Deleted**
+
 - `components/inventory/modals/AdjustStockSheet.tsx`
 - `components/inventory/modals/MarkDamagedSheet.tsx`
 
 **Test files created**
+
 - `components/inventory/ledger/__tests__/LogTransactionForm.test.tsx` — covers the two new behaviors (picker when product=null, no chooser when initialType set).
 - `app/(tabs)/inventory/__tests__/products.test.tsx` — covers the per-row menu → `LogTransactionForm` wiring (mock the action menu, assert the form is rendered with the right props).
 
@@ -45,10 +48,12 @@
 ## Task 1: Add `initialType` option to `useLogTransactionForm` and verify reset behavior
 
 **Files:**
+
 - Modify: `components/inventory/ledger/useLogTransactionForm.ts:8-93`
 - Test: `components/inventory/ledger/__tests__/useLogTransactionForm.test.ts` (new)
 
 **Interfaces:**
+
 - Consumes: `Product` (existing), `UseLogTransactionFormOptions` (existing shape).
 - Produces: `UseLogTransactionFormOptions.initialType?: InventoryEventType`. Default `initialType` is `'restock'` and `reset()` seeds `type` from it.
 
@@ -97,9 +102,11 @@ describe('useLogTransactionForm initialType', () => {
 
   it('seeds type from initialType on mount', () => {
     const { result } = renderHook(
-      ({ initialType }) =>
-        useLogTransactionForm(fixture, { initialType }),
-      { wrapper: createWrapper(), initialProps: { initialType: 'damaged' as const } },
+      ({ initialType }) => useLogTransactionForm(fixture, { initialType }),
+      {
+        wrapper: createWrapper(),
+        initialProps: { initialType: 'damaged' as const },
+      },
     );
     expect(result.current.type).toBe('damaged');
   });
@@ -188,10 +195,12 @@ git commit -m "feat(ledger): add initialType option to useLogTransactionForm"
 ## Task 2: Make `product` optional in `LogTransactionForm` and render in-sheet picker when missing
 
 **Files:**
+
 - Modify: `components/inventory/ledger/LogTransactionForm.tsx:20-32`
 - Test: `components/inventory/ledger/__tests__/LogTransactionForm.test.tsx` (new)
 
 **Interfaces:**
+
 - Consumes: `useProducts` (existing).
 - Produces: `LogTransactionFormProps.product?: Product | null`.
 
@@ -223,7 +232,9 @@ describe('LogTransactionForm product picker', () => {
   });
 
   it('renders ProductPicker search input when product is null', () => {
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const qc = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     const { getByLabelText } = render(
       <QueryClientProvider client={qc}>
         <LogTransactionForm product={null} visible onClose={() => {}} />
@@ -269,22 +280,24 @@ const products = productsQuery.data ?? [];
 3. Conditionally render the picker above the product context card:
 
 ```tsx
-{effectiveProduct ? (
-  <View className="bg-paper-100 border border-ink-100 rounded-xl p-4 mb-4">
-    {/* existing product context block (uses effectiveProduct instead of product) */}
-  </View>
-) : (
-  <View className="mb-4">
-    <ProductPicker
-      products={products}
-      selectedId={null}
-      onSelect={(id) => {
-        const p = products.find((x) => x.id === id) ?? null;
-        setPickedProduct(p);
-      }}
-    />
-  </View>
-)}
+{
+  effectiveProduct ? (
+    <View className="bg-paper-100 border border-ink-100 rounded-xl p-4 mb-4">
+      {/* existing product context block (uses effectiveProduct instead of product) */}
+    </View>
+  ) : (
+    <View className="mb-4">
+      <ProductPicker
+        products={products}
+        selectedId={null}
+        onSelect={(id) => {
+          const p = products.find((x) => x.id === id) ?? null;
+          setPickedProduct(p);
+        }}
+      />
+    </View>
+  );
+}
 ```
 
 4. To power the picker, the component already imports `useProducts` is **not** there yet. Add it:
@@ -319,8 +332,17 @@ function LogTransactionFormInner({
   visible,
   onClose,
   onSuccess,
-}: { product: Product; initialType?: InventoryEventType; visible: boolean; onClose: () => void; onSuccess?: () => void }) {
-  const form = useLogTransactionForm(product, { onSuccessCallback: onSuccess, initialType });
+}: {
+  product: Product;
+  initialType?: InventoryEventType;
+  visible: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}) {
+  const form = useLogTransactionForm(product, {
+    onSuccessCallback: onSuccess,
+    initialType,
+  });
   // ... entire existing body, with `product` referencing the locked product
 }
 
@@ -330,10 +352,18 @@ export function LogTransactionForm({
   visible,
   onClose,
   onSuccess,
-}: { product?: Product | null; initialType?: InventoryEventType; visible: boolean; onClose: () => void; onSuccess?: () => void }) {
+}: {
+  product?: Product | null;
+  initialType?: InventoryEventType;
+  visible: boolean;
+  onClose: () => void;
+  onSuccess?: () => void;
+}) {
   const { getAllProductsQuery } = useProducts();
   const products = (getAllProductsQuery.data as Product[]) ?? [];
-  const [pickedProduct, setPickedProduct] = React.useState<Product | null>(null);
+  const [pickedProduct, setPickedProduct] = React.useState<Product | null>(
+    null,
+  );
   const locked = product ?? pickedProduct;
   const showPicker = visible && !locked;
   const showForm = visible && !!locked;
@@ -341,12 +371,30 @@ export function LogTransactionForm({
   return (
     <>
       {showPicker ? (
-        <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={onClose}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            className="flex-1"
+          >
             <View className="flex-1 justify-end bg-black/50">
-              <TouchableOpacity className="flex-1" activeOpacity={1} onPress={onClose} />
-              <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100" style={{ maxHeight: '88%' }}>
-                <StyledText variant="extrabold" className="text-xl text-ink-900 mb-4">
+              <TouchableOpacity
+                className="flex-1"
+                activeOpacity={1}
+                onPress={onClose}
+              />
+              <View
+                className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100"
+                style={{ maxHeight: '88%' }}
+              >
+                <StyledText
+                  variant="extrabold"
+                  className="text-xl text-ink-900 mb-4"
+                >
                   {titleMap[initialType] ?? 'Log Transaction'}
                 </StyledText>
                 <ProductPicker
@@ -363,7 +411,9 @@ export function LogTransactionForm({
                   accessibilityRole="button"
                   accessibilityLabel="Cancel"
                 >
-                  <StyledText variant="medium" className="text-ink-600">Cancel</StyledText>
+                  <StyledText variant="medium" className="text-ink-600">
+                    Cancel
+                  </StyledText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -418,10 +468,12 @@ git commit -m "feat(ledger): LogTransactionForm accepts optional product (render
 ## Task 3: Suppress Type chooser in `LogTransactionForm` when `initialType` is set
 
 **Files:**
+
 - Modify: `components/inventory/ledger/LogTransactionForm.tsx` — the inner form body where the Type chooser / Direction toggle is rendered (around lines 155-288).
 - Test: extend `components/inventory/ledger/__tests__/LogTransactionForm.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `initialType?: InventoryEventType`, `form.type` (existing).
 - Produces: when `initialType` is `'restock'` or `'damaged'`, the in-sheet Type chooser is hidden and a static label replaces it. The Direction toggle for `adjustment` continues to render as today.
 
@@ -430,24 +482,24 @@ git commit -m "feat(ledger): LogTransactionForm accepts optional product (render
 Append to `LogTransactionForm.test.tsx`:
 
 ```tsx
-  it('does not render Type chooser when initialType is damaged', () => {
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const { queryByLabelText } = render(
-      <QueryClientProvider client={qc}>
-        <LogTransactionForm
-          product={fixture}
-          initialType="damaged"
-          visible
-          onClose={() => {}}
-        />
-      </QueryClientProvider>,
-    );
-    // The chooser renders buttons with accessibilityLabel `Select type ${label}`.
-    // When initialType is provided, none of them should render.
-    expect(queryByLabelText('Select type Restock')).toBeNull();
-    expect(queryByLabelText('Select type Damaged')).toBeNull();
-    expect(queryByLabelText('Select type Adjust')).toBeNull();
-  });
+it('does not render Type chooser when initialType is damaged', () => {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const { queryByLabelText } = render(
+    <QueryClientProvider client={qc}>
+      <LogTransactionForm
+        product={fixture}
+        initialType="damaged"
+        visible
+        onClose={() => {}}
+      />
+    </QueryClientProvider>,
+  );
+  // The chooser renders buttons with accessibilityLabel `Select type ${label}`.
+  // When initialType is provided, none of them should render.
+  expect(queryByLabelText('Select type Restock')).toBeNull();
+  expect(queryByLabelText('Select type Damaged')).toBeNull();
+  expect(queryByLabelText('Select type Adjust')).toBeNull();
+});
 ```
 
 Add `Product` to the imports in the test file:
@@ -479,27 +531,41 @@ Expected: FAIL (currently the chooser always renders for non-adjustment types).
 In the inner component body, where the chooser is rendered:
 
 ```tsx
-{form.type === 'adjustment' ? (
-  <View className="mb-4">{/* Direction toggle (unchanged) */}</View>
-) : initialType ? (
-  <View className="mb-4">
-    <StyledText variant="medium" className="text-ink-900 mb-2 text-xs uppercase" style={{ letterSpacing: 0.5 }}>
-      Type
-    </StyledText>
-    <View className="bg-paper-100 border border-ink-100 rounded-xl px-4 py-3 flex-row items-center gap-2">
-      <FontAwesome name={typeIconFor(initialType)} size={14} color="#7A7165" />
-      <StyledText variant="semibold" className="text-ink-700 text-sm">{typeLabelFor(initialType)}</StyledText>
+{
+  form.type === 'adjustment' ? (
+    <View className="mb-4">{/* Direction toggle (unchanged) */}</View>
+  ) : initialType ? (
+    <View className="mb-4">
+      <StyledText
+        variant="medium"
+        className="text-ink-900 mb-2 text-xs uppercase"
+        style={{ letterSpacing: 0.5 }}
+      >
+        Type
+      </StyledText>
+      <View className="bg-paper-100 border border-ink-100 rounded-xl px-4 py-3 flex-row items-center gap-2">
+        <FontAwesome
+          name={typeIconFor(initialType)}
+          size={14}
+          color="#7A7165"
+        />
+        <StyledText variant="semibold" className="text-ink-700 text-sm">
+          {typeLabelFor(initialType)}
+        </StyledText>
+      </View>
     </View>
-  </View>
-) : (
-  <View className="mb-4">{/* existing Type chooser (unchanged) */}</View>
-)}
+  ) : (
+    <View className="mb-4">{/* existing Type chooser (unchanged) */}</View>
+  );
+}
 ```
 
 Add the helper functions at the file top:
 
 ```ts
-function typeIconFor(t: InventoryEventType): React.ComponentProps<typeof FontAwesome>['name'] {
+function typeIconFor(
+  t: InventoryEventType,
+): React.ComponentProps<typeof FontAwesome>['name'] {
   if (t === 'restock') return 'plus';
   if (t === 'damaged') return 'exclamation-triangle';
   if (t === 'adjustment') return 'sliders';
@@ -536,10 +602,12 @@ git commit -m "feat(ledger): hide LogTransactionForm Type chooser when initialTy
 ## Task 4: Wire `products.tsx` per-row triple-dot menu to `LogTransactionForm`
 
 **Files:**
+
 - Modify: `app/(tabs)/inventory/products.tsx`
 - Test: `app/(tabs)/inventory/__tests__/products.test.tsx` (new)
 
 **Interfaces:**
+
 - Consumes: `ProductActionMenuModal.onAdjustStock` / `onMarkDamaged` callbacks (already receive `id: number`).
 - Produces: local state `{ formProduct: Product | null; formType: InventoryEventType | null }` and a `<LogTransactionForm>` rendered conditionally.
 
@@ -561,8 +629,16 @@ jest.mock('@/hooks/useProducts', () => ({
   useProducts: () => ({
     getAllProductsQuery: {
       data: [
-        { id: 1, name: 'Coke', sku: 'COKE1', barcode: null, price: 15, quantity: 10,
-          created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+        {
+          id: 1,
+          name: 'Coke',
+          sku: 'COKE1',
+          barcode: null,
+          price: 15,
+          quantity: 10,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
       ],
       isLoading: false,
       error: null,
@@ -573,12 +649,18 @@ jest.mock('@/hooks/useProducts', () => ({
 }));
 
 jest.mock('@/components/inventory/ledger', () => ({
-  LogTransactionForm: jest.fn(({ product, initialType, visible, onClose }: any) => {
-    if (!visible) return null;
-    const React = require('react');
-    const { View } = require('react-native');
-    return React.createElement(View, { testID: 'log-tx-form', 'data-product-id': product?.id, 'data-initial-type': initialType });
-  }),
+  LogTransactionForm: jest.fn(
+    ({ product, initialType, visible, onClose }: any) => {
+      if (!visible) return null;
+      const React = require('react');
+      const { View } = require('react-native');
+      return React.createElement(View, {
+        testID: 'log-tx-form',
+        'data-product-id': product?.id,
+        'data-initial-type': initialType,
+      });
+    },
+  ),
 }));
 
 const Wrapper = ({ children }: { children: React.ReactNode }) => {
@@ -597,7 +679,11 @@ beforeEach(async () => {
 
 describe('ProductsScreen triple-dot menu', () => {
   it('opens LogTransactionForm with initialType=adjustment when Adjust Stock is pressed', async () => {
-    const { findByLabelText, findByText } = render(<Wrapper><ProductsScreen /></Wrapper>);
+    const { findByLabelText, findByText } = render(
+      <Wrapper>
+        <ProductsScreen />
+      </Wrapper>,
+    );
     // Open the per-row action menu.
     const actionBtn = await findByLabelText('Open actions for Coke');
     fireEvent.press(actionBtn);
@@ -617,7 +703,11 @@ describe('ProductsScreen triple-dot menu', () => {
   });
 
   it('opens LogTransactionForm with initialType=damaged when Mark Damaged is pressed', async () => {
-    const { findByLabelText, findByText } = render(<Wrapper><ProductsScreen /></Wrapper>);
+    const { findByLabelText, findByText } = render(
+      <Wrapper>
+        <ProductsScreen />
+      </Wrapper>,
+    );
     fireEvent.press(await findByLabelText('Open actions for Coke'));
     fireEvent.press(await findByText('Mark Damaged'));
     await waitFor(() => {
@@ -729,9 +819,11 @@ git commit -m "feat(inventory): wire triple-dot menu to LogTransactionForm for d
 ## Task 5: Update `_layout.tsx` FAB to use `LogTransactionForm` for Mark Damaged and Stock Adjustment
 
 **Files:**
+
 - Modify: `app/(tabs)/inventory/_layout.tsx`
 
 **Interfaces:**
+
 - Consumes: `InventorySpeedDialFab` callbacks `onMarkDamaged`, `onStockAdjustment`.
 - Produces: local state `{ fabFormType: InventoryEventType; fabFormVisible: boolean }`, `<LogTransactionForm initialType=... visible=... onClose=... />` rendered below the FAB.
 
@@ -758,7 +850,10 @@ import { LogTransactionForm } from '@/components/inventory/ledger';
 3. Add state:
 
 ```ts
-const [fabForm, setFabForm] = useState<{ visible: boolean; type: InventoryEventType }>({
+const [fabForm, setFabForm] = useState<{
+  visible: boolean;
+  type: InventoryEventType;
+}>({
   visible: false,
   type: 'adjustment',
 });
@@ -767,15 +862,19 @@ const [fabForm, setFabForm] = useState<{ visible: boolean; type: InventoryEventT
 4. Replace the signal calls in the FAB prop with handlers that open the form:
 
 ```tsx
-{!isDetail ? (
-  <InventorySpeedDialFab
-    onAddProduct={openAddProduct}
-    onReceiveStock={() => signal.requestRestock(null)}
-    onMarkDamaged={() => setFabForm({ visible: true, type: 'damaged' })}
-    onStockAdjustment={() => setFabForm({ visible: true, type: 'adjustment' })}
-    onScanBarcode={() => {}}
-  />
-) : null}
+{
+  !isDetail ? (
+    <InventorySpeedDialFab
+      onAddProduct={openAddProduct}
+      onReceiveStock={() => signal.requestRestock(null)}
+      onMarkDamaged={() => setFabForm({ visible: true, type: 'damaged' })}
+      onStockAdjustment={() =>
+        setFabForm({ visible: true, type: 'adjustment' })
+      }
+      onScanBarcode={() => {}}
+    />
+  ) : null;
+}
 ```
 
 5. Render the form below the FAB. Place it inside the outer `<View className="flex-1 bg-paper-200 relative">` so it stacks above other overlays.
@@ -812,6 +911,7 @@ git commit -m "feat(inventory): FAB Mark Damaged and Stock Adjustment now use Lo
 ## Task 6: Delete the broken stock sheets and update the barrel
 
 **Files:**
+
 - Delete: `components/inventory/modals/AdjustStockSheet.tsx`
 - Delete: `components/inventory/modals/MarkDamagedSheet.tsx`
 - Modify: `components/inventory/modals/index.ts`
