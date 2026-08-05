@@ -133,7 +133,11 @@ export const insertProduct = async (
 
   try {
     await db.withTransactionAsync(async () => {
-      await checkProductCollision(sku, normalizedBarcode, normalizedWholesaleBarcode);
+      await checkProductCollision(
+        sku,
+        normalizedBarcode,
+        normalizedWholesaleBarcode,
+      );
 
       const result = await db.runAsync(
         `INSERT INTO products (
@@ -163,7 +167,13 @@ export const insertProduct = async (
       if (quantity > 0) {
         await db.runAsync(
           'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
-          [productId, 'restock', quantity, cost_price ?? null, supplier_id ?? null],
+          [
+            productId,
+            'restock',
+            quantity,
+            cost_price ?? null,
+            supplier_id ?? null,
+          ],
         );
       }
 
@@ -180,7 +190,10 @@ export const insertProduct = async (
         } catch (catalogErr) {
           // Catalog writes are non-fatal per spec: a failure must not prevent
           // saving the store product or inventory transaction.
-          console.warn('Failed to write catalog record during product save; continuing.', catalogErr);
+          console.warn(
+            'Failed to write catalog record during product save; continuing.',
+            catalogErr,
+          );
         }
       }
     });
@@ -223,7 +236,12 @@ export const updateProduct = async (
 
   try {
     await db.withTransactionAsync(async () => {
-      await checkProductCollision(sku, normalizedBarcode, normalizedWholesaleBarcode, id);
+      await checkProductCollision(
+        sku,
+        normalizedBarcode,
+        normalizedWholesaleBarcode,
+        id,
+      );
 
       const current = await db.getFirstAsync<{ quantity: number }>(
         'SELECT quantity FROM products WHERE id = ?',
@@ -275,7 +293,10 @@ export const updateProduct = async (
         } catch (catalogErr) {
           // Catalog writes are non-fatal per spec: a failure must not prevent
           // saving the store product or inventory transaction.
-          console.warn('Failed to write catalog record during product update; continuing.', catalogErr);
+          console.warn(
+            'Failed to write catalog record during product update; continuing.',
+            catalogErr,
+          );
         }
       }
     });
@@ -295,18 +316,104 @@ export const updateProduct = async (
   }
 };
 
+export type ProductFilterType =
+  | 'all'
+  | 'in_stock'
+  | 'low'
+  | 'out'
+  | 'new'
+  | 'critical'
+  | 'overstock'
+  | 'near_expiry';
+
+export interface ProductsPageCursor {
+  name: string;
+  id: number;
+}
+
+export interface ProductsPage {
+  items: Product[];
+  nextCursor: ProductsPageCursor | null;
+}
+
+export const getProductsPage = async (params: {
+  cursor: ProductsPageCursor | null;
+  limit: number;
+  search?: string;
+  filter?: ProductFilterType;
+}): Promise<ProductsPage> => {
+  const search = (params.search ?? '').trim();
+  const searchPattern = `%${search.toLowerCase()}%`;
+  const filter = params.filter ?? 'all';
+  const cursorName = params.cursor?.name ?? '';
+  const cursorId = params.cursor?.id ?? 0;
+  const limit = Math.max(1, Math.floor(params.limit));
+
+  let filterCondition = '1=1';
+  if (filter === 'in_stock') {
+    filterCondition = 'quantity > 0';
+  } else if (filter === 'low') {
+    filterCondition = 'quantity > 0 AND quantity <= 5';
+  } else if (filter === 'critical') {
+    filterCondition = 'quantity > 0 AND quantity <= 3';
+  } else if (filter === 'out') {
+    filterCondition = 'quantity = 0';
+  } else if (filter === 'overstock') {
+    filterCondition = 'quantity >= 100';
+  } else if (filter === 'new') {
+    filterCondition = "julianday('now') - julianday(created_at) <= 7";
+  } else if (filter === 'near_expiry') {
+    filterCondition = 'wholesale_unit_name IS NOT NULL';
+  }
+
+  const rows = await db.getAllAsync<Product>(
+    `SELECT * FROM products
+     WHERE (
+       ? = '' OR
+       (LOWER(name) > LOWER(?) OR (LOWER(name) = LOWER(?) AND id > ?))
+     )
+     AND (
+       ? = '' OR
+       LOWER(name) LIKE ? OR
+       LOWER(sku)  LIKE ? OR
+       LOWER(barcode) LIKE ? OR
+       LOWER(category) LIKE ?
+     )
+     AND (${filterCondition})
+     ORDER BY LOWER(name), id
+     LIMIT ?`,
+    [
+      cursorName,
+      cursorName,
+      cursorName,
+      cursorId,
+      search,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      limit,
+    ],
+  );
+
+  const nextCursor =
+    rows.length < limit
+      ? null
+      : (() => {
+          const last = rows[rows.length - 1];
+          // `noUncheckedIndexedAccess` makes `last` `Product | undefined`.
+          // `rows.length` is at least 1 here (limit >= 1, returned N rows).
+          if (!last) return null;
+          return { name: last.name, id: last.id } satisfies ProductsPageCursor;
+        })();
+
+  return { items: rows, nextCursor };
+};
+
 export const deleteProduct = async (id: number) => {
   await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
 };
 
-/**
- * Bulk-move helper used by `BulkMoveCategoryModal`. Skips the
- * barcode collision check and inventory-transaction side effect of
- * `updateProduct` so we can patch `category` on N selected rows in
- * parallel without rewriting every required column or flooding the
- * ledger with restock rows. Caller must invalidate
- * `productKeys.list()` once the batch resolves.
- */
 export const updateProductCategory = async (
   id: number,
   category: string | null,

@@ -8,15 +8,25 @@ import {
   insertProduct,
   updateProduct,
   updateProductCategory,
+  getProductsPage,
+  type ProductsPageCursor,
+  type ProductFilterType,
 } from '@/database/products';
 import { useToastStore } from '@/stores/ToastStore';
 import {
   InsertProductParams,
   UpdateProductParams,
 } from '@/types/products.types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import { saveProductImageLocal, deleteLocalProductImage } from '@/lib';
 import { catalogKeys } from './useCatalog';
+
+const PAGE_SIZE = 30;
 
 export const productKeys = {
   all: ['products'] as const,
@@ -25,6 +35,8 @@ export const productKeys = {
     [...productKeys.all, 'barcode', barcode] as const,
   sku: (sku: string) => [...productKeys.all, 'sku', sku] as const,
   detail: (id: number) => [...productKeys.all, 'detail', id] as const,
+  infinite: (search: string = '', filter: string = 'all') =>
+    [...productKeys.all, 'infinite', search, filter] as const,
 };
 
 export function useGetProduct(id: number) {
@@ -51,6 +63,20 @@ export function useFindProductByBarcode(barcode: string | null | undefined) {
         ? getProductByBarcode(barcode)
         : Promise.resolve(null),
     enabled: !!barcode && barcode.length > 0,
+    staleTime: 60_000,
+  });
+}
+
+export function usePaginatedProducts(
+  search: string = '',
+  filter: ProductFilterType = 'all',
+) {
+  return useInfiniteQuery({
+    queryKey: productKeys.infinite(search, filter),
+    initialPageParam: null as ProductsPageCursor | null,
+    queryFn: ({ pageParam }) =>
+      getProductsPage({ cursor: pageParam, limit: PAGE_SIZE, search, filter }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
     staleTime: 60_000,
   });
 }
