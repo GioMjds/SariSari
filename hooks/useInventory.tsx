@@ -2,6 +2,8 @@ import {
   getInventoryTransactions,
   getInventoryTransactionsByDateRange,
   getInventoryTransactionsByProductAndDateRange,
+  getInventoryTransactionsPage,
+  InventoryTransactionsPageCursor,
   insertInventoryTransaction,
 } from '@/database/inventory';
 import { useToastStore } from '@/stores/ToastStore';
@@ -9,7 +11,12 @@ import {
   InsertInventoryV2,
   InventoryTransaction,
 } from '@/types/inventory.types';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -126,3 +133,23 @@ export function useInventory() {
     insertInventoryMutation,
   };
 }
+
+export function usePaginatedInventoryTransactions(
+  search: string = '',
+  type: string = 'all',
+) {
+  return useInfiniteQuery({
+    queryKey: ['inventory_transactions', 'infinite', search, type],
+    initialPageParam: null as InventoryTransactionsPageCursor | null,
+    queryFn: ({ pageParam }) =>
+      getInventoryTransactionsPage({
+        cursor: pageParam,
+        limit: 30,
+        search,
+        type,
+      }),
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 30_000,
+  });
+}
+

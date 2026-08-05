@@ -2,13 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useCartStore, useToastStore } from '@/stores';
-import { useProducts, useSales, useBarcodeResolver, useCustomers } from '@/hooks';
+import {
+  usePaginatedProducts,
+  useSales,
+  useBarcodeResolver,
+  useCustomers,
+} from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
 import type { NewSaleItem } from '@/types';
 import type { ScanResolution } from '@/lib/barcodes/types';
 
-export function useCart() {
+export function useCart(search: string = '') {
   const {
     cartItems,
     paymentType,
@@ -21,7 +26,18 @@ export function useCart() {
     setCustomer,
   } = useCartStore();
 
-  const { getAllProductsQuery } = useProducts();
+  const productsQuery = usePaginatedProducts(search);
+  const products =
+    productsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const {
+    isLoading: isProductsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchProducts,
+    error: productsError,
+  } = productsQuery;
+
   const { data: customers = [] } = useCustomers();
   const { insertSaleMutation, getTodayStatsQuery } = useSales();
   const addToast = useToastStore((state) => state.addToast);
@@ -39,9 +55,6 @@ export function useCart() {
 
   const pendingScanRef = useRef<string | null>(null);
   const { resolve } = useBarcodeResolver();
-
-  const { data: products = [], isLoading: isProductsLoading } =
-    getAllProductsQuery;
 
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const total = cartItems.reduce(
@@ -140,17 +153,12 @@ export function useCart() {
   );
 
   useEffect(() => {
-    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
-      return;
+    if (!productsQuery.isSuccess || productsQuery.isFetching) return;
     const queued = pendingScanRef.current;
     if (!queued) return;
     pendingScanRef.current = null;
     void handleScannedBarcode(queued);
-  }, [
-    getAllProductsQuery.isSuccess,
-    getAllProductsQuery.isFetching,
-    handleScannedBarcode,
-  ]);
+  }, [productsQuery.isSuccess, productsQuery.isFetching, handleScannedBarcode]);
 
   const handlePressAddNewProduct = useCallback(() => {
     if (!pendingAddProductBarcode) return;
@@ -172,6 +180,13 @@ export function useCart() {
     }
 
     try {
+      const customerName =
+        typeof selectedCustomer === 'string'
+          ? selectedCustomer
+          : selectedCustomer?.name;
+      const customerCreditId =
+        typeof selectedCustomer === 'string' ? undefined : selectedCustomer?.id;
+
       await insertSaleMutation.mutateAsync({
         items: cartItems.map((item) => ({
           product_id: item.product_id,
@@ -180,14 +195,10 @@ export function useCart() {
           selected_unit: item.selected_unit,
         })),
         payment_type: paymentType,
-        customer_name:
-          typeof selectedCustomer === 'string'
-            ? selectedCustomer
-            : selectedCustomer?.name,
-        customer_credit_id:
-          typeof selectedCustomer === 'string'
-            ? undefined
-            : selectedCustomer?.id,
+        ...(customerName !== undefined ? { customer_name: customerName } : {}),
+        ...(customerCreditId !== undefined
+          ? { customer_credit_id: customerCreditId }
+          : {}),
       });
 
       clearCartStore();
@@ -203,7 +214,13 @@ export function useCart() {
       Alert.alert('Error', 'Failed to complete sale. Please try again.');
       return false;
     }
-  }, [cartItems, paymentType, selectedCustomer, insertSaleMutation, clearCartStore]);
+  }, [
+    cartItems,
+    paymentType,
+    selectedCustomer,
+    insertSaleMutation,
+    clearCartStore,
+  ]);
 
   const getCartLine = useCallback(
     (productId: number): NewSaleItem | undefined =>
@@ -217,6 +234,13 @@ export function useCart() {
     customers,
     isProductsLoading,
     todayStats: getTodayStatsQuery.data,
+
+    // Pagination
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetchProducts,
+    productsError,
 
     // Cart state (from store)
     cartItems,

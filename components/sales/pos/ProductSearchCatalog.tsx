@@ -28,6 +28,10 @@ interface ProductSearchCatalogProps {
   pendingAddProductBarcode?: string | null;
   onPressAddNewProduct?: () => void;
   onDismissPendingAddProduct?: () => void;
+  isFetchingNextPage?: boolean;
+  hasNextPage?: boolean;
+  onEndReached?: () => void;
+  onRetryFetchNext?: () => void;
 }
 
 export function ProductSearchCatalog({
@@ -42,6 +46,10 @@ export function ProductSearchCatalog({
   pendingAddProductBarcode,
   onPressAddNewProduct,
   onDismissPendingAddProduct,
+  isFetchingNextPage = false,
+  hasNextPage = false,
+  onEndReached,
+  onRetryFetchNext,
 }: ProductSearchCatalogProps) {
   return (
     <View className="flex-1">
@@ -142,16 +150,22 @@ export function ProductSearchCatalog({
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          contentContainerStyle={{ paddingBottom: 82 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onEndReached={() => {
+            if (!isFetchingNextPage && hasNextPage && onEndReached) {
+              onEndReached();
+            }
+          }}
+          onEndReachedThreshold={0.4}
           renderItem={({ item }) => (
             <ProductRow
               product={item}
               cartLine={getCartLine(item.id)}
               onAdd={onAdd}
               onUpdateQuantity={onUpdateQuantity}
-              onToggleUnit={onToggleUnit}
+              {...(onToggleUnit ? { onToggleUnit } : {})}
             />
           )}
           ListEmptyComponent={
@@ -169,6 +183,25 @@ export function ProductSearchCatalog({
                 No products found
               </StyledText>
             </View>
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View className="items-center py-4">
+                <ActivityIndicator size="small" color="#623418" />
+                <StyledText
+                  variant="medium"
+                  className="text-ink-500 text-xs mt-2"
+                >
+                  Loading more...
+                </StyledText>
+              </View>
+            ) : !hasNextPage && filteredProducts.length > 0 ? (
+              <View className="items-center py-4">
+                <StyledText variant="medium" className="text-ink-500 text-xs">
+                  End of list
+                </StyledText>
+              </View>
+            ) : null
           }
         />
       )}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { useForm } from 'react-hook-form';
 import {
@@ -15,7 +15,6 @@ interface SearchFormData {
 }
 
 export default function POSScreen() {
-  const cart = useCart();
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -24,21 +23,13 @@ export default function POSScreen() {
   });
 
   const search = watch('search') || '';
-
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return cart.products;
-    return cart.products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
-    );
-  }, [cart.products, search]);
+  const cart = useCart(search);
 
   return (
     <View className="flex-1 bg-paper-200">
       <ProductSearchCatalog
         control={control}
-        filteredProducts={filteredProducts}
+        filteredProducts={cart.products}
         isLoading={cart.isProductsLoading}
         getCartLine={cart.getCartLine}
         onAdd={cart.addItem}
@@ -53,6 +44,14 @@ export default function POSScreen() {
         pendingAddProductBarcode={cart.pendingAddProductBarcode}
         onPressAddNewProduct={cart.handlePressAddNewProduct}
         onDismissPendingAddProduct={cart.dismissPendingAddProduct}
+        isFetchingNextPage={cart.isFetchingNextPage}
+        hasNextPage={cart.hasNextPage}
+        onEndReached={() => {
+          if (!cart.isFetchingNextPage && cart.hasNextPage) {
+            cart.fetchNextPage();
+          }
+        }}
+        onRetryFetchNext={() => cart.fetchNextPage()}
       />
 
       {/* Floating Checkout Button */}
@@ -94,4 +93,3 @@ export default function POSScreen() {
     </View>
   );
 }
-

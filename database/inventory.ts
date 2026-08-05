@@ -119,3 +119,75 @@ export const getInventoryTransactionsByProductAndDateRange = async (
     [product_id, startDate, endDate],
   );
 };
+
+export interface InventoryTransactionsPageCursor {
+  timestamp: string;
+  id: number;
+}
+
+export interface InventoryTransactionsPage {
+  items: InventoryTransaction[];
+  nextCursor: InventoryTransactionsPageCursor | null;
+}
+
+export const getInventoryTransactionsPage = async (params: {
+  cursor: InventoryTransactionsPageCursor | null;
+  limit: number;
+  search?: string;
+  type?: string;
+}): Promise<InventoryTransactionsPage> => {
+  const search = (params.search ?? '').trim();
+  const searchPattern = `%${search.toLowerCase()}%`;
+  const type = (params.type ?? 'all').trim();
+  const cursorTimestamp = params.cursor?.timestamp ?? '';
+  const cursorId = params.cursor?.id ?? 0;
+  const limit = Math.max(1, Math.floor(params.limit));
+
+  const rows = await db.getAllAsync<InventoryTransaction>(
+    `SELECT t.* FROM inventory_transactions t
+     LEFT JOIN products p ON t.product_id = p.id
+     WHERE (
+       ? = '' OR
+       (t.timestamp < ? OR (t.timestamp = ? AND t.id < ?))
+     )
+     AND (
+       ? = 'all' OR t.type = ?
+     )
+     AND (
+       ? = '' OR
+       LOWER(t.type) LIKE ? OR
+       LOWER(COALESCE(p.name, '')) LIKE ? OR
+       LOWER(COALESCE(p.sku, '')) LIKE ?
+     )
+     ORDER BY t.timestamp DESC, t.id DESC
+     LIMIT ?`,
+    [
+      cursorTimestamp,
+      cursorTimestamp,
+      cursorTimestamp,
+      cursorId,
+      type,
+      type,
+      search,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      limit,
+    ],
+  );
+
+  const nextCursor =
+    rows.length < limit
+      ? null
+      : (() => {
+          const last = rows[rows.length - 1];
+          if (!last || last.timestamp === undefined || last.id === undefined) return null;
+          return {
+            timestamp: String(last.timestamp),
+            id: Number(last.id),
+          } satisfies InventoryTransactionsPageCursor;
+        })();
+
+  return { items: rows, nextCursor };
+};
+

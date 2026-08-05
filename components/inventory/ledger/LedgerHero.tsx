@@ -1,5 +1,5 @@
 import { useMemo, memo } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
@@ -11,21 +11,11 @@ import { MovementChip } from './MovementChip';
 interface LedgerHeroProps {
   product: Product;
   transactions: InventoryTransaction[];
-  onLogTransaction: () => void;
 }
 
-/**
- * LedgerHero — the receipt-style hero card that anchors the inventory
- * ledger screen.
- *
- * Pure presentation. Sums are derived in a `useMemo` so a refetch
- * doesn't re-allocate. Mirrors the `CustomerHeroCard` pattern from
- * `components/utang/credit-details/`.
- */
 export const LedgerHero = memo(function LedgerHero({
   product,
   transactions,
-  onLogTransaction,
 }: LedgerHeroProps) {
   const { restocked, sold, damaged } = useMemo(() => {
     let restocked = 0;
@@ -132,24 +122,6 @@ export const LedgerHero = memo(function LedgerHero({
               icon="exclamation-triangle"
             />
           </View>
-        </View>
-
-        {/* Quick-action footer */}
-        <View className="border-t border-dashed border-ink-200 px-5 py-4">
-          <Pressable
-            onPress={onLogTransaction}
-            accessibilityRole="button"
-            accessibilityLabel="Log a new transaction"
-            className="press-scale bg-persimmon-500 rounded-xl py-3 flex-row items-center justify-center shadow-persimmon-glow"
-          >
-            <FontAwesome name="plus" size={14} color="#FBF7EE" />
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-sm ml-2"
-            >
-              Log Transaction
-            </StyledText>
-          </Pressable>
         </View>
       </ReceiptHero>
     </MotiView>

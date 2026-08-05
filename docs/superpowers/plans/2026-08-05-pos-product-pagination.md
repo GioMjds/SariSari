@@ -52,6 +52,7 @@
 
 - Consumes: `Product` from `@/types/products.types`, `db` from `@/configs/sqlite`.
 - Produces:
+
   ```ts
   export interface ProductsPageCursor {
     name: string;
@@ -138,7 +139,8 @@ describe('getProductsPage', () => {
     // ids 1..50 in order, then 51, 52
     expect(allIds).toEqual([
       ...Array.from({ length: 50 }, (_, i) => i + 1),
-      51, 52,
+      51,
+      52,
     ]);
   });
 
@@ -166,7 +168,11 @@ describe('getProductsPage', () => {
     const { getProductsPage } = await import('@/database/products');
     await seedFifty();
 
-    const page1 = await getProductsPage({ cursor: null, limit: 30, search: '' });
+    const page1 = await getProductsPage({
+      cursor: null,
+      limit: 30,
+      search: '',
+    });
     expect(page1.items).toHaveLength(30);
     expect(page1.nextCursor).not.toBeNull();
   });
@@ -231,8 +237,13 @@ export const getProductsPage = async (params: {
      ORDER BY LOWER(name), id
      LIMIT ?`,
     [
-      cursorName, cursorName, cursorName, cursorId,
-      search, searchPattern, searchPattern,
+      cursorName,
+      cursorName,
+      cursorName,
+      cursorId,
+      search,
+      searchPattern,
+      searchPattern,
       limit,
     ],
   );
@@ -279,6 +290,7 @@ git commit -m "feat(pos): add cursor-paginated getProductsPage DB function"
 
 - Consumes: `getProductsPage` from `@/database/products` (Task 1), `Product` from `@/types/products.types`.
 - Produces:
+
   ```ts
   export const productKeys = {
     // ...existing keys...
@@ -286,6 +298,7 @@ git commit -m "feat(pos): add cursor-paginated getProductsPage DB function"
   };
   export function usePaginatedProducts(search: string): UseInfiniteQueryResult<...>;
   ```
+
   The return shape is the standard `useInfiniteQuery` result so callers can read `data`, `isLoading`, `isFetchingNextPage`, `hasNextPage`, `fetchNextPage`, `error`.
 
 - [ ] **Step 1: Create the failing test**
@@ -320,8 +333,18 @@ describe('usePaginatedProducts', () => {
 
   it('resets page 1 when search changes', async () => {
     mockGetProductsPage.mockResolvedValueOnce({
-      items: [{ id: 1, name: 'Coke', sku: 'COKE1', price: 15, quantity: 5,
-                barcode: null, created_at: '', updated_at: '' }],
+      items: [
+        {
+          id: 1,
+          name: 'Coke',
+          sku: 'COKE1',
+          price: 15,
+          quantity: 5,
+          barcode: null,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
       nextCursor: { name: 'Coke', id: 1 },
     });
 
@@ -333,27 +356,48 @@ describe('usePaginatedProducts', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockGetProductsPage).toHaveBeenCalledWith({
-      cursor: null, limit: 30, search: '',
+      cursor: null,
+      limit: 30,
+      search: '',
     });
 
     mockGetProductsPage.mockResolvedValueOnce({
-      items: [], nextCursor: null,
+      items: [],
+      nextCursor: null,
     });
     rerender({ search: 'coke' });
 
     await waitFor(() => expect(mockGetProductsPage).toHaveBeenCalledTimes(2));
     expect(mockGetProductsPage).toHaveBeenLastCalledWith({
-      cursor: null, limit: 30, search: 'coke',
+      cursor: null,
+      limit: 30,
+      search: 'coke',
     });
   });
 
   it('getNextPageParam returns the last cursor', async () => {
     mockGetProductsPage.mockResolvedValueOnce({
       items: [
-        { id: 1, name: 'A', sku: 'A', price: 1, quantity: 1,
-          barcode: null, created_at: '', updated_at: '' },
-        { id: 2, name: 'B', sku: 'B', price: 1, quantity: 1,
-          barcode: null, created_at: '', updated_at: '' },
+        {
+          id: 1,
+          name: 'A',
+          sku: 'A',
+          price: 1,
+          quantity: 1,
+          barcode: null,
+          created_at: '',
+          updated_at: '',
+        },
+        {
+          id: 2,
+          name: 'B',
+          sku: 'B',
+          price: 1,
+          quantity: 1,
+          barcode: null,
+          created_at: '',
+          updated_at: '',
+        },
       ],
       nextCursor: { name: 'B', id: 2 },
     });
@@ -370,7 +414,9 @@ describe('usePaginatedProducts', () => {
 
     await waitFor(() => expect(mockGetProductsPage).toHaveBeenCalledTimes(2));
     expect(mockGetProductsPage).toHaveBeenLastCalledWith({
-      cursor: { name: 'B', id: 2 }, limit: 30, search: '',
+      cursor: { name: 'B', id: 2 },
+      limit: 30,
+      search: '',
     });
   });
 });
@@ -386,7 +432,12 @@ Expected: FAIL — `usePaginatedProducts` is not exported from `@/hooks/useProdu
 Append to `hooks/useProducts.tsx`. First, ensure the imports are present at the top — update the existing import block to add `useInfiniteQuery` (TanStack Query v5 re-exports it from `@tanstack/react-query`):
 
 ```ts
-import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 ```
 
 Add `getProductsPage` to the existing `@/database/products` import:
@@ -513,8 +564,14 @@ describe('ProductSearchCatalog pagination footer', () => {
         control={control}
         filteredProducts={[
           {
-            id: 1, name: 'Coke', sku: 'COKE1', price: 15, quantity: 5,
-            barcode: null, created_at: '', updated_at: '',
+            id: 1,
+            name: 'Coke',
+            sku: 'COKE1',
+            price: 15,
+            quantity: 5,
+            barcode: null,
+            created_at: '',
+            updated_at: '',
           },
         ]}
         isLoading={false}
@@ -537,8 +594,14 @@ describe('ProductSearchCatalog pagination footer', () => {
         control={control}
         filteredProducts={[
           {
-            id: 1, name: 'Coke', sku: 'COKE1', price: 15, quantity: 5,
-            barcode: null, created_at: '', updated_at: '',
+            id: 1,
+            name: 'Coke',
+            sku: 'COKE1',
+            price: 15,
+            quantity: 5,
+            barcode: null,
+            created_at: '',
+            updated_at: '',
           },
         ]}
         isLoading={false}
@@ -620,66 +683,57 @@ export function ProductSearchCatalog({
 (c) Add a `ListFooterComponent` to the FlatList. Replace the existing `<FlatList ... />` (currently around lines 142–173) with:
 
 ```tsx
-        <FlatList
-          data={filteredProducts}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 82 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          onEndReached={() => {
-            if (!isFetchingNextPage && hasNextPage && onEndReached) {
-              onEndReached();
-            }
-          }}
-          onEndReachedThreshold={0.4}
-          renderItem={({ item }) => (
-            <ProductRow
-              product={item}
-              cartLine={getCartLine(item.id)}
-              onAdd={onAdd}
-              onUpdateQuantity={onUpdateQuantity}
-              {...(onToggleUnit ? { onToggleUnit } : {})}
-            />
-          )}
-          ListEmptyComponent={
-            <View className="flex-1 justify-center items-center py-12">
-              <FontAwesome
-                name="inbox"
-                size={56}
-                color="#623418"
-                style={{ opacity: 0.25 }}
-              />
-              <StyledText
-                variant="semibold"
-                className="text-ink-500 text-base mt-3"
-              >
-                No products found
-              </StyledText>
-            </View>
-          }
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <View className="items-center py-4">
-                <ActivityIndicator size="small" color="#623418" />
-                <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-xs mt-2"
-                >
-                  Loading more...
-                </StyledText>
-              </View>
-            ) : !hasNextPage && filteredProducts.length > 0 ? (
-              <View className="items-center py-4">
-                <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-xs"
-                >
-                  End of list
-                </StyledText>
-              </View>
-            ) : null
-          }
-        />
+<FlatList
+  data={filteredProducts}
+  keyExtractor={(item) => item.id.toString()}
+  contentContainerStyle={{ paddingBottom: 82 }}
+  showsVerticalScrollIndicator={false}
+  keyboardShouldPersistTaps="handled"
+  onEndReached={() => {
+    if (!isFetchingNextPage && hasNextPage && onEndReached) {
+      onEndReached();
+    }
+  }}
+  onEndReachedThreshold={0.4}
+  renderItem={({ item }) => (
+    <ProductRow
+      product={item}
+      cartLine={getCartLine(item.id)}
+      onAdd={onAdd}
+      onUpdateQuantity={onUpdateQuantity}
+      {...(onToggleUnit ? { onToggleUnit } : {})}
+    />
+  )}
+  ListEmptyComponent={
+    <View className="flex-1 justify-center items-center py-12">
+      <FontAwesome
+        name="inbox"
+        size={56}
+        color="#623418"
+        style={{ opacity: 0.25 }}
+      />
+      <StyledText variant="semibold" className="text-ink-500 text-base mt-3">
+        No products found
+      </StyledText>
+    </View>
+  }
+  ListFooterComponent={
+    isFetchingNextPage ? (
+      <View className="items-center py-4">
+        <ActivityIndicator size="small" color="#623418" />
+        <StyledText variant="medium" className="text-ink-500 text-xs mt-2">
+          Loading more...
+        </StyledText>
+      </View>
+    ) : !hasNextPage && filteredProducts.length > 0 ? (
+      <View className="items-center py-4">
+        <StyledText variant="medium" className="text-ink-500 text-xs">
+          End of list
+        </StyledText>
+      </View>
+    ) : null
+  }
+/>
 ```
 
 Note: `ActivityIndicator` is already imported at the top of the file. `StyledText` is already imported. No new imports needed.
@@ -722,107 +776,107 @@ In `components/sales/pos/useCart.ts`:
 (a) Update the import block — `useProducts` is no longer needed for `getAllProductsQuery`; replace with `usePaginatedProducts`. The destructure for `customers`, `sales`, barcode, etc. is unchanged.
 
 ```ts
-import { usePaginatedProducts, useSales, useBarcodeResolver, useCustomers } from '@/hooks';
+import {
+  usePaginatedProducts,
+  useSales,
+  useBarcodeResolver,
+  useCustomers,
+} from '@/hooks';
 ```
 
 (b) Replace the products query line:
 
 ```ts
-  const productsQuery = usePaginatedProducts('');
-  const {
-    data: products = [],
-    isLoading: isProductsLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch: refetchProducts,
-    error: productsError,
-  } = productsQuery;
+const productsQuery = usePaginatedProducts('');
+const {
+  data: products = [],
+  isLoading: isProductsLoading,
+  isFetchingNextPage,
+  hasNextPage,
+  fetchNextPage,
+  refetch: refetchProducts,
+  error: productsError,
+} = productsQuery;
 ```
 
 (c) Update the queued-scan effect that currently depends on `getAllProductsQuery` — the new shape uses `productsQuery`. Find the existing `useEffect`:
 
 ```ts
-  useEffect(() => {
-    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
-      return;
-    const queued = pendingScanRef.current;
-    if (!queued) return;
-    pendingScanRef.current = null;
-    void handleScannedBarcode(queued);
-  }, [
-    getAllProductsQuery.isSuccess,
-    getAllProductsQuery.isFetching,
-    handleScannedBarcode,
-  ]);
+useEffect(() => {
+  if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching) return;
+  const queued = pendingScanRef.current;
+  if (!queued) return;
+  pendingScanRef.current = null;
+  void handleScannedBarcode(queued);
+}, [
+  getAllProductsQuery.isSuccess,
+  getAllProductsQuery.isFetching,
+  handleScannedBarcode,
+]);
 ```
 
 Replace it with:
 
 ```ts
-  useEffect(() => {
-    if (!productsQuery.isSuccess || productsQuery.isFetching) return;
-    const queued = pendingScanRef.current;
-    if (!queued) return;
-    pendingScanRef.current = null;
-    void handleScannedBarcode(queued);
-  }, [
-    productsQuery.isSuccess,
-    productsQuery.isFetching,
-    handleScannedBarcode,
-  ]);
+useEffect(() => {
+  if (!productsQuery.isSuccess || productsQuery.isFetching) return;
+  const queued = pendingScanRef.current;
+  if (!queued) return;
+  pendingScanRef.current = null;
+  void handleScannedBarcode(queued);
+}, [productsQuery.isSuccess, productsQuery.isFetching, handleScannedBarcode]);
 ```
 
 (d) Update the returned object to surface the new fields. Find the `return {` block in `useCart` and add the pagination fields (keep existing fields):
 
 ```ts
-  return {
-    // Domain data
-    products,
-    customers,
-    isProductsLoading,
-    todayStats: getTodayStatsQuery.data,
+return {
+  // Domain data
+  products,
+  customers,
+  isProductsLoading,
+  todayStats: getTodayStatsQuery.data,
 
-    // Pagination
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetchProducts,
-    productsError,
+  // Pagination
+  isFetchingNextPage,
+  hasNextPage,
+  fetchNextPage,
+  refetchProducts,
+  productsError,
 
-    // Cart state (from store)
-    cartItems,
-    paymentType,
-    selectedCustomer,
-    itemCount,
-    total,
-    isSubmitDisabled,
+  // Cart state (from store)
+  cartItems,
+  paymentType,
+  selectedCustomer,
+  itemCount,
+  total,
+  isSubmitDisabled,
 
-    // Scanner state (local)
-    isScannerOpen,
-    lastScanned,
-    pendingAddProductBarcode,
+  // Scanner state (local)
+  isScannerOpen,
+  lastScanned,
+  pendingAddProductBarcode,
 
-    // Store actions
-    addItem,
-    updateQuantity,
-    toggleUnit,
-    clearCart: clearCartStore,
-    setPaymentType,
-    setCustomer,
+  // Store actions
+  addItem,
+  updateQuantity,
+  toggleUnit,
+  clearCart: clearCartStore,
+  setPaymentType,
+  setCustomer,
 
-    // Handlers
-    openScanner,
-    closeScanner,
-    handleScannedBarcode,
-    handlePressAddNewProduct,
-    dismissPendingAddProduct,
-    submit,
-    getCartLine,
+  // Handlers
+  openScanner,
+  closeScanner,
+  handleScannedBarcode,
+  handlePressAddNewProduct,
+  dismissPendingAddProduct,
+  submit,
+  getCartLine,
 
-    // Mutation
-    insertSaleMutation,
-  };
+  // Mutation
+  insertSaleMutation,
+};
 ```
 
 - [ ] **Step 2: Update `pos.tsx`**
@@ -832,14 +886,13 @@ In `app/(tabs)/sales/pos.tsx`:
 (a) Remove the in-memory filter `useMemo` (the existing block is lines 28–35):
 
 ```tsx
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return cart.products;
-    return cart.products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
-    );
-  }, [cart.products, search]);
+const filteredProducts = useMemo(() => {
+  const q = search.trim().toLowerCase();
+  if (!q) return cart.products;
+  return cart.products.filter(
+    (p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q),
+  );
+}, [cart.products, search]);
 ```
 
 Delete it. Also delete the now-unused `useMemo` import at the top of the file (line 1):
@@ -867,7 +920,7 @@ export function useCart(search: string = '') {
 Then the call inside `useCart`:
 
 ```ts
-  const productsQuery = usePaginatedProducts(search);
+const productsQuery = usePaginatedProducts(search);
 ```
 
 And the POS screen calls `const cart = useCart(search);`.
@@ -877,32 +930,32 @@ Make those two changes.
 (c) Update the `<ProductSearchCatalog />` element. Replace the existing block (lines 39–56) with:
 
 ```tsx
-      <ProductSearchCatalog
-        control={control}
-        filteredProducts={cart.products}
-        isLoading={cart.isProductsLoading}
-        getCartLine={cart.getCartLine}
-        onAdd={cart.addItem}
-        onUpdateQuantity={cart.updateQuantity}
-        onToggleUnit={(productId) => {
-          const idx = cart.cartItems.findIndex(
-            (item) => item.product_id === productId,
-          );
-          if (idx !== -1) cart.toggleUnit(idx);
-        }}
-        onPressScan={cart.openScanner}
-        pendingAddProductBarcode={cart.pendingAddProductBarcode}
-        onPressAddNewProduct={cart.handlePressAddNewProduct}
-        onDismissPendingAddProduct={cart.dismissPendingAddProduct}
-        isFetchingNextPage={cart.isFetchingNextPage}
-        hasNextPage={cart.hasNextPage}
-        onEndReached={() => {
-          if (!cart.isFetchingNextPage && cart.hasNextPage) {
-            cart.fetchNextPage();
-          }
-        }}
-        onRetryFetchNext={() => cart.fetchNextPage()}
-      />
+<ProductSearchCatalog
+  control={control}
+  filteredProducts={cart.products}
+  isLoading={cart.isProductsLoading}
+  getCartLine={cart.getCartLine}
+  onAdd={cart.addItem}
+  onUpdateQuantity={cart.updateQuantity}
+  onToggleUnit={(productId) => {
+    const idx = cart.cartItems.findIndex(
+      (item) => item.product_id === productId,
+    );
+    if (idx !== -1) cart.toggleUnit(idx);
+  }}
+  onPressScan={cart.openScanner}
+  pendingAddProductBarcode={cart.pendingAddProductBarcode}
+  onPressAddNewProduct={cart.handlePressAddNewProduct}
+  onDismissPendingAddProduct={cart.dismissPendingAddProduct}
+  isFetchingNextPage={cart.isFetchingNextPage}
+  hasNextPage={cart.hasNextPage}
+  onEndReached={() => {
+    if (!cart.isFetchingNextPage && cart.hasNextPage) {
+      cart.fetchNextPage();
+    }
+  }}
+  onRetryFetchNext={() => cart.fetchNextPage()}
+/>
 ```
 
 Note: `onEndReached` here re-checks the guards even though `ProductSearchCatalog` already does. Cheap and unambiguous. The actual fetch handler lives on `cart.fetchNextPage`.

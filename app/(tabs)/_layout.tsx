@@ -131,7 +131,7 @@ export default function ScreensLayout() {
 const styles = StyleSheet.create({
   toastContainer: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 90,
     left: 16,
     right: 16,
     alignItems: 'center',

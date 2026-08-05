@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  RestockSheet,
-  MarkDamagedSheet,
-  AdjustStockSheet,
-} from '@/components/inventory/modals/';
+import { RestockSheet } from '@/components/inventory/modals/';
 import { BarcodeScannerModal } from '@/components/ui';
 import { useStockSheetSignal } from '@/stores';
 import { useProducts } from '@/hooks';
@@ -26,11 +22,6 @@ export function InventoryModalsHost({ scannerOpen, onCloseScanner }: Props) {
   );
 
   const [restockOpen, setRestockOpen] = useState(false);
-  const [damagedOpen, setDamagedOpen] = useState(false);
-  const [adjustOpen, setAdjustOpen] = useState(false);
-
-  const [adjustProduct, setAdjustProduct] = useState<number | null>(null);
-  const [damagedProduct, setDamagedProduct] = useState<number | null>(null);
   const [restockProduct, setRestockProduct] = useState<number | null>(null);
 
   const resolveProduct = useCallback(
@@ -39,14 +30,6 @@ export function InventoryModalsHost({ scannerOpen, onCloseScanner }: Props) {
     [products],
   );
 
-  const lockedAdjust = useMemo(
-    () => resolveProduct(adjustProduct),
-    [resolveProduct, adjustProduct],
-  );
-  const lockedDamaged = useMemo(
-    () => resolveProduct(damagedProduct),
-    [resolveProduct, damagedProduct],
-  );
   const lockedRestock = useMemo(
     () => resolveProduct(restockProduct),
     [resolveProduct, restockProduct],
@@ -54,15 +37,12 @@ export function InventoryModalsHost({ scannerOpen, onCloseScanner }: Props) {
 
   useEffect(() => {
     if (signal.adjust.productId !== null) {
-      setAdjustProduct(signal.adjust.productId);
-      setAdjustOpen(true);
       signal.clearAdjust();
     }
   }, [signal.adjust.productId, signal]);
 
   useEffect(() => {
     if (signal.restock.productId !== null) {
-      setRestockProduct(signal.restock.productId);
       setRestockOpen(true);
       signal.clearRestock();
     }
@@ -70,8 +50,6 @@ export function InventoryModalsHost({ scannerOpen, onCloseScanner }: Props) {
 
   useEffect(() => {
     if (signal.damaged.productId !== null) {
-      setDamagedProduct(signal.damaged.productId);
-      setDamagedOpen(true);
       signal.clearDamaged();
     }
   }, [signal.damaged.productId, signal]);
@@ -93,22 +71,6 @@ export function InventoryModalsHost({ scannerOpen, onCloseScanner }: Props) {
         onClose={() => {
           setRestockOpen(false);
           setRestockProduct(null);
-        }}
-      />
-      <MarkDamagedSheet
-        visible={damagedOpen}
-        lockedProduct={lockedDamaged}
-        onClose={() => {
-          setDamagedOpen(false);
-          setDamagedProduct(null);
-        }}
-      />
-      <AdjustStockSheet
-        visible={adjustOpen}
-        lockedProduct={lockedAdjust}
-        onClose={() => {
-          setAdjustOpen(false);
-          setAdjustProduct(null);
         }}
       />
       <BarcodeScannerModal

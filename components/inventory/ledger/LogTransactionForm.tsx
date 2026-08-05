@@ -599,7 +599,7 @@ export function LogTransactionForm({
                   variant="extrabold"
                   className="text-xl text-ink-900 mb-4"
                 >
-                  {titleMap[initialType] ?? 'Log Transaction'}
+                  {titleMap[initialType]}
                 </StyledText>
                 <ProductPicker
                   products={products}
