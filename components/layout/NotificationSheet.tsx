@@ -3,7 +3,7 @@ import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Dimensions, Modal, Pressable, View } from 'react-native';
+import { Dimensions, FlatList, Modal, Pressable, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Extrapolation,
@@ -20,7 +20,6 @@ import { scheduleOnRN } from 'react-native-worklets';
 const TAG = '[NotificationSheet]';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAX_ALERTS = 3;
 const DISMISS_THRESHOLD = 100;
 const DISMISS_VELOCITY = 600;
 const OVERSCROLL_CAP = 44;
@@ -110,7 +109,6 @@ export function NotificationSheet({
 }: NotificationSheetProps) {
   const shouldReduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const visibleAlerts = useMemo(() => alerts.slice(0, MAX_ALERTS), [alerts]);
   const topOffset = insets.top + 10;
 
   const translateY = useSharedValue(0);
@@ -353,34 +351,39 @@ export function NotificationSheet({
                 <View className="h-px bg-paper-300" />
 
                 {/* Content */}
-                {visibleAlerts.length === 0 ? (
-                  <View className="px-4 py-6 items-center">
-                    <StyledText
-                      variant="medium"
-                      className="text-ink-400 text-sm text-center"
-                    >
-                      Store is operating smoothly. No alerts right now.
-                    </StyledText>
-                  </View>
-                ) : (
-                  <View className="px-4 pt-1">
-                    {visibleAlerts.map((alert) => (
-                      <AlertCardItem
-                        key={alert.id}
-                        type={alert.type}
-                        title={alert.title}
-                        subtitle={alert.subtitle}
-                        actionLabel={alert.actionLabel}
-                        onAction={() => {
-                          console.log(
-                            `${TAG} alert action tapped: id=${alert.id}`,
-                          );
-                          onAlertAction(alert);
-                        }}
-                      />
-                    ))}
-                  </View>
-                )}
+                <FlatList
+                  data={alerts}
+                  keyExtractor={(item) => String(item.id)}
+                  style={{ maxHeight: SCREEN_HEIGHT * 0.48 }}
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingTop: 4,
+                  }}
+                  renderItem={({ item: alert }) => (
+                    <AlertCardItem
+                      type={alert.type}
+                      title={alert.title}
+                      subtitle={alert.subtitle}
+                      actionLabel={alert.actionLabel}
+                      onAction={() => {
+                        console.log(
+                          `${TAG} alert action tapped: id=${alert.id}`,
+                        );
+                        onAlertAction(alert);
+                      }}
+                    />
+                  )}
+                  ListEmptyComponent={
+                    <View className="py-6 items-center">
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-400 text-sm text-center"
+                      >
+                        Store is operating smoothly. No alerts right now.
+                      </StyledText>
+                    </View>
+                  }
+                />
 
                 {/* CTA */}
                 <Pressable
