@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import {
   Href,
@@ -30,13 +30,9 @@ export default function InventoryLayout() {
   const router = useRouter();
   const searchParams = useLocalSearchParams<{
     q?: string;
-    addCategory?: string;
-    addSupplier?: string;
   }>();
   const search = searchParams.q ?? '';
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [supplierOpen, setSupplierOpen] = useState(false);
   const [fabForm, setFabForm] = useState<{
     visible: boolean;
     type: InventoryEventType;
@@ -44,18 +40,6 @@ export default function InventoryLayout() {
     visible: false,
     type: 'adjustment',
   });
-
-  useEffect(() => {
-    if (searchParams.addCategory === 'true') {
-      setCategoryOpen(true);
-    }
-  }, [searchParams.addCategory]);
-
-  useEffect(() => {
-    if (searchParams.addSupplier === 'true') {
-      setSupplierOpen(true);
-    }
-  }, [searchParams.addSupplier]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -127,8 +111,12 @@ export default function InventoryLayout() {
         {!isDetail ? (
           <InventorySpeedDialFab
             onAddProduct={openAddProduct}
-            onAddCategory={() => setCategoryOpen(true)}
-            onAddSupplier={() => setSupplierOpen(true)}
+            onAddCategory={() =>
+              router.push('/(edit-forms)/add-category' as Href)
+            }
+            onAddSupplier={() =>
+              router.push('/(edit-forms)/add-supplier' as Href)
+            }
             onScanBarcode={() => setScannerOpen(true)}
           />
         ) : null}
@@ -144,20 +132,6 @@ export default function InventoryLayout() {
       <InventoryModalsHost
         scannerOpen={scannerOpen}
         onCloseScanner={() => setScannerOpen(false)}
-        categoryOpen={categoryOpen}
-        onCloseCategory={() => {
-          setCategoryOpen(false);
-          if (searchParams.addCategory) {
-            router.setParams({ addCategory: undefined });
-          }
-        }}
-        supplierOpen={supplierOpen}
-        onCloseSupplier={() => {
-          setSupplierOpen(false);
-          if (searchParams.addSupplier) {
-            router.setParams({ addSupplier: undefined });
-          }
-        }}
       />
     </View>
   );

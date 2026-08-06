@@ -4,7 +4,7 @@ import {
   getCategoriesWithCount,
   getCategory,
   getCategoryByName,
-  insertCategory,
+  insertCategoryWithProducts,
   updateCategory,
 } from '@/database/categories';
 import { useToastStore } from '@/stores/ToastStore';
@@ -48,10 +48,12 @@ export function useCategories() {
 
   // Mutation: Insert a new category
   const insertCategoryMutation = useMutation({
-    mutationFn: ({ name }: InsertCategoryParams) => insertCategory(name),
+    mutationFn: ({ name, productIds }: InsertCategoryParams) =>
+      insertCategoryWithProducts(name, productIds ?? []),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       addToast({
         message: 'Category added successfully',
         variant: 'success',

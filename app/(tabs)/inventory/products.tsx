@@ -182,7 +182,7 @@ export default function ProductsScreen() {
       <CategoryFilterBar
         selectedCategory={category}
         onSelectCategory={(cat) => router.setParams({ category: cat ?? '' })}
-        onOpenAddCategory={() => router.setParams({ addCategory: 'true' })}
+        onOpenAddCategory={() => router.push('/(edit-forms)/add-category' as Href)}
       />
       <ProductsFilterChips value={filter} onChange={setFilter} />
       {products.length === 0 ? (

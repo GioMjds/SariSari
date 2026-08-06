@@ -1,5 +1,7 @@
 # 01. Mabilisang Pag-checkout sa POS (POS Fast Lane)
 
+## Status: DONE
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema

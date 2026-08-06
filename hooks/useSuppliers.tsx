@@ -1,13 +1,21 @@
 import {
-  createSupplier,
+  createSupplierWithProducts,
   deleteSupplier,
   listSuppliers,
   getSupplier,
   updateSupplier,
+  updateSupplierWithProducts,
 } from '@/database/suppliers';
 import { useToastStore } from '@/stores/ToastStore';
 import { Supplier, NewSupplier } from '@/types/suppliers.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+export interface InsertSupplierParams {
+  name: string;
+  contact?: string | null;
+  notes?: string | null;
+  productIds?: number[];
+}
 
 export const supplierKeys = {
   all: ['suppliers'] as const,
@@ -35,9 +43,14 @@ export function useSuppliers() {
 
   // Mutation: Insert a new supplier
   const insertSupplierMutation = useMutation({
-    mutationFn: (input: NewSupplier) => createSupplier(input),
+    mutationFn: ({ name, contact, notes, productIds }: InsertSupplierParams) =>
+      createSupplierWithProducts(
+        { name, contact: contact ?? null, notes: notes ?? null },
+        productIds ?? []
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supplierKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       addToast({
         message: 'Supplier added successfully',
         variant: 'success',
@@ -55,8 +68,18 @@ export function useSuppliers() {
 
   // Mutation: Update a supplier
   const updateSupplierMutation = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<NewSupplier> }) =>
-      updateSupplier(id, patch),
+    mutationFn: ({
+      id,
+      patch,
+      productIds,
+    }: {
+      id: string;
+      patch: Partial<NewSupplier>;
+      productIds?: number[];
+    }) =>
+      productIds !== undefined
+        ? updateSupplierWithProducts(id, patch, productIds)
+        : updateSupplier(id, patch),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: supplierKeys.all });
       queryClient.invalidateQueries({ queryKey: supplierKeys.detail(variables.id) });

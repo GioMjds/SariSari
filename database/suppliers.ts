@@ -83,3 +83,65 @@ export const updateSupplier = async (
 export const deleteSupplier = async (id: string): Promise<void> => {
   await db.runAsync('DELETE FROM suppliers WHERE id = ?', [id]);
 };
+
+export const updateSupplierWithProducts = async (
+  id: string,
+  patch: Partial<NewSupplier>,
+  productIds: number[] = [],
+): Promise<void> => {
+  await db.withTransactionAsync(async () => {
+    const current = await db.getFirstAsync<SupplierRow>(
+      'SELECT * FROM suppliers WHERE id = ?',
+      [id],
+    );
+    if (!current) {
+      throw new Error(`Supplier with ID ${id} not found`);
+    }
+
+    const name = patch.name !== undefined ? patch.name : current.name;
+    const contact = patch.contact !== undefined ? patch.contact : current.contact;
+    const notes = patch.notes !== undefined ? patch.notes : current.notes;
+
+    await db.runAsync(
+      'UPDATE suppliers SET name = ?, contact = ?, notes = ? WHERE id = ?',
+      [name, contact ?? null, notes ?? null, id],
+    );
+
+    // Detach all products currently linked to this supplier.
+    await db.runAsync(
+      'UPDATE products SET supplier_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE supplier_id = ?',
+      [id],
+    );
+
+    // Re-attach selected products in the same transaction.
+    if (productIds.length > 0) {
+      const placeholders = productIds.map(() => '?').join(',');
+      await db.runAsync(
+        `UPDATE products SET supplier_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
+        [id, ...productIds],
+      );
+    }
+  });
+};
+
+export const createSupplierWithProducts = async (
+  input: NewSupplier,
+  productIds: number[] = [],
+): Promise<Supplier> => {
+  return await db.withTransactionAsync(async () => {
+    const id = Crypto.randomUUID();
+    const createdAt = Date.now();
+    await db.runAsync(
+      'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
+      [id, input.name, input.contact ?? null, input.notes ?? null, createdAt],
+    );
+    if (productIds.length > 0) {
+      const placeholders = productIds.map(() => '?').join(',');
+      await db.runAsync(
+        `UPDATE products SET supplier_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
+        [id, ...productIds],
+      );
+    }
+    return { id, createdAt, ...input };
+  });
+};

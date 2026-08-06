@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AddCategoryModal, AddSupplierModal, RestockSheet } from '@/components/inventory/modals/';
+import { RestockSheet } from '@/components/inventory/modals/';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { BarcodeScannerModal } from '@/components/ui';
 import { useStockSheetSignal } from '@/stores';
@@ -12,19 +12,11 @@ import { useRouter } from 'expo-router';
 interface Props {
   scannerOpen: boolean;
   onCloseScanner: () => void;
-  categoryOpen: boolean;
-  onCloseCategory: () => void;
-  supplierOpen: boolean;
-  onCloseSupplier: () => void;
 }
 
 export function InventoryModalsHost({
   scannerOpen,
   onCloseScanner,
-  categoryOpen,
-  onCloseCategory,
-  onCloseSupplier,
-  supplierOpen,
 }: Props) {
   const router = useRouter();
   const signal = useStockSheetSignal();
@@ -112,20 +104,6 @@ export function InventoryModalsHost({
         visible={txForm.visible}
         onClose={handleCloseTxForm}
         onSuccess={handleCloseTxForm}
-      />
-      <AddCategoryModal
-        visible={categoryOpen}
-        onClose={onCloseCategory}
-        onSuccess={(categoryName) => {
-          router.setParams({ category: categoryName });
-        }}
-      />
-      <AddSupplierModal
-        visible={supplierOpen}
-        onClose={onCloseSupplier}
-        onSuccess={(supplier) => {
-          router.setParams({ supplier: supplier.id });
-        }}
       />
       <BarcodeScannerModal
         mode="single"

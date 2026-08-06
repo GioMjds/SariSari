@@ -102,7 +102,6 @@ export default function AddProduct() {
         title="Unsaved Changes"
         description="You have unsaved changes. Are you sure you want to discard them?"
         variant="warning"
-        useNativeModal={false}
         buttons={[
           {
             text: "Don't Leave",

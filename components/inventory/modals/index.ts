@@ -6,5 +6,3 @@ export * from './_shared/sheetChrome';
 export * from './RestockSheet';
 export * from './ProductPicker';
 export * from './BulkMoveCategoryModal';
-export * from './AddCategoryModal';
-export * from './AddSupplierModal';

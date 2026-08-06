@@ -3,6 +3,7 @@ import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
 import { insertCatalogProductsBatch } from './catalog';
 import {
   MOCK_CATEGORIES,
+  MOCK_SUPPLIERS,
   MOCK_PRODUCTS,
   MOCK_CUSTOMERS,
   MOCK_CREDIT_TRANSACTIONS,
@@ -10,6 +11,7 @@ import {
   MOCK_SALES,
   MOCK_SALE_ITEMS,
   MOCK_INVENTORY_TRANSACTIONS,
+  MOCK_FINANCIAL_ENTRIES,
 } from '@/scripts/sample-mock-datas';
 
 export async function seedProductCatalog(): Promise<void> {
@@ -67,25 +69,51 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 2. Seed Products
-      for (const prod of MOCK_PRODUCTS) {
+      // 2. Seed Suppliers
+      for (const sup of MOCK_SUPPLIERS) {
         await db.runAsync(
-          'INSERT INTO products (id, name, sku, price, cost_price, quantity, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
           [
-            prod.id,
-            prod.name,
-            prod.sku,
-            prod.price,
-            prod.cost_price,
-            prod.quantity,
-            prod.category,
-            prod.created_at,
-            prod.updated_at,
+            sup.id,
+            sup.name,
+            sup.contact ?? null,
+            sup.notes ?? null,
+            sup.created_at,
           ],
         );
       }
 
-      // 3. Seed Customers
+      // 3. Seed Products
+      for (const prod of MOCK_PRODUCTS) {
+        await db.runAsync(
+          `INSERT INTO products (
+            id, name, sku, price, cost_price, quantity, category, created_at, updated_at,
+            barcode, supplier_id, retail_unit_name, wholesale_unit_name,
+            wholesale_price, wholesale_cost_price, conversion_factor, is_favorite
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            prod.id,
+            prod.name,
+            prod.sku ?? null,
+            prod.price,
+            prod.cost_price ?? null,
+            prod.quantity,
+            prod.category ?? null,
+            prod.created_at,
+            prod.updated_at,
+            prod.barcode ?? null,
+            prod.supplier_id ?? null,
+            prod.retail_unit_name ?? 'Pc',
+            prod.wholesale_unit_name ?? null,
+            prod.wholesale_price ?? null,
+            prod.wholesale_cost_price ?? null,
+            prod.conversion_factor ?? null,
+            prod.is_favorite ?? 0,
+          ],
+        );
+      }
+
+      // 4. Seed Customers
       for (const cust of MOCK_CUSTOMERS) {
         await db.runAsync(
           'INSERT INTO customers (id, name, phone, address, notes, credit_limit, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -102,7 +130,7 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 4. Seed Credit Transactions
+      // 5. Seed Credit Transactions
       for (const ct of MOCK_CREDIT_TRANSACTIONS) {
         await db.runAsync(
           'INSERT INTO credit_transactions (id, customer_id, product_id, product_name, quantity, amount, status, amount_paid, date, due_date, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -124,7 +152,7 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 5. Seed Payments
+      // 6. Seed Payments
       for (const pay of MOCK_PAYMENTS) {
         await db.runAsync(
           'INSERT INTO payments (id, customer_id, credit_transaction_id, amount, payment_method, date, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -141,7 +169,7 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 6. Seed Sales
+      // 7. Seed Sales
       for (const sale of MOCK_SALES) {
         await db.runAsync(
           'INSERT INTO sales (id, total, payment_type, customer_name, customer_credit_id, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
@@ -156,7 +184,7 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 7. Seed Sale Items
+      // 8. Seed Sale Items
       for (const item of MOCK_SALE_ITEMS) {
         await db.runAsync(
           'INSERT INTO sale_items (id, sale_id, product_id, quantity, price) VALUES (?, ?, ?, ?, ?)',
@@ -164,17 +192,41 @@ export const seedDatabase = async () => {
         );
       }
 
-      // 8. Seed Inventory Transactions
+      // 9. Seed Inventory Transactions
       for (const tx of MOCK_INVENTORY_TRANSACTIONS) {
         await db.runAsync(
-          'INSERT INTO inventory_transactions (id, product_id, type, quantity, timestamp) VALUES (?, ?, ?, ?, ?)',
-          [tx.id, tx.product_id, tx.type, tx.quantity, tx.timestamp],
+          'INSERT INTO inventory_transactions (id, product_id, type, quantity, note, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+          [
+            tx.id,
+            tx.product_id,
+            tx.type,
+            tx.quantity,
+            tx.note ?? null,
+            tx.timestamp,
+          ],
+        );
+      }
+
+      // 10. Seed Financial Entries (Gastos / Kaha)
+      for (const fe of MOCK_FINANCIAL_ENTRIES) {
+        await db.runAsync(
+          'INSERT INTO financial_entries (id, entry_type, amount, business_date, expense_category, note, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            fe.id,
+            fe.entry_type,
+            fe.amount,
+            fe.business_date,
+            fe.expense_category ?? null,
+            fe.note ?? null,
+            fe.created_at,
+            fe.updated_at,
+          ],
         );
       }
     });
 
     console.log(
-      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions.`,
+      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_SUPPLIERS.length} suppliers, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions, ${MOCK_FINANCIAL_ENTRIES.length} financial entries.`,
     );
   } catch (error) {
     console.error('❌ Database seeding failed:', error);

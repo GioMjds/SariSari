@@ -76,3 +76,24 @@ export const getCategoryByName = async (
   );
   return result || null;
 };
+
+export const insertCategoryWithProducts = async (
+  name: string,
+  productIds: number[] = [],
+): Promise<number> => {
+  return await db.withTransactionAsync(async () => {
+    const result = await db.runAsync(
+      'INSERT INTO categories (name) VALUES (?)',
+      [name],
+    );
+    const categoryId = result.lastInsertRowId;
+    if (productIds.length > 0) {
+      const placeholders = productIds.map(() => '?').join(',');
+      await db.runAsync(
+        `UPDATE products SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders})`,
+        [name, ...productIds],
+      );
+    }
+    return categoryId;
+  });
+};

@@ -129,18 +129,18 @@ export function Modal({
     if (finalCloseOnOverlay) handleClose();
   };
 
-  const getSizeClasses = () => {
+  const getSizeWidth = () => {
     switch (size) {
       case 'sm':
-        return 'max-w-sm w-full';
+        return 384;
       case 'md':
-        return 'max-w-md w-full';
+        return 448;
       case 'lg':
-        return 'max-w-lg w-full';
+        return 512;
       case 'xl':
-        return 'max-w-xl w-full';
+        return 576;
       default:
-        return 'max-w-md w-full';
+        return 448;
     }
   };
 
@@ -184,8 +184,16 @@ export function Modal({
 
   const ModalContent = (
     <View
-      style={StyleSheet.absoluteFill}
-      className="justify-center items-center px-6"
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 24,
+          zIndex: 9999,
+          elevation: 9999,
+        },
+      ]}
       pointerEvents={isVisible ? 'auto' : 'none'}
     >
       {/* Backdrop */}
@@ -203,7 +211,7 @@ export function Modal({
           accessibilityLabel="Dismiss"
           accessibilityRole="button"
           onPress={handleOverlayPress}
-          className="absolute inset-0"
+          style={StyleSheet.absoluteFill}
         />
       </MotiView>
 
@@ -219,8 +227,14 @@ export function Modal({
           scale: reducedMotion ? 1 : 0.95,
         }}
         transition={{ type: 'timing', duration: 200 }}
-        className={`bg-white rounded-2xl p-6 ${getSizeClasses()}`}
-        style={{ zIndex: 1 }}
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          padding: 24,
+          width: '100%',
+          maxWidth: getSizeWidth(),
+          zIndex: 1,
+        }}
         accessibilityLabel={finalTitle || 'Dialog'}
       >
         {/* Header / Icon */}

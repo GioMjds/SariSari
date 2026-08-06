@@ -12,6 +12,7 @@ export interface CategoryWithCount extends Category {
 // Parameters for insertCategory function
 export interface InsertCategoryParams {
   name: string;
+  productIds?: number[];
 }
 
 // Parameters for updateCategory function

@@ -16,7 +16,10 @@ export default function EditFormsLayout() {
           sheetInitialDetentIndex: 'last',
           contentStyle: { backgroundColor: '#FAFAF7' },
         }}
-      />
+      >
+        <Stack.Screen name="add-category/index" />
+        <Stack.Screen name="add-supplier/index" />
+      </Stack>
     </>
   );
 }
