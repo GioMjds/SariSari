@@ -48,13 +48,14 @@ export default function InventoryLayout() {
   useEffect(() => {
     if (searchParams.addCategory === 'true') {
       setCategoryOpen(true);
-      router.setParams({ addCategory: undefined });
     }
+  }, [searchParams.addCategory]);
+
+  useEffect(() => {
     if (searchParams.addSupplier === 'true') {
       setSupplierOpen(true);
-      router.setParams({ addSupplier: undefined });
     }
-  }, [searchParams.addCategory, searchParams.addSupplier, router]);
+  }, [searchParams.addSupplier]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -144,9 +145,19 @@ export default function InventoryLayout() {
         scannerOpen={scannerOpen}
         onCloseScanner={() => setScannerOpen(false)}
         categoryOpen={categoryOpen}
-        onCloseCategory={() => setCategoryOpen(false)}
+        onCloseCategory={() => {
+          setCategoryOpen(false);
+          if (searchParams.addCategory) {
+            router.setParams({ addCategory: undefined });
+          }
+        }}
         supplierOpen={supplierOpen}
-        onCloseSupplier={() => setSupplierOpen(false)}
+        onCloseSupplier={() => {
+          setSupplierOpen(false);
+          if (searchParams.addSupplier) {
+            router.setParams({ addSupplier: undefined });
+          }
+        }}
       />
     </View>
   );
