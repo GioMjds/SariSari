@@ -7,11 +7,14 @@ import { StyledText } from '@/components/elements';
 import { NotificationSheet } from './NotificationSheet';
 import { useProfile } from '@/hooks/useProfile';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
+import { useSystemNotifications } from '@/hooks';
 
 export const StoreHeader = memo(function StoreHeader() {
   const router = useRouter();
   const { profile } = useProfile();
   const { alertCount, alerts } = useHomeDashboardData();
+
+  useSystemNotifications(alertCount);
 
   const [isSheetVisible, setSheetVisible] = useState(false);
 
