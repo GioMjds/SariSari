@@ -14,10 +14,6 @@ export interface DashboardQuickActionsProps {
   overdueCount?: number;
 }
 
-/**
- * DashboardQuickActions — "New Sale" hero row + 2x2 secondary action grid.
- * Layout matches HTML reference: icon top-left, label + subtitle bottom-left, chevron right.
- */
 export const DashboardQuickActions = memo(function DashboardQuickActions({
   onNewSale,
   onAddProduct,
@@ -51,35 +47,51 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
         {/* 2x2 secondary action grid */}
         <View className="flex-row gap-3 mb-3">
           <ActionCard
-            label={t('common:dashboard.quickActions.addProduct', { defaultValue: 'Add Product' })}
-            subtitle={t('common:dashboard.quickActions.addProductSub', { defaultValue: 'New catalog item' })}
+            label={t('common:dashboard.quickActions.addProduct', {
+              defaultValue: 'Add Product',
+            })}
+            subtitle={t('common:dashboard.quickActions.addProductSub', {
+              defaultValue: 'New catalog item',
+            })}
             icon="plus-square"
             iconColor="#E85A1F"
             iconBg="bg-persimmon-50"
             onPress={onAddProduct}
-            accessibilityLabel={t('common:dashboard.quickActions.addProduct', { defaultValue: 'Add Product' })}
+            accessibilityLabel={t('common:dashboard.quickActions.addProduct', {
+              defaultValue: 'Add Product',
+            })}
           />
           <ActionCard
-            label={t('common:dashboard.quickActions.addStock', { defaultValue: 'Add Stock' })}
-            subtitle={t('common:dashboard.quickActions.addStockSub', { defaultValue: 'Update inventory' })}
+            label={t('common:dashboard.quickActions.addStock', {
+              defaultValue: 'Add Stock',
+            })}
+            subtitle={t('common:dashboard.quickActions.addStockSub', {
+              defaultValue: 'Update inventory',
+            })}
             icon="database"
             iconColor="#4F7A24"
             iconBg="bg-sage-50"
             onPress={onAddStock}
-            accessibilityLabel={t('common:dashboard.quickActions.addStock', { defaultValue: 'Add Stock' })}
+            accessibilityLabel={t('common:dashboard.quickActions.addStock', {
+              defaultValue: 'Add Stock',
+            })}
           />
         </View>
 
         <View className="flex-row gap-3">
           <ActionCard
-            label={t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })}
+            label={t('common:dashboard.quickActions.credits', {
+              defaultValue: 'Utang / Credits',
+            })}
             subtitle={
               overdueCount > 0
                 ? t('common:dashboard.quickActions.overdueCount', {
                     defaultValue: '{{count}} overdue',
                     count: overdueCount,
                   })
-                : t('common:dashboard.quickActions.creditsSub', { defaultValue: 'Customer ledger' })
+                : t('common:dashboard.quickActions.creditsSub', {
+                    defaultValue: 'Customer ledger',
+                  })
             }
             icon="credit-card"
             iconColor="#C8460F"
@@ -88,21 +100,32 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
             onPress={onOpenCredits}
             accessibilityLabel={
               overdueCount > 0
-                ? `${t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })} - ${t('common:dashboard.quickActions.overdueCount', {
-                    defaultValue: '{{count}} overdue',
-                    count: overdueCount,
-                  })}`
-                : t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })
+                ? `${t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })} - ${t(
+                    'common:dashboard.quickActions.overdueCount',
+                    {
+                      defaultValue: '{{count}} overdue',
+                      count: overdueCount,
+                    },
+                  )}`
+                : t('common:dashboard.quickActions.credits', {
+                    defaultValue: 'Utang / Credits',
+                  })
             }
           />
           <ActionCard
-            label={t('common:dashboard.quickActions.reports', { defaultValue: 'Reports' })}
-            subtitle={t('common:dashboard.quickActions.reportsSub', { defaultValue: 'Sales & trends' })}
+            label={t('common:dashboard.quickActions.reports', {
+              defaultValue: 'Reports',
+            })}
+            subtitle={t('common:dashboard.quickActions.reportsSub', {
+              defaultValue: 'Sales & trends',
+            })}
             icon="bar-chart"
             iconColor="#2E6FA8"
             iconBg="bg-semantic-info-50"
             onPress={onOpenReports}
-            accessibilityLabel={t('common:dashboard.quickActions.reports', { defaultValue: 'Reports' })}
+            accessibilityLabel={t('common:dashboard.quickActions.reports', {
+              defaultValue: 'Reports',
+            })}
           />
         </View>
       </View>
@@ -177,12 +200,18 @@ function ActionCard({
     >
       {/* Icon row with optional badge */}
       <View className="flex-row items-start justify-between mb-3">
-        <View className={`w-8 h-8 rounded-lg items-center justify-center ${iconBg}`}>
+        <View
+          className={`w-8 h-8 rounded-lg items-center justify-center ${iconBg}`}
+        >
           <FontAwesome name={icon} size={15} color={iconColor} />
         </View>
         {badge !== undefined && (
           <View className="w-5 h-5 rounded-full bg-persimmon-500 items-center justify-center">
-            <StyledText variant="extrabold" className="text-paper-50" style={{ fontSize: 10 }}>
+            <StyledText
+              variant="extrabold"
+              className="text-paper-50"
+              style={{ fontSize: 10 }}
+            >
               {badge > 9 ? '9+' : badge}
             </StyledText>
           </View>
@@ -192,10 +221,18 @@ function ActionCard({
       {/* Label + subtitle + chevron */}
       <View className="flex-row items-end justify-between">
         <View className="flex-1 mr-1">
-          <StyledText variant="extrabold" className="text-sm text-ink-900" numberOfLines={1}>
+          <StyledText
+            variant="extrabold"
+            className="text-sm text-ink-900"
+            numberOfLines={1}
+          >
             {label}
           </StyledText>
-          <StyledText variant="regular" className="text-xs text-ink-500 mt-0.5" numberOfLines={1}>
+          <StyledText
+            variant="regular"
+            className="text-xs text-ink-500 mt-0.5"
+            numberOfLines={1}
+          >
             {subtitle}
           </StyledText>
         </View>

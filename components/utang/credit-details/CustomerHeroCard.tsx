@@ -43,9 +43,12 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
   onAddPayment,
   onAddCredit,
 }: CustomerHeroCardProps) {
-  const trustTags = deriveTrustTags(customer, credits, payments, {
-    daysOverdue: customer.days_overdue,
-  });
+  const trustTags = deriveTrustTags(
+    customer,
+    credits,
+    payments,
+    customer.days_overdue != null ? { daysOverdue: customer.days_overdue } : {},
+  );
   const debtLimit = classifyDebtLimit(
     customer.outstanding_balance,
     customer.credit_limit ?? null,
@@ -243,4 +246,4 @@ export const CustomerHeroCard = memo(function CustomerHeroCard({
       </View>
     </MotiView>
   );
-})
+});

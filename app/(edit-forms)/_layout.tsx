@@ -19,6 +19,16 @@ export default function EditFormsLayout() {
       >
         <Stack.Screen name="add-category/index" />
         <Stack.Screen name="add-supplier/index" />
+        {/* Credit flows push as full-screen cards so users can scroll the form
+            without the sheet's drag-to-dismiss gesture swallowing the gesture. */}
+        <Stack.Screen
+          name="add-payment/[id]"
+          options={{ presentation: 'card', animation: 'fade' }}
+        />
+        <Stack.Screen
+          name="add-credit/[id]"
+          options={{ presentation: 'card', animation: 'fade' }}
+        />
       </Stack>
     </>
   );

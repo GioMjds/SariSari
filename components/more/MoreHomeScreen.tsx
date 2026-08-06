@@ -7,7 +7,7 @@ import { MoreGroupSection } from './MoreGroupSection';
 import { MoreLinkRow } from './MoreLinkRow';
 
 const routes = {
-  reports: '/(tabs)/more/reports',
+  reports: '/(tabs)/home',
   expenses: '/gastos-kaha',
   settings: '/(tabs)/more/settings',
 } satisfies Record<string, Href>;

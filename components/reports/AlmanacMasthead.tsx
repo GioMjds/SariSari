@@ -4,11 +4,6 @@ import { StyledText } from '../elements';
 import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 
-/**
- * AlmanacMasthead — the editorial header. Cinnamon band with
- * a paper-cream inset, double rules, serial number, and a
- * refresh "edition stamp" that shows when data was last pulled.
- */
 export function AlmanacMasthead({
   dateRange,
   onRefresh,
@@ -28,7 +23,7 @@ export function AlmanacMasthead({
     .toUpperCase();
 
   return (
-    <View className="bg-cinnamon-500 px-5 pt-3 pb-5">
+    <View className="px-5 pt-3 pb-5">
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center">
           <View className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2 shadow-paper">

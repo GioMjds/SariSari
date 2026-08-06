@@ -25,7 +25,7 @@ const routes = {
   utang: '/(tabs)/customers/credit',
   cashSession: '/(edit-forms)/cash-session',
   newSale: '/(tabs)/sales/pos',
-  reports: '/(tabs)/more/reports',
+  reports: '/(tabs)/home/today',
 } satisfies Record<string, Href>;
 
 export default function OverviewScreen() {
@@ -54,7 +54,7 @@ export default function OverviewScreen() {
       utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
-      reports: '/(tabs)/more/reports',
+      reports: '/(tabs)/home/today',
     };
     router.push(map[rec.destination] as Href);
   };
@@ -66,7 +66,7 @@ export default function OverviewScreen() {
       utang: '/(tabs)/customers/credit',
       cashSession: '/(edit-forms)/cash-session',
       newSale: '/(tabs)/sales/pos',
-      reports: '/(tabs)/more/reports',
+      reports: '/(tabs)/home/today',
     };
     router.push(map[destination] as Href);
   };
@@ -102,7 +102,7 @@ export default function OverviewScreen() {
               variant="extrabold"
               className="text-ink-500 text-xs tracking-wider uppercase"
             >
-              TOTAL SALES TODAY
+              Total Sales Today
             </StyledText>
             <View className="flex-row items-baseline gap-3 mt-1.5">
               <StyledText
