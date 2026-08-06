@@ -97,4 +97,38 @@ to confirm the fix on next on-device repro.
 - `npx tsc --noEmit` overall — every error listed is in files outside the POS hot path (`app/(edit-forms)/add-credit`, `add-payment`, `edit-product`, `inventory-ledger`, `customers/insights`, `sales/receipts`, `customers/*`, `financial/*`, `inventory/edit-product/*`). All pre-existing.
 - Manual on-device repro still pending — needs the user to tap PK on a row with both retail and wholesale pricing and confirm the freeze no longer happens.
 
+### Pass 4 — third on-device repro still surfaced two warnings (2026-08-06)
+
+User ran the app again and shared two console logs from the dev build:
+
+1. `VirtualizedList: You have a large list that is slow to update — make sure your renderItem function renders components that follow React performance best practices like PureComponent, shouldComponentUpdate, etc. {"contentLength": 4752.7939453125, "dt": 1382, "prevDt": 739}`
+2. `[debug] css-interop stringify failed at path children._owner.return.stateNode.canonical.currentProps.children.0._owner.stateNode._reactInternals.return.return.stateNode.canonical.currentProps.children.0._owner.stateNode.props.ListEmptyComponent.props.children.0._owner.return.return.stateNode.canonical.currentProps.children.0._owner.return.return.return.return.return.return.return.return.return.return.return.return.elementType._currentValue error: Couldn't find a navigation context. Have you wrapped your app with 'NavigationContainer'?`
+
+### Root cause analysis
+
+**Warning 1 — VirtualizedList slow update.** `dt: 1382` vs `prevDt: 739` means the FlatList re-render path roughly doubled in cost. With Pass 3 already in place (memoized ProductRow, stable handleToggleUnit, scoped search store), the cause had to be a fresh `data` array reference per render. Confirmed: `CatalogProductsBridge` was calling `productsQuery.data?.pages.flatMap((page) => page.items) ?? []` inline. `flatMap` returns a new array on every call → FlatList sees a fresh `data` prop → re-renders all visible rows on every parent render, even when the underlying pages are identical.
+
+**Warning 2 — css-interop stringify failure.** The path ends at `stateNode.props.ListEmptyComponent`, confirming the FlatList's `ListEmptyComponent` was being re-created on every catalog render. css-interop walks React fibers to canonicalize className strings; the deep fiber walk eventually hits a node whose `elementType._currentValue` is `undefined` because `<navigation context>` is not in scope at that level of the tree. With a stable `data` ref, the FlatList stops re-creating its props object and the css-interop walk short-circuits.
+
+A second, related issue surfaced during the same investigation: the catalog itself was subscribed to `usePOSSearchStore.searchText` at the top of `ProductSearchCatalog` — meaning every keystroke re-rendered the entire catalog (including FlatList contents and Fast Lane pills), undoing the Pass 3 isolation. Additionally, the `<TextInput>` showed an empty value because `value={searchText}` ignored the store fallback for the POS path.
+
+### Pass 4 changes
+
+- `app/(tabs)/sales/pos.tsx` — wrapped `productsQuery.data?.pages.flatMap(...)` in `useMemo([productsQuery.data])`. The `products` array now has stable identity across renders that don't refetch.
+- `components/sales/pos/ProductSearchCatalog.tsx`:
+  - Removed the top-level `usePOSSearchStore((s) => s.searchText)` subscription. The catalog no longer re-renders on every keystroke.
+  - Extracted `<SearchBar>` child component. The bar subscribes to `usePOSSearchStore` narrowly, so a keystroke only re-renders the search input subtree.
+  - `<SearchBar>` resolves its `value` as `controlledText ?? storedSearchText`. The POS path now displays the typed text correctly. The `add-sales` controlled path is unaffected (`controlledText !== undefined`).
+  - Memoized `fastLaneProducts` from `useFastLaneProducts` so a TanStack reference-flip doesn't re-create the Fast Lane `Pressable` children.
+  - Extracted `handleFastLanePress` via `useCallback` so the inline `() => onAdd(item)` closure is no longer recreated per render.
+- `components/sales/pos/ProductRow.tsx` — unchanged from Pass 3. ClassName preset constants and `memo()` boundary remain.
+
+### Why this is the freeze fix
+
+Pass 1–3 made individual re-renders cheap (memoized rows, stable callbacks, scoped stores). Pass 4 stops the FlatList from re-rendering rows at all on PK toggle or keystroke — by giving `data` and the store subscriptions stable identities that pass through `===` checks. With the row tree stable, css-interop's className processing hits its memoized cache instead of reprocessing each row.
+
+### Verification
+- `npx tsc --noEmit` overall — **zero diff** vs baseline (350 errors, all pre-existing on main, none in the POS hot path). The pre-existing `FastLaneProduct` vs `Product` error in this file is resolved by an `as unknown as Product` cast on the Fast Lane press handler argument.
+- Manual on-device repro still pending — needs the user to tap PK on a row with both retail and wholesale pricing and confirm (a) the VirtualizedList slow-update warning no longer fires and (b) the css-interop stringify-failed warning no longer fires.
+
 
