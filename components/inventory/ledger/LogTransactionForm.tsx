@@ -65,8 +65,14 @@ function LogTransactionFormInner({
   onClose,
   onSuccess,
 }: LogTransactionFormInnerProps) {
-  const formOptions: Parameters<typeof useLogTransactionForm>[1] = {};
-  if (onSuccess) formOptions.onSuccessCallback = onSuccess;
+  const handleSuccess = React.useCallback(() => {
+    onSuccess?.();
+    onClose();
+  }, [onSuccess, onClose]);
+
+  const formOptions: Parameters<typeof useLogTransactionForm>[1] = {
+    onSuccessCallback: handleSuccess,
+  };
   if (initialType) formOptions.initialType = initialType;
 
   const form = useLogTransactionForm(product, formOptions);
@@ -568,6 +574,18 @@ export function LogTransactionForm({
   const { getAllProductsQuery } = useProducts();
   const products = (getAllProductsQuery.data as Product[]) ?? [];
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
+
+  React.useEffect(() => {
+    if (!visible) {
+      setPickedProduct(null);
+    }
+  }, [visible]);
+
+  const handleClose = React.useCallback(() => {
+    setPickedProduct(null);
+    onClose();
+  }, [onClose]);
+
   const locked = product ?? pickedProduct;
   const showPicker = visible && !locked;
   const showForm = visible && !!locked;
@@ -579,7 +597,7 @@ export function LogTransactionForm({
           visible
           transparent
           animationType="fade"
-          onRequestClose={onClose}
+          onRequestClose={handleClose}
         >
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -589,7 +607,7 @@ export function LogTransactionForm({
               <TouchableOpacity
                 className="flex-1"
                 activeOpacity={1}
-                onPress={onClose}
+                onPress={handleClose}
               />
               <View
                 className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100"
@@ -610,7 +628,7 @@ export function LogTransactionForm({
                   }}
                 />
                 <TouchableOpacity
-                  onPress={onClose}
+                  onPress={handleClose}
                   className="flex-1 border border-ink-200 bg-paper-50 rounded-xl py-3 items-center justify-center mt-6"
                   accessibilityRole="button"
                   accessibilityLabel="Cancel"
@@ -629,10 +647,7 @@ export function LogTransactionForm({
         <LogTransactionFormInner
           product={locked}
           visible={visible}
-          onClose={() => {
-            setPickedProduct(null);
-            onClose();
-          }}
+          onClose={handleClose}
           {...(initialType ? { initialType } : {})}
           {...(onSuccess ? { onSuccess } : {})}
         />

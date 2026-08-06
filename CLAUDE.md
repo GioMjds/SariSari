@@ -91,7 +91,8 @@ See `AGENTS.md` (which simply re-exports this file) and `.agents/` for the workf
 - Write `activity-log.md` in `/docs` when working on something you might want to refer back to.
 - Run major changes by the user first; review existing files before refactoring.
 - Never commit user personal data or credentials (passwords, API keys, tokens, connection strings).
-- Don't include test (`*.test.ts`, `*.spec.ts`) files into my `specs` and `tasks`.
+- Don't include test (`*.test.ts`, `*.spec.ts`) files into my `docs/superpowers/specs` and `docs/superpowers/tasks`.
+- Don't auto-commit or auto-push agent tasks. Always review and edit before committing. Use `activity-log.md` for notes.
 
 ## Useful Entry Points
 

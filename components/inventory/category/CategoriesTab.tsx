@@ -134,6 +134,7 @@ function CategoriesTabComponent() {
 
     await insertCategoryMutation.mutateAsync({ name: data.name.trim() });
     setShowAddModal(false);
+    reset({ name: '' });
   };
 
   const submitEditCategory = async (data: CategoryFormData) => {
@@ -148,6 +149,8 @@ function CategoriesTabComponent() {
       name: data.name.trim(),
     });
     setShowEditModal(false);
+    setSelectedCategory(null);
+    reset({ name: '' });
   };
 
   const confirmDelete = async () => {
@@ -155,6 +158,7 @@ function CategoriesTabComponent() {
 
     await deleteCategoryMutation.mutateAsync(selectedCategory.id);
     setShowDeleteModal(false);
+    setSelectedCategory(null);
   };
 
   if (isLoading) {

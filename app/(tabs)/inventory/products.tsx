@@ -44,9 +44,9 @@ export default function ProductsScreen() {
   const [formType, setFormType] = useState<InventoryEventType | null>(null);
 
   const { q, category, supplier } = useLocalSearchParams<{
-    q?: string;
-    category?: string;
-    supplier?: string;
+    q: string;
+    category: string;
+    supplier: string;
   }>();
   const searchTerm = (q ?? '').trim().toLowerCase();
 

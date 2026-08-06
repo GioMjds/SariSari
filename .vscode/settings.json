@@ -24,17 +24,17 @@
     "**/.turbo": true
   },
 
-  "git.autorefresh": false,
-  "git.autofetch": false,
+  "git.autorefresh": true,
+  "git.autofetch": true,
 
   "js/ts.tsserver.automaticTypeAcquisition.enabled": true,
   "terminal.integrated.gpuAcceleration": "on",
   "breadcrumbs.enabled": false,
-  "editor.semanticHighlighting.enabled": false,
-  "editor.codeLens": false,
-  "explorer.decorations.badges": false,
+  "editor.semanticHighlighting.enabled": "configuredByTheme",
+  "editor.codeLens": true,
+  "explorer.decorations.badges": true,
   "explorer.decorations.colors": false,
   "search.followSymlinks": false,
-  "editor.quickSuggestionsDelay": 150,
+  "editor.quickSuggestionsDelay": 50,
   "editor.inlineSuggest.enabled": true
 }

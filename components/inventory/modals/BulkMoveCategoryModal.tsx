@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -26,6 +26,11 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
   const { updateProductCategoryMutation } = useProducts();
   const addToast = useToastStore((s) => s.addToast);
   const [picked, setPicked] = useState<string>('');
+
+  useEffect(() => {
+    if (!visible) setPicked('');
+  }, [visible]);
+
   const categories = useMemo(
     () => getAllCategoriesQuery.data ?? [],
     [getAllCategoriesQuery.data],

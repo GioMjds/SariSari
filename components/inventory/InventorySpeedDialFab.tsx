@@ -1,32 +1,31 @@
-import React, { useState, useCallback } from 'react';
-import { View, Pressable, Modal, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
+import { useTabBarBottomOffset } from '@/components/layout';
 import { FontAwesome } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useCallback, useState } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  interpolate,
   Extrapolation,
   SharedValue,
-  runOnJS,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
 } from 'react-native-reanimated';
-import { useTabBarBottomOffset } from '@/components/layout';
+import { scheduleOnRN } from 'react-native-worklets';
 
 export interface InventorySpeedDialFabProps {
   onAddProduct: () => void;
-  onReceiveStock: () => void;
-  onMarkDamaged: () => void;
-  onStockAdjustment: () => void;
   onScanBarcode: () => void;
+  onAddCategory: () => void;
+  onAddSupplier: () => void;
 }
 
 const SPRING_CONFIG = {
   damping: 18,
   stiffness: 220,
   mass: 0.8,
-};
+} as const;
 
 interface SpeedDialItemProps {
   label: string;
@@ -102,9 +101,19 @@ function SpeedDialItem({
   );
 }
 
+interface Actions {
+  id: string;
+  label: string;
+  icon: keyof typeof FontAwesome.glyphMap;
+  isPrimary: boolean;
+  onPress: () => void;
+}
+
 export function InventorySpeedDialFab({
   onAddProduct,
   onScanBarcode,
+  onAddCategory,
+  onAddSupplier,
 }: InventorySpeedDialFabProps) {
   const [expanded, setExpanded] = useState(false);
   const tabBarBottomOffset = useTabBarBottomOffset();
@@ -120,9 +129,7 @@ export function InventorySpeedDialFab({
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     expandProgress.value = withSpring(0, SPRING_CONFIG, (finished) => {
-      if (finished) {
-        runOnJS(setExpanded)(false);
-      }
+      if (finished) scheduleOnRN(setExpanded, false);
     });
   }, [expandProgress]);
 
@@ -130,7 +137,7 @@ export function InventorySpeedDialFab({
     {
       id: 'add_product',
       label: 'Add Product',
-      icon: 'plus' as const,
+      icon: 'plus',
       isPrimary: true,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -139,9 +146,31 @@ export function InventorySpeedDialFab({
       },
     },
     {
+      id: 'add_category',
+      label: 'Add Category',
+      icon: 'tag',
+      isPrimary: false,
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        handleClose();
+        onAddCategory();
+      },
+    },
+    {
+      id: 'add_supplier',
+      label: 'Add Supplier',
+      icon: 'users',
+      isPrimary: false,
+      onPress: () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        handleClose();
+        onAddSupplier();
+      },
+    },
+    {
       id: 'scan_barcode',
       label: 'Scan Barcode',
-      icon: 'barcode' as const,
+      icon: 'barcode',
       isPrimary: false,
       onPress: () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -149,7 +178,7 @@ export function InventorySpeedDialFab({
         onScanBarcode();
       },
     },
-  ] as const;
+  ] satisfies Actions[];
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: expandProgress.value,
@@ -300,4 +329,3 @@ export function InventorySpeedDialFab({
     </>
   );
 }
-

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 interface SheetSlice {
   productId: number | null;
+  active: boolean;
 }
 
 interface StockSheetSignalState {
@@ -19,15 +20,15 @@ interface StockSheetSignalState {
 }
 
 export const useStockSheetSignal = create<StockSheetSignalState>((set) => ({
-  restock: { productId: null },
-  damaged: { productId: null },
-  adjust: { productId: null },
+  restock: { productId: null, active: false },
+  damaged: { productId: null, active: false },
+  adjust: { productId: null, active: false },
 
-  requestRestock: (productId) => set({ restock: { productId } }),
-  requestDamaged: (productId) => set({ damaged: { productId } }),
-  requestAdjust: (productId) => set({ adjust: { productId } }),
+  requestRestock: (productId) => set({ restock: { productId, active: true } }),
+  requestDamaged: (productId) => set({ damaged: { productId, active: true } }),
+  requestAdjust: (productId) => set({ adjust: { productId, active: true } }),
 
-  clearRestock: () => set({ restock: { productId: null } }),
-  clearDamaged: () => set({ damaged: { productId: null } }),
-  clearAdjust: () => set({ adjust: { productId: null } }),
+  clearRestock: () => set({ restock: { productId: null, active: false } }),
+  clearDamaged: () => set({ damaged: { productId: null, active: false } }),
+  clearAdjust: () => set({ adjust: { productId: null, active: false } }),
 }));
