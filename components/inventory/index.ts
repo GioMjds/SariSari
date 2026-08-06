@@ -7,3 +7,4 @@ export * from './InventorySpeedDialFab';
 export * from './ProductStatusChip';
 export * from './ValuationSummaryCard';
 export * from './DayHeader';
+export * from './CategoryFilterBar';

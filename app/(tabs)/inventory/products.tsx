@@ -12,11 +12,8 @@ import {
 } from '@/components/inventory/products';
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
-import {
-  useInventorySelection,
-  useToastStore,
-} from '@/stores';
-import { BulkActionsToolbar } from '@/components/inventory';
+import { useInventorySelection, useToastStore } from '@/stores';
+import { BulkActionsToolbar, CategoryFilterBar } from '@/components/inventory';
 import type { Product } from '@/types/products.types';
 import type { InventoryEventType } from '@/types/inventory.types';
 import { LogTransactionForm } from '@/components/inventory/ledger';
@@ -26,9 +23,11 @@ type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 function getEmptyVariant(
   searchTerm: string,
   filter: ProductsFilter,
+  category?: string,
+  supplier?: string,
 ): EmptyVariant {
   if (searchTerm) return 'no-search';
-  if (filter !== 'all') return 'no-filter';
+  if (filter !== 'all' || category || supplier) return 'no-filter';
   return 'no-products';
 }
 
@@ -44,22 +43,39 @@ export default function ProductsScreen() {
   const [formProduct, setFormProduct] = useState<Product | null>(null);
   const [formType, setFormType] = useState<InventoryEventType | null>(null);
 
-  const params = useLocalSearchParams<{ q?: string }>();
-  const searchTerm = (params.q ?? '').trim().toLowerCase();
+  const { q, category, supplier } = useLocalSearchParams<{
+    q?: string;
+    category?: string;
+    supplier?: string;
+  }>();
+  const searchTerm = (q ?? '').trim().toLowerCase();
 
   const productsQuery = usePaginatedProducts(searchTerm, filter);
 
-  const products = useMemo(
+  const rawProducts = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [productsQuery.data],
   );
+
+  const products = useMemo(() => {
+    let list = rawProducts;
+    if (category) {
+      list = list.filter(
+        (p) => p.category?.toLowerCase() === category.toLowerCase(),
+      );
+    }
+    if (supplier) {
+      list = list.filter((p) => p.supplier_id === supplier);
+    }
+    return list;
+  }, [rawProducts, category, supplier]);
 
   const selectedIds = useMemo(
     () => Array.from(selection.selectedIds),
     [selection.selectedIds],
   );
 
-  const emptyVariant = getEmptyVariant(searchTerm, filter);
+  const emptyVariant = getEmptyVariant(searchTerm, filter, category, supplier);
 
   const handlePress = useCallback(
     (id: number) => router.push(`/(edit-forms)/product-details/${id}`),
@@ -92,8 +108,7 @@ export default function ProductsScreen() {
         duration: 4000,
       });
       selection.clear();
-    } catch {
-    }
+    } catch {}
   }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
 
   const handleActionPress = useCallback((product: Product) => {
@@ -159,13 +174,16 @@ export default function ProductsScreen() {
 
   if (productsQuery.isLoading) return <ProductsSkeleton />;
   if (productsQuery.error) {
-    return (
-      <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />
-    );
+    return <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />;
   }
 
   return (
     <View className="flex-1 bg-paper-200">
+      <CategoryFilterBar
+        selectedCategory={category}
+        onSelectCategory={(cat) => router.setParams({ category: cat ?? '' })}
+        onOpenAddCategory={() => router.setParams({ addCategory: 'true' })}
+      />
       <ProductsFilterChips value={filter} onChange={setFilter} />
       {products.length === 0 ? (
         <ProductsEmptyState
@@ -173,7 +191,10 @@ export default function ProductsScreen() {
           searchTerm={searchTerm}
           onAddPress={handleAdd}
           onClearSearch={handleClearSearch}
-          onClearFilters={() => setFilter('all')}
+          onClearFilters={() => {
+            setFilter('all');
+            router.setParams({ category: '', supplier: '' });
+          }}
         />
       ) : (
         <ProductsList
@@ -184,7 +205,10 @@ export default function ProductsScreen() {
           isFetchingNextPage={productsQuery.isFetchingNextPage}
           hasNextPage={productsQuery.hasNextPage}
           onEndReached={() => {
-            if (!productsQuery.isFetchingNextPage && productsQuery.hasNextPage) {
+            if (
+              !productsQuery.isFetchingNextPage &&
+              productsQuery.hasNextPage
+            ) {
               productsQuery.fetchNextPage();
             }
           }}
@@ -230,6 +254,12 @@ export default function ProductsScreen() {
         onClose={() => {
           setFormProduct(null);
           setFormType(null);
+          if (selection.selectMode) selection.clear();
+        }}
+        onSuccess={() => {
+          setFormProduct(null);
+          setFormType(null);
+          if (selection.selectMode) selection.clear();
         }}
       />
     </View>

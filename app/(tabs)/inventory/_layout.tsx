@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import {
   Href,
@@ -10,7 +10,6 @@ import {
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
 import { LogTransactionForm } from '@/components/inventory/ledger';
-import { useStockSheetSignal } from '@/stores';
 import type { InventorySubTab } from '@/constants/tabs';
 import type { InventoryEventType } from '@/types/inventory.types';
 import { InventoryModalsHost } from './modals';
@@ -29,10 +28,15 @@ function isInventorySubTab(segment: string): segment is InventorySubTab {
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
-  const searchParams = useLocalSearchParams<{ q?: string }>();
+  const searchParams = useLocalSearchParams<{
+    q?: string;
+    addCategory?: string;
+    addSupplier?: string;
+  }>();
   const search = searchParams.q ?? '';
-  const signal = useStockSheetSignal();
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [supplierOpen, setSupplierOpen] = useState(false);
   const [fabForm, setFabForm] = useState<{
     visible: boolean;
     type: InventoryEventType;
@@ -40,6 +44,17 @@ export default function InventoryLayout() {
     visible: false,
     type: 'adjustment',
   });
+
+  useEffect(() => {
+    if (searchParams.addCategory === 'true') {
+      setCategoryOpen(true);
+      router.setParams({ addCategory: undefined });
+    }
+    if (searchParams.addSupplier === 'true') {
+      setSupplierOpen(true);
+      router.setParams({ addSupplier: undefined });
+    }
+  }, [searchParams.addCategory, searchParams.addSupplier, router]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -111,11 +126,8 @@ export default function InventoryLayout() {
         {!isDetail ? (
           <InventorySpeedDialFab
             onAddProduct={openAddProduct}
-            onReceiveStock={() => signal.requestRestock(null)}
-            onMarkDamaged={() => setFabForm({ visible: true, type: 'damaged' })}
-            onStockAdjustment={() =>
-              setFabForm({ visible: true, type: 'adjustment' })
-            }
+            onAddCategory={() => setCategoryOpen(true)}
+            onAddSupplier={() => setSupplierOpen(true)}
             onScanBarcode={() => setScannerOpen(true)}
           />
         ) : null}
@@ -124,12 +136,17 @@ export default function InventoryLayout() {
           initialType={fabForm.type}
           visible={fabForm.visible}
           onClose={() => setFabForm({ visible: false, type: fabForm.type })}
+          onSuccess={() => setFabForm({ visible: false, type: fabForm.type })}
         />
       </View>
 
       <InventoryModalsHost
         scannerOpen={scannerOpen}
         onCloseScanner={() => setScannerOpen(false)}
+        categoryOpen={categoryOpen}
+        onCloseCategory={() => setCategoryOpen(false)}
+        supplierOpen={supplierOpen}
+        onCloseSupplier={() => setSupplierOpen(false)}
       />
     </View>
   );
