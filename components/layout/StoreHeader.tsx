@@ -14,7 +14,7 @@ export const StoreHeader = memo(function StoreHeader() {
   const { profile } = useProfile();
   const { alertCount, alerts } = useHomeDashboardData();
 
-  useSystemNotifications(alertCount);
+  useSystemNotifications(alerts);
 
   const [isSheetVisible, setSheetVisible] = useState(false);
 

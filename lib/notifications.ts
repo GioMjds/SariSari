@@ -73,8 +73,12 @@ export async function triggerLowStockNotification(
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: `Low Stock Alert: ${productName}`,
-        body: `Only ${quantity} item${quantity === 1 ? '' : 's'} remaining in inventory. Tap to restock.`,
+        body:
+          quantity === 0
+            ? `${productName} is out of stock! Tap to restock.`
+            : `Only ${quantity} item${quantity === 1 ? '' : 's'} remaining in inventory. Tap to restock.`,
         sound: 'default',
+        channelId: Platform.OS === 'android' ? 'low-stock-channel' : undefined,
         data: { targetPath: '/inventory', type: 'low_stock' },
       },
       trigger: null,
@@ -96,6 +100,7 @@ export async function triggerOverdueDebtNotification(
         title: `Overdue Credit: ${customerName}`,
         body: `Outstanding balance of ${amountFormatted} requires collection.`,
         sound: 'default',
+        channelId: Platform.OS === 'android' ? 'overdue-debt-channel' : undefined,
         data: { targetPath: '/(tabs)/customers/credit', type: 'overdue_debts' },
       },
       trigger: null,
