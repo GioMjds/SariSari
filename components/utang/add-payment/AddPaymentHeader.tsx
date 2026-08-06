@@ -6,21 +6,10 @@ import { StyledText } from '@/components/elements';
 
 interface AddPaymentHeaderProps {
   customer?: Customer | null;
-  /**
-   * True when the screen was opened from the Quick Settle action
-   * on a single UtangCard. Drives the eyebrow label so the cashier
-   * knows they're targeting a specific credit instead of FIFO.
-   */
   quickSettle?: boolean;
   onBack: () => void;
 }
 
-/**
- * AddPaymentHeader — top bar with back button, title eyebrow, and
- * the dark `bg-cinnamon-500` suki hero card showing the customer's
- * outstanding balance. Mirrors the AddCreditHeader so the two
- * screens share the same visual anchor.
- */
 export function AddPaymentHeader({
   customer,
   quickSettle = false,

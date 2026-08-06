@@ -88,18 +88,6 @@ export function SalesHeader({
         </View>
 
         <View className="flex-row items-center gap-2">
-          <View className="bg-white/20 px-3 py-1 rounded-full flex-row items-center border border-white/30">
-            <FontAwesome
-              name="bolt"
-              size={10}
-              color="#FFFFFF"
-              style={{ marginRight: 5 }}
-            />
-            <StyledText variant="extrabold" className="text-white text-xs">
-              Live POS Session
-            </StyledText>
-          </View>
-
           {transactionCount !== undefined ? (
             <View className="bg-white/20 px-3 py-1 rounded-full flex-row items-center border border-white/30">
               <FontAwesome

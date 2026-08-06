@@ -45,11 +45,6 @@ export const StoreHeader = memo(function StoreHeader() {
     [router],
   );
 
-  const handleSeeAll = useCallback(() => {
-    setSheetVisible(false);
-    router.push('/reports' as Href);
-  }, [router]);
-
   return (
     <View className="bg-paper-200 px-4 pt-3 pb-2">
       <View className="flex-row items-center justify-between">
@@ -91,7 +86,6 @@ export const StoreHeader = memo(function StoreHeader() {
         alerts={alerts}
         onClose={handleSheetClose}
         onAlertAction={handleAlertAction}
-        onSeeAll={handleSeeAll}
       />
     </View>
   );

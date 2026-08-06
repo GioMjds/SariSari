@@ -2,7 +2,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import { memo } from 'react';
 import { MotiView } from 'moti';
 import { Pressable, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 import { t } from 'i18next';
 import { dialPhone, smsPhone } from '@/utils';
 import {
@@ -27,39 +26,14 @@ import { StatementShareButton } from './StatementShareButton';
 
 interface CustomerHeroCardProps {
   customer: CustomerWithDetails;
-  /** All credits for the suki (paid + unpaid) — used for trust tags. */
   credits: CreditTransaction[];
-  /** All payments on file — used for payback-speed tag. */
   payments: Payment[];
-  /**
-   * Name of the store, used in the statement template. Falls back
-   * to a generic line if the profile isn't loaded yet.
-   */
   storeName: string;
-  /**
-   * Currently active credit count — passed so the hero can surface
-   * the number of unpaid items at a glance next to the balance.
-   */
   activeCreditCount: number;
   onAddPayment: () => void;
   onAddCredit: () => void;
 }
 
-/**
- * CustomerHeroCard — the receipt-style hero that anchors the
- * credit-details screen.
- *
- * Composition:
- *   • ReceiptHero (cinnamon tone) for the receipt-shaped outer card
- *     with a hero money line and a primary CTA row.
- *   • Debt-to-limit warning bar — colored by utilization.
- *   • Trust tags (good payer / frequent suki / needs follow-up).
- *   • Quick contact row (Call / SMS) plus the Statement Share button.
- *
- * The hero carries zero state of its own. Statement text and trust
- * tags are derived here at render time from props — pure
- * presentation, easy to test.
- */
 export const CustomerHeroCard = memo(function CustomerHeroCard({
   customer,
   credits,

@@ -31,7 +31,7 @@ export interface NotificationSheetProps {
   alerts: DynamicHomeAlert[];
   onClose: () => void;
   onAlertAction: (alert: DynamicHomeAlert) => void;
-  onSeeAll: () => void;
+  onSeeAll?: () => void;
 }
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -386,22 +386,24 @@ export function NotificationSheet({
                 />
 
                 {/* CTA */}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="See all alerts"
-                  onPress={() => {
-                    console.log(`${TAG} see-all CTA tapped`);
-                    onSeeAll();
-                  }}
-                  className="mx-4 my-3 min-h-[44px] rounded-xl bg-persimmon-500 active:bg-persimmon-600 items-center justify-center"
-                >
-                  <StyledText
-                    variant="extrabold"
-                    className="text-paper-50 text-sm"
+                {onSeeAll ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="See all alerts"
+                    onPress={() => {
+                      console.log(`${TAG} see-all CTA tapped`);
+                      onSeeAll();
+                    }}
+                    className="mx-4 my-3 min-h-[44px] rounded-xl bg-persimmon-500 active:bg-persimmon-600 items-center justify-center"
                   >
-                    See all alerts
-                  </StyledText>
-                </Pressable>
+                    <StyledText
+                      variant="extrabold"
+                      className="text-paper-50 text-sm"
+                    >
+                      See all alerts
+                    </StyledText>
+                  </Pressable>
+                ) : null}
               </MotiView>
             </Animated.View>
           </GestureDetector>

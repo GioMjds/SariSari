@@ -6,7 +6,6 @@ const TAG = '[Notifications]';
 // Configure foreground presentation
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
     shouldShowBanner: true,
@@ -16,7 +15,8 @@ Notifications.setNotificationHandler({
 
 export async function requestNotificationPermissions(): Promise<boolean> {
   try {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } =
+      await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
       const { status } = await Notifications.requestPermissionsAsync();
@@ -67,7 +67,7 @@ export async function updateAppIconBadge(count: number): Promise<void> {
 
 export async function triggerLowStockNotification(
   productName: string,
-  quantity: number
+  quantity: number,
 ): Promise<string | null> {
   try {
     const notificationId = await Notifications.scheduleNotificationAsync({
@@ -78,10 +78,10 @@ export async function triggerLowStockNotification(
             ? `${productName} is out of stock! Tap to restock.`
             : `Only ${quantity} item${quantity === 1 ? '' : 's'} remaining in inventory. Tap to restock.`,
         sound: 'default',
-        channelId: Platform.OS === 'android' ? 'low-stock-channel' : undefined,
         data: { targetPath: '/inventory', type: 'low_stock' },
       },
-      trigger: null,
+      trigger:
+        Platform.OS === 'android' ? { channelId: 'low-stock-channel' } : null,
     });
     return notificationId;
   } catch (error) {
@@ -92,7 +92,7 @@ export async function triggerLowStockNotification(
 
 export async function triggerOverdueDebtNotification(
   customerName: string,
-  amountFormatted: string
+  amountFormatted: string,
 ): Promise<string | null> {
   try {
     const notificationId = await Notifications.scheduleNotificationAsync({
@@ -100,10 +100,12 @@ export async function triggerOverdueDebtNotification(
         title: `Overdue Credit: ${customerName}`,
         body: `Outstanding balance of ${amountFormatted} requires collection.`,
         sound: 'default',
-        channelId: Platform.OS === 'android' ? 'overdue-debt-channel' : undefined,
         data: { targetPath: '/(tabs)/customers/credit', type: 'overdue_debts' },
       },
-      trigger: null,
+      trigger:
+        Platform.OS === 'android'
+          ? { channelId: 'overdue-debt-channel' }
+          : null,
     });
     return notificationId;
   } catch (error) {
