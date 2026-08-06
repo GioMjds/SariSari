@@ -39,6 +39,14 @@ const queryClient = new QueryClient({
   },
 });
 
+const CUSTOM_THEME = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#F7F6F2', // Sets the fallback background for all screens
+  },
+};
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     'StackSansText-Regular': require('../assets/fonts/StackSansText-Regular.ttf'),
@@ -131,14 +139,6 @@ export default function RootLayout() {
     }
   }, []);
 
-  const CustomTheme = {
-    ...DefaultTheme,
-    colors: {
-      ...DefaultTheme.colors,
-      background: '#F7F6F2', // Sets the fallback background for all screens
-    },
-  };
-
   if (dbInitError) {
     return (
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
@@ -151,7 +151,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={CustomTheme}>
+    <ThemeProvider value={CUSTOM_THEME}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
         <QueryClientProvider client={queryClient}>
           <SafeAreaProvider>
