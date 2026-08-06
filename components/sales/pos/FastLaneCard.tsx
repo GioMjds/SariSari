@@ -1,9 +1,10 @@
 import { FC } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable, View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { FastLaneProduct } from '@/database/products';
 import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
+import { formatPesos } from '@/lib';
 
 interface FastLaneCardProps {
   product: FastLaneProduct;
@@ -15,6 +16,7 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
   onAddToCart,
 }) => {
   const toggleFavorite = useToggleFavorite();
+  const isOutOfStock = product.quantity <= 0;
 
   const handleToggleFav = () => {
     toggleFavorite.mutate({
@@ -24,93 +26,70 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
   };
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <StyledText variant="extrabold" style={styles.name} numberOfLines={1}>
+    <View
+      className={`bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 shadow-paper ${
+        isOutOfStock ? 'opacity-60' : ''
+      }`}
+    >
+      <View className="flex-row items-center justify-between mb-1">
+        <StyledText
+          variant="extrabold"
+          className="text-ink-900 text-xs flex-1 mr-1"
+          numberOfLines={1}
+        >
           {product.name}
         </StyledText>
-        <TouchableOpacity
+        <Pressable
           onPress={handleToggleFav}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={
+            product.is_favorite
+              ? `Remove ${product.name} from favorites`
+              : `Add ${product.name} to favorites`
+          }
         >
-          <MaterialCommunityIcons
-            name={product.is_favorite ? 'star' : 'star-outline'}
-            size={18}
-            color={product.is_favorite ? '#fbc02d' : '#9e9e9e'}
+          <FontAwesome
+            name={product.is_favorite ? 'star' : 'star-o'}
+            size={14}
+            color={product.is_favorite ? '#E85A1F' : '#7A7165'}
           />
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      <StyledText variant="extrabold" style={styles.price}>
-        ₱{Math.round(product.price)}
+      <StyledText variant="extrabold" className="text-sage-700 text-xs mb-2">
+        {formatPesos(product.price)}
       </StyledText>
 
-      <View style={styles.chipsRow}>
-        {[1, 2, 5, 12].map((qty) => (
-          <TouchableOpacity
-            key={qty}
-            style={styles.chip}
-            onPress={() => onAddToCart(product, qty)}
+      {isOutOfStock ? (
+        <View className="bg-semantic-danger-50 border border-semantic-danger/20 rounded-lg py-1 items-center">
+          <StyledText
+            variant="semibold"
+            className="text-semantic-danger text-[10px]"
           >
-            <StyledText variant="extrabold" style={styles.chipText}>
-              +{qty}
-            </StyledText>
-          </TouchableOpacity>
-        ))}
-      </View>
+            Out of stock
+          </StyledText>
+        </View>
+      ) : (
+        <View className="flex-row items-center justify-between gap-1">
+          {[1, 2, 5].map((qty) => (
+            <Pressable
+              key={qty}
+              onPress={() => onAddToCart(product, qty)}
+              accessibilityRole="button"
+              accessibilityLabel={`Add ${qty} ${product.name} to cart`}
+              className="flex-1 bg-cinnamon-500 active:bg-cinnamon-600 py-1.5 rounded-lg items-center justify-center min-h-[32px]"
+            >
+              <StyledText
+                variant="extrabold"
+                className="text-paper-50 text-[11px]"
+              >
+                +{qty}
+              </StyledText>
+            </Pressable>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    width: 140,
-    backgroundColor: '#ffffff',
-    borderRadius: 10,
-    padding: 10,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  name: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#212121',
-    flex: 1,
-    marginRight: 4,
-  },
-  price: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2e7d32',
-    marginBottom: 8,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  chip: {
-    backgroundColor: '#e8f5e9',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#c8e6c9',
-  },
-  chipText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#2e7d32',
-  },
-});

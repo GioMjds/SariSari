@@ -29,32 +29,104 @@ export function CheckoutLineRow({
     : item.retail_unit_name || 'Pc';
 
   return (
-    <Pressable
-      onLongPress={() => setShowConfirmRemove(true)}
-      delayLongPress={400}
-      accessibilityRole="button"
-      accessibilityLabel={`${item.product_name} row`}
-      className="py-3 px-4 border-b border-paper-200 bg-paper-50 flex-row items-center justify-between"
-    >
-      <View className="flex-1 mr-3">
-        <StyledText variant="semibold" className="text-ink-900 text-base">
-          {item.product_name}
-        </StyledText>
-        <StyledText variant="medium" className="text-ink-500 text-xs mt-0.5">
-          {unitName} · {formatPesos(item.price)} each
-        </StyledText>
+    <View className="px-5 py-3 border-b border-paper-200 bg-paper-50">
+      <Pressable
+        onLongPress={() => setShowConfirmRemove(true)}
+        delayLongPress={400}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.product_name} row`}
+        accessibilityHint="Long press to remove item"
+        className="flex-row items-center justify-between"
+      >
+        <View className="flex-1 mr-3 min-w-0">
+          <StyledText
+            variant="semibold"
+            className="text-ink-900 text-base"
+            numberOfLines={1}
+          >
+            {item.product_name}
+          </StyledText>
+          <View className="flex-row items-center gap-1.5 mt-0.5">
+            <View
+              className={`px-2 py-0.5 rounded-md border ${
+                isWholesale
+                  ? 'bg-amber-100/90 border-amber-300/60'
+                  : 'bg-paper-200/80 border-paper-300/50'
+              }`}
+            >
+              <StyledText
+                variant="extrabold"
+                className={`text-[10px] uppercase ${
+                  isWholesale ? 'text-amber-900' : 'text-ink-600'
+                }`}
+              >
+                {unitName}
+              </StyledText>
+            </View>
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              {formatPesos(item.price)} each
+            </StyledText>
+          </View>
+        </View>
 
-        {showConfirmRemove && (
-          <View className="flex-row items-center mt-2 bg-semantic-danger-50 p-2 rounded-xl border border-semantic-danger/20">
+        {/* Right side: Stepper + Subtotal */}
+        <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center bg-paper-100/90 rounded-2xl border border-paper-300 p-1">
+            <Pressable
+              onPress={() =>
+                onUpdateQuantity(item.product_id, -1, item.selected_unit)
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Decrease quantity of ${item.product_name}`}
+              className="w-7 h-7 rounded-xl bg-paper-200/80 items-center justify-center active:opacity-60"
+              hitSlop={4}
+            >
+              <FontAwesome name="minus" size={10} color="#0E0C0A" />
+            </Pressable>
+
             <StyledText
               variant="extrabold"
-              className="text-semantic-danger text-xs mr-3"
+              className="text-ink-900 text-sm px-2.5 min-w-[28px] text-center"
             >
-              Remove item?
+              {item.quantity}
             </StyledText>
+
+            <Pressable
+              onPress={() =>
+                onUpdateQuantity(item.product_id, 1, item.selected_unit)
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Increase quantity of ${item.product_name}`}
+              className="w-7 h-7 rounded-xl bg-persimmon-500 items-center justify-center active:opacity-75"
+              hitSlop={4}
+            >
+              <FontAwesome name="plus" size={10} color="#FFFFFF" />
+            </Pressable>
+          </View>
+
+          <View className="w-18 items-end">
+            <MoneyText
+              value={subtotal}
+              size="sm"
+              className="text-ink-900 font-extrabold"
+            />
+          </View>
+        </View>
+      </Pressable>
+
+      {showConfirmRemove && (
+        <View className="flex-row items-center justify-between mt-2.5 bg-semantic-danger-50 px-3.5 py-2 rounded-xl border border-semantic-danger/30">
+          <StyledText
+            variant="extrabold"
+            className="text-semantic-danger text-xs flex-1 mr-2"
+          >
+            Remove this item from cart?
+          </StyledText>
+          <View className="flex-row items-center gap-1.5">
             <Pressable
               onPress={() => onRemove(item.product_id, item.selected_unit)}
-              className="bg-semantic-danger px-2.5 py-1 rounded-lg mr-2"
+              className="bg-semantic-danger px-3 py-1.5 rounded-lg active:opacity-80"
+              hitSlop={4}
             >
               <StyledText variant="extrabold" className="text-white text-xs">
                 Remove
@@ -62,57 +134,17 @@ export function CheckoutLineRow({
             </Pressable>
             <Pressable
               onPress={() => setShowConfirmRemove(false)}
-              className="bg-paper-200 px-2.5 py-1 rounded-lg"
+              className="bg-paper-200 border border-paper-300 px-3 py-1.5 rounded-lg active:bg-paper-300"
+              hitSlop={4}
             >
               <StyledText variant="extrabold" className="text-ink-700 text-xs">
                 Cancel
               </StyledText>
             </Pressable>
           </View>
-        )}
-      </View>
-
-      {/* Right side: Stepper + Subtotal */}
-      <View className="flex-row items-center">
-        <View className="flex-row items-center bg-paper-100 rounded-full border border-ink-150 p-1 mr-3">
-          <Pressable
-            onPress={() =>
-              onUpdateQuantity(item.product_id, -1, item.selected_unit)
-            }
-            accessibilityRole="button"
-            accessibilityLabel={`Decrease quantity of ${item.product_name}`}
-            className="w-7 h-7 rounded-full bg-paper-200 items-center justify-center active:opacity-60"
-          >
-            <FontAwesome name="minus" size={10} color="#0E0C0A" />
-          </Pressable>
-
-          <StyledText
-            variant="extrabold"
-            className="text-ink-900 text-sm px-2.5"
-          >
-            {item.quantity}
-          </StyledText>
-
-          <Pressable
-            onPress={() =>
-              onUpdateQuantity(item.product_id, 1, item.selected_unit)
-            }
-            accessibilityRole="button"
-            accessibilityLabel={`Increase quantity of ${item.product_name}`}
-            className="w-7 h-7 rounded-full bg-persimmon-500 items-center justify-center active:opacity-60"
-          >
-            <FontAwesome name="plus" size={10} color="#FFFFFF" />
-          </Pressable>
         </View>
-
-        <View className="w-16 items-end">
-          <MoneyText
-            value={subtotal}
-            size="sm"
-            className="text-ink-900 font-extrabold"
-          />
-        </View>
-      </View>
-    </Pressable>
+      )}
+    </View>
   );
 }
+

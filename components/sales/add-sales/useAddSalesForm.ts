@@ -49,7 +49,7 @@ export function useAddSalesForm() {
   const pendingScanRef = useRef<string | null>(null);
   const { resolve } = useBarcodeResolver();
 
-  const { control, reset } = useForm<AddSalesFormData>({
+  const { control, setValue, reset } = useForm<AddSalesFormData>({
     defaultValues: { search: '' },
   });
 
@@ -406,6 +406,7 @@ export function useAddSalesForm() {
   return {
     // Form & Search
     control,
+    setValue,
     search,
 
     // Domain data

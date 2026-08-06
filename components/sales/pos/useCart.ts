@@ -1,46 +1,74 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useCartStore, useToastStore } from '@/stores';
+import { useToastStore } from '@/stores';
 import {
-  usePaginatedProducts,
   useSales,
   useBarcodeResolver,
   useCustomers,
 } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
-import type { NewSaleItem } from '@/types';
+import { logger } from '@/lib/logger';
 import type { ScanResolution } from '@/lib/barcodes/types';
+import { useCartLines } from './useCartLines';
 
-export function useCart(search: string = '') {
-  const {
-    cartItems,
-    paymentType,
-    selectedCustomer,
-    addItem,
-    updateQuantity,
-    toggleUnit,
-    clearCart: clearCartStore,
-    setPaymentType,
-    setCustomer,
-  } = useCartStore();
-
-  const productsQuery = usePaginatedProducts(search);
-  const products =
-    productsQuery.data?.pages.flatMap((page) => page.items) ?? [];
-  const {
-    isLoading: isProductsLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch: refetchProducts,
-    error: productsError,
-  } = productsQuery;
-
+/**
+ * Cart-action surface for the POS screen.
+ *
+ * Responsibilities (split for stability):
+ *   - cart line state and actions: see `useCartLines`.
+ *   - scanner state machine (modal open, last scan, pending add):
+ *     local React state with stable callback identities via refs.
+ *   - submit / customer actions: built on top of both.
+ *
+ * The product catalog query is owned by `CatalogProductsBridge` in
+ * `app/(tabs)/sales/pos.tsx`, NOT here, so the search keystroke does
+ * not invalidate the cart subtree's render.
+ */
+export function useCart() {
+  const cartLines = useCartLines();
   const { data: customers = [] } = useCustomers();
   const { insertSaleMutation, getTodayStatsQuery } = useSales();
   const addToast = useToastStore((state) => state.addToast);
+
+  // Watch the `customers` reference identity. If useCustomers returns
+  // a new array on every render, every downstream memo in the POS
+  // subtree invalidates and the css-interop layer can re-process the
+  // whole tree. Emit a single warn when the identity flips mid-flow.
+  const prevCustomersRef = useRef<typeof customers>(customers);
+  useEffect(() => {
+    if (prevCustomersRef.current !== customers) {
+      logger.warn(
+        {
+          event: 'checkout_useCustomers_identity_changed',
+          feature: 'checkout',
+          prevLength: prevCustomersRef.current.length,
+          nextLength: customers.length,
+        },
+        'useCustomers returned a new reference',
+      );
+      prevCustomersRef.current = customers;
+    }
+  }, [customers]);
+
+  // Same watch for the payment type from the store. Pair with the
+  // CheckoutModal-level event so we get a source-and-consumer view.
+  const prevPaymentTypeRef = useRef(cartLines.paymentType);
+  useEffect(() => {
+    if (prevPaymentTypeRef.current !== cartLines.paymentType) {
+      logger.info(
+        {
+          event: 'checkout_payment_type_changed_at_source',
+          feature: 'checkout',
+          from: prevPaymentTypeRef.current,
+          to: cartLines.paymentType,
+        },
+        'payment type changed at store source',
+      );
+      prevPaymentTypeRef.current = cartLines.paymentType;
+    }
+  }, [cartLines.paymentType]);
 
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
   const [lastScanned, setLastScanned] = useState<{
@@ -56,16 +84,10 @@ export function useCart(search: string = '') {
   const pendingScanRef = useRef<string | null>(null);
   const { resolve } = useBarcodeResolver();
 
-  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const total = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
-
   const isSubmitDisabled =
     insertSaleMutation.isPending ||
-    cartItems.length === 0 ||
-    (paymentType === 'credit' && !selectedCustomer);
+    cartLines.cartItems.length === 0 ||
+    (cartLines.paymentType === 'credit' && !cartLines.selectedCustomer);
 
   const openScanner = useCallback(() => {
     setIsScannerOpen(true);
@@ -126,7 +148,7 @@ export function useCart(search: string = '') {
 
       if (result.kind === 'resolved') {
         const { product, matchedUnit } = result;
-        addItem(product, matchedUnit);
+        cartLines.addItem(product, matchedUnit);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
         setPendingAddProductBarcode(null);
         setLastScanned({
@@ -149,16 +171,8 @@ export function useCart(search: string = '') {
         return;
       }
     },
-    [resolve, addToast, addItem],
+    [resolve, addToast, cartLines],
   );
-
-  useEffect(() => {
-    if (!productsQuery.isSuccess || productsQuery.isFetching) return;
-    const queued = pendingScanRef.current;
-    if (!queued) return;
-    pendingScanRef.current = null;
-    void handleScannedBarcode(queued);
-  }, [productsQuery.isSuccess, productsQuery.isFetching, handleScannedBarcode]);
 
   const handlePressAddNewProduct = useCallback(() => {
     if (!pendingAddProductBarcode) return;
@@ -175,79 +189,95 @@ export function useCart(search: string = '') {
   }, []);
 
   const submit = useCallback(async (): Promise<boolean> => {
-    if (cartItems.length === 0 || insertSaleMutation.isPending) {
+    if (cartLines.cartItems.length === 0 || insertSaleMutation.isPending) {
       return false;
     }
 
+    logger.info(
+      {
+        event: 'checkout_submit_started',
+        feature: 'checkout',
+        paymentType: cartLines.paymentType,
+        itemCount: cartLines.cartItems.length,
+        hasCustomer: cartLines.selectedCustomer != null,
+      },
+      'checkout submit started',
+    );
+
     try {
       const customerName =
-        typeof selectedCustomer === 'string'
-          ? selectedCustomer
-          : selectedCustomer?.name;
+        typeof cartLines.selectedCustomer === 'string'
+          ? cartLines.selectedCustomer
+          : cartLines.selectedCustomer?.name;
       const customerCreditId =
-        typeof selectedCustomer === 'string' ? undefined : selectedCustomer?.id;
+        typeof cartLines.selectedCustomer === 'string'
+          ? undefined
+          : cartLines.selectedCustomer?.id;
 
       await insertSaleMutation.mutateAsync({
-        items: cartItems.map((item) => ({
+        items: cartLines.cartItems.map((item) => ({
           product_id: item.product_id,
           quantity: item.quantity,
           price: item.price,
           selected_unit: item.selected_unit,
         })),
-        payment_type: paymentType,
+        payment_type: cartLines.paymentType,
         ...(customerName !== undefined ? { customer_name: customerName } : {}),
         ...(customerCreditId !== undefined
           ? { customer_credit_id: customerCreditId }
           : {}),
       });
 
-      clearCartStore();
+      cartLines.clearCart();
+      logger.info(
+        {
+          event: 'checkout_submit_succeeded',
+          feature: 'checkout',
+          paymentType: cartLines.paymentType,
+        },
+        'checkout submit succeeded',
+      );
       return true;
     } catch (err) {
+      const errorName = err instanceof Error ? err.name : 'unknown';
       if (err instanceof InsufficientStockError) {
         Alert.alert(
           'Stock changed',
           `Only ${err.available} of ${err.requested} available now. Please refresh.`,
         );
-        return false;
+      } else {
+        Alert.alert('Error', 'Failed to complete sale. Please try again.');
       }
-      Alert.alert('Error', 'Failed to complete sale. Please try again.');
+      logger.warn(
+        {
+          event: 'checkout_submit_failed',
+          feature: 'checkout',
+          paymentType: cartLines.paymentType,
+          errorName,
+        },
+        'checkout submit failed',
+      );
       return false;
     }
   }, [
-    cartItems,
-    paymentType,
-    selectedCustomer,
+    cartLines.cartItems,
+    cartLines.paymentType,
+    cartLines.selectedCustomer,
+    cartLines.clearCart,
     insertSaleMutation,
-    clearCartStore,
   ]);
-
-  const getCartLine = useCallback(
-    (productId: number): NewSaleItem | undefined =>
-      cartItems.find((item) => item.product_id === productId),
-    [cartItems],
-  );
 
   return {
     // Domain data
-    products,
     customers,
-    isProductsLoading,
     todayStats: getTodayStatsQuery.data,
 
-    // Pagination
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetchProducts,
-    productsError,
-
-    // Cart state (from store)
-    cartItems,
-    paymentType,
-    selectedCustomer,
-    itemCount,
-    total,
+    // Cart state (delegated from useCartLines)
+    cartItems: cartLines.cartItems,
+    paymentType: cartLines.paymentType,
+    selectedCustomer: cartLines.selectedCustomer,
+    itemCount: cartLines.itemCount,
+    total: cartLines.total,
     isSubmitDisabled,
 
     // Scanner state (local)
@@ -256,12 +286,12 @@ export function useCart(search: string = '') {
     pendingAddProductBarcode,
 
     // Store actions
-    addItem,
-    updateQuantity,
-    toggleUnit,
-    clearCart: clearCartStore,
-    setPaymentType,
-    setCustomer,
+    addItem: cartLines.addItem,
+    updateQuantity: cartLines.updateQuantity,
+    toggleUnit: cartLines.toggleUnit,
+    clearCart: cartLines.clearCart,
+    setPaymentType: cartLines.setPaymentType,
+    setCustomer: cartLines.setCustomer,
 
     // Handlers
     openScanner,
@@ -270,7 +300,7 @@ export function useCart(search: string = '') {
     handlePressAddNewProduct,
     dismissPendingAddProduct,
     submit,
-    getCartLine,
+    getCartLine: cartLines.getCartLine,
 
     // Mutation
     insertSaleMutation,

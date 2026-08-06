@@ -10,6 +10,7 @@ export * from './useHomeDashboardData';
 export * from './useInventory';
 export * from './useProducts';
 export * from './useProfile';
+export * from './useRenderCounter';
 export * from './useReducedMotion';
 export * from './useReports';
 export * from './useSales';

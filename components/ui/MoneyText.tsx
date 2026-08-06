@@ -50,11 +50,16 @@ export function MoneyText({
   const formattedWithoutPeso = formatted.replace(/^₱/, '');
   const animateValue = size === 'display' || size === 'hero';
 
+  const hasCustomTextColor = className
+    ?.split(/\s+/)
+    .some((c) => c.startsWith('text-'));
+  const colorClass = hasCustomTextColor ? '' : variantMap[variant];
+
   const text = (
     <StyledText
       numberOfLines={numberOfLines}
       style={[style, { fontVariant: ['tabular-nums'] }]}
-      className={`${sizeMap[size]} ${variantMap[variant]} font-extrabold${className ? ` ${className}` : ''}`}
+      className={`${sizeMap[size]} ${colorClass} font-extrabold${className ? ` ${className}` : ''}`}
     >
       {currency !== '₱' && (
         <StyledText variant="medium" className="text-ink-500 text-sm mr-1.5">

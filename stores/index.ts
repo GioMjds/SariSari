@@ -5,5 +5,6 @@ export * from './ScrollStore';
 export * from './ToastStore';
 export * from './TooltipStore';
 export * from './CartStore';
+export * from './posSearchStore';
 export * from './useStockSheetSignal';
 export * from './useInventorySelection';

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Customer, NewSaleItem, Product } from '@/types';
 import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
+import { logger } from '@/lib/logger';
 
 /**
  * CartStore — shared point-of-sale cart state.
@@ -141,6 +142,18 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   toggleUnit: (index) => {
+    const target = get().cartItems[index];
+    logger.debug(
+      {
+        event: 'cart_unit_toggled',
+        feature: 'cart',
+        idx: index,
+        productId: target?.product_id ?? null,
+        prevUnit: target?.selected_unit ?? null,
+        cartLen: get().cartItems.length,
+      },
+      'toggleUnit invoked',
+    );
     set((state) => ({
       cartItems: state.cartItems.map((item, idx) => {
         if (idx !== index) return item;
@@ -150,6 +163,17 @@ export const useCartStore = create<CartState>((set, get) => ({
         if (nextUnit === 'wholesale') {
           const piecesPerUnit = item.conversion_factor ?? 1;
           if (item.quantity * piecesPerUnit > item.stock) {
+            logger.debug(
+              {
+                event: 'cart_unit_toggle_blocked',
+                feature: 'cart',
+                productId: item.product_id,
+                reason: 'insufficient_stock',
+                quantity: item.quantity,
+                stock: item.stock,
+              },
+              'toggleUnit blocked by insufficient stock',
+            );
             Alert.alert(
               'Insufficient Stock',
               `Only ${item.stock} pieces available. Not enough for ${item.quantity} wholesale units.`,
@@ -162,6 +186,18 @@ export const useCartStore = create<CartState>((set, get) => ({
           nextUnit === 'wholesale' && item.wholesale_price != null
             ? item.wholesale_price
             : (item.retail_price ?? item.price);
+        logger.debug(
+          {
+            event: 'cart_unit_toggle_applied',
+            feature: 'cart',
+            productId: item.product_id,
+            from: item.selected_unit,
+            to: nextUnit,
+            prevPrice: item.price,
+            nextPrice,
+          },
+          'toggleUnit applied',
+        );
         return {
           ...item,
           selected_unit: nextUnit,

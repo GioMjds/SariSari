@@ -1,5 +1,5 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -10,6 +10,8 @@ import {
 import { Customer } from '@/types';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
+import { logger } from '@/lib/logger';
 
 interface CustomerPickerModalProps {
   visible: boolean;
@@ -30,8 +32,29 @@ export function CustomerPickerModal({
 }: CustomerPickerModalProps) {
   const [query, setQuery] = useState<string>('');
 
+  useRenderCounter('CustomerPickerModal', { feature: 'checkout' });
+
   const isCash = paymentType === 'cash';
   const trimmedQuery = query.trim();
+
+  // Visibility transition is one of the suspected triggers. Emit
+  // a structured event so we can correlate it with render counts.
+  const prevVisibleRef = useRef(visible);
+  useEffect(() => {
+    if (prevVisibleRef.current !== visible) {
+      logger.info(
+        {
+          event: 'checkout_customer_picker_visibility',
+          feature: 'checkout',
+          visible,
+          paymentType,
+          customerCount: customers.length,
+        },
+        'customer picker visibility changed',
+      );
+      prevVisibleRef.current = visible;
+    }
+  }, [visible, paymentType, customers.length]);
 
   const filtered = useMemo(() => {
     const q = trimmedQuery.toLowerCase();

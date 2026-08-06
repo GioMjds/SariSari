@@ -1,9 +1,34 @@
 import type { NewSaleItem, Product } from '@/types';
+import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Image } from 'expo-image';
 import { formatPesos, getProductImageUri } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
+import { useToggleFavorite } from '@/hooks/useProducts';
+
+// Variant style maps live outside the component so css-interop sees
+// stable references and does not reprocess the row's className string
+// on each toggle. Render-time ternaries were the previous pattern;
+// the variants below are referenced by static classNames only.
+const ROW_OUT_OF_STOCK_CLASS = 'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card opacity-60';
+const ROW_AVAILABLE_CLASS = 'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card active:opacity-95';
+
+const PC_CHIP_ACTIVE_CLASS = 'flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center bg-cinnamon-500 shadow-sm border border-cinnamon-600';
+const PC_CHIP_INACTIVE_CLASS = 'flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center';
+
+const PC_LABEL_ACTIVE_CLASS = 'text-xs text-paper-50';
+const PC_LABEL_INACTIVE_CLASS = 'text-xs text-ink-700';
+
+const PK_CHIP_ACTIVE_CLASS = PC_CHIP_ACTIVE_CLASS;
+const PK_CHIP_INACTIVE_CLASS = PC_CHIP_INACTIVE_CLASS;
+
+const PK_LABEL_ACTIVE_CLASS = PC_LABEL_ACTIVE_CLASS;
+const PK_LABEL_INACTIVE_CLASS = PC_LABEL_INACTIVE_CLASS;
+
+const ADD_BUTTON_DISABLED_CLASS = 'bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm opacity-40';
+const ADD_BUTTON_ENABLED_CLASS = 'bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm';
 
 interface ProductRowProps {
   product: Product;
@@ -17,13 +42,28 @@ interface ProductRowProps {
   onToggleUnit?: (productId: number) => void;
 }
 
-export function ProductRow({
+function ProductRowImpl({
   product,
   cartLine,
   onAdd,
   onUpdateQuantity,
   onToggleUnit,
 }: ProductRowProps) {
+  const toggleFavorite = useToggleFavorite();
+
+  useRenderCounter(`ProductRow#${product.id}`, {
+    feature: 'pos_catalog',
+    threshold: 25,
+    windowMs: 1000,
+  });
+
+  const handleToggleFavorite = () => {
+    toggleFavorite.mutate({
+      productId: product.id,
+      isFavorite: !product.is_favorite,
+    });
+  };
+
   const isOutOfStock = product.quantity <= 0;
   const isLowStock = !isOutOfStock && product.quantity <= 5;
   const inCart = !!cartLine;
@@ -43,12 +83,21 @@ export function ProductRow({
   const retailUnitLabel = product.retail_unit_name || 'PC';
   const wholesaleUnitLabel = product.wholesale_unit_name || 'PK';
 
+  // PC/PK are "active" by className, not by ternary string. The same
+  // string is reused for both states so css-interop caches the parsed
+  // styles after the first render of each row.
+  const isRetailActive = !inCart || cartLine?.selected_unit === 'retail';
+  const isWholesaleActive =
+    inCart && cartLine?.selected_unit === 'wholesale';
+
   return (
     <Pressable
       onPress={() => {
         if (isOutOfStock) return;
         if (!inCart) onAdd(product);
       }}
+      onLongPress={handleToggleFavorite}
+      delayLongPress={400}
       disabled={isOutOfStock}
       accessibilityRole="button"
       accessibilityLabel={
@@ -56,9 +105,9 @@ export function ProductRow({
           ? `${product.name} out of stock`
           : `Add ${product.name} to cart`
       }
-      className={`mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card ${
-        isOutOfStock ? 'opacity-60' : 'active:opacity-95'
-      }`}
+      className={
+        isOutOfStock ? ROW_OUT_OF_STOCK_CLASS : ROW_AVAILABLE_CLASS
+      }
     >
       {/* Top Header Row: Thumbnail + Details (Title, Category, SKU) */}
       <View className="flex-row items-start mb-2.5">
@@ -71,10 +120,7 @@ export function ProductRow({
               contentFit="cover"
             />
           ) : (
-            <StyledText
-              variant="black"
-              className="text-persimmon-600 text-lg"
-            >
+            <StyledText variant="black" className="text-persimmon-600 text-lg">
               {placeholderText}
             </StyledText>
           )}
@@ -82,13 +128,31 @@ export function ProductRow({
 
         {/* Title, Category Badge & SKU */}
         <View className="flex-1">
-          <StyledText
-            variant="extrabold"
-            className="text-ink-900 text-base leading-tight mb-1"
-            numberOfLines={2}
-          >
-            {product.name}
-          </StyledText>
+          <View className="flex-row items-center justify-between">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-base leading-tight mb-1 flex-1 mr-2"
+              numberOfLines={2}
+            >
+              {product.name}
+            </StyledText>
+            <Pressable
+              onPress={handleToggleFavorite}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={
+                product.is_favorite
+                  ? `Unstar ${product.name}`
+                  : `Star ${product.name} for Fast Lane`
+              }
+            >
+              <FontAwesome
+                name={product.is_favorite ? 'star' : 'star-o'}
+                size={16}
+                color={product.is_favorite ? '#E85A1F' : '#B0A89E'}
+              />
+            </Pressable>
+          </View>
 
           <View className="flex-row items-center flex-wrap gap-1.5">
             {/* Category Tag Badge */}
@@ -129,19 +193,17 @@ export function ProductRow({
             }}
             accessibilityRole="button"
             accessibilityLabel={`Select ${retailUnitLabel} unit`}
-            className={`flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center ${
-              !inCart || cartLine?.selected_unit === 'retail'
-                ? 'bg-cinnamon-500 shadow-sm border border-cinnamon-600'
-                : ''
-            }`}
+            className={
+              isRetailActive ? PC_CHIP_ACTIVE_CLASS : PC_CHIP_INACTIVE_CLASS
+            }
           >
             <StyledText
               variant="extrabold"
-              className={`text-xs ${
-                !inCart || cartLine?.selected_unit === 'retail'
-                  ? 'text-paper-50'
-                  : 'text-ink-700'
-              }`}
+              className={
+                isRetailActive
+                  ? PC_LABEL_ACTIVE_CLASS
+                  : PC_LABEL_INACTIVE_CLASS
+              }
             >
               PC ({retailUnitLabel})
             </StyledText>
@@ -157,19 +219,17 @@ export function ProductRow({
             }}
             accessibilityRole="button"
             accessibilityLabel={`Select ${wholesaleUnitLabel} unit`}
-            className={`flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center ${
-              inCart && cartLine?.selected_unit === 'wholesale'
-                ? 'bg-cinnamon-500 shadow-sm border border-cinnamon-600'
-                : ''
-            }`}
+            className={
+              isWholesaleActive ? PK_CHIP_ACTIVE_CLASS : PK_CHIP_INACTIVE_CLASS
+            }
           >
             <StyledText
               variant="extrabold"
-              className={`text-xs ${
-                inCart && cartLine?.selected_unit === 'wholesale'
-                  ? 'text-paper-50'
-                  : 'text-ink-700'
-              }`}
+              className={
+                isWholesaleActive
+                  ? PK_LABEL_ACTIVE_CLASS
+                  : PK_LABEL_INACTIVE_CLASS
+              }
             >
               PK ({wholesaleUnitLabel})
             </StyledText>
@@ -193,7 +253,11 @@ export function ProductRow({
             </View>
           ) : isLowStock ? (
             <View className="bg-semantic-warning-50 border border-semantic-warning-100 px-2.5 py-0.5 rounded-full flex-row items-center">
-              <FontAwesome name="exclamation-triangle" size={10} color="#C77B0E" />
+              <FontAwesome
+                name="exclamation-triangle"
+                size={10}
+                color="#C77B0E"
+              />
               <StyledText
                 variant="semibold"
                 className="text-semantic-warning text-[11px] ml-1"
@@ -214,7 +278,10 @@ export function ProductRow({
           )}
 
           {/* Formatted Price Display in Pesos */}
-          <StyledText variant="extrabold" className="text-ink-900 text-lg leading-tight">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-lg leading-tight"
+          >
             {formatPesos(displayPrice)}
           </StyledText>
         </View>
@@ -231,7 +298,10 @@ export function ProductRow({
               <FontAwesome name="minus" size={12} color="#4D2810" />
             </Pressable>
 
-            <StyledText variant="extrabold" className="text-ink-900 text-sm px-3">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-sm px-3"
+            >
               {cartLine.quantity}
             </StyledText>
 
@@ -247,17 +317,21 @@ export function ProductRow({
         ) : (
           <Pressable
             onPress={() => {
-              if (!isOutOfStock) onAdd(product);
+              if (!isOutOfStock && !inCart) onAdd(product);
             }}
             disabled={isOutOfStock}
             accessibilityRole="button"
             accessibilityLabel={`Add ${product.name} to cart`}
-            className={`bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm ${
-              isOutOfStock ? 'opacity-40' : ''
-            }`}
+            className={
+              isOutOfStock ? ADD_BUTTON_DISABLED_CLASS : ADD_BUTTON_ENABLED_CLASS
+            }
+            delayLongPress={400}
           >
             <FontAwesome name="plus" size={12} color="#FAFAF7" />
-            <StyledText variant="extrabold" className="text-paper-50 text-sm ml-1.5">
+            <StyledText
+              variant="extrabold"
+              className="text-paper-50 text-sm ml-1.5"
+            >
               Add
             </StyledText>
           </Pressable>
@@ -266,3 +340,5 @@ export function ProductRow({
     </Pressable>
   );
 }
+
+export const ProductRow = memo(ProductRowImpl);

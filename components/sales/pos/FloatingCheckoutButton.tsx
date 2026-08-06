@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Animated, {
@@ -13,13 +13,16 @@ import { formatPesos } from '@/lib';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+const ICON_COLOR = '#FFFFFF';
+const SPRING_CONFIG = { damping: 15, stiffness: 300 };
+
 export interface FloatingCheckoutButtonProps {
   itemCount: number;
   total?: number;
   onPress: () => void;
 }
 
-export function FloatingCheckoutButton({
+export const FloatingCheckoutButton = memo(function FloatingCheckoutButton({
   itemCount,
   total,
   onPress,
@@ -31,22 +34,41 @@ export function FloatingCheckoutButton({
     transform: [{ scale: scale.value }],
   }));
 
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.98, SPRING_CONFIG);
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, SPRING_CONFIG);
+  }, [scale]);
+
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    onPress();
+  }, [onPress]);
+
+  const containerStyle = useMemo(
+    () => [
+      {
+        position: 'absolute' as const,
+        bottom: tabBarBottomOffset + 8,
+        left: 16,
+        right: 16,
+        zIndex: 50,
+      },
+      animatedStyle,
+    ],
+    [tabBarBottomOffset, animatedStyle],
+  );
+
   if (itemCount === 0) {
     return null;
   }
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.98);
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1);
-  };
-
-  const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onPress();
-  };
+  const formattedTotal = typeof total === 'number' ? formatPesos(total) : null;
+  const accessibilityLabelText = `Checkout, ${itemCount} ${
+    itemCount === 1 ? 'item' : 'items'
+  }${formattedTotal ? `, total ${formattedTotal}` : ''}`;
 
   return (
     <AnimatedPressable
@@ -54,42 +76,50 @@ export function FloatingCheckoutButton({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       accessibilityRole="button"
-      accessibilityLabel={`Review Cart, ${itemCount} items${typeof total === 'number' ? `, total ${formatPesos(total)}` : ''}`}
-      style={[
-        {
-          position: 'absolute',
-          bottom: tabBarBottomOffset + 8,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-        },
-        animatedStyle,
-      ]}
-      className="mx-4 mb-2 min-h-[52px] rounded-3xl bg-cinnamon-500 shadow-lg shadow-cinnamon-500/25 px-4 py-3 flex-row items-center justify-between active:scale-[0.98]"
+      accessibilityLabel={accessibilityLabelText}
+      accessibilityHint="Double tap to review items in cart and complete sale"
+      style={containerStyle}
+      className="min-h-[52px] rounded-2xl bg-cinnamon-500 shadow-raised px-4 py-3 flex-row items-center justify-between"
     >
       {/* Left Badge: total item count */}
-      <View className="bg-white/20 px-2.5 py-1 rounded-full flex-row items-center space-x-1.5">
-        <FontAwesome name="shopping-basket" size={12} color="#FFFFFF" />
-        <StyledText variant="bold" className="text-white text-xs">
+      <View className="bg-white/25 border border-white/20 px-2.5 py-1 rounded-full flex-row items-center space-x-1.5 shrink-0">
+        <FontAwesome name="shopping-basket" size={12} color={ICON_COLOR} />
+        <StyledText
+          variant="extrabold"
+          className="text-white text-xs"
+          numberOfLines={1}
+        >
           {itemCount} {itemCount === 1 ? 'item' : 'items'}
         </StyledText>
       </View>
 
       {/* Center CTA */}
-      <StyledText variant="bold" className="text-white text-base">
-        Review Cart
-      </StyledText>
+      <View className="px-2 shrink items-center justify-center">
+        <StyledText
+          variant="extrabold"
+          className="text-white text-base text-center"
+          numberOfLines={1}
+        >
+          Checkout
+        </StyledText>
+      </View>
 
       {/* Right Section: total price display & chevron-right */}
-      <View className="flex-row items-center space-x-2">
-        {typeof total === 'number' && (
-          <StyledText variant="extrabold" className="text-white text-base">
-            {formatPesos(total)}
+      <View className="flex-row items-center space-x-2 shrink-0">
+        {formattedTotal && (
+          <StyledText
+            variant="extrabold"
+            className="text-white text-base"
+            numberOfLines={1}
+          >
+            {formattedTotal}
           </StyledText>
         )}
-        <FontAwesome name="chevron-right" size={14} color="#FFFFFF" />
+        <FontAwesome name="chevron-right" size={14} color={ICON_COLOR} />
       </View>
     </AnimatedPressable>
   );
-}
+});
+
+FloatingCheckoutButton.displayName = 'FloatingCheckoutButton';
 

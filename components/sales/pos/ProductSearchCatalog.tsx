@@ -1,5 +1,5 @@
+import { useCallback, useMemo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { Control, Controller } from 'react-hook-form';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,13 +10,13 @@ import {
 } from 'react-native';
 import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
-import { AddSalesFormData } from '../add-sales/useAddSalesForm';
 import { ProductRow } from './ProductRow';
 import { useFastLaneProducts } from '@/hooks/useProducts';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { formatPesos } from '@/lib';
+import { usePOSSearchStore } from '@/stores';
 
 interface ProductSearchCatalogProps {
-  control: Control<AddSalesFormData>;
   filteredProducts: Product[];
   isLoading: boolean;
   getCartLine: (productId: number) => NewSaleItem | undefined;
@@ -35,10 +35,17 @@ interface ProductSearchCatalogProps {
   hasNextPage?: boolean;
   onEndReached?: () => void;
   onRetryFetchNext?: () => void;
+  /**
+   * Controlled value for the search input. Parent screens own the
+   * state — passing a getter + setter keeps the keystroke re-render
+   * out of this catalog tree. Defaults to '' if omitted (e.g. a parent
+   * that does not need search).
+   */
+  searchText?: string;
+  onSearchTextChange?: (text: string) => void;
 }
 
 export function ProductSearchCatalog({
-  control,
   filteredProducts,
   isLoading,
   getCartLine,
@@ -53,54 +60,53 @@ export function ProductSearchCatalog({
   hasNextPage = false,
   onEndReached,
   onRetryFetchNext,
+  searchText,
+  onSearchTextChange,
 }: ProductSearchCatalogProps) {
-  const { data: fastLaneProducts = [] } = useFastLaneProducts();
+  useRenderCounter('ProductSearchCatalog', {
+    feature: 'pos_catalog',
+    threshold: 10,
+    windowMs: 1000,
+  });
+
+  const { data: fastLaneData = [] } = useFastLaneProducts();
+  // `useFastLaneProducts` returns a fresh `data` array reference on
+  // each render even when the result hasn't changed. Without this
+  // memo the inline map below re-creates each Pressable on every
+  // parent re-render and css-interop reprocesses the Fast Lane bar.
+  const fastLaneProducts = useMemo(() => fastLaneData, [fastLaneData]);
+
+  const renderProductRow = useCallback(
+    ({ item }: { item: Product }) => (
+      <ProductRow
+        product={item}
+        cartLine={getCartLine(item.id)}
+        onAdd={onAdd}
+        onUpdateQuantity={onUpdateQuantity}
+        {...(onToggleUnit ? { onToggleUnit } : {})}
+      />
+    ),
+    [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
+  );
+
+  // Stable handler for Fast Lane pills — inline arrow would be a fresh
+  // closure each render and force each Pressable to re-render.
+  const handleFastLanePress = useCallback(
+    (item: (typeof fastLaneProducts)[number]) => {
+      onAdd(item as unknown as Product);
+    },
+    [onAdd],
+  );
 
   return (
     <View className="flex-1">
-      {/* Search Bar */}
-      <View className="bg-paper-100 mx-4 mt-2 mb-3 rounded-2xl px-3.5 py-2 flex-row items-center border border-paper-300">
-        <FontAwesome name="search" size={16} color="#623418" />
-        <Controller
-          control={control}
-          name="search"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <>
-              <TextInput
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                placeholder="Search products..."
-                placeholderTextColor="#7A7165"
-                className="flex-1 ml-3 text-ink-900 font-stack-sans-medium text-sm py-1.5 min-h-[44px]"
-                returnKeyType="search"
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-              {value && value.length > 0 ? (
-                <Pressable
-                  onPress={() => onChange('')}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                  className="w-11 h-11 items-center justify-center active:opacity-50"
-                >
-                  <FontAwesome name="times-circle" size={16} color="#623418" />
-                </Pressable>
-              ) : null}
-            </>
-          )}
-        />
-        <Pressable
-          onPress={onPressScan}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Scan barcode"
-          className="bg-cinnamon-500 active:bg-cinnamon-600 w-11 h-11 rounded-xl items-center justify-center ml-2 min-w-[44px] min-h-[44px]"
-        >
-          <FontAwesome name="barcode" size={18} color="#FAFAF7" />
-        </Pressable>
-      </View>
+      {/* Search Bar — keystroke re-renders are scoped to this subtree.
+          The catalog itself does not subscribe to searchText. */}
+      <SearchBar
+        controlledText={searchText}
+        onTextChange={onSearchTextChange}
+        onPressScan={onPressScan}
+      />
 
       {/* Fast Lane Pills */}
       {fastLaneProducts.length > 0 ? (
@@ -122,7 +128,7 @@ export function ProductSearchCatalog({
             {fastLaneProducts.map((item) => (
               <Pressable
                 key={item.id}
-                onPress={() => onAdd(item)}
+                onPress={() => handleFastLanePress(item)}
                 accessibilityRole="button"
                 accessibilityLabel={`Add ${item.name} fast lane product to cart`}
                 className="bg-paper-100 border border-paper-300 rounded-2xl px-3 py-2 flex-row items-center mr-2 min-h-[44px] active:bg-paper-200"
@@ -219,15 +225,7 @@ export function ProductSearchCatalog({
             }
           }}
           onEndReachedThreshold={0.4}
-          renderItem={({ item }) => (
-            <ProductRow
-              product={item}
-              cartLine={getCartLine(item.id)}
-              onAdd={onAdd}
-              onUpdateQuantity={onUpdateQuantity}
-              {...(onToggleUnit ? { onToggleUnit } : {})}
-            />
-          )}
+          renderItem={renderProductRow}
           ListEmptyComponent={
             <View className="flex-1 justify-center items-center py-12">
               <FontAwesome
@@ -265,6 +263,88 @@ export function ProductSearchCatalog({
           }
         />
       )}
+    </View>
+  );
+}
+
+interface SearchBarProps {
+  /**
+   * Controlled text from the parent. When omitted, the bar falls back
+   * to `usePOSSearchStore` — the production path for the live POS
+   * screen, where the parent screen does not own the search state.
+   */
+  controlledText?: string | undefined;
+  onTextChange?: ((text: string) => void) | undefined;
+  onPressScan: () => void;
+}
+
+/**
+ * Isolated search bar so the catalog tree does not re-render on every
+ * keystroke. The bar subscribes to the POS search store itself; the
+ * parent `ProductSearchCatalog` and the FlatList of `ProductRow` items
+ * are not subscribed.
+ */
+function SearchBar({
+  controlledText,
+  onTextChange,
+  onPressScan,
+}: SearchBarProps) {
+  // Read the store value directly so we render the latest text without
+  // re-rendering any ancestor above this component.
+  const storedSearchText = usePOSSearchStore((s) => s.searchText);
+  const setStoredSearchText = usePOSSearchStore((s) => s.setSearchText);
+
+  const value = controlledText ?? storedSearchText;
+  const isControlled = controlledText !== undefined && onTextChange;
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      if (isControlled && onTextChange) {
+        onTextChange(text);
+      } else {
+        setStoredSearchText(text);
+      }
+    },
+    [isControlled, onTextChange, setStoredSearchText],
+  );
+
+  const handleClear = useCallback(() => {
+    handleChangeText('');
+  }, [handleChangeText]);
+
+  return (
+    <View className="bg-paper-100 mx-4 mt-2 mb-3 rounded-2xl px-3.5 py-2 flex-row items-center border border-paper-300">
+      <FontAwesome name="search" size={16} color="#623418" />
+      <TextInput
+        value={value}
+        onChangeText={handleChangeText}
+        placeholder="Search products..."
+        placeholderTextColor="#7A7165"
+        className="flex-1 ml-3 text-ink-900 font-stack-sans-medium text-sm py-1.5 min-h-[44px]"
+        returnKeyType="search"
+        autoCorrect={false}
+        autoCapitalize="none"
+      />
+      {value.length > 0 ? (
+        <Pressable
+          onPress={handleClear}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Clear search"
+          className="w-11 h-11 items-center justify-center active:opacity-50"
+        >
+          <FontAwesome name="times-circle" size={16} color="#623418" />
+        </Pressable>
+      ) : null}
+      <Pressable
+        onPress={onPressScan}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Scan barcode"
+        className="bg-cinnamon-500 active:bg-cinnamon-600 w-11 h-11 rounded-xl items-center justify-center ml-2 min-w-[44px] min-h-[44px]"
+      >
+        <FontAwesome name="barcode" size={18} color="#FAFAF7" />
+      </Pressable>
     </View>
   );
 }

@@ -17,6 +17,7 @@ export interface Product {
   wholesale_cost_price?: number | null;
   conversion_factor?: number | null;
   wholesale_barcode?: string | null;
+  is_favorite: boolean;
 }
 
 // Parameters for insertProduct function

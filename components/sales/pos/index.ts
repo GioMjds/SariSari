@@ -7,4 +7,6 @@ export * from './CheckoutModal';
 export * from './FloatingCheckoutButton';
 export * from './useCart';
 export * from './FastLaneBar';
+export * from './FastLaneCard';
+export * from './FastLaneSection';
 export * from './ScanToastBanner';

@@ -126,3 +126,17 @@ export function useSales() {
     deleteSaleMutation,
   };
 }
+
+/**
+ * Standalone today's-stats query so layout components that only need
+ * the sales summary don't have to subscribe to the entire sales
+ * machinery (insert/delete mutations, all-sales list) and the full
+ * cart store via `useCart()`. Used by `app/(tabs)/sales/_layout.tsx`
+ * to keep the header re-rendering scoped to `['sales-stats']` only.
+ */
+export function useTodayStats() {
+  return useQuery({
+    queryKey: ['sales-stats'],
+    queryFn: () => getTodayStats(),
+  });
+}

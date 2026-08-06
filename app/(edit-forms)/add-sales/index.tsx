@@ -46,7 +46,6 @@ export default function AddSales() {
         <AddSalesHeader itemCount={form.itemCount} onBack={form.router.back} />
 
         <ProductSearchCatalog
-          control={form.control}
           filteredProducts={form.filteredProducts}
           isLoading={form.isProductsLoading}
           getCartLine={form.getCartLine}
@@ -62,6 +61,8 @@ export default function AddSales() {
           pendingAddProductBarcode={form.pendingAddProductBarcode}
           onPressAddNewProduct={form.handlePressAddNewProduct}
           onDismissPendingAddProduct={form.dismissPendingAddProduct}
+          searchText={form.search}
+          onSearchTextChange={(text) => form.setValue('search', text)}
         />
 
         <CartSummaryTray
