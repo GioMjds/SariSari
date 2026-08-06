@@ -16,4 +16,5 @@ export * from './useSales';
 export * from './useStockIntelligence';
 export * from './useSuppliers';
 export * from './useNetworkStatus';
+export * from './useSystemNotifications';
 
