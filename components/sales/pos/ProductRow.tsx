@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Image } from 'expo-image';
-import { formatPesos, getProductImageUri } from '@/lib';
+import { calculateBulkSavings, formatPesos, getProductImageUri } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { useToggleFavorite } from '@/hooks/useProducts';
@@ -13,7 +13,7 @@ import { useToggleFavorite } from '@/hooks/useProducts';
 // on each toggle. Render-time ternaries were the previous pattern;
 // the variants below are referenced by static classNames only.
 const ROW_OUT_OF_STOCK_CLASS = 'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card opacity-60';
-const ROW_AVAILABLE_CLASS = 'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card active:opacity-95';
+const ROW_AVAILABLE_CLASS = 'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card active:bg-paper-200/50';
 
 const PC_CHIP_ACTIVE_CLASS = 'flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center bg-cinnamon-500 shadow-sm border border-cinnamon-600';
 const PC_CHIP_INACTIVE_CLASS = 'flex-1 py-1.5 rounded-lg items-center min-h-[36px] justify-center';
@@ -75,11 +75,7 @@ function ProductRowImpl({
     : '?';
   const displayImageUri = getProductImageUri(product.image_uri);
 
-  const hasWholesale =
-    product.wholesale_price != null &&
-    product.conversion_factor != null &&
-    product.conversion_factor >= 2;
-
+  const bulkSavings = calculateBulkSavings(product);
   const retailUnitLabel = product.retail_unit_name || 'PC';
   const wholesaleUnitLabel = product.wholesale_unit_name || 'PK';
 
@@ -112,7 +108,7 @@ function ProductRowImpl({
       {/* Top Header Row: Thumbnail + Details (Title, Category, SKU) */}
       <View className="flex-row items-start mb-2.5">
         {/* Soft Surface Thumbnail Container */}
-        <View className="w-14 h-14 rounded-xl bg-paper-200 border border-paper-300/60 overflow-hidden mr-3 items-center justify-center">
+        <View className="relative w-14 h-14 rounded-xl bg-paper-200 border border-paper-300/60 overflow-hidden mr-3 items-center justify-center">
           {displayImageUri ? (
             <Image
               source={{ uri: displayImageUri }}
@@ -124,6 +120,11 @@ function ProductRowImpl({
               {placeholderText}
             </StyledText>
           )}
+          {bulkSavings.hasWholesale ? (
+            <View className="absolute bottom-1 right-1 bg-paper-100/90 border border-paper-300/80 rounded-md px-1 py-0.5 flex-row items-center">
+              <FontAwesome name="cubes" size={10} color="#E85A1F" />
+            </View>
+          ) : null}
         </View>
 
         {/* Title, Category Badge & SKU */}
@@ -176,64 +177,83 @@ function ProductRowImpl({
                 </StyledText>
               </View>
             ) : null}
+
+            {/* Wholesale Conversion Badge */}
+            {bulkSavings.hasWholesale ? (
+              <View className="bg-sage-50 border border-sage-200 rounded-md px-2 py-0.5 self-start flex-row items-center">
+                <StyledText variant="bold" className="text-sage-700 text-[10px]">
+                  1 {wholesaleUnitLabel} = {product.conversion_factor} {retailUnitLabel}s
+                </StyledText>
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
 
       {/* Unit Toggle Badge (PC vs PK) */}
-      {hasWholesale ? (
-        <View className="flex-row items-center mb-3 bg-paper-200/80 rounded-xl p-1 border border-paper-300/60">
-          <Pressable
-            onPress={() => {
-              if (inCart && cartLine?.selected_unit !== 'retail') {
-                onToggleUnit?.(product.id);
-              } else if (!inCart) {
-                onAdd(product, 'retail');
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Select ${retailUnitLabel} unit`}
-            className={
-              isRetailActive ? PC_CHIP_ACTIVE_CLASS : PC_CHIP_INACTIVE_CLASS
-            }
-          >
-            <StyledText
-              variant="extrabold"
+      {bulkSavings.hasWholesale ? (
+        <View className="mb-3">
+          {bulkSavings.savings > 0 ? (
+            <View className="bg-sage-50 border border-sage-200 rounded-full px-2.5 py-0.5 flex-row items-center self-start mb-2">
+              <FontAwesome name="tag" size={10} color="#4F7A24" />
+              <StyledText variant="extrabold" className="text-sage-700 text-[11px] ml-1">
+                Save {formatPesos(bulkSavings.savings)} in bulk
+              </StyledText>
+            </View>
+          ) : null}
+          <View className="flex-row items-center bg-paper-200/80 rounded-xl p-1 border border-paper-300/60">
+            <Pressable
+              onPress={() => {
+                if (inCart && cartLine?.selected_unit !== 'retail') {
+                  onToggleUnit?.(product.id);
+                } else if (!inCart) {
+                  onAdd(product, 'retail');
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${retailUnitLabel} unit`}
               className={
-                isRetailActive
-                  ? PC_LABEL_ACTIVE_CLASS
-                  : PC_LABEL_INACTIVE_CLASS
+                isRetailActive ? PC_CHIP_ACTIVE_CLASS : PC_CHIP_INACTIVE_CLASS
               }
             >
-              PC ({retailUnitLabel})
-            </StyledText>
-          </Pressable>
+              <StyledText
+                variant="extrabold"
+                className={
+                  isRetailActive
+                    ? PC_LABEL_ACTIVE_CLASS
+                    : PC_LABEL_INACTIVE_CLASS
+                }
+              >
+                PC ({retailUnitLabel})
+              </StyledText>
+            </Pressable>
 
-          <Pressable
-            onPress={() => {
-              if (inCart && cartLine?.selected_unit !== 'wholesale') {
-                onToggleUnit?.(product.id);
-              } else if (!inCart) {
-                onAdd(product, 'wholesale');
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Select ${wholesaleUnitLabel} unit`}
-            className={
-              isWholesaleActive ? PK_CHIP_ACTIVE_CLASS : PK_CHIP_INACTIVE_CLASS
-            }
-          >
-            <StyledText
-              variant="extrabold"
+            <Pressable
+              onPress={() => {
+                if (inCart && cartLine?.selected_unit !== 'wholesale') {
+                  onToggleUnit?.(product.id);
+                } else if (!inCart) {
+                  onAdd(product, 'wholesale');
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${wholesaleUnitLabel} unit`}
               className={
-                isWholesaleActive
-                  ? PK_LABEL_ACTIVE_CLASS
-                  : PK_LABEL_INACTIVE_CLASS
+                isWholesaleActive ? PK_CHIP_ACTIVE_CLASS : PK_CHIP_INACTIVE_CLASS
               }
             >
-              PK ({wholesaleUnitLabel})
-            </StyledText>
-          </Pressable>
+              <StyledText
+                variant="extrabold"
+                className={
+                  isWholesaleActive
+                    ? PK_LABEL_ACTIVE_CLASS
+                    : PK_LABEL_INACTIVE_CLASS
+                }
+              >
+                PK ({wholesaleUnitLabel})
+              </StyledText>
+            </Pressable>
+          </View>
         </View>
       ) : null}
 
@@ -341,4 +361,4 @@ function ProductRowImpl({
   );
 }
 
-export const ProductRow = memo(ProductRowImpl);
+export const ProductRow = memo(ProductRowImpl);
