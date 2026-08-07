@@ -42,3 +42,44 @@ export function formatPesosCompact(value: number | Pesos): string {
 }
 
 export const MONEY_UNIT_DOC = 'integer pesos';
+
+export interface BulkSavingsResult {
+  retailEquivalent: number;
+  wholesalePrice: number;
+  savings: number;
+  hasWholesale: boolean;
+}
+
+export function calculateBulkSavings(product: {
+  price: number;
+  wholesale_price?: number | null;
+  conversion_factor?: number | null;
+}): BulkSavingsResult {
+  const hasWholesale =
+    product.wholesale_price != null &&
+    product.wholesale_price > 0 &&
+    product.conversion_factor != null &&
+    product.conversion_factor >= 2;
+
+  if (!hasWholesale) {
+    return {
+      retailEquivalent: 0,
+      wholesalePrice: 0,
+      savings: 0,
+      hasWholesale: false,
+    };
+  }
+
+  const wholesalePrice = product.wholesale_price!;
+  const conversionFactor = product.conversion_factor!;
+  const retailEquivalent = product.price * conversionFactor;
+  const savings = Math.max(0, retailEquivalent - wholesalePrice);
+
+  return {
+    retailEquivalent,
+    wholesalePrice,
+    savings,
+    hasWholesale: true,
+  };
+}
+
