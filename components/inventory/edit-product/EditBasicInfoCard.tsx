@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { Control, Controller, useFormState } from 'react-hook-form';
+import { Control, Controller } from 'react-hook-form';
 import { Modal, Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Category } from '@/types/categories.types';
 import type { EditProductFormData } from './useEditProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../products/ProductImagePicker';
 
 interface EditBasicInfoCardProps {
@@ -15,16 +16,24 @@ interface EditBasicInfoCardProps {
   onSelectCategory: (name: string) => void;
 }
 
+const EDIT_CATEGORY_PILL_ACTIVE_CLASS =
+  'press-scale px-4 py-3 min-h-[44px] justify-center rounded-pill border bg-persimmon-500 border-persimmon-500 active:opacity-80';
+const EDIT_CATEGORY_PILL_INACTIVE_CLASS =
+  'press-scale px-4 py-3 min-h-[44px] justify-center rounded-pill border bg-paper-100 border-ink-200 active:opacity-80';
+
+const CATEGORY_TEXT_ACTIVE_CLASS = 'text-sm text-paper-50';
+const CATEGORY_TEXT_INACTIVE_CLASS = 'text-sm text-ink-700';
+
 export function EditBasicInfoCard({
   control,
   categories,
   selectedCategory,
   onSelectCategory,
 }: EditBasicInfoCardProps) {
+  useRenderCounter('EditBasicInfoCard', { feature: 'products_form' });
+
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
-
-  useFormState({ control });
 
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
@@ -123,18 +132,19 @@ export function EditBasicInfoCard({
                   accessibilityRole="button"
                   accessibilityLabel={`Select category ${category.name}`}
                   accessibilityState={{ selected: isActive }}
-                  className={`press-scale px-4 py-3 rounded-pill border ${
+                  className={
                     isActive
-                      ? 'bg-persimmon-500 border-persimmon-500'
-                      : 'bg-paper-100 border-ink-200'
-                  }`}
-                  style={{ minHeight: 44, justifyContent: 'center' }}
+                      ? EDIT_CATEGORY_PILL_ACTIVE_CLASS
+                      : EDIT_CATEGORY_PILL_INACTIVE_CLASS
+                  }
                 >
                   <StyledText
                     variant="extrabold"
-                    className={`text-sm ${
-                      isActive ? 'text-paper-50' : 'text-ink-700'
-                    }`}
+                    className={
+                      isActive
+                        ? CATEGORY_TEXT_ACTIVE_CLASS
+                        : CATEGORY_TEXT_INACTIVE_CLASS
+                    }
                   >
                     {category.name}
                   </StyledText>

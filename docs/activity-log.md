@@ -4,6 +4,29 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-08-07 — Sales Tab Product Cards & Bundled Products Redesign (Completed)
+
+### Overview
+Completed Awwwards-tier visual redesign of POS product cards in [`app/(tabs)/sales`](file:///D:/giomj/Projects/sarisari/app/(tabs)/sales):
+- Added `calculateBulkSavings` helper function to [`lib/money.ts`](file:///D:/giomj/Projects/sarisari/lib/money.ts) and unit tests in [`lib/__tests__/moneyBundle.test.ts`](file:///D:/giomj/Projects/sarisari/lib/__tests__/moneyBundle.test.ts) to calculate bulk savings (`retail_price * conversion_factor - wholesale_price`).
+- Upgraded [`ProductRow.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/ProductRow.tsx) with hardware doppelrand (double-bezel) card enclosure, stacked-paper thumbnail icon for bundled items, explicit conversion badge (`1 PK = 12 PCs`), bulk savings pill badge (`Save ₱24.00`), and tactile action buttons.
+- Upgraded [`FastLaneCard.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/FastLaneCard.tsx) with compact double-bezel card enclosure, wholesale bundle indicator tag, and pill-shaped quick-add stepper buttons (`+1`, `+2`, `+5`).
+- Verified clean TypeScript build and 100% passing Jest test suite.
+
+---
+
+## 2026-08-07 — Product Form Unification (Completed)
+
+### Overview
+Completed implementation of unified product form design and components:
+- Created shared components in `components/inventory/products/form/`: [`ProductBasicInfoCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductBasicInfoCard.tsx), [`ProductPricingCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductPricingCard.tsx), [`ProductStockCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductStockCard.tsx), [`ProductFormActionButtons.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductFormActionButtons.tsx), and [`ProductFormHeader.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductFormHeader.tsx).
+- Upgraded [`useEditProductForm.ts`](file:///D:/giomj/Projects/sarisari/components/inventory/edit-product/useEditProductForm.ts) with camera barcode scanner modal, manual barcode editing, barcode duplicate conflict check, bundle pricing mode calculation, quick markup presets (`+10%`, `+20%`, `+30%`, `+50%`), and non-blocking loss validation.
+- Refactored [`app/(edit-forms)/add-product/index.tsx`](file:///D:/giomj/Projects/sarisari/app/%28edit-forms%29/add-product/index.tsx) and [`app/(edit-forms)/edit-product/[id].tsx`](file:///D:/giomj/Projects/sarisari/app/%28edit-forms%29/edit-product/%5Bid%5D.tsx) to achieve 100% visual and functional design parity.
+- Fixed supplier picker modal selection on `/add-product`.
+- Verified clean TypeScript build (`npm run typecheck` passed with 0 errors).
+
+---
+
 ## 2026-08-06 — POS pcs/pack toggle freeze (in progress)
 
 ### Symptom

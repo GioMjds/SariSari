@@ -1,19 +1,18 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  ScrollView,
   TextInput,
   View,
 } from 'react-native';
 import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
-import { useFastLaneProducts } from '@/hooks/useProducts';
+import { FastLaneSection } from './FastLaneSection';
+import { FastLaneProduct } from '@/database/products';
 import { useRenderCounter } from '@/hooks/useRenderCounter';
-import { formatPesos } from '@/lib';
 import { usePOSSearchStore } from '@/stores';
 
 interface ProductSearchCatalogProps {
@@ -69,13 +68,6 @@ export function ProductSearchCatalog({
     windowMs: 1000,
   });
 
-  const { data: fastLaneData = [] } = useFastLaneProducts();
-  // `useFastLaneProducts` returns a fresh `data` array reference on
-  // each render even when the result hasn't changed. Without this
-  // memo the inline map below re-creates each Pressable on every
-  // parent re-render and css-interop reprocesses the Fast Lane bar.
-  const fastLaneProducts = useMemo(() => fastLaneData, [fastLaneData]);
-
   const renderProductRow = useCallback(
     ({ item }: { item: Product }) => (
       <ProductRow
@@ -89,79 +81,32 @@ export function ProductSearchCatalog({
     [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
   );
 
-  // Stable handler for Fast Lane pills — inline arrow would be a fresh
-  // closure each render and force each Pressable to re-render.
-  const handleFastLanePress = useCallback(
-    (item: (typeof fastLaneProducts)[number]) => {
-      onAdd(item as unknown as Product);
+  const handleFastLaneAddToCart = useCallback(
+    (product: FastLaneProduct, qty: number) => {
+      const existingLine = getCartLine(product.id);
+      if (existingLine) {
+        onUpdateQuantity(product.id, qty);
+      } else {
+        onAdd(product as unknown as Product);
+        if (qty > 1) {
+          onUpdateQuantity(product.id, qty - 1);
+        }
+      }
     },
-    [onAdd],
+    [getCartLine, onAdd, onUpdateQuantity],
   );
 
   return (
     <View className="flex-1">
-      {/* Search Bar — keystroke re-renders are scoped to this subtree.
-          The catalog itself does not subscribe to searchText. */}
+      {/* Search Bar — keystroke re-renders are debounced & scoped to this subtree. */}
       <SearchBar
         controlledText={searchText}
         onTextChange={onSearchTextChange}
         onPressScan={onPressScan}
       />
 
-      {/* Fast Lane Pills */}
-      {fastLaneProducts.length > 0 ? (
-        <View className="mb-3 px-4">
-          <View className="flex-row items-center mb-1.5">
-            <FontAwesome name="bolt" size={12} color="#E85A1F" />
-            <StyledText
-              variant="extrabold"
-              className="text-persimmon-600 text-xs tracking-wider uppercase ml-1.5"
-            >
-              Fast Lane
-            </StyledText>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 16 }}
-          >
-            {fastLaneProducts.map((item) => (
-              <Pressable
-                key={item.id}
-                onPress={() => handleFastLanePress(item)}
-                accessibilityRole="button"
-                accessibilityLabel={`Add ${item.name} fast lane product to cart`}
-                className="bg-paper-100 border border-paper-300 rounded-2xl px-3 py-2 flex-row items-center mr-2 min-h-[44px] active:bg-paper-200"
-              >
-                <FontAwesome
-                  name="bolt"
-                  size={12}
-                  color="#E85A1F"
-                  style={{ marginRight: 6 }}
-                />
-                <View className="mr-2">
-                  <StyledText
-                    variant="extrabold"
-                    className="text-ink-900 text-xs"
-                    numberOfLines={1}
-                  >
-                    {item.name}
-                  </StyledText>
-                  <StyledText
-                    variant="medium"
-                    className="text-sage-700 text-[10px]"
-                  >
-                    {formatPesos(item.price)}
-                  </StyledText>
-                </View>
-                <View className="bg-cinnamon-500 rounded-lg w-6 h-6 items-center justify-center ml-1">
-                  <FontAwesome name="plus" size={10} color="#FAFAF7" />
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      ) : null}
+      {/* Fast Lane Section (with +1, +2, +5 quick-qty chips) */}
+      <FastLaneSection onAddToCart={handleFastLaneAddToCart} />
 
       {pendingAddProductBarcode ? (
         <View className="mx-4 mb-3 bg-semantic-danger-50 border border-semantic-danger/30 rounded-2xl p-4 shadow-paper">
@@ -276,18 +221,19 @@ interface SearchBarProps {
   controlledText?: string | undefined;
   onTextChange?: ((text: string) => void) | undefined;
   onPressScan: () => void;
+  debounceMs?: number;
 }
 
 /**
- * Isolated search bar so the catalog tree does not re-render on every
- * keystroke. The bar subscribes to the POS search store itself; the
- * parent `ProductSearchCatalog` and the FlatList of `ProductRow` items
- * are not subscribed.
+ * Isolated, debounced search bar so the catalog tree does not re-render on
+ * every keystroke. The bar manages its local state for immediate typing feedback
+ * and propagates search query changes after a `debounceMs` delay.
  */
 function SearchBar({
   controlledText,
   onTextChange,
   onPressScan,
+  debounceMs = 250,
 }: SearchBarProps) {
   // Read the store value directly so we render the latest text without
   // re-rendering any ancestor above this component.
@@ -297,26 +243,45 @@ function SearchBar({
   const value = controlledText ?? storedSearchText;
   const isControlled = controlledText !== undefined && onTextChange;
 
-  const handleChangeText = useCallback(
-    (text: string) => {
+  const [localText, setLocalText] = useState(value);
+
+  // Sync external resets / initial values
+  useEffect(() => {
+    setLocalText(value);
+  }, [value]);
+
+  // Debounce propagation of search text to store/parent query handler
+  useEffect(() => {
+    if (localText === value) return;
+    const timer = setTimeout(() => {
       if (isControlled && onTextChange) {
-        onTextChange(text);
+        onTextChange(localText);
       } else {
-        setStoredSearchText(text);
+        setStoredSearchText(localText);
       }
-    },
-    [isControlled, onTextChange, setStoredSearchText],
-  );
+    }, debounceMs);
+
+    return () => clearTimeout(timer);
+  }, [localText, value, isControlled, onTextChange, setStoredSearchText, debounceMs]);
+
+  const handleChangeText = useCallback((text: string) => {
+    setLocalText(text);
+  }, []);
 
   const handleClear = useCallback(() => {
-    handleChangeText('');
-  }, [handleChangeText]);
+    setLocalText('');
+    if (isControlled && onTextChange) {
+      onTextChange('');
+    } else {
+      setStoredSearchText('');
+    }
+  }, [isControlled, onTextChange, setStoredSearchText]);
 
   return (
     <View className="bg-paper-100 mx-4 mt-2 mb-3 rounded-2xl px-3.5 py-2 flex-row items-center border border-paper-300">
       <FontAwesome name="search" size={16} color="#623418" />
       <TextInput
-        value={value}
+        value={localText}
         onChangeText={handleChangeText}
         placeholder="Search products..."
         placeholderTextColor="#7A7165"
@@ -325,7 +290,7 @@ function SearchBar({
         autoCorrect={false}
         autoCapitalize="none"
       />
-      {value.length > 0 ? (
+      {localText.length > 0 ? (
         <Pressable
           onPress={handleClear}
           hitSlop={8}

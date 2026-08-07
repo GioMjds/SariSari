@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useCategories } from '@/hooks/useCategories';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
 
 interface CategoryFilterBarProps {
   selectedCategory?: string;
@@ -10,11 +11,27 @@ interface CategoryFilterBarProps {
   onOpenAddCategory: () => void;
 }
 
+const CHIP_ACTIVE_CLASS =
+  'px-3.5 py-1.5 rounded-full border flex-row items-center gap-x-1.5 bg-ink-900 border-ink-900 active:opacity-80';
+const CHIP_INACTIVE_CLASS =
+  'px-3.5 py-1.5 rounded-full border flex-row items-center gap-x-1.5 bg-paper-50 border-ink-200 active:opacity-80';
+
+const CHIP_TEXT_ACTIVE_CLASS = 'text-xs text-paper-50';
+const CHIP_TEXT_INACTIVE_CLASS = 'text-xs text-ink-700';
+
+const CHIP_COUNT_BADGE_ACTIVE = 'px-1.5 py-0.5 rounded-full bg-ink-700';
+const CHIP_COUNT_BADGE_INACTIVE = 'px-1.5 py-0.5 rounded-full bg-paper-200';
+
+const CHIP_COUNT_TEXT_ACTIVE = 'text-[10px] text-paper-50';
+const CHIP_COUNT_TEXT_INACTIVE = 'text-[10px] text-ink-500';
+
 export function CategoryFilterBar({
   selectedCategory,
   onSelectCategory,
   onOpenAddCategory,
 }: CategoryFilterBarProps) {
+  useRenderCounter('CategoryFilterBar', { feature: 'inventory_catalog' });
+
   const { getCategoriesWithCountQuery } = useCategories();
   const categories = getCategoriesWithCountQuery.data ?? [];
 
@@ -43,15 +60,15 @@ export function CategoryFilterBar({
         {/* "All" Pill */}
         <Pressable
           onPress={() => handleSelect(undefined)}
-          className={`px-3.5 py-1.5 rounded-full border ${
+          className={
             !selectedCategory
-              ? 'bg-ink-900 border-ink-900'
-              : 'bg-paper-50 border-ink-200'
-          }`}
+              ? 'px-3.5 py-1.5 rounded-full border bg-ink-900 border-ink-900 active:opacity-80'
+              : 'px-3.5 py-1.5 rounded-full border bg-paper-50 border-ink-200 active:opacity-80'
+          }
         >
           <StyledText
             variant="extrabold"
-            className={`text-xs ${!selectedCategory ? 'text-paper-50' : 'text-ink-700'}`}
+            className={!selectedCategory ? 'text-xs text-paper-50' : 'text-xs text-ink-700'}
           >
             All
           </StyledText>
@@ -64,26 +81,20 @@ export function CategoryFilterBar({
             <Pressable
               key={cat.id}
               onPress={() => handleSelect(cat.name)}
-              className={`px-3.5 py-1.5 rounded-full border flex-row items-center gap-x-1.5 ${
-                isSelected
-                  ? 'bg-ink-900 border-ink-900'
-                  : 'bg-paper-50 border-ink-200'
-              }`}
+              className={isSelected ? CHIP_ACTIVE_CLASS : CHIP_INACTIVE_CLASS}
             >
               <StyledText
                 variant="extrabold"
-                className={`text-xs ${isSelected ? 'text-paper-50' : 'text-ink-700'}`}
+                className={isSelected ? CHIP_TEXT_ACTIVE_CLASS : CHIP_TEXT_INACTIVE_CLASS}
               >
                 {cat.name}
               </StyledText>
               <View
-                className={`px-1.5 py-0.5 rounded-full ${
-                  isSelected ? 'bg-ink-700' : 'bg-paper-200'
-                }`}
+                className={isSelected ? CHIP_COUNT_BADGE_ACTIVE : CHIP_COUNT_BADGE_INACTIVE}
               >
                 <StyledText
                   variant="extrabold"
-                  className={`text-[10px] ${isSelected ? 'text-paper-50' : 'text-ink-500'}`}
+                  className={isSelected ? CHIP_COUNT_TEXT_ACTIVE : CHIP_COUNT_TEXT_INACTIVE}
                 >
                   {cat.product_count}
                 </StyledText>

@@ -1,5 +1,5 @@
 import { View, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { router, Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { StatusBar } from 'expo-status-bar';
@@ -45,7 +45,7 @@ export default function AddProduct() {
             barcode={form.barcode}
             barcodeConflictProduct={form.barcodeConflictProduct}
             onPressEditConflictingProduct={(productId) =>
-              router.push(`/(edit-forms)/edit-product/${productId}` as any)
+              router.push(`/(edit-forms)/edit-product/${productId}` as Href)
             }
           />
 

@@ -12,6 +12,7 @@ import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface BasicInfoCardProps {
@@ -28,6 +29,14 @@ interface BasicInfoCardProps {
   onPressEditConflictingProduct?: (productId: number) => void;
 }
 
+const CATEGORY_PILL_ACTIVE_CLASS =
+  'press-scale px-4 py-2 rounded-pill border bg-persimmon-500 border-persimmon-500 active:opacity-80';
+const CATEGORY_PILL_INACTIVE_CLASS =
+  'press-scale px-4 py-2 rounded-pill border bg-paper-100 border-ink-200 active:opacity-80';
+
+const CATEGORY_TEXT_ACTIVE_CLASS = 'text-sm text-paper-50';
+const CATEGORY_TEXT_INACTIVE_CLASS = 'text-sm text-ink-700';
+
 export function BasicInfoCard({
   control,
   sku,
@@ -41,6 +50,8 @@ export function BasicInfoCard({
   barcodeConflictProduct,
   onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
+  useRenderCounter('BasicInfoCard', { feature: 'products_form' });
+
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
 
@@ -252,26 +263,19 @@ export function BasicInfoCard({
                   accessibilityRole="button"
                   accessibilityLabel={`Select category ${category.name}`}
                   accessibilityState={{ selected: isActive }}
-                  className={`press-scale px-4 py-2 rounded-pill border ${
+                  className={
                     isActive
-                      ? 'bg-persimmon-500 border-persimmon-500'
-                      : 'bg-paper-100 border-ink-200'
-                  }`}
-                  style={({ pressed }) => ({
-                    backgroundColor: pressed
-                      ? isActive
-                        ? '#C8460F'
-                        : '#E6E3D8'
-                      : isActive
-                        ? '#E85A1F'
-                        : '#F2F0E8',
-                  })}
+                      ? CATEGORY_PILL_ACTIVE_CLASS
+                      : CATEGORY_PILL_INACTIVE_CLASS
+                  }
                 >
                   <StyledText
                     variant="extrabold"
-                    className={`text-sm ${
-                      isActive ? 'text-paper-50' : 'text-ink-700'
-                    }`}
+                    className={
+                      isActive
+                        ? CATEGORY_TEXT_ACTIVE_CLASS
+                        : CATEGORY_TEXT_INACTIVE_CLASS
+                    }
                   >
                     {category.name}
                   </StyledText>

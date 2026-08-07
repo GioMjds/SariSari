@@ -17,7 +17,7 @@ Status legend:
 
 | #   | Feature                                 | Status               | Phase |
 | --- | --------------------------------------- | -------------------- | ----- |
-| 1   | POS Fast Lane                           | Partial              | Now   |
+| 1   | POS Fast Lane                           | Done                 | Now   |
 | 2   | Parked Sales                            | Not started          | Now   |
 | 3   | Daily Cash Close-Out                    | Done                 | Now   |
 | 4   | Physical Stocktake                      | Not started          | Now   |
@@ -36,7 +36,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 5 Done · 6 Partial · 7 Not started.
+**Tally:** 6 Done · 5 Partial · 7 Not started.
 
 ---
 
@@ -44,16 +44,13 @@ Status legend:
 
 For each feature: which routes, hooks, and DB files back it, and what is missing.
 
-### 2.1 POS Fast Lane — Partial
+### 2.1 POS Fast Lane — Done
 
 - **Routes:** `app/(tabs)/sales/pos.tsx`
 - **Hooks:** `hooks/useProducts.tsx` (`useFastLaneProducts`, `useToggleFavorite`, `usePaginatedProducts`); `hooks/useBarcodeResolver.tsx`
 - **DB:** `database/products.ts` (`getFastLaneProducts` CTE merging `is_favorite` + 14-day top sellers; `toggleProductFavorite`); columns `is_favorite` and `last_sold_at` are on the products table
-- **Components:** `components/sales/pos/ProductSearchCatalog.tsx` (in-POS strip); `components/sales/pos/FastLaneBar.tsx` + `FastLaneCard.tsx` (built but never imported); `components/ui/BarcodeScannerModal.tsx`; `components/sales/pos/useCart.ts` (scan-to-add path)
-- **Gaps:**
-  - The common-qty chips (`+1/+2/+5/+12`) exist only in the unused `FastLaneCard.tsx`. The live `ProductSearchCatalog.tsx:106-158` strip does a single-tap add only.
-  - Search isn't debounced per spec (uses React Hook Form `watch`).
-  - Favorites toggle and 14-day top sellers work.
+- **Components:** `components/sales/pos/ProductSearchCatalog.tsx` (in-POS strip); `components/sales/pos/FastLaneSection.tsx` + `FastLaneCard.tsx` (common-qty chips `+1/+2/+5` and favorite toggling); `components/ui/BarcodeScannerModal.tsx`; `components/sales/pos/useCart.ts` (scan-to-add path)
+- **Notes:** Fast Lane strip with `+1/+2/+5` quick quantity chips and debounced search input (250ms) are fully integrated into the live POS screen.
 
 ### 2.2 Parked Sales — Not started
 
@@ -203,7 +200,7 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 
 ## 3. Current routes inventory
 
-```
+```folder
 app/
   (tabs)/
     customers/{index, credit, insights}.tsx
@@ -265,7 +262,7 @@ Note: there is **no `app/(tabs)/dev/reset.tsx`** referenced by features 11 and 1
 
 ## 5. Target Information Architecture — 5 tabs, each with a clear job
 
-```
+```folder
 ┌─ Home (Today)        Status snapshot · alerts · quick jumps
 ├─ Sales (POS)         Checkout · cart · suki balance · park cart
 ├─ Inventory           Products · Movements · Recommendations · Damaged · Labels

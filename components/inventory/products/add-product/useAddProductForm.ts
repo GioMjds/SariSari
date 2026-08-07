@@ -220,13 +220,18 @@ export function useAddProductForm() {
     [initialStock, setValue],
   );
 
+  const categoryRef = useRef(category);
+  categoryRef.current = category;
+
   const selectCategory = useCallback(
     (name: string) => {
-      setValue('category', category === name ? '' : name, {
+      const current = categoryRef.current;
+      const nextCategory = current === name ? '' : name;
+      setValue('category', nextCategory, {
         shouldDirty: true,
       });
     },
-    [category, setValue],
+    [setValue],
   );
 
   const confirmDiscard = useCallback(() => {

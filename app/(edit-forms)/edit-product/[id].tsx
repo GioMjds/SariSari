@@ -43,7 +43,7 @@ export default function EditProduct() {
 
           <View className="mt-3">
             <EditPricingCard
-              control={form.control as any}
+              control={form.control}
               profitPerPiece={form.profitPerPiece}
               markupPercent={form.markupPercent}
               isLossWarning={form.isLossWarning}

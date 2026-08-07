@@ -281,6 +281,18 @@ jest.mock('expo-image-picker', () => ({
   })),
 }));
 
+// Mock expo-notifications to prevent EventEmitter failures in Node/Jest
+jest.mock('expo-notifications', () => ({
+  getPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  scheduleNotificationAsync: jest.fn(async () => 'notification-id'),
+  cancelScheduledNotificationAsync: jest.fn(async () => undefined),
+  setNotificationHandler: jest.fn(),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeNotificationSubscription: jest.fn(),
+}));
+
 // Mock expo-linear-gradient to prevent EventEmitter failures in Node/Jest
 jest.mock('expo-linear-gradient', () => {
   const mockReact = require('react');
