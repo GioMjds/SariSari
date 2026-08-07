@@ -37,9 +37,8 @@ export function CustomerPickerModal({
   const isCash = paymentType === 'cash';
   const trimmedQuery = query.trim();
 
-  // Visibility transition is one of the suspected triggers. Emit
-  // a structured event so we can correlate it with render counts.
   const prevVisibleRef = useRef(visible);
+
   useEffect(() => {
     if (prevVisibleRef.current !== visible) {
       logger.info(

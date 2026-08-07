@@ -12,7 +12,6 @@ import { MotiView } from 'moti';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Pressable,
@@ -21,6 +20,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Alert } from '@/utils';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';

@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, ListRenderItemInfo, View } from 'react-native';
+import { FlatList, ListRenderItemInfo, Platform, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
 import type { Product } from '@/types/products.types';
@@ -48,6 +48,7 @@ export function ProductsList({
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
+      removeClippedSubviews={Platform.OS === 'android'}
       onEndReached={() => {
         if (!isFetchingNextPage && hasNextPage && onEndReached) {
           onEndReached();

@@ -404,4 +404,14 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: any) => children,
 }));
 
+// Mock expo-image to prevent EventEmitter native module errors in Node/Jest
+jest.mock('expo-image', () => {
+  const mockReact = require('react');
+  const mockRN = require('react-native');
+  return {
+    Image: (props: any) => mockReact.createElement(mockRN.View, props),
+  };
+});
+
+
 

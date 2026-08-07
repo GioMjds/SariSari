@@ -3,6 +3,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   TextInput,
   View,
@@ -164,6 +165,10 @@ export function ProductSearchCatalog({
           contentContainerStyle={{ paddingBottom: 82 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           onEndReached={() => {
             if (!isFetchingNextPage && hasNextPage && onEndReached) {
               onEndReached();

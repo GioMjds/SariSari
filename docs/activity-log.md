@@ -4,6 +4,17 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-08-07 — POS ProductRow Unit Action Buttons & FastLaneCard Layout Fix (Completed)
+
+### Overview
+- Upgraded [`ProductRow.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/ProductRow.tsx) unit selection UI:
+  - Single products (retail-only) now display a clean, single **`+ Add`** action button (or quantity stepper when in cart) with no unnecessary unit toggle bar.
+  - Bundle products replace the generic `+ Add` button with high-contrast, tactile pressable **`+ Tingi`** (`bg-cinnamon-500`) and **`+ Pakyaw`** (`bg-sage-600`) action buttons, eliminating ambiguous tag styling and direct add ambiguity.
+  - Added unit test suite in [`components/sales/pos/__tests__/ProductRow.test.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/__tests__/ProductRow.test.tsx).
+- Fixed [`FastLaneCard.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/FastLaneCard.tsx) layout shift for bundle products by enforcing a fixed container height (`h-[132px]`), reserved sub-header badge slot (`h-5`), and flex `justify-between` structure, ensuring all cards in the horizontal strip have aligned prices and steppers. Added unit test suite [`components/sales/pos/__tests__/FastLaneCard.test.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/__tests__/FastLaneCard.test.tsx).
+
+---
+
 ## 2026-08-07 — Sales Tab Product Cards & Bundled Products Redesign (Completed)
 
 ### Overview

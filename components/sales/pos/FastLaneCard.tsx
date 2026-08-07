@@ -5,6 +5,12 @@ import { FastLaneProduct } from '@/database/products';
 import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { formatPesos } from '@/lib';
+import { useRenderCounter } from '@/hooks/useRenderCounter';
+
+const CARD_AVAILABLE_CLASS =
+  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[132px] justify-between shadow-paper active:bg-paper-200/60';
+const CARD_OUT_OF_STOCK_CLASS =
+  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[132px] justify-between shadow-paper active:bg-paper-200/60 opacity-60';
 
 interface FastLaneCardProps {
   product: FastLaneProduct;
@@ -15,6 +21,12 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
   product,
   onAddToCart,
 }) => {
+  useRenderCounter(`FastLaneCard#${product.id}`, {
+    feature: 'pos_fast_lane',
+    threshold: 25,
+    windowMs: 1000,
+  });
+
   const toggleFavorite = useToggleFavorite();
   const isOutOfStock = product.quantity <= 0;
   const hasWholesale =
@@ -33,54 +45,58 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
   return (
     <View
       className={
-        'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 shadow-paper active:bg-paper-200/60 ' +
-        (isOutOfStock ? 'opacity-60' : '')
+        isOutOfStock ? CARD_OUT_OF_STOCK_CLASS : CARD_AVAILABLE_CLASS
       }
     >
-      <View className="flex-row items-center justify-between mb-1">
-        <StyledText
-          variant="extrabold"
-          className="text-ink-900 text-xs flex-1 mr-1"
-          numberOfLines={1}
-        >
-          {product.name}
-        </StyledText>
-        <Pressable
-          onPress={handleToggleFav}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={
-            product.is_favorite
-              ? `Remove ${product.name} from favorites`
-              : `Add ${product.name} to favorites`
-          }
-        >
-          <FontAwesome
-            name={product.is_favorite ? 'star' : 'star-o'}
-            size={14}
-            color={product.is_favorite ? '#E85A1F' : '#7A7165'}
-          />
-        </Pressable>
-      </View>
-
-      {hasWholesale && (
-        <View className="bg-sage-50 border border-sage-200 rounded-md px-1.5 py-0.5 self-start mb-1 flex-row items-center">
-          <FontAwesome name="cubes" size={9} color="#4F7A24" />
+      <View>
+        <View className="flex-row items-center justify-between mb-1">
           <StyledText
             variant="extrabold"
-            className="text-sage-700 text-[9px] ml-1"
+            className="text-ink-900 text-xs flex-1 mr-1"
+            numberOfLines={1}
           >
-            Bundle
+            {product.name}
           </StyledText>
+          <Pressable
+            onPress={handleToggleFav}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={
+              product.is_favorite
+                ? `Remove ${product.name} from favorites`
+                : `Add ${product.name} to favorites`
+            }
+          >
+            <FontAwesome
+              name={product.is_favorite ? 'star' : 'star-o'}
+              size={14}
+              color={product.is_favorite ? '#E85A1F' : '#7A7165'}
+            />
+          </Pressable>
         </View>
-      )}
 
-      <StyledText variant="extrabold" className="text-sage-700 text-xs mb-2">
-        {formatPesos(product.price)}
-      </StyledText>
+        <View className="h-5 mb-1 justify-center">
+          {hasWholesale ? (
+            <View className="bg-sage-50 border border-sage-200 rounded-md px-1.5 py-0.5 self-start flex-row items-center">
+              <FontAwesome name="cubes" size={9} color="#4F7A24" />
+              <StyledText
+                variant="extrabold"
+                className="text-sage-700 text-[9px] ml-1"
+                numberOfLines={1}
+              >
+                Bundle{product.conversion_factor ? ` (${product.conversion_factor}x)` : ''}
+              </StyledText>
+            </View>
+          ) : null}
+        </View>
+
+        <StyledText variant="extrabold" className="text-sage-700 text-xs">
+          {formatPesos(product.price)}
+        </StyledText>
+      </View>
 
       {isOutOfStock ? (
-        <View className="bg-semantic-danger-50 border border-semantic-danger/20 rounded-lg py-1 items-center">
+        <View className="bg-semantic-danger-50 border border-semantic-danger/20 rounded-lg py-1 items-center justify-center min-h-[32px]">
           <StyledText
             variant="semibold"
             className="text-semantic-danger text-[10px]"
