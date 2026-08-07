@@ -12,8 +12,7 @@ import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
 import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
-import { useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
+import { Href, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import {
@@ -24,10 +23,10 @@ import {
   subDays,
   subMonths,
 } from 'date-fns';
+import { formatPesos } from '@/lib';
 
 export default function Receipts() {
   const router = useRouter();
-  const { t } = useTranslation('sales');
   const flatListRef = useRef<FlatList<SaleWithItems>>(null);
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -57,16 +56,12 @@ export default function Receipts() {
   const filteredSales = useMemo(() => {
     let filtered = [...sales];
 
-    // Search query filter
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase().trim();
       filtered = filtered.filter((sale) => {
-        // Match customer name
         if (sale.customer_name?.toLowerCase().includes(q)) return true;
-        // Match receipt serial ref (e.g. #SR-0042 or 42)
         const refStr = `#sr-${String(sale.id).padStart(4, '0')}`;
         if (refStr.includes(q) || String(sale.id) === q) return true;
-        // Match any item product name inside receipt
         if (
           sale.items?.some((item) =>
             item.product_name.toLowerCase().includes(q),
@@ -163,7 +158,7 @@ export default function Receipts() {
 
   const handleSalePress = useCallback(
     (saleId: number) => {
-      router.push(`/(edit-forms)/sale-details/${saleId}` as any);
+      router.push(`/(edit-forms)/sale-details/${saleId}` as Href);
     },
     [router],
   );
@@ -201,11 +196,9 @@ export default function Receipts() {
       <View>
         <FilterChips
           filters={filters}
-          onChange={setFilters}
           onOpenMore={handleOpenFilters}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onResetFilters={handleResetFilters}
         />
 
         {filteredSales.length > 0 && (
@@ -215,15 +208,17 @@ export default function Receipts() {
               {filteredSales.length === 1 ? 'Receipt' : 'Receipts'} Found
             </StyledText>
             <View className="flex-row items-baseline">
-              <StyledText variant="regular" className="text-ink-500 text-xs mr-1">
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-xs mr-1"
+              >
                 Sum:
               </StyledText>
-              <StyledText variant="bold" className="text-persimmon-600 text-xs">
-                ₱
-                {filteredTotalAmount.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+              <StyledText
+                variant="extrabold"
+                className="text-persimmon-600 text-xs"
+              >
+                {formatPesos(filteredTotalAmount)}
               </StyledText>
             </View>
           </View>
@@ -235,15 +230,11 @@ export default function Receipts() {
     searchQuery,
     filteredSales.length,
     filteredTotalAmount,
-    setFilters,
     handleOpenFilters,
-    handleResetFilters,
   ]);
 
   const listEmpty = useMemo(() => {
-    if (isLoading) {
-      return <SalesSkeleton />;
-    }
+    if (isLoading) return <SalesSkeleton />;
     return (
       <View className="px-2 pb-12">
         <SalesEmptyState

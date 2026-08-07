@@ -76,7 +76,7 @@ export function ProductSearchCatalog({
         cartLine={getCartLine(item.id)}
         onAdd={onAdd}
         onUpdateQuantity={onUpdateQuantity}
-        {...(onToggleUnit ? { onToggleUnit } : {})}
+        onToggleUnit={onToggleUnit}
       />
     ),
     [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
@@ -167,8 +167,9 @@ export function ProductSearchCatalog({
           keyboardShouldPersistTaps="handled"
           initialNumToRender={10}
           maxToRenderPerBatch={10}
-          windowSize={5}
-          removeClippedSubviews={Platform.OS === 'android'}
+          updateCellsBatchingPeriod={50}
+          windowSize={11}
+          removeClippedSubviews={false}
           onEndReached={() => {
             if (!isFetchingNextPage && hasNextPage && onEndReached) {
               onEndReached();

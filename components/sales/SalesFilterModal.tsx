@@ -18,11 +18,6 @@ interface SalesFilterModalProps {
 const PERFORATION_COUNT = 24;
 const PERFORATION_BG = '#F7F6F2'; // page bg = paper-200, so circles look bitten out
 
-/**
- * Reskin of the original sales filter sheet. Now reads as a paper sheet
- * torn from the resibo book — cream surface, paper-200 perforations on
- * the bottom edge, persimmon "Apply" with brand-tinted glow.
- */
 export function SalesFilterModal({
   visible,
   onClose,
