@@ -144,34 +144,46 @@ export function Modal({
     }
   };
 
+  // Variant styles - use semantic color tokens that adapt to light/dark theme
+  // These ensure proper contrast and theme compliance
   const getVariantStyles = () => {
     switch (finalVariant) {
       case 'danger':
         return {
+          // Using bg-semantic-danger-50 for background and text-semantic-danger for icon
+          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-danger-50',
           iconColor: 'text-semantic-danger',
           defaultIcon: 'exclamation-triangle',
         };
       case 'success':
         return {
+          // Using bg-sage-50 for background and text-semantic-success for icon
+          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-sage-50',
           iconColor: 'text-semantic-success',
           defaultIcon: 'check-circle',
         };
       case 'warning':
         return {
+          // Using bg-semantic-warning-50 for background and text-semantic-warning for icon
+          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-warning-50',
           iconColor: 'text-semantic-warning',
           defaultIcon: 'exclamation-circle',
         };
       case 'info':
         return {
+          // Using bg-semantic-info-50 for background and text-semantic-info for icon
+          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-info-50',
           iconColor: 'text-semantic-info',
           defaultIcon: 'info-circle',
         };
       default:
         return {
+          // Using bg-surface-warm for background and text-semantic-info for icon
+          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-surface-warm',
           iconColor: 'text-semantic-info', // or appropriate default
           defaultIcon: 'info-circle',
@@ -196,7 +208,10 @@ export function Modal({
       ]}
       pointerEvents={isVisible ? 'auto' : 'none'}
     >
-      {/* Backdrop */}
+      {/* Backdrop - uses theme-aware background color with 40% opacity
+       * The CSS variable --background-muted should be defined in your CSS to adapt to theme
+       * Currently using bg-ink-900/40 which is the ink-900 token with 40% opacity
+       */}
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -225,7 +240,7 @@ export function Modal({
         }}
         transition={{ type: 'timing', duration: 200 }}
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--color-surface-subtle)',
           borderRadius: 16,
           padding: 'space-y-6',
           width: '100%',
@@ -334,7 +349,7 @@ export function Modal({
               accessibilityLabel="Close"
               className="absolute top-3 right-3 z-10 w-7 h-7 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
             >
-              <FontAwesome name="times" size={18} color="#A89F90" />
+              <FontAwesome name="times" size={18} color="var(--color-ink-300)" />
             </Pressable>
           )}
       </MotiView>

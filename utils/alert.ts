@@ -5,6 +5,10 @@ import { ModalButton } from '@/types/ui/Modal.types';
 /**
  * This is to replace the default React Native Alert with our custom modal implementation.
  * It uses the same API as the default Alert, but shows a custom modal instead.
+ *
+ * Alert utility - maps to Modal component which now uses design system tokens
+ * Default variant changed from 'default' to 'info' for better semantic meaning
+ * Button styling is handled entirely by the Modal component for consistency
  */
 const alert = (
   title: string,
