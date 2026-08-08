@@ -254,7 +254,7 @@ export function Modal({
             {finalTitle && (
               <StyledText
                 variant="extrabold"
-                className="text-heading-medium text-warm-900 mb-4 text-center"
+                className="text-h2 text-warm-900 mb-4 text-center"
               >
                 {finalTitle}
               </StyledText>
@@ -262,7 +262,7 @@ export function Modal({
             {finalDescription && (
               <StyledText
                 variant="regular"
-                className="text-body-medium text-warm-700 mb-4 text-center"
+                className="text-body text-warm-700 mb-4 text-center"
               >
                 {finalDescription}
               </StyledText>
