@@ -202,10 +202,7 @@ export function Modal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ type: 'timing', duration: 200 }}
-        style={[
-          StyleSheet.absoluteFillObject,
-          { backgroundColor: 'rgba(14, 12, 10, 0.4)' },
-        ]}
+        className="absolute inset-0 bg-ink-900/40"
       >
         <Pressable
           accessibilityLabel="Dismiss"
