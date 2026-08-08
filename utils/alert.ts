@@ -25,7 +25,7 @@ const alert = (
   // Determine variant based on buttons or content
   // If there is a destructive button, set variant to danger
   const hasDestructive = modalButtons.some((b) => b.style === 'destructive');
-  const variant = hasDestructive ? 'danger' : 'default';
+  const variant = hasDestructive ? 'danger' : 'info';
 
   openModal({
     title,
