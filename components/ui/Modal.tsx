@@ -189,7 +189,7 @@ export function Modal({
         {
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 24,
+          paddingHorizontal: 'space-x-6',
           zIndex: 9999,
           elevation: 9999,
         },
@@ -227,7 +227,7 @@ export function Modal({
         style={{
           backgroundColor: '#FFFFFF',
           borderRadius: 16,
-          padding: 24,
+          padding: 'space-y-6',
           width: '100%',
           maxWidth: getSizeWidth(),
           zIndex: 1,
@@ -242,7 +242,7 @@ export function Modal({
           <View className="items-center mb-4">
             {(finalIcon || finalVariant !== 'default') && (
               <View
-                className={`${variantStyles.iconBg} rounded-full px-4 py-3 mb-3`}
+                className={`${variantStyles.iconBg} rounded-full px-3 py-2 mb-3`}
               >
                 <FontAwesome
                   name={displayIcon as any}
@@ -275,7 +275,7 @@ export function Modal({
 
         {/* Buttons */}
         {finalButtons && finalButtons.length > 0 && (
-          <View className="gap-3">
+          <View className="gap-4">
             {finalButtons.map((button: ModalButton, index: number) => {
               const isDestructive = button.style === 'destructive';
               const isCancel = button.style === 'cancel';
@@ -307,7 +307,7 @@ export function Modal({
                   disabled={isLoading}
                   accessibilityRole="button"
                   accessibilityLabel={button.text}
-                  className={`${bgClass} ${borderClass} rounded-xl py-3 press-scale active:opacity-70`}
+                  className={`${bgClass} ${borderClass} rounded-xl py-2.5 press-scale active:opacity-70`}
                 >
                   {isLoading ? (
                     <ActivityIndicator color="#fff" />
@@ -332,7 +332,7 @@ export function Modal({
               onPress={handleClose}
               accessibilityRole="button"
               accessibilityLabel="Close"
-              className="absolute top-4 right-4 z-10 w-8 h-8 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
+              className="absolute top-3 right-3 z-10 w-7 h-7 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
             >
               <FontAwesome name="times" size={18} color="#A89F90" />
             </Pressable>
