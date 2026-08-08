@@ -314,7 +314,7 @@ export function Modal({
                   ) : (
                     <StyledText
                       variant={isCancel ? 'semibold' : 'extrabold'}
-                      className={`${textClass} text-center text-base`}
+                      className={`${textClass} text-center text-body`}
                     >
                       {button.text}
                     </StyledText>
