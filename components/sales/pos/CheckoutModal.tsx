@@ -16,6 +16,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { runOnJS } from 'react-native-worklets';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
@@ -34,12 +36,7 @@ export interface CheckoutModalProps {
 
 export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
   const insets = useSafeAreaInsets();
-  // Narrow selectors keep this modal's re-renders scoped to the
-  // exact store fields it reads. The previous code destructured the
-  // entire useCartStore() AND called useCart() (which itself
-  // subscribed to the whole store plus usePaginatedProducts), so a
-  // single toggleUnit call re-rendered this component three times in
-  // the same commit — that's the css-interop freeze.
+
   const cartItems = useCartStore((s) => s.cartItems);
   const paymentType = useCartStore((s) => s.paymentType);
   const selectedCustomer = useCartStore((s) => s.selectedCustomer);
@@ -47,12 +44,9 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
   const clearCart = useCartStore((s) => s.clearCart);
   const setPaymentType = useCartStore((s) => s.setPaymentType);
   const setCustomer = useCartStore((s) => s.setCustomer);
-  // useCart supplies the submit action and derived helpers
-  // (total/itemCount/customers/isSubmitDisabled) that the modal needs
-  // but aren't first-class store fields. With useCart's own destructure
-  // now narrowed, this single subscription is the only store-level
-  // coupling on this component.
+
   const cart = useCart();
+
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -112,13 +106,24 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
     }
   }, [paymentType, selectedCustomer]);
 
-  // Cleanup the auto-dismiss timer if the component unmounts mid-flight.
   useEffect(() => {
     const timer = timerRef.current;
     return () => {
       if (timer) clearTimeout(timer);
     };
   }, []);
+
+  useEffect(() => {
+    logger.info(
+      {
+        event: 'checkout_inner_customer_picker_visibility',
+        feature: 'checkout',
+        visible: showCustomerPicker,
+        paymentType,
+      },
+      'inner customer picker visibility changed',
+    );
+  }, [showCustomerPicker, paymentType]);
 
   const sheetStyle = useAnimatedStyle(() => ({
     opacity: enterProgress.value,
@@ -254,148 +259,142 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
   }, [isSuccess, handleDismissSuccess, onClose]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-      statusBarTranslucent
-    >
-      <View className="flex-1 justify-end bg-black/65">
-        <Pressable
-          accessible={false}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-          onPress={handleBackdropPress}
-          className="absolute inset-0"
-        />
-        <Animated.View
-          accessibilityViewIsModal
-          accessibilityRole="summary"
-          accessibilityLabel={isSuccess ? 'Sale receipt' : 'Checkout summary'}
-          style={[
-            sheetStyle,
-            isSuccess
-              ? { height: '100%', maxHeight: '100%' }
-              : { height: '90%', maxHeight: '90%' },
-          ]}
-          className={`w-full overflow-hidden bg-paper-50 ${
-            isSuccess
-              ? 'rounded-none h-full'
-              : 'rounded-t-[28px] shadow-paper-deep'
-          }`}
-        >
-          {/* Drag handle — shown only in modal review mode */}
-          {!isSuccess && (
-            <View className="items-center pt-3 pb-1 bg-paper-50">
-              <View className="w-10 h-1 rounded-full bg-paper-300" />
-            </View>
-          )}
-
-          {/* Header — clean parchment style, matching light app design */}
-          <View
-            className="px-5 pb-4 bg-paper-50 border-b border-paper-200"
-            style={{ paddingTop: isSuccess ? Math.max(insets.top, 16) : 4 }}
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleClose}
+        statusBarTranslucent
+      >
+        <View className="flex-1 justify-end bg-black/65">
+          <Pressable
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            onPress={handleBackdropPress}
+            className="absolute inset-0"
+          />
+          <Animated.View
+            accessibilityViewIsModal
+            accessibilityRole="summary"
+            accessibilityLabel={isSuccess ? 'Sale receipt' : 'Checkout summary'}
+            style={[
+              sheetStyle,
+              isSuccess
+                ? { height: '100%', maxHeight: '100%' }
+                : { height: '90%', maxHeight: '90%' },
+            ]}
+            className={`w-full overflow-hidden bg-paper-50 ${
+              isSuccess
+                ? 'rounded-none h-full'
+                : 'rounded-t-[28px] shadow-paper-deep'
+            }`}
           >
-            <View className="flex-row items-center justify-between mb-2">
-              <Pressable
-                onPress={handleClose}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel="Close checkout"
-                className="w-10 h-10 items-center justify-center rounded-full bg-paper-100 border border-paper-300 active:bg-paper-200"
-              >
-                <FontAwesome name="chevron-left" size={14} color="#3D372F" />
-              </Pressable>
-
-              <View className="items-center flex-1 mx-3">
-                <StyledText
-                  variant="extrabold"
-                  className="text-[10px] uppercase tracking-[0.22em] text-persimmon-600"
-                >
-                  {isSuccess ? 'Receipt Confirmed' : 'Checkout'}
-                </StyledText>
-                <StyledText
-                  variant="black"
-                  className="text-ink-900 text-xl mt-0.5"
-                >
-                  {isSuccess ? 'Sale Recorded' : 'Review Order'}
-                </StyledText>
-              </View>
-
-              <Pressable
-                onPress={handleClose}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel="Close checkout"
-                className="w-10 h-10 rounded-full bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
-              >
-                <FontAwesome name="times" size={14} color="#3D372F" />
-              </Pressable>
-            </View>
-
-            {!isSuccess && !isEmpty && (
-              <View className="flex-row items-center justify-center gap-2 mt-1">
-                <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-[11px]"
-                  >
-                    {itemCountLabel}
-                  </StyledText>
-                </View>
-                <View className="w-1 h-1 rounded-full bg-persimmon-500" />
-                <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-[11px]"
-                  >
-                    {piecesLabel}
-                  </StyledText>
-                </View>
+            {/* Drag handle — shown only in modal review mode */}
+            {!isSuccess && (
+              <View className="items-center pt-3 pb-1 bg-paper-50">
+                <View className="w-10 h-1 rounded-full bg-paper-300" />
               </View>
             )}
-          </View>
 
-          {isSuccess ? (
-            <SaleSuccessState
-              recordedTotal={recordedTotal}
-              itemCountLabel={itemCountLabel}
-              piecesLabel={piecesLabel}
-              paymentType={paymentType}
-              customerName={customerName}
-              checkRingStyle={checkRingStyle}
-              checkMarkStyle={checkMarkStyle}
-              insets={insets}
-              onNewSale={handleDismissSuccess}
-              onViewReceipts={handleViewReceipts}
-            />
-          ) : (
-            <CheckoutForm
-              cartItems={cartItems}
-              cart={cart}
-              paymentType={paymentType}
-              setPaymentType={setPaymentType}
-              setShowCustomerPicker={setShowCustomerPicker}
-              customerName={customerName}
-              customerInitial={customerInitial}
-              customerMissing={customerMissing}
-              isEmpty={isEmpty}
-              itemCountLabel={itemCountLabel}
-              piecesLabel={piecesLabel}
-              isSubmitting={isSubmitting}
-              isSubmitDisabled={isSubmitDisabled}
-              submitError={submitError}
-              insets={insets}
-              onUpdateQuantity={updateQuantity}
-              onRemoveItem={handleRemoveItem}
-              onConfirmSubmit={handleConfirmSubmit}
-              onRetry={handleRetry}
-              onDismissError={() => setSubmitError(null)}
-            />
-          )}
-        </Animated.View>
-      </View>
+            {/* Header — clean parchment style, matching light app design */}
+            <View
+              className="px-5 pb-4 bg-paper-50 border-b border-paper-200"
+              style={{ paddingTop: isSuccess ? Math.max(insets.top, 16) : 4 }}
+            >
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="w-10 h-10 items-center justify-center" />
+                <View className="items-center flex-1 mx-3">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-[10px] uppercase tracking-[0.22em] text-persimmon-600"
+                  >
+                    {isSuccess ? 'Receipt Confirmed' : 'Checkout'}
+                  </StyledText>
+                  <StyledText
+                    variant="black"
+                    className="text-ink-900 text-xl mt-0.5"
+                  >
+                    {isSuccess ? 'Sale Recorded' : 'Review Order'}
+                  </StyledText>
+                </View>
+
+                <Pressable
+                  onPress={handleClose}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close checkout"
+                  className="w-14 h-14 rounded-full bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
+                >
+                  <FontAwesome name="times" size={24} color="#E85A1F" />
+                </Pressable>
+              </View>
+
+              {!isSuccess && !isEmpty && (
+                <View className="flex-row items-center justify-center gap-2 mt-1">
+                  <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
+                    <StyledText
+                      variant="semibold"
+                      className="text-ink-700 text-[11px]"
+                    >
+                      {itemCountLabel}
+                    </StyledText>
+                  </View>
+                  <View className="w-1 h-1 rounded-full bg-persimmon-500" />
+                  <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
+                    <StyledText
+                      variant="semibold"
+                      className="text-ink-700 text-[11px]"
+                    >
+                      {piecesLabel}
+                    </StyledText>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {isSuccess ? (
+              <SaleSuccessState
+                recordedTotal={recordedTotal}
+                itemCountLabel={itemCountLabel}
+                piecesLabel={piecesLabel}
+                paymentType={paymentType}
+                customerName={customerName}
+                checkRingStyle={checkRingStyle}
+                checkMarkStyle={checkMarkStyle}
+                insets={insets}
+                onNewSale={handleDismissSuccess}
+                onViewReceipts={handleViewReceipts}
+              />
+            ) : (
+              <CheckoutForm
+                cartItems={cartItems}
+                cart={cart}
+                paymentType={paymentType}
+                setPaymentType={setPaymentType}
+                setShowCustomerPicker={setShowCustomerPicker}
+                customerName={customerName}
+                customerInitial={customerInitial}
+                customerMissing={customerMissing}
+                isEmpty={isEmpty}
+                itemCountLabel={itemCountLabel}
+                piecesLabel={piecesLabel}
+                isSubmitting={isSubmitting}
+                isSubmitDisabled={isSubmitDisabled}
+                submitError={submitError}
+                insets={insets}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={handleRemoveItem}
+                onConfirmSubmit={handleConfirmSubmit}
+                onRetry={handleRetry}
+                onDismissError={() => setSubmitError(null)}
+                clearCart={clearCart}
+              />
+            )}
+          </Animated.View>
+        </View>
+      </Modal>
 
       <CustomerPickerModal
         visible={showCustomerPicker}
@@ -411,7 +410,7 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
           setShowCustomerPicker(false);
         }}
       />
-    </Modal>
+    </>
   );
 }
 
@@ -431,7 +430,11 @@ interface CheckoutFormProps {
   isSubmitDisabled: boolean;
   submitError: string | null;
   insets: { top: number; bottom: number; left: number; right: number };
-  onUpdateQuantity: ReturnType<typeof useCartStore.getState>['updateQuantity'];
+  onUpdateQuantity: (
+    productId: number,
+    delta: number,
+    selectedUnit?: 'retail' | 'wholesale',
+  ) => 'over_stock' | void;
   onRemoveItem: (
     productId: number,
     selectedUnit?: 'retail' | 'wholesale',
@@ -439,6 +442,7 @@ interface CheckoutFormProps {
   onConfirmSubmit: () => void;
   onRetry: () => void;
   onDismissError: () => void;
+  clearCart: () => void;
 }
 
 function CheckoutForm({
@@ -462,7 +466,9 @@ function CheckoutForm({
   onConfirmSubmit,
   onRetry,
   onDismissError,
+  clearCart,
 }: CheckoutFormProps) {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   return (
     <View className="flex-1 bg-paper-50">
       {/* Buyer + Payment section — single elevated card */}
@@ -563,13 +569,81 @@ function CheckoutForm({
             Order Items
           </StyledText>
         </View>
-        <StyledText
-          variant="medium"
-          className="text-ink-500 text-[11px]"
-          numberOfLines={1}
-        >
-          {itemCountLabel} · {piecesLabel}
-        </StyledText>
+        {showClearConfirm ? (
+          <View className="flex-row items-center gap-1.5">
+            <Pressable
+              onPress={() => {
+                logger.info(
+                  {
+                    event: 'checkout_clear_all',
+                    feature: 'checkout',
+                    itemCount: cartItems.length,
+                  },
+                  'checkout clear all triggered',
+                );
+                clearCart();
+                setShowClearConfirm(false);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Confirm clear all cart items"
+              className="flex-row items-center bg-semantic-danger px-2.5 py-1 rounded-full active:opacity-80"
+              hitSlop={4}
+            >
+              <StyledText
+                variant="extrabold"
+                className="text-white text-[11px]"
+              >
+                Confirm?
+              </StyledText>
+            </Pressable>
+            <Pressable
+              onPress={() => setShowClearConfirm(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel clear all"
+              className="flex-row items-center bg-paper-200 border border-paper-300 px-2.5 py-1 rounded-full active:opacity-80"
+              hitSlop={4}
+            >
+              <StyledText
+                variant="extrabold"
+                className="text-ink-700 text-[11px]"
+              >
+                Cancel
+              </StyledText>
+            </Pressable>
+          </View>
+        ) : (
+          <View className="flex-row items-center gap-2">
+            <StyledText
+              variant="medium"
+              className="text-ink-500 text-[11px]"
+              numberOfLines={1}
+            >
+              {itemCountLabel} · {piecesLabel}
+            </StyledText>
+            {!isEmpty && (
+              <Pressable
+                onPress={() => setShowClearConfirm(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all cart items"
+                className="flex-row items-center bg-semantic-danger-50 border border-semantic-danger/30 px-2.5 py-1 rounded-full active:opacity-80"
+                hitSlop={4}
+              >
+                <FontAwesome
+                  name="trash"
+                  size={10}
+                  color="#C13030"
+                  style={{ marginRight: 4 }}
+                />
+                <StyledText
+                  variant="extrabold"
+                  className="text-semantic-danger text-[11px]"
+                >
+                  Clear
+                </StyledText>
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Line items list — clean dividers */}
@@ -689,74 +763,15 @@ function CheckoutForm({
           </View>
         </View>
 
-        <Pressable
-          onPress={onConfirmSubmit}
+        <SwipeConfirmButton
+          onConfirm={onConfirmSubmit}
           disabled={isSubmitDisabled}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isEmpty
-              ? 'Cart is empty'
-              : customerMissing
-                ? 'Select a customer to confirm credit sale'
-                : `Confirm sale for ${formatPesos(cart.total)}`
-          }
-          accessibilityState={{
-            disabled: isSubmitDisabled,
-            busy: isSubmitting,
-          }}
-          className={`h-14 rounded-2xl flex-row items-center justify-center active:opacity-90 ${
-            isSubmitDisabled
-              ? 'bg-paper-300 border border-paper-400'
-              : paymentType === 'cash'
-                ? 'bg-persimmon-500 shadow-persimmon-glow'
-                : 'bg-amber-600 shadow-raised'
-          }`}
-        >
-          {isSubmitting ? (
-            <View className="flex-row items-center">
-              <ActivityIndicator color="#FFFFFF" size="small" />
-              <StyledText
-                variant="extrabold"
-                className="text-white text-base ml-2.5"
-              >
-                Recording sale...
-              </StyledText>
-            </View>
-          ) : (
-            <>
-              <View
-                className={`w-7 h-7 rounded-full items-center justify-center mr-2.5 ${
-                  isSubmitDisabled ? 'bg-ink-400' : 'bg-white/20'
-                }`}
-              >
-                <FontAwesome
-                  name={
-                    isEmpty
-                      ? 'shopping-cart'
-                      : customerMissing
-                        ? 'user-plus'
-                        : 'check'
-                  }
-                  size={12}
-                  color={isSubmitDisabled ? '#FAFAF7' : '#FFFFFF'}
-                />
-              </View>
-              <StyledText
-                variant="black"
-                className={`text-[15px] uppercase tracking-wider ${
-                  isSubmitDisabled ? 'text-ink-600' : 'text-white'
-                }`}
-                numberOfLines={1}
-              >
-                {isEmpty
-                  ? 'Add Items'
-                  : customerMissing
-                    ? 'Select Customer'
-                    : `Confirm · ${formatPesos(cart.total)}`}
-              </StyledText>
-            </>
-          )}
-        </Pressable>
+          isSubmitting={isSubmitting}
+          isEmpty={isEmpty}
+          customerMissing={customerMissing}
+          paymentType={paymentType}
+          total={cart.total}
+        />
       </View>
     </View>
   );
@@ -1222,5 +1237,140 @@ function SaleSuccessState({
         </View>
       </View>
     </View>
+  );
+}
+
+interface SwipeConfirmButtonProps {
+  onConfirm: () => void;
+  disabled: boolean;
+  isSubmitting: boolean;
+  isEmpty: boolean;
+  customerMissing: boolean;
+  paymentType: 'cash' | 'credit';
+  total: number;
+}
+
+function SwipeConfirmButton({
+  onConfirm,
+  disabled,
+  isSubmitting,
+  isEmpty,
+  customerMissing,
+  paymentType,
+  total,
+}: SwipeConfirmButtonProps) {
+  const translateX = useSharedValue(0);
+  const containerWidth = useSharedValue(0);
+  const confirmed = useSharedValue(false);
+
+  const THUMB_SIZE = 52;
+  const PADDING = 4;
+
+  const pan = Gesture.Pan()
+    .enabled(!disabled && !isSubmitting)
+    .onUpdate((e) => {
+      const maxTranslate = containerWidth.value - THUMB_SIZE - PADDING * 2;
+      translateX.value = Math.max(0, Math.min(e.translationX, maxTranslate));
+      if (translateX.value >= maxTranslate * 0.8 && !confirmed.value) {
+        confirmed.value = true;
+        runOnJS(onConfirm)();
+      }
+    })
+    .onEnd(() => {
+      translateX.value = withSpring(0, {
+        damping: 15,
+        stiffness: 200,
+      });
+      confirmed.value = false;
+    });
+
+  const thumbStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  const labelOpacity = useAnimatedStyle(() => ({
+    opacity:
+      1 -
+      translateX.value /
+        Math.max(containerWidth.value - THUMB_SIZE - PADDING * 2, 1),
+  }));
+
+  if (disabled) {
+    const icon = isEmpty
+      ? 'shopping-cart'
+      : customerMissing
+        ? 'user-plus'
+        : 'check';
+    const label = isEmpty
+      ? 'Add Items'
+      : customerMissing
+        ? 'Select Customer'
+        : `Confirm · ${formatPesos(total)}`;
+    return (
+      <View className="h-[60px] rounded-[30px] flex-row items-center justify-center bg-paper-300 border border-paper-400">
+        <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-ink-400">
+          <FontAwesome name={icon} size={12} color="#FAFAF7" />
+        </View>
+        <StyledText
+          variant="black"
+          className="text-[15px] uppercase tracking-wider text-ink-600"
+          numberOfLines={1}
+        >
+          {label}
+        </StyledText>
+      </View>
+    );
+  }
+
+  if (isSubmitting) {
+    return (
+      <View
+        className={`h-[60px] rounded-[30px] flex-row items-center justify-center ${
+          paymentType === 'cash' ? 'bg-persimmon-500' : 'bg-amber-600'
+        }`}
+      >
+        <ActivityIndicator color="#FFFFFF" size="small" />
+        <StyledText variant="extrabold" className="text-white text-base ml-2.5">
+          Recording sale...
+        </StyledText>
+      </View>
+    );
+  }
+
+  const activeBg = paymentType === 'cash' ? 'bg-persimmon-500' : 'bg-amber-600';
+
+  return (
+    <GestureDetector gesture={pan}>
+      <Animated.View
+        className={`h-[60px] rounded-[30px] overflow-hidden ${activeBg}`}
+        onLayout={(e) => {
+          containerWidth.value = e.nativeEvent.layout.width;
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Slide to confirm sale for ${formatPesos(total)}`}
+      >
+        {/* Track label */}
+        <Animated.View
+          className="absolute inset-0 items-center justify-center"
+          style={labelOpacity}
+        >
+          <StyledText
+            variant="black"
+            className="text-white text-[14px] uppercase tracking-wider"
+            numberOfLines={1}
+          >
+            Slide to Confirm · {formatPesos(total)}
+          </StyledText>
+        </Animated.View>
+
+        {/* Thumb knob */}
+        <Animated.View
+          className="absolute top-[4px] left-[4px] w-[52px] h-[52px] rounded-full bg-white/25 items-center justify-center"
+          style={thumbStyle}
+        >
+          <FontAwesome name="chevron-right" size={16} color="#FFFFFF" />
+        </Animated.View>
+      </Animated.View>
+    </GestureDetector>
   );
 }

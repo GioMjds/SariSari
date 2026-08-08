@@ -27,12 +27,12 @@ interface CartState {
   addItem: (
     product: Product,
     selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+  ) => 'over_stock' | void;
   updateQuantity: (
     productId: number,
     delta: number,
     selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+  ) => 'over_stock' | void;
   toggleUnit: (index: number) => void;
   clearCart: () => void;
   setPaymentType: (type: 'cash' | 'credit') => void;
@@ -57,18 +57,17 @@ export const useCartStore = create<CartState>((set, get) => ({
       calculateTotalPieces(1, selectedUnit, product.conversion_factor);
 
     if (totalPieces > product.quantity) {
-      if (currentPieces === 0) {
-        Alert.alert(
-          'Out of Stock',
-          'Insufficient stock for this packaging unit',
-        );
-      } else {
-        Alert.alert(
-          'Insufficient Stock',
-          `Only ${product.quantity} total pieces available`,
-        );
-      }
-      return;
+      logger.warn(
+        {
+          event: 'cart_over_stock',
+          feature: 'cart',
+          productId: product.id,
+          totalPieces,
+          available: product.quantity,
+        },
+        'addItem blocked by stock limit',
+      );
+      return 'over_stock';
     }
 
     if (existing) {
@@ -99,13 +98,14 @@ export const useCartStore = create<CartState>((set, get) => ({
           stock: product.quantity,
           selected_unit: selectedUnit,
           retail_unit_name: product.retail_unit_name || 'Pc',
-          wholesale_unit_name: product.wholesale_unit_name,
+          wholesale_unit_name: product.wholesale_unit_name ?? null,
           retail_price: product.price,
-          wholesale_price: product.wholesale_price,
-          conversion_factor: product.conversion_factor,
+          wholesale_price: product.wholesale_price ?? null,
+          conversion_factor: product.conversion_factor ?? null,
         },
       ],
     });
+    return;
   },
 
   updateQuantity: (productId, delta, selectedUnit = 'retail') => {
@@ -115,7 +115,8 @@ export const useCartStore = create<CartState>((set, get) => ({
         item.product_id === productId &&
         (item.selected_unit || 'retail') === selectedUnit,
     );
-    if (matchingItems.length === 0) return;
+    const targetItem = matchingItems[0];
+    if (!targetItem) return;
 
     const next = prev
       .map((item) => {
@@ -131,14 +132,20 @@ export const useCartStore = create<CartState>((set, get) => ({
       })
       .filter(Boolean) as NewSaleItem[];
 
-    if (calculateCartProductPieces(next, productId) > matchingItems[0].stock) {
-      Alert.alert(
-        'Insufficient Stock',
-        `Only ${matchingItems[0].stock} total pieces available`,
+    if (calculateCartProductPieces(next, productId) > targetItem.stock) {
+      logger.warn(
+        {
+          event: 'cart_over_stock',
+          feature: 'cart',
+          productId,
+          available: targetItem.stock,
+        },
+        'updateQuantity blocked by stock limit',
       );
-      return;
+      return 'over_stock';
     }
     set({ cartItems: next });
+    return;
   },
 
   toggleUnit: (index) => {

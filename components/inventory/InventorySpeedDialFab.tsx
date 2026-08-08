@@ -10,7 +10,8 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withSpring
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -46,32 +47,47 @@ function SpeedDialItem({
   total,
   expandProgress,
 }: SpeedDialItemProps) {
-  const itemStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
+  const itemStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
       expandProgress.value,
-      [0.15 * index, 1],
+      [0.08 * index, 1],
       [0, 1],
       Extrapolation.CLAMP,
-    ),
-    transform: [
-      {
-        translateY: interpolate(
-          expandProgress.value,
-          [0, 1],
-          [20 * (total - index), 0],
-          Extrapolation.CLAMP,
-        ),
-      },
-      {
-        scale: interpolate(
-          expandProgress.value,
-          [0, 1],
-          [0.8, 1],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
-  }));
+    );
+    const shadowProgress = interpolate(
+      expandProgress.value,
+      [0, 1],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      opacity,
+      shadowColor: '#0E0C0A',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: shadowProgress * 0.18,
+      shadowRadius: shadowProgress * 8,
+      elevation: shadowProgress * 6,
+      transform: [
+        {
+          translateY: interpolate(
+            expandProgress.value,
+            [0, 1],
+            [16 * (total - index), 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          scale: interpolate(
+            expandProgress.value,
+            [0, 1],
+            [0.85, 1],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    };
+  });
 
   return (
     <Animated.View style={itemStyle}>
@@ -81,14 +97,14 @@ function SpeedDialItem({
         accessibilityLabel={label}
         className="flex-row items-center gap-x-3 active:scale-95"
       >
-        <View className="bg-ink-900 px-3.5 py-2 rounded-xl shadow-md border border-ink-700">
+        <View className="bg-ink-900 px-3.5 py-2 rounded-xl border border-ink-700">
           <StyledText variant="extrabold" className="text-paper-50 text-base">
             {label}
           </StyledText>
         </View>
 
         <View
-          className={`w-16 h-16 rounded-full items-center justify-center shadow-lg border ${
+          className={`w-16 h-16 rounded-full items-center justify-center border ${
             isPrimary
               ? 'bg-persimmon-500 border-persimmon-400'
               : 'bg-cinnamon-500 border-cinnamon-400'
@@ -128,7 +144,7 @@ export function InventorySpeedDialFab({
 
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    expandProgress.value = withSpring(0, SPRING_CONFIG, (finished) => {
+    expandProgress.value = withTiming(0, { duration: 180 }, (finished) => {
       if (finished) scheduleOnRN(setExpanded, false);
     });
   }, [expandProgress]);
@@ -242,9 +258,11 @@ export function InventorySpeedDialFab({
     <>
       {/* Collapsed FAB Trigger Button (on main screen) */}
       <View
-        className="absolute right-5 items-end z-50 pointer-events-box-none"
+        className={`absolute right-5 items-end z-50 pointer-events-box-none ${
+          expanded ? 'opacity-0' : 'opacity-100'
+        }`}
         style={{ bottom: bottomOffset }}
-        pointerEvents="box-none"
+        pointerEvents={expanded ? 'none' : 'box-none'}
       >
         <Pressable
           onPress={handleOpen}

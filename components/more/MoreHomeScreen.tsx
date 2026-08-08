@@ -8,7 +8,7 @@ import { MoreLinkRow } from './MoreLinkRow';
 
 const routes = {
   reports: '/(tabs)/home',
-  expenses: '/gastos-kaha',
+  cashEntries: '/(tabs)/more/cash-entries',
   settings: '/(tabs)/more/settings',
 } satisfies Record<string, Href>;
 
@@ -51,6 +51,12 @@ export function MoreHomeScreen() {
             subtitle={t('common:moreHomeExpensesSub')}
             icon="money"
             onPress={() => router.push(routes.expenses)}
+          />
+          <MoreLinkRow
+            label={t('common:moreHomeCashEntriesLabel')}
+            subtitle={t('common:moreHomeCashEntriesSub')}
+            icon="money"
+            onPress={() => router.push(routes.cashEntries)}
           />
         </MoreGroupSection>
 

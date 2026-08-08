@@ -10,3 +10,4 @@ export * from './FastLaneBar';
 export * from './FastLaneCard';
 export * from './FastLaneSection';
 export * from './ScanToastBanner';
+export * from './parked';

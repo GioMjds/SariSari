@@ -1,5 +1,5 @@
 import type { NewSaleItem, Product } from '@/types';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Image } from 'expo-image';
@@ -30,12 +30,15 @@ const WHOLESALE_CHIP_INACTIVE_CLASS =
 interface ProductRowProps {
   product: Product;
   cartLine: NewSaleItem | undefined;
-  onAdd: (product: Product, selectedUnit?: 'retail' | 'wholesale') => void;
+  onAdd: (
+    product: Product,
+    selectedUnit?: 'retail' | 'wholesale',
+  ) => 'over_stock' | void;
   onUpdateQuantity: (
     productId: number,
     delta: number,
     selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+  ) => 'over_stock' | void;
   onToggleUnit?: (productId: number) => void;
 }
 
@@ -47,6 +50,7 @@ function ProductRowImpl({
   onToggleUnit,
 }: ProductRowProps) {
   const toggleFavorite = useToggleFavorite();
+  const [overStock, setOverStock] = useState(false);
 
   useRenderCounter(`ProductRow#${product.id}`, {
     feature: 'pos_catalog',
@@ -83,7 +87,14 @@ function ProductRowImpl({
     <Pressable
       onPress={() => {
         if (isOutOfStock) return;
-        if (!inCart) onAdd(product);
+        if (!inCart) {
+          const result = onAdd(product);
+          if (result === 'over_stock') {
+            setOverStock(true);
+          } else {
+            setOverStock(false);
+          }
+        }
       }}
       onLongPress={handleToggleFavorite}
       delayLongPress={400}
@@ -331,7 +342,10 @@ function ProductRowImpl({
         {inCart && cartLine ? (
           <View className="flex-row items-center bg-paper-200 border border-paper-300 rounded-xl p-1">
             <Pressable
-              onPress={() => onUpdateQuantity(product.id, -1, activeUnit)}
+              onPress={() => {
+                onUpdateQuantity(product.id, -1, activeUnit);
+                setOverStock(false);
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Decrease quantity for ${product.name}`}
               className="w-10 h-10 rounded-lg bg-paper-100 items-center justify-center border border-paper-300 active:bg-paper-300 min-h-[44px] min-w-[44px]"
@@ -347,7 +361,16 @@ function ProductRowImpl({
             </StyledText>
 
             <Pressable
-              onPress={() => onUpdateQuantity(product.id, 1, activeUnit)}
+              onPress={() => {
+                const result = onUpdateQuantity(
+                  product.id,
+                  1,
+                  activeUnit,
+                );
+                if (result === 'over_stock') {
+                  setOverStock(true);
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Increase quantity for ${product.name}`}
               className="w-10 h-10 rounded-lg bg-cinnamon-500 items-center justify-center active:bg-cinnamon-600 min-h-[44px] min-w-[44px]"
@@ -358,7 +381,14 @@ function ProductRowImpl({
         ) : !bulkSavings.hasWholesale ? (
           <Pressable
             onPress={() => {
-              if (!isOutOfStock && !inCart) onAdd(product);
+              if (!isOutOfStock && !inCart) {
+                const result = onAdd(product);
+                if (result === 'over_stock') {
+                  setOverStock(true);
+                } else {
+                  setOverStock(false);
+                }
+              }
             }}
             disabled={isOutOfStock}
             accessibilityRole="button"
@@ -380,6 +410,17 @@ function ProductRowImpl({
           </Pressable>
         ) : null}
       </View>
+      {overStock && (
+        <View className="mt-1 items-end">
+          <StyledText
+            variant="semibold"
+            className="text-semantic-danger text-[11px]"
+            accessibilityLiveRegion="polite"
+          >
+            Max stock
+          </StyledText>
+        </View>
+      )}
     </Pressable>
   );
 }

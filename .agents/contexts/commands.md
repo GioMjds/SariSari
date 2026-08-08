@@ -4,5 +4,5 @@
 - `npx expo run:ios` / `run:android` — native builds (needed for `expo-sqlite` and
   other modules that don't run in Expo Go)
 - `npx expo lint` — ESLint
-- `pnpm test` — Jest (uses `better-sqlite3` for DB tests)
+- `npm test` — Jest (uses `better-sqlite3` for DB tests)
 - `eas build --platform android` — production build

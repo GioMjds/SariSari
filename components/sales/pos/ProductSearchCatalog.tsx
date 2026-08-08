@@ -20,12 +20,15 @@ interface ProductSearchCatalogProps {
   filteredProducts: Product[];
   isLoading: boolean;
   getCartLine: (productId: number) => NewSaleItem | undefined;
-  onAdd: (product: Product, selectedUnit?: 'retail' | 'wholesale') => void;
+  onAdd: (
+    product: Product,
+    selectedUnit?: 'retail' | 'wholesale',
+  ) => 'over_stock' | void;
   onUpdateQuantity: (
     productId: number,
     delta: number,
     selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+  ) => 'over_stock' | void;
   onToggleUnit?: (productId: number) => void;
   onPressScan: () => void;
   pendingAddProductBarcode?: string | null;
@@ -41,8 +44,12 @@ interface ProductSearchCatalogProps {
    * out of this catalog tree. Defaults to '' if omitted (e.g. a parent
    * that does not need search).
    */
-  searchText?: string;
-  onSearchTextChange?: (text: string) => void;
+  searchText?: string | undefined;
+  onSearchTextChange?: ((text: string) => void) | undefined;
+  parkedCartsCount?: number | undefined;
+  cartItemCount?: number | undefined;
+  onPressParkedList?: (() => void) | undefined;
+  onPressParkCurrent?: (() => void) | undefined;
 }
 
 export function ProductSearchCatalog({
@@ -62,6 +69,10 @@ export function ProductSearchCatalog({
   onRetryFetchNext,
   searchText,
   onSearchTextChange,
+  parkedCartsCount = 0,
+  cartItemCount = 0,
+  onPressParkedList,
+  onPressParkCurrent,
 }: ProductSearchCatalogProps) {
   useRenderCounter('ProductSearchCatalog', {
     feature: 'pos_catalog',
@@ -104,6 +115,10 @@ export function ProductSearchCatalog({
         controlledText={searchText}
         onTextChange={onSearchTextChange}
         onPressScan={onPressScan}
+        parkedCartsCount={parkedCartsCount}
+        cartItemCount={cartItemCount}
+        onPressParkedList={onPressParkedList}
+        onPressParkCurrent={onPressParkCurrent}
       />
 
       {/* Fast Lane Section (with +1, +2, +5 quick-qty chips) */}
@@ -227,7 +242,11 @@ interface SearchBarProps {
   controlledText?: string | undefined;
   onTextChange?: ((text: string) => void) | undefined;
   onPressScan: () => void;
-  debounceMs?: number;
+  debounceMs?: number | undefined;
+  parkedCartsCount?: number | undefined;
+  cartItemCount?: number | undefined;
+  onPressParkedList?: (() => void) | undefined;
+  onPressParkCurrent?: (() => void) | undefined;
 }
 
 /**
@@ -240,6 +259,10 @@ function SearchBar({
   onTextChange,
   onPressScan,
   debounceMs = 250,
+  parkedCartsCount = 0,
+  cartItemCount = 0,
+  onPressParkedList,
+  onPressParkCurrent,
 }: SearchBarProps) {
   // Read the store value directly so we render the latest text without
   // re-rendering any ancestor above this component.
@@ -307,6 +330,36 @@ function SearchBar({
           <FontAwesome name="times-circle" size={16} color="#623418" />
         </Pressable>
       ) : null}
+
+      {/* Parked Carts Badge Button */}
+      {parkedCartsCount > 0 && onPressParkedList ? (
+        <Pressable
+          onPress={onPressParkedList}
+          accessibilityRole="button"
+          accessibilityLabel="View parked carts"
+          className="bg-cinnamon-100 active:bg-cinnamon-200 px-2.5 h-11 rounded-xl items-center justify-center ml-1.5 flex-row space-x-1"
+        >
+          <FontAwesome name="inbox" size={14} color="#623418" />
+          <StyledText variant="extrabold" className="text-cinnamon-800 text-xs ml-1">
+            {parkedCartsCount}
+          </StyledText>
+        </Pressable>
+      ) : null}
+
+      {/* Park Active Cart Action Button */}
+      {cartItemCount > 0 && onPressParkCurrent ? (
+        <Pressable
+          onPress={onPressParkCurrent}
+          accessibilityRole="button"
+          accessibilityLabel="Park active cart"
+          className="bg-paper-300 active:bg-paper-400 px-2.5 h-11 rounded-xl items-center justify-center ml-1.5"
+        >
+          <StyledText variant="bold" className="text-ink-800 text-xs">
+            Park
+          </StyledText>
+        </Pressable>
+      ) : null}
+
       <Pressable
         onPress={onPressScan}
         hitSlop={8}

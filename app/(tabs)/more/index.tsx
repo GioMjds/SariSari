@@ -5,4 +5,4 @@ function MoreTab() {
   return <MoreHomeScreen />;
 }
 
-export default withFeatureGuard(MoreTab, __DEV__);
+export default withFeatureGuard(MoreTab, !__DEV__);

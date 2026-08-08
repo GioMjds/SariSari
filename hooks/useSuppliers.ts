@@ -7,7 +7,7 @@ import {
   updateSupplierWithProducts,
 } from '@/database/suppliers';
 import { useToastStore } from '@/stores/ToastStore';
-import { Supplier, NewSupplier } from '@/types/suppliers.types';
+import { NewSupplier } from '@/types/suppliers.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export interface InsertSupplierParams {

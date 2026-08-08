@@ -6,14 +6,26 @@ import {
   FloatingCheckoutButton,
   CheckoutModal,
 } from '@/components/sales/pos';
+import {
+  ParkCartModal,
+  ParkedCartsListModal,
+  ActiveCartConflictModal,
+} from '@/components/sales/pos/parked';
 import { BarcodeScannerModal } from '@/components/ui';
 import { useCart } from '@/components/sales/pos/useCart';
-import { usePOSSearchStore } from '@/stores';
-import { usePaginatedProducts } from '@/hooks';
+import { useCartStore, usePOSSearchStore, useToastStore } from '@/stores';
+import { usePaginatedProducts, useParkedCarts } from '@/hooks';
+import { ParkedCart } from '@/database/parkedCarts';
 
 export default function POSScreen() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [showParkModal, setShowParkModal] = useState(false);
+  const [showParkedListModal, setShowParkedListModal] = useState(false);
+  const [targetResumeCart, setTargetResumeCart] = useState<ParkedCart | null>(
+    null,
+  );
+  const [showConflictModal, setShowConflictModal] = useState(false);
 
   const setSearchText = usePOSSearchStore((s) => s.setSearchText);
   const handleSearchTextChange = useCallback(
@@ -24,6 +36,13 @@ export default function POSScreen() {
   );
 
   const cart = useCart();
+
+  const { parkedCarts, parkCart, discardCart, resumeCart } = useParkedCarts();
+  const cartItems = useCartStore((s) => s.cartItems);
+  const selectedCustomer = useCartStore((s) => s.selectedCustomer);
+  const paymentType = useCartStore((s) => s.paymentType);
+  const clearCart = useCartStore((s) => s.clearCart);
+  const addToast = useToastStore((s) => s.addToast);
 
   const cartItemsRef = useRef(cart.cartItems);
   const toggleUnitRef = useRef(cart.toggleUnit);
@@ -48,6 +67,104 @@ export default function POSScreen() {
     setShowCustomerPicker(false);
   }, []);
 
+  const handleParkCurrentCart = useCallback(
+    async (label: string): Promise<boolean> => {
+      try {
+        await parkCart({
+          label,
+          customer_id:
+            selectedCustomer && typeof selectedCustomer === 'object'
+              ? selectedCustomer.id
+              : null,
+          customer_name:
+            typeof selectedCustomer === 'string'
+              ? selectedCustomer
+              : (selectedCustomer?.name ?? null),
+          payment_type: paymentType,
+          cartItems,
+        });
+        clearCart();
+        setShowParkModal(false);
+        addToast({
+          variant: 'success',
+          message: 'Cart parked successfully.',
+        });
+        return true;
+      } catch (error) {
+        addToast({
+          variant: 'danger',
+          message:
+            error instanceof Error ? error.message : 'Failed to park cart.',
+        });
+        return false;
+      }
+    },
+    [cartItems, selectedCustomer, paymentType, parkCart, clearCart, addToast],
+  );
+
+  const handleExecuteResume = useCallback(
+    async (cartToResume: ParkedCart) => {
+      try {
+        const { validatedItems, warnings } = await resumeCart(cartToResume);
+        clearCart();
+
+        useCartStore.setState({
+          cartItems: validatedItems,
+          paymentType: cartToResume.paymentType,
+          selectedCustomer: cartToResume.customerName ?? null,
+        });
+
+        setShowParkedListModal(false);
+        setTargetResumeCart(null);
+
+        if (warnings.length > 0) {
+          addToast({ message: warnings.join(' '), variant: 'warning' });
+        } else {
+          addToast({ message: 'Parked cart resumed.', variant: 'success' });
+        }
+      } catch {
+        addToast({ message: 'Failed to resume cart.', variant: 'danger' });
+      }
+    },
+    [resumeCart, clearCart, addToast],
+  );
+
+  const handleSelectResume = useCallback(
+    (cartToResume: ParkedCart) => {
+      if (cartItems.length > 0) {
+        setTargetResumeCart(cartToResume);
+        setShowConflictModal(true);
+      } else {
+        handleExecuteResume(cartToResume);
+      }
+    },
+    [cartItems, handleExecuteResume],
+  );
+
+  const handleParkCurrentAndSwitch = useCallback(async () => {
+    if (!targetResumeCart) return;
+    setShowConflictModal(false);
+    const autoLabel = `Cart • ${cartItems.length} items`;
+    const success = await handleParkCurrentCart(autoLabel);
+    if (success) {
+      await handleExecuteResume(targetResumeCart);
+    }
+  }, [targetResumeCart, cartItems, handleParkCurrentCart, handleExecuteResume]);
+
+  const handleReplaceCurrent = useCallback(async () => {
+    if (!targetResumeCart) return;
+    setShowConflictModal(false);
+    await handleExecuteResume(targetResumeCart);
+  }, [targetResumeCart, handleExecuteResume]);
+
+  const handleOpenParkedListModal = useCallback(() => {
+    setShowParkedListModal(true);
+  }, []);
+
+  const handleOpenParkModal = useCallback(() => {
+    setShowParkModal(true);
+  }, []);
+
   const memoizedCartLine = useMemo(() => cart.getCartLine, [cart.getCartLine]);
 
   return (
@@ -62,6 +179,10 @@ export default function POSScreen() {
         onPressAddNewProduct={cart.handlePressAddNewProduct}
         onDismissPendingAddProduct={cart.dismissPendingAddProduct}
         onSearchTextChange={handleSearchTextChange}
+        parkedCartsCount={parkedCarts.length}
+        cartItemCount={cartItems.length}
+        onPressParkedList={handleOpenParkedListModal}
+        onPressParkCurrent={handleOpenParkModal}
       />
 
       {/* Floating Checkout Button */}
@@ -98,6 +219,34 @@ export default function POSScreen() {
         itemCount={cart.itemCount}
         total={cart.total}
       />
+
+      {/* Parked Carts Modals */}
+      <ParkCartModal
+        visible={showParkModal}
+        cartItems={cartItems}
+        selectedCustomer={selectedCustomer}
+        paymentType={paymentType}
+        onClose={() => setShowParkModal(false)}
+        onConfirm={handleParkCurrentCart}
+      />
+
+      <ParkedCartsListModal
+        visible={showParkedListModal}
+        parkedCarts={parkedCarts}
+        onClose={() => setShowParkedListModal(false)}
+        onResume={handleSelectResume}
+        onDiscard={(id) => discardCart(id)}
+      />
+
+      <ActiveCartConflictModal
+        visible={showConflictModal}
+        onClose={() => {
+          setShowConflictModal(false);
+          setTargetResumeCart(null);
+        }}
+        onParkCurrentAndSwitch={handleParkCurrentAndSwitch}
+        onReplaceCurrent={handleReplaceCurrent}
+      />
     </View>
   );
 }
@@ -106,19 +255,23 @@ interface CatalogProductsBridgeProps {
   getCartLine: (productId: number) => import('@/types').NewSaleItem | undefined;
   onAdd: (
     product: import('@/types').Product,
-    selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+    selectedUnit?: 'retail' | 'wholesale' | undefined,
+  ) => 'over_stock' | void;
   onUpdateQuantity: (
     productId: number,
     delta: number,
-    selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+    selectedUnit?: 'retail' | 'wholesale' | undefined,
+  ) => 'over_stock' | void;
   onToggleUnit: (productId: number) => void;
   onPressScan: () => void;
   pendingAddProductBarcode: string | null;
   onPressAddNewProduct: () => void;
   onDismissPendingAddProduct: () => void;
   onSearchTextChange: (text: string) => void;
+  parkedCartsCount?: number | undefined;
+  cartItemCount?: number | undefined;
+  onPressParkedList?: (() => void) | undefined;
+  onPressParkCurrent?: (() => void) | undefined;
 }
 
 function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
@@ -164,6 +317,10 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
       onEndReached={handleFetchNextPage}
       onRetryFetchNext={handleRetryFetchNext}
       onSearchTextChange={props.onSearchTextChange}
+      parkedCartsCount={props.parkedCartsCount}
+      cartItemCount={props.cartItemCount}
+      onPressParkedList={props.onPressParkedList}
+      onPressParkCurrent={props.onPressParkCurrent}
     />
   );
 }

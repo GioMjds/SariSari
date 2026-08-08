@@ -12,7 +12,7 @@ export interface CheckoutLineRowProps {
     productId: number,
     delta: number,
     selectedUnit?: 'retail' | 'wholesale',
-  ) => void;
+  ) => 'over_stock' | void;
   onRemove: (productId: number, selectedUnit?: 'retail' | 'wholesale') => void;
 }
 
@@ -22,6 +22,7 @@ export function CheckoutLineRow({
   onRemove,
 }: CheckoutLineRowProps) {
   const [showConfirmRemove, setShowConfirmRemove] = useState(false);
+  const [overStock, setOverStock] = useState(false);
   const subtotal = item.price * item.quantity;
   const isWholesale = item.selected_unit === 'wholesale';
   const unitName = isWholesale
@@ -73,9 +74,10 @@ export function CheckoutLineRow({
         <View className="flex-row items-center gap-3">
           <View className="flex-row items-center bg-paper-100/90 rounded-2xl border border-paper-300 p-1">
             <Pressable
-              onPress={() =>
-                onUpdateQuantity(item.product_id, -1, item.selected_unit)
-              }
+              onPress={() => {
+                onUpdateQuantity(item.product_id, -1, item.selected_unit);
+                setOverStock(false);
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Decrease quantity of ${item.product_name}`}
               className="w-7 h-7 rounded-xl bg-paper-200/80 items-center justify-center active:opacity-60"
@@ -92,9 +94,16 @@ export function CheckoutLineRow({
             </StyledText>
 
             <Pressable
-              onPress={() =>
-                onUpdateQuantity(item.product_id, 1, item.selected_unit)
-              }
+              onPress={() => {
+                const result = onUpdateQuantity(
+                  item.product_id,
+                  1,
+                  item.selected_unit,
+                );
+                if (result === 'over_stock') {
+                  setOverStock(true);
+                }
+              }}
               accessibilityRole="button"
               accessibilityLabel={`Increase quantity of ${item.product_name}`}
               className="w-7 h-7 rounded-xl bg-persimmon-500 items-center justify-center active:opacity-75"
@@ -113,6 +122,16 @@ export function CheckoutLineRow({
           </View>
         </View>
       </Pressable>
+
+      {overStock && (
+        <StyledText
+          variant="semibold"
+          className="text-semantic-danger text-[11px] text-right mt-1 pr-1"
+          accessibilityLiveRegion="polite"
+        >
+          Max stock reached
+        </StyledText>
+      )}
 
       {showConfirmRemove && (
         <View className="flex-row items-center justify-between mt-2.5 bg-semantic-danger-50 px-3.5 py-2 rounded-xl border border-semantic-danger/30">
@@ -147,4 +166,3 @@ export function CheckoutLineRow({
     </View>
   );
 }
-

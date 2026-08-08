@@ -1,0 +1,94 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+import type { NewSaleItem } from '@/types';
+
+export interface ParkedCartRow {
+  id: number;
+  label: string;
+  customer_id: number | null;
+  customer_name: string | null;
+  payment_type: 'cash' | 'credit';
+  payload_json: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface ParkedCart {
+  id: number;
+  label: string;
+  customerId: number | null;
+  customerName: string | null;
+  paymentType: 'cash' | 'credit';
+  cartItems: NewSaleItem[];
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface ParkCartInput {
+  label: string;
+  customer_id?: number | null;
+  customer_name?: string | null;
+  payment_type: 'cash' | 'credit';
+  cartItems: NewSaleItem[];
+}
+export async function getParkedCarts(
+  db: SQLiteDatabase,
+): Promise<ParkedCart[]> {
+  const rows = await db.getAllAsync<ParkedCartRow>(
+    `SELECT * FROM parked_carts 
+     WHERE datetime(expires_at) > datetime('now')
+     ORDER BY datetime(created_at) DESC;`,
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.label,
+    customerId: row.customer_id,
+    customerName: row.customer_name,
+    paymentType: row.payment_type,
+    cartItems: JSON.parse(row.payload_json) as NewSaleItem[],
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
+  }));
+}
+
+export async function parkCart(
+  db: SQLiteDatabase,
+  input: ParkCartInput,
+): Promise<number> {
+  const existing = await getParkedCarts(db);
+  if (existing.length >= 3) {
+    throw new Error('Maximum limit of 3 parked carts reached.');
+  }
+
+  // Expires in 24 hours by default
+  const now = new Date();
+  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+  const result = await db.runAsync(
+    `INSERT INTO parked_carts (label, customer_id, customer_name, payment_type, payload_json, created_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'), ?);`,
+    [
+      input.label,
+      input.customer_id ?? null,
+      input.customer_name ?? null,
+      input.payment_type,
+      JSON.stringify(input.cartItems),
+      expires,
+    ],
+  );
+
+  return result.lastInsertRowId;
+}
+
+export async function discardParkedCart(
+  db: SQLiteDatabase,
+  id: number,
+): Promise<void> {
+  await db.runAsync('DELETE FROM parked_carts WHERE id = ?;', [id]);
+}
+
+export async function cleanupExpiredCarts(db: SQLiteDatabase): Promise<void> {
+  await db.runAsync(
+    "DELETE FROM parked_carts WHERE datetime(expires_at) <= datetime('now');",
+  );
+}

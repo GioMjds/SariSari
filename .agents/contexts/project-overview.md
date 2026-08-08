@@ -28,10 +28,10 @@ Defined in `constants/tabs.ts` and rendered in `app/(tabs)/_layout.tsx`:
 | Order | Tab       | Route        | Purpose                                               |
 | ----- | --------- | ------------ | ----------------------------------------------------- |
 | 1     | Dashboard | `/`          | Home base — daily summary, low stock, recent activity |
-| 2     | Sell      | `/sell`      | POS / barcode-scanning counter                        |
+| 2     | Sales     | `/sales`     | POS / barcode-scanning counter                        |
 | 3     | Inventory | `/inventory` | Product catalog, categories, restock, suppliers       |
-| 4     | Utang     | `/utang`     | Suki ledger — outstanding balances, credits, payments |
-| 5     | Reports   | `/reports`   | Analytics and aging buckets                           |
+| 4     | Customers | `/customers` | Suki ledger — outstanding balances, credits, payments |
+| 5     | More      | `/reports`   | Analytics and aging buckets                           |
 
 A `dev/reset` route is hidden in production builds and lets a developer wipe
 and re-seed the database against `scripts/sample-mock-datas.ts`.
@@ -81,9 +81,9 @@ This is the real layout — note `database/` (not `db/`) is the SQLite layer.
 app/                       Routes (expo-router). One folder per screen group.
   (tabs)/                  Bottom-tab screens.
     index.tsx              Dashboard (home).
-    sell/                  POS screens.
+    sales/                 POS screens.
     inventory/             Product catalog + restock.
-    utang/                 Suki ledger.
+    customers/             Customer management.
     reports/               Analytics.
     dev/reset.tsx          Hidden dev-only reset + re-seed.
   (edit-forms)/            Modal form routes (add/edit) — one folder per flow:

@@ -364,6 +364,18 @@ export async function runMigrations() {
         );
       `);
 
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS parked_carts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          label TEXT NOT NULL,
+          customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+          customer_name TEXT,
+          payment_type TEXT NOT NULL DEFAULT 'cash',
+          payload_json TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          expires_at TEXT NOT NULL
+        );
+      `);
       await db.execAsync('PRAGMA user_version = 10;');
     });
     console.log('Database migrated to version 10.');
