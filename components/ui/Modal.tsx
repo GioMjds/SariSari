@@ -149,31 +149,31 @@ export function Modal({
       case 'danger':
         return {
           iconBg: 'bg-semantic-danger-50',
-          iconColor: '#C13030',
+          iconColor: 'text-semantic-danger',
           defaultIcon: 'exclamation-triangle',
         };
       case 'success':
         return {
           iconBg: 'bg-sage-50',
-          iconColor: '#3D5E1B',
+          iconColor: 'text-semantic-success',
           defaultIcon: 'check-circle',
         };
       case 'warning':
         return {
           iconBg: 'bg-semantic-warning-50',
-          iconColor: '#C77B0E',
+          iconColor: 'text-semantic-warning',
           defaultIcon: 'exclamation-circle',
         };
       case 'info':
         return {
           iconBg: 'bg-semantic-info-50',
-          iconColor: '#2E6FA8',
+          iconColor: 'text-semantic-info',
           defaultIcon: 'info-circle',
         };
       default:
         return {
           iconBg: 'bg-surface-warm',
-          iconColor: '#B45309',
+          iconColor: 'text-semantic-info', // or appropriate default
           defaultIcon: 'info-circle',
         };
     }
