@@ -16,8 +16,12 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { runOnJS } from 'react-native-worklets';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
@@ -32,9 +36,14 @@ import { calculateTotalPieces, formatPesos } from '@/lib';
 export interface CheckoutModalProps {
   visible: boolean;
   onClose: () => void;
+  onParkCart?: () => void;
 }
 
-export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
+export function CheckoutModal({
+  visible,
+  onClose,
+  onParkCart,
+}: CheckoutModalProps) {
   const insets = useSafeAreaInsets();
 
   const cartItems = useCartStore((s) => s.cartItems);
@@ -267,133 +276,158 @@ export function CheckoutModal({ visible, onClose }: CheckoutModalProps) {
         onRequestClose={handleClose}
         statusBarTranslucent
       >
-        <View className="flex-1 justify-end bg-black/65">
-          <Pressable
-            accessible={false}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
-            onPress={handleBackdropPress}
-            className="absolute inset-0"
-          />
-          <Animated.View
-            accessibilityViewIsModal
-            accessibilityRole="summary"
-            accessibilityLabel={isSuccess ? 'Sale receipt' : 'Checkout summary'}
-            style={[
-              sheetStyle,
-              isSuccess
-                ? { height: '100%', maxHeight: '100%' }
-                : { height: '90%', maxHeight: '90%' },
-            ]}
-            className={`w-full overflow-hidden bg-paper-50 ${
-              isSuccess
-                ? 'rounded-none h-full'
-                : 'rounded-t-[28px] shadow-paper-deep'
-            }`}
-          >
-            {/* Drag handle — shown only in modal review mode */}
-            {!isSuccess && (
-              <View className="items-center pt-3 pb-1 bg-paper-50">
-                <View className="w-10 h-1 rounded-full bg-paper-300" />
-              </View>
-            )}
-
-            {/* Header — clean parchment style, matching light app design */}
-            <View
-              className="px-5 pb-4 bg-paper-50 border-b border-paper-200"
-              style={{ paddingTop: isSuccess ? Math.max(insets.top, 16) : 4 }}
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <View className="flex-1 justify-end bg-black/65">
+            <Pressable
+              accessible={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+              onPress={handleBackdropPress}
+              className="absolute inset-0"
+            />
+            <Animated.View
+              accessibilityViewIsModal
+              accessibilityRole="summary"
+              accessibilityLabel={isSuccess ? 'Sale receipt' : 'Checkout summary'}
+              style={[
+                sheetStyle,
+                isSuccess
+                  ? { height: '100%', maxHeight: '100%' }
+                  : { height: '90%', maxHeight: '90%' },
+              ]}
+              className={`w-full overflow-hidden bg-paper-50 ${
+                isSuccess
+                  ? 'rounded-none h-full'
+                  : 'rounded-t-[28px] shadow-paper-deep'
+              }`}
             >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="w-10 h-10 items-center justify-center" />
-                <View className="items-center flex-1 mx-3">
-                  <StyledText
-                    variant="extrabold"
-                    className="text-[10px] uppercase tracking-[0.22em] text-persimmon-600"
-                  >
-                    {isSuccess ? 'Receipt Confirmed' : 'Checkout'}
-                  </StyledText>
-                  <StyledText
-                    variant="black"
-                    className="text-ink-900 text-xl mt-0.5"
-                  >
-                    {isSuccess ? 'Sale Recorded' : 'Review Order'}
-                  </StyledText>
-                </View>
-
-                <Pressable
-                  onPress={handleClose}
-                  hitSlop={12}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close checkout"
-                  className="w-14 h-14 rounded-full bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
-                >
-                  <FontAwesome name="times" size={24} color="#E85A1F" />
-                </Pressable>
-              </View>
-
-              {!isSuccess && !isEmpty && (
-                <View className="flex-row items-center justify-center gap-2 mt-1">
-                  <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
-                    <StyledText
-                      variant="semibold"
-                      className="text-ink-700 text-[11px]"
-                    >
-                      {itemCountLabel}
-                    </StyledText>
-                  </View>
-                  <View className="w-1 h-1 rounded-full bg-persimmon-500" />
-                  <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
-                    <StyledText
-                      variant="semibold"
-                      className="text-ink-700 text-[11px]"
-                    >
-                      {piecesLabel}
-                    </StyledText>
-                  </View>
+              {/* Drag handle — shown only in modal review mode */}
+              {!isSuccess && (
+                <View className="items-center pt-3 pb-1 bg-paper-50">
+                  <View className="w-10 h-1 rounded-full bg-paper-300" />
                 </View>
               )}
-            </View>
 
-            {isSuccess ? (
-              <SaleSuccessState
-                recordedTotal={recordedTotal}
-                itemCountLabel={itemCountLabel}
-                piecesLabel={piecesLabel}
-                paymentType={paymentType}
-                customerName={customerName}
-                checkRingStyle={checkRingStyle}
-                checkMarkStyle={checkMarkStyle}
-                insets={insets}
-                onNewSale={handleDismissSuccess}
-                onViewReceipts={handleViewReceipts}
-              />
-            ) : (
-              <CheckoutForm
-                cartItems={cartItems}
-                cart={cart}
-                paymentType={paymentType}
-                setPaymentType={setPaymentType}
-                setShowCustomerPicker={setShowCustomerPicker}
-                customerName={customerName}
-                customerInitial={customerInitial}
-                customerMissing={customerMissing}
-                isEmpty={isEmpty}
-                itemCountLabel={itemCountLabel}
-                piecesLabel={piecesLabel}
-                isSubmitting={isSubmitting}
-                isSubmitDisabled={isSubmitDisabled}
-                submitError={submitError}
-                insets={insets}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={handleRemoveItem}
-                onConfirmSubmit={handleConfirmSubmit}
-                onRetry={handleRetry}
-                onDismissError={() => setSubmitError(null)}
-                clearCart={clearCart}
-              />
-            )}
-          </Animated.View>
-        </View>
+              {/* Header — clean parchment style, matching light app design */}
+              <View
+                className="px-5 pb-4 bg-paper-50 border-b border-paper-200"
+                style={{ paddingTop: isSuccess ? Math.max(insets.top, 16) : 4 }}
+              >
+                <View className="flex-row items-center justify-between mb-2">
+                  <View className="w-10 h-10 items-center justify-center" />
+                  <View className="items-center flex-1 mx-3">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-[10px] uppercase tracking-[0.22em] text-persimmon-600"
+                    >
+                      {isSuccess ? 'Receipt Confirmed' : 'Checkout'}
+                    </StyledText>
+                    <StyledText
+                      variant="black"
+                      className="text-ink-900 text-xl mt-0.5"
+                    >
+                      {isSuccess ? 'Sale Recorded' : 'Review Order'}
+                    </StyledText>
+                  </View>
+
+                  <View className="flex-row items-center space-x-2 gap-2">
+                    {!isSuccess && !isEmpty && onParkCart && (
+                      <Pressable
+                        onPress={() => {
+                          handleClose();
+                          onParkCart();
+                        }}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Park current cart"
+                        className="px-3.5 h-11 rounded-xl bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200 flex-row"
+                      >
+                        <FontAwesome name="inbox" size={14} color="#623418" />
+                        <StyledText
+                          variant="extrabold"
+                          className="text-ink-800 text-xs ml-1.5"
+                        >
+                          Park
+                        </StyledText>
+                      </Pressable>
+                    )}
+
+                    <Pressable
+                      onPress={handleClose}
+                      hitSlop={12}
+                      accessibilityRole="button"
+                      accessibilityLabel="Close checkout"
+                      className="w-14 h-14 rounded-full bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
+                    >
+                      <FontAwesome name="times" size={24} color="#E85A1F" />
+                    </Pressable>
+                  </View>
+                </View>
+
+                {!isSuccess && !isEmpty && (
+                  <View className="flex-row items-center justify-center gap-2 mt-1">
+                    <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
+                      <StyledText
+                        variant="semibold"
+                        className="text-ink-700 text-[11px]"
+                      >
+                        {itemCountLabel}
+                      </StyledText>
+                    </View>
+                    <View className="w-1 h-1 rounded-full bg-persimmon-500" />
+                    <View className="px-2.5 py-1 rounded-full bg-paper-100 border border-paper-300">
+                      <StyledText
+                        variant="semibold"
+                        className="text-ink-700 text-[11px]"
+                      >
+                        {piecesLabel}
+                      </StyledText>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {isSuccess ? (
+                <SaleSuccessState
+                  recordedTotal={recordedTotal}
+                  itemCountLabel={itemCountLabel}
+                  piecesLabel={piecesLabel}
+                  paymentType={paymentType}
+                  customerName={customerName}
+                  checkRingStyle={checkRingStyle}
+                  checkMarkStyle={checkMarkStyle}
+                  insets={insets}
+                  onNewSale={handleDismissSuccess}
+                  onViewReceipts={handleViewReceipts}
+                />
+              ) : (
+                <CheckoutForm
+                  cartItems={cartItems}
+                  cart={cart}
+                  paymentType={paymentType}
+                  setPaymentType={setPaymentType}
+                  setShowCustomerPicker={setShowCustomerPicker}
+                  customerName={customerName}
+                  customerInitial={customerInitial}
+                  customerMissing={customerMissing}
+                  isEmpty={isEmpty}
+                  itemCountLabel={itemCountLabel}
+                  piecesLabel={piecesLabel}
+                  isSubmitting={isSubmitting}
+                  isSubmitDisabled={isSubmitDisabled}
+                  submitError={submitError}
+                  insets={insets}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                  onConfirmSubmit={handleConfirmSubmit}
+                  onRetry={handleRetry}
+                  onDismissError={() => setSubmitError(null)}
+                  clearCart={clearCart}
+                />
+              )}
+            </Animated.View>
+          </View>
+        </GestureHandlerRootView>
       </Modal>
 
       <CustomerPickerModal
@@ -1265,35 +1299,94 @@ function SwipeConfirmButton({
 
   const THUMB_SIZE = 52;
   const PADDING = 4;
+  const CONFIRM_THRESHOLD = 0.8;
 
-  const pan = Gesture.Pan()
-    .enabled(!disabled && !isSubmitting)
-    .onUpdate((e) => {
-      const maxTranslate = containerWidth.value - THUMB_SIZE - PADDING * 2;
-      translateX.value = Math.max(0, Math.min(e.translationX, maxTranslate));
-      if (translateX.value >= maxTranslate * 0.8 && !confirmed.value) {
-        confirmed.value = true;
-        runOnJS(onConfirm)();
-      }
-    })
-    .onEnd(() => {
-      translateX.value = withSpring(0, {
-        damping: 15,
-        stiffness: 200,
+  const logSwipeBegin = useCallback((cw: number, tx: number) => {
+    logger.info(
+      {
+        event: 'swipe_gesture_begin',
+        feature: 'checkout',
+        containerWidth: cw,
+        translateX: tx,
+      },
+      'Swipe gesture began',
+    );
+  }, []);
+
+  const logSwipeConfirm = useCallback((progress: number) => {
+    logger.info(
+      {
+        event: 'swipe_gesture_confirm',
+        feature: 'checkout',
+        progress,
+      },
+      'Swipe gesture confirmed - triggering onConfirm',
+    );
+  }, []);
+
+  const pan = useMemo(() => {
+    return Gesture.Pan()
+      .enabled(!disabled && !isSubmitting)
+
+      .activeOffsetX([-10, 10])
+      .failOffsetY([-10, 10])
+
+      .onBegin(() => {
+        scheduleOnRN(logSwipeBegin, containerWidth.value, translateX.value);
+      })
+
+      .onUpdate((e) => {
+        const maxTranslate = Math.max(
+          containerWidth.value - THUMB_SIZE - PADDING * 2,
+          0,
+        );
+
+        if (maxTranslate <= 0) {
+          return;
+        }
+
+        translateX.value = Math.max(0, Math.min(e.translationX, maxTranslate));
+
+        const progress = translateX.value / maxTranslate;
+
+        if (progress >= CONFIRM_THRESHOLD && !confirmed.value) {
+          confirmed.value = true;
+
+          scheduleOnRN(logSwipeConfirm, progress);
+          scheduleOnRN(onConfirm);
+        }
+      })
+
+      .onFinalize(() => {
+        translateX.value = withSpring(0, {
+          damping: 15,
+          stiffness: 200,
+        });
+
+        confirmed.value = false;
       });
-      confirmed.value = false;
-    });
+  }, [disabled, isSubmitting, logSwipeBegin, logSwipeConfirm, onConfirm]);
 
   const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [
+      {
+        translateX: translateX.value,
+      },
+    ],
   }));
 
-  const labelOpacity = useAnimatedStyle(() => ({
-    opacity:
-      1 -
-      translateX.value /
-        Math.max(containerWidth.value - THUMB_SIZE - PADDING * 2, 1),
-  }));
+  const labelOpacity = useAnimatedStyle(() => {
+    const maxTranslate = Math.max(
+      containerWidth.value - THUMB_SIZE - PADDING * 2,
+      1,
+    );
+
+    const progress = Math.min(translateX.value / maxTranslate, 1);
+
+    return {
+      opacity: 1 - progress,
+    };
+  });
 
   if (disabled) {
     const icon = isEmpty
@@ -1349,7 +1442,6 @@ function SwipeConfirmButton({
         accessibilityRole="button"
         accessibilityLabel={`Slide to confirm sale for ${formatPesos(total)}`}
       >
-        {/* Track label */}
         <Animated.View
           className="absolute inset-0 items-center justify-center"
           style={labelOpacity}
@@ -1363,7 +1455,6 @@ function SwipeConfirmButton({
           </StyledText>
         </Animated.View>
 
-        {/* Thumb knob */}
         <Animated.View
           className="absolute top-[4px] left-[4px] w-[52px] h-[52px] rounded-full bg-white/25 items-center justify-center"
           style={thumbStyle}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Modal, Pressable } from 'react-native';
+import { View, TextInput, Modal, Pressable } from 'react-native';
+import { StyledText } from '@/components/elements';
 import { formatPesos } from '@/lib/money';
 import type { Customer, NewSaleItem } from '@/types';
 
@@ -28,11 +29,14 @@ export function ParkCartModal({
     0,
   );
 
-  const defaultLabel =
+  const customerDisplayName =
     typeof selectedCustomer === 'string'
       ? selectedCustomer
-      : (selectedCustomer?.name ??
-        `Cart • ${itemCount} items (${formatPesos(total)})`);
+      : (selectedCustomer?.name ?? null);
+
+  const defaultLabel = customerDisplayName
+    ? customerDisplayName
+    : `Cart • ${itemCount} ${itemCount === 1 ? 'item' : 'items'} (${formatPesos(total)})`;
 
   useEffect(() => {
     if (visible) {
@@ -53,53 +57,57 @@ export function ParkCartModal({
       onRequestClose={onClose}
     >
       <View className="flex-1 bg-black/50 justify-center items-center p-4">
-        <View className="bg-paper-100 w-full max-w-sm rounded-2xl p-5 shadow-lg">
-          <Text className="text-xl font-bold text-ink-900 mb-1">
+        <View className="bg-paper-100 w-full max-w-sm rounded-2xl p-5 shadow-lg border border-paper-300">
+          <StyledText variant="extrabold" className="text-xl text-ink-900 mb-1">
             Park Active Cart
-          </Text>
-          <Text className="text-sm text-ink-600 mb-4">
-            Snapshot this cart so you can serve another suki.
-          </Text>
+          </StyledText>
+          <StyledText variant="regular" className="text-sm text-ink-600 mb-4">
+            Hold this cart so you can serve another suki.
+          </StyledText>
 
-          <View className="bg-paper-200 p-3 rounded-xl mb-4">
-            <Text className="text-xs text-ink-500 uppercase font-semibold mb-1">
+          <View className="bg-paper-200 p-3 rounded-xl mb-4 border border-paper-300">
+            <StyledText variant="bold" className="text-xs text-ink-500 uppercase tracking-wider mb-1">
               Summary
-            </Text>
-            <Text className="text-base font-semibold text-ink-900">
+            </StyledText>
+            <StyledText variant="extrabold" className="text-base text-ink-900">
               {itemCount} {itemCount === 1 ? 'item' : 'items'} •{' '}
               {formatPesos(total)}
-            </Text>
-            {selectedCustomer && (
-              <Text className="text-sm text-brand-600 font-medium mt-0.5">
-                Suki: {defaultLabel}
-              </Text>
+            </StyledText>
+            {customerDisplayName && (
+              <StyledText variant="semibold" className="text-sm text-cinnamon-700 mt-1">
+                Suki: {customerDisplayName} ({paymentType === 'credit' ? 'Utang' : 'Cash'})
+              </StyledText>
             )}
           </View>
 
-          <Text className="text-sm font-semibold text-ink-800 mb-1">
+          <StyledText variant="semibold" className="text-sm text-ink-800 mb-1.5">
             Note / Label (Optional)
-          </Text>
+          </StyledText>
           <TextInput
-            className="bg-white border border-paper-300 rounded-xl p-3 text-base text-ink-900 mb-5"
+            className="bg-paper-50 border border-paper-300 rounded-xl p-3 text-base text-ink-900 font-stack-sans-medium mb-5 min-h-[44px]"
             placeholder={defaultLabel}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#7A7165"
             value={note}
             onChangeText={setNote}
             autoFocus
           />
 
-          <View className="flex-row justify-end space-x-3">
+          <View className="flex-row justify-end space-x-3 gap-2">
             <Pressable
               onPress={onClose}
-              className="px-4 py-3 rounded-xl bg-paper-300 active:bg-paper-400"
+              className="px-4 py-3 rounded-xl bg-paper-300 active:bg-paper-400 min-h-[44px] justify-center items-center"
             >
-              <Text className="text-ink-700 font-semibold">Cancel</Text>
+              <StyledText variant="semibold" className="text-ink-700 text-sm">
+                Cancel
+              </StyledText>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              className="px-5 py-3 rounded-xl bg-brand-600 active:bg-brand-700"
+              className="px-5 py-3 rounded-xl bg-cinnamon-500 active:bg-cinnamon-600 min-h-[44px] justify-center items-center shadow-persimmon-glow"
             >
-              <Text className="text-white font-bold">Park Cart</Text>
+              <StyledText variant="extrabold" className="text-paper-50 text-sm">
+                Park Cart
+              </StyledText>
             </Pressable>
           </View>
         </View>

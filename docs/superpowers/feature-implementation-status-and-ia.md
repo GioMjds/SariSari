@@ -18,7 +18,7 @@ Status legend:
 | #   | Feature                                 | Status               | Phase |
 | --- | --------------------------------------- | -------------------- | ----- |
 | 1   | POS Fast Lane                           | Done                 | Now   |
-| 2   | Parked Sales                            | Not started          | Now   |
+| 2   | Parked Sales                            | Done                 | Now   |
 | 3   | Daily Cash Close-Out                    | Done                 | Now   |
 | 4   | Physical Stocktake                      | Not started          | Now   |
 | 5   | Utang Guardrails at Checkout            | Partial              | Now   |
@@ -36,7 +36,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 6 Done · 5 Partial · 7 Not started.
+**Tally:** 7 Done · 5 Partial · 6 Not started.
 
 ---
 
@@ -52,13 +52,13 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Components:** `components/sales/pos/ProductSearchCatalog.tsx` (in-POS strip); `components/sales/pos/FastLaneSection.tsx` + `FastLaneCard.tsx` (common-qty chips `+1/+2/+5` and favorite toggling); `components/ui/BarcodeScannerModal.tsx`; `components/sales/pos/useCart.ts` (scan-to-add path)
 - **Notes:** Fast Lane strip with `+1/+2/+5` quick quantity chips and debounced search input (250ms) are fully integrated into the live POS screen.
 
-### 2.2 Parked Sales — Not started
+### 2.2 Parked Sales — Done
 
-- **Routes:** None
-- **Hooks:** None
-- **DB:** None — no `parked_carts` table, no `parkCart / listParkedCarts / resumeParkedCart / discardParkedCart` in `database/sales.ts`
-- **Components:** None
-- **Notes:** Cart lives only in the in-memory `useCartStore` and is lost on cold restart. Repo grep for `parked_cart` / `parkSale` returns only the feature docs.
+- **Routes:** `app/(tabs)/sales/pos.tsx` (integrated into POS screen)
+- **Hooks:** `hooks/useParkedCarts.ts` (`useParkedCarts`, `validateParkedCartItems`); `hooks/useProducts.ts` (for product validation during resume)
+- **DB:** `database/parkedCarts.ts` — `parked_carts` table with `parkCart`, `getParkedCarts`, `discardParkedCart`, `cleanupExpiredCarts` functions; migration v10 in `database/migrations.ts`
+- **Components:** `components/sales/pos/parked/ParkCartModal.tsx`, `components/sales/pos/parked/ParkedCartsListModal.tsx`, `components/sales/pos/parked/ActiveCartConflictModal.tsx`; integrated into `app/(tabs)/sales/pos.tsx` and `components/sales/pos/ProductSearchCatalog.tsx` (parked carts count display)
+- **Notes:** Complete implementation with 3-cart limit, 24-hour expiration, stock/price validation on resume, and conflict resolution for active carts. Replaces in-memory only cart persistence with durable SQLite storage.
 
 ### 2.3 Daily Cash Close-Out — Done
 
@@ -326,7 +326,7 @@ Proposed files:
 | #   | Feature                 | Status      | Where it lives now                                         | Where it **should** live                                     |
 | --- | ----------------------- | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
 | 1   | POS Fast Lane           | Partial     | `sales/pos.tsx`                                            | Sales tab — main screen                                      |
-| 2   | Parked Sales            | Not started | —                                                          | Inside POS, cart toolbar button                              |
+| 2   | Parked Sales            | Done        | `app/(tabs)/sales/pos.tsx` (integrated)                    | Inside POS, cart toolbar button                              |
 | 3   | Daily Cash Close-Out    | Done        | split across 3 cash screens                                | More → Cash Session (consolidated)                           |
 | 4   | Physical Stocktake      | Not started | —                                                          | Inventory → new "Stocktake" screen                           |
 | 5   | Utang Guardrails        | Partial     | customer detail only                                       | **Also POS CheckoutModal** (suki live panel)                 |

@@ -74,7 +74,7 @@ These are not stylistic preferences — they prevent real bugs and are enforced 
 
 - TypeScript strict mode is on, plus `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `useUnknownInCatchVariables`. New code must compile cleanly under these.
 - Path alias `@/*` maps to the repo root (see `tsconfig.json`).
-- Styling via NativeWind v4 (`className`) with Tailwind config in `tailwind.config.js`; global styles in `global.css`. Reanimated 4 + Moti for animations. Babel uses `nativewind/babel` and `react-native-reanimated/plugin` (last in the list).
+- Styling via NativeWind v4 (`className`) with Tailwind config in `tailwind.config.js`; global styles in `global.css`. Reanimated 4 + Moti for animations. Babel uses `nativewind/babel` preset and `react-native-reanimated/plugin` (last in the plugins list).
 - Forms use `react-hook-form` v7. Server state via TanStack Query v5. Client UI state via Zustand v5.
 - i18n via `i18next` + `react-i18next`, setup in `lib/i18n.ts`.
 - Prettier: 2-space indent, single quotes, semicolons, trailing commas, 80-col print width (`.prettierrc`).

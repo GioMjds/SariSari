@@ -103,5 +103,8 @@
   "allowScripts": {
     "better-sqlite3@12.11.1": true,
     "unrs-resolver@1.12.2": true
+  },
+  "overrides": {
+    "react-native-reanimated": "~4.1.1"
   }
 }

@@ -3,6 +3,7 @@ import { db } from '@/configs/sqlite';
 import {
   getParkedCarts,
   parkCart,
+  swapParkedCart,
   discardParkedCart,
   ParkCartInput,
   ParkedCart,
@@ -59,10 +60,13 @@ export function validateParkedCartItems(
 
     updatedItems.push({
       ...item,
+      product_name: product.name,
       price: currentPrice,
       quantity: adjustedQty,
       stock: product.quantity,
       retail_price: product.price,
+      retail_unit_name: product.retail_unit_name || 'Pc',
+      wholesale_unit_name: product.wholesale_unit_name ?? null,
       wholesale_price: product.wholesale_price ?? null,
       conversion_factor: product.conversion_factor ?? null,
     });
@@ -81,6 +85,19 @@ export function useParkedCarts() {
 
   const parkMutation = useMutation({
     mutationFn: (input: ParkCartInput) => parkCart(db, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: parkedCartKeys.all });
+    },
+  });
+
+  const swapMutation = useMutation({
+    mutationFn: ({
+      parkInput,
+      discardId,
+    }: {
+      parkInput: ParkCartInput;
+      discardId: number;
+    }) => swapParkedCart(db, parkInput, discardId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: parkedCartKeys.all });
     },
@@ -119,6 +136,7 @@ export function useParkedCarts() {
     parkedCarts: parkedQuery.data ?? [],
     isLoading: parkedQuery.isLoading,
     parkCart: parkMutation.mutateAsync,
+    swapCart: swapMutation.mutateAsync,
     discardCart: discardMutation.mutateAsync,
     resumeCart: resumeMutation.mutateAsync,
     isParkPending: parkMutation.isPending,

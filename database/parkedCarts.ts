@@ -30,9 +30,12 @@ export interface ParkCartInput {
   payment_type: 'cash' | 'credit';
   cartItems: NewSaleItem[];
 }
+
 export async function getParkedCarts(
   db: SQLiteDatabase,
 ): Promise<ParkedCart[]> {
+  await cleanupExpiredCarts(db);
+
   const rows = await db.getAllAsync<ParkedCartRow>(
     `SELECT * FROM parked_carts 
      WHERE datetime(expires_at) > datetime('now')
@@ -55,6 +58,10 @@ export async function parkCart(
   db: SQLiteDatabase,
   input: ParkCartInput,
 ): Promise<number> {
+  if (!input.cartItems || input.cartItems.length === 0) {
+    throw new Error('Cannot park an empty cart.');
+  }
+
   const existing = await getParkedCarts(db);
   if (existing.length >= 3) {
     throw new Error('Maximum limit of 3 parked carts reached.');
@@ -78,6 +85,46 @@ export async function parkCart(
   );
 
   return result.lastInsertRowId;
+}
+
+export async function swapParkedCart(
+  db: SQLiteDatabase,
+  parkInput: ParkCartInput,
+  discardId: number,
+): Promise<{ newParkedId: number }> {
+  if (!parkInput.cartItems || parkInput.cartItems.length === 0) {
+    throw new Error('Cannot park an empty cart.');
+  }
+
+  let newParkedId = 0;
+  await db.withTransactionAsync(async () => {
+    await discardParkedCart(db, discardId);
+
+    const existing = await getParkedCarts(db);
+    if (existing.length >= 3) {
+      throw new Error('Maximum limit of 3 parked carts reached.');
+    }
+
+    const now = new Date();
+    const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+
+    const result = await db.runAsync(
+      `INSERT INTO parked_carts (label, customer_id, customer_name, payment_type, payload_json, created_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'), ?);`,
+      [
+        parkInput.label,
+        parkInput.customer_id ?? null,
+        parkInput.customer_name ?? null,
+        parkInput.payment_type,
+        JSON.stringify(parkInput.cartItems),
+        expires,
+      ],
+    );
+
+    newParkedId = result.lastInsertRowId;
+  });
+
+  return { newParkedId };
 }
 
 export async function discardParkedCart(
