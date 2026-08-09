@@ -50,6 +50,15 @@
 4. Include code snippets when helpful
 5. Link to related feature specs or meeting notes
 
+### Claude Code Integration
+You can interact with this vault programmatically using Claude Code's file operations:
+- **Read notes**: Use `Read({file_path: "path/to/note.md"})` to get project context
+- **Create notes**: Use `Write()` to create new feature specs, meeting notes, bug reports, etc.
+- **Update notes**: Use `Edit()` to modify existing documentation with new insights
+- **Search content**: Use `Grep({pattern: "your search term", glob: "**/*.md"})` to find information
+- **List notes**: Use `Glob({pattern: "02-Features/**/*.md"})` to see all feature specifications
+- **See detailed guide**: Check `08-Resources/CLAUDE-CODE-INTEGRATION.md` for complete examples and workflows
+
 ## Tips for Effective Use
 - **Link liberally**: The power of Obsidian is in connections between notes
 - **Use the graph view**: Regularly check how your ideas connect
@@ -57,6 +66,7 @@
 - **Keep it current**: Update notes as projects evolve, don't let them go stale
 - **Reference existing docs**: Link to relevant files in the `docs/` folder when appropriate
 - **Use templates**: They ensure consistency and save time
+- **Leverage Claude Code**: Use programmatic access to automate knowledge workflows
 
 ## Backup and Sync
 Since this vault stores plain markdown files:
@@ -70,5 +80,6 @@ Since this vault stores plain markdown files:
 - Continue using `docs/` folder for implementation-specific documentation
 - Reference between the two systems as needed
 - Bring insights from this vault into development planning sessions
+- Use Claude Code to bridge your coding workflow with your knowledge base
 
 Happy note-taking! May your ideas flow freely and your forgetfulness diminish.
