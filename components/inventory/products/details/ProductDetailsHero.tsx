@@ -17,24 +17,9 @@ import type { Product } from '@/types';
 
 interface ProductDetailsHeroProps {
   product: Product;
-  /** Optional override for the stamp label. Defaults to stock state. */
   stockLabel?: string;
 }
 
-/**
- * ProductDetailsHero — the receipt-style hero that anchors the top
- * of the Product Details screen.
- *
- * Composition (top → bottom):
- *   • Cinnamon header strip ("PRODUCT PROFILE") + image monogram.
- *   • Eyebrow + product name + SKU/barcode line.
- *   • Status stamp (stock state) on the right.
- *   • Meta block (SKU / barcode / category) via ReceiptHeroMeta.
- *   • Printed-plate selling price via ReceiptHeroTotal.
- *
- * Pure presentational. The screen passes the product; the hero
- * derives the stamp tone/label from `product.quantity` itself.
- */
 export const ProductDetailsHero = memo(function ProductDetailsHero({
   product,
   stockLabel,
@@ -43,9 +28,6 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
   const isLowStock =
     product.quantity > 0 && product.quantity < LOW_STOCK_THRESHOLD;
 
-  // Stamp tone + label — derived from stock state. These are the
-  // three states the inventory grid also surfaces, so the hero
-  // matches the rest of the product language exactly.
   let stampTone: 'sage' | 'cinnamon' | 'persimmon';
   let stampLabel: string;
   if (isOutOfStock) {
@@ -83,11 +65,7 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
               {product.name}
             </StyledText>
             <View className="flex-row items-center mt-1.5">
-              <Ionicons
-                name="barcode-outline"
-                size={12}
-                color="#7A7165"
-              />
+              <Ionicons name="barcode-outline" size={12} color="#7A7165" />
               <StyledText
                 variant="regular"
                 className="text-ink-500 text-xs ml-1.5"
@@ -136,11 +114,7 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
             <View className="flex-row items-center gap-2">
               <StatusPill
                 variant={
-                  isOutOfStock
-                    ? 'danger'
-                    : isLowStock
-                      ? 'warning'
-                      : 'success'
+                  isOutOfStock ? 'danger' : isLowStock ? 'warning' : 'success'
                 }
                 size="sm"
                 dot
@@ -187,9 +161,6 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
           ]}
         />
 
-        {/* Printed-plate selling price — the dominant number on the
-            receipt. Lives at the bottom of the hero so the eye lands
-            on the price after scanning identity, stock, and meta. */}
         <ReceiptHeroTotal label="SELLING PRICE" amount={product.price} />
       </ReceiptHero>
     </MotiView>

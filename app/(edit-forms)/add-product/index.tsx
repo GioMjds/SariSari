@@ -52,7 +52,8 @@ export default function AddProduct() {
           <View className="my-3 border-t border-dashed border-ink-300" />
 
           <PricingProfitCard
-            control={form.control as any}
+            // Must fix the type invocation of `control` 
+            control={form.control}
             costPerPiece={form.costPerPiece}
             price={form.price}
             useBundlePricing={form.useBundlePricing}

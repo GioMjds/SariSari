@@ -6,16 +6,6 @@ interface AddProductHeaderProps {
   onBack: () => void;
 }
 
-/**
- * AddProductHeader — top bar with back button, title, and editorial
- * eyebrow ("Item Registry"). The header sits on the cream page
- * background (`bg-background`) above the form cards.
- *
- * Mirrors the AddCreditHeader / AddPaymentHeader pattern: a small
- * paper circular back button on the left, a centered title group,
- * and a 40×40 spacer on the right to keep the title optically
- * centered.
- */
 export function AddProductHeader({ onBack }: AddProductHeaderProps) {
   return (
     <View className="px-5 pt-3 pb-4 bg-background">

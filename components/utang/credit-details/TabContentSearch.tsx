@@ -7,23 +7,12 @@ interface TabContentSearchProps {
   value: string;
   onChange: (next: string) => void;
   resultCount: number;
-  /** Total items in the unfiltered list (denominator for the count line). */
   totalCount: number;
-  /** Label for the active list, e.g. "credits", "payments". */
   noun: string;
   placeholder?: string;
   debounceMs?: number;
 }
 
-/**
- * TabContentSearch — a compact filter row that lives at the top of
- * each tab list (Credits / Payments). The result count below the
- * input tells the user whether their query matched anything so they
- * don't keep typing into an empty list.
- *
- * Pure presentation — the parent owns the actual filtering and the
- * `resultCount` calculation.
- */
 export function TabContentSearch({
   value,
   onChange,
@@ -35,12 +24,10 @@ export function TabContentSearch({
 }: TabContentSearchProps) {
   const [localValue, setLocalValue] = useState(value);
 
-  // Sync with parent value (e.g. if the parent resets search, or switches tabs)
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  // Debounced propagation
   useEffect(() => {
     const handler = setTimeout(() => {
       if (localValue !== value) {
@@ -93,8 +80,6 @@ export function TabContentSearch({
     </View>
   );
 }
-
-/* ─── Inline clear button ────────────────────────────────────── */
 
 function ClearButton({ onClear }: { onClear: () => void }) {
   return (

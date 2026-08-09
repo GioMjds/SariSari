@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput } from 'react-native';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { StyledText } from '@/components/elements';

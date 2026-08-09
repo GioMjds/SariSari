@@ -21,28 +21,6 @@ import {
   LogTransactionForm,
 } from '@/components/inventory/ledger';
 
-/**
- * Inventory ledger screen — chronological audit log of every stock
- * movement for a single product (`productId`).
- *
- * Layout (top → bottom):
- *   1. Header — slim top bar (`StyledText` title + close button).
- *   2. `LedgerHero` — receipt-header card showing product name, SKU,
- *      barcode, price, and current stock in a hero badge.
- *   3. `LedgerToolbar` + `LedgerTypeFilter` — search input and type
- *      pills (`All / + In / - Out / Set / Adj / Damaged`).
- *   4. `LedgerList` — transaction rows grouped by `Today / Yesterday / Older`,
- *      with running-balance pills on every row.
- *   5. FAB (bottom-right) — opens `LogTransactionForm` so the owner
- *      can restock / record a sale / mark damaged / adjust stock
- *      without scrolling.
- *
- * The screen is the orchestrator: it owns data fetching via hooks
- * (products + inventory), the page-level refresh control, the
- * filter/search state, and the form's open/close state. All visual
- * rendering is delegated to the presentation sub-components under
- * `components/inventory/ledger/`.
- */
 export default function InventoryLedger() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const parsedProductId = parseInt(productId ?? '', 10);
@@ -61,13 +39,9 @@ export default function InventoryLedger() {
     [transactionsQuery.data],
   );
 
-  // ─── Filter state (shared by toolbar + list) ───────────────────
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
 
-  // Per-type totals used to render the chip count badges.
-  // Computed once per `transactions` change so the toolbar and the
-  // hero stats grid can't drift.
   const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
     const acc: Partial<Record<InventoryEventType, number>> = {};
     for (const tx of transactions) {
@@ -76,10 +50,8 @@ export default function InventoryLedger() {
     return acc;
   }, [transactions]);
 
-  // ─── Form open state ────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState<boolean>(false);
 
-  // ─── Handlers ───────────────────────────────────────────────────
   const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     router.back();
@@ -95,9 +67,7 @@ export default function InventoryLedger() {
     setFormOpen(true);
   }, []);
 
-  if (isLoading) {
-    return <LedgerSkeleton />;
-  }
+  if (isLoading) return <LedgerSkeleton />;
 
   const hasTransactions = transactions.length > 0;
 

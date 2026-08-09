@@ -8,7 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { StyledText } from '@/components/elements';
 import { useGetProduct, useGetSupplier } from '@/hooks';
@@ -47,7 +47,7 @@ export default function ProductDetailsPage() {
   const handleEdit = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
     if (product) {
-      router.push(`/(edit-forms)/edit-product/${product.id}`);
+      router.push(`/(edit-forms)/edit-product/${product.id}` as Href);
     }
   }, [product]);
 
@@ -69,7 +69,7 @@ export default function ProductDetailsPage() {
     [transactionsQuery.data],
   );
 
-  // ─── Loading state ─────────────────────────────────────────────
+  // Replace with a loading skeleton
   if (productQuery.isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
@@ -86,7 +86,6 @@ export default function ProductDetailsPage() {
     );
   }
 
-  // ─── Not-found state ───────────────────────────────────────────
   if (!product) {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
@@ -105,7 +104,7 @@ export default function ProductDetailsPage() {
               variant="regular"
               className="text-ink-500 text-sm mt-1 text-center"
             >
-              This product may have been deleted on another device.
+              This product may have been deleted.
             </StyledText>
             <Pressable
               onPress={handleBack}
@@ -130,7 +129,6 @@ export default function ProductDetailsPage() {
     );
   }
 
-  // ─── Main screen ───────────────────────────────────────────────
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
       {/* ── Top bar with Back button & title ── */}

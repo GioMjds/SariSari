@@ -12,18 +12,6 @@ interface HistoryTimelineProps {
   history: CreditHistory[];
 }
 
-/**
- * HistoryTimeline — chronological ledger combining credits + payments.
- *
- * Each row sits on a dotted vertical trace. Credits land on the left
- * with a red "+" node, payments on the left with a green "check" node.
- * A bold running-balance badge on the right shows where the suki's
- * outstanding balance stood after that entry was logged.
- *
- * Renders an empty-state when there's no history yet — the parent's
- * loader screen handles the "still loading" case so we don't double
- * up a spinner here.
- */
 export function HistoryTimeline({ history }: HistoryTimelineProps) {
   if (history.length === 0) {
     return (
@@ -63,8 +51,6 @@ export function HistoryTimeline({ history }: HistoryTimelineProps) {
     </View>
   );
 }
-
-/* ─── Single row ─────────────────────────────────────────────────────── */
 
 function HistoryRow({
   item,

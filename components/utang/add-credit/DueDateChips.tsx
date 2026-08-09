@@ -8,20 +8,11 @@ import {
 import { StyledText } from '@/components/elements';
 
 interface DueDateChipsProps {
-  /** Current ISO date string from the form (`YYYY-MM-DD` or `''`). */
   dueDate: string;
-  /** Currently selected preset id, for the "active" pill styling. */
   activePreset: DuePreset;
-  /** Called when the user taps one of the preset chips. */
   onPresetSelect: (preset: DuePresetConfig) => void;
 }
 
-/**
- * DueDateChips — four preset chips (No Limit, 1 Wk, 2 Wks, 1 Mo)
- * with a small "selected" pill summary on the right of the row.
- * The chip config is imported from the form hook so the preset
- * list stays in one place.
- */
 export function DueDateChips({
   dueDate,
   activePreset,

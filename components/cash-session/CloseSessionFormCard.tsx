@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller, FieldErrors, UseFormHandleSubmit } from 'react-hook-form';

@@ -7,10 +7,6 @@ interface NotesFieldProps {
   control: Control<CreditFormData>;
 }
 
-/**
- * NotesField — multiline notes textarea inside a paper-100 panel.
- * Wraps a Controller so the parent hook owns RHF state.
- */
 export function NotesField({ control }: NotesFieldProps) {
   return (
     <View>

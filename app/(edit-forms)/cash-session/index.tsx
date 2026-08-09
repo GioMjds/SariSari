@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -11,6 +10,7 @@ import {
   CloseSessionFormCard,
   CashMovementsList,
 } from '@/components/cash-session';
+import { Href } from 'expo-router';
 
 export default function CashSessionScreen() {
   const {
@@ -23,19 +23,13 @@ export default function CashSessionScreen() {
     summaryLoading,
     entries,
     entriesLoading,
-    openSessionMutation,
     closeSessionMutation,
-    openControl,
-    handleOpenSubmit,
-    openErrors,
-    openIsValid,
     closeControl,
     handleCloseSubmit,
     closeErrors,
     closeIsValid,
     expectedCash,
     variance,
-    onOpenSession,
     onCloseSession,
   } = useCashSessionState();
 
@@ -58,7 +52,6 @@ export default function CashSessionScreen() {
   if (!currentSession) {
     return <OpenSessionView onBack={() => router.back()} />;
   }
-
 
   const isOpen = currentSession.status === 'open';
 
@@ -90,7 +83,7 @@ export default function CashSessionScreen() {
           {isOpen && (
             <CloseSessionFormCard
               onRecordMovement={() =>
-                router.push('/(edit-forms)/cash-entry' as any)
+                router.push('/(edit-forms)/cash-entry' as Href)
               }
               closeControl={closeControl}
               handleCloseSubmit={handleCloseSubmit}

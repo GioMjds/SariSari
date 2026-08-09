@@ -6,22 +6,12 @@ import { PaymentsEmptyState } from './PaymentsEmptyState';
 import { NoMatchesState } from './NoMatchesState';
 
 interface PaymentsTabContentProps {
-  /** Already-filtered payment list. */
   payments: Payment[];
-  /** Total count before filtering — drives the "X of Y" caption. */
   totalCount: number;
   searchValue: string;
   onSearchChange: (next: string) => void;
 }
 
-/**
- * PaymentsTabContent — body of the "Payments" tab.
- *
- * Mirrors `CreditsTabContent` for visual consistency: empty state
- * when the suki has never paid, no-matches when the filter excludes
- * everything, and a `TabContentSearch` + animated `PaymentCard`
- * list otherwise.
- */
 export function PaymentsTabContent({
   payments,
   totalCount,

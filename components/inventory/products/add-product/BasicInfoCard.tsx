@@ -73,10 +73,7 @@ export function BasicInfoCard({
         control={control}
         name="imageUri"
         render={({ field: { value, onChange } }) => (
-          <ProductImagePicker
-            imageUri={value}
-            onImageChange={onChange}
-          />
+          <ProductImagePicker imageUri={value} onImageChange={onChange} />
         )}
       />
 
@@ -134,7 +131,7 @@ export function BasicInfoCard({
         <Controller
           control={control}
           name="sku"
-          render={({ field: { value, onChange } }) => (
+          render={({ field: { onChange } }) => (
             <TextInput
               placeholder="e.g., PC-001"
               placeholderTextColor="#A89F90"
@@ -174,9 +171,6 @@ export function BasicInfoCard({
         )}
       </View>
 
-      {/* Barcode (v5) — only rendered when populated. The row reads
-          as a thin "barcode: 4800016112345" stamp so the form stays
-          calm when the user hasn't scanned anything yet. */}
       {hasBarcode ? (
         <View className="mb-4">
           <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">

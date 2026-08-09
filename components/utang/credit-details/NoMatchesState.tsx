@@ -1,20 +1,11 @@
-import { FontAwesome } from '@expo/vector-icons';
 import { View } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
 interface NoMatchesStateProps {
-  /** Singular noun matching the active list (e.g. "credit", "payment"). */
   noun: string;
 }
 
-/**
- * NoMatchesState — shared "your filter returned nothing" empty state.
- *
- * Reused by Credits, Payments, and History tabs when the list has
- * rows but the current search query matches none of them. The
- * "nothing yet" empty state is handled separately per tab so each
- * can show its own onboarding copy.
- */
 export function NoMatchesState({ noun }: NoMatchesStateProps) {
   return (
     <View className="items-center justify-center py-10 px-6 bg-paper-50 rounded-2xl border border-dashed border-ink-200">

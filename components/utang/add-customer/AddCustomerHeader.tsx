@@ -4,29 +4,13 @@ import { StyledText } from '@/components/elements';
 import { formatPesos, Pesos } from '@/lib/money';
 
 interface AddCustomerHeaderProps {
-  /** Currently typed customer name (drives the Passbook preview). */
   name: string;
-  /** Currently typed phone number (drives the Passbook preview). */
   phone: string;
-  /** True when a non-zero credit limit has been entered. */
   hasLimit: boolean;
-  /** Parsed credit-limit value in integer pesos. */
   parsedLimit: number | Pesos;
   onBack: () => void;
 }
 
-/**
- * AddCustomerHeader — top bar with back button, title eyebrow, and
- * the dark `bg-cinnamon-500` Suki Passbook hero card.
- *
- * The Passbook card updates in real time as the user types into the
- * form below. An empty credit limit renders as "No Limit" in
- * `text-persimmon-300` to denote open-ended borrowing; a valid
- * value formats via `formatPesos`.
- *
- * The large semi-transparent `₱` glyph sits absolutely-positioned in
- * the top-right of the card as a decorative "watermark".
- */
 export function AddCustomerHeader({
   name,
   phone,

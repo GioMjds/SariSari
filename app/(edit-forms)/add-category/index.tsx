@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Platform, TextInput, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -136,10 +136,16 @@ export default function AddCategoryScreen() {
           {/* Category Name Section */}
           <View className="bg-paper-50 rounded-2xl border border-ink-100 p-4 shadow-paper mt-3 mb-4">
             <View className="mb-4">
-              <StyledText variant="black" className="label-caps text-cinnamon-500">
+              <StyledText
+                variant="black"
+                className="label-caps text-cinnamon-500"
+              >
                 {t('categoryBasicInfo', 'Category Info')}
               </StyledText>
-              <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5">
+              <StyledText
+                variant="regular"
+                className="text-ink-400 text-xs mt-0.5"
+              >
                 {t(
                   'categoryBasicInfoDesc',
                   'Pick a clear, short name to group your products.',
@@ -158,7 +164,10 @@ export default function AddCategoryScreen() {
               <Controller
                 control={control}
                 rules={{
-                  required: t('categoryNameRequired', 'Category name is required'),
+                  required: t(
+                    'categoryNameRequired',
+                    'Category name is required',
+                  ),
                   validate: {
                     notBlank: (val) =>
                       val.trim().length > 0 ||
@@ -186,15 +195,17 @@ export default function AddCategoryScreen() {
                         errors.name
                           ? 'bg-white border-persimmon-500'
                           : focusedField === 'name'
-                          ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
-                          : 'bg-paper-100 border-ink-200 shadow-none'
+                            ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
+                            : 'bg-paper-100 border-ink-200 shadow-none'
                       }`}
                     >
                       <View className="absolute left-4 z-10">
                         <FontAwesome
                           name="tag"
                           size={16}
-                          color={focusedField === 'name' ? '#E85A1F' : '#564E45'}
+                          color={
+                            focusedField === 'name' ? '#E85A1F' : '#564E45'
+                          }
                         />
                       </View>
                       <TextInput
@@ -345,7 +356,10 @@ export default function AddCategoryScreen() {
                       >
                         {product.category
                           ? `${t('currentCategory', 'Current: {{category}}').replace('{{category}}', product.category)}`
-                          : t('currentCategoryUncategorized', 'Uncategorized')}{' '}
+                          : t(
+                              'currentCategoryUncategorized',
+                              'Uncategorized',
+                            )}{' '}
                         • ₱{formatPesos(product.price)}
                       </StyledText>
                     </View>
@@ -430,6 +444,7 @@ export default function AddCategoryScreen() {
   );
 }
 
+// `t` must invoke translation types
 function ContextBanner({ t }: { t: any }) {
   return (
     <View className="rounded-2xl overflow-hidden shadow-paper bg-cinnamon-50 p-4 mb-4">

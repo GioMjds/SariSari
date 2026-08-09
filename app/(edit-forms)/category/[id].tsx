@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
@@ -26,6 +25,7 @@ export default function CategoryScreen() {
     handleOpenProduct,
   } = useCategoryDetailsState();
 
+  // Replace with a loading skeleton
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-background" edges={['top']}>

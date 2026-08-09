@@ -9,15 +9,6 @@ interface StockCardProps {
   onBumpStock: (delta: number) => void;
 }
 
-/**
- * StockCard — the third parchment card on the form.
- *
- * Holds:
- *   • Initial stock quantity input (numeric).
- *   • Quick-bump chips (`+5`, `+10`, `+20`). Tapping a chip parses
- *     the current input as an integer, adds the chip amount, and
- *     writes the result back — so `10 → +5 → 15`.
- */
 export function StockCard({
   control,
   initialStock,
@@ -41,7 +32,7 @@ export function StockCard({
         <Controller
           control={control}
           name="initialStock"
-          render={({ field: { value, onChange } }) => (
+          render={({ field: { onChange } }) => (
             <TextInput
               placeholder="0"
               placeholderTextColor="#A89F90"

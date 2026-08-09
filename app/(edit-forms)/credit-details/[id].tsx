@@ -3,7 +3,7 @@ import { Platform, RefreshControl, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useCreditHistory,
@@ -89,13 +89,13 @@ export default function CustomerDetails() {
   const handleAddCredit = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/(edit-forms)/add-credit/${customer.id}`);
+    router.push(`/(edit-forms)/add-credit/${customer.id}` as Href);
   }, [customer]);
 
   const handleAddPayment = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/(edit-forms)/add-payment/${customer.id}`);
+    router.push(`/(edit-forms)/add-payment/${customer.id}` as Href);
   }, [customer]);
 
   const handleQuickSettle = useCallback(
@@ -103,7 +103,7 @@ export default function CustomerDetails() {
       if (!customer) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
       router.push(
-        `/(edit-forms)/add-payment/${customer.id}?creditId=${credit.id}`,
+        `/(edit-forms)/add-payment/${customer.id}?creditId=${credit.id}` as Href,
       );
     },
     [customer],

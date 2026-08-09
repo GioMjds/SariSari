@@ -267,7 +267,11 @@ export default function AddSupplier() {
                           }`}
                         >
                           {isSelected && (
-                            <FontAwesome name="check" size={12} color="#FFFFFF" />
+                            <FontAwesome
+                              name="check"
+                              size={12}
+                              color="#FFFFFF"
+                            />
                           )}
                         </View>
                       </Pressable>
@@ -422,10 +426,7 @@ function BasicInfoCard({
           control={control}
           name="name"
           rules={{
-            required: t(
-              'supplierNameRequired',
-              'Supplier name is required',
-            ),
+            required: t('supplierNameRequired', 'Supplier name is required'),
             validate: {
               notBlank: (val) =>
                 val.trim().length > 0 ||

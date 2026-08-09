@@ -15,6 +15,8 @@ import {
 export default function AddPaymentTransaction() {
   const form = useAddPaymentForm();
 
+  if (!form.customer) return null;
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <KeyboardAwareScrollView
@@ -53,6 +55,7 @@ export default function AddPaymentTransaction() {
             rows={form.allocation.rows}
             unallocated={form.allocation.unallocated}
             hasAmount={form.parsedAmount > 0}
+            // Must fix the type invocation
             pinnedCreditLabel={
               form.pinnedCredit
                 ? `${form.pinnedCredit.product_name || 'Credit'} · ${formatPesos(

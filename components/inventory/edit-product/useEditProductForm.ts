@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { useBarcodeResolver, useCategories, useGetProduct, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib';
-import { useToastStore } from '@/stores';
-import { MARKUP_PRESETS, MarkupPreset } from '../products/form/ProductPricingCard';
+import { MarkupPreset } from '../products/form/ProductPricingCard';
 
 export interface EditProductFormData {
   name: string;
@@ -39,7 +36,6 @@ export function useEditProductForm() {
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
   const { data: product, isLoading } = useGetProduct(productId);
-  const addToast = useToastStore((state) => state.addToast);
   const { resolve } = useBarcodeResolver();
 
   const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
@@ -115,9 +111,6 @@ export function useEditProductForm() {
   const initialStock = useWatch({ control, name: 'initialStock' });
   const category = useWatch({ control, name: 'category' });
   const supplierId = useWatch({ control, name: 'supplier_id' });
-  const imageUri = useWatch({ control, name: 'imageUri' });
-  const bundleCost = useWatch({ control, name: 'bundleCost' });
-  const piecesPerBundle = useWatch({ control, name: 'piecesPerBundle' });
   const enableWholesale = useWatch({ control, name: 'enableWholesale' });
   const retailUnitName = useWatch({ control, name: 'retailUnitName' });
   const wholesaleUnitName = useWatch({ control, name: 'wholesaleUnitName' });
@@ -200,11 +193,10 @@ export function useEditProductForm() {
 
   const handleScannedBarcode = useCallback(
     async (barcodeValue: string) => {
-      const result = await resolve(barcodeValue);
       setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
       setIsScannerOpen(false);
     },
-    [resolve, setValue],
+    [setValue],
   );
 
   const handleBack = useCallback(() => {

@@ -9,13 +9,6 @@ interface ActionButtonsProps {
   onCancel: () => void;
 }
 
-/**
- * ActionButtons — the Add Product + Cancel pair.
- *
- * The Add Product button is the persimmon primary action with the
- * brand-tinted glow shadow and a subtle press-scale. The Cancel
- * button is the secondary, tactile off-white surface.
- */
 export function ActionButtons({
   disabled,
   isPending,

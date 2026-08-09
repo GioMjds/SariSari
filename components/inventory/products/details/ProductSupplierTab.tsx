@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -15,7 +15,7 @@ interface ProductSupplierTabProps {
   onLinkSupplier: () => void;
 }
 
-export const ProductSupplierTab = React.memo(function ProductSupplierTab({
+export const ProductSupplierTab = memo(function ProductSupplierTab({
   supplier,
   isLoading,
   onLinkSupplier,
@@ -36,6 +36,7 @@ export const ProductSupplierTab = React.memo(function ProductSupplierTab({
     }
   };
 
+  // Must replace with loading skeleton
   if (isLoading) {
     return (
       <View className="items-center justify-center py-12 px-8">

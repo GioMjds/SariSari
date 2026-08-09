@@ -574,9 +574,7 @@ export function LogTransactionForm({
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    if (!visible) {
-      setPickedProduct(null);
-    }
+    if (!visible) setPickedProduct(null);
   }, [visible]);
 
   const handleClose = useCallback(() => {
