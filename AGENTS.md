@@ -118,6 +118,30 @@ Treat the `obsidian-vault/` directory as your external knowledge base and planni
 - **Use consistent naming**: Match feature names between Obsidian notes, code components, and documentation
 - **Preserve atomicity**: Treat each Obsidian note as a single source of truth for its topic; avoid duplicating information across notes
 
+## Documentation Practices
+
+Follow these practices to ensure documentation captures the _why_ behind decisions and helps both humans and AI agents understand the project:
+
+- **Document decisions, not just code**: Capture the context, constraints, and trade-offs that led to a decision. Code shows _what_ was built; documentation explains _why it was built this way_.
+- **When to document significant decisions**:
+  - Choosing a framework, library, or major dependency
+  - Designing a data model or database schema
+  - Selecting an authentication strategy
+  - Deciding on an API architecture (REST vs. GraphQL vs. tRPC)
+  - Choosing between build tools, hosting platforms, or infrastructure
+  - Any decision that would be expensive to reverse
+- **Where to document decisions**:
+  - Technical architecture decisions: `03-Technical/` folder
+  - Feature/product decisions: `01-Roadmap/` or `02-Features/` folders
+  - Keep decision notes atomic and link to related concepts using `[[Note Title]]`
+- **Commenting guidelines**:
+  - Comment the _why_, not the _what_: Explain non-obvious intent, constraints, or trade-offs
+  - Avoid commenting self-explanatory code
+  - Remove commented-out code (use git history instead)
+  - Address TODO comments promptly or convert to proper issues
+- **API documentation**: Use inline TypeScript JSDoc for functions and interfaces that are part of public APIs
+- **Changelog maintenance**: For significant user-facing changes, document in `activity-log.md` in `/docs` with what was changed and why
+
 ## Useful Entry Points
 
 - `configs/sqlite.ts` — the SQLite handle + PRAGMAs.
