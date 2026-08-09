@@ -4,37 +4,40 @@ This guide shows how to use Claude Code's file operations to interact with your 
 
 ## Quick Reference: Claude Code Tools for Obsidian
 
-| Action | Claude Code Tool | Example |
-|--------|------------------|---------|
-| **Read a note** | `Read` | `Read({file_path: "D:/giomj/Projects/sarisari/obsidian-vault/02-Features/pos-fast-lane.md"})` |
-| **Create a note** | `Write` | `Write({file_path: "...", content: "# New Feature..."})` |
-| **Update a note** | `Edit` | `Edit({file_path: "...", old_string: "...", new_string: "..."})` |
-| **Search content** | `Grep` | `Grep({pattern: "offline sync", glob: "**/*.md"})` |
-| **List notes** | `Glob` | `Glob({pattern: "02-Features/**/*.md"})` |
-| **Get file info** | `Read` (with limits) | Read first 50 lines to preview |
+| Action             | Claude Code Tool     | Example                                                                                       |
+| ------------------ | -------------------- | --------------------------------------------------------------------------------------------- |
+| **Read a note**    | `Read`               | `Read({file_path: "D:/giomj/Projects/sarisari/obsidian-vault/02-Features/pos-fast-lane.md"})` |
+| **Create a note**  | `Write`              | `Write({file_path: "...", content: "# New Feature..."})`                                      |
+| **Update a note**  | `Edit`               | `Edit({file_path: "...", old_string: "...", new_string: "..."})`                              |
+| **Search content** | `Grep`               | `Grep({pattern: "offline sync", glob: "**/*.md"})`                                            |
+| **List notes**     | `Glob`               | `Glob({pattern: "02-Features/**/*.md"})`                                                      |
+| **Get file info**  | `Read` (with limits) | Read first 50 lines to preview                                                                |
 
 ## Common Workflows
 
 ### 1. Creating a New Feature Note from Template
 
-**Step 1: Read the template**
+#### **Step 1: Read the template**
+
 ```python
 template = Read({
     "file_path": "D:/giomj/Projects/sarisari/obsidian-vault/02-Features/feature-template.md"
 })
 ```
 
-**Step 2: Customize the template**
+#### **Step 2: Customize the template**
+
 ```python
 # Replace placeholders with actual values
 content = template.replace("[Feature Name]", "Offline-First Inventory Sync")
-content = content.replace("[Brief description of the feature and its purpose]", 
+content = content.replace("[Brief description of the feature and its purpose]",
                          "Enable automatic synchronization of inventory counts when internet connectivity is restored")
 content = content.replace("- As a [user type], I want to [action] so that [benefit]",
                          "- As a store owner, I want inventory counts to sync automatically when online so that I never lose sales data\n- As a cashier, I want to see sync status indicators so I know when data is current")
 ```
 
-**Step 3: Create the new note**
+#### **Step 3: Create the new note**
+
 ```python
 Write({
     "file_path": "D:/giomj/Projects/sarisari/obsidian-vault/02-Features/offline-inventory-sync.md",
@@ -45,6 +48,7 @@ Write({
 ### 2. Researching Existing Information
 
 **Search for all notes about "offline" functionality:**
+
 ```python
 results = Grep({
     "pattern": "offline",
@@ -54,6 +58,7 @@ results = Grep({
 ```
 
 **Find all meetings where inventory was discussed:**
+
 ```python
 results = Grep({
     "pattern": "inventory",
@@ -65,6 +70,7 @@ results = Grep({
 ### 3. Updating Project Documentation
 
 **Add a decision to the technical architecture notes:**
+
 ```python
 # First read the existing file
 current = Read({
@@ -108,6 +114,7 @@ Write({
 ### 5. Linking Between Notes (Obsidian's Superpower)
 
 When creating content, add links to related notes:
+
 ```python
 # In a feature note, link to related technical documentation
 content = """
@@ -129,6 +136,7 @@ Write({
 ### 6. Getting Project Context Before Coding
 
 Before implementing a feature, read relevant notes:
+
 ```python
 # Get feature specification
 feature_spec = Read({
@@ -151,6 +159,7 @@ decisions = Read({
 ### 7. Bulk Operations
 
 **Update all TODO items in a specific area:**
+
 ```python
 # Find all notes with TODO in Features folder
 todo_files = Glob({
@@ -165,6 +174,7 @@ for file in todo_files:
 ```
 
 **Generate a report of all open bugs:**
+
 ```python
 bug_files = Glob({
     "pattern": "05-Bugs-Issues/**/*.md"
@@ -181,7 +191,9 @@ for file in bug_files:
 ## Best Practices for Claude Code-Obsidian Workflow
 
 ### 1. Always Read Before Writing
+
 When updating existing notes, always read them first to avoid overwriting content:
+
 ```python
 # GOOD: Read first, then update
 current = Read({"file_path": "path/to/note.md"})
@@ -193,28 +205,36 @@ Write({"file_path": "path/to/note.md", "content": updated})
 ```
 
 ### 2. Use Relative Paths from Project Root
+
 For consistency, you can use paths relative to your project root:
+
 ```python
 # Instead of full paths, use relative from D:/giomj/Projects/sarisari/
 Read({"file_path": "obsidian-vault/02-Features/feature-name.md"})
 ```
 
 ### 3. Leverage Obsidian's Linking System
+
 When creating content, think about connections:
+
 - What existing notes should this link TO?
 - What future notes might link FROM this?
 - Use `[[Note Title]]` format for Obsidian links
 - Use `#tag` for categorization that works across the vault
 
 ### 4. Use Templates Effectively
+
 Keep your template files in each folder and:
+
 - Read them as starting points
 - Replace placeholders systematically
 - Save them with meaningful names in the appropriate folder
 - Consider creating a master template library in `08-Resources/Templates/`
 
 ### 5. Combine with Existing Documentation
+
 Remember that your Obsidian vault complements the existing `docs/` folder:
+
 - Use Obsidian for: planning, ideas, meeting notes, feature specs, brainstorming
 - Keep in `docs/`: implementation-specific docs, API references, user guides, technical specs
 - Link between systems when appropriate: `[[../docs/api-reference.md]]`
@@ -224,64 +244,68 @@ Remember that your Obsidian vault complements the existing `docs/` folder:
 Here's how a typical Claude Code + Obsidian session might work:
 
 1. **Start with context gathering**
+
    ```python
    # Read current project vision
    vision = Read({"file_path": "obsidian-vault/00-Vision/project-vision.md"})
-   
+
    # Check current roadmap
    roadmap = Read({"file_path": "obsidian-vault/01-Roadmap/project-roadmap.md"})
    ```
 
 2. **Plan your work**
+
    ```python
    # Create a planning note for today's work
    planning_note = f"""# Today's Work: {date}
-   
+
    ## Goals
    - Implement offline inventory sync feature
    - Update architecture documentation
-   
+
    ## Context from Vision
    {vision['Core Purpose']}
    """
-   
-   Write({"file_path": f"obsidian-vault/07-Planning/{date}-daily-planning.md", 
+
+   Write({"file_path": f"obsidian-vault/07-Planning/{date}-daily-planning.md",
           "content": planning_note})
    ```
 
 3. **Implement and document**
+
    ```python
    # After writing some code, document what you did
    dev_log = f"""## Development Log - {timestamp}
-   
+
    ### What I built:
    - Created sync queue mechanism
    - Added conflict detection for inventory updates
-   
+
    ### Files changed:
    - src/sync/SyncQueue.ts
    - src/services/InventoryService.ts
-   
+
    ### Next steps:
    - Write unit tests for sync logic
    - Test with simulated connectivity loss
    """
-   
+
    # Append to technical notes or create new dev log
    current_log = Read({"file_path": "obsidian-vault/03-Technical/dev-log-August.md"})
    Write({
-       "file_path": "obsidian-vault/03-Technical/dev-log-August.md", 
+       "file_path": "obsidian-vault/03-Technical/dev-log-August.md",
        "content": current_log + "\n\n" + dev_log
    })
    ```
 
 4. **Review and link**
+
    ```python
    # Ensure your new feature links to related concepts
    feature_note = Read({"file_path": "obsidian-vault/02-Features/offline-inventory-sync.md"})
    if "[[03-Technical/sync-mechanism.md]]" not in feature_note:
        updated = feature_note + "\n\n## Technical Details\nSee implementation: [[03-Technical/sync-mechanism.md]]"
-       Write({"file_path": "obsidian-vault/02-Features/offline-inventory-sync.md", 
+       Write({"file_path": "obsidian-vault/02-Features/offline-inventory-sync.md",
               "content": updated})
    ```
 

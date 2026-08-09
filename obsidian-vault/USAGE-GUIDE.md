@@ -1,19 +1,23 @@
 # Obsidian Vault Usage Guide for SariSari Project
 
 ## Quick Start
+
 1. Launch Obsidian
 2. Click "Open folder as vault"
 3. Select the `obsidian-vault` folder in your SariSari project
 4. Begin creating notes!
 
 ## Daily Workflow
+
 ### Capturing Ideas
+
 - When you have an idea, create a new note in the appropriate folder
 - Use the templates provided in each folder for consistency
 - Link to related notes using `[[double brackets]]`
 - Add relevant tags like `#urgent` or `#backend` when needed
 
 ### Weekly Review (Recommended)
+
 1. Process any new notes created during the week
 2. Check for broken links or notes needing updates
 3. Ensure action items from meetings are captured in planning folders
@@ -22,6 +26,7 @@
 ## Specific Use Cases
 
 ### Feature Planning
+
 1. Go to `02-Features/` folder
 2. Create new note from `feature-template.md`
 3. Fill out overview, user stories, acceptance criteria
@@ -29,6 +34,7 @@
 5. Tag appropriately (e.g., `#pos`, `#inventory`, `#utang`)
 
 ### Meeting Notes
+
 1. Go to `04-Meetings/` folder
 2. Create new note from `meeting-template.md`
 3. Fill in attendees, agenda, discussion points
@@ -36,6 +42,7 @@
 5. Link to related features or technical topics discussed
 
 ### Bug Tracking
+
 1. Go to `05-Bugs-Issues/` folder
 2. Create new note from `bug-template.md`
 3. Clearly describe steps to reproduce
@@ -44,6 +51,7 @@
 6. Link to related features or technical areas
 
 ### Technical Documentation
+
 1. Go to `03-Technical/` folder
 2. Create new note from `tech-note-template.md`
 3. Document architecture decisions, code explanations, or debugging sessions
@@ -51,7 +59,9 @@
 5. Link to related feature specs or meeting notes
 
 ### Claude Code Integration
+
 You can interact with this vault programmatically using Claude Code's file operations:
+
 - **Read notes**: Use `Read({file_path: "path/to/note.md"})` to get project context
 - **Create notes**: Use `Write()` to create new feature specs, meeting notes, bug reports, etc.
 - **Update notes**: Use `Edit()` to modify existing documentation with new insights
@@ -60,6 +70,7 @@ You can interact with this vault programmatically using Claude Code's file opera
 - **See detailed guide**: Check `08-Resources/CLAUDE-CODE-INTEGRATION.md` for complete examples and workflows
 
 ## Tips for Effective Use
+
 - **Link liberally**: The power of Obsidian is in connections between notes
 - **Use the graph view**: Regularly check how your ideas connect
 - **Search effectively**: Use Obsidian's powerful search to find past notes
@@ -69,13 +80,16 @@ You can interact with this vault programmatically using Claude Code's file opera
 - **Leverage Claude Code**: Use programmatic access to automate knowledge workflows
 
 ## Backup and Sync
+
 Since this vault stores plain markdown files:
+
 - Ensure your computer is backed up regularly
 - Consider using Obsidian Sync for cross-device access
 - Or use a cloud folder service (Dropbox, Google Drive, etc.) with caution
 - Git version control is also available for tracking changes
 
 ## Integration with Existing Workflow
+
 - Use this vault for strategic thinking, planning, and idea capture
 - Continue using `docs/` folder for implementation-specific documentation
 - Reference between the two systems as needed

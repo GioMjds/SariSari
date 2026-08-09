@@ -3,6 +3,7 @@
 This vault serves as the central knowledge base for the SariSari project, designed to combat forgetfulness and support project growth through organized storage of ideas, plans, and documentation.
 
 ## Purpose
+
 - Store project vision, roadmap, and strategic thinking
 - Track feature ideas and specifications
 - Document technical decisions and architecture
@@ -13,7 +14,8 @@ This vault serves as the central knowledge base for the SariSari project, design
 - Collect useful resources and references
 
 ## Folder Structure
-```
+
+```folder
 00-Vision/          # Project vision, mission, core values
 01-Roadmap/         # Timeline, milestones, release plans
 02-Features/        # Feature ideas, specifications, user stories
@@ -26,22 +28,27 @@ This vault serves as the central knowledge base for the SariSari project, design
 ```
 
 ## Naming Conventions
+
 - Files: Use kebab-case with descriptive names (e.g., `pos-fast-lane-feature.md`)
 - Folder numbers: Keep two-digit numbering for consistent ordering (00, 01, 02, etc.)
 - Dates: When relevant, prefix with YYYY-MM-DD (e.g., `2026-08-09-meeting-notes.md`)
 
 ## Linking Strategy
+
 - Use Obsidian's double-bracket linking (`[[Feature Name]]`) to connect related notes
 - Create MOCs (Maps of Content) for complex topics (e.g., `[[02-Features/Feature-Map.md]]`)
 - Use tags sparingly for cross-cutting concerns (e.g., `#urgent`, `#backend`, `#ui`)
 
 ## Connection to Existing Documentation
+
 This obsidian vault complements the existing documentation in the `docs/` folder:
+
 - Strategic and planning docs live here in the vault
 - Implementation-specific docs remain in `docs/` folder
 - Cross-reference between vault and docs as needed
 
 ## Getting Started
+
 1. Install Obsidian if not already installed
 2. Open Obsidian and select "Open folder as vault"
 3. Navigate to and select this `obsidian-vault` folder
@@ -49,6 +56,7 @@ This obsidian vault complements the existing documentation in the `docs/` folder
 5. Use the graph view to see connections between your ideas
 
 ## Maintenance
+
 - Weekly: Review inbox, process new notes, update links
 - Monthly: Review older notes, archive or update as needed
 - Quarterly: Review overall structure, adjust as project evolves

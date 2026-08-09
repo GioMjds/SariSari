@@ -94,6 +94,30 @@ See `AGENTS.md` (which simply re-exports this file) and `.agents/` for the workf
 - Don't include test (`*.test.ts`, `*.spec.ts`) files into my `docs/superpowers/specs` and `docs/superpowers/tasks`.
 - Don't auto-commit or auto-push agent tasks. Always review and edit before committing. Use `activity-log.md` for notes.
 
+## Obsidian Vault Workflow (Second Brain)
+
+Treat the `obsidian-vault/` directory as your external knowledge base and planning system. Use these guidelines to maintain alignment between code and documentation:
+
+- **Read before writing**: Always use `Read()` to examine existing notes before creating or modifying them in the vault
+- **Use structured folders**: Place files in the appropriate subfolders:
+  - `00-Vision/` - Core project vision and principles
+  - `01-Roadmap/` - Planning documents, timelines, and status tracking
+  - `02-Features/` - Feature specifications and implementation details
+  - `03-Technical/` - Technical architecture, decisions, and references
+  - `04-Meetings/` - Meeting notes and transcripts
+  - `05-Bugs-Issues/` - Bug tracking and issue management
+  - `06-Research/` - Research notes and spikes
+  - `07-Planning/` - Sprint planning, daily notes, and tactical planning
+  - `08-Resources/` - Reference materials, templates, and indices
+- **Leverage Obsidian linking**: Use `[[Note Title]]` format to create bidirectional connections between related concepts
+- **Use templates effectively**: Read template files from each folder as starting points for new content
+- **Maintain bidirectional links**: When implementing features, update both code and relevant Obsidian notes
+- **Use daily notes for context**: Before coding sessions, read relevant roadmap and feature notes; after sessions, document what was accomplished
+- **Link to code when appropriate**: In Obsidian notes, reference code files using relative paths like `src/components/SyncButton.tsx`
+- **Keep implementation details in code/docs**: Use Obsidian for planning, rationale, and high-level design; keep detailed technical specs in the codebase or `docs/` folder
+- **Use consistent naming**: Match feature names between Obsidian notes, code components, and documentation
+- **Preserve atomicity**: Treat each Obsidian note as a single source of truth for its topic; avoid duplicating information across notes
+
 ## Useful Entry Points
 
 - `configs/sqlite.ts` — the SQLite handle + PRAGMAs.

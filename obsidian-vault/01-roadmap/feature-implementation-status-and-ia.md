@@ -214,7 +214,6 @@ app/
     add-customer/index.tsx
     add-payment/[id].tsx
     add-product/index.tsx
-    add-sales/index.tsx
     add-supplier/index.tsx
     cash-entry/index.tsx
     cash-session/index.tsx
@@ -223,7 +222,7 @@ app/
     edit-product/[id].tsx
     edit-supplier/[id].tsx
     inventory-ledger/[productId].tsx
-    product-details/[id].tsx
+    product-details/[id].txz
     sale-details/[id].tsx
   gastos-kaha/index.tsx
   inventory/recommendations.tsx
@@ -263,11 +262,11 @@ Note: there is **no `app/(tabs)/dev/reset.tsx`** referenced by features 11 and 1
 ## 5. Target Information Architecture — 5 tabs, each with a clear job
 
 ```folder
-┌─ Home (Today)        Status snapshot · alerts · quick jumps
+�┌─ Home (Today)        Status snapshot · alerts · quick jumps
 ├─ Sales (POS)         Checkout · cart · suki balance · park cart
 ├─ Inventory           Products · Movements · Recommendations · Damaged · Labels
 ├─ Customers (Utang)   People · Collection queue · per-suki profile
-└─ More                Reports · Cash · Backup · Settings (PIN, shifts)
+�└─ More                Reports · Cash · Backup · Settings (PIN, shifts)
 ```
 
 ### Tab-by-tab — what lives where, and why

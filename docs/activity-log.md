@@ -7,6 +7,7 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 ## 2026-08-07 — POS ProductRow Unit Action Buttons & FastLaneCard Layout Fix (Completed)
 
 ### Overview
+
 - Upgraded [`ProductRow.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/ProductRow.tsx) unit selection UI:
   - Single products (retail-only) now display a clean, single **`+ Add`** action button (or quantity stepper when in cart) with no unnecessary unit toggle bar.
   - Bundle products replace the generic `+ Add` button with high-contrast, tactile pressable **`+ Tingi`** (`bg-cinnamon-500`) and **`+ Pakyaw`** (`bg-sage-600`) action buttons, eliminating ambiguous tag styling and direct add ambiguity.
@@ -18,7 +19,9 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 ## 2026-08-07 — Sales Tab Product Cards & Bundled Products Redesign (Completed)
 
 ### Overview
-Completed Awwwards-tier visual redesign of POS product cards in [`app/(tabs)/sales`](file:///D:/giomj/Projects/sarisari/app/(tabs)/sales):
+
+Completed Awwwards-tier visual redesign of POS product cards in [`app/(tabs)/sales`](<file:///D:/giomj/Projects/sarisari/app/(tabs)/sales>):
+
 - Added `calculateBulkSavings` helper function to [`lib/money.ts`](file:///D:/giomj/Projects/sarisari/lib/money.ts) and unit tests in [`lib/__tests__/moneyBundle.test.ts`](file:///D:/giomj/Projects/sarisari/lib/__tests__/moneyBundle.test.ts) to calculate bulk savings (`retail_price * conversion_factor - wholesale_price`).
 - Upgraded [`ProductRow.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/ProductRow.tsx) with hardware doppelrand (double-bezel) card enclosure, stacked-paper thumbnail icon for bundled items, explicit conversion badge (`1 PK = 12 PCs`), bulk savings pill badge (`Save ₱24.00`), and tactile action buttons.
 - Upgraded [`FastLaneCard.tsx`](file:///D:/giomj/Projects/sarisari/components/sales/pos/FastLaneCard.tsx) with compact double-bezel card enclosure, wholesale bundle indicator tag, and pill-shaped quick-add stepper buttons (`+1`, `+2`, `+5`).
@@ -29,7 +32,9 @@ Completed Awwwards-tier visual redesign of POS product cards in [`app/(tabs)/sal
 ## 2026-08-07 — Product Form Unification (Completed)
 
 ### Overview
+
 Completed implementation of unified product form design and components:
+
 - Created shared components in `components/inventory/products/form/`: [`ProductBasicInfoCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductBasicInfoCard.tsx), [`ProductPricingCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductPricingCard.tsx), [`ProductStockCard.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductStockCard.tsx), [`ProductFormActionButtons.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductFormActionButtons.tsx), and [`ProductFormHeader.tsx`](file:///D:/giomj/Projects/sarisari/components/inventory/products/form/ProductFormHeader.tsx).
 - Upgraded [`useEditProductForm.ts`](file:///D:/giomj/Projects/sarisari/components/inventory/edit-product/useEditProductForm.ts) with camera barcode scanner modal, manual barcode editing, barcode duplicate conflict check, bundle pricing mode calculation, quick markup presets (`+10%`, `+20%`, `+30%`, `+50%`), and non-blocking loss validation.
 - Refactored [`app/(edit-forms)/add-product/index.tsx`](file:///D:/giomj/Projects/sarisari/app/%28edit-forms%29/add-product/index.tsx) and [`app/(edit-forms)/edit-product/[id].tsx`](file:///D:/giomj/Projects/sarisari/app/%28edit-forms%29/edit-product/%5Bid%5D.tsx) to achieve 100% visual and functional design parity.
@@ -41,9 +46,11 @@ Completed implementation of unified product form design and components:
 ## 2026-08-06 — POS pcs/pack toggle freeze (in progress)
 
 ### Symptom
+
 Tapping **PK** (or the active PC) inside `app/(tabs)/sales/pos.tsx` causes the whole app to freeze. Logcat / dev console emits repeated `css-interop` warnings before the freeze.
 
 ### Suspected root causes (in order of likelihood)
+
 1. **Duplicate `useCart()` calls.** Three independent consumers open their own subscriptions to the cart store AND to `usePaginatedProducts`:
    - `app/(tabs)/sales/_layout.tsx:11` — `const { todayStats } = useCart();`
    - `app/(tabs)/sales/pos.tsx:26` — `const cart = useCart(search);`
@@ -56,6 +63,7 @@ Tapping **PK** (or the active PC) inside `app/(tabs)/sales/pos.tsx` causes the w
 3. **`useEffect` identity-watchers in `useCart.ts:49-63` and `:67-81`** emit JSON-stringified `console.warn` / `console.log` events when store identity flips. They aren't the freeze cause, but they add log volume during a freeze (useful as breadcrumbs for now).
 
 ### Repro (manual, on device)
+
 1. Launch the app on a device or simulator.
 2. Sign in and open the POS tab.
 3. Search for a product with **both retail and wholesale pricing** (e.g. a snack with `wholesale_price` set and `conversion_factor >= 2`).
@@ -65,17 +73,20 @@ Tapping **PK** (or the active PC) inside `app/(tabs)/sales/pos.tsx` causes the w
    - **Observed:** Within ~1 second the UI freezes; repeated `css-interop` console warnings scroll past; eventually the JS thread wedges.
 
 ### Relevant commits in repo
+
 - `5eb7f30 fix: memoize CUSTOM_THEME outside RootLayout to prevent css-interop re-render loop`
 - `3f51b46 fix: use in-tree Modal and remove router.setParams useEffect loop to prevent css-interop freeze`
 
 Both pre-existing fixes target css-interop layout-level patterns; this is the third instance and lives inside the POS hot path.
 
 ### Plan
+
 1. Add targeted render-storm telemetry (per-component render counters in ProductRow / ProductSearchCatalog / CheckoutModal / FastLaneCard with threshold warn at 20 renders/sec).
 2. Emit a structured `cart_unit_toggled` event from `CartStore.toggleUnit` with prev/next unit + resulting store shape so freezes correlate with state.
 3. Once telemetry confirms: collapse the three `useCart()` consumers into a single owner and pass derived data down; stabilize `renderItem` with `useCallback` + memoized `ProductRow`; switch `useCartStore` destructuring to narrow selectors.
 
 ### Files in scope
+
 - `app/(tabs)/sales/_layout.tsx`
 - `app/(tabs)/sales/pos.tsx`
 - `components/sales/pos/useCart.ts`
@@ -87,6 +98,7 @@ Both pre-existing fixes target css-interop layout-level patterns; this is the th
 - `lib/logger.ts` (already in place)
 
 ### Verification run (subagent, 2026-08-06)
+
 - **`npx tsc --noEmit`** — no errors in `components/sales/pos/*` or `app/(tabs)/sales/pos.tsx`. Pre-existing `exactOptionalPropertyTypes` errors live in `app/(edit-forms)/*` and `components/customers/*` and are unrelated.
 - **`npm test`** — 4 tests across 2 suites pass (`useLogTransactionForm`, `useRecordDamaged`). One suite fails at load time (`components/inventory/ledger/__tests__/LogTransactionForm.test.tsx`) because `expo-notifications`' `EventEmitter` mock is missing — pre-existing infra issue in `hooks/useSystemNotifications.ts`, not introduced by this work.
 
@@ -127,6 +139,7 @@ Even after Pass 2, every keystroke in the search bar re-rendered the entire POS 
 to confirm the fix on next on-device repro.
 
 ### Verification
+
 - `npx tsc --noEmit` for `components/sales/pos/*` and `app/(tabs)/sales/*` — only pre-existing errors remain: `useAddSalesForm.ts:84,173,177,368` and `ProductSearchCatalog.tsx:170` (`FastLaneProduct` vs `Product`). All were on main before this work and are unrelated. Confirmed by `git stash` + typecheck on clean main.
 - `npx tsc --noEmit` overall — every error listed is in files outside the POS hot path (`app/(edit-forms)/add-credit`, `add-payment`, `edit-product`, `inventory-ledger`, `customers/insights`, `sales/receipts`, `customers/*`, `financial/*`, `inventory/edit-product/*`). All pre-existing.
 - Manual on-device repro still pending — needs the user to tap PK on a row with both retail and wholesale pricing and confirm the freeze no longer happens.
@@ -162,7 +175,6 @@ A second, related issue surfaced during the same investigation: the catalog itse
 Pass 1–3 made individual re-renders cheap (memoized rows, stable callbacks, scoped stores). Pass 4 stops the FlatList from re-rendering rows at all on PK toggle or keystroke — by giving `data` and the store subscriptions stable identities that pass through `===` checks. With the row tree stable, css-interop's className processing hits its memoized cache instead of reprocessing each row.
 
 ### Verification
+
 - `npx tsc --noEmit` overall — **zero diff** vs baseline (350 errors, all pre-existing on main, none in the POS hot path). The pre-existing `FastLaneProduct` vs `Product` error in this file is resolved by an `as unknown as Product` cast on the Fast Lane press handler argument.
 - Manual on-device repro still pending — needs the user to tap PK on a row with both retail and wholesale pricing and confirm (a) the VirtualizedList slow-update warning no longer fires and (b) the css-interop stringify-failed warning no longer fires.
-
-
