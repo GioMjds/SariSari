@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
@@ -100,7 +100,11 @@ export function BulkActionsToolbar({
         title={`Delete ${selectedCount} products?`}
         description="This cannot be undone. Stock movements linked to these products will remain in your ledger."
         buttons={[
-          { text: 'Cancel', style: 'cancel', onPress: () => setConfirmDelete(false) },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setConfirmDelete(false),
+          },
           {
             text: 'Delete',
             style: 'destructive',

@@ -25,7 +25,7 @@ export interface InventoryTransaction {
   adjustment_sign?: 'positive' | 'negative' | null;
   unit_cost?: number | null;
   supplier_id?: number | string | null;
-  timestamp: number | string;
+  timestamp: string;
   product_name?: string;
 }
 

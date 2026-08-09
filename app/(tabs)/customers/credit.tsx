@@ -1,4 +1,3 @@
-import React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CreditLedgerTab, CustomersSkeleton } from '@/components/customers';
@@ -41,4 +40,3 @@ export default function CreditLedgerScreen() {
     </View>
   );
 }
-

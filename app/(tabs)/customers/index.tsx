@@ -1,6 +1,5 @@
-import React from 'react';
 import { View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import { AllCustomersTab, CustomersSkeleton } from '@/components/customers';
 import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
@@ -20,7 +19,7 @@ export default function AllCustomersScreen() {
   };
 
   const handleAddCustomer = () => {
-    router.push('/(edit-forms)/add-customer');
+    router.push('/(edit-forms)/add-customer' as Href);
   };
 
   if (isLoading) {

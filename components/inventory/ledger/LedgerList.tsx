@@ -1,7 +1,6 @@
-import React, { useMemo, useCallback, memo } from 'react';
-import { View, SectionList, RefreshControl, ActivityIndicator } from 'react-native';
+import { useMemo, useCallback, memo } from 'react';
+import { View, SectionList, RefreshControl } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { format, isToday, isYesterday, isValid } from 'date-fns';
 import { StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
@@ -13,18 +12,7 @@ import { parseStoredTimestamp } from '@/utils/timezone';
 import { LedgerTypeFilter } from './types';
 
 interface LedgerListProps {
-  /**
-   * The full transaction list for the product (last 30 days, as
-   * returned by `useInventoryTransactionsByProduct`). The list
-   * component owns the in-place filtering so the screen file stays
-   * declarative.
-   */
   transactions: InventoryTransaction[];
-  /**
-   * The product's current on-hand count. Used as the seed for the
-   * running-balance calculation so the topmost visible row's
-   * balance reflects "what the cashier actually has on the shelf."
-   */
   currentStock: number;
   searchQuery: string;
   selectedType: LedgerTypeFilter;
@@ -42,15 +30,6 @@ type LedgerRowData = InventoryTransaction & { runningBalance: number };
 
 const keyExtractor = (item: LedgerRowData) => `${item.type}-${item.id}`;
 
-/**
- * LedgerList — the filtered, animated transaction timeline.
- *
- * Uses SectionList for high-performance virtualized rendering.
- * The screen passes the raw 30-day list; this component filters it,
- * computes a **running balance** for each row, groups entries into
- * sticky day buckets, and renders them with the same receipt-ledger
- * visual language used by `components/utang/credit-details/`.
- */
 export const LedgerList = memo(function LedgerList({
   transactions,
   currentStock,
@@ -65,7 +44,7 @@ export const LedgerList = memo(function LedgerList({
 }: LedgerListProps) {
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return transactions.filter((tx) => {
+    return transactions.filter((tx: InventoryTransaction) => {
       if (selectedType !== 'all' && tx.type !== selectedType) {
         return false;
       }
@@ -80,9 +59,6 @@ export const LedgerList = memo(function LedgerList({
     });
   }, [transactions, searchQuery, selectedType]);
 
-  // Build rows with a running balance. We walk newest→oldest and
-  // back-fill: the most recent row's balance equals current stock,
-  // then we subtract each row's delta moving backward.
   const rowsWithBalance = useMemo(() => {
     const ordered = [...filtered].sort((a, b) => {
       const ta = parseStoredTimestamp(a.timestamp)?.getTime() ?? 0;
@@ -97,7 +73,6 @@ export const LedgerList = memo(function LedgerList({
     });
   }, [filtered, currentStock]);
 
-  // Group by day bucket for the sticky day separator UX.
   const groups = useMemo(() => groupByDay(rowsWithBalance), [rowsWithBalance]);
 
   const sections = useMemo(() => {
@@ -118,7 +93,11 @@ export const LedgerList = memo(function LedgerList({
   );
 
   const renderSectionHeader = useCallback(
-    ({ section: { label, data } }: { section: { label: string; data: any[] } }) => (
+    ({
+      section: { label, data },
+    }: {
+      section: { label: string; data: any[] };
+    }) => (
       <View className="px-4 mt-2">
         <DaySeparator label={label} count={data.length} />
       </View>
@@ -126,11 +105,14 @@ export const LedgerList = memo(function LedgerList({
     [],
   );
 
-  const renderEmpty = useCallback(() => (
-    <View className="px-4">
-      <LedgerNoMatches />
-    </View>
-  ), []);
+  const renderEmpty = useCallback(
+    () => (
+      <View className="px-4">
+        <LedgerNoMatches />
+      </View>
+    ),
+    [],
+  );
 
   return (
     <SectionList
@@ -176,8 +158,6 @@ export const LedgerList = memo(function LedgerList({
     />
   );
 });
-
-/* ─── Single row ──────────────────────────────────────────────────── */
 
 const LedgerRow = memo(function LedgerRow({
   row,
@@ -254,9 +234,13 @@ const LedgerRow = memo(function LedgerRow({
   );
 });
 
-/* ─── Day separator ─────────────────────────────────────────────────── */
-
-const DaySeparator = memo(function DaySeparator({ label, count }: { label: string; count: number }) {
+const DaySeparator = memo(function DaySeparator({
+  label,
+  count,
+}: {
+  label: string;
+  count: number;
+}) {
   return (
     <View className="flex-row items-center bg-paper-100 border border-ink-100 rounded-xl px-3 py-2 mb-2.5">
       <View className="w-1.5 h-1.5 rounded-full bg-cinnamon-500 mr-2" />
@@ -277,8 +261,6 @@ const DaySeparator = memo(function DaySeparator({ label, count }: { label: strin
     </View>
   );
 });
-
-/* ─── No matches inline state ─────────────────────────────────────── */
 
 const LedgerNoMatches = memo(function LedgerNoMatches() {
   return (
@@ -301,8 +283,6 @@ const LedgerNoMatches = memo(function LedgerNoMatches() {
     </View>
   );
 });
-
-/* ─── Pill + icon helpers (module-scope) ─────────────────────────── */
 
 function EventPill({
   type,
@@ -390,9 +370,6 @@ function EventIcon({
   }
 }
 
-/* ─── Pure helpers ────────────────────────────────────────────────── */
-
-/** Signed quantity change for a transaction (+/− integer). */
 function signedQuantity(tx: {
   type: InventoryEventType;
   quantity: number;
@@ -445,17 +422,9 @@ function groupByDay(
   return order.map((k) => groups[k]);
 }
 
-/**
- * `formatDateTime` — friendly relative-ish timestamp. SQLite stores
- * `timestamp` as `CURRENT_TIMESTAMP` (UTC); we accept both
- * space-separated and ISO forms and prefer date-fns for the output.
- * Format goal: scanable at a glance (`Today · 9:01 AM`,
- * `Yesterday · 4:15 PM`, `Jun 24 · 11:00 AM`).
- */
 function formatDateTime(timestampStr: string): string {
   const d = parseStoredTimestamp(timestampStr);
   if (!d || !isValid(d)) {
-    // Best-effort fallback for non-ISO pre-existing rows.
     const normalized = new Date(timestampStr.replace(' ', 'T') + 'Z');
     if (isValid(normalized)) return format(normalized, 'MMM dd · h:mm a');
     return timestampStr;

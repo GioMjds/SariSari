@@ -35,7 +35,7 @@ import {
   useTopSellingProducts,
 } from '@/hooks';
 import { formatPesos } from '@/lib/money';
-import { DateRange, DateRangeType, ReportKPIs } from '@/types';
+import { DateRange, DateRangeType } from '@/types';
 import {
   formatCompactCurrency,
   getDateRangeFromType,
@@ -52,49 +52,16 @@ import {
   Pressable,
 } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
+import {
+  DEFAULT_CREDITS_OVERVIEW,
+  DEFAULT_INVENTORY_MOVEMENT,
+  DEFAULT_INVENTORY_VALUE,
+  DEFAULT_KPIS,
+  DEFAULT_SALES_BREAKDOWN,
+} from '@/constants';
 
+// Fix: Infer strict type for empty array initialization
 const EMPTY_ARRAY: any[] = [];
-
-const DEFAULT_KPIS: ReportKPIs = {
-  totalSales: 0,
-  totalProfit: null,
-  grossProfit: null,
-  operatingProfit: null,
-  paidExpenses: 0,
-  ownerDrawings: 0,
-  totalCreditsIssued: 0,
-  totalCreditsCollected: 0,
-  totalExpenses: 0,
-  inventoryCostOut: 0,
-  profitCoverage: null,
-  marginPercent: null,
-};
-
-const DEFAULT_SALES_BREAKDOWN = {
-  cashSales: 0,
-  creditSales: 0,
-  averageTransactionValue: 0,
-  totalTransactions: 0,
-};
-
-const DEFAULT_INVENTORY_MOVEMENT = {
-  itemsSold: 0,
-  lowStockCount: 0,
-  outOfStockCount: 0,
-};
-
-const DEFAULT_INVENTORY_VALUE = {
-  currentStockValue: 0,
-  potentialSalesValue: 0,
-  costCoverage: null,
-};
-
-const DEFAULT_CREDITS_OVERVIEW = {
-  issued: 0,
-  collected: 0,
-  outstanding: 0,
-  activeAccounts: 0,
-};
 
 export default function HomeReports() {
   const queryClient = useQueryClient();
@@ -119,8 +86,6 @@ export default function HomeReports() {
   const insightsQuery = useReportInsights(dateRange);
   const sessionsQuery = useCashSessions();
 
-  // Per-section loading flags — each section renders as soon as its own
-  // data arrives without waiting for every other query to finish.
   const isInsightsLoading = insightsQuery.isLoading;
   const isKPIsLoading =
     kpisQuery.isLoading ||
@@ -216,480 +181,450 @@ export default function HomeReports() {
       }}
     >
       <View className="px-4 mt-2">
-            <DateRangeSelector
-              activeRange={dateRangeType}
-              onRangeChange={handleDateRangeChange}
-            />
-          </View>
+        <DateRangeSelector
+          activeRange={dateRangeType}
+          onRangeChange={handleDateRangeChange}
+        />
+      </View>
 
-          {/* ─── Smart Alerts / Insights ────────────────────────── */}
-          {(isInsightsLoading || insights.length > 0) && (
-            <View className="px-4 mt-2">
-              <EditorialEyebrow number="I" label="Dispatch from the counter" />
-              {isInsightsLoading ? (
-                <View className="mt-3 items-center py-4">
-                  <ActivityIndicator size="small" color="#623418" />
+      {/* ─── Smart Alerts / Insights ────────────────────────── */}
+      {(isInsightsLoading || insights.length > 0) && (
+        <View className="px-4 mt-2">
+          <EditorialEyebrow number="I" label="Dispatch from the counter" />
+          {isInsightsLoading ? (
+            <View className="mt-3 items-center py-4">
+              <ActivityIndicator size="small" color="#623418" />
+            </View>
+          ) : (
+            <View className="mt-3">
+              {insights.map((insight, index) => (
+                <InsightCard key={index} {...insight} icon={insight.icon} />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* ─── Bento KPI grid ─────────────────────────────────── */}
+      <View className="px-4 mt-6">
+        <EditorialEyebrow number="II" label="The four pillars" />
+        {isKPIsLoading ? (
+          <View className="mt-3 items-center py-8">
+            <ActivityIndicator size="large" color="#623418" />
+          </View>
+        ) : (
+          <View className="mt-3">
+            <BentoGrid>
+              <BentoHero
+                animationKey={`${dateRangeType}-${kpis.totalSales}`}
+                kicker="TOTAL SALES · COVER STORY"
+                headline={formatCompactCurrency(kpis.totalSales)}
+                subline={`${salesBreakdown.totalTransactions} ${
+                  salesBreakdown.totalTransactions === 1
+                    ? 'transaction'
+                    : 'transactions'
+                } · cash & credit combined`}
+                icon={
+                  <FontAwesome name="shopping-cart" size={14} color="#FBF7EE" />
+                }
+                accent="persimmon"
+              />
+
+              <View className="flex-row gap-3">
+                <BentoKPICard
+                  kicker="TUBO · GROSS PROFIT"
+                  headline={
+                    kpis.totalProfit === null
+                      ? '—'
+                      : formatCompactCurrency(kpis.totalProfit)
+                  }
+                  subline={
+                    kpis.totalProfit === null
+                      ? 'Add cost prices to compute tubo'
+                      : profitSubline(kpis.marginPercent)
+                  }
+                  icon={
+                    <FontAwesome name="line-chart" size={16} color="#3D5E1B" />
+                  }
+                  accent="sage"
+                />
+                <BentoKPICard
+                  kicker="ACTIVE UTANG"
+                  headline={formatCompactCurrency(creditsOverview.outstanding)}
+                  subline={`${creditsOverview.activeAccounts} ${
+                    creditsOverview.activeAccounts === 1
+                      ? 'suki owes'
+                      : 'sukis owe'
+                  } you`}
+                  icon={
+                    <FontAwesome name="credit-card" size={16} color="#A1370C" />
+                  }
+                  accent="persimmon"
+                />
+              </View>
+
+              <View className="flex-row gap-3">
+                <BentoKPICard
+                  kicker="STOCK ASSET VALUE · AT COST"
+                  headline={formatCompactCurrency(
+                    inventoryValue.currentStockValue,
+                  )}
+                  subline={
+                    inventoryValue.costCoverage !== null &&
+                    inventoryValue.costCoverage < 1
+                      ? `${Math.round(
+                          inventoryValue.costCoverage * 100,
+                        )}% of stock has cost data`
+                      : `Potential retail: ${formatCompactCurrency(
+                          inventoryValue.potentialSalesValue,
+                        )}`
+                  }
+                  icon={
+                    <FontAwesome name="archive" size={16} color="#391C0A" />
+                  }
+                  accent="cinnamon"
+                />
+                <BentoKPICard
+                  kicker="CASH COLLECTED"
+                  headline={formatCompactCurrency(salesBreakdown.cashSales)}
+                  subline={`Avg ticket: ${formatCompactCurrency(
+                    salesBreakdown.averageTransactionValue,
+                  )}`}
+                  icon={<FontAwesome name="money" size={16} color="#3D5E1B" />}
+                  accent="sage"
+                />
+              </View>
+            </BentoGrid>
+
+            <View className="mt-4">
+              <FinancialResultSection
+                kpis={kpis}
+                onOpenLedger={() => router.push('/gastos-kaha')}
+              />
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* ─── Sales Trend & Payments ─────────────────────────── */}
+      <View className="px-4 mt-8">
+        <EditorialEyebrow number="III" label="Sales trend & payment split" />
+        <View className="mt-3">
+          <CollapsibleSection
+            number="01"
+            title="Sales Trend & Payments"
+            subtitle="Daily takings and how customers paid"
+            tone="persimmon"
+            icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
+            defaultExpanded
+          >
+            {isSalesTrendLoading ? (
+              <View className="items-center py-8">
+                <ActivityIndicator size="large" color="#623418" />
+              </View>
+            ) : (
+              <View>
+                <SimpleBarChart data={salesOverTime} height={200} />
+
+                {/* Perforation between chart and breakdown */}
+                <View
+                  style={{
+                    marginTop: 20,
+                    marginBottom: 12,
+                    borderBottomWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: '#D1D5DC',
+                  }}
+                />
+
+                <PaymentSplitStrip
+                  cash={salesBreakdown.cashSales}
+                  credit={salesBreakdown.creditSales}
+                  total={kpis.totalSales}
+                  transactions={salesBreakdown.totalTransactions}
+                  avgTicket={salesBreakdown.averageTransactionValue}
+                />
+              </View>
+            )}
+          </CollapsibleSection>
+        </View>
+      </View>
+
+      {/* ─── Top Products ──────────────────────────────────── */}
+      <View className="px-4 mt-6">
+        <CollapsibleSection
+          number="02"
+          title="Top Products & Profitability"
+          subtitle="The champions of the shelves"
+          tone="cinnamon"
+          icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
+          defaultExpanded
+        >
+          {isTopProductsLoading ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color="#623418" />
+            </View>
+          ) : (
+            <View>
+              {/* Top by revenue */}
+              <StyledText
+                variant="extrabold"
+                className="text-label text-ink-400 mb-3"
+                style={{ letterSpacing: 1.4 }}
+              >
+                TOP RANKING BY REVENUE
+              </StyledText>
+              <TopProductsList products={topProducts} />
+
+              {/* Dashed separator between sub-sections */}
+              <View className="my-4 flex-row items-center">
+                <View className="flex-1 h-px bg-ink-200" />
+                <StyledText
+                  variant="extrabold"
+                  className="text-label text-ink-300 mx-3"
+                  style={{ letterSpacing: 1.6 }}
+                >
+                  · · ·
+                </StyledText>
+                <View className="flex-1 h-px bg-ink-200" />
+              </View>
+
+              {/* Most profitable */}
+              <View className="flex-row items-center justify-between mb-3">
+                <StyledText
+                  variant="extrabold"
+                  className="text-label text-ink-400"
+                  style={{ letterSpacing: 1.4 }}
+                >
+                  MOST PROFITABLE · TUBO LEADERS
+                </StyledText>
+                {kpis.totalProfit === null && (
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-400 text-[10px]"
+                  >
+                    Add cost prices
+                  </StyledText>
+                )}
+              </View>
+              <ProfitabilityRanking products={productProfitability} />
+            </View>
+          )}
+        </CollapsibleSection>
+      </View>
+
+      {/* ─── Stock Movement ────────────────────────────────── */}
+      <View className="px-4 mt-6">
+        <CollapsibleSection
+          number="03"
+          title="Stock Levels & Movement"
+          subtitle="What left the shelves, what needs restock"
+          tone="sage"
+          icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
+          defaultExpanded
+        >
+          {isStockLoading ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color="#623418" />
+            </View>
+          ) : (
+            <View>
+              <StockMovementDetails
+                itemsSold={inventoryMovement.itemsSold}
+                lowStockCount={inventoryMovement.lowStockCount}
+                outOfStockCount={inventoryMovement.outOfStockCount}
+                fastMoving={fastMovingProducts}
+                slowMoving={slowMovingProducts}
+              />
+
+              {/* Inventory value sub-block */}
+              <View className="mt-4 flex-row items-stretch border border-ink-200 rounded-md overflow-hidden">
+                <View className="flex-1 p-3 border-r border-dashed border-ink-200 bg-cinnamon-50/40">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-label text-cinnamon-700 mb-1"
+                    style={{ letterSpacing: 1.2 }}
+                  >
+                    AT COST
+                  </StyledText>
+                  <MoneyText
+                    value={inventoryValue.currentStockValue}
+                    size="md"
+                    variant="default"
+                    className="text-ink-900 text-sm"
+                  />
+                  {inventoryValue.costCoverage !== null &&
+                    inventoryValue.costCoverage < 1 && (
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-400 text-[10px] mt-1"
+                      >
+                        {Math.round(inventoryValue.costCoverage * 100)}% cost
+                        coverage
+                      </StyledText>
+                    )}
                 </View>
-              ) : (
-                <View className="mt-3">
-                  {insights.map((insight, index) => (
-                    <InsightCard
-                      key={index}
-                      {...insight}
-                      icon={insight.icon as keyof typeof FontAwesome.glyphMap}
-                    />
+                <View className="flex-1 p-3 bg-sage-50/40">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-label text-sage-700 mb-1"
+                    style={{ letterSpacing: 1.2 }}
+                  >
+                    AT RETAIL
+                  </StyledText>
+                  <MoneyText
+                    value={inventoryValue.potentialSalesValue}
+                    size="md"
+                    variant="success"
+                    className="text-sm"
+                  />
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-400 text-[10px] mt-1"
+                  >
+                    Potential takings
+                  </StyledText>
+                </View>
+              </View>
+
+              {/* Low stock alert */}
+              {lowStockItems.length > 0 && (
+                <View className="mt-4 rounded-md border-2 border-dashed border-semantic-warning p-3 bg-semantic-warning-50">
+                  <View className="flex-row items-center mb-2">
+                    <View className="w-6 h-6 rounded-full bg-semantic-warning items-center justify-center mr-2">
+                      <FontAwesome
+                        name="exclamation"
+                        size={12}
+                        color="#FBF7EE"
+                      />
+                    </View>
+                    <StyledText
+                      variant="extrabold"
+                      className="text-label text-semantic-warning"
+                      style={{ letterSpacing: 1.4 }}
+                    >
+                      LOW STOCK · {lowStockItems.length} ITEMS
+                    </StyledText>
+                  </View>
+                  {lowStockItems.slice(0, 4).map((item) => (
+                    <View
+                      key={item.id}
+                      className="flex-row items-center justify-between mt-1"
+                    >
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-700 text-xs flex-1"
+                        numberOfLines={1}
+                      >
+                        · {item.name}
+                      </StyledText>
+                      <StyledText
+                        variant="extrabold"
+                        className={`text-xs ${
+                          item.quantity === 0
+                            ? 'text-semantic-danger'
+                            : 'text-semantic-warning'
+                        }`}
+                      >
+                        {item.quantity} left
+                      </StyledText>
+                    </View>
                   ))}
                 </View>
               )}
             </View>
           )}
+        </CollapsibleSection>
+      </View>
 
-          {/* ─── Bento KPI grid ─────────────────────────────────── */}
-          <View className="px-4 mt-6">
-            <EditorialEyebrow number="II" label="The four pillars" />
-            {isKPIsLoading ? (
-              <View className="mt-3 items-center py-8">
-                <ActivityIndicator size="large" color="#623418" />
-              </View>
-            ) : (
-              <View className="mt-3">
-                <BentoGrid>
-                  <BentoHero
-                    animationKey={`${dateRangeType}-${kpis.totalSales}`}
-                    kicker="TOTAL SALES · COVER STORY"
-                    headline={formatCompactCurrency(kpis.totalSales)}
-                    subline={`${salesBreakdown.totalTransactions} ${
-                      salesBreakdown.totalTransactions === 1
-                        ? 'transaction'
-                        : 'transactions'
-                    } · cash & credit combined`}
-                    icon={
-                      <FontAwesome
-                        name="shopping-cart"
-                        size={14}
-                        color="#FBF7EE"
-                      />
-                    }
-                    accent="persimmon"
-                  />
-
-                  <View className="flex-row gap-3">
-                    <BentoKPICard
-                      kicker="TUBO · GROSS PROFIT"
-                      headline={
-                        kpis.totalProfit === null
-                          ? '—'
-                          : formatCompactCurrency(kpis.totalProfit)
-                      }
-                      subline={
-                        kpis.totalProfit === null
-                          ? 'Add cost prices to compute tubo'
-                          : profitSubline(kpis.marginPercent)
-                      }
-                      icon={
-                        <FontAwesome
-                          name="line-chart"
-                          size={16}
-                          color="#3D5E1B"
-                        />
-                      }
-                      accent="sage"
-                    />
-                    <BentoKPICard
-                      kicker="ACTIVE UTANG"
-                      headline={formatCompactCurrency(
-                        creditsOverview.outstanding,
-                      )}
-                      subline={`${creditsOverview.activeAccounts} ${
-                        creditsOverview.activeAccounts === 1
-                          ? 'suki owes'
-                          : 'sukis owe'
-                      } you`}
-                      icon={
-                        <FontAwesome
-                          name="credit-card"
-                          size={16}
-                          color="#A1370C"
-                        />
-                      }
-                      accent="persimmon"
-                    />
-                  </View>
-
-                  <View className="flex-row gap-3">
-                    <BentoKPICard
-                      kicker="STOCK ASSET VALUE · AT COST"
-                      headline={formatCompactCurrency(
-                        inventoryValue.currentStockValue,
-                      )}
-                      subline={
-                        inventoryValue.costCoverage !== null &&
-                        inventoryValue.costCoverage < 1
-                          ? `${Math.round(
-                              inventoryValue.costCoverage * 100,
-                            )}% of stock has cost data`
-                          : `Potential retail: ${formatCompactCurrency(
-                              inventoryValue.potentialSalesValue,
-                            )}`
-                      }
-                      icon={
-                        <FontAwesome name="archive" size={16} color="#391C0A" />
-                      }
-                      accent="cinnamon"
-                    />
-                    <BentoKPICard
-                      kicker="CASH COLLECTED"
-                      headline={formatCompactCurrency(salesBreakdown.cashSales)}
-                      subline={`Avg ticket: ${formatCompactCurrency(
-                        salesBreakdown.averageTransactionValue,
-                      )}`}
-                      icon={
-                        <FontAwesome name="money" size={16} color="#3D5E1B" />
-                      }
-                      accent="sage"
-                    />
-                  </View>
-                </BentoGrid>
-
-                <View className="mt-4">
-                  <FinancialResultSection
-                    kpis={kpis}
-                    onOpenLedger={() => router.push('/gastos-kaha')}
-                  />
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* ─── Sales Trend & Payments ─────────────────────────── */}
-          <View className="px-4 mt-8">
-            <EditorialEyebrow
-              number="III"
-              label="Sales trend & payment split"
-            />
-            <View className="mt-3">
-              <CollapsibleSection
-                number="01"
-                title="Sales Trend & Payments"
-                subtitle="Daily takings and how customers paid"
-                tone="persimmon"
-                icon={
-                  <FontAwesome name="bar-chart" size={16} color="#A1370C" />
-                }
-                defaultExpanded
-              >
-                {isSalesTrendLoading ? (
-                  <View className="items-center py-8">
-                    <ActivityIndicator size="large" color="#623418" />
-                  </View>
-                ) : (
-                  <View>
-                    <SimpleBarChart data={salesOverTime} height={200} />
-
-                    {/* Perforation between chart and breakdown */}
-                    <View
-                      style={{
-                        marginTop: 20,
-                        marginBottom: 12,
-                        borderBottomWidth: 1,
-                        borderStyle: 'dashed',
-                        borderColor: '#D1D5DC',
-                      }}
-                    />
-
-                    <PaymentSplitStrip
-                      cash={salesBreakdown.cashSales}
-                      credit={salesBreakdown.creditSales}
-                      total={kpis.totalSales}
-                      transactions={salesBreakdown.totalTransactions}
-                      avgTicket={salesBreakdown.averageTransactionValue}
-                    />
-                  </View>
-                )}
-              </CollapsibleSection>
+      {/* ─── Suki Credit Aging ─────────────────────────────── */}
+      <View className="px-4 mt-6">
+        <CollapsibleSection
+          number="04"
+          title="Suki Credit Aging"
+          subtitle="How long the debt has been sitting on the books"
+          tone="cinnamon"
+          icon={<FontAwesome name="hourglass-half" size={16} color="#391C0A" />}
+          defaultExpanded
+        >
+          {isCreditAgingLoading ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color="#623418" />
             </View>
-          </View>
+          ) : (
+            <View>
+              <CreditAgingChart
+                buckets={agingBuckets}
+                totalOutstanding={creditsOverview.outstanding}
+              />
 
-          {/* ─── Top Products ──────────────────────────────────── */}
-          <View className="px-4 mt-6">
-            <CollapsibleSection
-              number="02"
-              title="Top Products & Profitability"
-              subtitle="The champions of the shelves"
-              tone="cinnamon"
-              icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
-              defaultExpanded
-            >
-              {isTopProductsLoading ? (
-                <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#623418" />
-                </View>
-              ) : (
-                <View>
-                  {/* Top by revenue */}
+              <View className="mt-4 flex-row gap-3">
+                <View className="flex-1 p-3 border border-ink-200 rounded-md bg-semantic-danger-50/30">
                   <StyledText
                     variant="extrabold"
-                    className="text-label text-ink-400 mb-3"
-                    style={{ letterSpacing: 1.4 }}
+                    className="text-label text-semantic-danger"
+                    style={{ letterSpacing: 1.2 }}
                   >
-                    TOP RANKING BY REVENUE
+                    ISSUED
                   </StyledText>
-                  <TopProductsList products={topProducts} />
-
-                  {/* Dashed separator between sub-sections */}
-                  <View className="my-4 flex-row items-center">
-                    <View className="flex-1 h-px bg-ink-200" />
-                    <StyledText
-                      variant="extrabold"
-                      className="text-label text-ink-300 mx-3"
-                      style={{ letterSpacing: 1.6 }}
-                    >
-                      · · ·
-                    </StyledText>
-                    <View className="flex-1 h-px bg-ink-200" />
-                  </View>
-
-                  {/* Most profitable */}
-                  <View className="flex-row items-center justify-between mb-3">
-                    <StyledText
-                      variant="extrabold"
-                      className="text-label text-ink-400"
-                      style={{ letterSpacing: 1.4 }}
-                    >
-                      MOST PROFITABLE · TUBO LEADERS
-                    </StyledText>
-                    {kpis.totalProfit === null && (
-                      <StyledText
-                        variant="medium"
-                        className="text-ink-400 text-[10px]"
-                      >
-                        Add cost prices
-                      </StyledText>
-                    )}
-                  </View>
-                  <ProfitabilityRanking products={productProfitability} />
-                </View>
-              )}
-            </CollapsibleSection>
-          </View>
-
-          {/* ─── Stock Movement ────────────────────────────────── */}
-          <View className="px-4 mt-6">
-            <CollapsibleSection
-              number="03"
-              title="Stock Levels & Movement"
-              subtitle="What left the shelves, what needs restock"
-              tone="sage"
-              icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
-              defaultExpanded
-            >
-              {isStockLoading ? (
-                <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#623418" />
-                </View>
-              ) : (
-                <View>
-                  <StockMovementDetails
-                    itemsSold={inventoryMovement.itemsSold}
-                    lowStockCount={inventoryMovement.lowStockCount}
-                    outOfStockCount={inventoryMovement.outOfStockCount}
-                    fastMoving={fastMovingProducts}
-                    slowMoving={slowMovingProducts}
+                  <MoneyText
+                    value={creditsOverview.issued}
+                    size="md"
+                    variant="danger"
+                    className="text-sm"
                   />
-
-                  {/* Inventory value sub-block */}
-                  <View className="mt-4 flex-row items-stretch border border-ink-200 rounded-md overflow-hidden">
-                    <View className="flex-1 p-3 border-r border-dashed border-ink-200 bg-cinnamon-50/40">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-label text-cinnamon-700 mb-1"
-                        style={{ letterSpacing: 1.2 }}
-                      >
-                        AT COST
-                      </StyledText>
-                      <MoneyText
-                        value={inventoryValue.currentStockValue}
-                        size="md"
-                        variant="default"
-                        className="text-ink-900 text-sm"
-                      />
-                      {inventoryValue.costCoverage !== null &&
-                        inventoryValue.costCoverage < 1 && (
-                          <StyledText
-                            variant="medium"
-                            className="text-ink-400 text-[10px] mt-1"
-                          >
-                            {Math.round(inventoryValue.costCoverage * 100)}%
-                            cost coverage
-                          </StyledText>
-                        )}
-                    </View>
-                    <View className="flex-1 p-3 bg-sage-50/40">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-label text-sage-700 mb-1"
-                        style={{ letterSpacing: 1.2 }}
-                      >
-                        AT RETAIL
-                      </StyledText>
-                      <MoneyText
-                        value={inventoryValue.potentialSalesValue}
-                        size="md"
-                        variant="success"
-                        className="text-sm"
-                      />
-                      <StyledText
-                        variant="medium"
-                        className="text-ink-400 text-[10px] mt-1"
-                      >
-                        Potential takings
-                      </StyledText>
-                    </View>
-                  </View>
-
-                  {/* Low stock alert */}
-                  {lowStockItems.length > 0 && (
-                    <View className="mt-4 rounded-md border-2 border-dashed border-semantic-warning p-3 bg-semantic-warning-50">
-                      <View className="flex-row items-center mb-2">
-                        <View className="w-6 h-6 rounded-full bg-semantic-warning items-center justify-center mr-2">
-                          <FontAwesome
-                            name="exclamation"
-                            size={12}
-                            color="#FBF7EE"
-                          />
-                        </View>
-                        <StyledText
-                          variant="extrabold"
-                          className="text-label text-semantic-warning"
-                          style={{ letterSpacing: 1.4 }}
-                        >
-                          LOW STOCK · {lowStockItems.length} ITEMS
-                        </StyledText>
-                      </View>
-                      {lowStockItems.slice(0, 4).map((item) => (
-                        <View
-                          key={item.id}
-                          className="flex-row items-center justify-between mt-1"
-                        >
-                          <StyledText
-                            variant="medium"
-                            className="text-ink-700 text-xs flex-1"
-                            numberOfLines={1}
-                          >
-                            · {item.name}
-                          </StyledText>
-                          <StyledText
-                            variant="extrabold"
-                            className={`text-xs ${
-                              item.quantity === 0
-                                ? 'text-semantic-danger'
-                                : 'text-semantic-warning'
-                            }`}
-                          >
-                            {item.quantity} left
-                          </StyledText>
-                        </View>
-                      ))}
-                    </View>
-                  )}
                 </View>
-              )}
-            </CollapsibleSection>
-          </View>
-
-          {/* ─── Suki Credit Aging ─────────────────────────────── */}
-          <View className="px-4 mt-6">
-            <CollapsibleSection
-              number="04"
-              title="Suki Credit Aging"
-              subtitle="How long the debt has been sitting on the books"
-              tone="cinnamon"
-              icon={
-                <FontAwesome name="hourglass-half" size={16} color="#391C0A" />
-              }
-              defaultExpanded
-            >
-              {isCreditAgingLoading ? (
-                <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#623418" />
-                </View>
-              ) : (
-                <View>
-                  <CreditAgingChart
-                    buckets={agingBuckets}
-                    totalOutstanding={creditsOverview.outstanding}
-                  />
-
-                  <View className="mt-4 flex-row gap-3">
-                    <View className="flex-1 p-3 border border-ink-200 rounded-md bg-semantic-danger-50/30">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-label text-semantic-danger"
-                        style={{ letterSpacing: 1.2 }}
-                      >
-                        ISSUED
-                      </StyledText>
-                      <MoneyText
-                        value={creditsOverview.issued}
-                        size="md"
-                        variant="danger"
-                        className="text-sm"
-                      />
-                    </View>
-                    <View className="flex-1 p-3 border border-ink-200 rounded-md bg-sage-50">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-label text-sage-700"
-                        style={{ letterSpacing: 1.2 }}
-                      >
-                        COLLECTED
-                      </StyledText>
-                      <MoneyText
-                        value={creditsOverview.collected}
-                        size="md"
-                        variant="success"
-                        className="text-sm"
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
-            </CollapsibleSection>
-          </View>
-
-          {/* ─── Cashbook History ──────────────────────────────── */}
-          <View className="px-4 mt-6">
-            <CollapsibleSection
-              number="05"
-              title="Cashbook History"
-              subtitle="Daily drawer logs, counted physical cash, and variances"
-              tone="cinnamon"
-              icon={<FontAwesome name="book" size={16} color="#391C0A" />}
-              defaultExpanded
-            >
-              {isSessionsLoading ? (
-                <View className="items-center py-8">
-                  <ActivityIndicator size="large" color="#623418" />
-                </View>
-              ) : filteredSessions.length === 0 ? (
-                <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
+                <View className="flex-1 p-3 border border-ink-200 rounded-md bg-sage-50">
                   <StyledText
-                    variant="regular"
-                    className="text-ink-400 text-sm"
+                    variant="extrabold"
+                    className="text-label text-sage-700"
+                    style={{ letterSpacing: 1.2 }}
                   >
-                    No cash sessions found in this date range.
+                    COLLECTED
                   </StyledText>
+                  <MoneyText
+                    value={creditsOverview.collected}
+                    size="md"
+                    variant="success"
+                    className="text-sm"
+                  />
                 </View>
-              ) : (
-                <View>
-                  {filteredSessions.map((session) => (
-                    <CashSessionRow key={session.id} session={session} />
-                  ))}
-                </View>
-              )}
-            </CollapsibleSection>
-          </View>
-        </ScrollView>
+              </View>
+            </View>
+          )}
+        </CollapsibleSection>
+      </View>
+
+      {/* ─── Cashbook History ──────────────────────────────── */}
+      <View className="px-4 mt-6">
+        <CollapsibleSection
+          number="05"
+          title="Cashbook History"
+          subtitle="Daily drawer logs, counted physical cash, and variances"
+          tone="cinnamon"
+          icon={<FontAwesome name="book" size={16} color="#391C0A" />}
+          defaultExpanded
+        >
+          {isSessionsLoading ? (
+            <View className="items-center py-8">
+              <ActivityIndicator size="large" color="#623418" />
+            </View>
+          ) : filteredSessions.length === 0 ? (
+            <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
+              <StyledText variant="regular" className="text-ink-400 text-sm">
+                No cash sessions found in this date range.
+              </StyledText>
+            </View>
+          ) : (
+            <View>
+              {filteredSessions.map((session) => (
+                <CashSessionRow key={session.id} session={session} />
+              ))}
+            </View>
+          )}
+        </CollapsibleSection>
+      </View>
+    </ScrollView>
   );
 }
 

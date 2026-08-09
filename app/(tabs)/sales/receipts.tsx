@@ -168,7 +168,7 @@ export default function Receipts() {
   }, []);
 
   const handleOpenAddSales = useCallback(() => {
-    router.push('/(tabs)/sales/pos');
+    router.push('/(tabs)/sales/pos' as Href);
   }, [router]);
 
   const handleOpenFilters = useCallback(() => {

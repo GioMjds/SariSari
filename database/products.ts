@@ -3,7 +3,7 @@ import { db } from '../configs/sqlite';
 import { insertCatalogProductIfMissing } from './catalog';
 
 export interface FastLaneProduct extends Product {
-  is_favorite: number;
+  is_favorite: boolean;
   last_sold_at?: string | null;
   units_sold_14d?: number;
 }

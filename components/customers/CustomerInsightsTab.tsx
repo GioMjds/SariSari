@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { View, ScrollView } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { CustomerInsights } from '@/types/credits.types';
@@ -8,7 +8,7 @@ interface CustomerInsightsTabProps {
   insights?: CustomerInsights;
 }
 
-export const CustomerInsightsTab: React.FC<CustomerInsightsTabProps> = ({
+export const CustomerInsightsTab: FC<CustomerInsightsTabProps> = ({
   insights,
 }) => {
   if (!insights) return null;
@@ -31,7 +31,10 @@ export const CustomerInsightsTab: React.FC<CustomerInsightsTabProps> = ({
             <StyledText variant="semibold" className="text-ink-800 text-sm">
               {i + 1}. {c.name}
             </StyledText>
-            <StyledText variant="extrabold" className="text-cinnamon-600 text-sm">
+            <StyledText
+              variant="extrabold"
+              className="text-cinnamon-600 text-sm"
+            >
               {formatPesos(c.total_spent)}
             </StyledText>
           </View>
@@ -54,7 +57,10 @@ export const CustomerInsightsTab: React.FC<CustomerInsightsTabProps> = ({
         <StyledText variant="extrabold" className="text-ink-900 text-base mb-1">
           Average Order Value
         </StyledText>
-        <StyledText variant="extrabold" className="text-cinnamon-600 text-3xl my-1">
+        <StyledText
+          variant="extrabold"
+          className="text-cinnamon-600 text-3xl my-1"
+        >
           {formatPesos(insights.averageOrderValue)}
         </StyledText>
       </View>

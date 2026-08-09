@@ -28,10 +28,10 @@ function isInventorySubTab(segment: string): segment is InventorySubTab {
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
-  const searchParams = useLocalSearchParams<{
+  const { q } = useLocalSearchParams<{
     q?: string;
   }>();
-  const search = searchParams.q ?? '';
+  const search = q ?? '';
   const [scannerOpen, setScannerOpen] = useState(false);
   const [fabForm, setFabForm] = useState<{
     visible: boolean;

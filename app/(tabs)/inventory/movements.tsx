@@ -2,7 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { usePaginatedInventoryTransactions } from '@/hooks/useInventory';
-import { LedgerList, LedgerToolbar, type LedgerTypeFilter } from '@/components/inventory/ledger';
+import {
+  LedgerList,
+  LedgerToolbar,
+  type LedgerTypeFilter,
+} from '@/components/inventory/ledger';
 import { MovementEmptyState } from '@/components/inventory/movements';
 import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
@@ -10,10 +14,10 @@ import type { InventoryEventType } from '@/types';
 
 export default function MovementsScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ q?: string }>();
+  const { q } = useLocalSearchParams<{ q?: string }>();
   const signal = useStockSheetSignal();
 
-  const searchQuery = (params.q ?? '').trim();
+  const searchQuery = (q ?? '').trim();
   const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
 
   const txQuery = usePaginatedInventoryTransactions(searchQuery, selectedType);
@@ -35,7 +39,7 @@ export default function MovementsScreen() {
 
   const setSearchQuery = useCallback(
     (next: string) => {
-      router.setParams({ q: next || undefined } as any);
+      router.setParams({ q: next });
     },
     [router],
   );
@@ -44,7 +48,11 @@ export default function MovementsScreen() {
     () => signal.requestRestock(null),
     [signal],
   );
-  const handleAdjustStock = useCallback(() => signal.requestAdjust(null), [signal]);
+
+  const handleAdjustStock = useCallback(
+    () => signal.requestAdjust(null),
+    [signal],
+  );
 
   if (txQuery.error) {
     return (

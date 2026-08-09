@@ -11,9 +11,6 @@ interface DashboardEmptyStateProps {
   onStartFirstSale?: () => void;
 }
 
-/**
- * DashboardEmptyState — setup nudges for a brand-new store catalog.
- */
 export const DashboardEmptyState = memo(function DashboardEmptyState({
   onAddProduct,
   onStartFirstSale,
@@ -27,10 +24,16 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
         resizeMode="contain"
         accessible={false}
       />
-      <StyledText variant="extrabold" className="label-caps text-ink-400 mb-1 text-center">
+      <StyledText
+        variant="extrabold"
+        className="label-caps text-ink-400 mb-1 text-center"
+      >
         {t('common:emptyEyebrow')}
       </StyledText>
-      <StyledText variant="black" className="text-ink-900 text-lg mb-1 text-center">
+      <StyledText
+        variant="black"
+        className="text-ink-900 text-lg mb-1 text-center"
+      >
         {t('common:emptyTitle')}
       </StyledText>
       <StyledText

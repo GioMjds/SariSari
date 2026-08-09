@@ -29,7 +29,7 @@ const WHOLESALE_CHIP_INACTIVE_CLASS =
 
 interface ProductRowProps {
   product: Product;
-  cartLine: NewSaleItem | undefined;
+  cartLine: NewSaleItem;
   onAdd: (
     product: Product,
     selectedUnit?: 'retail' | 'wholesale',
@@ -362,11 +362,7 @@ function ProductRowImpl({
 
             <Pressable
               onPress={() => {
-                const result = onUpdateQuantity(
-                  product.id,
-                  1,
-                  activeUnit,
-                );
+                const result = onUpdateQuantity(product.id, 1, activeUnit);
                 if (result === 'over_stock') {
                   setOverStock(true);
                 }

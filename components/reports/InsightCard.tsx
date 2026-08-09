@@ -2,18 +2,13 @@ import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import { View } from 'react-native';
 
-interface InsightCardProps {
+type InsightCardProps = {
 	type: 'success' | 'warning' | 'info';
 	title: string;
 	message: string;
 	icon: keyof typeof FontAwesome.glyphMap;
 }
 
-/**
- * InsightCard — A editorial "dispatch" row styled like a
- * small newspaper pull-quote. Each variant gets a left rule
- * in the semantic color and a small icon mark.
- */
 export function InsightCard({ type, title, message, icon }: InsightCardProps) {
 	const colors = {
 		success: { accent: '#4F7A24', text: '#3D5E1B', bg: 'bg-sage-50', label: 'BULLETIN' },

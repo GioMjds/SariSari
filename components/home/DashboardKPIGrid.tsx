@@ -127,7 +127,7 @@ export function DashboardKPIGrid({
                   {kpi.subtitle}
                 </StyledText>
                 <FontAwesome5
-                  name={kpi.icon as any}
+                  name={kpi.icon}
                   size={11}
                   color="#A89F90"
                 />

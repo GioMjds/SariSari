@@ -35,13 +35,16 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
     return null;
   }
 
-  const title = t('common:dashboard.recentActivity.title', { defaultValue: 'Recent Activity' });
-  const viewAllSales = t('common:dashboard.recentActivity.viewAllSales', { defaultValue: 'View all sales' });
+  const title = t('common:dashboard.recentActivity.title', {
+    defaultValue: 'Recent Activity',
+  });
+  const viewAllSales = t('common:dashboard.recentActivity.viewAllSales', {
+    defaultValue: 'View all sales',
+  });
 
   return (
     <View testID="recent-sales" className="px-4 mb-4">
       <View className="bg-paper-50 rounded-2xl p-4 border border-ink-100">
-
         {/* Section header */}
         <View className="flex-row items-center justify-between mb-3">
           <StyledText variant="extrabold" className="text-base text-ink-900">
@@ -54,7 +57,10 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
               accessibilityLabel={viewAllSales}
               className="active:opacity-60"
             >
-              <StyledText variant="semibold" className="text-sm text-persimmon-500">
+              <StyledText
+                variant="semibold"
+                className="text-sm text-persimmon-500"
+              >
                 {viewAllSales}
               </StyledText>
             </Pressable>
@@ -73,11 +79,14 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
                 key={sale.id}
                 onPress={() => onOpenSale(sale.id)}
                 accessibilityRole="button"
-                accessibilityLabel={t('common:dashboard.recentActivity.saleAccessibilityLabel', {
-                  defaultValue: 'Sale #{{id}}, {{total}}',
-                  id: sale.id,
-                  total: formatPesos(sale.total),
-                })}
+                accessibilityLabel={t(
+                  'common:dashboard.recentActivity.saleAccessibilityLabel',
+                  {
+                    defaultValue: 'Sale #{{id}}, {{total}}',
+                    id: sale.id,
+                    total: formatPesos(sale.total),
+                  },
+                )}
                 className={`flex-row items-center justify-between py-3 active:opacity-70 ${
                   !isLast ? 'border-b border-dashed border-ink-100' : ''
                 }`}
@@ -89,25 +98,34 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
 
                 {/* Sale info */}
                 <View className="flex-1 mr-2">
-                  <StyledText variant="semibold" className="text-sm text-ink-900">
+                  <StyledText
+                    variant="semibold"
+                    className="text-sm text-ink-900"
+                  >
                     {t('common:dashboard.recentActivity.saleLabel', {
                       defaultValue: 'Sale #{{id}}',
                       id: sale.id,
                     })}
                   </StyledText>
                   <View className="flex-row items-center mt-0.5">
-                    <StyledText variant="regular" className="text-xs text-ink-500">
+                    <StyledText
+                      variant="regular"
+                      className="text-xs text-ink-500"
+                    >
                       {t('common:dashboard.recentActivity.itemCount', {
                         defaultValue_one: '{{count}} item',
                         defaultValue_other: '{{count}} items',
                         defaultValue: '{{count}} items',
                         count: itemCount,
-                      })} ·{' '}
+                      })}{' '}
+                      ·{' '}
                     </StyledText>
                     <StyledText
                       variant="extrabold"
                       style={{ fontSize: 10, letterSpacing: 0.6 }}
-                      className={isCash ? 'text-sage-500' : 'text-persimmon-600'}
+                      className={
+                        isCash ? 'text-sage-500' : 'text-persimmon-600'
+                      }
                     >
                       {(sale.payment_type ?? 'CASH').toUpperCase()}
                     </StyledText>
@@ -117,11 +135,17 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
                 {/* Amount + time + chevron */}
                 <View className="flex-row items-center">
                   <View className="items-end mr-2">
-                    <StyledText variant="black" className="text-sm text-ink-900">
+                    <StyledText
+                      variant="black"
+                      className="text-sm text-ink-900"
+                    >
                       {formatPesos(sale.total)}
                     </StyledText>
                     {ago ? (
-                      <StyledText variant="regular" className="text-xs text-ink-400 mt-0.5">
+                      <StyledText
+                        variant="regular"
+                        className="text-xs text-ink-400 mt-0.5"
+                      >
                         {ago}
                       </StyledText>
                     ) : null}

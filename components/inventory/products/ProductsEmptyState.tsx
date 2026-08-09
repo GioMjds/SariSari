@@ -113,10 +113,7 @@ export function ProductsEmptyState({
             onPress={onClearSearch}
             className="mt-5 bg-ink-100 rounded-pill px-6 py-2.5 flex-row items-center border border-ink-200"
           >
-            <StyledText
-              variant="extrabold"
-              className="text-ink-700 text-sm"
-            >
+            <StyledText variant="extrabold" className="text-ink-700 text-sm">
               Clear Search
             </StyledText>
           </TouchableOpacity>
@@ -128,10 +125,7 @@ export function ProductsEmptyState({
             onPress={onClearFilters}
             className="mt-5 bg-ink-100 rounded-pill px-6 py-2.5 flex-row items-center border border-ink-200"
           >
-            <StyledText
-              variant="extrabold"
-              className="text-ink-700 text-sm"
-            >
+            <StyledText variant="extrabold" className="text-ink-700 text-sm">
               Clear Filters
             </StyledText>
           </TouchableOpacity>

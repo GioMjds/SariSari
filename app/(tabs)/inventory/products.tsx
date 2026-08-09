@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
@@ -19,6 +19,12 @@ import type { InventoryEventType } from '@/types/inventory.types';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
+
+type SearchParams = {
+  q: string;
+  category: string;
+  supplier: string;
+};
 
 function getEmptyVariant(
   searchTerm: string,
@@ -43,11 +49,7 @@ export default function ProductsScreen() {
   const [formProduct, setFormProduct] = useState<Product | null>(null);
   const [formType, setFormType] = useState<InventoryEventType | null>(null);
 
-  const { q, category, supplier } = useLocalSearchParams<{
-    q: string;
-    category: string;
-    supplier: string;
-  }>();
+  const { q, category, supplier } = useLocalSearchParams<SearchParams>();
   const searchTerm = (q ?? '').trim().toLowerCase();
 
   const productsQuery = usePaginatedProducts(searchTerm, filter);
@@ -78,7 +80,7 @@ export default function ProductsScreen() {
   const emptyVariant = getEmptyVariant(searchTerm, filter, category, supplier);
 
   const handlePress = useCallback(
-    (id: number) => router.push(`/(edit-forms)/product-details/${id}`),
+    (id: number) => router.push(`/(edit-forms)/product-details/${id}` as Href),
     [router],
   );
   const handleLongPress = useCallback(
@@ -86,7 +88,7 @@ export default function ProductsScreen() {
     [selection],
   );
   const handleAdd = useCallback(
-    () => router.push('/(edit-forms)/add-product'),
+    () => router.push('/(edit-forms)/add-product' as Href),
     [router],
   );
 
@@ -122,7 +124,7 @@ export default function ProductsScreen() {
   const handleMenuEdit = useCallback(
     (id: number) => {
       setMenuProduct(null);
-      router.push(`/(edit-forms)/edit-product/${id}`);
+      router.push(`/(edit-forms)/edit-product/${id}` as Href);
     },
     [router],
   );
@@ -182,7 +184,9 @@ export default function ProductsScreen() {
       <CategoryFilterBar
         selectedCategory={category}
         onSelectCategory={(cat) => router.setParams({ category: cat ?? '' })}
-        onOpenAddCategory={() => router.push('/(edit-forms)/add-category' as Href)}
+        onOpenAddCategory={() =>
+          router.push('/(edit-forms)/add-category' as Href)
+        }
       />
       <ProductsFilterChips value={filter} onChange={setFilter} />
       {products.length === 0 ? (

@@ -9,10 +9,6 @@ export interface DashboardStockAlertProps {
   onRestock: () => void;
 }
 
-/**
- * DashboardStockAlert — slim single-row alert banner shown when items are running low.
- * Renders nothing when lowStockCount is 0.
- */
 export const DashboardStockAlert = memo(function DashboardStockAlert({
   lowStockCount,
   onRestock,
@@ -41,18 +37,29 @@ export const DashboardStockAlert = memo(function DashboardStockAlert({
         className="flex-row items-center justify-between bg-paper-50 rounded-xl px-4 py-3 border border-ink-100 active:opacity-80"
       >
         <View className="flex-row items-center flex-1 mr-3">
-          <FontAwesome name="exclamation-triangle" size={14} color="#C77B0E" style={{ marginRight: 10 }} />
+          <FontAwesome
+            name="exclamation-triangle"
+            size={14}
+            color="#C77B0E"
+            style={{ marginRight: 10 }}
+          />
           <View className="flex-1">
             <StyledText variant="semibold" className="text-sm text-ink-900">
               {message}
             </StyledText>
-            <StyledText variant="regular" className="text-xs text-ink-500 mt-0.5">
+            <StyledText
+              variant="regular"
+              className="text-xs text-ink-500 mt-0.5"
+            >
               {sub}
             </StyledText>
           </View>
         </View>
         <View className="flex-row items-center">
-          <StyledText variant="extrabold" className="text-sm text-persimmon-500 mr-1">
+          <StyledText
+            variant="extrabold"
+            className="text-sm text-persimmon-500 mr-1"
+          >
             {cta}
           </StyledText>
           <FontAwesome name="arrow-right" size={11} color="#E85A1F" />

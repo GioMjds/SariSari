@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -34,9 +34,7 @@ const confirmLabels = {
   adjustment: 'Adjust stock',
 } satisfies Record<InventoryEventType, string>;
 
-function typeIconFor(
-  t: InventoryEventType,
-): React.ComponentProps<typeof FontAwesome>['name'] {
+function typeIconFor(t: InventoryEventType): keyof typeof FontAwesome.glyphMap {
   if (t === 'restock') return 'plus';
   if (t === 'damaged') return 'exclamation-triangle';
   if (t === 'adjustment') return 'sliders';
@@ -65,7 +63,7 @@ function LogTransactionFormInner({
   onClose,
   onSuccess,
 }: LogTransactionFormInnerProps) {
-  const handleSuccess = React.useCallback(() => {
+  const handleSuccess = useCallback(() => {
     onSuccess?.();
     onClose();
   }, [onSuccess, onClose]);
@@ -572,16 +570,16 @@ export function LogTransactionForm({
   onSuccess,
 }: LogTransactionFormProps) {
   const { getAllProductsQuery } = useProducts();
-  const products = (getAllProductsQuery.data as Product[]) ?? [];
+  const products = getAllProductsQuery.data ?? [];
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!visible) {
       setPickedProduct(null);
     }
   }, [visible]);
 
-  const handleClose = React.useCallback(() => {
+  const handleClose = useCallback(() => {
     setPickedProduct(null);
     onClose();
   }, [onClose]);

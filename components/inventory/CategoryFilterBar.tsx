@@ -68,7 +68,11 @@ export function CategoryFilterBar({
         >
           <StyledText
             variant="extrabold"
-            className={!selectedCategory ? 'text-xs text-paper-50' : 'text-xs text-ink-700'}
+            className={
+              !selectedCategory
+                ? 'text-xs text-paper-50'
+                : 'text-xs text-ink-700'
+            }
           >
             All
           </StyledText>
@@ -85,16 +89,26 @@ export function CategoryFilterBar({
             >
               <StyledText
                 variant="extrabold"
-                className={isSelected ? CHIP_TEXT_ACTIVE_CLASS : CHIP_TEXT_INACTIVE_CLASS}
+                className={
+                  isSelected ? CHIP_TEXT_ACTIVE_CLASS : CHIP_TEXT_INACTIVE_CLASS
+                }
               >
                 {cat.name}
               </StyledText>
               <View
-                className={isSelected ? CHIP_COUNT_BADGE_ACTIVE : CHIP_COUNT_BADGE_INACTIVE}
+                className={
+                  isSelected
+                    ? CHIP_COUNT_BADGE_ACTIVE
+                    : CHIP_COUNT_BADGE_INACTIVE
+                }
               >
                 <StyledText
                   variant="extrabold"
-                  className={isSelected ? CHIP_COUNT_TEXT_ACTIVE : CHIP_COUNT_TEXT_INACTIVE}
+                  className={
+                    isSelected
+                      ? CHIP_COUNT_TEXT_ACTIVE
+                      : CHIP_COUNT_TEXT_INACTIVE
+                  }
                 >
                   {cat.product_count}
                 </StyledText>
