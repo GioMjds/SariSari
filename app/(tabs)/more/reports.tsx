@@ -373,6 +373,7 @@ export default function Reports() {
             />
             <View className="mt-3">
               <CollapsibleSection
+                id="trend"
                 number="01"
                 title="Sales Trend & Payments"
                 subtitle="Daily takings and how customers paid"
@@ -417,6 +418,7 @@ export default function Reports() {
           {/* ─── Top Products ──────────────────────────────────── */}
           <View className="px-4 mt-6">
             <CollapsibleSection
+              id="top"
               number="02"
               title="Top Products & Profitability"
               subtitle="The champions of the shelves"
@@ -480,6 +482,7 @@ export default function Reports() {
           {/* ─── Stock Movement ────────────────────────────────── */}
           <View className="px-4 mt-6">
             <CollapsibleSection
+              id="stock"
               number="03"
               title="Stock Levels & Movement"
               subtitle="What left the shelves, what needs restock"
@@ -604,6 +607,7 @@ export default function Reports() {
           {/* ─── Suki Credit Aging ─────────────────────────────── */}
           <View className="px-4 mt-6">
             <CollapsibleSection
+              id="aging"
               number="04"
               title="Suki Credit Aging"
               subtitle="How long the debt has been sitting on the books"
@@ -664,6 +668,7 @@ export default function Reports() {
           {/* ─── Cashbook History ──────────────────────────────── */}
           <View className="px-4 mt-6">
             <CollapsibleSection
+              id="cashbook"
               number="05"
               title="Cashbook History"
               subtitle="Daily drawer logs, counted physical cash, and variances"
