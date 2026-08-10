@@ -1,5 +1,7 @@
 # 03. Pang-araw-araw na Pagre-reconcile ng Kaha (Daily Cash Close-Out)
 
+## Status: DONE
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema

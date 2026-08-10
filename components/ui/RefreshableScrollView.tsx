@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -16,7 +16,7 @@ interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'onScroll'> {
   isRefreshing: boolean;
   onRefresh: () => void | Promise<void>;
   refreshThreshold?: number;
-  children: React.ReactNode;
+  children: ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
   className?: string;
 }

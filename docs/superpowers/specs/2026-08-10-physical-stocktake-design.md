@@ -112,7 +112,7 @@ it navigates to the Stocktake sub-tab.
 
 ### 5.1 New files
 
-```
+```folder
 database/
   stocktake.ts
 hooks/
@@ -135,7 +135,7 @@ No new top-level routes outside `app/(tabs)/inventory/`. No new tab group.
 
 ### 5.2 Modified files
 
-```
+```text
 database/migrations.ts                    # add v15 block
 app/(tabs)/inventory/_layout.tsx          # add 'stocktake' to SUB_TAB_SEGMENTS + TopTabs.Screen, mount <StocktakeBanner />
 components/inventory/.../ProductActionMenuModal.tsx # useStocktakeGuard on Adjust/Mark damaged
@@ -145,7 +145,7 @@ components/inventory/ledger/LogTransactionForm.tsx   # guard against adjustment/
 
 ### 5.3 Data flow
 
-```
+```diagram
 stocktake.tsx
    ↓ reads
 useStocktake()  ──→  database/stocktake.ts  ──→  SQLite
@@ -210,7 +210,7 @@ Notes:
 
 ### 6.1 Helpers in `database/stocktake.ts`
 
-```
+```ts
 initStocktakeTables()
 startSession(note?): Promise<string>
 getActiveSession(): Promise<StocktakeSession | null>
@@ -436,7 +436,7 @@ baseline, not the post-write state.
 
 New keys under a `stocktake:` namespace:
 
-```
+```text
 stocktake:title
 stocktake:lastSessionSummary
 stocktake:startCta

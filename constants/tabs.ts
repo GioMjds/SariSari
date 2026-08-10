@@ -59,7 +59,6 @@ export const getSellAction = (t: TFunction): Tab => ({
   icon: 'shopping-cart',
 });
 
-// Sub-Tab Swipe Routes per FUTURE_REVAMP.md
 export const HOME_SUB_TABS = ['overview', 'today'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
@@ -67,6 +66,7 @@ export const INVENTORY_SUB_TABS = [
   'stock',
   'movements',
   'analytics',
+  'stocktake',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
 export const MORE_SUB_TABS = [] as const;

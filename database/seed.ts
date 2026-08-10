@@ -12,6 +12,8 @@ import {
   MOCK_SALE_ITEMS,
   MOCK_INVENTORY_TRANSACTIONS,
   MOCK_FINANCIAL_ENTRIES,
+  MOCK_STOCKTAKE_SESSIONS,
+  MOCK_STOCKTAKE_COUNTS,
 } from '@/scripts/sample-mock-datas';
 
 export async function seedProductCatalog(): Promise<void> {
@@ -223,10 +225,53 @@ export const seedDatabase = async () => {
           ],
         );
       }
+
+      // 11. Seed Stocktake Sessions (seeded before counts because counts FK sessions)
+      for (const s of MOCK_STOCKTAKE_SESSIONS) {
+        await db.runAsync(
+          `INSERT INTO stocktake_sessions (
+            id, started_at, ended_at, status, note,
+            total_products_counted, total_variance_pesos,
+            created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            s.id,
+            s.started_at,
+            s.ended_at ?? null,
+            s.status,
+            s.note ?? null,
+            s.total_products_counted,
+            s.total_variance_pesos,
+            s.created_at,
+            s.updated_at,
+          ],
+        );
+      }
+
+      // 12. Seed Stocktake Counts (per-line variance rows referencing sessions above)
+      for (const c of MOCK_STOCKTAKE_COUNTS) {
+        await db.runAsync(
+          `INSERT INTO stocktake_counts (
+            id, session_id, product_id, expected_qty, counted_qty,
+            cost_price_at_count, reason_code, note, committed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            c.id,
+            c.session_id,
+            c.product_id,
+            c.expected_qty,
+            c.counted_qty,
+            c.cost_price_at_count ?? null,
+            c.reason_code ?? null,
+            c.note ?? null,
+            c.committed_at ?? null,
+          ],
+        );
+      }
     });
 
     console.log(
-      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_SUPPLIERS.length} suppliers, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions, ${MOCK_FINANCIAL_ENTRIES.length} financial entries.`,
+      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_SUPPLIERS.length} suppliers, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions, ${MOCK_FINANCIAL_ENTRIES.length} financial entries, ${MOCK_STOCKTAKE_SESSIONS.length} stocktake sessions, ${MOCK_STOCKTAKE_COUNTS.length} stocktake counts.`,
     );
   } catch (error) {
     console.error('❌ Database seeding failed:', error);

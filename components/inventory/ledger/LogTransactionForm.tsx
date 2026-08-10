@@ -19,6 +19,7 @@ import { formatDualStock } from '@/lib';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductPicker } from '@/components/inventory/modals';
+import { useStocktakeGuard } from '@/hooks';
 
 const titleMap = {
   restock: 'Restock Product',
@@ -63,6 +64,8 @@ function LogTransactionFormInner({
   onClose,
   onSuccess,
 }: LogTransactionFormInnerProps) {
+  const stocktakeGuard = useStocktakeGuard();
+
   const handleSuccess = useCallback(() => {
     onSuccess?.();
     onClose();
@@ -77,6 +80,41 @@ function LogTransactionFormInner({
 
   const activeTitle = titleMap[form.type];
   const activeConfirmLabel = confirmLabels[form.type];
+
+  const isBlocked =
+    stocktakeGuard.isActive &&
+    (form.type === 'adjustment' || form.type === 'damaged');
+
+  if (isBlocked) {
+    return (
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100 gap-y-4">
+            <StyledText variant="extrabold" className="text-xl text-ink-900">
+              Stocktake in Progress
+            </StyledText>
+            <StyledText variant="medium" className="text-ink-600 text-sm">
+              Manual adjustments and marking damaged goods are paused during a
+              physical count to prevent inventory drift.
+            </StyledText>
+            <TouchableOpacity
+              onPress={onClose}
+              className="bg-persimmon-500 py-3 rounded-xl items-center"
+            >
+              <StyledText variant="extrabold" className="text-paper-50 text-sm">
+                Got it
+              </StyledText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 
   return (
     <Modal

@@ -8,6 +8,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
+import { useStocktakeGuard } from '@/hooks/useStocktake';
 
 export interface ProductActionMenuModalProps {
   visible: boolean;
@@ -30,6 +31,8 @@ export function ProductActionMenuModal({
   onViewLedger,
   onDelete,
 }: ProductActionMenuModalProps) {
+  const stocktakeGuard = useStocktakeGuard();
+
   return (
     <Modal
       visible={visible}
@@ -73,6 +76,39 @@ export function ProductActionMenuModal({
               >
                 <FontAwesome name="times" size={16} color="#564E45" />
               </Pressable>
+            </View>
+
+            <View className="gap-y-1 mt-2">
+              <ActionRow
+                icon="ban"
+                iconColor={stocktakeGuard.isActive ? '#A1978A' : '#C22D2D'}
+                label={
+                  stocktakeGuard.isActive
+                    ? 'Mark Damaged (Stocktake in progress)'
+                    : 'Mark Damaged'
+                }
+                disabled={stocktakeGuard.isActive}
+                onPress={() => {
+                  if (stocktakeGuard.isActive) return;
+                  onClose();
+                  onMarkDamaged(product.id);
+                }}
+              />
+              <ActionRow
+                icon="sliders"
+                iconColor={stocktakeGuard.isActive ? '#A1978A' : '#564E45'}
+                label={
+                  stocktakeGuard.isActive
+                    ? 'Adjust Stock (Stocktake in progress)'
+                    : 'Adjust Stock'
+                }
+                disabled={stocktakeGuard.isActive}
+                onPress={() => {
+                  if (stocktakeGuard.isActive) return;
+                  onClose();
+                  onAdjustStock(product.id);
+                }}
+              />
             </View>
 
             {/* Stock actions */}
@@ -150,6 +186,7 @@ interface ActionRowProps {
   icon: keyof typeof FontAwesome.glyphMap;
   iconColor?: string;
   label: string;
+  disabled?: boolean;
   onPress: () => void;
 }
 
@@ -157,11 +194,13 @@ function ActionRow({
   icon,
   iconColor = '#564E45',
   label,
+  disabled = false,
   onPress,
 }: ActionRowProps) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       className="min-h-[44px] px-3 rounded-xl flex-row items-center gap-x-3 active:bg-paper-100"

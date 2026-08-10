@@ -22,17 +22,17 @@ export default function CustomersLayout() {
   const getCurrentTab = (): CustomersSubTab => {
     if (pathname.includes('credit')) return 'credit';
     if (pathname.includes('insights')) return 'insights';
-    return 'index';
+    return 'all';
   };
 
   const isDetailScreen =
     pathname.includes('/customers/') &&
-    !['credit', 'insights', 'index', ''].includes(
+    !['credit', 'insights', 'all', ''].includes(
       pathname.split('/customers/')[1] || '',
     );
 
   const handleTabPress = (tab: CustomersSubTab) => {
-    if (tab === 'index') {
+    if (tab === 'all') {
       router.push('/(tabs)/customers' as Href);
     } else {
       router.push(`/(tabs)/customers/${tab}` as Href);
@@ -59,6 +59,7 @@ export default function CustomersLayout() {
       )}
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
+          initialRouteName="all"
           screenOptions={{
             tabBarStyle: { display: 'none' },
             swipeEnabled: true,
@@ -66,7 +67,7 @@ export default function CustomersLayout() {
             lazyPreloadDistance: 0,
           }}
         >
-          <TopTabs.Screen name="index" />
+          <TopTabs.Screen name="all" />
           <TopTabs.Screen name="credit" />
           <TopTabs.Screen name="insights" />
         </TopTabs>

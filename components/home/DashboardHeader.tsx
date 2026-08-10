@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
 
-export type HomeSubTab = 'index' | 'today';
+export type HomeSubTab = 'overview' | 'today';
 
 export interface DashboardHeaderProps {
   storeName: string;
@@ -20,8 +20,8 @@ export function DashboardHeader({
   onTabPress,
 }: DashboardHeaderProps) {
   const tabs = [
-    { key: 'index', label: 'Overview', icon: 'th-large' },
-    { key: 'today', label: 'Today', icon: 'calendar' },
+    { key: 'overview', label: 'Overview' },
+    { key: 'today', label: 'Today' },
   ] satisfies SubTabItem<HomeSubTab>[];
 
   return (

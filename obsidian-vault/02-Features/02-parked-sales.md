@@ -1,5 +1,7 @@
 # 02. Pag-ihinto o Pag-iimbak ng Cart (Parked Sales)
 
+## Status: DONE
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema

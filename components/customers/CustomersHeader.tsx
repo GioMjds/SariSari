@@ -1,11 +1,10 @@
-import React from 'react';
 import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
 import { formatPesos } from '@/lib';
 
-export type CustomersSubTab = 'index' | 'credit' | 'insights';
+export type CustomersSubTab = 'all' | 'credit' | 'insights';
 
 export interface CustomersHeaderProps {
   activeTab: CustomersSubTab;
@@ -26,9 +25,9 @@ export function CustomersHeader({
   onTabPress,
 }: CustomersHeaderProps) {
   const tabs: SubTabItem<CustomersSubTab>[] = [
-    { key: 'index', label: 'ALL', icon: 'users' },
-    { key: 'credit', label: 'CREDIT', icon: 'book', badgeCount: debtorCount },
-    { key: 'insights', label: 'INSIGHTS', icon: 'bar-chart' },
+    { key: 'all', label: 'ALL' },
+    { key: 'credit', label: 'CREDIT', badgeCount: debtorCount },
+    { key: 'insights', label: 'INSIGHTS' },
   ];
 
   return (
@@ -66,7 +65,10 @@ export function CustomersHeader({
 
         {/* Main Amount */}
         <View className="flex-row items-baseline mb-3">
-          <StyledText variant="extrabold" className="text-white/90 text-2xl mr-1">
+          <StyledText
+            variant="extrabold"
+            className="text-white/90 text-2xl mr-1"
+          >
             ₱
           </StyledText>
           <StyledText
@@ -98,7 +100,10 @@ export function CustomersHeader({
           <View className="w-8 h-8 rounded-full bg-cinnamon-100 items-center justify-center mb-2">
             <FontAwesome name="users" size={14} color="#E85A1F" />
           </View>
-          <StyledText variant="extrabold" className="text-ink-900 text-2xl mb-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-2xl mb-0.5"
+          >
             {totalCustomers}
           </StyledText>
           <StyledText
@@ -114,7 +119,10 @@ export function CustomersHeader({
           <View className="w-8 h-8 rounded-full bg-amber-100 items-center justify-center mb-2">
             <FontAwesome name="star" size={14} color="#D97706" />
           </View>
-          <StyledText variant="extrabold" className="text-ink-900 text-2xl mb-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-2xl mb-0.5"
+          >
             {loyalCount}
           </StyledText>
           <StyledText

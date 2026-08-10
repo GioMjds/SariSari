@@ -1,0 +1,23 @@
+{
+  "title": "Physical Stocktake",
+  "lastSessionSummary": "Last count: {{date}} · {{counted}} counted · {{netPesos}} net",
+  "startCta": "Start new stocktake",
+  "inProgressBanner": "Stocktake in progress — manual stock edits are paused.",
+  "progressLabel": "{{counted}} / {{total}} products counted",
+  "finishReviewCta": "Finish & review",
+  "saveQuitCta": "Save & quit",
+  "abandonTitle": "Abandon stocktake?",
+  "abandonConfirm": "Yes, Abandon",
+  "varianceHeader": "Variance Summary: {{variances}} variances, {{netPesos}} net impact",
+  "commitCta": "Commit Adjustments",
+  "commitDisabledReason": "Select a reason for all non-zero variance lines.",
+  "noActiveSession": "No active stocktake session.",
+  "reason": {
+    "shrinkage": "Shrinkage / Theft",
+    "spoilage": "Spoilage / Damaged",
+    "miscount": "Miscount",
+    "freebie_to_neighbor": "Freebie / Suki Gift",
+    "customer_return": "Customer Return",
+    "unexplained": "Unexplained Gap"
+  }
+}

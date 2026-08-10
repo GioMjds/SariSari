@@ -9,6 +9,7 @@ import {
 } from 'expo-router';
 import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
+import { StocktakeBanner } from '@/components/inventory/stocktake';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import type { InventorySubTab } from '@/constants/tabs';
 import type { InventoryEventType } from '@/types/inventory.types';
@@ -19,6 +20,7 @@ const SUB_TAB_SEGMENTS = [
   'stock',
   'movements',
   'analytics',
+  'stocktake',
 ] satisfies InventorySubTab[];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
@@ -82,14 +84,17 @@ export default function InventoryLayout() {
     <View className="flex-1 bg-paper-200">
       <Stack.Screen options={{ headerShown: false }} />
       {!isDetail ? (
-        <InventoryHeader
-          active={activeTab}
-          search={search}
-          onSearchChange={handleSearchChange}
-          onOpenScanner={() => setScannerOpen(true)}
-          onTabChange={handleTabChange}
-          onPillPress={handlePillPress}
-        />
+        <>
+          <InventoryHeader
+            active={activeTab}
+            search={search}
+            onSearchChange={handleSearchChange}
+            onOpenScanner={() => setScannerOpen(true)}
+            onTabChange={handleTabChange}
+            onPillPress={handlePillPress}
+          />
+          <StocktakeBanner />
+        </>
       ) : null}
 
       <View className="flex-1 bg-paper-200 relative">
@@ -106,6 +111,7 @@ export default function InventoryLayout() {
           <TopTabs.Screen name="stock" />
           <TopTabs.Screen name="movements" />
           <TopTabs.Screen name="analytics" />
+          <TopTabs.Screen name="stocktake" />
         </TopTabs>
 
         {!isDetail ? (

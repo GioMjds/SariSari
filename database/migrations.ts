@@ -507,4 +507,50 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 14.');
   }
+
+  if (currentVersion < 15) {
+    console.log(
+      'Running migration to version 15 (Physical Stocktake Sessions & Counts)...',
+    );
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS stocktake_sessions (
+          id TEXT PRIMARY KEY,
+          started_at TEXT NOT NULL,
+          ended_at TEXT,
+          status TEXT NOT NULL CHECK(status IN ('in_progress', 'completed', 'abandoned')),
+          note TEXT,
+          total_products_counted INTEGER NOT NULL DEFAULT 0,
+          total_variance_pesos INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS stocktake_counts (
+          id TEXT PRIMARY KEY,
+          session_id TEXT NOT NULL REFERENCES stocktake_sessions(id) ON DELETE CASCADE,
+          product_id INTEGER NOT NULL REFERENCES products(id),
+          expected_qty INTEGER NOT NULL,
+          counted_qty INTEGER NOT NULL,
+          cost_price_at_count INTEGER,
+          reason_code TEXT,
+          note TEXT,
+          committed_at TEXT,
+          UNIQUE(session_id, product_id)
+        );
+      `);
+
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_stocktake_counts_session ON stocktake_counts(session_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_stocktake_counts_committed ON stocktake_counts(committed_at);',
+      );
+
+      await db.execAsync('PRAGMA user_version = 15;');
+    });
+    console.log('Database migrated to version 15.');
+  }
 }

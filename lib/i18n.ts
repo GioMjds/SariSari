@@ -7,12 +7,14 @@ import inventoryEn from '../locales/en/inventory.json';
 import salesEn from '../locales/en/sales.json';
 import utangEn from '../locales/en/utang.json';
 import onboardingEn from '../locales/en/onboarding.json';
+import stocktakeEn from '../locales/en/stocktake.json';
 
 import commonTl from '../locales/tl/common.json';
 import inventoryTl from '../locales/tl/inventory.json';
 import salesTl from '../locales/tl/sales.json';
 import utangTl from '../locales/tl/utang.json';
 import onboardingTl from '../locales/tl/onboarding.json';
+import stocktakeTl from '../locales/tl/stocktake.json';
 
 const LANGUAGE_KEY = 'sarisari_language_preference';
 
@@ -25,6 +27,7 @@ const resources = {
     sales: salesEn,
     utang: utangEn,
     onboarding: onboardingEn,
+    stocktake: stocktakeEn,
   },
   tl: {
     common: commonTl,
@@ -32,15 +35,15 @@ const resources = {
     sales: salesTl,
     utang: utangTl,
     onboarding: onboardingTl,
+    stocktake: stocktakeTl,
   },
-};
+} satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
 export const initI18n = async (): Promise<void> => {
   let savedLanguage: string | null = null;
   try {
     savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
   } catch (error) {
-    // If AsyncStorage read fails (extremely rare), fall back to English.
     console.warn('Could not read saved language preference:', error);
   }
 
@@ -51,7 +54,7 @@ export const initI18n = async (): Promise<void> => {
     resources,
     lng: initialLanguage,
     fallbackLng: 'en',
-    ns: ['common', 'inventory', 'sales', 'utang', 'onboarding'],
+    ns: ['common', 'inventory', 'sales', 'utang', 'onboarding', 'stocktake'],
     defaultNS: 'common',
     interpolation: {
       escapeValue: false,

@@ -14,3 +14,4 @@ export * from './ui/Alert.types';
 export * from './ui/Modal.types';
 export * from './ui/Toast.types';
 export * from './ui/Tooltip.types';
+export * from './stocktake.types';

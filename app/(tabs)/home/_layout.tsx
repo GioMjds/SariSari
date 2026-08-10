@@ -21,11 +21,11 @@ export default function HomeLayout() {
 
   const getCurrentTab = (): HomeSubTab => {
     if (pathname.includes('today')) return 'today';
-    return 'index';
+    return 'overview';
   };
 
   const handleTabPress = (tab: HomeSubTab) => {
-    if (tab === 'index') {
+    if (tab === 'overview') {
       router.push('/(tabs)/home' as Href);
     } else {
       router.push(`/(tabs)/home/${tab}` as Href);
@@ -49,8 +49,9 @@ export default function HomeLayout() {
             lazy: true,
             lazyPreloadDistance: 0,
           }}
+          initialRouteName="overview"
         >
-          <TopTabs.Screen name="index" />
+          <TopTabs.Screen name="overview" />
           <TopTabs.Screen name="today" />
         </TopTabs>
       </View>

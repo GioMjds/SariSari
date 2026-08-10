@@ -14,7 +14,7 @@ To empower small neighborhood store owners with technology that works reliably w
 - Simplicity and ease of use
 - Relevant to Filipino sari-sari store context
 - Privacy-focused (data stays on device)
-- Sustainable for small business owners
+- Sustainable not just for small business owners
 
 ## Connection to Existing Documentation
 

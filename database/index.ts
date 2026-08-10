@@ -11,3 +11,4 @@ export * from './stock-intelligence';
 export * from './catalog';
 export * from './financial';
 export * from './receipts';
+export * from './stocktake';

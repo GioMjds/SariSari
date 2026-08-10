@@ -25,6 +25,7 @@ const INVENTORY_TAB_META = {
   stock: { icon: 'archive', label: 'STOCK' },
   movements: { icon: 'exchange', label: 'MOVEMENTS' },
   analytics: { icon: 'line-chart', label: 'ANALYTICS' },
+  stocktake: { icon: 'check-square', label: 'STOCKTAKE' },
 } satisfies Record<InventorySubTab, InventoryTabMeta>;
 
 export function InventoryHeader(props: InventoryHeaderProps) {

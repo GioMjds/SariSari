@@ -10,7 +10,6 @@ export default function CustomerInsightsScreen() {
   const tabBarBottomOffset = useTabBarBottomOffset();
   const { data: insights, isLoading } = useCustomerInsights();
 
-  // Must resolve the type casting invocation. Maybe this returns null and then the data
   if (!insights) return null;
 
   if (isLoading) {

@@ -18,19 +18,12 @@
 
 ## Development Guides
 
-- [Getting Started Guide](<>)
-- [Development Setup](<>)
-- [Testing Guidelines](<>)
-- [Code Review Checklist](<>)
-- [Commit Message Guidelines](<>)
-- [Claude Code ↔ Obsidian Integration](CLAUDE-CODE-INTEGRATION.md)
-
-## Business References
-
-- [Philippine Sari-Sari Store Association](<>)
-- [DTI MSME Resources](<>)
-- [Local Government Business Permits](<>)
-- [BIR Tax Guidelines for Small Businesses](<>)
+- [Getting Started Guide](../GETTING_STARTED.md)
+- [Development Setup](../DEVELOPMENT_SETUP.md)
+- [Testing Guidelines](../TESTING_GUIDELINES.md)
+- [Code Review Checklist](../CODE_REVIEW_CHECKLIST.md)
+- [Commit Message Guidelines](../COMMIT_MESSAGE_GUIDELINES.md)
+- [Claude Code ↔ Obsidian Integration](../CLAUDE-CODE-INTEGRATION.md)
 
 ## Templates
 
@@ -41,13 +34,6 @@
 - [[Research Template|06-Research/research-template.md]]
 - [[Planning Template|07-Planning/planning-template.md]]
 
-## Inspiration and Examples
-
-- [Similar Apps for Inspiration](<>)
-- [UI/UX Design References](<>)
-- [Offline-First Architecture Examples](<>)
-- [Small Business Management Tools](<>)
-
 ## Last Updated
 
-2026-08-09
+2026-08-10

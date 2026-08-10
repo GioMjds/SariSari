@@ -8,26 +8,18 @@ type StatusPillProps = {
   variant: StatusVariant;
   size?: StatusSize;
   children: React.ReactNode;
-  /**
-   * When true, render a small leading dot in the variant color.
-   * Useful when stacking pills or when the pill needs to be
-   * distinguishable in a busy list.
-   */
   dot?: boolean;
-  /**
-   * When set, the pill becomes a Pressable button with a11y role
-   * "button" and a press-scale animation. Useful for "Mark paid"
-   * style actions on a customer row.
-   */
   onPress?: () => void;
-  /** Override the default a11y label (the rendered text is used otherwise). */
   accessibilityLabel?: string;
 };
 
-const variantMap: Record<
-  StatusVariant,
-  { bg: string; text: string; border: string }
-> = {
+type VariantMap = {
+  bg: string;
+  text: string;
+  border: string;
+};
+
+const variantMap = {
   success: {
     bg: 'bg-sage-50',
     text: 'text-sage-700',
@@ -53,24 +45,18 @@ const variantMap: Record<
     text: 'text-ink-700',
     border: 'border-ink-300',
   },
-};
+} satisfies Record<StatusVariant, VariantMap>;
 
-const containerSizeMap: Record<StatusSize, string> = {
+const containerSizeMap = {
   sm: 'px-2 py-0.5',
   md: 'px-3 py-1',
-};
+} satisfies Record<StatusSize, string>;
 
-const textSizeMap: Record<StatusSize, string> = {
+const textSizeMap = {
   sm: 'text-xs',
   md: 'text-sm',
-};
+} satisfies Record<StatusSize, string>;
 
-/**
- * StatusPill — a small, color-coded tag rendered on a tinted surface.
- * Replaces the stock Tailwind `bg-red-50` etc. with the brand semantic
- * ramps defined in `tailwind.config.js` so success/danger/warning/info
- * read consistently across the app.
- */
 export function StatusPill({
   variant,
   size = 'md',

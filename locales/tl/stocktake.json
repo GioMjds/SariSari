@@ -1,0 +1,23 @@
+{
+  "title": "Inventaryo Stocktake",
+  "lastSessionSummary": "Huling bilang: {{date}} · {{counted}} nabilang · {{netPesos}} kabuuan",
+  "startCta": "Magsimula ng bagong stocktake",
+  "inProgressBanner": "May stocktake na nagaganap — nakahinto ang manual stock adjustments.",
+  "progressLabel": "{{counted}} / {{total}} mga produkto ang nabilang",
+  "finishReviewCta": "Tapusin at suriin",
+  "saveQuitCta": "I-save at lumabas",
+  "abandonTitle": "I-abandon ang stocktake?",
+  "abandonConfirm": "Oo, I-abandon",
+  "varianceHeader": "Buod ng Bawas/Dagdag: {{variances}} pagkakaiba, {{netPesos}} epekto",
+  "commitCta": "I-commit ang Adjustments",
+  "commitDisabledReason": "Pumili ng dahilan para sa lahat ng may pagkakaiba.",
+  "noActiveSession": "Walang aktibong stocktake session.",
+  "reason": {
+    "shrinkage": "Nawala / Nanaka",
+    "spoilage": "Nasira / Napano",
+    "miscount": "Maling bilang",
+    "freebie_to_neighbor": "Bigay / Libre sa Suki",
+    "customer_return": "Isinauli ng customer",
+    "unexplained": "Di-maipaliwanag na kulang"
+  }
+}

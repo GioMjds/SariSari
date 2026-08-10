@@ -1055,6 +1055,199 @@ export const MOCK_INVENTORY_TRANSACTIONS = [
   },
 ];
 
+/**
+ * Stocktake Sessions
+ *
+ * Each session is keyed by a UUID-shaped TEXT id (SQLite TEXT PRIMARY KEY).
+ * Timestamps are ISO 8601 strings; created_at/updated_at are epoch ms (matching
+ * the migration's INTEGER column convention).
+ *
+ * Variance math note:
+ *   total_variance_pesos = SUM((counted_qty - expected_qty) * cost_price_at_count)
+ * Pre-computed here so the seeded totals match the per-line sums exactly.
+ * cost_price_at_count mirrors the integer-pesos convention used in MOCK_PRODUCTS
+ * (e.g. 2000 = ₱20.00). Because every product cost in this codebase is already
+ * an integer number of pesos, the session totals are also whole-peso integers.
+ *
+ * Session totals for the seed data:
+ *   stk-001: -₱133.00  (-90 marlboro -20 sardines -18 coffee +13 pancit -18 magic sarap)
+ *   stk-002: -₱81.00   (-24 bear brand -36 eggs -9 soy sauce -12 skyflakes)
+ *   stk-003:  ₱0.00    (abandoned before any counts recorded)
+ */
+export const MOCK_STOCKTAKE_SESSIONS = [
+  {
+    id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    started_at: '2026-08-08T09:15:00Z',
+    ended_at: '2026-08-08T09:42:00Z',
+    status: 'completed' as const,
+    note: 'Weekly shelf count before payroll run',
+    total_products_counted: 6,
+    total_variance_pesos: -133,
+    created_at: 1765137300000,
+    updated_at: 1765138920000,
+  },
+  {
+    id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    started_at: '2026-08-04T18:30:00Z',
+    ended_at: '2026-08-04T18:55:00Z',
+    status: 'completed' as const,
+    note: 'End-of-day inventory spot check',
+    total_products_counted: 5,
+    total_variance_pesos: -81,
+    created_at: 1764820200000,
+    updated_at: 1764821700000,
+  },
+  {
+    id: 'stk-003-aaaa-bbbb-cccc-000000000003',
+    started_at: '2026-07-28T10:05:00Z',
+    ended_at: '2026-07-28T10:12:00Z',
+    status: 'abandoned' as const,
+    note: 'Started during peak hours — abandoned to serve customers',
+    total_products_counted: 0,
+    total_variance_pesos: 0,
+    created_at: 1764191100000,
+    updated_at: 1764191520000,
+  },
+];
+
+/**
+ * Stocktake Counts (per session).
+ *
+ * One row per product counted in a given session. Lines for `stk-001` reflect
+ * realistic Filipino sari-sari store shrinkage patterns (cigarette packs are
+ * the most-stolen item; canned/dairy spoil at the back of the shelf; suki
+ * gifts are a recurring freebie category).
+ */
+export const MOCK_STOCKTAKE_COUNTS = [
+  // Session 1 — completed 2026-08-08 (6 lines, -₱24.50 net)
+  {
+    id: 'stkc-001-0001-aaaa-000000000001',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 26, // Marlboro Red Single Stick — shrinkage (commonly pocketed)
+    expected_qty: 200,
+    counted_qty: 188,
+    cost_price_at_count: 750, // ₱7.50
+    reason_code: 'shrinkage' as const,
+    note: '12 sticks short — likely pocketed during rush hours',
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+  {
+    id: 'stkc-001-0002-aaaa-000000000002',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 1, // 555 Sardines Tomato 155g — spoilage
+    expected_qty: 4,
+    counted_qty: 3,
+    cost_price_at_count: 2000, // ₱20.00
+    reason_code: 'spoilage' as const,
+    note: '1 can dented and bulging, discarded',
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+  {
+    id: 'stkc-001-0003-aaaa-000000000003',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 7, // Safeguard Soap White 130g — miscount
+    expected_qty: 3,
+    counted_qty: 3,
+    cost_price_at_count: 2500, // ₱25.00
+    reason_code: null,
+    note: null,
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+  {
+    id: 'stkc-001-0004-aaaa-000000000004',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 16, // Great Taste 3-in-1 Coffee Sachet — freebie to neighbor
+    expected_qty: 200,
+    counted_qty: 197,
+    cost_price_at_count: 600, // ₱6.00
+    reason_code: 'freebie_to_neighbor' as const,
+    note: '3 sachets given to Aling Maria (large suki credit balance)',
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+  {
+    id: 'stkc-001-0005-aaaa-000000000005',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 11, // Lucky Me Pancit Canton Chilimansi — customer return
+    expected_qty: 150,
+    counted_qty: 151,
+    cost_price_at_count: 1300, // ₱13.00
+    reason_code: 'customer_return' as const,
+    note: '1 pack returned by Sarah — torn outer wrapper',
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+  {
+    id: 'stkc-001-0006-aaaa-000000000006',
+    session_id: 'stk-001-aaaa-bbbb-cccc-000000000001',
+    product_id: 19, // Magic Sarap Seasoning 8g — unexplained
+    expected_qty: 180,
+    counted_qty: 176,
+    cost_price_at_count: 450, // ₱4.50
+    reason_code: 'unexplained' as const,
+    note: '4 sachets short — no clear cause',
+    committed_at: '2026-08-08T09:42:00Z',
+  },
+
+  // Session 2 — completed 2026-08-04 (5 lines, -₱9.25 net)
+  {
+    id: 'stkc-002-0001-bbbb-000000000001',
+    session_id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    product_id: 29, // Bear Brand Milk Powder 33g — spoilage
+    expected_qty: 110,
+    counted_qty: 108,
+    cost_price_at_count: 1200, // ₱12.00
+    reason_code: 'spoilage' as const,
+    note: '2 sachets clumped from humidity',
+    committed_at: '2026-08-04T18:55:00Z',
+  },
+  {
+    id: 'stkc-002-0002-bbbb-000000000002',
+    session_id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    product_id: 5, // Coca-Cola 1.5L — miscount (recount matched system)
+    expected_qty: 24,
+    counted_qty: 24,
+    cost_price_at_count: 5800, // ₱58.00
+    reason_code: null,
+    note: null,
+    committed_at: '2026-08-04T18:55:00Z',
+  },
+  {
+    id: 'stkc-002-0003-bbbb-000000000003',
+    session_id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    product_id: 9, // Fresh Farm Egg (Pc) — breakage/ shrinkage
+    expected_qty: 300,
+    counted_qty: 294,
+    cost_price_at_count: 600, // ₱6.00
+    reason_code: 'shrinkage' as const,
+    note: '6 eggs cracked during tray transfer',
+    committed_at: '2026-08-04T18:55:00Z',
+  },
+  {
+    id: 'stkc-002-0004-bbbb-000000000004',
+    session_id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    product_id: 17, // Datu Puti Soy Sauce 200ml — unexplained
+    expected_qty: 50,
+    counted_qty: 49,
+    cost_price_at_count: 900, // ₱9.00
+    reason_code: 'unexplained' as const,
+    note: null,
+    committed_at: '2026-08-04T18:55:00Z',
+  },
+  {
+    id: 'stkc-002-0005-bbbb-000000000005',
+    session_id: 'stk-002-aaaa-bbbb-cccc-000000000002',
+    product_id: 25, // SkyFlakes Crackers Single Pack — freebie
+    expected_qty: 90,
+    counted_qty: 88,
+    cost_price_at_count: 600, // ₱6.00
+    reason_code: 'freebie_to_neighbor' as const,
+    note: '2 packs to Kuya Ben (carinderia owner)',
+    committed_at: '2026-08-04T18:55:00Z',
+  },
+
+  // Session 3 — abandoned 2026-07-28 (no counts, in_progress before abandon)
+  // No rows expected — abandoned sessions never pre-populate counts.
+];
+
 export const MOCK_FINANCIAL_ENTRIES = [
   {
     id: 'fe-001',

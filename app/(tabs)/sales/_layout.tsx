@@ -8,9 +8,6 @@ import { useTodayStats } from '@/hooks/useSales';
 export default function SalesLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  // Direct query subscription — avoids the full useCart() cascade
-  // (which also pulls in usePaginatedProducts('') and the cart store)
-  // that this layout was previously paying just for a header number.
   const { data: todayStats } = useTodayStats();
 
   const getCurrentTab = (): SalesSubTab => {
