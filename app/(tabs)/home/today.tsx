@@ -15,7 +15,7 @@ import {
   EditorialEyebrow,
   FinancialResultSection,
 } from '@/components/reports';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { MoneyText, RefreshableScrollView, Skeleton } from '@/components/ui';
 import {
   useAgingBuckets,
@@ -57,6 +57,9 @@ import {
 const EMPTY_ARRAY: never[] = [];
 
 export default function TodayScreen() {
+  const { section } = useLocalSearchParams<{ section?: string }>();
+  const requestedSection = typeof section === 'string' ? section : undefined;
+
   const queryClient = useQueryClient();
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
   const [dateRange, setDateRange] = useState<DateRange>(
@@ -340,7 +343,8 @@ export default function TodayScreen() {
             subtitle="Daily takings and how customers paid"
             tone="persimmon"
             icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
-            defaultExpanded
+            defaultExpanded={requestedSection === undefined}
+            expanded={requestedSection === 'trend' ? true : undefined}
           >
             {isSalesTrendLoading ? (
               <View className="py-2 gap-y-4">
@@ -397,7 +401,8 @@ export default function TodayScreen() {
           subtitle="The champions of the shelves"
           tone="cinnamon"
           icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
-          defaultExpanded
+          defaultExpanded={requestedSection === undefined}
+          expanded={requestedSection === 'top' ? true : undefined}
         >
           {isTopProductsLoading ? (
             <View className="py-2 gap-y-4">
@@ -488,7 +493,8 @@ export default function TodayScreen() {
           subtitle="What left the shelves, what needs restock"
           tone="sage"
           icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
-          defaultExpanded
+          defaultExpanded={requestedSection === undefined}
+          expanded={requestedSection === 'stock' ? true : undefined}
         >
           {isStockLoading ? (
             <View className="py-2 gap-y-4">
@@ -633,7 +639,8 @@ export default function TodayScreen() {
           subtitle="How long the debt has been sitting on the books"
           tone="cinnamon"
           icon={<FontAwesome name="hourglass-half" size={16} color="#391C0A" />}
-          defaultExpanded
+          defaultExpanded={requestedSection === undefined}
+          expanded={requestedSection === 'aging' ? true : undefined}
         >
           {isCreditAgingLoading ? (
             <View className="py-2 gap-y-4">
@@ -702,7 +709,8 @@ export default function TodayScreen() {
           subtitle="Daily drawer logs, counted physical cash, and variances"
           tone="cinnamon"
           icon={<FontAwesome name="book" size={16} color="#391C0A" />}
-          defaultExpanded
+          defaultExpanded={requestedSection === undefined}
+          expanded={requestedSection === 'cashbook' ? true : undefined}
         >
           {isSessionsLoading ? (
             <View className="py-2 gap-y-3">

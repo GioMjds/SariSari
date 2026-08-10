@@ -15,7 +15,6 @@ import { RefObject } from '@testing-library/react-native/dist/types';
 interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'onScroll'> {
   isRefreshing: boolean;
   onRefresh: () => void | Promise<void>;
-  refreshLabel?: string;
   refreshThreshold?: number;
   children: React.ReactNode;
   contentContainerStyle?: StyleProp<ViewStyle>;
@@ -25,7 +24,6 @@ interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'onScroll'> {
 export function RefreshableScrollView({
   isRefreshing,
   onRefresh,
-  refreshLabel = '',
   refreshThreshold = 80,
   children,
   className = '',

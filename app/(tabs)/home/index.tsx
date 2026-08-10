@@ -1,4 +1,4 @@
-import { RefreshControl, View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { Href, useRouter } from 'expo-router';
 import { StyledText } from '@/components/elements';
 import {
@@ -18,6 +18,7 @@ import {
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { formatCurrency } from '@/utils';
+import { RefreshableScrollView } from '@/components/ui';
 
 const routes = {
   addProduct: '/(edit-forms)/add-product',
@@ -72,20 +73,15 @@ export default function OverviewScreen() {
   };
 
   return (
-    <ScrollView
+    <RefreshableScrollView
       className="flex-1 bg-paper-200"
       contentContainerStyle={{
         paddingTop: 8,
         paddingBottom: tabBarBottomOffset + 24,
       }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={refetchAll}
-          tintColor="#E85A1F"
-          colors={['#E85A1F']}
-        />
-      }
+      isRefreshing={refreshing}
+      onRefresh={refetchAll}
+      refreshThreshold={80}
     >
       {isError ? (
         <DashboardErrorState onRetry={refetchAll} />
@@ -198,6 +194,6 @@ export default function OverviewScreen() {
           />
         </>
       )}
-    </ScrollView>
+    </RefreshableScrollView>
   );
 }

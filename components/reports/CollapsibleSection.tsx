@@ -21,8 +21,8 @@ type CollapsibleSectionProps = {
   tone?: 'persimmon' | 'sage' | 'cinnamon' | 'ink';
   icon?: ReactNode;
   /** Controlled or uncontrolled default. */
-  defaultExpanded?: boolean;
-  expanded?: boolean;
+  defaultExpanded?: boolean | undefined;
+  expanded?: boolean | undefined;
   onToggle?: () => void;
   children: ReactNode;
   rightBadge?: ReactNode;
