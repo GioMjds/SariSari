@@ -185,7 +185,7 @@ export function useAddProductForm() {
 
     const skuParts = safeSku.split('-');
     const skuPrefix = skuParts.slice(0, skuParts.length - 1).join('-');
-    const skuSuffix = skuParts[skuParts.length - 1];
+    const skuSuffix = skuParts[skuParts.length - 1] as string;
     const isExistingValid = skuPrefix === prefix && /^\d{4}$/.test(skuSuffix);
 
     if (isExistingValid) return currentSku;
@@ -391,24 +391,37 @@ export function useAddProductForm() {
       {
         name: safeTrim(data.productName),
         sku: safeTrim(data.sku),
-        barcode: trimmedBarcode ?? undefined,
+        ...(trimmedBarcode != null ? { barcode: trimmedBarcode } : {}),
         price: priceValue,
-        quantity: Number.isFinite(stockValue) ? stockValue : undefined,
-        cost_price: costPriceValue ?? undefined,
-        category: safeTrim(data.category) ?? undefined,
-        supplier_id: data.supplierId ?? undefined,
-        image_uri: data.imageUri ? safeTrim(data.imageUri) : undefined,
-        retail_unit_name: retailUnitName ?? undefined,
-        wholesale_unit_name: wholesaleUnitName ?? undefined,
-        wholesale_price: wholesalePriceVal ?? undefined,
-        wholesale_cost_price: wholesaleCostVal ?? undefined,
-        conversion_factor:
-          conversionFactorNum &&
-          Number.isFinite(conversionFactorNum) &&
-          conversionFactorNum >= 2
-            ? conversionFactorNum
-            : undefined,
-        wholesale_barcode: wholesaleBarcodeVal ?? undefined,
+        ...(Number.isFinite(stockValue) ? { quantity: stockValue } : {}),
+        ...(costPriceValue != null ? { cost_price: costPriceValue } : {}),
+        ...(safeTrim(data.category) != null
+          ? { category: safeTrim(data.category) as string }
+          : {}),
+        ...(data.supplierId != null
+          ? { supplier_id: data.supplierId }
+          : {}),
+        ...(data.imageUri
+          ? { image_uri: safeTrim(data.imageUri) }
+          : {}),
+        ...(retailUnitName != null ? { retail_unit_name: retailUnitName } : {}),
+        ...(wholesaleUnitName != null
+          ? { wholesale_unit_name: wholesaleUnitName }
+          : {}),
+        ...(wholesalePriceVal != null
+          ? { wholesale_price: wholesalePriceVal }
+          : {}),
+        ...(wholesaleCostVal != null
+          ? { wholesale_cost_price: wholesaleCostVal }
+          : {}),
+        ...(conversionFactorNum &&
+        Number.isFinite(conversionFactorNum) &&
+        conversionFactorNum >= 2
+          ? { conversion_factor: conversionFactorNum }
+          : {}),
+        ...(wholesaleBarcodeVal != null
+          ? { wholesale_barcode: wholesaleBarcodeVal }
+          : {}),
       },
       {
         onSuccess: () => {

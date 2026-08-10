@@ -123,7 +123,7 @@ export function SaleDetailsHero({
                 : 'bg-paper-50 border-ink-150'
             }`}
           >
-            <StyledText className="label-caps text-ink-400 mb-1">
+            <StyledText variant="regular" className="label-caps text-ink-400 mb-1">
               {isCredit ? LABELS.billTo : LABELS.soldTo}
             </StyledText>
             <StyledText variant="extrabold" className="text-ink-900 text-lg">

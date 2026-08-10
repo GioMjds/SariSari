@@ -5,7 +5,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Customer } from '@/types';
 import { MoneyText } from '@/components/ui';
 import { StyledText } from '@/components/elements';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { logger } from '@/lib/logger';
 
 interface CustomerPickerModalProps {
@@ -26,9 +25,6 @@ export function CustomerPickerModal({
   onSelectOneOffName,
 }: CustomerPickerModalProps) {
   const [query, setQuery] = useState<string>('');
-
-  useRenderCounter('CustomerPickerModal', { feature: 'checkout' });
-
   const isCash = paymentType === 'cash';
   const trimmedQuery = query.trim();
 

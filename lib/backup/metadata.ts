@@ -63,15 +63,17 @@ export const parseMetadata = (json: string | null): Metadata | null => {
     const parsed = JSON.parse(json) as unknown;
     if (!parsed || typeof parsed !== 'object') return null;
     const obj = parsed as Record<string, unknown>;
-    if (typeof obj.updatedAt !== 'number') return null;
-    if (typeof obj.salesCount !== 'number') return null;
-    if (typeof obj.appVersion !== 'string') return null;
+    if (typeof obj['updatedAt'] !== 'number') return null;
+    if (typeof obj['salesCount'] !== 'number') return null;
+    if (typeof obj['appVersion'] !== 'string') return null;
     return {
-      updatedAt: obj.updatedAt,
-      storeName: typeof obj.storeName === 'string' ? obj.storeName : '',
-      ownerName: typeof obj.ownerName === 'string' ? obj.ownerName : '',
-      salesCount: obj.salesCount,
-      appVersion: obj.appVersion,
+      updatedAt: obj['updatedAt'],
+      storeName:
+        typeof obj['storeName'] === 'string' ? obj['storeName'] : '',
+      ownerName:
+        typeof obj['ownerName'] === 'string' ? obj['ownerName'] : '',
+      salesCount: obj['salesCount'],
+      appVersion: obj['appVersion'],
     };
   } catch {
     return null;

@@ -34,8 +34,6 @@ type KPIItem = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function DashboardKPIGrid({
-  totalSales,
-  transactionCount,
   profitMargin,
   cashSessionStatus = 'Open',
   startingFloat = 500,

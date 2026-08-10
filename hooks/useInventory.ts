@@ -35,7 +35,7 @@ export function useInsertInventory() {
     mutationFn: async (tx: InsertInventoryV2) => {
       return await insertInventoryTransaction(tx);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       addToast({
@@ -110,7 +110,7 @@ export function useInventory() {
     mutationFn: async (tx: InsertInventoryV2) => {
       return await insertInventoryTransaction(tx);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
       addToast({

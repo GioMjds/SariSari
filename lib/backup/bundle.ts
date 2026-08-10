@@ -88,9 +88,11 @@ export async function extractBackupBundle(
           } catch {
             continue;
           }
+          const content = unzipped[key];
+          if (!content) continue;
           receipts.push({
             relativePath: key,
-            content: unzipped[key],
+            content,
           });
         }
       }

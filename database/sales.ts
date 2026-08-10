@@ -297,7 +297,7 @@ export const getAllSales = async (): Promise<SaleWithItems[]> => {
     if (!itemsBySaleId[item.sale_id]) {
       itemsBySaleId[item.sale_id] = [];
     }
-    itemsBySaleId[item.sale_id].push({
+    itemsBySaleId[item.sale_id]!.push({
       id: item.id,
       sale_id: item.sale_id,
       product_id: item.product_id,
@@ -340,7 +340,7 @@ export const getRecentSales = async (
     if (!itemsBySaleId[item.sale_id]) {
       itemsBySaleId[item.sale_id] = [];
     }
-    itemsBySaleId[item.sale_id].push({
+    itemsBySaleId[item.sale_id]!.push({
       id: item.id,
       sale_id: item.sale_id,
       product_id: item.product_id,
@@ -398,7 +398,7 @@ export const getSalesByDateRange = async (
     if (!itemsBySaleId[item.sale_id]) {
       itemsBySaleId[item.sale_id] = [];
     }
-    itemsBySaleId[item.sale_id].push({
+    itemsBySaleId[item.sale_id]!.push({
       id: item.id,
       sale_id: item.sale_id,
       product_id: item.product_id,

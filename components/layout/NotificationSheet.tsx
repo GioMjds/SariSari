@@ -194,7 +194,7 @@ export function NotificationSheet({
             translateY.value = withSpring(0, SPRING_SNAP_BACK);
           }
         })
-        .onFinalize((event) => {
+        .onFinalize(() => {
           if (isDismissing.value !== 1) {
             translateY.value = withSpring(0, SPRING_SNAP_BACK);
           }

@@ -12,7 +12,6 @@ import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface BasicInfoCardProps {
@@ -50,8 +49,6 @@ export function BasicInfoCard({
   barcodeConflictProduct,
   onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
-  useRenderCounter('BasicInfoCard', { feature: 'products_form' });
-
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
 
@@ -305,7 +302,7 @@ export function BasicInfoCard({
         <Controller
           control={control}
           name="supplierId"
-          render={({ field: { value, onChange } }) => {
+          render={({ field: { value } }) => {
             const currentSupplier = suppliers.find((s) => s.id === value);
             return (
               <>

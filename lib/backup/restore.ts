@@ -40,7 +40,7 @@ export class RestoreError extends Error {
     | 'reload_failed'
     | 'already_in_progress'
     | 'gdrive_not_configured';
-  cause?: unknown;
+  override cause?: unknown;
   constructor(code: RestoreError['code'], message: string, cause?: unknown) {
     super(message);
     this.name = 'RestoreError';

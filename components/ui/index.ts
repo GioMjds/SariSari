@@ -1,5 +1,6 @@
 export * from './BarcodeScannerModal';
 export * from './GlobalModal';
+export * from './LoadingBar';
 export * from './Modal';
 export * from './MoneyText';
 export * from './Pagination';

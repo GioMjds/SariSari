@@ -14,7 +14,6 @@ import { Category } from '@/types/categories.types';
 import { Supplier } from '@/types/suppliers.types';
 import type { EditProductFormData } from './useEditProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../products/ProductImagePicker';
 
 interface EditBasicInfoCardProps {
@@ -38,8 +37,6 @@ export function EditBasicInfoCard({
   selectedCategory,
   onSelectCategory,
 }: EditBasicInfoCardProps) {
-  useRenderCounter('EditBasicInfoCard', { feature: 'products_form' });
-
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers: Supplier[] = getAllSuppliersQuery.data || [];
 

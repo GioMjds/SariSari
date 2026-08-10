@@ -52,7 +52,7 @@ export default function AddProduct() {
           <View className="my-3 border-t border-dashed border-ink-300" />
 
           <PricingProfitCard
-            // Must fix the type invocation of `control` 
+            // Must fix the type invocation of `control`
             control={form.control}
             costPerPiece={form.costPerPiece}
             price={form.price}
@@ -77,7 +77,6 @@ export default function AddProduct() {
             wholesaleUnitName={form.wholesaleUnitName}
             conversionFactor={form.conversionFactor}
             wholesalePrice={form.wholesalePrice}
-            wholesaleCostPrice={form.wholesaleCostPrice}
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />

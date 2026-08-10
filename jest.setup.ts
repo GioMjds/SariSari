@@ -38,9 +38,9 @@ if (!process.env.NODE_ENV) {
     writable: false,
   });
 }
-process.env.JWT_SECRET = 'kgiohqaxca';
-process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3000';
-process.env.EXPO_PUBLIC_DJANGO_URL = 'http://localhost:8000';
+process.env['JWT_SECRET'] = 'kgiohqaxca';
+process.env['EXPO_PUBLIC_API_URL'] = 'http://localhost:3000';
+process.env['EXPO_PUBLIC_DJANGO_URL'] = 'http://localhost:8000';
 
 // Mock Expo modules
 // Mock expo-secure-store — bare jest.fn() returns undefined for

@@ -256,13 +256,16 @@ export const getCustomerWithDetails = async (
     [id],
   );
 
+  const daysOverdue =
+    overdueCredit?.days_overdue != null
+      ? Math.floor(overdueCredit.days_overdue)
+      : undefined;
+
   return {
     ...customer,
     credits,
     payments,
-    days_overdue: overdueCredit?.days_overdue
-      ? Math.floor(overdueCredit.days_overdue)
-      : undefined,
+    ...(daysOverdue != null ? { days_overdue: daysOverdue } : {}),
   };
 };
 
@@ -717,13 +720,14 @@ export const getCustomerTimeline = async (
   const timeline: CustomerTimelineItem[] = [];
 
   for (const c of credits) {
+    const details = c.product_name || c.notes;
     timeline.push({
       id: `credit-${c.id}`,
       type: 'credit',
       amount: c.amount,
       date: c.date,
       description: 'Added Credit',
-      details: c.product_name || c.notes || undefined,
+      ...(details ? { details } : {}),
     });
   }
 
@@ -734,7 +738,9 @@ export const getCustomerTimeline = async (
       amount: p.amount,
       date: p.date,
       description: 'Paid Credit',
-      details: p.payment_method ? `Method: ${p.payment_method}` : undefined,
+      ...(p.payment_method
+        ? { details: `Method: ${p.payment_method}` }
+        : {}),
     });
   }
 

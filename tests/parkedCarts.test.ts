@@ -38,12 +38,13 @@ describe('Parked Carts Database & Hook Logic', () => {
     id: 1,
     name: 'Coke 1.5L',
     sku: 'COKE1',
+    barcode: '4800010000017',
     price: 65,
     quantity: 10,
     retail_unit_name: 'Pc',
     is_favorite: false,
-    created_at: 1000,
-    updated_at: 1000,
+    created_at: '1000',
+    updated_at: '1000',
   };
 
   it('parks and retrieves a cart correctly', async () => {

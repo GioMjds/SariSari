@@ -57,6 +57,7 @@ export function MoneyText({
 
   const text = (
     <StyledText
+      variant="regular"
       numberOfLines={numberOfLines}
       style={[style, { fontVariant: ['tabular-nums'] }]}
       className={`${sizeMap[size]} ${colorClass} font-extrabold${className ? ` ${className}` : ''}`}

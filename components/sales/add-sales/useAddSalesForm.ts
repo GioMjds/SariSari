@@ -130,10 +130,10 @@ export function useAddSalesForm() {
             stock: product.quantity,
             selected_unit: selectedUnit,
             retail_unit_name: product.retail_unit_name || 'Pc',
-            wholesale_unit_name: product.wholesale_unit_name,
+            wholesale_unit_name: product.wholesale_unit_name ?? null,
             retail_price: product.price,
-            wholesale_price: product.wholesale_price,
-            conversion_factor: product.conversion_factor,
+            wholesale_price: product.wholesale_price ?? null,
+            conversion_factor: product.conversion_factor ?? null,
           },
         ];
       });
@@ -170,11 +170,12 @@ export function useAddSalesForm() {
           .filter(Boolean) as NewSaleItem[];
 
         if (
-          calculateCartProductPieces(next, productId) > matchingItems[0].stock
+          calculateCartProductPieces(next, productId) >
+          matchingItems[0]!.stock
         ) {
           Alert.alert(
             'Insufficient Stock',
-            `Only ${matchingItems[0].stock} total pieces available`,
+            `Only ${matchingItems[0]!.stock} total pieces available`,
           );
           return prev;
         }
@@ -374,14 +375,14 @@ export function useAddSalesForm() {
           selected_unit: item.selected_unit,
         })),
         payment_type: paymentType,
-        customer_name:
-          typeof selectedCustomer === 'string'
-            ? selectedCustomer
-            : selectedCustomer?.name,
-        customer_credit_id:
-          typeof selectedCustomer === 'string'
-            ? undefined
-            : selectedCustomer?.id,
+        ...(typeof selectedCustomer === 'string'
+          ? { customer_name: selectedCustomer }
+          : selectedCustomer?.name != null
+            ? { customer_name: selectedCustomer.name }
+            : {}),
+        ...(typeof selectedCustomer !== 'string' && selectedCustomer?.id != null
+          ? { customer_credit_id: selectedCustomer.id }
+          : {}),
       });
 
       clearCart();

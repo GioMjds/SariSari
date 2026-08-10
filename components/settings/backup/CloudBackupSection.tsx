@@ -21,6 +21,7 @@ import Constants from 'expo-constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyledText } from '@/components/elements';
@@ -46,7 +47,7 @@ const getGoogleClientId = (): string | null => {
 
 const formatRelativeTime = (
   epochMs: number | null | undefined,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string => {
   if (!epochMs) return '';
   const diffMs = Date.now() - epochMs;

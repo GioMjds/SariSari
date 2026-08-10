@@ -13,7 +13,6 @@ import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
 import type { Category } from '@/types/categories.types';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface ProductBasicInfoCardProps {
@@ -57,7 +56,6 @@ export function ProductBasicInfoCard({
   onPressEditConflictingProduct,
   supplierFieldName = mode === 'add' ? 'supplierId' : 'supplier_id',
 }: ProductBasicInfoCardProps) {
-  useRenderCounter('ProductBasicInfoCard', { feature: 'products_form' });
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = useMemo(
     () => getAllSuppliersQuery.data || [],

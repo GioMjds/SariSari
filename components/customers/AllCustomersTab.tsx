@@ -10,14 +10,12 @@ import * as Haptics from 'expo-haptics';
 
 interface AllCustomersTabProps {
   customers: Customer[];
-  totalCredit: number;
   onSelectCustomer: (customer: Customer) => void;
   onAddCustomer: () => void;
 }
 
 export const AllCustomersTab: FC<AllCustomersTabProps> = ({
   customers,
-  totalCredit,
   onSelectCustomer,
   onAddCustomer,
 }) => {

@@ -128,7 +128,8 @@ export const createSupplierWithProducts = async (
   input: NewSupplier,
   productIds: number[] = [],
 ): Promise<Supplier> => {
-  return await db.withTransactionAsync(async () => {
+  let inserted: Supplier | undefined;
+  await db.withTransactionAsync(async () => {
     const id = Crypto.randomUUID();
     const createdAt = Date.now();
     await db.runAsync(
@@ -142,6 +143,10 @@ export const createSupplierWithProducts = async (
         [id, ...productIds],
       );
     }
-    return { id, createdAt, ...input };
+    inserted = { id, createdAt, ...input };
   });
+  if (!inserted) {
+    throw new Error('createSupplierWithProducts: transaction did not complete');
+  }
+  return inserted;
 };

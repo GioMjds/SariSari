@@ -9,6 +9,7 @@
 
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
@@ -41,7 +42,7 @@ const formatBytes = (bytes: number): string => {
  */
 const formatRelative = (
   isoStamp: string,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string => {
   // "2026-06-27_14-02-31-421" → parseable.
   const m = isoStamp.match(

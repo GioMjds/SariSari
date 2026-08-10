@@ -36,7 +36,7 @@ export function StockList({
   );
 
   const getItemLayout = useCallback(
-    (_data: readonly Product[] | null | undefined, index: number) => ({
+    (_data: ArrayLike<Product> | null | undefined, index: number) => ({
       length: 72,
       offset: 72 * index,
       index,

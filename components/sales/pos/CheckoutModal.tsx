@@ -27,7 +27,6 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { useCartStore } from '@/stores/CartStore';
 import { useCart } from '@/components/sales/pos/useCart';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { logger } from '@/lib/logger';
 import { CheckoutLineRow } from './CheckoutLineRow';
 import { CustomerPickerModal } from './CustomerPickerModal';
@@ -64,8 +63,6 @@ export function CheckoutModal({
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevPaymentTypeRef = useRef(paymentType);
-
-  useRenderCounter('CheckoutModal', { feature: 'checkout' });
 
   const enterProgress = useSharedValue(0);
   const successProgress = useSharedValue(0);
@@ -1054,7 +1051,6 @@ function SaleSuccessState({
   itemCountLabel,
   piecesLabel,
   paymentType,
-  customerName,
   checkRingStyle,
   checkMarkStyle,
   insets,

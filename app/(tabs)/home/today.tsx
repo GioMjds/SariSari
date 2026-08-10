@@ -16,7 +16,7 @@ import {
   FinancialResultSection,
 } from '@/components/reports';
 import { router } from 'expo-router';
-import { MoneyText } from '@/components/ui';
+import { LoadingBar, MoneyText, PullToRefreshHeader } from '@/components/ui';
 import {
   useAgingBuckets,
   useCashEntries,
@@ -171,8 +171,11 @@ export default function HomeReports() {
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          tintColor="#623418"
-          colors={['#623418']}
+          tintColor="transparent"
+          colors={['transparent']}
+          progressBackgroundColor="transparent"
+          progressViewOffset={-1000}
+          style={{ opacity: 0 }}
         />
       }
       contentContainerStyle={{
@@ -180,6 +183,8 @@ export default function HomeReports() {
         paddingBottom: tabBarBottomOffset + 24,
       }}
     >
+      <PullToRefreshHeader isRefreshing={isRefreshing} label="Ina-update ang datos..." />
+
       <View className="px-4 mt-2">
         <DateRangeSelector
           activeRange={dateRangeType}

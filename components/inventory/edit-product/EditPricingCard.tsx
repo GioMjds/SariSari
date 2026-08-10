@@ -35,7 +35,6 @@ export function EditPricingCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: EditPricingCardProps) {
   // Enable LayoutAnimation on Android (no-op on iOS where it's always on).
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {

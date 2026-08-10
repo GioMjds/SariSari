@@ -30,7 +30,6 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 	height = 200,
 	barColor = '#623418', // cinnamon-500
 	accentColor = '#E85A1F', // persimmon-500
-	_dataKey,
 }: SimpleBarChartProps) {
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	// On first paint skip the `from` state so the peak label appears instantly.

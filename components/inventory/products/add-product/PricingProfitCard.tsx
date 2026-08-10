@@ -29,7 +29,6 @@ interface PricingProfitCardProps {
   wholesaleUnitName?: string;
   conversionFactor?: string;
   wholesalePrice?: string;
-  wholesaleCostPrice?: string;
 }
 
 export function PricingProfitCard({
@@ -51,7 +50,6 @@ export function PricingProfitCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: PricingProfitCardProps) {
   const retailPriceVal = tryParsePesosInput(price);
   const wholesalePriceVal = wholesalePrice

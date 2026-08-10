@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import { Href, useRouter } from 'expo-router';
 import { AllCustomersTab, CustomersSkeleton } from '@/components/customers';
-import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
+import { useCustomers } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Customer } from '@/types/credits.types';
 
@@ -9,7 +9,6 @@ export default function AllCustomersScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const { data: customers = [], isLoading } = useCustomers();
-  const { data: kpis } = useCreditKPIs();
 
   const handleSelectCustomer = (customer: Customer) => {
     router.push({
@@ -40,11 +39,9 @@ export default function AllCustomersScreen() {
     >
       <AllCustomersTab
         customers={customers}
-        totalCredit={kpis?.totalOutstanding || 0}
         onSelectCustomer={handleSelectCustomer}
         onAddCustomer={handleAddCustomer}
       />
     </View>
   );
 }
-

@@ -235,7 +235,6 @@ export const ProductOverviewTab = React.memo(function ProductOverviewTab({
             icon="money"
             label="Inventory value"
             value={formatPesos(product.price * product.quantity)}
-            isLast
           />
         </View>
       </View>
@@ -268,12 +267,10 @@ function GlanceRow({
   icon,
   label,
   value,
-  isLast,
 }: {
   icon: keyof typeof FontAwesome.glyphMap;
   label: string;
   value: string;
-  isLast?: boolean;
 }) {
   return (
     <View className="px-4 py-3 flex-row items-center justify-between">

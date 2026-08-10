@@ -12,7 +12,6 @@ import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { usePOSSearchStore } from '@/stores';
 
 interface ProductSearchCatalogProps {
@@ -67,22 +66,19 @@ export function ProductSearchCatalog({
   onPressParkedList,
   onPressParkCurrent,
 }: ProductSearchCatalogProps) {
-  useRenderCounter('ProductSearchCatalog', {
-    feature: 'pos_catalog',
-    threshold: 10,
-    windowMs: 1000,
-  });
-
   const renderProductRow = useCallback(
-    ({ item }: { item: Product }) => (
-      <ProductRow
-        product={item}
-        cartLine={getCartLine(item.id)}
-        onAdd={onAdd}
-        onUpdateQuantity={onUpdateQuantity}
-        onToggleUnit={onToggleUnit}
-      />
-    ),
+    ({ item }: { item: Product }) => {
+      const cartLine = getCartLine(item.id);
+      return (
+        <ProductRow
+          product={item}
+          {...(cartLine ? { cartLine } : {})}
+          onAdd={onAdd}
+          onUpdateQuantity={onUpdateQuantity}
+          {...(onToggleUnit ? { onToggleUnit } : {})}
+        />
+      );
+    },
     [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
   );
 

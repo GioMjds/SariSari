@@ -3,7 +3,6 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useCategories } from '@/hooks/useCategories';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 
 interface CategoryFilterBarProps {
   selectedCategory?: string;
@@ -30,8 +29,6 @@ export function CategoryFilterBar({
   onSelectCategory,
   onOpenAddCategory,
 }: CategoryFilterBarProps) {
-  useRenderCounter('CategoryFilterBar', { feature: 'inventory_catalog' });
-
   const { getCategoriesWithCountQuery } = useCategories();
   const categories = getCategoriesWithCountQuery.data ?? [];
 

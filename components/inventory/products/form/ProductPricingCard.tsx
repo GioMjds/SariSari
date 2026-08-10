@@ -29,7 +29,6 @@ interface ProductPricingCardProps {
   wholesaleUnitName?: string;
   conversionFactor?: string;
   wholesalePrice?: string;
-  wholesaleCostPrice?: string;
 }
 
 export function ProductPricingCard({
@@ -49,7 +48,6 @@ export function ProductPricingCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: ProductPricingCardProps) {
   const hasCost = !!costPerPiece && costPerPiece !== '0.00';
   const hasPrice = !!price && price !== '0.00';

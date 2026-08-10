@@ -252,19 +252,33 @@ async function parseLocalDump(
         return;
       }
 
-      const countriesTags = cols[headerIndices['countries_tags']] || '';
-      // Filter for Philippines
+      const countriesTagsIdx = headerIndices['countries_tags'];
+      const codeIdx = headerIndices['code'];
+      const productNameIdx = headerIndices['product_name'];
+      const brandsIdx = headerIndices['brands'];
+      const categoriesTagsIdx = headerIndices['categories_tags'];
+
+      if (
+        countriesTagsIdx === undefined ||
+        codeIdx === undefined ||
+        productNameIdx === undefined
+      ) {
+        return;
+      }
+
+      const countriesTags = cols[countriesTagsIdx] || '';
       if (
         countriesTags.toLowerCase().includes('philippines') ||
         countriesTags.toLowerCase().includes('ph')
       ) {
-        const code = cols[headerIndices['code']];
-        const productName = cols[headerIndices['product_name']];
-        const brands = cols[headerIndices['brands']];
-        const categoriesTagsRaw = cols[headerIndices['categories_tags']] || '';
+        const code = cols[codeIdx];
+        const productName = cols[productNameIdx];
+        const brands = brandsIdx !== undefined ? cols[brandsIdx] : '';
+        const categoriesTagsRaw =
+          categoriesTagsIdx !== undefined ? cols[categoriesTagsIdx] || '' : '';
         const categoriesTags = categoriesTagsRaw
           .split(',')
-          .map((t) => t.trim());
+          .map((t: string) => t.trim());
 
         if (code && productName) {
           products.push({
@@ -304,7 +318,7 @@ function updateTestFileLimit(newTotalCount: number) {
     let testContent = fs.readFileSync(testFilePath, 'utf8');
     const maxBoundMatch = testContent.match(/toBeLessThanOrEqual\((\d+)\)/);
     if (maxBoundMatch) {
-      const currentMax = parseInt(maxBoundMatch[1], 10);
+      const currentMax = maxBoundMatch[1] ? parseInt(maxBoundMatch[1], 10) : 0;
       if (newTotalCount > currentMax) {
         const newMax = Math.ceil(newTotalCount / 50) * 50; // Round up to nearest 50
         testContent = testContent.replace(
@@ -324,9 +338,17 @@ function updateTestFileLimit(newTotalCount: number) {
 async function main() {
   const args = process.argv.slice(2);
   const dumpIdx = args.indexOf('--dump');
-  const dumpPath = dumpIdx !== -1 ? args[dumpIdx + 1] : null;
+  const dumpPathRaw = dumpIdx !== -1 ? args[dumpIdx + 1] : undefined;
+  const dumpPath =
+    typeof dumpPathRaw === 'string' && dumpPathRaw.length > 0
+      ? dumpPathRaw
+      : null;
   const limitIdx = args.indexOf('--limit');
-  const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
+  const limitRaw = limitIdx !== -1 ? args[limitIdx + 1] : undefined;
+  const limit =
+    typeof limitRaw === 'string' && limitRaw.length > 0
+      ? parseInt(limitRaw, 10)
+      : null;
   const allFlag = args.includes('--all');
 
   // Load existing records to preserve manual entries
@@ -430,15 +452,6 @@ async function main() {
       console.log('No new items added to keep the limit at 250.');
       process.exit(0);
     }
-
-    // Simple truncation: keep only the first maxNew items
-    // Re-load and truncate
-    const truncatedBeverages = beveragesList.slice(
-      0,
-      beveragesList.length - (newMappedCount - maxNew),
-    );
-    // Let's keep it simple: just truncate to a safe distribution or exit.
-    // In our case, we can slice each list to the limit or only add up to maxNew.
   }
 
   // Ensure output directory exists

@@ -18,7 +18,6 @@ interface LedgerHeroProps {
 export const LedgerHero = memo(function LedgerHero({
   product,
   transactions,
-  onLogTransaction,
 }: LedgerHeroProps) {
   const { restocked, sold, damaged } = useMemo(() => {
     let restocked = 0;
