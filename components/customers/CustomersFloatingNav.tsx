@@ -21,7 +21,7 @@ export const CustomersFloatingNav: React.FC<CustomersFloatingNavProps> = ({
     label: string;
     icon: keyof typeof FontAwesome.glyphMap;
   }[] = [
-    { key: 'index', label: 'ALL', icon: 'users' },
+    { key: 'all', label: 'ALL', icon: 'users' },
     { key: 'credit', label: 'CREDIT', icon: 'book' },
     { key: 'insights', label: 'INSIGHTS', icon: 'bar-chart' },
   ];

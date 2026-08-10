@@ -30,7 +30,6 @@ const routes = {
   cashEntries: '/(tabs)/more/cash-entries',
   gastos: '/gastos-kaha',
   settings: '/(tabs)/more/settings',
-  devReset: '/(tabs)/home/dev/reset',
   collection: '/(tabs)/customers/credit',
 } satisfies Record<string, Href>;
 
@@ -215,12 +214,6 @@ function MoreTab() {
               label={t('common:moreHomeTileBackup')}
               icon="cloud"
               onPress={() => router.push(routes.settings)}
-              accent="paper"
-            />
-            <MoreTile
-              label={t('common:moreHomeTileDeveloperReset')}
-              icon="wrench"
-              onPress={() => router.push(routes.devReset)}
               accent="paper"
             />
           </MoreTileGrid>

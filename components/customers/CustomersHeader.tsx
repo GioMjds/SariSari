@@ -2,9 +2,10 @@ import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
+import { CustomersSubTab } from '@/constants/tabs';
 import { formatPesos } from '@/lib';
 
-export type CustomersSubTab = 'all' | 'credit' | 'insights';
+export type { CustomersSubTab };
 
 export interface CustomersHeaderProps {
   activeTab: CustomersSubTab;

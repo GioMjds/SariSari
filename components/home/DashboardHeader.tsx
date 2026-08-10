@@ -1,8 +1,9 @@
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
+import { HomeSubTab } from '@/constants/tabs';
 
-export type HomeSubTab = 'overview' | 'today';
+export type { HomeSubTab };
 
 export interface DashboardHeaderProps {
   storeName: string;
@@ -20,8 +21,8 @@ export function DashboardHeader({
   onTabPress,
 }: DashboardHeaderProps) {
   const tabs = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'today', label: 'Today' },
+    { key: 'overview', label: 'OVERVIEW' },
+    { key: 'today', label: 'TODAY' },
   ] satisfies SubTabItem<HomeSubTab>[];
 
   return (

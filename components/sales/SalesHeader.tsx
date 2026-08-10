@@ -21,9 +21,12 @@ export function SalesHeader({
   onTabPress,
 }: SalesHeaderProps) {
   const tabs = [
-    { key: 'pos', label: 'POS', icon: 'shopping-cart' },
-    { key: 'receipts', label: 'RECEIPTS', icon: 'list-alt' },
+    { key: 'pos', label: 'POS' },
+    { key: 'receipts', label: 'RECEIPTS' },
   ] satisfies SubTabItem<SalesSubTab>[];
+
+  const effectiveActiveTab: SalesSubTab =
+    activeTab === 'cart' || activeTab === 'checkout' ? 'pos' : activeTab;
 
   const todayFormatted = new Date()
     .toLocaleDateString('en-US', {
@@ -36,9 +39,9 @@ export function SalesHeader({
     <View className="bg-paper-200 px-4 pt-2 pb-1">
       <SubTabControl
         tabs={tabs}
-        activeTab={activeTab}
+        activeTab={effectiveActiveTab}
         onTabPress={onTabPress}
-        containerClassName="mb-3.5 rounded-3xl shadow-sm border-paper-300"
+        containerClassName="mb-3.5"
       />
 
       <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-lg border border-cinnamon-400/40 relative overflow-hidden">
@@ -106,4 +109,3 @@ export function SalesHeader({
     </View>
   );
 }
-

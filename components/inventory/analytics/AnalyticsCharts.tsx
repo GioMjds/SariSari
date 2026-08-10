@@ -10,6 +10,7 @@ import { useChartPalette } from './useChartPalette';
 import { useProducts } from '@/hooks/useProducts';
 import { AnalyticsSkeleton } from './AnalyticsSkeleton';
 import { ChartEmptyState } from './ChartEmptyState';
+import { ChartErrorBoundary } from './ChartErrorBoundary';
 
 function formatPesos(n: number) {
   return `₱${n.toLocaleString(undefined, {
@@ -121,14 +122,14 @@ export function AnalyticsCharts() {
         {byCategory.length === 0 ? (
           <ChartEmptyState message="Add products to see category breakdown." />
         ) : (
-          <>
+          <ChartErrorBoundary message="Category chart unavailable. Pull to retry.">
             <BarChart data={byCategory} barWidth={28} spacing={12} hideRules />
             {byCategory[0] ? (
               <StyledText variant="regular" className="text-[11px] text-ink-500 mt-1">
                 Top: {byCategory[0].label} · {byCategory[0].value} products
               </StyledText>
             ) : null}
-          </>
+          </ChartErrorBoundary>
         )}
       </View>
 
@@ -144,14 +145,14 @@ export function AnalyticsCharts() {
         {byValue.length === 0 ? (
           <ChartEmptyState message="No value data yet." />
         ) : (
-          <>
+          <ChartErrorBoundary message="Value chart unavailable. Pull to retry.">
             <PieChart data={byValue} donut radius={80} innerRadius={48} />
             {byValue[0] ? (
               <StyledText variant="regular" className="text-[11px] text-ink-500 mt-1">
                 Top: {byValue[0].text} · {formatPesos(byValue[0].value)}
               </StyledText>
             ) : null}
-          </>
+          </ChartErrorBoundary>
         )}
       </View>
     </ScrollView>

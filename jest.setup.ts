@@ -417,3 +417,25 @@ jest.mock('expo-image', () => {
     Image: (props: any) => mockReact.createElement(mockRN.View, props),
   };
 });
+
+// Mock react-native-gifted-charts — the real package ships ESM in
+// gifted-charts-core and pulls react-native-svg internals. Tests only
+// assert on chart props/lifecycle, not the rendered SVG, so a plain
+// passthrough View stub is enough. Replace per-test by re-mocking this
+// module locally if a test needs different chart behavior.
+jest.mock('react-native-gifted-charts', () => {
+  const mockReact = require('react');
+  const mockRN = require('react-native');
+  const Stub = ({ children, ...props }: any) =>
+    mockReact.createElement(mockRN.View, props, children);
+  Stub.displayName = 'GiftedChartStub';
+  return {
+    BarChart: Stub,
+    PieChart: Stub,
+    LineChart: Stub,
+    PopulationPyramid: Stub,
+    StackedBarChart: Stub,
+    RadarChart: Stub,
+    AnimatedThreeDBar: Stub,
+  };
+});

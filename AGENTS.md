@@ -94,6 +94,14 @@ See `AGENTS.md` (which simply re-exports this file) and `.agents/` for the workf
 - Don't include test (`*.test.ts`, `*.spec.ts`) files into my `docs/superpowers/specs` and `docs/superpowers/tasks`.
 - Don't auto-commit or auto-push agent tasks. Always review and edit before committing. Use `activity-log.md` for notes.
 
+## Debugging discipline
+
+- Reproduce first, then theorize. Get the actual stack trace (`adb logcat *:E ReactNativeJS:V` on Android, Xcode console on iOS) before guessing. The crash signature usually points at the culprit library within a couple of hops.
+- Track bug diagnoses in `obsidian-vault/05-Bugs-Issues/`. Include: reproduction steps, suspected root causes, the crash trace, the fix that was tried, and links to upstream issues. This is the first place to look when a similar crash recurs.
+- For third-party libraries with a history of native crashes (chart libs, view pagers, gesture handlers), wrap their render output in an `ErrorBoundary` so a single bad render does not take down the host screen. See `components/inventory/analytics/ChartErrorBoundary.tsx` as the reference pattern.
+- `react-native-pager-view` must be at least `^7.0.2`. Versions in the 6.9.x line recycle `View`s while they are still attached to the window, which crashes Android's `ViewPager2.RecyclerViewImpl` with `Scrapped or attached views may not be recycled` when a top tab is swiped away mid-render. The 7.x line carries the recycling fix forward and stays UIKit-based on iOS; jump to 8.x only when you specifically need the SwiftUI rewrite.
+- `npm test -- -t "<pattern>"` runs a focused subset. For Jest, `render` from `@testing-library/react-native@14` returns a `Promise` — always `await render(...)` before destructuring queries.
+
 ## Obsidian Vault Workflow (Second Brain)
 
 Treat the `obsidian-vault/` directory as your external knowledge base and planning system. Use these guidelines to maintain alignment between code and documentation:
@@ -151,3 +159,4 @@ Follow these practices to ensure documentation captures the _why_ behind decisio
 - `lib/i18n.ts`, `lib/pdfGenerator.ts`, `lib/creditDetails.ts` — cross-cutting utilities.
 - `hooks/index.ts` — re-exports for hooks; `stores/index.ts` — re-exports for Zustand stores.
 - `app/(tabs)/dev/reset.tsx` — developer-only DB reset/seed screen.
+- `obsidian-vault/05-Bugs-Issues/` — bug diagnoses (reproduction, root cause, fix, upstream links). Check here first when a known-crashy screen misbehaves.

@@ -25,22 +25,8 @@ export interface SubTabControlProps<T extends string> {
   activeTab: T;
   onTabPress: (tab: T) => void;
   containerClassName?: string;
-  /**
-   * Continuous page position from an external swipeable pager, 0-indexed,
-   * fractional mid-swipe (e.g. 1.35). Drive this from your pager's onScroll
-   * worklet to have the underline track that gesture instead of this
-   * control's own. When set, the built-in drag-to-switch gesture below is
-   * disabled since the pager already owns the swipe.
-   */
   progress?: SharedValue<number>;
-  /**
-   * Lets the user drag directly on the tab row to switch tabs, mirroring
-   * RefreshableScrollView's pull gesture: live elastic tracking while
-   * dragging, a threshold check on release, spring settle either way.
-   * Ignored when `progress` is provided. Defaults to true.
-   */
   dragToSwitch?: boolean;
-  /** Horizontal drag distance (px) needed to commit a tab switch. */
   dragThreshold?: number;
 }
 
@@ -57,23 +43,58 @@ export function SubTabControl<T extends string>({
 
   const xs = useSharedValue<number[]>(new Array(tabCount).fill(0));
   const widths = useSharedValue<number[]>(new Array(tabCount).fill(0));
-  const measuredCount = useRef(0);
+  const layoutVersion = useSharedValue(0);
+  const measuredIndices = useRef<Set<number>>(new Set());
   const [ready, setReady] = useState(false);
 
   const internalProgress = useSharedValue(0);
   const activeIndexShared = useSharedValue(0);
   const dragX = useSharedValue(0);
 
+  const tabKeys = tabs.map((t) => t.key).join(',');
+  const prevTabKeysRef = useRef(tabKeys);
+
+  useEffect(() => {
+    if (prevTabKeysRef.current !== tabKeys) {
+      prevTabKeysRef.current = tabKeys;
+      measuredIndices.current.clear();
+      setReady(false);
+      // xs/widths are sized once at mount via useSharedValue's initial
+      // value, which is only ever evaluated on first render. If tabCount
+      // changes later (a tab is added or removed), these arrays keep
+      // their old length. interpolate() then reads an inputRange built
+      // from the current tab count against an outputRange of the wrong
+      // length, and silently degrades toward the last defined entry
+      // instead of throwing, which is what pins the underline to the
+      // last tab. Resetting both to a fresh zero-filled array of the
+      // current length keeps them in sync with inputRange and gives
+      // handleLayout a clean slate to remeasure into.
+      xs.value = new Array(tabCount).fill(0);
+      widths.value = new Array(tabCount).fill(0);
+    }
+  }, [tabKeys, tabCount, xs, widths]);
+
   useEffect(() => {
     const index = tabs.findIndex((t) => t.key === activeTab);
     if (index < 0) return;
     activeIndexShared.value = index;
     if (!progress) {
-      internalProgress.value = withTiming(index, { duration: 200 });
+      // Before layout has completed once, xs/widths are still zero-filled,
+      // so animating internalProgress toward `index` here would animate
+      // through meaningless positions. Snap instantly until `ready`, then
+      // animate on every activeTab change after that.
+      internalProgress.value = ready
+        ? withTiming(index, { duration: 200 })
+        : index;
     }
-  }, [activeTab, progress, activeIndexShared, internalProgress, tabs]);
+  }, [activeTab, progress, ready, activeIndexShared, internalProgress, tabs]);
 
   const handleLayout = (index: number) => (e: LayoutChangeEvent) => {
+    // Guard against a stale closure firing onLayout for an index that no
+    // longer exists in the current tab set (e.g. a tab was removed between
+    // when this callback was created and when RN actually calls it).
+    if (index >= tabCount) return;
+
     const { x, width } = e.nativeEvent.layout;
 
     const nextXs = [...xs.value];
@@ -84,11 +105,21 @@ export function SubTabControl<T extends string>({
     nextWidths[index] = width;
     widths.value = nextWidths;
 
-    measuredCount.current += 1;
-    if (measuredCount.current === tabCount) {
+    measuredIndices.current.add(index);
+    layoutVersion.value += 1;
+
+    if (measuredIndices.current.size === tabCount) {
+      // Snap activeIndexShared here since the pan gesture and drag math
+      // need a correct starting index immediately once layout is known.
+      // internalProgress is intentionally NOT written here: the
+      // activeTab-driven effect below is the single owner of
+      // internalProgress, so this block doesn't race it. Before this
+      // fix, both this block and that effect wrote internalProgress on
+      // mount, and whichever one ran last "won", non-deterministically,
+      // which was a second, independent source of an incorrect resting
+      // position for the underline.
       const activeIndex = tabs.findIndex((t) => t.key === activeTab);
       if (activeIndex >= 0) {
-        internalProgress.value = activeIndex;
         activeIndexShared.value = activeIndex;
       }
       setReady(true);
@@ -120,15 +151,15 @@ export function SubTabControl<T extends string>({
       const atStart = activeIndexShared.value === 0;
       const atEnd = activeIndexShared.value === tabCount - 1;
       let next = event.translationX;
-      if (atStart && next < 0) next *= 0.3;
-      if (atEnd && next > 0) next *= 0.3;
+      if (atStart && next > 0) next *= 0.3;
+      if (atEnd && next < 0) next *= 0.3;
       dragX.value = next;
     })
     .onEnd(() => {
       const advancing =
-        dragX.value > dragThreshold && activeIndexShared.value < tabCount - 1;
+        dragX.value < -dragThreshold && activeIndexShared.value < tabCount - 1;
       const retreating =
-        dragX.value < -dragThreshold && activeIndexShared.value > 0;
+        dragX.value > dragThreshold && activeIndexShared.value > 0;
 
       if (advancing || retreating) {
         const nextIndex = activeIndexShared.value + (advancing ? 1 : -1);
@@ -176,7 +207,7 @@ export function SubTabControl<T extends string>({
               >
                 <StyledText
                   variant="extrabold"
-                  className={`text-xs ${
+                  className={`text-xs uppercase ${
                     isActive ? 'text-ink-900' : 'text-ink-400'
                   }`}
                 >
