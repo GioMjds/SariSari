@@ -7,7 +7,6 @@ import { MoreIconSection } from './MoreIconSection';
 import { MoreLinkRow } from './MoreLinkRow';
 import { MoreTile } from './MoreTile';
 import { MoreTileGrid } from './MoreTileGrid';
-import { StyledText } from '@/components/elements';
 import { withFeatureGuard } from '@/components/withFeatureGuard';
 
 const routes = {
@@ -40,25 +39,9 @@ function MoreTab() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <View className="bg-cinnamon-500 px-5 pt-3 pb-2">
-        <StyledText
-          variant="extrabold"
-          className="text-h1 text-paper-50 text-3xl"
-          style={{ letterSpacing: -0.28 }}
-        >
-          {t('common:moreHomeTitle')}
-        </StyledText>
-        <StyledText
-          variant="regular"
-          className="text-sm text-paper-200 opacity-90 mt-1"
-        >
-          {t('common:moreHomeSubtitle')}
-        </StyledText>
-      </View>
-
       <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
         {/* Hero strip */}
-        <View className="bg-cinnamon-500 px-4 pt-1 pb-5">
+        <View className="px-4 pt-1 pb-5">
           <MoreHeroStrip>
             <MoreTile
               label={t('common:moreHomeHeroCashSession')}

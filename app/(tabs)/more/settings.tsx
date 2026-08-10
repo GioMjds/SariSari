@@ -1,23 +1,47 @@
-import { ScrollView, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyledText } from '@/components/elements';
-import { MoreGroupSection } from '@/components/more';
-import { useProfile } from '@/hooks/useProfile';
-import { useBackup } from '@/hooks/useBackup';
+import { FontAwesome } from '@expo/vector-icons';
 
-export default function SettingsScreen() {
+import { StyledText } from '@/components/elements';
+import { useProfile } from '@/hooks/useProfile';
+import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog';
+import {
+  CloudBackupSection,
+  LocalSnapshotsSection,
+} from '@/components/settings/backup';
+import { SupportedLanguage } from '@/lib/i18n';
+
+export default function Settings() {
   const { t, i18n } = useTranslation();
   const { profile, loading: profileLoading } = useProfile();
-  const { backups, createBackup, isCreating } = useBackup();
-  const currentLang = i18n.language;
+  const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
 
-  const handleLanguageChange = (lang: string) => {
-    i18n.changeLanguage(lang);
-  };
+  const activeLang = i18n.language as SupportedLanguage;
+  const languageValue =
+    activeLang === 'tl'
+      ? t('common:languageTagalog')
+      : t('common:languageEnglish');
 
   return (
     <View className="flex-1 bg-paper-200">
       <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
+        {router.canGoBack() ? (
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <Pressable
+                onPress={() => router.back()}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel={t('common:settingsGoBackA11y')}
+                className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15 active:opacity-70"
+              >
+                <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
         <StyledText
           variant="extrabold"
           className="text-h1 text-paper-50 text-3xl"
@@ -34,93 +58,127 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
-        {/* Store Profile Section */}
-        <MoreGroupSection
+        <SettingsSection
           title={t('common:settingsStoreSection')}
           subtitle={t('common:settingsStoreSectionSub')}
         >
-          <View className="px-4 py-3">
-            <StyledText variant="medium" className="text-xs text-ink-400">
-              {t('common:settingsStoreName')}
-            </StyledText>
-            <StyledText variant="semibold" className="text-sm text-ink-900 mt-0.5 mb-3">
-              {profileLoading ? '...' : (profile?.storeName || '—')}
-            </StyledText>
-            <StyledText variant="medium" className="text-xs text-ink-400">
-              {t('common:settingsOwnerName')}
-            </StyledText>
-            <StyledText variant="semibold" className="text-sm text-ink-900 mt-0.5">
-              {profileLoading ? '...' : (profile?.ownerName || '—')}
-            </StyledText>
-          </View>
-        </MoreGroupSection>
+          <SettingsRow
+            label={t('common:settingsStoreName')}
+            value={
+              profileLoading ? t('common:loading') : (profile?.storeName ?? '—')
+            }
+            icon="home"
+          />
+          <SettingsRow
+            label={t('common:settingsOwnerName')}
+            value={
+              profileLoading ? t('common:loading') : (profile?.ownerName ?? '—')
+            }
+            icon="user"
+          />
+        </SettingsSection>
 
-        {/* Language Section */}
-        <MoreGroupSection title={t('common:settingsLanguage')}>
-          <View className="px-4 py-3 flex-row gap-3">
-            <TouchableOpacity
-              onPress={() => handleLanguageChange('en')}
-              className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
-                currentLang.startsWith('en')
-                  ? 'bg-cinnamon-500 border-cinnamon-500'
-                  : 'bg-paper-50 border-warm-200'
-              }`}
-            >
-              <StyledText
-                variant="semibold"
-                className={currentLang.startsWith('en') ? 'text-paper-50' : 'text-ink-700'}
-              >
-                English
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleLanguageChange('tl')}
-              className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
-                currentLang.startsWith('tl')
-                  ? 'bg-cinnamon-500 border-cinnamon-500'
-                  : 'bg-paper-50 border-warm-200'
-              }`}
-            >
-              <StyledText
-                variant="semibold"
-                className={currentLang.startsWith('tl') ? 'text-paper-50' : 'text-ink-700'}
-              >
-                Tagalog
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-        </MoreGroupSection>
+        <SettingsSection>
+          <SettingsRow
+            label={t('common:settingsLanguage')}
+            value={languageValue}
+            icon="globe"
+            interactive
+            onPress={() => setLanguagePickerOpen(true)}
+          />
+        </SettingsSection>
 
-        {/* Database Section */}
-        <MoreGroupSection
+        <SettingsSection
           title={t('common:settingsDatabaseSection')}
           subtitle={t('common:settingsDatabaseSub')}
         >
-          <View className="px-4 py-3">
-            <StyledText variant="medium" className="text-xs text-ink-600 mb-2">
-              {t('common:settingsLocalSnapshotsCount', { count: backups.length })}
-            </StyledText>
-            <TouchableOpacity
-              onPress={() => createBackup()}
-              disabled={isCreating}
-              className="bg-warm-100 active:bg-warm-200 py-2.5 px-4 rounded-xl flex-row items-center justify-center gap-2 border border-warm-300"
-            >
-              {isCreating ? (
-                <ActivityIndicator size="small" color="#623418" />
-              ) : null}
-              <StyledText variant="semibold" className="text-xs text-warm-900">
-                {t('common:settingsCreateBackup')}
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-        </MoreGroupSection>
-
-        <View className="px-5 mt-6 items-center">
-          <StyledText variant="regular" className="text-xs text-ink-400 text-center">
-            {t('common:settingsFooter')}
-          </StyledText>
-        </View>
+          <CloudBackupSection />
+          <LocalSnapshotsSection />
+        </SettingsSection>
       </ScrollView>
+
+      <LanguagePickerDialog
+        visible={languagePickerOpen}
+        onClose={() => setLanguagePickerOpen(false)}
+      />
     </View>
+  );
+}
+
+function SettingsSection({
+  title,
+  subtitle,
+  children,
+}: {
+  title?: string;
+  subtitle?: string;
+  children: ReactNode;
+}) {
+  return (
+    <View className="px-5 mt-6">
+      {title ? (
+        <StyledText
+          variant="extrabold"
+          className="text-xs uppercase text-ink-400 mb-1"
+          style={{ letterSpacing: 1.2 }}
+        >
+          {title}
+        </StyledText>
+      ) : null}
+      {subtitle ? (
+        <StyledText variant="regular" className="text-xs text-ink-400 mb-2">
+          {subtitle}
+        </StyledText>
+      ) : null}
+      <View className="bg-paper-50 rounded-2xl border border-warm-100 overflow-hidden">
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function SettingsRow({
+  label,
+  value,
+  subtitle,
+  icon,
+  interactive,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  subtitle?: string;
+  icon?: string;
+  interactive?: boolean;
+  onPress?: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!interactive}
+      className="px-4 py-3 border-b border-warm-100 last:border-b-0 flex-row items-center active:opacity-80"
+    >
+      {icon ? (
+        <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+          <FontAwesome name={icon as any} size={15} color="#623418" />
+        </View>
+      ) : null}
+      <View className="flex-1">
+        <StyledText variant="semibold" className="text-sm text-ink-700">
+          {label}
+        </StyledText>
+        <StyledText variant="regular" className="text-sm text-ink-500 mt-0.5">
+          {value}
+        </StyledText>
+        {subtitle ? (
+          <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
+            {subtitle}
+          </StyledText>
+        ) : null}
+      </View>
+      {interactive ? (
+        <FontAwesome name="chevron-right" size={14} color="#9C8E7E" />
+      ) : null}
+    </Pressable>
   );
 }

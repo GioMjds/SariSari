@@ -12,7 +12,7 @@ export function MoreHeroStrip({
 }: MoreHeroStripProps) {
   const childArray = Children.toArray(children);
   return (
-    <View testID={testID} className="bg-cinnamon-500 px-4 pt-2 pb-4" {...rest}>
+    <View testID={testID} className="px-4 pt-2 pb-4" {...rest}>
       <View className="flex-row gap-3">
         {childArray.map((child, index) => (
           <View key={index} className="flex-1">
