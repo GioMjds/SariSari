@@ -16,7 +16,7 @@ import {
   FinancialResultSection,
 } from '@/components/reports';
 import { router } from 'expo-router';
-import { LoadingBar, MoneyText, PullToRefreshHeader } from '@/components/ui';
+import { MoneyText, RefreshableScrollView, Skeleton } from '@/components/ui';
 import {
   useAgingBuckets,
   useCashEntries,
@@ -44,13 +44,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  View,
-  Pressable,
-} from 'react-native';
+import { View, Pressable } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
 import {
   DEFAULT_CREDITS_OVERVIEW,
@@ -60,10 +54,9 @@ import {
   DEFAULT_SALES_BREAKDOWN,
 } from '@/constants';
 
-// Fix: Infer strict type for empty array initialization
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: never[] = [];
 
-export default function HomeReports() {
+export default function TodayScreen() {
   const queryClient = useQueryClient();
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
   const [dateRange, setDateRange] = useState<DateRange>(
@@ -164,27 +157,16 @@ export default function HomeReports() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
   return (
-    <ScrollView
+    <RefreshableScrollView
       className="flex-1 bg-paper-200"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          tintColor="transparent"
-          colors={['transparent']}
-          progressBackgroundColor="transparent"
-          progressViewOffset={-1000}
-          style={{ opacity: 0 }}
-        />
-      }
       contentContainerStyle={{
         paddingTop: 8,
         paddingBottom: tabBarBottomOffset + 24,
       }}
+      isRefreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      refreshLabel="Ina-update ang datos..."
     >
-      <PullToRefreshHeader isRefreshing={isRefreshing} label="Ina-update ang datos..." />
-
       <View className="px-4 mt-2">
         <DateRangeSelector
           activeRange={dateRangeType}
@@ -197,8 +179,10 @@ export default function HomeReports() {
         <View className="px-4 mt-2">
           <EditorialEyebrow number="I" label="Dispatch from the counter" />
           {isInsightsLoading ? (
-            <View className="mt-3 items-center py-4">
-              <ActivityIndicator size="small" color="#623418" />
+            <View className="mt-3 bg-paper-50 rounded-xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+              <Skeleton width="40%" height={14} borderRadius={4} />
+              <Skeleton width="90%" height={12} borderRadius={4} />
+              <Skeleton width="70%" height={12} borderRadius={4} />
             </View>
           ) : (
             <View className="mt-3">
@@ -214,8 +198,43 @@ export default function HomeReports() {
       <View className="px-4 mt-6">
         <EditorialEyebrow number="II" label="The four pillars" />
         {isKPIsLoading ? (
-          <View className="mt-3 items-center py-8">
-            <ActivityIndicator size="large" color="#623418" />
+          <View className="mt-3 gap-y-3">
+            <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100/60 shadow-sm gap-y-3">
+              <Skeleton width={140} height={12} borderRadius={4} />
+              <Skeleton width={180} height={32} borderRadius={6} />
+              <Skeleton width="60%" height={14} borderRadius={4} />
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                <Skeleton width={90} height={10} borderRadius={4} />
+                <Skeleton width={100} height={24} borderRadius={6} />
+                <Skeleton width="80%" height={12} borderRadius={4} />
+              </View>
+              <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                <Skeleton width={90} height={10} borderRadius={4} />
+                <Skeleton width={100} height={24} borderRadius={6} />
+                <Skeleton width="80%" height={12} borderRadius={4} />
+              </View>
+            </View>
+
+            <View className="flex-row gap-3">
+              <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                <Skeleton width={90} height={10} borderRadius={4} />
+                <Skeleton width={100} height={24} borderRadius={6} />
+                <Skeleton width="80%" height={12} borderRadius={4} />
+              </View>
+              <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                <Skeleton width={90} height={10} borderRadius={4} />
+                <Skeleton width={100} height={24} borderRadius={6} />
+                <Skeleton width="80%" height={12} borderRadius={4} />
+              </View>
+            </View>
+
+            <View className="mt-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+              <Skeleton width={140} height={14} borderRadius={4} />
+              <Skeleton width="100%" height={40} borderRadius={8} />
+            </View>
           </View>
         ) : (
           <View className="mt-3">
@@ -324,8 +343,22 @@ export default function HomeReports() {
             defaultExpanded
           >
             {isSalesTrendLoading ? (
-              <View className="items-center py-8">
-                <ActivityIndicator size="large" color="#623418" />
+              <View className="py-2 gap-y-4">
+                <Skeleton width="100%" height={180} borderRadius={12} />
+                <View
+                  style={{
+                    borderBottomWidth: 1,
+                    borderStyle: 'dashed',
+                    borderColor: '#D1D5DC',
+                  }}
+                />
+                <View className="gap-y-2">
+                  <Skeleton width="100%" height={24} borderRadius={6} />
+                  <View className="flex-row justify-between">
+                    <Skeleton width={100} height={14} borderRadius={4} />
+                    <Skeleton width={100} height={14} borderRadius={4} />
+                  </View>
+                </View>
               </View>
             ) : (
               <View>
@@ -366,8 +399,35 @@ export default function HomeReports() {
           defaultExpanded
         >
           {isTopProductsLoading ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#623418" />
+            <View className="py-2 gap-y-4">
+              <Skeleton width={160} height={12} borderRadius={4} />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <View
+                  key={`top-prod-skel-${i}`}
+                  className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
+                >
+                  <View className="flex-row items-center flex-1 mr-3 gap-2">
+                    <Skeleton width={24} height={24} circle />
+                    <Skeleton width="60%" height={14} borderRadius={4} />
+                  </View>
+                  <Skeleton width={70} height={16} borderRadius={4} />
+                </View>
+              ))}
+
+              <View className="my-2 flex-row items-center">
+                <View className="flex-1 h-px bg-ink-200" />
+              </View>
+
+              <Skeleton width={180} height={12} borderRadius={4} />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <View
+                  key={`profit-skel-${i}`}
+                  className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
+                >
+                  <Skeleton width="50%" height={14} borderRadius={4} />
+                  <Skeleton width={60} height={14} borderRadius={4} />
+                </View>
+              ))}
             </View>
           ) : (
             <View>
@@ -429,8 +489,28 @@ export default function HomeReports() {
           defaultExpanded
         >
           {isStockLoading ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#623418" />
+            <View className="py-2 gap-y-4">
+              <View className="flex-row flex-wrap gap-2">
+                <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
+                  <Skeleton width={80} height={10} borderRadius={4} />
+                  <Skeleton width={50} height={20} borderRadius={4} />
+                </View>
+                <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
+                  <Skeleton width={80} height={10} borderRadius={4} />
+                  <Skeleton width={50} height={20} borderRadius={4} />
+                </View>
+              </View>
+
+              <View className="flex-row items-stretch border border-ink-200 rounded-md overflow-hidden bg-paper-50 p-3 gap-3">
+                <View className="flex-1 gap-y-2">
+                  <Skeleton width={60} height={10} borderRadius={4} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+                <View className="flex-1 gap-y-2">
+                  <Skeleton width={60} height={10} borderRadius={4} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+              </View>
             </View>
           ) : (
             <View>
@@ -553,8 +633,18 @@ export default function HomeReports() {
           defaultExpanded
         >
           {isCreditAgingLoading ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#623418" />
+            <View className="py-2 gap-y-4">
+              <Skeleton width="100%" height={140} borderRadius={12} />
+              <View className="flex-row gap-3">
+                <View className="flex-1 p-3 border border-ink-200 rounded-md bg-paper-50 gap-y-2">
+                  <Skeleton width={60} height={10} borderRadius={4} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+                <View className="flex-1 p-3 border border-ink-200 rounded-md bg-paper-50 gap-y-2">
+                  <Skeleton width={60} height={10} borderRadius={4} />
+                  <Skeleton width={80} height={16} borderRadius={4} />
+                </View>
+              </View>
             </View>
           ) : (
             <View>
@@ -611,8 +701,22 @@ export default function HomeReports() {
           defaultExpanded
         >
           {isSessionsLoading ? (
-            <View className="items-center py-8">
-              <ActivityIndicator size="large" color="#623418" />
+            <View className="py-2 gap-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <View
+                  key={`session-skel-${i}`}
+                  className="border border-ink-200 rounded-xl bg-paper-50 p-4 gap-y-2"
+                >
+                  <View className="flex-row justify-between items-center">
+                    <Skeleton width={100} height={16} borderRadius={4} />
+                    <Skeleton width={50} height={18} borderRadius={10} />
+                  </View>
+                  <View className="flex-row gap-3">
+                    <Skeleton width={90} height={12} borderRadius={4} />
+                    <Skeleton width={90} height={12} borderRadius={4} />
+                  </View>
+                </View>
+              ))}
             </View>
           ) : filteredSessions.length === 0 ? (
             <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
@@ -629,7 +733,7 @@ export default function HomeReports() {
           )}
         </CollapsibleSection>
       </View>
-    </ScrollView>
+    </RefreshableScrollView>
   );
 }
 
@@ -719,7 +823,10 @@ function CashSessionRow({ session }: { session: any }) {
             Manual Movements ({entries.length})
           </StyledText>
           {isLoading ? (
-            <ActivityIndicator size="small" color="#623418" className="py-2" />
+            <View className="py-2 gap-y-2">
+              <Skeleton width="100%" height={20} borderRadius={4} />
+              <Skeleton width="100%" height={20} borderRadius={4} />
+            </View>
           ) : entries.length === 0 ? (
             <StyledText
               variant="regular"

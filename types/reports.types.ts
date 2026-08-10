@@ -1,3 +1,5 @@
+import type { FontAwesome } from '@expo/vector-icons';
+
 export interface DateRange {
 	startDate: Date;
 	endDate: Date;
@@ -80,5 +82,5 @@ export interface ReportInsight {
 	type: 'success' | 'warning' | 'info';
 	title: string;
 	message: string;
-	icon: string;
+	icon: keyof typeof FontAwesome.glyphMap;
 }

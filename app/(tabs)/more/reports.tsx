@@ -54,7 +54,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const EMPTY_ARRAY: any[] = [];
+const EMPTY_ARRAY: never[] = [];
 
 const DEFAULT_KPIS: ReportKPIs = {
   totalSales: 0,

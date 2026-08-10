@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { useEffect } from 'react';
+import { View } from 'react-native';
 import Animated, {
+  Extrapolation,
+  SharedValue,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -17,10 +19,6 @@ export interface LoadingBarProps {
   size?: 'sm' | 'md' | 'lg';
   /** Color palette variant */
   colorScheme?: 'brand' | 'persimmon' | 'sage' | 'ink';
-  /** Optional text label displayed next to or below beads */
-  label?: string;
-  /** Position of optional label relative to beads */
-  labelPosition?: 'right' | 'bottom';
   /** NativeWind class name wrapper for layout & margins */
   className?: string;
   /** Optional test identifier */
@@ -31,14 +29,14 @@ const SIZE_MAP = {
   sm: { beadWidth: 4, beadHeight: 10, gap: 4, height: 16 },
   md: { beadWidth: 6, beadHeight: 16, gap: 6, height: 24 },
   lg: { beadWidth: 8, beadHeight: 22, gap: 8, height: 32 },
-};
+} as const;
 
 const COLOR_MAP = {
   brand: ['#E85A1F', '#FA7A4B', '#623418', '#4F7A24', '#4F7A24'],
   persimmon: ['#FA7A4B', '#E85A1F', '#C8460F', '#E85A1F', '#FA7A4B'],
   sage: ['#92B662', '#4F7A24', '#3D5E1B', '#4F7A24', '#92B662'],
   ink: ['#A89F90', '#564E45', '#28231D', '#564E45', '#A89F90'],
-};
+} as const;
 
 interface BeadItemProps {
   index: number;
@@ -56,11 +54,11 @@ function BeadItem({ index, color, beadWidth, beadHeight }: BeadItemProps) {
         index * 120,
         withSequence(
           withTiming(1, { duration: 350, easing: Easing.out(Easing.quad) }),
-          withTiming(0, { duration: 350, easing: Easing.in(Easing.quad) })
-        )
+          withTiming(0, { duration: 350, easing: Easing.in(Easing.quad) }),
+        ),
       ),
       -1,
-      false
+      false,
     );
   }, [index, progress]);
 
@@ -93,24 +91,18 @@ function BeadItem({ index, color, beadWidth, beadHeight }: BeadItemProps) {
 export function LoadingBar({
   size = 'md',
   colorScheme = 'brand',
-  label,
-  labelPosition = 'right',
   className = '',
   testID = 'loading-bar',
 }: LoadingBarProps) {
   const config = SIZE_MAP[size];
   const colors = COLOR_MAP[colorScheme];
 
-  const isBottom = labelPosition === 'bottom';
-
   return (
     <View
       testID={testID}
       accessibilityRole="progressbar"
       accessibilityState={{ busy: true }}
-      className={`flex-row items-center justify-center ${
-        isBottom ? 'flex-col gap-2' : 'gap-3'
-      } ${className}`}
+      className={`flex-row items-center justify-center ${className}`}
     >
       <View
         style={{
@@ -130,9 +122,6 @@ export function LoadingBar({
           />
         ))}
       </View>
-      {Boolean(label) && (
-        <Text className="text-xs font-semibold text-ink-500">{label}</Text>
-      )}
     </View>
   );
 }
@@ -141,18 +130,33 @@ export interface PullToRefreshHeaderProps {
   isRefreshing: boolean;
   label?: string;
   className?: string;
+  /**
+   * Live scroll offset (negative while pulling past the top). When provided,
+   * the header animates directly from this value so the LoadingBar tracks the
+   * user's finger in real time. When omitted, the header falls back to a
+   * snap animation driven only by `isRefreshing` toggling.
+   */
+  scrollY?: SharedValue<number>;
+  /**
+   * Pull distance (px) at which the header reaches its full visible size.
+   * Only used when `scrollY` is provided. Defaults to 80.
+   */
+  refreshThreshold?: number;
 }
 
 export function PullToRefreshHeader({
   isRefreshing,
-  label = 'Ina-update ang datos...',
   className = '',
+  scrollY,
+  refreshThreshold = 80,
 }: PullToRefreshHeaderProps) {
   const height = useSharedValue(0);
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(-20);
 
   useEffect(() => {
+    if (scrollY !== undefined) return;
+
     if (isRefreshing) {
       height.value = withSpring(56, { damping: 16, stiffness: 140 });
       opacity.value = withTiming(1, { duration: 180 });
@@ -162,19 +166,53 @@ export function PullToRefreshHeader({
       opacity.value = withTiming(0, { duration: 180 });
       translateY.value = withTiming(-20, { duration: 200 });
     }
-  }, [isRefreshing, height, opacity, translateY]);
+  }, [isRefreshing, height, opacity, translateY, scrollY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: height.value,
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-    overflow: 'hidden',
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    if (scrollY !== undefined) {
+      // Negative contentOffset means the user is pulling past the top edge.
+      // Clamp so we never grow the header from a downward scroll.
+      const pullDistance = Math.max(0, -scrollY.value);
+
+      const h = interpolate(
+        pullDistance,
+        [0, refreshThreshold, refreshThreshold * 1.5],
+        [0, 56, 64],
+        Extrapolation.CLAMP,
+      );
+      const o = interpolate(
+        pullDistance,
+        [0, refreshThreshold * 0.4],
+        [0, 1],
+        Extrapolation.CLAMP,
+      );
+      const ty = interpolate(
+        pullDistance,
+        [0, refreshThreshold],
+        [-20, 0],
+        Extrapolation.CLAMP,
+      );
+
+      return {
+        height: h,
+        opacity: o,
+        transform: [{ translateY: ty }],
+        overflow: 'hidden',
+      };
+    }
+
+    return {
+      height: height.value,
+      opacity: opacity.value,
+      transform: [{ translateY: translateY.value }],
+      overflow: 'hidden',
+    };
+  });
 
   return (
     <Animated.View style={animatedStyle} className={`px-4 ${className}`}>
-      <View className="items-center justify-center py-3 rounded-xl bg-paper-50 border border-paper-300 shadow-sm">
-        <LoadingBar size="sm" label={label} colorScheme="brand" />
+      <View className="items-center justify-center py-3">
+        <LoadingBar size="md" colorScheme="brand" />
       </View>
     </Animated.View>
   );
