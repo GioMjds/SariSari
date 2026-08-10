@@ -14,6 +14,7 @@ import { Pressable, View } from 'react-native';
  */
 
 type CollapsibleSectionProps = {
+  id?: string;
   number: string;
   title: string;
   subtitle?: string;
@@ -55,6 +56,7 @@ const TONE_BAR: Record<NonNullable<CollapsibleSectionProps['tone']>, string> = {
 };
 
 export function CollapsibleSection({
+  id,
   number,
   title,
   subtitle,
@@ -76,7 +78,10 @@ export function CollapsibleSection({
   };
 
   return (
-    <View className="rounded-card bg-paper-50 shadow-paper overflow-hidden border border-ink-100">
+    <View
+      testID={id ? `collapsible-section-${id}` : undefined}
+      className="rounded-card bg-paper-50 shadow-paper overflow-hidden border border-ink-100"
+    >
       <Pressable
         onPress={handlePress}
         accessibilityRole="button"
