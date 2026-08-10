@@ -98,7 +98,7 @@ export default function SettingsScreen() {
         >
           <View className="px-4 py-3">
             <StyledText variant="medium" className="text-xs text-ink-600 mb-2">
-              Local Snapshots: {backups.length} stored on device
+              {t('common:settingsLocalSnapshotsCount', { count: backups.length })}
             </StyledText>
             <TouchableOpacity
               onPress={() => createBackup()}
@@ -109,7 +109,7 @@ export default function SettingsScreen() {
                 <ActivityIndicator size="small" color="#623418" />
               ) : null}
               <StyledText variant="semibold" className="text-xs text-warm-900">
-                Create Backup Snapshot
+                {t('common:settingsCreateBackup')}
               </StyledText>
             </TouchableOpacity>
           </View>

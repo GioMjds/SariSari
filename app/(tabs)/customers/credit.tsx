@@ -8,7 +8,7 @@ import { Customer } from '@/types/credits.types';
 export default function CreditLedgerScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
-  useLocalSearchParams<{ filter?: string }>();
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
   const { data: customers = [], isLoading } = useCustomers();
 
   const handleSelectCustomer = (customer: Customer) => {
@@ -37,6 +37,7 @@ export default function CreditLedgerScreen() {
       <CreditLedgerTab
         customers={customers}
         onSelectCustomer={handleSelectCustomer}
+        {...(filter === 'overdue' ? { defaultFilter: 'overdue' } : {})}
       />
     </View>
   );

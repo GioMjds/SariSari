@@ -32,6 +32,7 @@ const routes = {
   gastos: '/gastos-kaha',
   settings: '/(tabs)/more/settings',
   devReset: '/(tabs)/home/dev/reset',
+  collection: '/(tabs)/customers/credit',
 } satisfies Record<string, Href>;
 
 function MoreTab() {

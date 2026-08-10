@@ -66,6 +66,8 @@
   "settingsLanguage": "Language",
   "settingsDatabaseSection": "Database",
   "settingsDatabaseSub": "Automatic and on-demand backups of your store",
+  "settingsLocalSnapshotsCount": "Local Snapshots: {{count}} stored on device",
+  "settingsCreateBackup": "Create Backup Snapshot",
   "settingsGoBackA11y": "Go back",
   "settingsFooter": "SariSari — a working prototype.",
 

@@ -20,7 +20,7 @@ export function MoreTileGrid({
   return (
     <View
       testID={testID}
-      style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 }}
       {...rest}
     >
       {childArray.map((child, index) => (
@@ -29,6 +29,7 @@ export function MoreTileGrid({
           style={{
             width: `${100 / columns}%`,
             paddingHorizontal: 6,
+            marginBottom: 12,
             boxSizing: 'border-box',
           }}
         >
@@ -41,6 +42,7 @@ export function MoreTileGrid({
           style={{
             width: `${100 / columns}%`,
             paddingHorizontal: 6,
+            marginBottom: 12,
           }}
           aria-hidden
         />

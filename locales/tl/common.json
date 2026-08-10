@@ -66,6 +66,8 @@
   "settingsLanguage": "Wika",
   "settingsDatabaseSection": "Database",
   "settingsDatabaseSub": "Awtomatiko at on-demand na backup ng iyong tindahan",
+  "settingsLocalSnapshotsCount": "Mga local snapshot: {{count}} nakatago sa device",
+  "settingsCreateBackup": "Gumawa ng backup snapshot",
   "settingsGoBackA11y": "Bumalik",
   "settingsFooter": "SariSari — isang gumaganang prototype.",
 

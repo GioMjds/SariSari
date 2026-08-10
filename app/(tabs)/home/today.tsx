@@ -343,8 +343,9 @@ export default function TodayScreen() {
             subtitle="Daily takings and how customers paid"
             tone="persimmon"
             icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
-            defaultExpanded={requestedSection === undefined}
-            expanded={requestedSection === 'trend' ? true : undefined}
+            defaultExpanded={
+              requestedSection === 'trend' || requestedSection === undefined
+            }
           >
             {isSalesTrendLoading ? (
               <View className="py-2 gap-y-4">
@@ -401,8 +402,7 @@ export default function TodayScreen() {
           subtitle="The champions of the shelves"
           tone="cinnamon"
           icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
-          defaultExpanded={requestedSection === undefined}
-          expanded={requestedSection === 'top' ? true : undefined}
+          defaultExpanded={requestedSection === 'top'}
         >
           {isTopProductsLoading ? (
             <View className="py-2 gap-y-4">
@@ -493,8 +493,7 @@ export default function TodayScreen() {
           subtitle="What left the shelves, what needs restock"
           tone="sage"
           icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
-          defaultExpanded={requestedSection === undefined}
-          expanded={requestedSection === 'stock' ? true : undefined}
+          defaultExpanded={requestedSection === 'stock'}
         >
           {isStockLoading ? (
             <View className="py-2 gap-y-4">
@@ -639,8 +638,7 @@ export default function TodayScreen() {
           subtitle="How long the debt has been sitting on the books"
           tone="cinnamon"
           icon={<FontAwesome name="hourglass-half" size={16} color="#391C0A" />}
-          defaultExpanded={requestedSection === undefined}
-          expanded={requestedSection === 'aging' ? true : undefined}
+          defaultExpanded={requestedSection === 'aging'}
         >
           {isCreditAgingLoading ? (
             <View className="py-2 gap-y-4">
@@ -709,8 +707,7 @@ export default function TodayScreen() {
           subtitle="Daily drawer logs, counted physical cash, and variances"
           tone="cinnamon"
           icon={<FontAwesome name="book" size={16} color="#391C0A" />}
-          defaultExpanded={requestedSection === undefined}
-          expanded={requestedSection === 'cashbook' ? true : undefined}
+          defaultExpanded={requestedSection === 'cashbook'}
         >
           {isSessionsLoading ? (
             <View className="py-2 gap-y-3">
