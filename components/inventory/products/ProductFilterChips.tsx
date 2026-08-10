@@ -6,7 +6,7 @@ export type ProductsFilter = 'all' | 'in_stock' | 'low' | 'out' | 'new';
 type FilterOption = {
   key: ProductsFilter;
   label: string;
-}
+};
 
 const OPTIONS = [
   { key: 'all', label: 'All' },
@@ -16,13 +16,15 @@ const OPTIONS = [
   { key: 'new', label: 'New' },
 ] satisfies FilterOption[];
 
+interface ProductFilterChipsProps {
+  value: ProductsFilter;
+  onChange: (v: ProductsFilter) => void;
+}
+
 export function ProductsFilterChips({
   value,
   onChange,
-}: {
-  value: ProductsFilter;
-  onChange: (v: ProductsFilter) => void;
-}) {
+}: ProductFilterChipsProps) {
   return (
     <ScrollView
       horizontal

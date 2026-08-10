@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Modal,
   View,
@@ -132,11 +131,7 @@ export function ProductActionMenuModal({
               accessibilityLabel={`Delete ${product.name}`}
               className="min-h-[44px] px-3 rounded-xl flex-row items-center gap-x-3 bg-rose-50 active:bg-rose-100"
             >
-              <FontAwesome
-                name="trash"
-                size={16}
-                color="#C22D2D"
-              />
+              <FontAwesome name="trash" size={16} color="#C22D2D" />
               <StyledText
                 variant="extrabold"
                 className="text-base text-semantic-danger"
@@ -152,13 +147,18 @@ export function ProductActionMenuModal({
 }
 
 interface ActionRowProps {
-  icon: React.ComponentProps<typeof FontAwesome>['name'];
+  icon: keyof typeof FontAwesome.glyphMap;
   iconColor?: string;
   label: string;
   onPress: () => void;
 }
 
-function ActionRow({ icon, iconColor = '#564E45', label, onPress }: ActionRowProps) {
+function ActionRow({
+  icon,
+  iconColor = '#564E45',
+  label,
+  onPress,
+}: ActionRowProps) {
   return (
     <Pressable
       onPress={onPress}

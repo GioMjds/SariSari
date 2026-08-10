@@ -24,7 +24,10 @@ export function MiniInsightsCard({
           >
             TOP SELLER TODAY
           </StyledText>
-          <StyledText variant="extrabold" className="text-paper-50 text-sm mt-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-paper-50 text-sm mt-0.5"
+          >
             {topProductName} leads with {unitsSold} units.
           </StyledText>
         </View>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller, FieldErrors, UseFormHandleSubmit } from 'react-hook-form';
@@ -88,7 +87,7 @@ export function CloseSessionFormCard({
           render={({ field: { onChange, onBlur, value } }) => (
             <View className="relative justify-center">
               <View className="absolute left-4 z-10">
-                <StyledText className="text-base font-extrabold text-ink-500">
+                <StyledText variant="extrabold" className="text-base font-extrabold text-ink-500">
                   ₱
                 </StyledText>
               </View>
@@ -113,7 +112,7 @@ export function CloseSessionFormCard({
           )}
         />
         {closeErrors.countedCash && (
-          <StyledText className="text-semantic-danger text-xs mt-1.5">
+          <StyledText variant="regular" className="text-semantic-danger text-xs mt-1.5">
             {closeErrors.countedCash.message ||
               'Please enter counted physical cash'}
           </StyledText>

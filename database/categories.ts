@@ -81,12 +81,13 @@ export const insertCategoryWithProducts = async (
   name: string,
   productIds: number[] = [],
 ): Promise<number> => {
-  return await db.withTransactionAsync(async () => {
+  let categoryId = 0;
+  await db.withTransactionAsync(async () => {
     const result = await db.runAsync(
       'INSERT INTO categories (name) VALUES (?)',
       [name],
     );
-    const categoryId = result.lastInsertRowId;
+    categoryId = result.lastInsertRowId;
     if (productIds.length > 0) {
       const placeholders = productIds.map(() => '?').join(',');
       await db.runAsync(
@@ -94,6 +95,6 @@ export const insertCategoryWithProducts = async (
         [name, ...productIds],
       );
     }
-    return categoryId;
   });
+  return categoryId;
 };

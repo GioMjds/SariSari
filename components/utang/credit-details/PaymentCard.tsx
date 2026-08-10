@@ -10,22 +10,13 @@ import { StyledText } from '@/components/elements';
 
 interface PaymentCardProps {
   payment: Payment;
-  /**
-   * Position in the list — drives the staggered entry animation. When
-   * omitted, no entrance animation is rendered (the card appears bare).
-   */
   index?: number;
 }
 
-/**
- * PaymentCard — one row in the Payments tab.
- *
- * Reads like a receipt line: a method icon (cash / bank / other) on
- * the left, the amount on the right, and the timestamp sitting under
- * the label. Optional notes float in their own dashed callout below
- * so they don't compete with the money line for attention.
- */
-export const PaymentCard = memo(function PaymentCard({ payment, index }: PaymentCardProps) {
+export const PaymentCard = memo(function PaymentCard({
+  payment,
+  index,
+}: PaymentCardProps) {
   const paymentDate = parseStoredTimestamp(payment.date);
   const method = describeMethod(payment.payment_method);
 
@@ -69,20 +60,14 @@ export const PaymentCard = memo(function PaymentCard({ payment, index }: Payment
           </View>
 
           {/* Amount — green to signal money coming in */}
-          <StyledText
-            variant="black"
-            className="text-semantic-success text-lg"
-          >
+          <StyledText variant="black" className="text-semantic-success text-lg">
             {formatPesos(payment.amount)}
           </StyledText>
         </View>
 
         {payment.notes && payment.notes.trim() !== '' && (
           <View className="mt-3 rounded-xl bg-paper-100 px-3 py-2">
-            <StyledText
-              variant="medium"
-              className="text-ink-700 text-caption"
-            >
+            <StyledText variant="medium" className="text-ink-700 text-caption">
               {payment.notes}
             </StyledText>
           </View>
@@ -102,9 +87,7 @@ export const PaymentCard = memo(function PaymentCard({ payment, index }: Payment
       {card}
     </MotiView>
   );
-})
-
-/* ─── Method badge ───────────────────────────────────────────────────── */
+});
 
 type MethodVisual = {
   label: string;

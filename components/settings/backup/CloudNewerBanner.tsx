@@ -10,6 +10,7 @@
 
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { useCloudNewerStatus } from '@/hooks/useBackup';
@@ -25,7 +26,7 @@ type CloudNewerBannerProps = {
  */
 const formatRelative = (
   epochMs: number | null | undefined,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string => {
   if (!epochMs) return '';
   const diffMs = Date.now() - epochMs;

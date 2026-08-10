@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
-import { useBarcodeResolver, useCategories, useGetProduct, useProducts } from '@/hooks';
+import {
+  useBarcodeResolver,
+  useCategories,
+  useGetProduct,
+  useProducts,
+} from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib';
-import { useToastStore } from '@/stores';
-import { MARKUP_PRESETS, MarkupPreset } from '../products/form/ProductPricingCard';
+import { MarkupPreset } from '../products/form/ProductPricingCard';
+import type { UpdateProductParams } from '@/types/products.types';
 
 export interface EditProductFormData {
   name: string;
@@ -33,13 +36,13 @@ const safeTrim = (s?: string) => (s ?? '').trim();
 
 export function useEditProductForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const productId = parseInt(id, 10);
+  const productId = parseInt(id ?? '0', 10);
 
-  const { updateProductMutation, deleteProductMutation, getAllProductsQuery } = useProducts();
+  const { updateProductMutation, deleteProductMutation, getAllProductsQuery } =
+    useProducts();
   const { getAllCategoriesQuery } = useCategories();
   const { data: categories = [] } = getAllCategoriesQuery;
   const { data: product, isLoading } = useGetProduct(productId);
-  const addToast = useToastStore((state) => state.addToast);
   const { resolve } = useBarcodeResolver();
 
   const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
@@ -47,64 +50,70 @@ export function useEditProductForm() {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
 
+  const defaultValues = useMemo<EditProductFormData>(() => {
+    if (!product) {
+      return {
+        name: '',
+        sku: '',
+        barcode: '',
+        costPerPiece: '',
+        price: '',
+        initialStock: '',
+        category: '',
+        supplier_id: '',
+        imageUri: '',
+        bundleCost: '',
+        piecesPerBundle: '',
+        enableWholesale: false,
+        retailUnitName: 'Pc',
+        wholesaleUnitName: 'Case',
+        conversionFactor: '12',
+        wholesalePrice: '',
+        wholesaleCostPrice: '',
+        wholesaleBarcode: '',
+      };
+    }
+
+    return {
+      name: product.name,
+      sku: product.sku,
+      barcode: product.barcode || '',
+      costPerPiece: product.cost_price ? product.cost_price.toString() : '',
+      price: product.price.toString(),
+      initialStock: product.quantity.toString(),
+      category: product.category || '',
+      supplier_id: product.supplier_id || '',
+      imageUri: product.image_uri || '',
+      bundleCost: '',
+      piecesPerBundle: '',
+      enableWholesale: !!(
+        product.wholesale_unit_name &&
+        product.conversion_factor &&
+        product.conversion_factor > 1
+      ),
+      retailUnitName: product.retail_unit_name || 'Pc',
+      wholesaleUnitName: product.wholesale_unit_name || 'Case',
+      conversionFactor: product.conversion_factor
+        ? product.conversion_factor.toString()
+        : '12',
+      wholesalePrice: product.wholesale_price
+        ? product.wholesale_price.toString()
+        : '',
+      wholesaleCostPrice: product.wholesale_cost_price
+        ? product.wholesale_cost_price.toString()
+        : '',
+      wholesaleBarcode: product.wholesale_barcode || '',
+    };
+  }, [product]);
+
   const {
     control,
     handleSubmit,
     setValue,
     formState: { isDirty },
   } = useForm<EditProductFormData>({
-    defaultValues: {
-      name: '',
-      sku: '',
-      barcode: '',
-      costPerPiece: '',
-      price: '',
-      initialStock: '',
-      category: '',
-      supplier_id: '',
-      imageUri: '',
-      bundleCost: '',
-      piecesPerBundle: '',
-      enableWholesale: false,
-      retailUnitName: 'Pc',
-      wholesaleUnitName: 'Case',
-      conversionFactor: '12',
-      wholesalePrice: '',
-      wholesaleCostPrice: '',
-      wholesaleBarcode: '',
-    },
-    values: product
-      ? {
-          name: product.name,
-          sku: product.sku,
-          barcode: product.barcode || '',
-          costPerPiece: product.cost_price ? product.cost_price.toString() : '',
-          price: product.price.toString(),
-          initialStock: product.quantity.toString(),
-          category: product.category || '',
-          supplier_id: product.supplier_id || '',
-          imageUri: product.image_uri || '',
-          bundleCost: '',
-          piecesPerBundle: '',
-          enableWholesale: !!(
-            product.wholesale_unit_name &&
-            product.conversion_factor &&
-            product.conversion_factor > 1
-          ),
-          retailUnitName: product.retail_unit_name || 'Pc',
-          wholesaleUnitName: product.wholesale_unit_name || 'Case',
-          conversionFactor: product.conversion_factor
-            ? product.conversion_factor.toString()
-            : '12',
-          wholesalePrice: product.wholesale_price
-            ? product.wholesale_price.toString()
-            : '',
-          wholesaleCostPrice: product.wholesale_cost_price
-            ? product.wholesale_cost_price.toString()
-            : '',
-          wholesaleBarcode: product.wholesale_barcode || '',
-        }
-      : undefined,
+    defaultValues,
+    values: defaultValues,
   });
 
   const name = useWatch({ control, name: 'name' });
@@ -115,9 +124,6 @@ export function useEditProductForm() {
   const initialStock = useWatch({ control, name: 'initialStock' });
   const category = useWatch({ control, name: 'category' });
   const supplierId = useWatch({ control, name: 'supplier_id' });
-  const imageUri = useWatch({ control, name: 'imageUri' });
-  const bundleCost = useWatch({ control, name: 'bundleCost' });
-  const piecesPerBundle = useWatch({ control, name: 'piecesPerBundle' });
   const enableWholesale = useWatch({ control, name: 'enableWholesale' });
   const retailUnitName = useWatch({ control, name: 'retailUnitName' });
   const wholesaleUnitName = useWatch({ control, name: 'wholesaleUnitName' });
@@ -139,7 +145,8 @@ export function useEditProductForm() {
         (p) =>
           p.id !== productId &&
           ((p.barcode != null && p.barcode === trimmedBarcode) ||
-            (p.wholesale_barcode != null && p.wholesale_barcode === trimmedBarcode) ||
+            (p.wholesale_barcode != null &&
+              p.wholesale_barcode === trimmedBarcode) ||
             p.sku === trimmedBarcode),
       ) ?? null
     );
@@ -187,9 +194,9 @@ export function useEditProductForm() {
   categoryRef.current = category;
 
   const selectCategory = useCallback(
-    (next: string) => {
+    (nextCat: string) => {
       const current = categoryRef.current;
-      const nextCategory = current === next ? '' : next;
+      const nextCategory = current === nextCat ? '' : nextCat;
       setValue('category', nextCategory, { shouldDirty: true });
     },
     [setValue],
@@ -200,11 +207,10 @@ export function useEditProductForm() {
 
   const handleScannedBarcode = useCallback(
     async (barcodeValue: string) => {
-      const result = await resolve(barcodeValue);
       setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
       setIsScannerOpen(false);
     },
-    [resolve, setValue],
+    [setValue],
   );
 
   const handleBack = useCallback(() => {
@@ -215,6 +221,10 @@ export function useEditProductForm() {
     }
   }, [isDirty]);
 
+  const cancelDiscard = useCallback(() => {
+    setShowDiscardModal(false);
+  }, []);
+
   const confirmDiscard = useCallback(() => {
     setShowDiscardModal(false);
     router.back();
@@ -222,29 +232,57 @@ export function useEditProductForm() {
 
   const submit = handleSubmit(async (data) => {
     const priceValue = parsePesosInput(data.price);
-    const stockValue = data.initialStock ? parseInt(data.initialStock, 10) : product?.quantity || 0;
-    const costPriceValue = data.costPerPiece ? parsePesosInput(data.costPerPiece) : undefined;
+    const stockValue = data.initialStock
+      ? parseInt(data.initialStock, 10)
+      : product?.quantity || 0;
+    const costPriceValue = data.costPerPiece
+      ? parsePesosInput(data.costPerPiece)
+      : undefined;
     const barcodeVal = safeTrim(data.barcode);
 
     try {
-      await updateProductMutation.mutateAsync({
+      const updatePayload: UpdateProductParams = {
         id: productId,
         name: safeTrim(data.name),
         sku: safeTrim(data.sku),
         price: priceValue,
-        quantity: Number.isFinite(stockValue) ? stockValue : product?.quantity || 0,
-        cost_price: costPriceValue,
-        category: safeTrim(data.category) || undefined,
+        quantity: Number.isFinite(stockValue)
+          ? stockValue
+          : product?.quantity || 0,
         barcode: barcodeVal || null,
         supplier_id: data.supplier_id ? data.supplier_id : null,
         image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
         retail_unit_name: safeTrim(data.retailUnitName) || 'Pc',
-        wholesale_unit_name: data.enableWholesale ? safeTrim(data.wholesaleUnitName) || null : null,
-        wholesale_price: data.enableWholesale && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null,
-        wholesale_cost_price: data.enableWholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null,
-        conversion_factor: data.enableWholesale && data.conversionFactor ? parseInt(data.conversionFactor, 10) : null,
-        wholesale_barcode: data.enableWholesale && safeTrim(data.wholesaleBarcode) ? safeTrim(data.wholesaleBarcode) : null,
-      });
+        wholesale_unit_name: data.enableWholesale
+          ? safeTrim(data.wholesaleUnitName) || null
+          : null,
+        wholesale_price:
+          data.enableWholesale && data.wholesalePrice
+            ? parsePesosInput(data.wholesalePrice)
+            : null,
+        wholesale_cost_price:
+          data.enableWholesale && data.wholesaleCostPrice
+            ? parsePesosInput(data.wholesaleCostPrice)
+            : null,
+        conversion_factor:
+          data.enableWholesale && data.conversionFactor
+            ? parseInt(data.conversionFactor, 10)
+            : null,
+        wholesale_barcode:
+          data.enableWholesale && safeTrim(data.wholesaleBarcode)
+            ? safeTrim(data.wholesaleBarcode)
+            : null,
+      };
+
+      if (costPriceValue !== undefined) {
+        updatePayload.cost_price = costPriceValue;
+      }
+      const trimmedCategory = safeTrim(data.category);
+      if (trimmedCategory) {
+        updatePayload.category = trimmedCategory;
+      }
+
+      await updateProductMutation.mutateAsync(updatePayload);
       router.back();
     } catch {
       // Surfaced by mutation state
@@ -298,9 +336,11 @@ export function useEditProductForm() {
     bumpStock,
     selectCategory,
     handleBack,
+    cancelDiscard,
     confirmDiscard,
     submit,
     updateProductMutation,
     deleteProductMutation,
+    resolve,
   };
 }

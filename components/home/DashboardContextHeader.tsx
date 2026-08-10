@@ -19,7 +19,6 @@ export interface DashboardContextHeaderProps {
 
 export const DashboardContextHeader = memo(function DashboardContextHeader({
   subtitle,
-  hasStockRisk,
   cashSession,
   totalPesos,
   transactionCount,

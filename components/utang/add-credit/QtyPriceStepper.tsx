@@ -5,22 +5,12 @@ import { CreditFormData } from './useAddCreditForm';
 import { StyledText } from '@/components/elements';
 
 interface QtyPriceStepperProps {
-  /** Current qty string from the form. */
   qty: string;
-  /** Min-clamped quantity value (for disabling the minus button). */
   qtyNum: number;
-  /** RHF control so this component can render the amount Controller. */
   control: Control<CreditFormData>;
-  /** Called when the user taps − or + on the stepper. */
   onBump: (delta: number) => void;
 }
 
-/**
- * QtyPriceStepper — the side-by-side quantity stepper and ₱-prefixed
- * unit-price input. The stepper drives the qty field via `onBump`;
- * the unit-price input is wired to the form via a Controller using
- * the `control` prop so the parent hook stays the source of truth.
- */
 export function QtyPriceStepper({
   qty,
   qtyNum,

@@ -122,7 +122,7 @@ export const clearTokens = async (): Promise<void> => {
  * button so the user knows Drive is intentionally unavailable.
  */
 export const getClientId = (): string | null => {
-  const id = Constants.expoConfig?.extra?.googleClientId;
+  const id = Constants.expoConfig?.extra?.['googleClientId'];
   if (typeof id === 'string' && id.trim().length > 0) return id;
   return null;
 };
@@ -329,7 +329,7 @@ export const findFile = async (name: string): Promise<string | null> => {
 export const createFile = async (
   name: string,
   data: Blob | ArrayBuffer | string,
-  contentType = 'application/octet-stream',
+  _contentType = 'application/octet-stream',
 ): Promise<string> => {
   const meta = { name, parents: ['appDataFolder'] };
   const form = new FormData();

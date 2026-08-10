@@ -9,12 +9,6 @@ interface AddCreditHeaderProps {
   onBack: () => void;
 }
 
-/**
- * AddCreditHeader — top bar with back button, title eyebrow, and
- * the dark `bg-cinnamon-500` suki hero card showing the customer's
- * outstanding balance. The header sits on the cream page background
- * (`bg-background`) above the ticket sheet.
- */
 export function AddCreditHeader({ customer, onBack }: AddCreditHeaderProps) {
   return (
     <View className="px-5 pt-3 pb-4 bg-background">

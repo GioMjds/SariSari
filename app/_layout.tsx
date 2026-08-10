@@ -43,7 +43,7 @@ const CUSTOM_THEME = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#F7F6F2', // Sets the fallback background for all screens
+    background: '#F7F6F2',
   },
 };
 

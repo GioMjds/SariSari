@@ -12,7 +12,6 @@ import type { Product } from '@/types/products.types';
 import { Category } from '@/types/categories.types';
 import { AddProductFormData } from './useAddProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface BasicInfoCardProps {
@@ -50,8 +49,6 @@ export function BasicInfoCard({
   barcodeConflictProduct,
   onPressEditConflictingProduct,
 }: BasicInfoCardProps) {
-  useRenderCounter('BasicInfoCard', { feature: 'products_form' });
-
   const { getAllSuppliersQuery } = useSuppliers();
   const suppliers = getAllSuppliersQuery.data || [];
 
@@ -73,17 +70,17 @@ export function BasicInfoCard({
         control={control}
         name="imageUri"
         render={({ field: { value, onChange } }) => (
-          <ProductImagePicker
-            imageUri={value}
-            onImageChange={onChange}
-          />
+          <ProductImagePicker imageUri={value} onImageChange={onChange} />
         )}
       />
 
       {/* Product Name */}
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
-          Product Name <StyledText className="text-persimmon-500">*</StyledText>
+          Product Name{' '}
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <Controller
           control={control}
@@ -105,7 +102,10 @@ export function BasicInfoCard({
       <View className="mb-4">
         <View className="flex-row items-center justify-between mb-2">
           <StyledText variant="semibold" className="text-ink-900 text-sm">
-            SKU <StyledText className="text-persimmon-500">*</StyledText>
+            SKU{' '}
+            <StyledText variant="regular" className="text-persimmon-500">
+              *
+            </StyledText>
           </StyledText>
           <Pressable
             onPress={onToggleAutoGenerateSku}
@@ -134,7 +134,7 @@ export function BasicInfoCard({
         <Controller
           control={control}
           name="sku"
-          render={({ field: { value, onChange } }) => (
+          render={({ field: { onChange } }) => (
             <TextInput
               placeholder="e.g., PC-001"
               placeholderTextColor="#A89F90"
@@ -174,9 +174,6 @@ export function BasicInfoCard({
         )}
       </View>
 
-      {/* Barcode (v5) — only rendered when populated. The row reads
-          as a thin "barcode: 4800016112345" stamp so the form stays
-          calm when the user hasn't scanned anything yet. */}
       {hasBarcode ? (
         <View className="mb-4">
           <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
@@ -305,7 +302,7 @@ export function BasicInfoCard({
         <Controller
           control={control}
           name="supplierId"
-          render={({ field: { value, onChange } }) => {
+          render={({ field: { value } }) => {
             const currentSupplier = suppliers.find((s) => s.id === value);
             return (
               <>

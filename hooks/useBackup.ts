@@ -301,3 +301,15 @@ export const useCloudNewerStatus = () => {
     staleTime: 60_000,
   });
 };
+
+export const useBackup = () => {
+  const { data: backups = [], isLoading } = useLocalSnapshots();
+  const backupNow = useBackupNow();
+  return {
+    backups,
+    isLoading,
+    createBackup: backupNow.mutate,
+    isCreating: backupNow.isPending,
+  };
+};
+

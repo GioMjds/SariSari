@@ -5,7 +5,6 @@ import { FastLaneProduct } from '@/database/products';
 import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { formatPesos } from '@/lib';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 
 const CARD_AVAILABLE_CLASS =
   'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[132px] justify-between shadow-paper active:bg-paper-200/60';
@@ -21,12 +20,6 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
   product,
   onAddToCart,
 }) => {
-  useRenderCounter(`FastLaneCard#${product.id}`, {
-    feature: 'pos_fast_lane',
-    threshold: 25,
-    windowMs: 1000,
-  });
-
   const toggleFavorite = useToggleFavorite();
   const isOutOfStock = product.quantity <= 0;
   const hasWholesale =

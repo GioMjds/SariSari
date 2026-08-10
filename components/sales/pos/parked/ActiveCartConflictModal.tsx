@@ -45,7 +45,7 @@ export function ActiveCartConflictModal({
               onPress={onReplaceCurrent}
               className="p-3.5 rounded-xl bg-semantic-danger-50 border border-semantic-danger/20 active:bg-semantic-danger-100 items-center justify-center min-h-[44px]"
             >
-              <StyledText variant="bold" className="text-semantic-danger text-sm">
+              <StyledText variant="extrabold" className="text-semantic-danger text-sm">
                 Replace Current Cart (Discard)
               </StyledText>
             </Pressable>

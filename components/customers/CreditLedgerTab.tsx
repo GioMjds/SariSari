@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, FC } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { SearchBar } from '@/components/ui';
@@ -12,7 +12,7 @@ interface CreditLedgerTabProps {
   onSelectCustomer: (customer: Customer) => void;
 }
 
-export const CreditLedgerTab: React.FC<CreditLedgerTabProps> = ({
+export const CreditLedgerTab: FC<CreditLedgerTabProps> = ({
   customers,
   onSelectCustomer,
 }) => {
@@ -62,7 +62,10 @@ export const CreditLedgerTab: React.FC<CreditLedgerTabProps> = ({
           activeOpacity={0.7}
           className="flex-row items-center py-1 px-2"
         >
-          <StyledText variant="extrabold" className="text-cinnamon-500 text-xs mr-1">
+          <StyledText
+            variant="extrabold"
+            className="text-cinnamon-500 text-xs mr-1"
+          >
             SORT ({sortBy === 'highest' ? 'DEBT' : 'NAME'}) ▾
           </StyledText>
         </TouchableOpacity>

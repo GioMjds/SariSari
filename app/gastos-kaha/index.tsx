@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useState, useCallback } from 'react';
 import { View, FlatList, Pressable, Alert, TextInput } from 'react-native';
@@ -17,6 +17,20 @@ import { formatPesos } from '@/lib/money';
 import { getDateRangeFromType } from '@/utils';
 import { RecordEntryModal } from '@/components/financial/RecordEntryModal';
 
+interface PresetPills {
+  label: string;
+  type: string;
+}
+
+type Categories =
+  | 'transport'
+  | 'utilities'
+  | 'supplies_packaging'
+  | 'rent'
+  | 'repairs'
+  | 'other'
+  | string;
+
 const formatDateString = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -24,7 +38,15 @@ const formatDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-const formatCategoryLabel = (category?: string | null): string => {
+const QUICK_FILTER_PRESET_PILLS = [
+  { label: 'Today', type: 'today' },
+  { label: 'Yesterday', type: 'yesterday' },
+  { label: '7 Days', type: 'last7days' },
+  { label: 'This Month', type: 'thisMonth' },
+  { label: 'Custom', type: 'custom' },
+] satisfies PresetPills[];
+
+const formatCategoryLabel = (category?: Categories | null): string => {
   if (!category) return 'General Expense';
   switch (category) {
     case 'transport':
@@ -92,7 +114,7 @@ export default function GastosKahaScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)/reports');
+      router.replace('/(tabs)/reports' as Href);
     }
   };
 
@@ -147,13 +169,7 @@ export default function GastosKahaScreen() {
 
             {/* Quick Filter Preset Pills */}
             <View className="flex-row flex-wrap gap-1.5 mb-3">
-              {[
-                { label: 'Today', type: 'today' },
-                { label: 'Yesterday', type: 'yesterday' },
-                { label: '7 Days', type: 'last7days' },
-                { label: 'This Month', type: 'thisMonth' },
-                { label: 'Custom', type: 'custom' },
-              ].map((pill) => {
+              {QUICK_FILTER_PRESET_PILLS.map((pill) => {
                 const isActive = activePreset === pill.type;
                 return (
                   <Pressable

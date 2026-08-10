@@ -11,18 +11,9 @@ interface LedgerToolbarProps {
   setSearchQuery: (s: string) => void;
   selectedType: LedgerTypeFilter;
   setSelectedType: (t: LedgerTypeFilter) => void;
-  /**
-   * Per-type totals used to render the small count badge on each
-   * chip, e.g. `Restock (12)`. Computed by the screen so the chip
-   * counts stay in sync with what's actually visible.
-   */
   counts: Partial<Record<InventoryEventType, number>>;
 }
 
-/**
- * LedgerToolbar — the search box + horizontal type-filter chip row
- * that sits above the transaction timeline.
- */
 export const LedgerToolbar = memo(function LedgerToolbar({
   searchQuery,
   setSearchQuery,
@@ -93,13 +84,6 @@ export const LedgerToolbar = memo(function LedgerToolbar({
                 onPress={() => setSelectedType('adjustment')}
                 accessibilityLabel="Show only adjustment entries"
               />
-              {/* Note: no "Sale" chip here. Sales are not logged
-                  from this form — they enter the ledger through the
-                  dedicated Sales screen — so showing a Sale filter
-                  here would invite the user to dig into something
-                  they can't act on from this page. Historical sale
-                  rows still render in the timeline, just not behind
-                  a chip. */}
             </ScrollView>
           </View>
         </View>

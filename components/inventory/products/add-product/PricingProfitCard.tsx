@@ -8,10 +8,10 @@ import {
   formatPesos,
   tryParsePesosInput,
 } from '@/lib';
-import { MARKUP_PRESETS, MarkupPreset } from './useAddProductForm';
+import { MARKUP_PRESETS, MarkupPreset, AddProductFormData } from './useAddProductForm';
 
 interface PricingProfitCardProps {
-  control: Control<any>;
+  control: Control<AddProductFormData>;
   costPerPiece: string;
   price: string;
   useBundlePricing: boolean;
@@ -22,8 +22,6 @@ interface PricingProfitCardProps {
   isLossWarning: boolean;
   hasCost: boolean;
   hasPrice: boolean;
-  /** Forwarded to the price TextInput so the form hook can focus it
-   *  after a successful barcode scan. */
   priceInputRef?: RefObject<TextInput | null>;
   enableWholesale?: boolean;
   onToggleWholesale?: () => void;
@@ -31,27 +29,8 @@ interface PricingProfitCardProps {
   wholesaleUnitName?: string;
   conversionFactor?: string;
   wholesalePrice?: string;
-  wholesaleCostPrice?: string;
 }
 
-/**
- * PricingProfitCard — the second parchment card on the form.
- *
- * Holds:
- *   • A Single Piece / Bundle toggle for cost entry.
- *     - Single mode: a direct "cost per piece" input.
- *     - Bundle mode: total bundle cost + pieces per bundle inputs;
- *       the form hook derives cost-per-piece from these.
- *   • Markup preset chips (`+10%`, `+20%`, `+30%`, `+50%`) that
- *     write `costPerPiece × (1 + M)` into the selling-price field.
- *   • Selling price input — the customer-facing price.
- *   • A warning banner if selling price ≤ cost.
- *   • The Sage-green Profit Receipt card showing live profit per
- *     piece and markup %.
- *
- * Pure presentation; every value and handler is supplied by the
- * route file from `useAddProductForm`.
- */
 export function PricingProfitCard({
   control,
   costPerPiece,
@@ -71,7 +50,6 @@ export function PricingProfitCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: PricingProfitCardProps) {
   const retailPriceVal = tryParsePesosInput(price);
   const wholesalePriceVal = wholesalePrice

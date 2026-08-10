@@ -6,9 +6,10 @@ import {
   formatPesos,
   tryParsePesosInput,
 } from '@/lib';
+import type { EditProductFormData } from './useEditProductForm';
 
 interface EditPricingCardProps {
-  control: Control<any>;
+  control: Control<EditProductFormData>;
   profitPerPiece: number;
   markupPercent: number;
   isLossWarning: boolean;
@@ -34,7 +35,6 @@ export function EditPricingCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: EditPricingCardProps) {
   // Enable LayoutAnimation on Android (no-op on iOS where it's always on).
   if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -102,7 +102,7 @@ export function EditPricingCard({
       <View>
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
           Selling Price (₱){' '}
-          <StyledText className="text-persimmon-500">*</StyledText>
+          <StyledText variant="extrabold" className="text-persimmon-500">*</StyledText>
         </StyledText>
         <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
           <StyledText variant="medium" className="text-ink-600 text-base mr-2">

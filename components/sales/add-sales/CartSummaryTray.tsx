@@ -9,12 +9,6 @@ interface CartSummaryTrayProps {
   itemCount: number;
   total: number;
   paymentType: 'cash' | 'credit';
-  /**
-   * Hybrid buyer identifier:
-   *   • `Customer` → registered Suki.
-   *   • `string`   → typed one-off name (cash sales only).
-   *   • `null`     → no buyer captured.
-   */
   selectedCustomer: Customer | string | null;
   isSubmitDisabled: boolean;
   isPending: boolean;
@@ -23,21 +17,6 @@ interface CartSummaryTrayProps {
   onSubmit: () => void;
 }
 
-/**
- * CartSummaryTray — fixed-bottom panel above the form-sheet edge.
- *
- * Anchors to the bottom of the screen and stacks four blocks:
- *   1. Total items + grand total row.
- *   2. Payment mode toggle (Cash / Credit).
- *   3. Buyer / Suki picker trigger — rendered for BOTH payment modes:
- *        • credit → "Suki (Required)", warning-styled when null.
- *        • cash   → "Buyer / Suki (Optional)", neutral-styled when null.
- *      Tapping opens the hybrid `CustomerPickerModal`.
- *   4. Complete Sale CTA (persimmon, matching `SubmitButton` style).
- *
- * Disabled state uses `bg-ink-100` so the brand fill reads as a
- * muted persimmon rather than fading to a neutral grey.
- */
 export function CartSummaryTray({
   itemCount,
   total,
@@ -55,9 +34,8 @@ export function CartSummaryTray({
   const displayName =
     typeof selectedCustomer === 'string'
       ? selectedCustomer
-      : selectedCustomer?.name ?? null;
+      : (selectedCustomer?.name ?? null);
 
-  // Label + state flags: credit requires a Suki, cash accepts anything.
   const buyerLabel = isCredit ? 'Suki (Required)' : 'Buyer / Suki (Optional)';
   const isRequiredAndMissing = isCredit && !selectedCustomer;
 
@@ -225,8 +203,8 @@ export function CartSummaryTray({
           {isPending
             ? 'Saving Resibo…'
             : itemCount > 0
-            ? `Complete Sale · ${formatPesos(total)}`
-            : 'Complete Sale'}
+              ? `Complete Sale · ${formatPesos(total)}`
+              : 'Complete Sale'}
         </StyledText>
       </Pressable>
     </View>

@@ -38,9 +38,9 @@ if (!process.env.NODE_ENV) {
     writable: false,
   });
 }
-process.env.JWT_SECRET = 'kgiohqaxca';
-process.env.EXPO_PUBLIC_API_URL = 'http://localhost:3000';
-process.env.EXPO_PUBLIC_DJANGO_URL = 'http://localhost:8000';
+process.env['JWT_SECRET'] = 'kgiohqaxca';
+process.env['EXPO_PUBLIC_API_URL'] = 'http://localhost:3000';
+process.env['EXPO_PUBLIC_DJANGO_URL'] = 'http://localhost:8000';
 
 // Mock Expo modules
 // Mock expo-secure-store — bare jest.fn() returns undefined for
@@ -173,6 +173,10 @@ jest.mock('expo-crypto', () => ({
   CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
 }));
 
+// Mock expo-router — tests that need finer-grained control over
+// `useRouter`, `usePathname`, etc. should re-mock this module locally
+// with their own jest.fn() instances. The default here passes through
+// to no-op stubs so screens that just render children don't crash.
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -188,7 +192,6 @@ jest.mock('expo-router', () => ({
   Stack: ({ children }: any) => children,
   Slot: ({ children }: any) => children,
 }));
-
 
 // Mock expo-haptics — both `stores/ToastStore.ts` and the new barcode
 // scanner code import this module. Tests don't assert haptic side
@@ -289,7 +292,9 @@ jest.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: jest.fn(async () => undefined),
   setNotificationHandler: jest.fn(),
   addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
-  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({
+    remove: jest.fn(),
+  })),
   removeNotificationSubscription: jest.fn(),
 }));
 
@@ -412,6 +417,3 @@ jest.mock('expo-image', () => {
     Image: (props: any) => mockReact.createElement(mockRN.View, props),
   };
 });
-
-
-

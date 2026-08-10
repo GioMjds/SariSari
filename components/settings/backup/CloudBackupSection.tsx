@@ -21,12 +21,8 @@ import Constants from 'expo-constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Pressable,
-  Switch,
-  View,
-} from 'react-native';
+import type { TFunction } from 'i18next';
+import { ActivityIndicator, Pressable, Switch, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyledText } from '@/components/elements';
 import { useToastStore } from '@/stores';
@@ -44,20 +40,21 @@ import {
 } from '@/hooks/useBackup';
 
 const getGoogleClientId = (): string | null => {
-  const id = Constants.expoConfig?.extra?.googleClientId;
+  const id = Constants.expoConfig?.extra?.['googleClientId'];
   if (typeof id === 'string' && id.trim().length > 0) return id;
   return null;
 };
 
 const formatRelativeTime = (
   epochMs: number | null | undefined,
-  t: (key: string, options?: Record<string, unknown>) => string,
+  t: TFunction,
 ): string => {
   if (!epochMs) return '';
   const diffMs = Date.now() - epochMs;
   const diffMin = Math.floor(diffMs / 60000);
   if (diffMin < 1) return t('common:settingsBackupJustNow');
-  if (diffMin < 60) return t('common:settingsBackupMinutesAgo', { count: diffMin });
+  if (diffMin < 60)
+    return t('common:settingsBackupMinutesAgo', { count: diffMin });
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return t('common:settingsBackupHoursAgo', { count: diffHr });
   const diffDay = Math.floor(diffHr / 24);
@@ -82,10 +79,7 @@ export function CloudBackupSection() {
             <StyledText variant="semibold" className="text-sm text-ink-700">
               {t('common:cloudBackupSectionTitle')}
             </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-xs text-ink-400 mt-1"
-            >
+            <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
               {t('common:cloudBackupNotConfigured')}
             </StyledText>
           </View>
@@ -102,11 +96,7 @@ export function CloudBackupSection() {
     );
   }
 
-  return isLinked ? (
-    <LinkedCloudRow />
-  ) : (
-    <UnlinkedCloudRow />
-  );
+  return isLinked ? <LinkedCloudRow /> : <UnlinkedCloudRow />;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -129,8 +119,7 @@ function UnlinkedCloudRow() {
         await link.mutateAsync({ authResult: result, request });
       } else if (result.type === 'error') {
         addToast({
-          message:
-            result.error?.message ?? t('common:cloudBackupConsentError'),
+          message: result.error?.message ?? t('common:cloudBackupConsentError'),
           variant: 'danger',
         });
       }
@@ -247,9 +236,7 @@ function LinkedCloudRow() {
   const handleBackupNow = async () => {
     setBusy(true);
     try {
-      const { createLocalSnapshot, markPending } = await import(
-        '@/lib/backup'
-      );
+      const { createLocalSnapshot, markPending } = await import('@/lib/backup');
       const result = await createLocalSnapshot();
       if (!result.ok) {
         addToast({
@@ -303,10 +290,7 @@ function LinkedCloudRow() {
             {t('common:cloudBackupLinked')}
           </StyledText>
           {lastSyncAt ? (
-            <StyledText
-              variant="regular"
-              className="text-xs text-ink-400 mt-1"
-            >
+            <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
               {t('common:cloudBackupLastSync', {
                 when: formatRelativeTime(lastSyncAt, t),
               })}
@@ -352,10 +336,7 @@ function LinkedCloudRow() {
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:useCellularForCloud')}
           </StyledText>
-          <StyledText
-            variant="regular"
-            className="text-xs text-ink-400 mt-0.5"
-          >
+          <StyledText variant="regular" className="text-xs text-ink-400 mt-0.5">
             {t('common:cloudSyncPendingHint')}
           </StyledText>
         </View>

@@ -3,7 +3,6 @@ import { FontAwesome } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   TextInput,
   View,
@@ -13,7 +12,6 @@ import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { usePOSSearchStore } from '@/stores';
 
 interface ProductSearchCatalogProps {
@@ -38,18 +36,12 @@ interface ProductSearchCatalogProps {
   hasNextPage?: boolean;
   onEndReached?: () => void;
   onRetryFetchNext?: () => void;
-  /**
-   * Controlled value for the search input. Parent screens own the
-   * state — passing a getter + setter keeps the keystroke re-render
-   * out of this catalog tree. Defaults to '' if omitted (e.g. a parent
-   * that does not need search).
-   */
-  searchText?: string | undefined;
-  onSearchTextChange?: ((text: string) => void) | undefined;
-  parkedCartsCount?: number | undefined;
-  cartItemCount?: number | undefined;
-  onPressParkedList?: (() => void) | undefined;
-  onPressParkCurrent?: (() => void) | undefined;
+  searchText?: string;
+  onSearchTextChange?: (text: string) => void;
+  parkedCartsCount?: number;
+  cartItemCount?: number;
+  onPressParkedList?: () => void;
+  onPressParkCurrent?: () => void;
 }
 
 export function ProductSearchCatalog({
@@ -66,7 +58,7 @@ export function ProductSearchCatalog({
   isFetchingNextPage = false,
   hasNextPage = false,
   onEndReached,
-  onRetryFetchNext,
+  // To use for a better data fetching
   searchText,
   onSearchTextChange,
   parkedCartsCount = 0,
@@ -74,22 +66,19 @@ export function ProductSearchCatalog({
   onPressParkedList,
   onPressParkCurrent,
 }: ProductSearchCatalogProps) {
-  useRenderCounter('ProductSearchCatalog', {
-    feature: 'pos_catalog',
-    threshold: 10,
-    windowMs: 1000,
-  });
-
   const renderProductRow = useCallback(
-    ({ item }: { item: Product }) => (
-      <ProductRow
-        product={item}
-        cartLine={getCartLine(item.id)}
-        onAdd={onAdd}
-        onUpdateQuantity={onUpdateQuantity}
-        onToggleUnit={onToggleUnit}
-      />
-    ),
+    ({ item }: { item: Product }) => {
+      const cartLine = getCartLine(item.id);
+      return (
+        <ProductRow
+          product={item}
+          {...(cartLine ? { cartLine } : {})}
+          onAdd={onAdd}
+          onUpdateQuantity={onUpdateQuantity}
+          {...(onToggleUnit ? { onToggleUnit } : {})}
+        />
+      );
+    },
     [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
   );
 
@@ -234,11 +223,6 @@ export function ProductSearchCatalog({
 }
 
 interface SearchBarProps {
-  /**
-   * Controlled text from the parent. When omitted, the bar falls back
-   * to `usePOSSearchStore` — the production path for the live POS
-   * screen, where the parent screen does not own the search state.
-   */
   controlledText?: string | undefined;
   onTextChange?: ((text: string) => void) | undefined;
   onPressScan: () => void;
@@ -249,11 +233,6 @@ interface SearchBarProps {
   onPressParkCurrent?: (() => void) | undefined;
 }
 
-/**
- * Isolated, debounced search bar so the catalog tree does not re-render on
- * every keystroke. The bar manages its local state for immediate typing feedback
- * and propagates search query changes after a `debounceMs` delay.
- */
 function SearchBar({
   controlledText,
   onTextChange,
@@ -264,8 +243,6 @@ function SearchBar({
   onPressParkedList,
   onPressParkCurrent,
 }: SearchBarProps) {
-  // Read the store value directly so we render the latest text without
-  // re-rendering any ancestor above this component.
   const storedSearchText = usePOSSearchStore((s) => s.searchText);
   const setStoredSearchText = usePOSSearchStore((s) => s.setSearchText);
 
@@ -274,7 +251,6 @@ function SearchBar({
 
   const [localText, setLocalText] = useState(value);
 
-  // Sync external resets / initial values
   useEffect(() => {
     setLocalText(value);
   }, [value]);
@@ -291,7 +267,14 @@ function SearchBar({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [localText, value, isControlled, onTextChange, setStoredSearchText, debounceMs]);
+  }, [
+    localText,
+    value,
+    isControlled,
+    onTextChange,
+    setStoredSearchText,
+    debounceMs,
+  ]);
 
   const handleChangeText = useCallback((text: string) => {
     setLocalText(text);
@@ -340,7 +323,10 @@ function SearchBar({
           className="bg-cinnamon-100 active:bg-cinnamon-200 px-2.5 h-11 rounded-xl items-center justify-center ml-1.5 flex-row space-x-1"
         >
           <FontAwesome name="inbox" size={14} color="#623418" />
-          <StyledText variant="extrabold" className="text-cinnamon-800 text-xs ml-1">
+          <StyledText
+            variant="extrabold"
+            className="text-cinnamon-800 text-xs ml-1"
+          >
             {parkedCartsCount}
           </StyledText>
         </Pressable>
@@ -354,7 +340,7 @@ function SearchBar({
           accessibilityLabel="Park active cart"
           className="bg-paper-300 active:bg-paper-400 px-2.5 h-11 rounded-xl items-center justify-center ml-1.5"
         >
-          <StyledText variant="bold" className="text-ink-800 text-xs">
+          <StyledText variant="extrabold" className="text-ink-800 text-xs">
             Park
           </StyledText>
         </Pressable>

@@ -3,7 +3,11 @@ import type { RefObject } from 'react';
 import { Control, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements';
-import { calculateWholesaleSavings, formatPesos, tryParsePesosInput } from '@/lib';
+import {
+  calculateWholesaleSavings,
+  formatPesos,
+  tryParsePesosInput,
+} from '@/lib';
 
 export const MARKUP_PRESETS = [0.1, 0.2, 0.3, 0.5] as const;
 export type MarkupPreset = (typeof MARKUP_PRESETS)[number];
@@ -25,7 +29,6 @@ interface ProductPricingCardProps {
   wholesaleUnitName?: string;
   conversionFactor?: string;
   wholesalePrice?: string;
-  wholesaleCostPrice?: string;
 }
 
 export function ProductPricingCard({
@@ -45,7 +48,6 @@ export function ProductPricingCard({
   wholesaleUnitName = 'Case',
   conversionFactor = '12',
   wholesalePrice = '',
-  wholesaleCostPrice = '',
 }: ProductPricingCardProps) {
   const hasCost = !!costPerPiece && costPerPiece !== '0.00';
   const hasPrice = !!price && price !== '0.00';
@@ -101,11 +103,17 @@ export function ProductPricingCard({
       {useBundlePricing ? (
         <>
           <View className="mb-3">
-            <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+            <StyledText
+              variant="semibold"
+              className="text-ink-900 text-sm mb-2"
+            >
               Total Bundle Cost
             </StyledText>
             <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
-              <StyledText variant="extrabold" className="text-ink-700 text-base mr-2">
+              <StyledText
+                variant="extrabold"
+                className="text-ink-700 text-base mr-2"
+              >
                 ₱
               </StyledText>
               <Controller
@@ -126,7 +134,10 @@ export function ProductPricingCard({
           </View>
 
           <View className="mb-3">
-            <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+            <StyledText
+              variant="semibold"
+              className="text-ink-900 text-sm mb-2"
+            >
               Pieces per Bundle
             </StyledText>
             <Controller
@@ -146,11 +157,17 @@ export function ProductPricingCard({
           </View>
 
           <View className="mb-3">
-            <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
+            <StyledText
+              variant="semibold"
+              className="text-ink-900 text-sm mb-2"
+            >
               Cost per Piece
             </StyledText>
             <View className="bg-paper-100/60 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center opacity-70">
-              <StyledText variant="extrabold" className="text-ink-500 text-base mr-2">
+              <StyledText
+                variant="extrabold"
+                className="text-ink-500 text-base mr-2"
+              >
                 ₱
               </StyledText>
               <Controller
@@ -175,7 +192,10 @@ export function ProductPricingCard({
             Cost Price (per piece)
           </StyledText>
           <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
-            <StyledText variant="extrabold" className="text-ink-700 text-base mr-2">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-700 text-base mr-2"
+            >
               ₱
             </StyledText>
             <Controller
@@ -220,10 +240,16 @@ export function ProductPricingCard({
 
       <View className="mb-1">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
-          Selling Price (per piece) <StyledText className="text-persimmon-500">*</StyledText>
+          Selling Price (per piece){' '}
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
-          <StyledText variant="extrabold" className="text-ink-700 text-base mr-2">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-700 text-base mr-2"
+          >
             ₱
           </StyledText>
           <Controller
@@ -245,8 +271,15 @@ export function ProductPricingCard({
 
         {isLossWarning && (
           <View className="mt-2 flex-row items-center bg-semantic-warning/10 rounded-xl px-3 py-2 border border-semantic-warning/20">
-            <FontAwesome name="exclamation-triangle" size={12} color="#C77B0E" />
-            <StyledText variant="semibold" className="text-semantic-warning text-xs ml-2 flex-1">
+            <FontAwesome
+              name="exclamation-triangle"
+              size={12}
+              color="#C77B0E"
+            />
+            <StyledText
+              variant="semibold"
+              className="text-semantic-warning text-xs ml-2 flex-1"
+            >
               Selling price is below or equal to cost price
             </StyledText>
           </View>
@@ -260,15 +293,25 @@ export function ProductPricingCard({
           </StyledText>
           <View className="flex-row items-end justify-between mt-2">
             <View>
-              <StyledText variant="medium" className="text-sage-600 text-xs mb-0.5">
+              <StyledText
+                variant="medium"
+                className="text-sage-600 text-xs mb-0.5"
+              >
                 Profit per piece
               </StyledText>
               <StyledText variant="extrabold" className="text-sage-600 text-h2">
-                ₱{profitPerPiece.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₱
+                {profitPerPiece.toLocaleString('en-PH', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </StyledText>
             </View>
             <View className="items-end">
-              <StyledText variant="medium" className="text-sage-600 text-xs mb-0.5">
+              <StyledText
+                variant="medium"
+                className="text-sage-600 text-xs mb-0.5"
+              >
                 Markup
               </StyledText>
               <StyledText variant="extrabold" className="text-sage-600 text-h2">
@@ -282,10 +325,16 @@ export function ProductPricingCard({
       <View className="mt-6 pt-4 border-t border-ink-200">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-1 pr-3">
-            <StyledText variant="black" className="label-caps text-cinnamon-500">
+            <StyledText
+              variant="black"
+              className="label-caps text-cinnamon-500"
+            >
               Wholesale (Pakyaw) Tier
             </StyledText>
-            <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5">
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs mt-0.5"
+            >
               Offer bulk pricing for suki & bulk buyers
             </StyledText>
           </View>
@@ -312,7 +361,10 @@ export function ProductPricingCard({
           <View className="mt-2 space-y-3">
             <View className="flex-row gap-2">
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Tingi Unit (Retail)
                 </StyledText>
                 <Controller
@@ -330,7 +382,10 @@ export function ProductPricingCard({
                 />
               </View>
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Unit (Bulk)
                 </StyledText>
                 <Controller
@@ -350,7 +405,10 @@ export function ProductPricingCard({
             </View>
 
             <View>
-              <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-xs mb-1"
+              >
                 Pieces per Pakyaw Unit
               </StyledText>
               <Controller
@@ -371,11 +429,17 @@ export function ProductPricingCard({
 
             <View className="flex-row gap-2">
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Selling Price
                 </StyledText>
                 <View className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 flex-row items-center">
-                  <StyledText variant="extrabold" className="text-ink-700 text-sm mr-1">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-700 text-sm mr-1"
+                  >
                     ₱
                   </StyledText>
                   <Controller
@@ -396,11 +460,17 @@ export function ProductPricingCard({
               </View>
 
               <View className="flex-1">
-                <StyledText variant="semibold" className="text-ink-900 text-xs mb-1">
+                <StyledText
+                  variant="semibold"
+                  className="text-ink-900 text-xs mb-1"
+                >
                   Pakyaw Cost Price
                 </StyledText>
                 <View className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-2.5 flex-row items-center">
-                  <StyledText variant="extrabold" className="text-ink-700 text-sm mr-1">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-ink-700 text-sm mr-1"
+                  >
                     ₱
                   </StyledText>
                   <Controller
@@ -423,8 +493,16 @@ export function ProductPricingCard({
 
             {savings && (
               <View className="mt-3 rounded-xl bg-cinnamon-50 dark:bg-cinnamon-950/30 p-3.5 border border-cinnamon-200/50">
-                <StyledText variant="medium" className="text-cinnamon-800 dark:text-cinnamon-200 text-xs">
-                  Selling at wholesale price ({formatPesos(wholesalePriceVal)}/{wholesaleUnitName}) is equivalent to {formatPesos(savings.equivalentRetailPrice)} per {retailUnitName} (saving customer {formatPesos(savings.savingsPerPiece)} or {savings.savingsPercent}%).
+                <StyledText
+                  variant="medium"
+                  className="text-cinnamon-800 dark:text-cinnamon-200 text-xs"
+                >
+                  Selling at wholesale price ({formatPesos(wholesalePriceVal)}/
+                  {wholesaleUnitName}) is equivalent to{' '}
+                  {formatPesos(savings.equivalentRetailPrice)} per{' '}
+                  {retailUnitName} (saving customer{' '}
+                  {formatPesos(savings.savingsPerPiece)} or{' '}
+                  {savings.savingsPercent}%).
                 </StyledText>
               </View>
             )}

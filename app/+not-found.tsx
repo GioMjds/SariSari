@@ -1,4 +1,4 @@
-import { Stack, router, usePathname } from 'expo-router';
+import { Href, Stack, router, usePathname } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,7 +20,7 @@ export default function NotFoundScreen() {
   }, [pathname]);
 
   const handleGoHome = () => {
-    router.replace('/(tabs)');
+    router.replace('/(tabs)' as Href);
   };
 
   return (

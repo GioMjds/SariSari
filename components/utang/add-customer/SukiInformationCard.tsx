@@ -33,7 +33,7 @@ export function SukiInformationCard({ control }: SukiInformationCardProps) {
         name="name"
         rules={{ required: 'Customer name is required' }}
         render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <FieldGroup label="Customer Name" required error={error?.message}>
+          <FieldGroup label="Customer Name" required {...(error?.message ? { error: error.message } : {})}>
             <View
               className={`bg-paper-100 rounded-xl border px-3 h-11 flex-row items-center ${
                 error

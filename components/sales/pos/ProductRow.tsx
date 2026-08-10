@@ -5,7 +5,6 @@ import { StyledText } from '@/components/elements';
 import { Image } from 'expo-image';
 import { calculateBulkSavings, formatPesos, getProductImageUri } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { useToggleFavorite } from '@/hooks/useProducts';
 
 const ROW_OUT_OF_STOCK_CLASS =
@@ -29,7 +28,7 @@ const WHOLESALE_CHIP_INACTIVE_CLASS =
 
 interface ProductRowProps {
   product: Product;
-  cartLine: NewSaleItem | undefined;
+  cartLine?: NewSaleItem;
   onAdd: (
     product: Product,
     selectedUnit?: 'retail' | 'wholesale',
@@ -51,12 +50,6 @@ function ProductRowImpl({
 }: ProductRowProps) {
   const toggleFavorite = useToggleFavorite();
   const [overStock, setOverStock] = useState(false);
-
-  useRenderCounter(`ProductRow#${product.id}`, {
-    feature: 'pos_catalog',
-    threshold: 25,
-    windowMs: 1000,
-  });
 
   const handleToggleFavorite = () => {
     toggleFavorite.mutate({
@@ -362,11 +355,7 @@ function ProductRowImpl({
 
             <Pressable
               onPress={() => {
-                const result = onUpdateQuantity(
-                  product.id,
-                  1,
-                  activeUnit,
-                );
+                const result = onUpdateQuantity(product.id, 1, activeUnit);
                 if (result === 'over_stock') {
                   setOverStock(true);
                 }

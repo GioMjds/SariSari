@@ -9,21 +9,18 @@ import {
 
 export default function AddCreditTransaction() {
   const form = useAddCreditForm();
-
-  /**
-   * Filtered product suggestions — runs against the products query
-   * cache. Lives here (not in the hook) because the hook is scoped
-   * to form state, and the products cache is a query-layer concern.
-   */
   const q = form.productQuery.trim().toLowerCase();
   const productSuggestions = !q
     ? form.products.slice(0, 6)
     : form.products
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q),
-      )
-      .slice(0, 6);
+        .filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            p.sku?.toLowerCase().includes(q),
+        )
+        .slice(0, 6);
+
+  if (!form.customer) return null;
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>

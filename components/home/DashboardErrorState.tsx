@@ -1,7 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-
 import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
 
@@ -9,9 +8,6 @@ export interface DashboardErrorStateProps {
   onRetry: () => void;
 }
 
-/**
- * DashboardErrorState — paper card error state when dashboard queries fail.
- */
 export const DashboardErrorState = memo(function DashboardErrorState({
   onRetry,
 }: DashboardErrorStateProps) {
@@ -34,7 +30,10 @@ export const DashboardErrorState = memo(function DashboardErrorState({
           <FontAwesome name="exclamation-triangle" size={20} color="#E85A1F" />
         </View>
 
-        <StyledText variant="extrabold" className="text-lg text-ink-900 mb-1 text-center">
+        <StyledText
+          variant="extrabold"
+          className="text-lg text-ink-900 mb-1 text-center"
+        >
           {title}
         </StyledText>
 
@@ -53,7 +52,10 @@ export const DashboardErrorState = memo(function DashboardErrorState({
           className="bg-persimmon-500 rounded-xl py-3 px-6 flex-row items-center justify-center press-scale"
         >
           <FontAwesome name="refresh" size={14} color="#FBF7EE" />
-          <StyledText variant="extrabold" className="text-paper-50 text-sm ml-2">
+          <StyledText
+            variant="extrabold"
+            className="text-paper-50 text-sm ml-2"
+          >
             {retryLabel}
           </StyledText>
         </TouchableOpacity>

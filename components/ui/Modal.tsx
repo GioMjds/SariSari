@@ -33,19 +33,12 @@ interface CustomModalProps extends Omit<
   onClose?: () => void;
   children?: React.ReactNode;
   loading?: boolean;
-  /** Per-button loading override. Falls back to the top-level `loading` prop for the first button. */
   buttonLoading?: boolean[];
 }
 
 let globalReducedMotion = false;
 let hasInitializedReducedMotion = false;
 
-/**
- * Modal — a tone-aware confirmation dialog. Backed by a Zustand store
- * (id-based open) or a controlled prop (visible). Mounts with a Moti
- * scale-in entrance; honors Reduce Motion by collapsing to opacity-only.
- * Bypasses native modal overhead when useNativeModal is false.
- */
 export function Modal({
   id,
   visible,
@@ -105,7 +98,9 @@ export function Modal({
   }, [storeModal]);
 
   const activeModal = storeModal || cachedModal;
-  const isVisible = id ? (storeModal !== null || cachedModal !== null) : !!visible;
+  const isVisible = id
+    ? storeModal !== null || cachedModal !== null
+    : !!visible;
 
   const finalTitle = activeModal?.title ?? title;
   const finalDescription = activeModal?.description ?? description;
@@ -144,8 +139,6 @@ export function Modal({
     }
   };
 
-  // Variant styles - use semantic color tokens that adapt to light/dark theme
-  // These ensure proper contrast and theme compliance
   const getVariantStyles = () => {
     switch (finalVariant) {
       case 'danger':
@@ -201,17 +194,13 @@ export function Modal({
         {
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 'space-x-6',
+          paddingHorizontal: 24,
           zIndex: 9999,
           elevation: 9999,
         },
       ]}
       pointerEvents={isVisible ? 'auto' : 'none'}
     >
-      {/* Backdrop - uses theme-aware background color with 40% opacity
-       * The CSS variable --background-muted should be defined in your CSS to adapt to theme
-       * Currently using bg-ink-900/40 which is the ink-900 token with 40% opacity
-       */}
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -242,7 +231,7 @@ export function Modal({
         style={{
           backgroundColor: 'var(--color-surface-subtle)',
           borderRadius: 16,
-          padding: 'space-y-6',
+          padding: 24,
           width: '100%',
           maxWidth: getSizeWidth(),
           zIndex: 1,
@@ -349,7 +338,11 @@ export function Modal({
               accessibilityLabel="Close"
               className="absolute top-3 right-3 z-10 w-7 h-7 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
             >
-              <FontAwesome name="times" size={18} color="var(--color-ink-300)" />
+              <FontAwesome
+                name="times"
+                size={18}
+                color="var(--color-ink-300)"
+              />
             </Pressable>
           )}
       </MotiView>
@@ -375,4 +368,3 @@ export function Modal({
 
   return isVisible ? ModalContent : null;
 }
-

@@ -9,9 +9,8 @@ export const useAppInfo = (): AppInfo => {
   const config = Constants.expoConfig;
   const version =
     (typeof config?.version === 'string' && config.version) || '1.0.0';
+  const rawPrivacyUrl = config?.extra?.['privacyPolicyUrl'];
   const privacyPolicyUrl =
-    (typeof config?.extra?.privacyPolicyUrl === 'string' &&
-      config.extra.privacyPolicyUrl) ||
-    null;
+    (typeof rawPrivacyUrl === 'string' && rawPrivacyUrl) || null;
   return { version, privacyPolicyUrl };
 };

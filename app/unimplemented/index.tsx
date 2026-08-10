@@ -10,24 +10,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const sariUnimplementedImage = require('@/assets/images/sari-emotions/sari-unimplemented.png');
 
+type SearchParams = {
+  route?: string;
+  title?: string;
+  description?: string;
+};
+
 export default function UnimplementedScreen() {
   const { t } = useTranslation();
-  const params = useLocalSearchParams<{
-    route?: string;
-    title?: string;
-    description?: string;
-  }>();
+  const { route, title, description } = useLocalSearchParams<SearchParams>();
 
-  const targetRoute = params.route ?? '';
+  const targetRoute = route ?? '';
   const featureMeta = getFeatureByRoute(targetRoute);
 
   const displayTitle =
-    params.title ||
+    title ||
     featureMeta?.title ||
     t('common:featureInDevelopmentTitle', 'Feature Under Construction');
 
   const displayDescription =
-    params.description ||
+    description ||
     featureMeta?.description ||
     t(
       'common:featureInDevelopmentSub',

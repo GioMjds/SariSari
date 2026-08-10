@@ -1,11 +1,8 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { formatPesos } from '@/lib/money';
 import { CashSession } from '@/types/cash.types';
 import { LegacyCashSessionBanner } from './LegacyCashSessionBanner';
-
-export { LegacyCashSessionBanner };
 
 interface ActiveSessionSummaryCardProps {
   currentSession: CashSession;
@@ -14,17 +11,14 @@ interface ActiveSessionSummaryCardProps {
   isOpen: boolean;
 }
 
-function CashSummaryRow({
-  label,
-  value,
-  isAdd,
-  isSubtract,
-}: {
+interface SummaryRowProps {
   label: string;
   value: number;
   isAdd?: boolean;
   isSubtract?: boolean;
-}) {
+}
+
+function CashSummaryRow({ label, value, isAdd, isSubtract }: SummaryRowProps) {
   let sign = '';
   let color = 'text-ink-700';
 
@@ -62,9 +56,7 @@ export function ActiveSessionSummaryCard({
 
       <View
         className={`rounded-xl border p-3 mb-4 flex-row items-center justify-between ${
-          isOpen
-            ? 'bg-sage-50 border-sage-100'
-            : 'bg-ink-100 border-ink-200'
+          isOpen ? 'bg-sage-50 border-sage-100' : 'bg-ink-100 border-ink-200'
         }`}
       >
         <View className="flex-row items-center">
@@ -75,17 +67,15 @@ export function ActiveSessionSummaryCard({
             variant="semibold"
             className={isOpen ? 'text-sage-700' : 'text-ink-700'}
           >
-            {isOpen
-              ? 'Drawer is Active / Open'
-              : 'Drawer is Closed & Locked'}
+            {isOpen ? 'Drawer is Active / Open' : 'Drawer is Closed & Locked'}
           </StyledText>
         </View>
         <StyledText variant="regular" className="text-ink-400 text-xs">
           Opened:{' '}
-          {new Date(currentSession.openingTimestamp).toLocaleTimeString(
-            [],
-            { hour: '2-digit', minute: '2-digit' },
-          )}
+          {new Date(currentSession.openingTimestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
         </StyledText>
       </View>
 
@@ -132,16 +122,10 @@ export function ActiveSessionSummaryCard({
           <View className="h-px border-t border-dashed border-ink-300 my-2" />
 
           <View className="flex-row justify-between items-center py-1">
-            <StyledText
-              variant="extrabold"
-              className="text-ink-950 text-base"
-            >
+            <StyledText variant="extrabold" className="text-ink-950 text-base">
               Expected Cash
             </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-ink-950 text-lg"
-            >
+            <StyledText variant="extrabold" className="text-ink-950 text-lg">
               {formatPesos(expectedCash)}
             </StyledText>
           </View>

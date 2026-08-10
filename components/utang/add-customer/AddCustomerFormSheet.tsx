@@ -13,11 +13,6 @@ interface AddCustomerFormSheetProps {
   onSubmit: () => void;
 }
 
-/**
- * SubmitButton — the persimmon primary action. Disabled state uses
- * the brand fill at 40% opacity to keep the call-to-action read as
- * persimmon rather than fading to a neutral grey.
- */
 export function SubmitButton({
   isPending,
   onSubmit,
@@ -47,16 +42,6 @@ export function SubmitButton({
   );
 }
 
-/**
- * AddCustomerFormSheet — composes the three parchment field cards
- * (Suki Information, Account Settings, Internal Notes) separated by
- * dashed dividers, plus the persimmon SubmitButton. The ticket
- * sheet lives inside the page-level `KeyboardAwareScrollView` on
- * the route file.
- *
- * Pure presentation; values and handlers come from the route via
- * `useAddCustomerForm`.
- */
 export function AddCustomerFormSheet({
   control,
   isPending,

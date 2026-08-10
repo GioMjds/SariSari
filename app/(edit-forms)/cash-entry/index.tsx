@@ -10,6 +10,7 @@ import {
   CashEntryTypeCard,
   CashEntryDetailsCard,
 } from '@/components/cash-entry';
+import { Href } from 'expo-router';
 
 export default function CashEntryScreen() {
   const {
@@ -29,7 +30,7 @@ export default function CashEntryScreen() {
   if (sessionLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        <StyledText className="text-ink-500">Loading Cash Drawer...</StyledText>
+        <StyledText variant="regular" className="text-ink-500">Loading Cash Drawer...</StyledText>
       </SafeAreaView>
     );
   }
@@ -52,7 +53,7 @@ export default function CashEntryScreen() {
         </StyledText>
         <Pressable
           onPress={() => {
-            router.replace('/(edit-forms)/cash-session' as any);
+            router.replace('/(edit-forms)/cash-session' as Href);
           }}
           className="mt-6 bg-persimmon-500 px-6 py-3 rounded-xl active:opacity-70"
         >

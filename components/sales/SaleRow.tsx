@@ -75,7 +75,7 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
               style={{ marginRight: 6 }}
             />
             <StyledText
-              variant="bold"
+              variant="extrabold"
               className="text-xs text-ink-800"
               numberOfLines={1}
             >
@@ -142,4 +142,4 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
       </View>
     </Pressable>
   );
-});
+});

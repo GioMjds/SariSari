@@ -37,7 +37,10 @@ export const DashboardSuggestions = memo(function DashboardSuggestions({
           <View className="w-7 h-7 rounded-full bg-paper-200 items-center justify-center mr-2.5">
             <FontAwesome name="lightbulb-o" size={15} color="#E85A1F" />
           </View>
-          <StyledText variant="semibold" className="text-sm text-ink-800 flex-1">
+          <StyledText
+            variant="semibold"
+            className="text-sm text-ink-800 flex-1"
+          >
             {ctaText}
           </StyledText>
         </View>

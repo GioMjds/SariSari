@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller } from 'react-hook-form';
 import {
@@ -13,7 +13,6 @@ import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
 import type { Category } from '@/types/categories.types';
 import { useSuppliers } from '@/hooks/useSuppliers';
-import { useRenderCounter } from '@/hooks/useRenderCounter';
 import { ProductImagePicker } from '../ProductImagePicker';
 
 interface ProductBasicInfoCardProps {
@@ -57,9 +56,11 @@ export function ProductBasicInfoCard({
   onPressEditConflictingProduct,
   supplierFieldName = mode === 'add' ? 'supplierId' : 'supplier_id',
 }: ProductBasicInfoCardProps) {
-  useRenderCounter('ProductBasicInfoCard', { feature: 'products_form' });
   const { getAllSuppliersQuery } = useSuppliers();
-  const suppliers = getAllSuppliersQuery.data || [];
+  const suppliers = useMemo(
+    () => getAllSuppliersQuery.data || [],
+    [getAllSuppliersQuery.data],
+  );
   const isDuplicate = !!barcodeConflictProduct;
 
   return (
@@ -85,7 +86,10 @@ export function ProductBasicInfoCard({
 
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
-          Product Name <StyledText className="text-persimmon-500">*</StyledText>
+          Product Name{' '}
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <Controller
           control={control}
@@ -106,7 +110,10 @@ export function ProductBasicInfoCard({
       <View className="mb-4">
         <View className="flex-row items-center justify-between mb-2">
           <StyledText variant="semibold" className="text-ink-900 text-sm">
-            SKU <StyledText className="text-persimmon-500">*</StyledText>
+            SKU{' '}
+            <StyledText variant="regular" className="text-persimmon-500">
+              *
+            </StyledText>
           </StyledText>
           {mode === 'add' && onToggleAutoGenerateSku ? (
             <Pressable
@@ -133,7 +140,10 @@ export function ProductBasicInfoCard({
           ) : (
             <View className="flex-row items-center">
               <FontAwesome name="lock" size={10} color="#A89F90" />
-              <StyledText variant="regular" className="text-ink-400 text-xs ml-1">
+              <StyledText
+                variant="regular"
+                className="text-ink-400 text-xs ml-1"
+              >
                 Read-only
               </StyledText>
             </View>
@@ -311,13 +321,12 @@ function SupplierPickerControl({
   value,
   onChange,
 }: {
-  suppliers: Array<{ id: number; name: string }>;
+  suppliers: { id: string; name: string }[];
   value: any;
   onChange: (id: any) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const numericValue =
-    typeof value === 'string' ? parseInt(value, 10) : value;
+  const numericValue = typeof value === 'string' ? parseInt(value, 10) : value;
   const currentSupplier = suppliers.find((s) => s.id === numericValue);
 
   return (
@@ -356,7 +365,7 @@ function SupplierPickerControl({
             className="bg-paper-50 rounded-t-2xl p-5 max-h-[70%]"
           >
             <View className="flex-row items-center justify-between pb-3 border-b border-ink-100 mb-3">
-              <StyledText variant="bold" className="text-ink-900 text-lg">
+              <StyledText variant="extrabold" className="text-ink-900 text-lg">
                 Select Supplier
               </StyledText>
               <TouchableOpacity onPress={() => setOpen(false)}>

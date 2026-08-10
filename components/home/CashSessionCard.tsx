@@ -16,7 +16,6 @@ export function CashSessionCard({
   status,
   startingFloat = 0,
   expectedCash = 0,
-  variance = 0,
   onSessionAction,
 }: CashSessionCardProps) {
   const isOpen = status === 'open';

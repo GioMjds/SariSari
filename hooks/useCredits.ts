@@ -370,7 +370,7 @@ export function useUpdateCreditStatus() {
   return useMutation({
     mutationFn: ({ id, amount }: { id: number; amount: number }) =>
       updateCreditStatus(id, amount),
-    onSuccess: (_res, variables) => {
+    onSuccess: (_res, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
     },

@@ -2,40 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useToastStore } from '@/stores';
-import {
-  useSales,
-  useBarcodeResolver,
-  useCustomers,
-} from '@/hooks';
+import { useSales, useBarcodeResolver, useCustomers } from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
 import { logger } from '@/lib/logger';
 import type { ScanResolution } from '@/lib/barcodes/types';
 import { useCartLines } from './useCartLines';
 
-/**
- * Cart-action surface for the POS screen.
- *
- * Responsibilities (split for stability):
- *   - cart line state and actions: see `useCartLines`.
- *   - scanner state machine (modal open, last scan, pending add):
- *     local React state with stable callback identities via refs.
- *   - submit / customer actions: built on top of both.
- *
- * The product catalog query is owned by `CatalogProductsBridge` in
- * `app/(tabs)/sales/pos.tsx`, NOT here, so the search keystroke does
- * not invalidate the cart subtree's render.
- */
 export function useCart() {
   const cartLines = useCartLines();
   const { data: customers = [] } = useCustomers();
   const { insertSaleMutation, getTodayStatsQuery } = useSales();
   const addToast = useToastStore((state) => state.addToast);
 
-  // Watch the `customers` reference identity. If useCustomers returns
-  // a new array on every render, every downstream memo in the POS
-  // subtree invalidates and the css-interop layer can re-process the
-  // whole tree. Emit a single warn when the identity flips mid-flow.
   const prevCustomersRef = useRef<typeof customers>(customers);
   useEffect(() => {
     if (prevCustomersRef.current !== customers) {
@@ -259,13 +238,7 @@ export function useCart() {
       );
       return false;
     }
-  }, [
-    cartLines.cartItems,
-    cartLines.paymentType,
-    cartLines.selectedCustomer,
-    cartLines.clearCart,
-    insertSaleMutation,
-  ]);
+  }, [cartLines, insertSaleMutation]);
 
   return {
     // Domain data

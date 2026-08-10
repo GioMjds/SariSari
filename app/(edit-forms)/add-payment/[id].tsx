@@ -15,6 +15,8 @@ import {
 export default function AddPaymentTransaction() {
   const form = useAddPaymentForm();
 
+  if (!form.customer) return null;
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <KeyboardAwareScrollView
@@ -53,13 +55,11 @@ export default function AddPaymentTransaction() {
             rows={form.allocation.rows}
             unallocated={form.allocation.unallocated}
             hasAmount={form.parsedAmount > 0}
-            pinnedCreditLabel={
-              form.pinnedCredit
-                ? `${form.pinnedCredit.product_name || 'Credit'} · ${formatPesos(
-                    form.pinnedCredit.amount - form.pinnedCredit.amount_paid,
-                  )}`
-                : undefined
-            }
+            {...(form.pinnedCredit && {
+              pinnedCreditLabel: `${form.pinnedCredit.product_name || 'Credit'} · ${formatPesos(
+                form.pinnedCredit.amount - form.pinnedCredit.amount_paid,
+              )}`,
+            })}
           />
 
           <View className="my-3 border-t border-dashed border-ink-300" />

@@ -66,11 +66,12 @@ function ProductRowImpl({
           ellipsizeMode="tail"
           className="text-ink-600 text-xs mt-0.5"
         >
-          {product.category ?? 'Uncategorized'} · {product.retail_unit_name ?? 'Pc'}
+          {product.category ?? 'Uncategorized'} ·{' '}
+          {product.retail_unit_name ?? 'Pc'}
         </StyledText>
       </View>
       <View className="flex-row items-center gap-2">
-        <View className="items-end gap-1 shrink-0" style={{ fontVariant: ['tabular-nums'] }}>
+        <View className="items-end gap-1 shrink-0">
           <MoneyText
             value={product.price ?? 0}
             size="sm"

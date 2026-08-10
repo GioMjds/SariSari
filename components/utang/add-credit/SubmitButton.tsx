@@ -7,16 +7,10 @@ interface SubmitButtonProps {
   disabled: boolean;
   isPending: boolean;
   total: number;
-  /** Whether the product name field has content, for the dynamic label. */
   hasProductName: boolean;
   onPress: () => void;
 }
 
-/**
- * SubmitButton — the persimmon primary action. Disabled state uses
- * the brand fill at 40% opacity to keep the call-to-action read as
- * persimmon rather than fading to a neutral grey.
- */
 export function SubmitButton({
   disabled,
   isPending,

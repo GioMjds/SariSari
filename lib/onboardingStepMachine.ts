@@ -46,7 +46,7 @@ export function stepAt(index: number): Step {
 	if (index <= PROFILE_INDEX) return { kind: 'profile' };
 	if (index >= READY_INDEX) return { kind: 'ready' };
 	const tourIndex = index - TOUR_START_INDEX;
-	const tab = TOUR_ORDER[tourIndex] ?? TOUR_ORDER[0];
+	const tab = TOUR_ORDER[tourIndex] ?? 'home';
 	return { kind: 'tour', tab };
 }
 

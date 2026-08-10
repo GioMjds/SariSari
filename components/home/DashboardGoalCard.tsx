@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ export interface DashboardGoalCardProps {
   onPress: () => void;
 }
 
-const goalIcons: Record<HomeGoalKind, keyof typeof FontAwesome.glyphMap> = {
+const goalIcons = {
   setupCatalog: 'cubes',
   outOfStock: 'exclamation-circle',
   lowStock: 'warning',
@@ -21,7 +21,7 @@ const goalIcons: Record<HomeGoalKind, keyof typeof FontAwesome.glyphMap> = {
   firstSale: 'shopping-cart',
   continueSelling: 'line-chart',
   reviewReports: 'bar-chart',
-};
+} satisfies Record<HomeGoalKind, keyof typeof FontAwesome.glyphMap>;
 
 export const DashboardGoalCard = memo(function DashboardGoalCard({
   recommendation,
@@ -47,7 +47,10 @@ export const DashboardGoalCard = memo(function DashboardGoalCard({
               <FontAwesome name={iconName} size={18} color="#E85A1F" />
             </View>
             <View className="flex-1">
-              <StyledText variant="extrabold" className="text-base text-ink-900">
+              <StyledText
+                variant="extrabold"
+                className="text-base text-ink-900"
+              >
                 {title}
               </StyledText>
             </View>
@@ -55,14 +58,20 @@ export const DashboardGoalCard = memo(function DashboardGoalCard({
 
           {count !== undefined && count > 0 && (
             <View className="bg-persimmon-100 px-2.5 py-1 rounded-full border border-persimmon-200">
-              <StyledText variant="extrabold" className="text-xs text-persimmon-800">
+              <StyledText
+                variant="extrabold"
+                className="text-xs text-persimmon-800"
+              >
                 {count}
               </StyledText>
             </View>
           )}
         </View>
 
-        <StyledText variant="regular" className="text-sm text-ink-600 mb-4 leading-5">
+        <StyledText
+          variant="regular"
+          className="text-sm text-ink-600 mb-4 leading-5"
+        >
           {description}
         </StyledText>
 
@@ -73,7 +82,10 @@ export const DashboardGoalCard = memo(function DashboardGoalCard({
           onPress={onPress}
           className="w-full bg-persimmon-500 py-3.5 px-4 rounded-xl flex-row items-center justify-center active:opacity-90 press-scale"
         >
-          <StyledText variant="extrabold" className="text-paper-50 text-sm mr-2">
+          <StyledText
+            variant="extrabold"
+            className="text-paper-50 text-sm mr-2"
+          >
             {ctaText}
           </StyledText>
           <FontAwesome name="arrow-right" size={14} color="#FBF7EE" />

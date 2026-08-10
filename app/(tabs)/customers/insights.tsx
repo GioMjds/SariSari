@@ -1,4 +1,3 @@
-import React from 'react';
 import { View } from 'react-native';
 import {
   CustomerInsightsTab,
@@ -10,6 +9,9 @@ import { useTabBarBottomOffset } from '@/components/layout';
 export default function CustomerInsightsScreen() {
   const tabBarBottomOffset = useTabBarBottomOffset();
   const { data: insights, isLoading } = useCustomerInsights();
+
+  // Must resolve the type casting invocation. Maybe this returns null and then the data
+  if (!insights) return null;
 
   if (isLoading) {
     return (
@@ -31,4 +33,3 @@ export default function CustomerInsightsScreen() {
     </View>
   );
 }
-

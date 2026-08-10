@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo, FC } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { SearchBar } from '@/components/ui';
 import { CustomerFilterChips } from './CustomerFilterChips';
@@ -10,12 +10,11 @@ import * as Haptics from 'expo-haptics';
 
 interface AllCustomersTabProps {
   customers: Customer[];
-  totalCredit: number;
   onSelectCustomer: (customer: Customer) => void;
   onAddCustomer: () => void;
 }
 
-export const AllCustomersTab: React.FC<AllCustomersTabProps> = ({
+export const AllCustomersTab: FC<AllCustomersTabProps> = ({
   customers,
   onSelectCustomer,
   onAddCustomer,

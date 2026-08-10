@@ -1,5 +1,5 @@
 import { validateBarcode } from './format';
-import { applyBarcodeToPosCart } from './applyToPosCart';
+import { applyBarcodeToPosCart, type PosScanInput } from './applyToPosCart';
 import type { Product } from '@/types/products.types';
 import type { CatalogProduct } from '@/types/catalog.types';
 import type { ScanResolution } from './types';
@@ -30,13 +30,17 @@ export function createBarcodeResolver(config: BarcodeResolverConfig) {
         return { kind: 'store_products_unavailable' };
       }
 
-      const storeResult = applyBarcodeToPosCart({
+      const scanInput: PosScanInput = {
         barcode: validation.barcode,
         products: config.getProducts(),
         lastScan: lastAcceptedScan,
         now: nowMs ?? Date.now(),
-        throttleMs: config.throttleMs,
-      });
+      };
+      if (config.throttleMs !== undefined) {
+        scanInput.throttleMs = config.throttleMs;
+      }
+
+      const storeResult = applyBarcodeToPosCart(scanInput);
 
       if (storeResult.kind === 'duplicate') {
         return { kind: 'duplicate' };

@@ -20,13 +20,10 @@ import { validateBarcode } from '@/lib/barcodes/format';
 
 export type BarcodeScannerMode = 'single' | 'continuous';
 
-/** Per-scan banner info fed in by the parent in continuous mode. */
 export interface BarcodeScanResult {
   name: string;
   sku: string;
-  /** Unix epoch ms when the scan was accepted. */
   at: number;
-  /** Whether the SKU matched an inventory row. */
   found: boolean;
 }
 
@@ -35,23 +32,12 @@ export interface BarcodeScannerModalProps {
   onClose: () => void;
   onScan: (barcode: string) => void;
   mode: BarcodeScannerMode;
-  /** Continuous-mode banner — ignored in 'single' mode. */
   lastScanned?: BarcodeScanResult | null;
-  /** Continuous-mode cart item count for the banner. */
   itemCount?: number;
-  /** Continuous-mode cart total for the banner. */
   total?: number;
-  /** Whether to render the manual-entry fallback when the camera is
-   *  unavailable. Defaults to true so devices without a camera (or
-   *  users with denied permission) still have an entry path. */
   enableManualEntry?: boolean;
 }
 
-// Consumer UPC/EAN formats only. No QR / DataMatrix — sari-sari products
-// overwhelmingly use EAN-13, EAN-8, UPC-A, UPC-E, and the two 1D codes
-// printed on warehouse labels. Names follow the expo-camera
-// `BarcodeType` literal type — note `ean8`/`ean13` (no underscore)
-// but `upc_a`/`upc_e` (with underscore).
 const ACCEPTED_BARCODE_TYPES = [
   'upc_a',
   'upc_e',
@@ -63,30 +49,6 @@ const ACCEPTED_BARCODE_TYPES = [
 
 const SCAN_THROTTLE_MS = 1500;
 
-/**
- * BarcodeScannerModal — full-screen camera scanner with permission
- * flow, viewfinder overlay, and single/continuous modes.
- *
- * Two modes:
- *   • `single` — closes after the first accepted scan. Used by Add
- *     Product registration.
- *   • `continuous` — stays open across multiple scans, shows an
- *     in-viewfinder banner with the last scanned product. Used by
- *     the POS counter checkout flow.
- *
- * Permission handling:
- *   • `granted === undefined` — initial load; show centered spinner.
- *   • `granted === false && canAskAgain === true` — show "Allow Camera"
- *     button calling `requestPermission()`.
- *   • `granted === false && canAskAgain === false` — permanent deny;
- *     show "Open Settings" button calling `Linking.openSettings()`.
- *
- * Throttle: the modal drops duplicate CameraView events for the same
- * barcode within 1500ms before they reach the parent. This is
- * belt-and-suspenders defense against CameraView occasionally firing
- * the same scan 2-3 times — the parent's `applyBarcodeToPosCart`
- * applies a matching throttle against inventory state.
- */
 export function BarcodeScannerModal({
   visible,
   onClose,
@@ -103,14 +65,9 @@ export function BarcodeScannerModal({
   const [permission, requestPermission] = useCameraPermissions();
   const lastReadRef = useRef<{ barcode: string; at: number } | null>(null);
 
-  // v5 manual-entry state. Held here so the camera-up branch can
-  // ignore it cleanly. `error` is the inline validation message from
-  // `validateBarcode` (empty / format); cleared on every keystroke.
   const [manualBarcode, setManualBarcode] = useState<string>('');
   const [manualError, setManualError] = useState<string | null>(null);
 
-  // Reset the local throttle and the manual-entry input whenever the
-  // modal hides so the next opening starts with a clean slate.
   useEffect(() => {
     if (!visible) {
       lastReadRef.current = null;
@@ -130,8 +87,6 @@ export function BarcodeScannerModal({
       return;
     }
     setManualError(null);
-    // Route through the same `onScan` callback as a camera accept —
-    // the parent hook treats both inputs identically.
     onScan(validation.barcode);
   }, [manualBarcode, onScan]);
 
@@ -139,8 +94,6 @@ export function BarcodeScannerModal({
     (event: { data: string }) => {
       const barcode = event.data;
 
-      // Defense-in-depth throttle — drops events the CameraView fires
-      // multiple times for the same physical scan.
       const now = Date.now();
       const last = lastReadRef.current;
       if (
@@ -152,9 +105,6 @@ export function BarcodeScannerModal({
       }
       lastReadRef.current = { barcode, at: now };
 
-      // Medium haptic for every accepted scan. Pattern mirrors
-      // stores/ToastStore.ts: namespace import + .catch(() => {}) to
-      // silently swallow platform errors.
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
       onScan(barcode);
@@ -266,12 +216,6 @@ interface ViewfinderOverlayProps {
   reducedMotion: boolean;
 }
 
-/**
- * Translucent overlay with a center cutout and a pulsing red scan
- * line. The pulsing animation copies the pattern from
- * `app/index.tsx:114-122`: `MotiView` with `from`/`animate` and
- * `transition: { type: 'timing', duration, loop: !reducedMotion }`.
- */
 function ViewfinderOverlay({ reducedMotion }: ViewfinderOverlayProps) {
   const cutoutW = '70%';
   const cutoutH = 220;
@@ -356,7 +300,6 @@ interface CornerBracketProps {
   color: string;
 }
 
-/** Small L-shaped bracket drawn as absolute-positioned borders. */
 function CornerBracket({
   position,
   size,
@@ -470,9 +413,6 @@ interface PermissionGateProps {
   permission: ReturnType<typeof useCameraPermissions>[0];
   onRequest: () => void | Promise<void>;
   onOpenSettings: () => void;
-  /** v5 manual-entry props — present so devices without cameras (or
-   *  users with permanently denied permission) can still type the
-   *  barcode instead of being stuck. */
   enableManualEntry: boolean;
   manualBarcode: string;
   manualError: string | null;
@@ -480,9 +420,6 @@ interface PermissionGateProps {
   onSubmitManualEntry: () => void;
 }
 
-/** Renders one of three states: loading, requestable, blocked.
- *  v5: appends a manual-entry input below the gate when `enableManualEntry`
- *  so the user always has an escape hatch. */
 function PermissionGate({
   permission,
   onRequest,
@@ -493,7 +430,6 @@ function PermissionGate({
   onChangeManualBarcode,
   onSubmitManualEntry,
 }: PermissionGateProps) {
-  // permission is null until the initial async read completes.
   if (!permission || permission.granted === undefined) {
     return (
       <View className="flex-1 items-center justify-center bg-black">
@@ -502,11 +438,7 @@ function PermissionGate({
     );
   }
 
-  if (permission.granted) {
-    // Caller should have rendered the camera instead of the gate;
-    // nothing to render here. Return null for safety.
-    return null;
-  }
+  if (permission.granted) return null;
 
   const blocked = permission.canAskAgain === false;
 

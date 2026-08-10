@@ -190,7 +190,9 @@ export function useAddCreditForm() {
       ...prev,
       {
         id: String(Date.now() + Math.random()),
-        product_id: selectedProduct?.id || undefined,
+        ...(selectedProduct?.id != null
+          ? { product_id: selectedProduct.id }
+          : {}),
         product_name: selectedProduct ? selectedProduct.name : productName.trim(),
         quantity: qty,
         amount: itemTotal,
@@ -213,24 +215,26 @@ export function useAddCreditForm() {
   const submit = handleSubmit((data) => {
     const credits: NewCredit[] = ticketItems.map((item) => ({
       customer_id: Number(id),
-      product_id: item.product_id,
-      product_name: item.product_name,
+      ...(item.product_id != null ? { product_id: item.product_id } : {}),
+      ...(item.product_name ? { product_name: item.product_name } : {}),
       quantity: item.quantity,
       amount: item.amount,
-      due_date: data.dueDate?.trim() || undefined,
-      notes: data.notes?.trim() || undefined,
+      due_date: data.dueDate?.trim() || null,
+      notes: data.notes?.trim() || null,
     }));
 
     // If there is currently a draft item filled out, include it in the submit
     if (productName?.trim() && amount) {
       credits.push({
         customer_id: Number(id),
-        product_id: selectedProduct?.id || undefined,
+        ...(selectedProduct?.id != null
+          ? { product_id: selectedProduct.id }
+          : {}),
         product_name: selectedProduct ? selectedProduct.name : productName.trim(),
-        quantity: quantity ? parseInt(quantity, 10) : undefined,
+        quantity: quantity ? parseInt(quantity, 10) : null,
         amount: qtyNum * tryParsePesosInput(amount),
-        due_date: data.dueDate?.trim() || undefined,
-        notes: data.notes?.trim() || undefined,
+        due_date: data.dueDate?.trim() || null,
+        notes: data.notes?.trim() || null,
       });
     }
 

@@ -42,7 +42,10 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
     try {
       await Promise.all(
         productIds.map((id) =>
-          updateProductCategoryMutation.mutateAsync({ id, category: nextCategory }),
+          updateProductCategoryMutation.mutateAsync({
+            id,
+            category: nextCategory,
+          }),
         ),
       );
       addToast({

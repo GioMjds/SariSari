@@ -8,33 +8,15 @@ import { AllocationRow } from './useAddPaymentForm';
 interface AllocationReceiptProps {
   rows: AllocationRow[];
   unallocated: number;
-  /** True when the form has an amount entered (drives visibility). */
   hasAmount: boolean;
-  /**
-   * Set when the form is in "Quick Settle" mode (entered from a
-   * single UtangCard). Surfaces a focused header so the cashier
-   * knows which credit they're paying down.
-   */
   pinnedCreditLabel?: string;
 }
 
-/**
- * AllocationReceipt — the live FIFO credit-allocation receipt.
- *
- * Renders the suki's unpaid credits oldest-to-newest with three
- * visual states:
- *   • Covered (green, checkmark)   — fully paid by this payment
- *   • Partial (orange)            — partly paid by this payment
- *   • Untouched (standard ink)    — not reached yet
- *
- * The visible state mirrors what `database/credits.ts:insertPayment`
- * will write inside the SQLite transaction.
- */
 export function AllocationReceipt({
   rows,
   unallocated,
   hasAmount,
-  pinnedCreditLabel,
+  pinnedCreditLabel = '',
 }: AllocationReceiptProps) {
   if (rows.length === 0) {
     return (
@@ -96,7 +78,11 @@ export function AllocationReceipt({
             <View className="border-t border-dashed border-ink-200 my-2.5" />
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
-                <FontAwesome name="exclamation-circle" size={12} color="#C77B0E" />
+                <FontAwesome
+                  name="exclamation-circle"
+                  size={12}
+                  color="#C77B0E"
+                />
                 <StyledText
                   variant="semibold"
                   className="text-semantic-warning text-xs ml-1.5"
@@ -143,11 +129,12 @@ function AllocationRowItem({ row }: AllocationRowItemProps) {
       ? 'Partial'
       : 'Unpaid';
 
-  const stateIcon: 'check-circle' | 'circle-o' | 'minus-circle' = row.fullyCovered
-    ? 'check-circle'
-    : row.partiallyCovered
-      ? 'minus-circle'
-      : 'circle-o';
+  const stateIcon: 'check-circle' | 'circle-o' | 'minus-circle' =
+    row.fullyCovered
+      ? 'check-circle'
+      : row.partiallyCovered
+        ? 'minus-circle'
+        : 'circle-o';
 
   return (
     <View>
@@ -195,10 +182,7 @@ function AllocationRowItem({ row }: AllocationRowItemProps) {
             : `${formatPesos(owedBefore)} owed`}
         </StyledText>
         {applied > 0 && (
-          <StyledText
-            variant="extrabold"
-            className={`text-sm ${stateColor}`}
-          >
+          <StyledText variant="extrabold" className={`text-sm ${stateColor}`}>
             −{formatPesos(applied)}
           </StyledText>
         )}

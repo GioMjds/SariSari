@@ -48,6 +48,7 @@ export default function AddSales() {
         <ProductSearchCatalog
           filteredProducts={form.filteredProducts}
           isLoading={form.isProductsLoading}
+          // Need proper fix
           getCartLine={form.getCartLine}
           onAdd={form.handleAddItem}
           onUpdateQuantity={form.handleUpdateQuantity}
@@ -58,6 +59,7 @@ export default function AddSales() {
             if (idx !== -1) form.toggleCartItemUnit(idx);
           }}
           onPressScan={form.openScanner}
+          // Need proper type invocations
           pendingAddProductBarcode={form.pendingAddProductBarcode}
           onPressAddNewProduct={form.handlePressAddNewProduct}
           onDismissPendingAddProduct={form.dismissPendingAddProduct}

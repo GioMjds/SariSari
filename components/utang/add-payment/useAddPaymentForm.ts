@@ -244,10 +244,10 @@ export function useAddPaymentForm() {
       customer_id: Number(id),
       // When Quick Settle pinned a credit, send the targeted
       // allocation; otherwise let the DB do FIFO.
-      credit_transaction_id: pinnedCredit?.id,
+      credit_transaction_id: pinnedCredit?.id ?? null,
       amount: parsePesosInput(data.amount),
       payment_method: data.paymentMethod,
-      notes: data.notes?.trim() || undefined,
+      notes: data.notes?.trim() ?? null,
       date: format(new Date(), 'yyyy-MM-dd'),
     };
 

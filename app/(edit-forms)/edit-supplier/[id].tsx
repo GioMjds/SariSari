@@ -448,7 +448,7 @@ function BasicInfoCard({
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
           {t('labelName', 'Supplier Name')}{' '}
-          <StyledText className="text-persimmon-500">*</StyledText>
+          <StyledText variant="semibold" className="text-persimmon-500">*</StyledText>
         </StyledText>
         <Controller
           control={control}

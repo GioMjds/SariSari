@@ -15,7 +15,7 @@ interface Props {
     quantity: number;
     price: number;
     cost_price?: number;
-    image_uri?: string;
+    image_uri?: string | null;
   };
   onPress: (id: number) => void;
   onLongPress?: (id: number) => void;
@@ -62,7 +62,7 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
         >
           {product.name}
         </StyledText>
-        <View className="flex-row items-center mt-0.5" style={{ fontVariant: ['tabular-nums'] }}>
+        <View className="flex-row items-center mt-0.5">
           <StyledText
             variant="medium"
             numberOfLines={1}

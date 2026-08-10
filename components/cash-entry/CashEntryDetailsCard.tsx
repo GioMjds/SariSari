@@ -1,4 +1,3 @@
-import React from 'react';
 import { View, TextInput } from 'react-native';
 import { Control, Controller, FieldErrors } from 'react-hook-form';
 import { StyledText } from '@/components/elements';
@@ -45,7 +44,7 @@ export function CashEntryDetailsCard({
           render={({ field: { onChange, onBlur, value } }) => (
             <View className="relative justify-center">
               <View className="absolute left-4 z-10">
-                <StyledText className="text-base font-extrabold text-ink-500">
+                <StyledText variant="extrabold" className="text-base font-extrabold text-ink-500">
                   ₱
                 </StyledText>
               </View>
@@ -70,7 +69,7 @@ export function CashEntryDetailsCard({
           )}
         />
         {!!errors.amount && (
-          <StyledText className="text-semantic-danger text-xs mt-1.5">
+          <StyledText variant="regular" className="text-semantic-danger text-xs mt-1.5">
             {errors.amount.message || 'Please enter a valid amount'}
           </StyledText>
         )}
@@ -108,7 +107,7 @@ export function CashEntryDetailsCard({
           )}
         />
         {errors.notes && (
-          <StyledText className="text-semantic-danger text-xs mt-1.5">
+          <StyledText variant="regular" className="text-semantic-danger text-xs mt-1.5">
             Please describe this movement (minimum 2 letters)
           </StyledText>
         )}

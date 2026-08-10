@@ -2,6 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "noUncheckedSideEffectImports": true,
+    "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
@@ -10,9 +12,8 @@
     "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "expo-file-system/legacy": ["./types/expo-file-system-shim/legacy.d.ts"]
     }
   },
   "include": [
@@ -24,6 +25,7 @@
   ],
   "exclude": [
     "node_modules",
+    "node_modules/expo-file-system",
     "dist",
     "build",
     ".expo",

@@ -13,7 +13,7 @@ interface SimpleBarChartProps {
 	/** Changing this value remounts the chart and replays nothing — bars appear
 	 * instantly. Pass the date-range key so the chart resets cleanly after a
 	 * range change without a mount flash. */
-	dataKey?: string;
+	_dataKey?: string;
 }
 
 /**
@@ -30,7 +30,6 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 	height = 200,
 	barColor = '#623418', // cinnamon-500
 	accentColor = '#E85A1F', // persimmon-500
-	dataKey,
 }: SimpleBarChartProps) {
 	const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 	// On first paint skip the `from` state so the peak label appears instantly.
@@ -64,9 +63,9 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 
 	const maxValue = Math.max(...data.map((d) => d.amount), 1);
 	const maxIndex = data.reduce(
-		(maxIdx, p, i, arr) => (p.amount > arr[maxIdx].amount ? i : maxIdx),
+		(maxIdx, p, i, arr) => (p.amount > (arr[maxIdx]?.amount ?? 0) ? i : maxIdx),
 		0,
-	);
+	) as number;
 	const todayIndex = data.length - 1;
 
 	const formatLabel = (v: number) => {
@@ -116,7 +115,7 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
 						>
 							{/* Value label (only on peak or selected for clarity) */}
 							<MotiView
-								from={shouldAnimate ? { opacity: 0 } : undefined}
+								from={{ opacity: shouldAnimate ? 0 : 1 }}
 								animate={{ opacity: isPeak || isSelected ? 1 : 0 }}
 								transition={{ type: 'timing', duration: 220 }}
 								className="mb-1"

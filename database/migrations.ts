@@ -1,9 +1,10 @@
 import { db } from '../configs/sqlite';
 
 export async function runMigrations() {
-  const [{ user_version: currentVersion }] = await db.getAllAsync<{
-    user_version: number;
-  }>('PRAGMA user_version');
+  const versionRows = await db.getAllAsync<{ user_version: number }>(
+    'PRAGMA user_version',
+  );
+  const currentVersion = versionRows[0]?.user_version ?? 0;
   console.log(`Current database version: ${currentVersion}`);
 
   if (currentVersion < 2) {

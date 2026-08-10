@@ -1,6 +1,6 @@
 import { useModalStore } from '@/stores/ModalStore';
 import { AlertButton, AlertOptions } from 'react-native';
-import { ModalButton } from '@/types/ui/Modal.types';
+import { Modal, ModalButton } from '@/types/ui/Modal.types';
 
 /**
  * This is to replace the default React Native Alert with our custom modal implementation.
@@ -19,11 +19,16 @@ const alert = (
   const { openModal } = useModalStore.getState();
 
   const modalButtons: ModalButton[] = buttons
-    ? buttons.map((btn) => ({
-        text: btn.text || 'OK',
-        style: btn.style,
-        onPress: btn.onPress,
-      }))
+    ? buttons.map((btn) => {
+        const item: ModalButton = {
+          text: btn.text || 'OK',
+          style: btn.style ?? 'default',
+        };
+        if (btn.onPress) {
+          item.onPress = () => btn.onPress?.();
+        }
+        return item;
+      })
     : [{ text: 'OK', style: 'default' }];
 
   // Determine variant based on buttons or content
@@ -31,15 +36,22 @@ const alert = (
   const hasDestructive = modalButtons.some((b) => b.style === 'destructive');
   const variant = hasDestructive ? 'danger' : 'info';
 
-  openModal({
+  const modalPayload: Omit<Modal, 'id'> = {
     title,
-    description: message,
     buttons: modalButtons,
     variant,
     closeOnOverlay: options?.cancelable ?? true,
     closeOnEscape: options?.cancelable ?? true,
-    onClose: options?.onDismiss,
-  });
+  };
+
+  if (message !== undefined) {
+    modalPayload.description = message;
+  }
+  if (options?.onDismiss) {
+    modalPayload.onClose = options.onDismiss;
+  }
+
+  openModal(modalPayload);
 };
 
 export const Alert = {

@@ -11,6 +11,8 @@ import { MovementChip } from './MovementChip';
 interface LedgerHeroProps {
   product: Product;
   transactions: InventoryTransaction[];
+  // To fix the proper types and to use in `LedgerHero`
+  onLogTransaction: unknown;
 }
 
 export const LedgerHero = memo(function LedgerHero({

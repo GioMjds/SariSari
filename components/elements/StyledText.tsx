@@ -10,10 +10,10 @@ type FontVariant =
   | 'extralight';
 
 interface StyledTextProps extends RNTextProps {
-  variant?: FontVariant;
+  variant: FontVariant;
 }
 
-const FONT_MAP: Record<FontVariant, string> = {
+const FONT_MAP = {
   regular: 'StackSansText-Regular',
   medium: 'StackSansText-Medium',
   semibold: 'StackSansText-SemiBold',
@@ -21,7 +21,7 @@ const FONT_MAP: Record<FontVariant, string> = {
   black: 'StackSansText-Bold',
   light: 'StackSansText-Light',
   extralight: 'StackSansText-ExtraLight',
-};
+} satisfies Record<FontVariant, string>;
 
 export function StyledText({
   variant = 'regular',

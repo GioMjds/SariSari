@@ -79,7 +79,10 @@ export function StockEmptyState({ filter }: StockEmptyStateProps) {
         >
           {copy.title}
         </StyledText>
-        <StyledText className="text-ink-500 text-body mt-2 text-center">
+        <StyledText
+          variant="medium"
+          className="text-ink-500 text-body mt-2 text-center"
+        >
           {copy.subtitle}
         </StyledText>
       </View>

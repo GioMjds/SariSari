@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { usePaginatedProducts } from '@/hooks/useProducts';
 import {
   StockList,
@@ -12,20 +12,29 @@ import {
 import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
 
+type SearchParams = {
+  filter?: StockFilter;
+  q?: string;
+};
+
+const STOCK_FILTER = [
+  'all',
+  'critical',
+  'low',
+  'out',
+  'overstock',
+  'near_expiry',
+] as const;
+
 export default function StockScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ filter?: StockFilter; q?: string }>();
+  const params = useLocalSearchParams<SearchParams>();
   const searchTerm = (params.q ?? '').trim().toLowerCase();
   const signal = useStockSheetSignal();
 
   const filter: StockFilter = useMemo(() => {
     const fromParams = params.filter;
-    if (
-      fromParams &&
-      ['all', 'critical', 'low', 'out', 'overstock', 'near_expiry'].includes(
-        fromParams,
-      )
-    ) {
+    if (fromParams && STOCK_FILTER.includes(fromParams)) {
       return fromParams;
     }
     return 'all';
@@ -39,7 +48,7 @@ export default function StockScreen() {
   );
 
   const handlePress = useCallback(
-    (id: number) => router.push(`/(edit-forms)/product-details/${id}`),
+    (id: number) => router.push(`/(edit-forms)/product-details/${id}` as Href),
     [router],
   );
   const handleRestock = useCallback(
@@ -49,9 +58,7 @@ export default function StockScreen() {
 
   if (productsQuery.isLoading) return <StockSkeleton />;
   if (productsQuery.error)
-    return (
-      <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />
-    );
+    return <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />;
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -69,7 +76,10 @@ export default function StockScreen() {
           isFetchingNextPage={productsQuery.isFetchingNextPage}
           hasNextPage={productsQuery.hasNextPage}
           onEndReached={() => {
-            if (!productsQuery.isFetchingNextPage && productsQuery.hasNextPage) {
+            if (
+              !productsQuery.isFetchingNextPage &&
+              productsQuery.hasNextPage
+            ) {
               productsQuery.fetchNextPage();
             }
           }}
@@ -78,4 +88,3 @@ export default function StockScreen() {
     </View>
   );
 }
-

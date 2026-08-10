@@ -66,7 +66,7 @@ export function ParkCartModal({
           </StyledText>
 
           <View className="bg-paper-200 p-3 rounded-xl mb-4 border border-paper-300">
-            <StyledText variant="bold" className="text-xs text-ink-500 uppercase tracking-wider mb-1">
+            <StyledText variant="extrabold" className="text-xs text-ink-500 uppercase tracking-wider mb-1">
               Summary
             </StyledText>
             <StyledText variant="extrabold" className="text-base text-ink-900">

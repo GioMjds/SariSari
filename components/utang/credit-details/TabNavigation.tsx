@@ -12,56 +12,40 @@ interface TabDefinition {
   icon: keyof typeof FontAwesome.glyphMap;
 }
 
-const TABS: TabDefinition[] = [
+const TABS = [
   { key: 'credits', label: 'Credits', icon: 'credit-card' },
   { key: 'payments', label: 'Payments', icon: 'money' },
   { key: 'history', label: 'History', icon: 'history' },
-];
+] satisfies TabDefinition[];
 
 interface TabNavigationProps {
   activeTab: CreditDetailTab;
   onChange: (next: CreditDetailTab) => void;
-  /** Optional per-tab counts shown as a small superscript dot. */
   counts?: Partial<Record<CreditDetailTab, number>>;
 }
 
-/**
- * TabNavigation — credits / payments / history segmented control.
- *
- * The active-tab pill's `translateX` and `width` are derived from the
- * active tab's measured layout (captured via `onLayout` per tab) and
- * updated synchronously when `activeTab` changes — no spring, no
- * wiggle. The pill snaps to its new tab on each render.
- */
 export const TabNavigation = memo(function TabNavigation({
   activeTab,
   onChange,
   counts,
 }: TabNavigationProps) {
-  // Per-tab measured x + width. Indexed by tab key.
   const [metrics, setMetrics] = useState<
     Partial<Record<CreditDetailTab, { x: number; width: number }>>
   >({});
 
-  // Stable per-tab layout handlers — stored in a ref so each Pressable
-  // always receives the same function reference across renders, preventing
-  // the entire tab row from re-rendering when `activeTab` or `metrics` changes.
   const layoutHandlersRef = useRef<
     Partial<Record<CreditDetailTab, (e: LayoutChangeEvent) => void>>
   >({});
 
-  const getTabLayoutHandler = useCallback(
-    (key: CreditDetailTab) => {
-      if (!layoutHandlersRef.current[key]) {
-        layoutHandlersRef.current[key] = (e: LayoutChangeEvent) => {
-          const { x, width } = e.nativeEvent.layout;
-          setMetrics((prev) => ({ ...prev, [key]: { x, width } }));
-        };
-      }
-      return layoutHandlersRef.current[key]!;
-    },
-    [],
-  );
+  const getTabLayoutHandler = useCallback((key: CreditDetailTab) => {
+    if (!layoutHandlersRef.current[key]) {
+      layoutHandlersRef.current[key] = (e: LayoutChangeEvent) => {
+        const { x, width } = e.nativeEvent.layout;
+        setMetrics((prev) => ({ ...prev, [key]: { x, width } }));
+      };
+    }
+    return layoutHandlersRef.current[key]!;
+  }, []);
 
   const active = metrics[activeTab];
 

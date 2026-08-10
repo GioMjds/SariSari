@@ -40,8 +40,8 @@ export const getReportKPIs = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-  const startDateStr = dateRange.startDate.toISOString().split('T')[0];
-  const endDateStr = dateRange.endDate.toISOString().split('T')[0];
+  const startDateStr = dateRange.startDate.toISOString().split('T')[0] ?? '';
+  const endDateStr = dateRange.endDate.toISOString().split('T')[0] ?? '';
 
   const [
     salesResult,

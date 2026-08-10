@@ -14,8 +14,14 @@ import {
 import { BarcodeScannerModal } from '@/components/ui';
 import { useCart } from '@/components/sales/pos/useCart';
 import { useCartStore, usePOSSearchStore, useToastStore } from '@/stores';
-import { usePaginatedProducts, useParkedCarts } from '@/hooks';
+import {
+  usePaginatedProducts,
+  useParkedCarts,
+  validateParkedCartItems,
+} from '@/hooks';
 import { ParkedCart } from '@/database/parkedCarts';
+import { Customer, NewSaleItem, Product } from '@/types';
+import { getAllProducts } from '@/database';
 
 export default function POSScreen() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
@@ -117,7 +123,7 @@ export default function POSScreen() {
         const { validatedItems, warnings } = await resumeCart(cartToResume);
         clearCart();
 
-        let restoredCustomer: import('@/types').Customer | string | null =
+        let restoredCustomer: Customer | string | null =
           cartToResume.customerName ?? null;
         if (cartToResume.customerId != null && customers.length > 0) {
           const found = customers.find((c) => c.id === cartToResume.customerId);
@@ -183,10 +189,7 @@ export default function POSScreen() {
           discardId: targetResumeCart.id,
         });
 
-        const currentProducts = await import('@/database/products').then((m) =>
-          m.getAllProducts(),
-        );
-        const { validateParkedCartItems } = await import('@/hooks/useParkedCarts');
+        const currentProducts = await getAllProducts();
         const { items, warnings } = validateParkedCartItems(
           targetResumeCart.cartItems,
           currentProducts,
@@ -194,10 +197,12 @@ export default function POSScreen() {
 
         clearCart();
 
-        let restoredCustomer: import('@/types').Customer | string | null =
+        let restoredCustomer: Customer | string | null =
           targetResumeCart.customerName ?? null;
         if (targetResumeCart.customerId != null && customers.length > 0) {
-          const found = customers.find((c) => c.id === targetResumeCart.customerId);
+          const found = customers.find(
+            (c) => c.id === targetResumeCart.customerId,
+          );
           if (found) {
             restoredCustomer = found;
           }
@@ -359,15 +364,15 @@ export default function POSScreen() {
 }
 
 interface CatalogProductsBridgeProps {
-  getCartLine: (productId: number) => import('@/types').NewSaleItem | undefined;
+  getCartLine: (productId: number) => NewSaleItem | undefined;
   onAdd: (
-    product: import('@/types').Product,
-    selectedUnit?: 'retail' | 'wholesale' | undefined,
+    product: Product,
+    selectedUnit?: 'retail' | 'wholesale',
   ) => 'over_stock' | void;
   onUpdateQuantity: (
     productId: number,
     delta: number,
-    selectedUnit?: 'retail' | 'wholesale' | undefined,
+    selectedUnit?: 'retail' | 'wholesale',
   ) => 'over_stock' | void;
   onToggleUnit: (productId: number) => void;
   onPressScan: () => void;
@@ -375,10 +380,10 @@ interface CatalogProductsBridgeProps {
   onPressAddNewProduct: () => void;
   onDismissPendingAddProduct: () => void;
   onSearchTextChange: (text: string) => void;
-  parkedCartsCount?: number | undefined;
-  cartItemCount?: number | undefined;
-  onPressParkedList?: (() => void) | undefined;
-  onPressParkCurrent?: (() => void) | undefined;
+  parkedCartsCount: number;
+  cartItemCount?: number;
+  onPressParkedList?: () => void;
+  onPressParkCurrent?: () => void;
 }
 
 function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
@@ -424,10 +429,14 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
       onEndReached={handleFetchNextPage}
       onRetryFetchNext={handleRetryFetchNext}
       onSearchTextChange={props.onSearchTextChange}
-      parkedCartsCount={props.parkedCartsCount}
-      cartItemCount={props.cartItemCount}
-      onPressParkedList={props.onPressParkedList}
-      onPressParkCurrent={props.onPressParkCurrent}
+      parkedCartsCount={props.parkedCartsCount ?? 0}
+      cartItemCount={props.cartItemCount ?? 0}
+      {...(props.onPressParkedList
+        ? { onPressParkedList: props.onPressParkedList }
+        : {})}
+      {...(props.onPressParkCurrent
+        ? { onPressParkCurrent: props.onPressParkCurrent }
+        : {})}
     />
   );
 }

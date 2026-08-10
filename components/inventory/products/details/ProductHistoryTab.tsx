@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -52,7 +52,7 @@ function EventPill({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':
@@ -93,7 +93,7 @@ function EventIcon({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':
@@ -133,7 +133,7 @@ function EventIcon({
   }
 }
 
-export const ProductHistoryTab = React.memo(function ProductHistoryTab({
+export const ProductHistoryTab = memo(function ProductHistoryTab({
   transactions,
   isLoading,
   currentStock,
@@ -151,7 +151,6 @@ export const ProductHistoryTab = React.memo(function ProductHistoryTab({
       return row;
     });
   }, [transactions, currentStock]);
-
 
   if (isLoading) {
     return (
@@ -210,12 +209,14 @@ export const ProductHistoryTab = React.memo(function ProductHistoryTab({
           >
             {/* Icon */}
             <View className="mr-3">
+              {/* TODO: To fix the type invocation */}
               <EventIcon type={item.type} sign={item.adjustment_sign} />
             </View>
 
             {/* Content */}
             <View className="flex-1 mr-2">
               <View className="flex-row items-center">
+                {/* TODO: To fix the type invocation */}
                 <EventPill type={item.type} sign={item.adjustment_sign} />
               </View>
               {hasNote && (

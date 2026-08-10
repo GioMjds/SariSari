@@ -17,6 +17,7 @@ const fixture: Product = {
   quantity: 10,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  is_favorite: false,
 };
 
 describe('LogTransactionForm product picker', () => {
