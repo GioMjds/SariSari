@@ -139,7 +139,9 @@ export function RestockSheet({
       )}
 
       <View className="gap-y-1">
-        <StyledText className="text-ink-500 text-xs">QUANTITY</StyledText>
+        <StyledText variant="regular" className="text-ink-500 text-xs">
+          QUANTITY
+        </StyledText>
         <QuantityStepper
           value={qty}
           onChange={setQty}
@@ -150,7 +152,7 @@ export function RestockSheet({
       </View>
 
       <View className="gap-y-1">
-        <StyledText className="text-ink-500 text-xs">
+        <StyledText variant="regular" className="text-ink-500 text-xs">
           WHOLESALE UNIT COST
         </StyledText>
         <TextInput
@@ -163,7 +165,7 @@ export function RestockSheet({
       </View>
 
       <View className="gap-y-1">
-        <StyledText className="text-ink-500 text-xs">
+        <StyledText variant="regular" className="text-ink-500 text-xs">
           SUPPLIER (OPTIONAL)
         </StyledText>
         {suppliers.length > 0 ? (
@@ -218,14 +220,14 @@ export function RestockSheet({
             })}
           </ScrollView>
         ) : (
-          <StyledText className="text-xs text-ink-400 py-1">
+          <StyledText variant="regular" className="text-xs text-ink-400 py-1">
             No suppliers found
           </StyledText>
         )}
       </View>
 
       <View className="gap-y-1">
-        <StyledText className="text-ink-500 text-xs">
+        <StyledText variant="regular" className="text-ink-500 text-xs">
           NOTE (OPTIONAL)
         </StyledText>
         <TextInput

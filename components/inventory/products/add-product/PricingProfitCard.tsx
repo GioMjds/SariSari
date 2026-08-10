@@ -8,10 +8,10 @@ import {
   formatPesos,
   tryParsePesosInput,
 } from '@/lib';
-import { MARKUP_PRESETS, MarkupPreset } from './useAddProductForm';
+import { MARKUP_PRESETS, MarkupPreset, AddProductFormData } from './useAddProductForm';
 
 interface PricingProfitCardProps {
-  control: Control<any>;
+  control: Control<AddProductFormData>;
   costPerPiece: string;
   price: string;
   useBundlePricing: boolean;

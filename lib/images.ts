@@ -18,7 +18,7 @@ export async function pickProductImage(): Promise<string | null> {
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: ['images'],
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.8,
@@ -28,7 +28,8 @@ export async function pickProductImage(): Promise<string | null> {
     return null;
   }
 
-  return result.assets[0].uri;
+  const firstAsset = result.assets[0];
+  return firstAsset ? firstAsset.uri : null;
 }
 
 export async function takeProductPhoto(): Promise<string | null> {
@@ -38,7 +39,7 @@ export async function takeProductPhoto(): Promise<string | null> {
   }
 
   const result = await ImagePicker.launchCameraAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    mediaTypes: ['images'],
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.8,
@@ -48,7 +49,8 @@ export async function takeProductPhoto(): Promise<string | null> {
     return null;
   }
 
-  return result.assets[0].uri;
+  const firstAsset = result.assets[0];
+  return firstAsset ? firstAsset.uri : null;
 }
 
 const IMAGE_DIR_NAME = 'product_images';

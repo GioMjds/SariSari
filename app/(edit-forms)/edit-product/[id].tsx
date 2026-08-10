@@ -35,7 +35,6 @@ export default function EditProduct() {
           showsVerticalScrollIndicator={false}
         >
           <EditBasicInfoCard
-            // Must fix the proper type invocation for edit basic info card forms
             control={form.control}
             categories={form.categories}
             selectedCategory={form.category}
@@ -44,7 +43,6 @@ export default function EditProduct() {
 
           <View className="mt-3">
             <EditPricingCard
-              // Must fix the proper type invocation for edit basic info card forms
               control={form.control}
               profitPerPiece={form.profitPerPiece}
               markupPercent={form.markupPercent}
@@ -94,7 +92,6 @@ export default function EditProduct() {
       {/* Discard-changes confirmation */}
       <Modal
         visible={form.showDiscardModal}
-        // Must add the `cancelDiscard` property into the edit product form RHF hook
         onClose={form.cancelDiscard}
         title="Unsaved Changes"
         description="You have unsaved changes. Are you sure you want to discard them?"

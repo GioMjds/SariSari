@@ -9,14 +9,14 @@ interface AllocationReceiptProps {
   rows: AllocationRow[];
   unallocated: number;
   hasAmount: boolean;
-  pinnedCreditLabel: string;
+  pinnedCreditLabel?: string;
 }
 
 export function AllocationReceipt({
   rows,
   unallocated,
   hasAmount,
-  pinnedCreditLabel,
+  pinnedCreditLabel = '',
 }: AllocationReceiptProps) {
   if (rows.length === 0) {
     return (

@@ -12,7 +12,7 @@ export interface Modal {
 	description?: string;
 	children?: ReactNode;
 	buttons?: ModalButton[];
-	variant?: 'default' | 'success' | 'warning' | 'danger';
+	variant: 'default' | 'success' | 'warning' | 'danger' | 'info';
 	icon?: string; // FontAwesome icon name
 	closeOnOverlay?: boolean;
 	closeOnEscape?: boolean;

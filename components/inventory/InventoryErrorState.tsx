@@ -19,7 +19,7 @@ export function InventoryErrorState({
       <StyledText variant="extrabold" className="text-base text-rose-900">
         {title}
       </StyledText>
-      <StyledText className="text-xs text-rose-800 text-center px-4">
+      <StyledText variant="regular" className="text-xs text-rose-800 text-center px-4">
         {message}
       </StyledText>
       <TouchableOpacity

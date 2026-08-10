@@ -80,7 +80,10 @@ export function BasicInfoCard({
       {/* Product Name */}
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
-          Product Name <StyledText className="text-persimmon-500">*</StyledText>
+          Product Name{' '}
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <Controller
           control={control}
@@ -102,7 +105,10 @@ export function BasicInfoCard({
       <View className="mb-4">
         <View className="flex-row items-center justify-between mb-2">
           <StyledText variant="semibold" className="text-ink-900 text-sm">
-            SKU <StyledText className="text-persimmon-500">*</StyledText>
+            SKU{' '}
+            <StyledText variant="regular" className="text-persimmon-500">
+              *
+            </StyledText>
           </StyledText>
           <Pressable
             onPress={onToggleAutoGenerateSku}

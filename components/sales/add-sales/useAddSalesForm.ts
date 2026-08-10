@@ -310,7 +310,8 @@ export function useAddSalesForm() {
   );
 
   useEffect(() => {
-    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching) return;
+    if (!getAllProductsQuery.isSuccess || getAllProductsQuery.isFetching)
+      return;
     const queued = pendingScanRef.current;
     if (!queued) return;
     pendingScanRef.current = null;

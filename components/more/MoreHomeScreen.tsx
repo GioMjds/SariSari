@@ -10,6 +10,8 @@ const routes = {
   reports: '/(tabs)/home',
   cashEntries: '/(tabs)/more/cash-entries',
   settings: '/(tabs)/more/settings',
+  // This route is not yet implemented.
+  expenses: '/(tabs)/more/expenses',
 } satisfies Record<string, Href>;
 
 export function MoreHomeScreen() {

@@ -23,7 +23,7 @@ export function ProductPicker({ products, selectedId, onSelect }: Props) {
 
   return (
     <View className="gap-y-2">
-      <StyledText className="text-xs text-ink-500">Product</StyledText>
+      <StyledText variant="regular" className="text-xs text-ink-500">Product</StyledText>
       <View className="flex-row items-center bg-paper-100 border border-paper-300 rounded-xl px-3">
         <FontAwesome name="search" size={12} color="#623418" />
         <TextInput
@@ -56,6 +56,7 @@ export function ProductPicker({ products, selectedId, onSelect }: Props) {
                 {p.name}
               </StyledText>
               <StyledText
+                variant="regular"
                 className={`text-[11px] ${isActive ? 'text-paper-200' : 'text-ink-500'}`}
               >
                 {p.quantity ?? 0} in stock
@@ -64,7 +65,7 @@ export function ProductPicker({ products, selectedId, onSelect }: Props) {
           );
         })}
         {filtered.length === 0 ? (
-          <StyledText className="text-xs text-ink-500 py-2 text-center">
+          <StyledText variant="regular" className="text-xs text-ink-500 py-2 text-center">
             No matches.
           </StyledText>
         ) : null}

@@ -29,7 +29,7 @@ export function SheetProductCard({ product }: Props) {
       </StyledText>
       <View className="flex-row mt-2 gap-x-8">
         <View>
-          <StyledText className="text-ink-500 text-[11px]">
+          <StyledText variant="regular" className="text-ink-500 text-[11px]">
             Current Stock
           </StyledText>
           <StyledText variant="black" className="text-ink-900 text-base">
@@ -37,7 +37,7 @@ export function SheetProductCard({ product }: Props) {
           </StyledText>
         </View>
         <View>
-          <StyledText className="text-ink-500 text-[11px]">Price</StyledText>
+          <StyledText variant="regular" className="text-ink-500 text-[11px]">Price</StyledText>
           <MoneyText value={product.price} size="sm" className="text-ink-900" />
         </View>
       </View>

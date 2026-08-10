@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { useCategories, useProducts, useBarcodeResolver } from '@/hooks';
 import {
@@ -176,13 +176,14 @@ export function useAddProductForm() {
 
   const generateSku = useCallback((name: string, currentSku: string) => {
     if (!name) return '';
+    const safeSku = currentSku ?? '';
     const parts = name.trim().split(' ');
     const prefix = parts
       .slice(0, 2)
       .map((p) => p.charAt(0).toUpperCase())
       .join('');
 
-    const skuParts = currentSku.split('-');
+    const skuParts = safeSku.split('-');
     const skuPrefix = skuParts.slice(0, skuParts.length - 1).join('-');
     const skuSuffix = skuParts[skuParts.length - 1];
     const isExistingValid = skuPrefix === prefix && /^\d{4}$/.test(skuSuffix);
@@ -361,7 +362,7 @@ export function useAddProductForm() {
     const stockValue = data.initialStock ? parseInt(data.initialStock, 10) : 0;
     const costPriceValue = data.costPerPiece
       ? parsePesosInput(data.costPerPiece)
-      : undefined;
+      : null;
     const trimmedBarcode = safeTrim(data.barcode);
 
     const enableWholesale = data.enableWholesale;
@@ -390,28 +391,28 @@ export function useAddProductForm() {
       {
         name: safeTrim(data.productName),
         sku: safeTrim(data.sku),
-        barcode: trimmedBarcode || null,
+        barcode: trimmedBarcode ?? undefined,
         price: priceValue,
-        quantity: Number.isFinite(stockValue) ? stockValue : 0,
-        cost_price: costPriceValue,
-        category: safeTrim(data.category) || undefined,
-        supplier_id: data.supplierId ? data.supplierId : null,
-        image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
-        retail_unit_name: retailUnitName,
-        wholesale_unit_name: wholesaleUnitName,
-        wholesale_price: wholesalePriceVal,
-        wholesale_cost_price: wholesaleCostVal,
+        quantity: Number.isFinite(stockValue) ? stockValue : undefined,
+        cost_price: costPriceValue ?? undefined,
+        category: safeTrim(data.category) ?? undefined,
+        supplier_id: data.supplierId ?? undefined,
+        image_uri: data.imageUri ? safeTrim(data.imageUri) : undefined,
+        retail_unit_name: retailUnitName ?? undefined,
+        wholesale_unit_name: wholesaleUnitName ?? undefined,
+        wholesale_price: wholesalePriceVal ?? undefined,
+        wholesale_cost_price: wholesaleCostVal ?? undefined,
         conversion_factor:
           conversionFactorNum &&
           Number.isFinite(conversionFactorNum) &&
           conversionFactorNum >= 2
             ? conversionFactorNum
-            : null,
-        wholesale_barcode: wholesaleBarcodeVal,
+            : undefined,
+        wholesale_barcode: wholesaleBarcodeVal ?? undefined,
       },
       {
         onSuccess: () => {
-          router.push('/(tabs)');
+          router.push('/(tabs)' as Href);
         },
       },
     );

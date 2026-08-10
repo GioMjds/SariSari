@@ -9,25 +9,26 @@ type Props = {
   className?: string;
   headerLabel?: string;
   headerCode?: string;
-  /** Number of perforation circles on each side. 22 looks good on phone widths. */
   perforations?: number;
 };
 
-const TONE_HEADER_BG: Record<Tone, string> = {
+const TONE_HEADER_BG = {
   persimmon: 'bg-persimmon-500',
   cinnamon: 'bg-cinnamon-500',
   sage: 'bg-sage-500',
-};
-const TONE_HEADER_TEXT: Record<Tone, string> = {
+} satisfies Record<Tone, string>;
+
+const TONE_HEADER_TEXT = {
   persimmon: 'text-paper-50',
   cinnamon: 'text-paper-50',
   sage: 'text-paper-50',
-};
-const TONE_ACCENT: Record<Tone, string> = {
+} satisfies Record<Tone, string>;
+
+const TONE_ACCENT = {
   persimmon: 'text-persimmon-600',
   cinnamon: 'text-cinnamon-700',
   sage: 'text-sage-600',
-};
+} satisfies Record<Tone, string>;
 
 function Header({ tone, label }: { tone: Tone; label: string }) {
   return (
@@ -35,7 +36,6 @@ function Header({ tone, label }: { tone: Tone; label: string }) {
       className={`${TONE_HEADER_BG[tone]} px-5 pt-5 pb-4 flex-row items-center justify-between`}
     >
       <View className="flex-row items-center">
-        {/* Stamp dot — small paper dot like an inked stamp highlight */}
         <View className="w-2 h-2 rounded-full bg-paper-50 mr-3" />
         <StyledText
           variant="extrabold"
@@ -53,7 +53,6 @@ export function ReceiptHero({
   tone = 'persimmon',
   className = '',
   headerLabel,
-  headerCode,
   perforations = 22,
 }: Props) {
   return (
@@ -101,8 +100,6 @@ export function ReceiptHero({
     </View>
   );
 }
-
-/* ─── Sub-components used inside the receipt ───────────────────── */
 
 export function ReceiptHeroMeta({
   rows,

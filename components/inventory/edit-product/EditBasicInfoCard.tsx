@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller } from 'react-hook-form';
-import { Modal, Pressable, ScrollView, TextInput, View, TouchableOpacity } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Category } from '@/types/categories.types';
+import { Supplier } from '@/types/suppliers.types';
 import type { EditProductFormData } from './useEditProductForm';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useRenderCounter } from '@/hooks/useRenderCounter';
@@ -33,7 +41,7 @@ export function EditBasicInfoCard({
   useRenderCounter('EditBasicInfoCard', { feature: 'products_form' });
 
   const { getAllSuppliersQuery } = useSuppliers();
-  const suppliers = getAllSuppliersQuery.data || [];
+  const suppliers: Supplier[] = getAllSuppliersQuery.data || [];
 
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
@@ -51,10 +59,7 @@ export function EditBasicInfoCard({
         control={control}
         name="imageUri"
         render={({ field: { value, onChange } }) => (
-          <ProductImagePicker
-            imageUri={value}
-            onImageChange={onChange}
-          />
+          <ProductImagePicker imageUri={value} onImageChange={onChange} />
         )}
       />
 
@@ -62,7 +67,9 @@ export function EditBasicInfoCard({
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
           Product Name{' '}
-          <StyledText className="text-persimmon-500">*</StyledText>
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <Controller
           control={control}
@@ -84,14 +91,14 @@ export function EditBasicInfoCard({
       <View className="mb-4">
         <View className="flex-row items-center justify-between mb-2">
           <StyledText variant="semibold" className="text-ink-900 text-sm">
-            SKU <StyledText className="text-persimmon-500">*</StyledText>
+            SKU{' '}
+            <StyledText variant="regular" className="text-persimmon-500">
+              *
+            </StyledText>
           </StyledText>
           <View className="flex-row items-center">
             <FontAwesome name="lock" size={10} color="#A89F90" />
-            <StyledText
-              variant="regular"
-              className="text-ink-400 text-xs ml-1"
-            >
+            <StyledText variant="regular" className="text-ink-400 text-xs ml-1">
               Read-only
             </StyledText>
           </View>
@@ -123,14 +130,14 @@ export function EditBasicInfoCard({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 8, paddingRight: 8 }}
           >
-            {categories.map((category) => {
-              const isActive = selectedCategory === category.name;
+            {categories.map((cat) => {
+              const isActive = selectedCategory === cat.name;
               return (
                 <Pressable
-                  key={category.id}
-                  onPress={() => onSelectCategory(category.name)}
+                  key={cat.id}
+                  onPress={() => onSelectCategory(cat.name)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Select category ${category.name}`}
+                  accessibilityLabel={`Select category ${cat.name}`}
                   accessibilityState={{ selected: isActive }}
                   className={
                     isActive
@@ -146,7 +153,7 @@ export function EditBasicInfoCard({
                         : CATEGORY_TEXT_INACTIVE_CLASS
                     }
                   >
-                    {category.name}
+                    {cat.name}
                   </StyledText>
                 </Pressable>
               );
@@ -180,7 +187,7 @@ export function EditBasicInfoCard({
                 suppliers={suppliers}
                 value={value}
                 currentSupplier={currentSupplier}
-                onChange={onChange}
+                onChange={(id) => onChange(id ?? '')}
               />
             );
           }}
@@ -196,10 +203,10 @@ function SupplierPickerControl({
   currentSupplier,
   onChange,
 }: {
-  suppliers: Array<{ id: number; name: string }>;
-  value: number | null | undefined;
-  currentSupplier: { id: number; name: string } | undefined;
-  onChange: (id: number | null) => void;
+  suppliers: Supplier[];
+  value: string | null | undefined;
+  currentSupplier: Supplier | undefined;
+  onChange: (id: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -218,25 +225,40 @@ function SupplierPickerControl({
       >
         <StyledText
           variant={currentSupplier ? 'semibold' : 'regular'}
-          className={currentSupplier ? 'text-ink-900 text-base' : 'text-ink-400 text-base'}
+          className={
+            currentSupplier
+              ? 'text-ink-900 text-base'
+              : 'text-ink-400 text-base'
+          }
         >
           {currentSupplier ? currentSupplier.name : 'Select Supplier'}
         </StyledText>
         <FontAwesome name="chevron-down" size={14} color="#7A7165" />
       </TouchableOpacity>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => setOpen(false)}
           className="flex-1 bg-ink-900/50 justify-end"
         >
-          <TouchableOpacity activeOpacity={1} className="bg-paper-50 rounded-t-2xl p-5 max-h-[70%]">
+          <TouchableOpacity
+            activeOpacity={1}
+            className="bg-paper-50 rounded-t-2xl p-5 max-h-[70%]"
+          >
             <View className="flex-row items-center justify-between pb-3 border-b border-ink-100 mb-3">
-              <StyledText variant="bold" className="text-ink-900 text-lg">
+              <StyledText variant="extrabold" className="text-ink-900 text-lg">
                 Select Supplier
               </StyledText>
-              <TouchableOpacity onPress={() => setOpen(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <TouchableOpacity
+                onPress={() => setOpen(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
                 <FontAwesome name="times" size={18} color="#78716C" />
               </TouchableOpacity>
             </View>
@@ -247,13 +269,17 @@ function SupplierPickerControl({
                   setOpen(false);
                 }}
                 className={`p-3.5 rounded-xl mb-1.5 flex-row items-center justify-between ${
-                  value == null ? 'bg-cinnamon-50 border border-cinnamon-200' : 'bg-paper-100'
+                  !value
+                    ? 'bg-cinnamon-50 border border-cinnamon-200'
+                    : 'bg-paper-100'
                 }`}
               >
                 <StyledText variant="medium" className="text-ink-700 text-sm">
                   None (No supplier)
                 </StyledText>
-                {value == null ? <FontAwesome name="check" size={14} color="#E85A1F" /> : null}
+                {!value ? (
+                  <FontAwesome name="check" size={14} color="#E85A1F" />
+                ) : null}
               </TouchableOpacity>
               {suppliers.map((s) => (
                 <TouchableOpacity
@@ -263,13 +289,20 @@ function SupplierPickerControl({
                     setOpen(false);
                   }}
                   className={`p-3.5 rounded-xl mb-1.5 flex-row items-center justify-between ${
-                    value === s.id ? 'bg-cinnamon-50 border border-cinnamon-200' : 'bg-paper-100'
+                    value === s.id
+                      ? 'bg-cinnamon-50 border border-cinnamon-200'
+                      : 'bg-paper-100'
                   }`}
                 >
-                  <StyledText variant="semibold" className="text-ink-900 text-base">
+                  <StyledText
+                    variant="semibold"
+                    className="text-ink-900 text-base"
+                  >
                     {s.name}
                   </StyledText>
-                  {value === s.id ? <FontAwesome name="check" size={14} color="#E85A1F" /> : null}
+                  {value === s.id ? (
+                    <FontAwesome name="check" size={14} color="#E85A1F" />
+                  ) : null}
                 </TouchableOpacity>
               ))}
             </ScrollView>

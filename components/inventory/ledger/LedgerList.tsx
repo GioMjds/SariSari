@@ -289,7 +289,7 @@ function EventPill({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':
@@ -330,7 +330,7 @@ function EventIcon({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':
@@ -417,9 +417,9 @@ function groupByDay(
       groups[key] = { key, label, entries: [] };
       order.push(key);
     }
-    groups[key].entries.push(row);
+    groups[key]!.entries.push(row);
   }
-  return order.map((k) => groups[k]);
+  return order.map((k) => groups[k]!);
 }
 
 function formatDateTime(timestampStr: string): string {

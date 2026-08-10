@@ -124,7 +124,7 @@ export function AnalyticsCharts() {
           <>
             <BarChart data={byCategory} barWidth={28} spacing={12} hideRules />
             {byCategory[0] ? (
-              <StyledText className="text-[11px] text-ink-500 mt-1">
+              <StyledText variant="regular" className="text-[11px] text-ink-500 mt-1">
                 Top: {byCategory[0].label} · {byCategory[0].value} products
               </StyledText>
             ) : null}
@@ -147,7 +147,7 @@ export function AnalyticsCharts() {
           <>
             <PieChart data={byValue} donut radius={80} innerRadius={48} />
             {byValue[0] ? (
-              <StyledText className="text-[11px] text-ink-500 mt-1">
+              <StyledText variant="regular" className="text-[11px] text-ink-500 mt-1">
                 Top: {byValue[0].text} · {formatPesos(byValue[0].value)}
               </StyledText>
             ) : null}

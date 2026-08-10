@@ -364,7 +364,7 @@ export default function POSScreen() {
 }
 
 interface CatalogProductsBridgeProps {
-  getCartLine: (productId: number) => NewSaleItem;
+  getCartLine: (productId: number) => NewSaleItem | undefined;
   onAdd: (
     product: Product,
     selectedUnit?: 'retail' | 'wholesale',
@@ -376,11 +376,11 @@ interface CatalogProductsBridgeProps {
   ) => 'over_stock' | void;
   onToggleUnit: (productId: number) => void;
   onPressScan: () => void;
-  pendingAddProductBarcode: string;
+  pendingAddProductBarcode: string | null;
   onPressAddNewProduct: () => void;
   onDismissPendingAddProduct: () => void;
   onSearchTextChange: (text: string) => void;
-  parkedCartsCount?: number;
+  parkedCartsCount: number;
   cartItemCount?: number;
   onPressParkedList?: () => void;
   onPressParkCurrent?: () => void;
@@ -429,10 +429,14 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
       onEndReached={handleFetchNextPage}
       onRetryFetchNext={handleRetryFetchNext}
       onSearchTextChange={props.onSearchTextChange}
-      parkedCartsCount={props.parkedCartsCount}
-      cartItemCount={props.cartItemCount}
-      onPressParkedList={props.onPressParkedList}
-      onPressParkCurrent={props.onPressParkCurrent}
+      parkedCartsCount={props.parkedCartsCount ?? 0}
+      cartItemCount={props.cartItemCount ?? 0}
+      {...(props.onPressParkedList
+        ? { onPressParkedList: props.onPressParkedList }
+        : {})}
+      {...(props.onPressParkCurrent
+        ? { onPressParkCurrent: props.onPressParkCurrent }
+        : {})}
     />
   );
 }

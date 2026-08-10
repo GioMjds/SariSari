@@ -47,7 +47,7 @@ export function BulkActionsToolbar({
             >
               <FontAwesome name="close" size={16} color="#FAFAF7" />
             </TouchableOpacity>
-            <StyledText className="text-paper-50 font-bold text-sm">
+            <StyledText variant="semibold" className="text-paper-50 font-bold text-sm">
               {selectedCount} selected
             </StyledText>
           </View>
@@ -61,7 +61,7 @@ export function BulkActionsToolbar({
               hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
               className="px-3 py-2.5 rounded-lg bg-ink-700 min-h-[44px] items-center justify-center"
             >
-              <StyledText className="text-xs font-semibold text-paper-50">
+              <StyledText variant="extrabold" className="text-xs font-semibold text-paper-50">
                 Adjust
               </StyledText>
             </TouchableOpacity>
@@ -73,7 +73,7 @@ export function BulkActionsToolbar({
               hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
               className="px-3 py-2.5 rounded-lg bg-ink-700 min-h-[44px] items-center justify-center"
             >
-              <StyledText className="text-xs font-semibold text-paper-50">
+              <StyledText variant="extrabold" className="text-xs font-semibold text-paper-50">
                 Move
               </StyledText>
             </TouchableOpacity>
@@ -85,7 +85,7 @@ export function BulkActionsToolbar({
               hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
               className="px-3 py-2.5 rounded-lg bg-semantic-danger min-h-[44px] items-center justify-center"
             >
-              <StyledText className="text-xs font-semibold text-paper-50">
+              <StyledText variant="extrabold" className="text-xs font-semibold text-paper-50">
                 Delete
               </StyledText>
             </TouchableOpacity>

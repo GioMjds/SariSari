@@ -30,7 +30,7 @@ export default function CashEntryScreen() {
   if (sessionLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        <StyledText className="text-ink-500">Loading Cash Drawer...</StyledText>
+        <StyledText variant="regular" className="text-ink-500">Loading Cash Drawer...</StyledText>
       </SafeAreaView>
     );
   }

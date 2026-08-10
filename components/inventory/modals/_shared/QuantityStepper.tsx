@@ -63,7 +63,7 @@ export function QuantityStepper({
 
       {!hidden && current !== undefined ? (
         <View className="items-center mt-1">
-          <StyledText className="text-ink-500 text-[11px]">
+          <StyledText variant="medium" className="text-ink-500 text-[11px]">
             {'CURRENT: '}
             {current}
             {' -> NEW: '}
@@ -86,7 +86,7 @@ export function QuantityStepper({
       ) : null}
 
       {willGoNegative ? (
-        <StyledText className="text-rose-700 text-xs text-center mt-1">
+        <StyledText variant="regular" className="text-rose-700 text-xs text-center mt-1">
           Can&apos;t go below zero.
         </StyledText>
       ) : null}

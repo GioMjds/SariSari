@@ -36,7 +36,7 @@ export default function CashSessionScreen() {
   if (sessionLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        <StyledText className="text-ink-500">Loading cash drawer...</StyledText>
+        <StyledText variant="regular" className="text-ink-500">Loading cash drawer...</StyledText>
       </SafeAreaView>
     );
   }
@@ -44,7 +44,7 @@ export default function CashSessionScreen() {
   if (summaryLoading) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
-        <StyledText className="text-ink-500">Loading...</StyledText>
+        <StyledText variant="regular" className="text-ink-500">Loading...</StyledText>
       </SafeAreaView>
     );
   }

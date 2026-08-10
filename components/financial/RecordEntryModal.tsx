@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { FC, useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable } from 'react-native';
 import {
   ExpenseCategory,
@@ -12,7 +12,7 @@ import { ReceiptPicker } from './ReceiptPicker';
 interface Props {
   visible: boolean;
   type: FinancialEntryType;
-  initialBusinessDate?: string;
+  initialBusinessDate: string;
   onClose: () => void;
   onSubmit: (data: NewFinancialEntry) => Promise<void>;
 }
@@ -31,7 +31,7 @@ const CATEGORIES = [
   { label: 'Other', value: 'other' },
 ] satisfies CategoryOption[];
 
-export const RecordEntryModal: React.FC<Props> = ({
+export const RecordEntryModal: FC<Props> = ({
   visible,
   type,
   initialBusinessDate,
@@ -45,9 +45,8 @@ export const RecordEntryModal: React.FC<Props> = ({
   const [loading, setLoading] = useState(false);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const defaultDate = initialBusinessDate || todayStr;
-  const [businessDate, setBusinessDate] = useState(defaultDate);
-
+  const fallbackDate = initialBusinessDate ?? todayStr;
+  const [businessDate, setBusinessDate] = useState<string>(fallbackDate);
 
   const handleSave = async () => {
     try {
@@ -75,12 +74,12 @@ export const RecordEntryModal: React.FC<Props> = ({
         amount: parsedAmount,
         businessDate: formattedDate,
         expenseCategory: type === 'expense' ? category : null,
-        note: note.trim() || undefined,
+        note: note.trim() || null,
       });
 
       setAmountStr('');
       setNote('');
-      setBusinessDate(defaultDate);
+      setBusinessDate(fallbackDate);
       onClose();
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to save entry');
@@ -189,12 +188,13 @@ export const RecordEntryModal: React.FC<Props> = ({
               onDeleteReceipt={async (id) => {
                 const index = parseInt(id.replace('staged-', ''), 10);
                 if (!isNaN(index)) {
-                  setStagedReceiptUris(stagedReceiptUris.filter((_, i) => i !== index));
+                  setStagedReceiptUris(
+                    stagedReceiptUris.filter((_, i) => i !== index),
+                  );
                 }
               }}
             />
           )}
-
 
           <View className="flex-row justify-end space-x-3">
             <Pressable

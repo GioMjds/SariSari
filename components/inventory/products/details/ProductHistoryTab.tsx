@@ -52,7 +52,7 @@ function EventPill({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':
@@ -93,7 +93,7 @@ function EventIcon({
   sign,
 }: {
   type: InventoryEventType;
-  sign?: 'positive' | 'negative' | null;
+  sign?: 'positive' | 'negative' | null | undefined;
 }) {
   switch (type) {
     case 'restock':

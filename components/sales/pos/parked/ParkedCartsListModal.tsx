@@ -105,7 +105,7 @@ export function ParkedCartsListModal({
                           }`}
                         >
                           <StyledText
-                            variant="bold"
+                            variant="extrabold"
                             className={`text-xs ${
                               cart.paymentType === 'credit'
                                 ? 'text-amber-800'
@@ -128,7 +128,7 @@ export function ParkedCartsListModal({
                         onPress={() => onDiscard(cart.id)}
                         className="px-3 py-2 bg-semantic-danger-50 border border-semantic-danger/20 rounded-xl active:bg-semantic-danger-100 min-h-[44px] justify-center items-center"
                       >
-                        <StyledText variant="bold" className="text-semantic-danger text-xs">
+                        <StyledText variant="extrabold" className="text-semantic-danger text-xs">
                           Discard
                         </StyledText>
                       </Pressable>

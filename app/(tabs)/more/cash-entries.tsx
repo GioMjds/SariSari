@@ -10,8 +10,8 @@ import {
   useFinancialTotals,
   useCreateFinancialEntry,
   useDeleteFinancialEntry,
-  useCashEntryForm,
 } from '@/hooks';
+import { useCashEntryForm } from '@/components/cash-entry/useCashEntryForm';
 import { FinancialEntryType, FinancialEntry } from '@/types/financial.types';
 import { DateRangeType } from '@/types/reports.types';
 import { formatPesos, parsePesosInput } from '@/lib/money';

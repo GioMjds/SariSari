@@ -2,6 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "noUncheckedSideEffectImports": true,
+    "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
@@ -10,9 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [

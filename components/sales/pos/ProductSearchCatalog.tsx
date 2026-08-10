@@ -18,7 +18,7 @@ import { usePOSSearchStore } from '@/stores';
 interface ProductSearchCatalogProps {
   filteredProducts: Product[];
   isLoading: boolean;
-  getCartLine: (productId: number) => NewSaleItem;
+  getCartLine: (productId: number) => NewSaleItem | undefined;
   onAdd: (
     product: Product,
     selectedUnit?: 'retail' | 'wholesale',
@@ -30,7 +30,7 @@ interface ProductSearchCatalogProps {
   ) => 'over_stock' | void;
   onToggleUnit?: (productId: number) => void;
   onPressScan: () => void;
-  pendingAddProductBarcode?: string;
+  pendingAddProductBarcode?: string | null;
   onPressAddNewProduct?: () => void;
   onDismissPendingAddProduct?: () => void;
   isFetchingNextPage?: boolean;
@@ -60,7 +60,6 @@ export function ProductSearchCatalog({
   hasNextPage = false,
   onEndReached,
   // To use for a better data fetching
-  onRetryFetchNext,
   searchText,
   onSearchTextChange,
   parkedCartsCount = 0,

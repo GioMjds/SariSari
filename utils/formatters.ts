@@ -46,7 +46,8 @@ export const getDateRangeFromType = (type: DateRangeType): DateRange => {
 
 export const formatCurrency = (amount: number) => formatPesos(amount);
 
-export const formatCompactCurrency = (amount: number) => formatPesosCompact(amount);
+export const formatCompactCurrency = (amount: number) =>
+  formatPesosCompact(amount);
 
 export const getStockColor = (quantity: number) => {
   if (quantity === 0) return 'text-red-600';
@@ -141,16 +142,16 @@ export const getStockStatus = (quantity: number) => {
 
 /** Issue number = day of year. Gives a stable, per-day serial. */
 export function dateIssueNumber(d: Date): string {
-	const startUtc = Date.UTC(d.getFullYear(), 0, 0);
-	const currentUtc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-	const day = Math.floor((currentUtc - startUtc) / 86_400_000);
-	return String(day).padStart(4, '0');
+  const startUtc = Date.UTC(d.getFullYear(), 0, 0);
+  const currentUtc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = Math.floor((currentUtc - startUtc) / 86_400_000);
+  return String(day).padStart(4, '0');
 }
 
 /** Returns a formatted margin subline string (e.g. "12.5% margin") if present. */
 export function profitSubline(margin: number | null | undefined): string {
-	if (margin === null || margin === undefined) return '';
-	return `${margin.toFixed(1)}% margin`;
+  if (margin === null || margin === undefined) return '';
+  return `${margin.toFixed(1)}% margin`;
 }
 
 export function dialPhone(phone: string) {

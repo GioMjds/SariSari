@@ -36,7 +36,7 @@ export function CashMovementsList({
       </StyledText>
 
       {entriesLoading ? (
-        <StyledText className="text-xs text-ink-400 py-4">
+        <StyledText variant="regular" className="text-xs text-ink-400 py-4">
           Loading entries...
         </StyledText>
       ) : entries.length === 0 ? (
