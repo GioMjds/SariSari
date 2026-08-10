@@ -78,9 +78,13 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
         <TouchableOpacity
           onPress={toggleSort}
           activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           className="flex-row items-center py-1 px-2"
         >
-          <StyledText variant="extrabold" className="text-cinnamon-500 text-xs mr-1">
+          <StyledText
+            variant="extrabold"
+            className="text-cinnamon-500 text-xs mr-1"
+          >
             SORT {sortAsc ? '▲' : '▼'}
           </StyledText>
         </TouchableOpacity>

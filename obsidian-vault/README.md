@@ -25,6 +25,7 @@ This vault serves as the central knowledge base for the SariSari project, design
 06-Research/        # Market research, user feedback, competitor analysis
 07-Planning/        # Sprints, task lists, development plans
 08-Resources/       # Reference materials, links, templates, assets
+09-Marketing/       # Social media plans, captions, posts, metrics
 ```
 
 ## Naming Conventions

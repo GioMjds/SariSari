@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Pressable, ScrollView, AccessibilityInfo } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
@@ -142,10 +142,7 @@ export function InventoryAlertPills({
               >
                 {count}
               </StyledText>
-              <StyledText
-                variant="medium"
-                className={`text-xs ${pill.text}`}
-              >
+              <StyledText variant="medium" className={`text-xs ${pill.text}`}>
                 {pill.label}
               </StyledText>
             </Pressable>

@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
-import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { Alert } from '@/utils';
 import { StyledText } from '@/components/elements';
+import { useTabBarBottomOffset } from '@/components/layout';
 import {
   useActiveStocktakeSession,
   useStocktakeCounts,
@@ -29,6 +31,7 @@ export default function StocktakeScreen() {
   const [viewState, setViewState] = useState<'counting' | 'variance'>(
     'counting',
   );
+  const tabBarBottomOffset = useTabBarBottomOffset();
 
   // Queries & Mutations
   const { data: activeSession, isLoading: loadingSession } =
@@ -135,10 +138,7 @@ export default function StocktakeScreen() {
     });
   };
 
-  // Loading state — render skeleton while the active session query is in flight.
-  if (loadingSession) {
-    return <StocktakeSkeleton />;
-  }
+  if (loadingSession) return <StocktakeSkeleton />;
 
   // State branch 1: Idle
   if (!activeSession) {
@@ -147,7 +147,7 @@ export default function StocktakeScreen() {
     return (
       <ScrollView
         className="flex-1 bg-paper-200 p-4"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
       >
         <StocktakeStartCard
           lastSession={lastSession}
@@ -164,7 +164,7 @@ export default function StocktakeScreen() {
     return (
       <ScrollView
         className="flex-1 bg-paper-200 p-4"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
       >
         <StocktakeVarianceSummary
           totalProducts={totalProducts}
@@ -237,7 +237,10 @@ export default function StocktakeScreen() {
   }
 
   return (
-    <View className="flex-1 bg-paper-200">
+    <View
+      className="flex-1 bg-paper-200"
+      style={{ paddingBottom: tabBarBottomOffset }}
+    >
       <View className="bg-paper-50 px-4 py-3 border-b border-paper-300 flex-row items-center justify-between">
         <StyledText variant="semibold" className="text-ink-800 text-xs">
           {t('progressLabel', { counted: countedCount, total: totalProducts })}

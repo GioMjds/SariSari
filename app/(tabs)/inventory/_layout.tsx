@@ -17,10 +17,9 @@ import { InventoryModalsHost } from './modals';
 
 const SUB_TAB_SEGMENTS = [
   'products',
-  'stock',
   'movements',
-  'analytics',
   'stocktake',
+  'damaged',
 ] satisfies InventorySubTab[];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
@@ -108,10 +107,9 @@ export default function InventoryLayout() {
           }}
         >
           <TopTabs.Screen name="products" />
-          <TopTabs.Screen name="stock" />
           <TopTabs.Screen name="movements" />
-          <TopTabs.Screen name="analytics" />
           <TopTabs.Screen name="stocktake" />
+          <TopTabs.Screen name="damaged" />
         </TopTabs>
 
         {!isDetail ? (

@@ -1,20 +1,16 @@
-import React from 'react';
+import { FC } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Customer } from '@/types/credits.types';
 import { CustomerAvatar } from './CustomerAvatar';
 import { LoyaltyBadge } from './LoyaltyBadge';
-import { formatPesos } from '@/lib';
 
 interface CustomerCardProps {
   customer: Customer;
   onPress: (customer: Customer) => void;
 }
 
-export const CustomerCard: React.FC<CustomerCardProps> = ({
-  customer,
-  onPress,
-}) => {
+export const CustomerCard: FC<CustomerCardProps> = ({ customer, onPress }) => {
   const hasBalance = customer.outstanding_balance > 0;
 
   return (
@@ -33,7 +29,10 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
             <LoyaltyBadge tier={customer.loyalty_tier || 'new'} />
           </View>
           {customer.phone ? (
-            <StyledText variant="medium" className="text-ink-400 text-xs mt-0.5">
+            <StyledText
+              variant="medium"
+              className="text-ink-400 text-xs mt-0.5"
+            >
               {customer.phone}
             </StyledText>
           ) : null}
@@ -49,17 +48,14 @@ export const CustomerCard: React.FC<CustomerCardProps> = ({
             >
               Outstanding
             </StyledText>
-            <StyledText variant="extrabold" className="text-cinnamon-600 text-sm">
-              {formatPesos(customer.outstanding_balance)}
-            </StyledText>
           </View>
         ) : (
           <View className="bg-sage-50 px-3 py-1.5 rounded-xl border border-sage-200 items-end">
-            <StyledText variant="semibold" className="text-sage-700 text-[10px] uppercase tracking-wider">
+            <StyledText
+              variant="semibold"
+              className="text-sage-700 text-[10px] uppercase tracking-wider"
+            >
               Cleared
-            </StyledText>
-            <StyledText variant="extrabold" className="text-sage-700 text-sm">
-              ₱0
             </StyledText>
           </View>
         )}

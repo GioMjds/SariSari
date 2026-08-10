@@ -33,6 +33,13 @@
 - [[Bug/Issue Template|05-Bugs-Issues/bug-template.md]]
 - [[Research Template|06-Research/research-template.md]]
 - [[Planning Template|07-Planning/planning-template.md]]
+- [[Marketing README|09-Marketing/README.md]]
+- [[Marketing Brand Voice|09-Marketing/strategy/brand-voice.md]]
+- [[Marketing Content Pillars|09-Marketing/strategy/content-pillars.md]]
+- [[Marketing Strategy Template|09-Marketing/strategy/strategy-template.md]]
+- [[Marketing Post Template|09-Marketing/calendar/post-template.md]]
+- [[Marketing Metrics Template|09-Marketing/metrics/metrics-template.md]]
+- [[Marketing Pipeline Template|09-Marketing/status/posting-pipeline-template.md]]
 
 ## Last Updated
 

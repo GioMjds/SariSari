@@ -228,8 +228,8 @@ export function Modal({
           scale: reducedMotion ? 1 : 0.95,
         }}
         transition={{ type: 'timing', duration: 200 }}
+        className="bg-paper-50"
         style={{
-          backgroundColor: 'var(--color-surface-subtle)',
           borderRadius: 16,
           padding: 24,
           width: '100%',
@@ -341,7 +341,7 @@ export function Modal({
               <FontAwesome
                 name="times"
                 size={18}
-                color="var(--color-ink-300)"
+                color="#A89F90"
               />
             </Pressable>
           )}

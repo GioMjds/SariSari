@@ -13,11 +13,16 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
+import { logger } from '@/lib/logger';
+
+export type SubTabBadgeTone = 'action' | 'info';
 
 export interface SubTabItem<T extends string> {
   key: T;
   label: string;
   badgeCount?: number;
+  badgeTone?: SubTabBadgeTone;
+  badgeAccessibilityLabel?: string;
 }
 
 export interface SubTabControlProps<T extends string> {
@@ -30,16 +35,35 @@ export interface SubTabControlProps<T extends string> {
   dragThreshold?: number;
 }
 
+const BADGE_CLAMP_LIMIT = 999;
+const BADGE_DISPLAY_CAP = '999+';
+
+function formatBadgeCount(count: number): string {
+  if (count > BADGE_CLAMP_LIMIT) return BADGE_DISPLAY_CAP;
+  return String(count);
+}
+
+function buildTabAccessibilityLabel(
+  label: string,
+  badgeCount: number | undefined,
+  badgeAccessibilityLabel: string | undefined,
+): string {
+  if (badgeCount === undefined || badgeCount <= 0) return label;
+  const noun = badgeAccessibilityLabel ?? 'notifications';
+  return `${label}, ${badgeCount} ${noun}`;
+}
+
 export function SubTabControl<T extends string>({
   tabs,
   activeTab,
   onTabPress,
-  containerClassName = 'mb-3',
+  containerClassName,
   progress,
   dragToSwitch = true,
   dragThreshold = 40,
 }: SubTabControlProps<T>) {
   const tabCount = tabs.length;
+  const resolvedContainerClassName = containerClassName ?? '';
 
   const xs = useSharedValue<number[]>(new Array(tabCount).fill(0));
   const widths = useSharedValue<number[]>(new Array(tabCount).fill(0));
@@ -50,6 +74,17 @@ export function SubTabControl<T extends string>({
   const internalProgress = useSharedValue(0);
   const activeIndexShared = useSharedValue(0);
   const dragX = useSharedValue(0);
+  const coldMountSeededRef = useRef(false);
+
+  const initialActiveIndex = Math.max(
+    0,
+    tabs.findIndex((t) => t.key === activeTab),
+  );
+  if (!coldMountSeededRef.current) {
+    coldMountSeededRef.current = true;
+    internalProgress.value = initialActiveIndex;
+    activeIndexShared.value = initialActiveIndex;
+  }
 
   const tabKeys = tabs.map((t) => t.key).join(',');
   const prevTabKeysRef = useRef(tabKeys);
@@ -59,16 +94,6 @@ export function SubTabControl<T extends string>({
       prevTabKeysRef.current = tabKeys;
       measuredIndices.current.clear();
       setReady(false);
-      // xs/widths are sized once at mount via useSharedValue's initial
-      // value, which is only ever evaluated on first render. If tabCount
-      // changes later (a tab is added or removed), these arrays keep
-      // their old length. interpolate() then reads an inputRange built
-      // from the current tab count against an outputRange of the wrong
-      // length, and silently degrades toward the last defined entry
-      // instead of throwing, which is what pins the underline to the
-      // last tab. Resetting both to a fresh zero-filled array of the
-      // current length keeps them in sync with inputRange and gives
-      // handleLayout a clean slate to remeasure into.
       xs.value = new Array(tabCount).fill(0);
       widths.value = new Array(tabCount).fill(0);
     }
@@ -79,10 +104,6 @@ export function SubTabControl<T extends string>({
     if (index < 0) return;
     activeIndexShared.value = index;
     if (!progress) {
-      // Before layout has completed once, xs/widths are still zero-filled,
-      // so animating internalProgress toward `index` here would animate
-      // through meaningless positions. Snap instantly until `ready`, then
-      // animate on every activeTab change after that.
       internalProgress.value = ready
         ? withTiming(index, { duration: 200 })
         : index;
@@ -90,9 +111,6 @@ export function SubTabControl<T extends string>({
   }, [activeTab, progress, ready, activeIndexShared, internalProgress, tabs]);
 
   const handleLayout = (index: number) => (e: LayoutChangeEvent) => {
-    // Guard against a stale closure firing onLayout for an index that no
-    // longer exists in the current tab set (e.g. a tab was removed between
-    // when this callback was created and when RN actually calls it).
     if (index >= tabCount) return;
 
     const { x, width } = e.nativeEvent.layout;
@@ -109,15 +127,6 @@ export function SubTabControl<T extends string>({
     layoutVersion.value += 1;
 
     if (measuredIndices.current.size === tabCount) {
-      // Snap activeIndexShared here since the pan gesture and drag math
-      // need a correct starting index immediately once layout is known.
-      // internalProgress is intentionally NOT written here: the
-      // activeTab-driven effect below is the single owner of
-      // internalProgress, so this block doesn't race it. Before this
-      // fix, both this block and that effect wrote internalProgress on
-      // mount, and whichever one ran last "won", non-deterministically,
-      // which was a second, independent source of an incorrect resting
-      // position for the underline.
       const activeIndex = tabs.findIndex((t) => t.key === activeTab);
       if (activeIndex >= 0) {
         activeIndexShared.value = activeIndex;
@@ -126,19 +135,19 @@ export function SubTabControl<T extends string>({
     }
   };
 
-  const handleSelect = (tabKey: T) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onTabPress(tabKey);
-  };
-
-  const selectByIndex = useCallback(
-    (index: number) => {
-      const tab = tabs[index];
-      if (!tab) return;
+  const handleSelect = useCallback(
+    (tabKey: T, source: 'tap' | 'gesture') => {
+      if (tabKey === activeTab) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      onTabPress(tab.key);
+      logger.info({
+        event: 'tab_selected',
+        feature: 'navigation',
+        tabKey: tabKey,
+        source,
+      });
+      onTabPress(tabKey);
     },
-    [tabs, onTabPress],
+    [activeTab, onTabPress],
   );
 
   const springConfig = { damping: 16, stiffness: 140 };
@@ -166,7 +175,10 @@ export function SubTabControl<T extends string>({
         activeIndexShared.value = nextIndex;
         internalProgress.value = withTiming(nextIndex, { duration: 200 });
         dragX.value = withSpring(0, springConfig);
-        scheduleOnRN(selectByIndex, nextIndex);
+        const nextKey = tabs[nextIndex]?.key;
+        if (nextKey !== undefined) {
+          scheduleOnRN(handleSelect, nextKey, 'gesture');
+        }
       } else {
         dragX.value = withSpring(0, springConfig);
       }
@@ -189,37 +201,57 @@ export function SubTabControl<T extends string>({
   });
 
   return (
-    <View accessibilityRole="tablist" className={containerClassName}>
+    <View accessibilityRole="tablist" className={resolvedContainerClassName}>
       <GestureDetector gesture={panGesture}>
-        <View className="flex-row gap-5">
+        <View className="flex-row gap-4">
           {tabs.map((tab, index) => {
             const isActive = activeTab === tab.key;
+            const badgeVisible =
+              typeof tab.badgeCount === 'number' && tab.badgeCount > 0;
+            const badgeTone: SubTabBadgeTone = tab.badgeTone ?? 'action';
             return (
               <Pressable
                 key={tab.key}
-                onPress={() => handleSelect(tab.key)}
+                onPress={() => handleSelect(tab.key, 'tap')}
                 onLayout={handleLayout(index)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`${tab.label} tab`}
+                accessibilityLabel={buildTabAccessibilityLabel(
+                  tab.label,
+                  tab.badgeCount,
+                  tab.badgeAccessibilityLabel,
+                )}
                 hitSlop={{ top: 12, bottom: 12, left: 4, right: 4 }}
                 className="flex-row items-center py-2.5"
+                testID={`subtab-${tab.key}`}
               >
                 <StyledText
-                  variant="extrabold"
-                  className={`text-xs uppercase ${
-                    isActive ? 'text-ink-900' : 'text-ink-400'
+                  variant={isActive ? 'extrabold' : 'semibold'}
+                  className={`text-base ${
+                    isActive ? 'text-ink-900' : 'text-ink-500'
                   }`}
                 >
                   {tab.label}
                 </StyledText>
-                {tab.badgeCount && tab.badgeCount > 0 ? (
-                  <View className="ml-1.5 h-4 min-w-[16px] items-center justify-center rounded-full bg-[#E85A1F] px-1">
+                {badgeVisible ? (
+                  <View
+                    className={`ml-2 h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 ${
+                      badgeTone === 'action'
+                        ? 'bg-persimmon-500'
+                        : 'bg-paper-200 border border-paper-300'
+                    }`}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no"
+                  >
                     <StyledText
                       variant="extrabold"
-                      className="text-paper-50 text-[10px]"
+                      className={`text-[11px] ${
+                        badgeTone === 'action'
+                          ? 'text-paper-50'
+                          : 'text-ink-700'
+                      }`}
                     >
-                      {tab.badgeCount > 99 ? '99+' : tab.badgeCount}
+                      {formatBadgeCount(tab.badgeCount as number)}
                     </StyledText>
                   </View>
                 ) : null}
@@ -229,14 +261,11 @@ export function SubTabControl<T extends string>({
         </View>
       </GestureDetector>
 
-      {/* Track + sliding underline */}
-      <View className="h-[2px] bg-paper-200">
-        {ready && (
-          <Animated.View
-            style={underlineStyle}
-            className="absolute h-[2px] rounded-full bg-ink-900"
-          />
-        )}
+      <View className="h-[3px] bg-paper-200">
+        <Animated.View
+          style={underlineStyle}
+          className="absolute h-[3px] rounded-full bg-persimmon-500"
+        />
       </View>
     </View>
   );

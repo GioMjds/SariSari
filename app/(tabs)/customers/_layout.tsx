@@ -21,7 +21,6 @@ export default function CustomersLayout() {
 
   const getCurrentTab = (): CustomersSubTab => {
     if (pathname.includes('credit')) return 'credit';
-    if (pathname.includes('insights')) return 'insights';
     return 'all';
   };
 
@@ -69,7 +68,6 @@ export default function CustomersLayout() {
         >
           <TopTabs.Screen name="all" />
           <TopTabs.Screen name="credit" />
-          <TopTabs.Screen name="insights" />
         </TopTabs>
 
         {!isDetailScreen && (

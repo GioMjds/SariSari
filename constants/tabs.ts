@@ -63,12 +63,11 @@ export const HOME_SUB_TABS = ['overview', 'today'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
-  'stock',
   'movements',
-  'analytics',
   'stocktake',
+  'damaged',
 ] as const;
-export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'insights'] as const;
+export const CUSTOMERS_SUB_TABS = ['all', 'credit'] as const;
 export const MORE_SUB_TABS = [] as const;
 
 export type HomeSubTab = (typeof HOME_SUB_TABS)[number];
