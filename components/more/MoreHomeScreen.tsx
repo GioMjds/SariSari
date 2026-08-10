@@ -20,7 +20,7 @@ const routes = {
   damaged: '/(tabs)/inventory/damaged',
   allCustomers: '/(tabs)/customers/all',
   credit: '/(tabs)/customers/credit',
-  creditOverdue: '/(tabs)/customers/credit?filter=overdue',
+  creditOverdue: '/(tabs)/customers/credit',
   insights: '/(tabs)/customers/insights',
   almanac: '/(tabs)/home/today',
   salesTrend: '/(tabs)/home/today?section=trend',

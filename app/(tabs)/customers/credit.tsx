@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CreditLedgerTab, CustomersSkeleton } from '@/components/customers';
 import { useCustomers } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
@@ -8,6 +8,7 @@ import { Customer } from '@/types/credits.types';
 export default function CreditLedgerScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
+  useLocalSearchParams<{ filter?: string }>();
   const { data: customers = [], isLoading } = useCustomers();
 
   const handleSelectCustomer = (customer: Customer) => {
