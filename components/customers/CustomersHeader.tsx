@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { SharedValue } from 'react-native-reanimated';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
 import { CustomersSubTab } from '@/constants/tabs';
@@ -15,6 +16,7 @@ export interface CustomersHeaderProps {
   totalCredit?: number;
   onTabPress: (tab: CustomersSubTab) => void;
   onAddCustomer?: () => void;
+  progress?: SharedValue<number>;
 }
 
 export function CustomersHeader({
@@ -24,6 +26,7 @@ export function CustomersHeader({
   loyalCount = 28,
   totalCredit = 4850,
   onTabPress,
+  progress,
 }: CustomersHeaderProps) {
   const tabs: SubTabItem<CustomersSubTab>[] = [
     { key: 'all', label: 'ALL' },
@@ -38,6 +41,7 @@ export function CustomersHeader({
         activeTab={activeTab}
         onTabPress={onTabPress}
         containerClassName="mb-3"
+        {...(progress ? { progress } : {})}
       />
 
       {/* Hero Card: Total Outstanding Credit */}

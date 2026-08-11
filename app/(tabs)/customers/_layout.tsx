@@ -5,6 +5,8 @@ import * as Haptics from 'expo-haptics';
 import { CustomersHeader, CustomersSubTab } from '@/components/customers';
 import { TopTabs } from '@/components/navigation/top-tabs';
 import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
+import { useTabProgress } from '@/hooks';
+import { CUSTOMERS_SUB_TABS } from '@/constants/tabs';
 import { useTabBarBottomOffset } from '@/components/layout';
 
 export default function CustomersLayout() {
@@ -23,6 +25,9 @@ export default function CustomersLayout() {
     if (pathname.includes('credit')) return 'credit';
     return 'all';
   };
+
+  const activeTab = getCurrentTab();
+  const progress = useTabProgress(activeTab, CUSTOMERS_SUB_TABS);
 
   const isDetailScreen =
     pathname.includes('/customers/') &&
@@ -47,13 +52,14 @@ export default function CustomersLayout() {
     <View className="flex-1 bg-paper-200">
       {!isDetailScreen && (
         <CustomersHeader
-          activeTab={getCurrentTab()}
+          activeTab={activeTab}
           totalCustomers={customers.length}
           debtorCount={debtorCount}
           loyalCount={loyalCount}
           totalCredit={kpis?.totalOutstanding || 0}
           onTabPress={handleTabPress}
           onAddCustomer={handleAddCustomer}
+          progress={progress}
         />
       )}
       <View className="flex-1 bg-paper-200 relative">
