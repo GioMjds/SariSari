@@ -1,14 +1,8 @@
 import { getTabs, Tab } from '@/constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, usePathname, useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useRef, useState, useEffect } from 'react';
-import {
-  TouchableOpacity,
-  View,
-  Keyboard,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { memo, useCallback, useMemo, useState, useEffect } from 'react';
+import { TouchableOpacity, View, Keyboard, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -19,10 +13,8 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { StyledText } from '../elements';
 
 export const TAB_BAR_TOTAL_OFFSET = 72;
-
 export const TAB_BAR_RAIL_HEIGHT = 72;
 export const TAB_BAR_ACTION_OVERHANG = 0;
 export const TAB_BAR_MARGIN = 50;
@@ -36,93 +28,56 @@ export function useTabBarBottomOffset(): number {
   return getTabBarBottomOffset(insets.bottom);
 }
 
-const ICON_ACTIVE = '#FFF1EA'; // persimmon-50
-const ICON_INACTIVE = '#C8C0B2'; // warm paper neutral (contrast ratio > 4.5:1 against cinnamon-900)
-const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)'; // ink-muted
+const ACTIVE_COLOR = '#E85A1F';
+const INACTIVE_COLOR = '#C8C0B2';
+
+const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)';
 
 const getHrefString = (href: Href): string =>
   typeof href === 'object' ? href.pathname : href;
 
-type TabLayout = { x: number; y: number; width: number; height: number };
-
 interface TabButtonProps {
   tab: Tab;
-  hrefString: string;
   isFocused: boolean;
   onPress: () => void;
-  onLayoutMeasured: (key: string, focused: boolean, layout: TabLayout) => void;
 }
 
-const TabButton = memo(
-  ({
-    tab,
-    hrefString,
-    isFocused,
-    onPress,
-    onLayoutMeasured,
-  }: TabButtonProps) => {
-    const scale = useSharedValue(1);
-    const shouldReduceMotion = useReducedMotion();
+const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
+  const scale = useSharedValue(1);
+  const shouldReduceMotion = useReducedMotion();
 
-    const animatedIconStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
+  const handlePressIn = useCallback(() => {
+    if (!shouldReduceMotion) {
+      scale.value = withSpring(0.92, { damping: 16, stiffness: 350 });
+    }
+  }, [scale, shouldReduceMotion]);
 
-    const handleLayout = useCallback(
-      (e: LayoutChangeEvent) => {
-        const { x, y, width, height } = e.nativeEvent.layout;
-        onLayoutMeasured(hrefString, isFocused, { x, y, width, height });
-      },
-      [hrefString, isFocused, onLayoutMeasured],
-    );
+  const handlePressOut = useCallback(() => {
+    if (!shouldReduceMotion) {
+      scale.value = withSpring(1, { damping: 16, stiffness: 350 });
+    }
+  }, [scale, shouldReduceMotion]);
 
-    const handlePressIn = useCallback(() => {
-      if (!shouldReduceMotion) {
-        scale.value = withSpring(0.92, { damping: 16, stiffness: 350 });
-      }
-    }, [scale, shouldReduceMotion]);
+  const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
 
-    const handlePressOut = useCallback(() => {
-      if (!shouldReduceMotion) {
-        scale.value = withSpring(1, { damping: 16, stiffness: 350 });
-      }
-    }, [scale, shouldReduceMotion]);
-
-    return (
-      <TouchableOpacity
-        accessibilityRole="tab"
-        accessibilityLabel={tab.name}
-        accessibilityState={{ selected: isFocused }}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.9}
-        onLayout={handleLayout}
-        className="items-center justify-center flex-1 py-1"
-        style={{ minWidth: 48, minHeight: 48 }}
-      >
-        <Animated.View
-          className="items-center justify-center px-1"
-          style={animatedIconStyle}
-        >
-          <FontAwesome
-            name={tab.icon}
-            size={26}
-            color={isFocused ? ICON_ACTIVE : ICON_INACTIVE}
-          />
-          <StyledText
-            numberOfLines={1}
-            variant="light"
-            className="text-md mt-0.5 text-center"
-            style={{ color: isFocused ? ICON_ACTIVE : ICON_INACTIVE }}
-          >
-            {tab.name}
-          </StyledText>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  },
-);
+  return (
+    <TouchableOpacity
+      accessibilityRole="tab"
+      accessibilityLabel={tab.name}
+      accessibilityState={{ selected: isFocused }}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={0.9}
+      className="items-center justify-center flex-1 py-1"
+      style={{ minWidth: 48, minHeight: 48 }}
+    >
+      <View className="items-center justify-center px-1">
+        <FontAwesome name={tab.icon} size={36} color={color} />
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 TabButton.displayName = 'TabButton';
 
@@ -158,15 +113,6 @@ export const StyledTab = memo(() => {
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
 
-  const activeLayout = useSharedValue<TabLayout>({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
-  const indicatorOpacity = useSharedValue(0);
-  const layouts = useRef<Record<string, TabLayout>>({});
-
   useEffect(() => {
     const showEvent =
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -197,69 +143,11 @@ export const StyledTab = memo(() => {
     opacity: opacity.value,
   }));
 
-  const indicatorStyle = useAnimatedStyle(() => {
-    const layout = activeLayout.value;
-    return {
-      transform: [{ translateX: layout.x }, { translateY: layout.y }],
-      width: layout.width,
-      height: layout.height,
-      opacity: indicatorOpacity.value,
-    };
-  });
-
   const visibleRoutes = useMemo<Tab[]>(() => getTabs(t).slice(0, 5), [t]);
 
   const isRouteFocused = useCallback(
     (hrefString: string) => isPathFocused(hrefString, pathname),
     [pathname],
-  );
-
-  const moveIndicatorTo = useCallback(
-    (key: string) => {
-      const layout = layouts.current[key];
-      if (layout) {
-        if (shouldReduceMotion) {
-          activeLayout.value = layout;
-          indicatorOpacity.value = 1;
-        } else {
-          activeLayout.value = withSpring(layout, {
-            damping: 22,
-            stiffness: 320,
-            mass: 0.5,
-          }) as unknown as TabLayout;
-          indicatorOpacity.value = withTiming(1, { duration: 100 });
-        }
-      }
-    },
-    [activeLayout, indicatorOpacity, shouldReduceMotion],
-  );
-
-  useEffect(() => {
-    const activeTab = visibleRoutes.find((tab) =>
-      isRouteFocused(getHrefString(tab.href)),
-    );
-    if (activeTab) {
-      moveIndicatorTo(getHrefString(activeTab.href));
-    } else {
-      indicatorOpacity.value = withTiming(0, {
-        duration: shouldReduceMotion ? 0 : 120,
-      });
-    }
-  }, [
-    pathname,
-    visibleRoutes,
-    isRouteFocused,
-    moveIndicatorTo,
-    indicatorOpacity,
-    shouldReduceMotion,
-  ]);
-
-  const onLayoutMeasured = useCallback(
-    (key: string, focused: boolean, layout: TabLayout) => {
-      layouts.current[key] = layout;
-      if (focused) moveIndicatorTo(key);
-    },
-    [moveIndicatorTo],
   );
 
   const handlePress = useCallback(
@@ -302,12 +190,6 @@ export const StyledTab = memo(() => {
           elevation: 3,
         }}
       >
-        <Animated.View
-          pointerEvents="none"
-          className="absolute bg-persimmon-500 rounded-[12px]"
-          style={[{ top: 0, left: 0 }, indicatorStyle]}
-        />
-
         {visibleRoutes.map((tab: Tab) => {
           const hrefString = getHrefString(tab.href);
           const isFocused = isRouteFocused(hrefString);
@@ -316,10 +198,8 @@ export const StyledTab = memo(() => {
             <TabButton
               key={hrefString}
               tab={tab}
-              hrefString={hrefString}
               isFocused={isFocused}
               onPress={() => handlePress(tab.href)}
-              onLayoutMeasured={onLayoutMeasured}
             />
           );
         })}
