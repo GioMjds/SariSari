@@ -20,6 +20,7 @@ import {
   getCustomerTimeline,
   getCustomerInsights,
   getCustomerFavoriteProduct,
+  getCustomerCreditSummary,
 } from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import type {
@@ -36,6 +37,7 @@ import type {
   Payment,
   CustomerTimelineItem,
   CustomerInsights,
+  CustomerCreditSummary,
 } from '@/types/credits.types';
 import { Alert } from '@/utils/alert';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -407,6 +409,22 @@ export function useCustomerInsights(opts = {}) {
     queryKey: ['customer-insights'],
     queryFn: getCustomerInsights,
     staleTime: 5 * 60 * 1000,
+    ...opts,
+  });
+}
+
+export function useCustomerCreditSummary(
+  customerId?: number | string,
+  opts = {},
+) {
+  const parsedId =
+    typeof customerId === 'string' ? parseInt(customerId, 10) : customerId;
+  return useQuery<CustomerCreditSummary | null>({
+    queryKey: ['customer-credit-summary', parsedId],
+    queryFn: () =>
+      parsedId ? getCustomerCreditSummary(parsedId) : Promise.resolve(null),
+    enabled: !!parsedId,
+    staleTime: 60 * 1000,
     ...opts,
   });
 }

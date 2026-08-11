@@ -1,10 +1,16 @@
 import { useCallback, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewCredit, Product } from '@/types';
 import { tryParsePesosInput } from '@/lib/money';
-import { useCustomer, useInsertCredit, useProducts } from '@/hooks';
+import {
+  useCustomer,
+  useInsertCredit,
+  useProducts,
+  useCustomerCreditSummary,
+} from '@/hooks';
+import type { OverrideReasonResult } from '../credit-guardrails';
+import type { OverrideReasonCode } from '@/types';
 
 export interface CreditFormData {
   productName: string;
@@ -29,7 +35,6 @@ export interface DuePresetConfig {
   id: DuePreset;
   label: string;
   description: string;
-  /** Returns the YYYY-MM-DD value for this preset, evaluated lazily. */
   resolve: () => string;
 }
 
@@ -51,7 +56,7 @@ export function formatDueChip(iso: string): string | null {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export const DUE_PRESETS: DuePresetConfig[] = [
+export const DUE_PRESETS = [
   {
     id: 'none',
     label: 'No Limit',
@@ -76,7 +81,7 @@ export const DUE_PRESETS: DuePresetConfig[] = [
     description: '30 days',
     resolve: () => addDaysIso(30),
   },
-];
+] satisfies DuePresetConfig[];
 
 /**
  * useAddCreditForm — owns the Add Credit screen's form state.
@@ -91,10 +96,14 @@ export const DUE_PRESETS: DuePresetConfig[] = [
 export function useAddCreditForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-
   const { getAllProductsQuery } = useProducts();
+  const { data: creditSummary = null } = useCustomerCreditSummary(id);
 
-  // Local UI state — product picker, due-date preset selection, and ticket items list.
+  const [overrideReason, setOverrideReason] =
+    useState<OverrideReasonResult | null>(null);
+  const [showOverrideModal, setShowOverrideModal] = useState<boolean>(false);
+  const [showSoftWarnModal, setShowSoftWarnModal] = useState<boolean>(false);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productQuery, setProductQuery] = useState<string>('');
   const [productDropdownOpen, setProductDropdownOpen] =
@@ -102,18 +111,15 @@ export function useAddCreditForm() {
   const [duePreset, setDuePreset] = useState<DuePreset>('none');
   const [ticketItems, setTicketItems] = useState<TicketItem[]>([]);
 
-  // react-hook-form setup with the field defaults that match the
-  // original screen.
-  const { control, handleSubmit, setValue, reset } =
-    useForm<CreditFormData>({
-      defaultValues: {
-        productName: '',
-        quantity: '1',
-        amount: '',
-        dueDate: '',
-        notes: '',
-      },
-    });
+  const { control, handleSubmit, setValue, reset } = useForm<CreditFormData>({
+    defaultValues: {
+      productName: '',
+      quantity: '1',
+      amount: '',
+      dueDate: '',
+      notes: '',
+    },
+  });
 
   const quantity = useWatch({ control, name: 'quantity' });
   const amount = useWatch({ control, name: 'amount' });
@@ -123,8 +129,6 @@ export function useAddCreditForm() {
   // Customer + product list from the query cache.
   const { data: customer } = useCustomer(Number(id));
   const { data: products = [] } = getAllProductsQuery;
-
-
 
   const insertCredit = useInsertCredit();
 
@@ -145,8 +149,6 @@ export function useAddCreditForm() {
     (text: string) => {
       setValue('productName', text);
       setProductQuery(text);
-      // Unlock the locked unit price when the user manually edits
-      // the product name away from the picked product.
       setSelectedProduct((current) =>
         current && text !== current.name ? null : current,
       );
@@ -193,7 +195,9 @@ export function useAddCreditForm() {
         ...(selectedProduct?.id != null
           ? { product_id: selectedProduct.id }
           : {}),
-        product_name: selectedProduct ? selectedProduct.name : productName.trim(),
+        product_name: selectedProduct
+          ? selectedProduct.name
+          : productName.trim(),
         quantity: qty,
         amount: itemTotal,
         unitPrice: price,
@@ -213,49 +217,91 @@ export function useAddCreditForm() {
   }, []);
 
   const submit = handleSubmit((data) => {
-    const credits: NewCredit[] = ticketItems.map((item) => ({
-      customer_id: Number(id),
-      ...(item.product_id != null ? { product_id: item.product_id } : {}),
-      ...(item.product_name ? { product_name: item.product_name } : {}),
-      quantity: item.quantity,
-      amount: item.amount,
-      due_date: data.dueDate?.trim() || null,
-      notes: data.notes?.trim() || null,
-    }));
+    const buildCredits = (): NewCredit[] => {
+      const overrideFields = overrideReason
+        ? {
+            overrideReasonCode: overrideReason.code as OverrideReasonCode,
+            overrideReasonNote: overrideReason.note,
+          }
+        : {};
 
-    // If there is currently a draft item filled out, include it in the submit
-    if (productName?.trim() && amount) {
-      credits.push({
+      const credits: NewCredit[] = ticketItems.map((item) => ({
         customer_id: Number(id),
-        ...(selectedProduct?.id != null
-          ? { product_id: selectedProduct.id }
-          : {}),
-        product_name: selectedProduct ? selectedProduct.name : productName.trim(),
-        quantity: quantity ? parseInt(quantity, 10) : null,
-        amount: qtyNum * tryParsePesosInput(amount),
+        ...(item.product_id != null ? { product_id: item.product_id } : {}),
+        ...(item.product_name ? { product_name: item.product_name } : {}),
+        quantity: item.quantity,
+        amount: item.amount,
         due_date: data.dueDate?.trim() || null,
         notes: data.notes?.trim() || null,
-      });
+        ...overrideFields,
+      }));
+
+      if (productName?.trim() && amount) {
+        credits.push({
+          customer_id: Number(id),
+          ...(selectedProduct?.id != null
+            ? { product_id: selectedProduct.id }
+            : {}),
+          product_name: selectedProduct
+            ? selectedProduct.name
+            : productName.trim(),
+          quantity: quantity ? parseInt(quantity, 10) : null,
+          amount: qtyNum * tryParsePesosInput(amount),
+          due_date: data.dueDate?.trim() || null,
+          notes: data.notes?.trim() || null,
+          ...overrideFields,
+        });
+      }
+      return credits;
+    };
+
+    if (submitIsBlockedByGuardrail) return;
+
+    // Soft warn path — prompt but allow continuation without override
+    if (
+      projectedWouldExceedLimit &&
+      !(creditSummary?.blockOnExceed ?? false) &&
+      overrideReason === null
+    ) {
+      setShowSoftWarnModal(true);
+      return;
     }
 
+    const credits = buildCredits();
     if (credits.length === 0) return;
     insertCredit.mutate(credits);
+    setOverrideReason(null);
   });
-
-  // ─── Derived values for the UI ──────────────────────────────────
 
   const qtyNum = quantity ? parseInt(quantity, 10) : 1;
   const unitPrice = amount ? tryParsePesosInput(amount) : 0;
   const draftTotal = qtyNum * unitPrice;
   const itemsTotal = ticketItems.reduce((sum, item) => sum + item.amount, 0);
   const total = itemsTotal + (productName?.trim() && amount ? draftTotal : 0);
-  
+
+  const projectedAvailable =
+    creditSummary?.creditLimit != null
+      ? creditSummary.creditLimit - creditSummary.balance - total
+      : null;
+
+  const projectedWouldExceedLimit =
+    creditSummary?.creditLimit != null &&
+    projectedAvailable !== null &&
+    projectedAvailable < 0;
+
+  const submitIsBlockedByGuardrail =
+    projectedWouldExceedLimit &&
+    (creditSummary?.blockOnExceed ?? false) &&
+    overrideReason === null;
+
   const dueChipLabel = formatDueChip(dueDate);
   const isSubmitDisabled =
     insertCredit.isPending ||
-    (ticketItems.length === 0 && (!productName?.trim() || !amount));
+    (ticketItems.length === 0 && (!productName?.trim() || !amount)) ||
+    submitIsBlockedByGuardrail;
 
-  const itemCount = ticketItems.length + (productName?.trim() && amount ? 1 : 0);
+  const itemCount =
+    ticketItems.length + (productName?.trim() && amount ? 1 : 0);
 
   return {
     // Form wiring (passed through to the ticket sheet / RHF controllers)
@@ -302,6 +348,15 @@ export function useAddCreditForm() {
     dueChipLabel,
     isSubmitDisabled,
     itemCount,
+    creditSummary,
+    overrideReason,
+    setOverrideReason,
+    showOverrideModal,
+    setShowOverrideModal,
+    showSoftWarnModal,
+    setShowSoftWarnModal,
+    projectedWouldExceedLimit,
+    submitIsBlockedByGuardrail,
 
     // Router (exposed for the back button)
     router,

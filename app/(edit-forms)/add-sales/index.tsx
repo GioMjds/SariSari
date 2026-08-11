@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreventRemove } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,11 @@ import {
   ProductSearchCatalog,
   useAddSalesForm,
 } from '@/components/sales/add-sales';
+import { StyledText } from '@/components/elements';
+import {
+  SukiPanel,
+  OverrideReasonModal,
+} from '@/components/utang/credit-guardrails';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
 
 export default function AddSales() {
@@ -48,7 +53,6 @@ export default function AddSales() {
         <ProductSearchCatalog
           filteredProducts={form.filteredProducts}
           isLoading={form.isProductsLoading}
-          // Need proper fix
           getCartLine={form.getCartLine}
           onAdd={form.handleAddItem}
           onUpdateQuantity={form.handleUpdateQuantity}
@@ -59,7 +63,6 @@ export default function AddSales() {
             if (idx !== -1) form.toggleCartItemUnit(idx);
           }}
           onPressScan={form.openScanner}
-          // Need proper type invocations
           pendingAddProductBarcode={form.pendingAddProductBarcode}
           onPressAddNewProduct={form.handlePressAddNewProduct}
           onDismissPendingAddProduct={form.dismissPendingAddProduct}
@@ -78,6 +81,20 @@ export default function AddSales() {
           onOpenCustomerPicker={() => form.setShowCustomerPicker(true)}
           onSubmit={form.submit}
         />
+
+        {form.paymentType === 'credit' &&
+          form.creditSummary &&
+          typeof form.selectedCustomer === 'object' &&
+          form.selectedCustomer !== null && (
+            <View className="px-4 pb-2">
+              <SukiPanel
+                summary={form.creditSummary}
+                pendingTotal={form.total}
+                mode="compact"
+                onRequestOverride={() => form.setShowOverrideModal(true)}
+              />
+            </View>
+          )}
       </View>
 
       <CustomerPickerModal
@@ -116,6 +133,58 @@ export default function AddSales() {
           />
         </View>
       </Modal>
+
+      <Modal
+        visible={form.showSoftWarnModal}
+        transparent
+        animationType="fade"
+        onClose={() => form.setShowSoftWarnModal(false)}
+      >
+        <View className="flex-1 bg-black/50 items-center justify-center px-6">
+          <View className="bg-paper-50 rounded-2xl p-5 gap-4 w-full">
+            <StyledText variant="extrabold" className="text-ink-900 text-base">
+              Suki is over limit
+            </StyledText>
+            <StyledText variant="regular" className="text-ink-600 text-sm">
+              You can continue or record a reason.
+            </StyledText>
+            <View className="gap-2">
+              <Pressable
+                onPress={() => {
+                  form.setShowSoftWarnModal(false);
+                  form.submit();
+                }}
+                className="bg-ink-200 rounded-xl px-4 py-3 items-center"
+              >
+                <StyledText variant="semibold" className="text-ink-700 text-sm">
+                  Continue without override
+                </StyledText>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  form.setShowSoftWarnModal(false);
+                  form.setShowOverrideModal(true);
+                }}
+                className="bg-primary-600 rounded-xl px-4 py-3 items-center"
+              >
+                <StyledText variant="semibold" className="text-white text-sm">
+                  Record override reason
+                </StyledText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <OverrideReasonModal
+        visible={form.showOverrideModal}
+        onClose={() => form.setShowOverrideModal(false)}
+        onSubmit={(result) => {
+          form.setOverrideReason(result);
+          form.setShowOverrideModal(false);
+          form.submit();
+        }}
+      />
 
       <BarcodeScannerModal
         visible={form.isScannerOpen}

@@ -10,7 +10,9 @@ import {
   useCustomerDetails,
   useDeleteCustomer,
   useProfile,
+  useCustomerCreditSummary,
 } from '@/hooks';
+import { SukiPanel } from '@/components/utang/credit-guardrails';
 import { useModalStore } from '@/stores';
 import { matchesSearch } from '@/lib/creditDetails';
 import { CreditTransaction } from '@/types/credits.types';
@@ -42,6 +44,7 @@ export default function CustomerDetails() {
   } = useCustomerDetails(id);
 
   const { data: history = [] } = useCreditHistory(id);
+  const { data: creditSummary = null } = useCustomerCreditSummary(id);
   const { profile } = useProfile();
 
   const deleteCustomerMutation = useDeleteCustomer();
@@ -200,6 +203,11 @@ export default function CustomerDetails() {
             onAddPayment={handleAddPayment}
             onAddCredit={handleAddCredit}
           />
+          {creditSummary && (
+            <View className="mt-3">
+              <SukiPanel summary={creditSummary} mode="detailed" />
+            </View>
+          )}
         </View>
 
         {/* ─── Tab navigation ──────────────────────────────────── */}

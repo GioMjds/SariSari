@@ -7,6 +7,7 @@ import {
   SaleWithItems,
   SaleStats,
 } from '@/types/sales.types';
+import { OverrideReasonCode } from '@/types';
 
 export const initSalesTables = async () => {
   await db.execAsync(`
@@ -81,6 +82,8 @@ export const insertSale = async (
   payment_type: 'cash' | 'credit' = 'cash',
   customer_name?: string,
   customer_credit_id?: number,
+  overrideReasonCode?: OverrideReasonCode,
+  overrideReasonNote?: string | null,
 ): Promise<number> => {
   if (!items || items.length === 0) {
     throw new Error('Cannot insert a sale with no items');
@@ -136,13 +139,15 @@ export const insertSale = async (
 
     // 2. Insert the sale header.
     const saleResult = await db.runAsync(
-      'INSERT INTO sales (total, payment_type, customer_name, customer_credit_id, timestamp) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO sales (total, payment_type, customer_name, customer_credit_id, timestamp, override_reason_code, override_reason_note) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         total,
         payment_type,
         customer_name || null,
         customer_credit_id || null,
         timestamp,
+        overrideReasonCode || null,
+        overrideReasonNote || null,
       ],
     );
     const saleId = saleResult.lastInsertRowId;
@@ -224,8 +229,14 @@ export const insertSale = async (
         );
       }
       const creditResult = await db.runAsync(
-        'INSERT INTO credit_transactions (customer_id, amount, status, date) VALUES (?, ?, ?, ?)',
-        [customer_credit_id, total, 'unpaid', timestamp],
+        "INSERT INTO credit_transactions (customer_id, amount, status, date, override_reason_code, override_reason_note) VALUES (?, ?, 'unpaid', ?, ?, ?)",
+        [
+          customer_credit_id,
+          total,
+          timestamp,
+          overrideReasonCode || null,
+          overrideReasonNote || null,
+        ],
       );
       const creditTxnId = creditResult.lastInsertRowId;
       await db.runAsync(

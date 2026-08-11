@@ -56,6 +56,8 @@ export interface NewCredit {
   amount: number;
   due_date?: string | null;
   notes?: string | null;
+  overrideReasonCode?: OverrideReasonCode;
+  overrideReasonNote?: string | null;
 }
 
 export interface Payment {
@@ -136,3 +138,24 @@ export type ExtendedCreditFilter =
 
 export type CreditSort =
   'name_asc' | 'name_desc' | 'balance_desc' | 'balance_asc' | 'recent';
+
+export type OverrideReasonCode = 
+  | 'regular_customer'
+  | 'long_term_suki'
+  | 'partial_payment_promised'
+  | 'owner_discretion'
+  | 'other';
+
+export interface CustomerCreditSummary {
+  customerId: number;
+  balance: number;
+  creditLimit: number | null;
+  availableCredit: number | null;
+  blockOnExceed: boolean;
+  oldestUnpaidDueDate: string | null;
+  overdueDays: number | null;
+  overdueThresholdDays: number;
+  isOverdue: boolean;
+  isNearLimit: boolean;
+  wouldExceedLimit: boolean;
+}

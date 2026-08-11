@@ -105,8 +105,17 @@ export function useSales() {
       payment_type,
       customer_name,
       customer_credit_id,
+      overrideReasonCode,
+      overrideReasonNote,
     }: InsertSaleParams) =>
-      insertSale(items, payment_type, customer_name, customer_credit_id),
+      insertSale(
+        items,
+        payment_type,
+        customer_name,
+        customer_credit_id,
+        overrideReasonCode,
+        overrideReasonNote,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: salesKeys.all });
       queryClient.invalidateQueries({ queryKey: salesKeys.salesStats });

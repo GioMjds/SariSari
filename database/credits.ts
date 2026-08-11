@@ -4,6 +4,7 @@ import {
   CreditSort,
   CreditTransaction,
   Customer,
+  CustomerCreditSummary,
   CustomerInsights,
   CustomerTimelineItem,
   CustomerWithDetails,
@@ -269,16 +270,15 @@ export const getCustomerWithDetails = async (
   };
 };
 
-// ==================== CREDIT TRANSACTION OPERATIONS ====================
-
 export const insertCreditTransaction = async (
   credit: NewCredit,
 ): Promise<number> => {
   const timestamp = getCurrentLocalTimestamp();
   const result = await db.runAsync(
-    `INSERT INTO credit_transactions 
-     (customer_id, product_id, product_name, quantity, amount, due_date, notes, status, date) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)`,
+    `INSERT INTO credit_transactions
+     (customer_id, product_id, product_name, quantity, amount, due_date, notes,
+      status, date, override_reason_code, override_reason_note)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'unpaid', ?, ?, ?)`,
     [
       credit.customer_id,
       credit.product_id || null,
@@ -288,6 +288,8 @@ export const insertCreditTransaction = async (
       credit.due_date || null,
       credit.notes || null,
       timestamp,
+      credit.overrideReasonCode || null,
+      credit.overrideReasonNote || null,
     ],
   );
   return result.lastInsertRowId;
@@ -738,9 +740,7 @@ export const getCustomerTimeline = async (
       amount: p.amount,
       date: p.date,
       description: 'Paid Credit',
-      ...(p.payment_method
-        ? { details: `Method: ${p.payment_method}` }
-        : {}),
+      ...(p.payment_method ? { details: `Method: ${p.payment_method}` } : {}),
     });
   }
 
@@ -810,5 +810,89 @@ export const getCustomerInsights = async (): Promise<CustomerInsights> => {
     loyaltyDistribution,
     creditRecoveryRate,
     averageOrderValue: 185,
+  };
+};
+
+/**
+ * Returns a live credit-guardrail summary for a single customer.
+ *
+ * Three reads, no transaction — pure reads with no side effects.
+ * isNearLimit and wouldExceedLimit are derived here from balance only
+ * (no pendingTotal — callers project the cart total at their layer).
+ *
+ * Money is integer pesos throughout; no float arithmetic.
+ */
+export const getCustomerCreditSummary = async (
+  customerId: number,
+): Promise<CustomerCreditSummary | null> => {
+  // 1. Customer config row
+  const configRow = await db.getFirstAsync<{
+    id: number;
+    credit_limit: number | null;
+    block_on_exceed: number;
+    overdue_threshold_days: number;
+  }>(
+    `SELECT id, credit_limit, block_on_exceed, overdue_threshold_days
+     FROM customers WHERE id = ?`,
+    [customerId],
+  );
+  if (!configRow) return null;
+
+  const creditLimit = configRow.credit_limit ?? null;
+  const blockOnExceed = configRow.block_on_exceed === 1;
+  const overdueThresholdDays = configRow.overdue_threshold_days;
+
+  // 2. Balance — canonical query matching getOutstandingBalance
+  const balanceRow = await db.getFirstAsync<{ balance: number }>(
+    `SELECT COALESCE(SUM(amount - amount_paid), 0) AS balance
+     FROM credit_transactions
+     WHERE customer_id = ? AND status != 'paid'`,
+    [customerId],
+  );
+  const balance = balanceRow?.balance ?? 0;
+
+  // 3. Overdue — oldest unpaid past-due credit
+  const overdueRow = await db.getFirstAsync<{
+    days_overdue: number | null;
+    oldest_due_date: string | null;
+  }>(
+    `SELECT MIN(julianday('now') - julianday(due_date)) AS days_overdue,
+            MIN(due_date) AS oldest_due_date
+     FROM credit_transactions
+     WHERE customer_id = ? AND status != 'paid'
+       AND due_date IS NOT NULL
+       AND due_date < date('now')`,
+    [customerId],
+  );
+
+  const rawDaysOverdue = overdueRow?.days_overdue ?? null;
+  const overdueDays =
+    rawDaysOverdue !== null ? Math.floor(rawDaysOverdue) : null;
+  const oldestUnpaidDueDate = overdueRow?.oldest_due_date ?? null;
+  const isOverdue = overdueDays !== null && overdueDays > overdueThresholdDays;
+
+  // JS derivations — no pendingTotal here (callers apply projection)
+  const availableCredit = creditLimit === null ? null : creditLimit - balance;
+
+  const isNearLimit =
+    creditLimit !== null &&
+    availableCredit !== null &&
+    availableCredit / creditLimit <= 0.2;
+
+  const wouldExceedLimit =
+    creditLimit !== null && availableCredit !== null && availableCredit < 0;
+
+  return {
+    customerId,
+    balance,
+    creditLimit,
+    availableCredit,
+    blockOnExceed,
+    oldestUnpaidDueDate,
+    overdueDays,
+    overdueThresholdDays,
+    isOverdue,
+    isNearLimit,
+    wouldExceedLimit,
   };
 };

@@ -1,3 +1,5 @@
+import type { OverrideReasonCode } from "./credits.types";
+
 export interface Sale {
   id: number;
   total: number;
@@ -108,6 +110,8 @@ export interface InsertSaleParams {
   payment_type: 'cash' | 'credit';
   customer_name?: string;
   customer_credit_id?: number;
+  overrideReasonCode?: OverrideReasonCode;
+  overrideReasonNote?: string | null;
 }
 
 // Parameters for getSalesByDateRange function

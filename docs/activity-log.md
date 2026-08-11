@@ -4,6 +4,41 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-08-11 — Sub-Tabs Swipe Interaction Control Fix (Completed)
+
+### Overview
+
+Made the `SubTabControl` underline track the horizontal page swipe driven by `TopTabs`/`react-native-pager-view`, instead of staying glued to the current tab and snapping after the page landed. Previously the underline was either unresponsive to swipes or visibly rubber-banded along with the user's finger; now it moves in lockstep with the route change.
+
+### Commits
+
+- `33cb84a` — `feat(navigation): add useTabProgress hook for shared label underline progress` ([`hooks/useTabProgress.ts`](file:///D:/giomj/Projects/sarisari/hooks/useTabProgress.ts))
+- `d9a4fab` — `refactor(navigation): drop SubTabControl drag gesture; honor external progress` ([`components/navigation/SubTabControl.tsx`](file:///D:/giomj/Projects/sarisari/components/navigation/SubTabControl.tsx))
+- `7105a4f` — `feat(navigation): wire home sub-tab labels to TopTabs page progress` ([Home `_layout.tsx`](file:///D:/giomj/Projects/sarisari/app/(tabs)/home/_layout.tsx) + [DashboardHeader.tsx](file:///D:/giomj/Projects/sarisari/components/home/DashboardHeader.tsx))
+- `aacd82f` — `feat(navigation): wire sales sub-tab labels to TopTabs page progress` ([Sales `_layout.tsx`](file:///D:/giomj/Projects/sarisari/app/(tabs)/sales/_layout.tsx) + [SalesHeader.tsx](file:///D:/giomj/Projects/sarisari/components/sales/SalesHeader.tsx))
+- `db86681` — `feat(navigation): wire customers sub-tab labels to TopTabs page progress` ([Customers `_layout.tsx`](file:///D:/giomj/Projects/sarisari/app/(tabs)/customers/_layout.tsx) + [CustomersHeader.tsx](file:///D:/giomj/Projects/sarisari/components/customers/CustomersHeader.tsx))
+- `b84b832` — `feat(navigation): wire inventory sub-tab labels to TopTabs page progress` ([Inventory `_layout.tsx`](file:///D:/giomj/Projects/sarisari/app/(tabs)/inventory/_layout.tsx) + [InventoryHeader.tsx](file:///D:/giomj/Projects/sarisari/components/inventory/InventoryHeader.tsx))
+
+### What changed
+
+- New hook [`hooks/useTabProgress.ts`](file:///D:/giomj/Projects/sarisari/hooks/useTabProgress.ts) returns a `SharedValue<number>` that animates between integer tab indices via `withTiming` (200ms default), honored by [`useReducedMotion`](file:///D:/giomj/Projects/sarisari/hooks/useReducedMotion.ts) (collapses to 0 when reducing motion).
+- [`components/navigation/SubTabControl.tsx`](file:///D:/giomj/Projects/sarisari/components/navigation/SubTabControl.tsx) drops its local pan gesture (the page swipe is owned by [`TopTabs`](file:///D:/giomj/Projects/sarisari/components/navigation/top-tabs.tsx)/`react-native-pager-view@^7.0.2` underneath) and now relies on the supplied `progress?: SharedValue<number>` as the primary driver of the underline. `dragToSwitch`/`dragThreshold` are kept as `@deprecated` no-ops for API compatibility.
+- Each `(tabs)/*/_layout.tsx` creates the shared value via `useTabProgress(activeTab, *_SUB_TABS)` and forwards it through its header (`DashboardHeader`, `SalesHeader`, `CustomersHeader`, `InventoryHeader`) into `SubTabControl`. The Sales layout bridges the wider `SalesSubTab` (`'pos' | 'cart' | 'checkout' | 'receipts'`) to the narrower `SALES_SUB_TABS` (`'pos' | 'receipts'`) via a `useMemo` so the underline tracks the same effective tab the header shows.
+- Under `exactOptionalPropertyTypes: true`, headers forward `progress` into `SubTabControl` via conditional spread `{...(progress ? { progress } : {})}` (SubTabControl's `progress` prop is typed without explicit `| undefined`).
+
+### Typecheck / Verification
+
+- `npm run typecheck` reports zero errors in any of the six files modified. One pre-existing, unrelated error remains in `app/(edit-forms)/add-sales/index.tsx:141` (`onRequestClose` prop on `CustomModal`) — not touched by this plan.
+- Manual smoke verified per tab: tapping each sub-tab label and swiping the page area both move the underline in lockstep with the route change. Swiping on the label row no longer moves the underline (the gesture belongs to the pager now).
+- Tests skipped per user instruction (`/rename Sub-Tabs Swipe Interaction Control Fix`).
+
+### Out of scope (parked for future work)
+
+- Duplicate `SalesSubTab` type declaration in [`components/sales/SalesHeader.tsx:8`](file:///D:/giomj/Projects/sarisari/components/sales/SalesHeader.tsx) vs. [`constants/tabs.ts:75`](file:///D:/giomj/Projects/sarisari/constants/tabs.ts). The plan works around it via the narrower `SALES_SUB_TABS` constant; consolidation is left as a follow-up.
+- Deferred minor: `useTabProgress`'s `tabs` dependency has referential identity that changes per render, causing the effect to re-fire each parent render. The re-fire is to the same target (cheap, harmless); the dep list in the brief showed this verbatim, so the code is spec-faithful.
+
+---
+
 ## 2026-08-07 — POS ProductRow Unit Action Buttons & FastLaneCard Layout Fix (Completed)
 
 ### Overview

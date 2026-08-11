@@ -2,13 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Customer, NewSaleItem, Product } from '@/types';
+import {
+  Customer,
+  NewSaleItem,
+  Product,
+  type OverrideReasonCode,
+} from '@/types';
 import {
   useBarcodeResolver,
   useCustomers,
   useProducts,
   useSales,
+  useCustomerCreditSummary,
 } from '@/hooks';
+import type { OverrideReasonResult } from '@/components/utang/credit-guardrails';
 import { InsufficientStockError } from '@/database/sales';
 import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
@@ -46,6 +53,10 @@ export function useAddSalesForm() {
   const [pendingAddProductBarcode, setPendingAddProductBarcode] = useState<
     string | null
   >(null);
+  const [overrideReason, setOverrideReason] =
+    useState<OverrideReasonResult | null>(null);
+  const [showOverrideModal, setShowOverrideModal] = useState<boolean>(false);
+  const [showSoftWarnModal, setShowSoftWarnModal] = useState<boolean>(false);
   const pendingScanRef = useRef<string | null>(null);
   const { resolve } = useBarcodeResolver();
 
@@ -58,6 +69,14 @@ export function useAddSalesForm() {
   const { data: products = [], isLoading: isProductsLoading } =
     getAllProductsQuery;
   const { data: customers = [] } = useCustomers();
+
+  const selectedCustomerId =
+    typeof selectedCustomer === 'object' && selectedCustomer !== null
+      ? selectedCustomer.id
+      : undefined;
+
+  const { data: creditSummary = null } =
+    useCustomerCreditSummary(selectedCustomerId);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -74,10 +93,27 @@ export function useAddSalesForm() {
     0,
   );
 
+  const projectedAvailable =
+    creditSummary?.creditLimit != null && paymentType === 'credit'
+      ? creditSummary.creditLimit - creditSummary.balance - total
+      : null;
+
+  const projectedWouldExceedLimit =
+    creditSummary?.creditLimit != null &&
+    projectedAvailable !== null &&
+    projectedAvailable < 0 &&
+    paymentType === 'credit';
+
+  const submitIsBlockedByGuardrail =
+    projectedWouldExceedLimit &&
+    (creditSummary?.blockOnExceed ?? false) &&
+    overrideReason === null;
+
   const isSubmitDisabled =
     insertSaleMutation.isPending ||
     cartItems.length === 0 ||
-    (paymentType === 'credit' && !selectedCustomer);
+    (paymentType === 'credit' && !selectedCustomer) ||
+    submitIsBlockedByGuardrail;
 
   const handleAddItem = useCallback(
     (product: Product, selectedUnit: 'retail' | 'wholesale' = 'retail') => {
@@ -170,8 +206,7 @@ export function useAddSalesForm() {
           .filter(Boolean) as NewSaleItem[];
 
         if (
-          calculateCartProductPieces(next, productId) >
-          matchingItems[0]!.stock
+          calculateCartProductPieces(next, productId) > matchingItems[0]!.stock
         ) {
           Alert.alert(
             'Insufficient Stock',
@@ -362,7 +397,16 @@ export function useAddSalesForm() {
   }, []);
 
   const submit = useCallback(async () => {
-    if (cartItems.length === 0 || insertSaleMutation.isPending) {
+    if (cartItems.length === 0 || insertSaleMutation.isPending) return;
+
+    if (submitIsBlockedByGuardrail) return;
+
+    if (
+      projectedWouldExceedLimit &&
+      !(creditSummary?.blockOnExceed ?? false) &&
+      overrideReason === null
+    ) {
+      setShowSoftWarnModal(true);
       return;
     }
 
@@ -383,8 +427,15 @@ export function useAddSalesForm() {
         ...(typeof selectedCustomer !== 'string' && selectedCustomer?.id != null
           ? { customer_credit_id: selectedCustomer.id }
           : {}),
+        ...(overrideReason
+          ? {
+              overrideReasonCode: overrideReason.code as OverrideReasonCode,
+              overrideReasonNote: overrideReason.note,
+            }
+          : {}),
       });
 
+      setOverrideReason(null);
       clearCart();
       router.back();
     } catch (err) {
@@ -397,7 +448,17 @@ export function useAddSalesForm() {
       }
       Alert.alert('Error', 'Failed to complete sale. Please try again.');
     }
-  }, [cartItems, paymentType, selectedCustomer, insertSaleMutation, clearCart]);
+  }, [
+    cartItems,
+    paymentType,
+    selectedCustomer,
+    insertSaleMutation,
+    clearCart,
+    overrideReason,
+    projectedWouldExceedLimit,
+    submitIsBlockedByGuardrail,
+    creditSummary,
+  ]);
 
   const getCartLine = useCallback(
     (productId: number): NewSaleItem | undefined =>
@@ -454,6 +515,17 @@ export function useAddSalesForm() {
 
     // Mutation
     insertSaleMutation,
+
+    creditSummary,
+    overrideReason,
+    setOverrideReason,
+    showOverrideModal,
+    setShowOverrideModal,
+    showSoftWarnModal,
+    setShowSoftWarnModal,
+    projectedWouldExceedLimit,
+    submitIsBlockedByGuardrail,
+    selectedCustomerId,
 
     // Router (exposed for the back button in the header)
     router,
