@@ -41,6 +41,14 @@ Bilang may-ari ng tindahan, gusto ko ng PIN na nagha-harang sa mga pinakamahahal
 - Kinakailangan ng tampok 5 (credit override), tampok 7 (voids/refunds), at tampok 4 (manual stock adjustments).
 - Dapat idisenyo kasabay ng tampok 16 (shift tracking).
 
+## Mga Kaugnay na Tampok
+
+- **Credit-limit exception:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ay humihingi ng PIN bago pahintulutan ang owner override.
+- **Sale correction:** [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]] ay nangangailangan ng PIN para sa void, refund, at price correction.
+- **Inventory adjustment:** [[04-physical-stocktake|04. Physical Stocktake]] ang hiwalay sa manual adjustment; ang huli ang PIN-protected.
+- **Write-off decision:** [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged-Goods Tracking]] ay may open question kung ang damaged-goods write-off ay dapat i-gate ng PIN.
+- **Shared-device identity:** [[16-shift-tracking-on-one-device|16. Shift Tracking]] ay nagdadagdag ng cashier identity habang ang PIN ay nananatiling owner authority.
+
 ## Mga Open Question
 
 - Hashing algorithm: Argon2 ang modernong piliin; ang scrypt ay katanggap-tanggap sa resource-constrained devices.

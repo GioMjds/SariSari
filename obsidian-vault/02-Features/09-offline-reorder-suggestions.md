@@ -39,6 +39,12 @@ Bilang may-ari ng tindahan na nagpaplano ng pagbili sa supplier, gusto ko ng sho
 - Tampok 8 (supplier delivery receiving) — kung wala ito, nabubuo ang listahan ng reorder ngunit nawawala ang feedback loop ng "ano ang aktwal na dumating".
 - Tampok 14 (local store insights) ay nagbabahagi ng velocity signal source.
 
+## Mga Kaugnay na Tampok
+
+- **Mula plano hanggang actual delivery:** [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]] ang nagko-commit ng restock at nagbabalik ng feedback tungkol sa mga kulang.
+- **Magkaparehong sales-velocity math:** [[14-transparent-local-store-insights|14. Transparent Local Store Insights]] ay gumagamit din ng local sales at stock signals upang gumawa ng paliwanag.
+- **Mas mabilis na pagdagdag ng benta:** [[01-pos-fast-lane|01. POS Fast Lane]] ay nagdaragdag ng tumpak na sale history na pinagmumulan ng velocity signal.
+
 ## Mga Open Question
 
 - Ano ang default na `target_stock_level` para sa umiiral na mga produkto? Null ang pinakaligtas.

@@ -38,6 +38,12 @@ Bilang may-ari ng tindahan sa register, gusto ko na ang mga panindang totoong na
 
 - Ang Tampok 18 (printable price-label/barcode sheets) ay makikinabang sa parehong barcode plumbing ngunit hindi kinakailangan.
 
+## Mga Kaugnay na Tampok
+
+- **Iisang POS cart:** [[02-parked-sales|02. Parked Sales]] ay nagse-save at nagbabalik ng cart na ginagamit din ng fast lane.
+- **Credit sa checkout:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ay dapat gumana kahit ang item ay naidagdag sa favorites, search, o barcode scan.
+- **Barcode source:** [[18-offline-price-label-and-barcode-sheets|18. Price Label at Barcode Sheets]] ay lumilikha ng mga barcode na sini-scan ng POS.
+
 ## Mga Open Question
 
 - Saan nanggagaling ang karaniwang dami (common quantities)? Naka-define ba bawat produkto ng may-ari, o kinuha mula sa 25th/50th/75th percentile ng mga nakaraang benta?

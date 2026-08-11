@@ -37,6 +37,14 @@ Bilang may-ari ng tindahan na nakatingin sa isang produkto, gusto kong makita an
 - Tampok 7 (safe voids/refunds) ay naglalagay ng mga reversal row sa timeline.
 - Tampok 13 (expiry/damaged tracking) ay naglalagay ng mga damaged row.
 
+## Mga Kaugnay na Tampok
+
+- **Stocktake adjustments:** [[04-physical-stocktake|04. Physical Stocktake]] ang naglalagay ng expected-versus-counted variance sa timeline.
+- **Sale reversal:** [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]] ang naglalagay ng void at refund reversals.
+- **Supplier restock:** [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]] ang naglalagay ng delivery at unit-cost context sa galaw ng stock.
+- **Spoilage loss:** [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged-Goods Tracking]] ang naglalagay ng damaged at write-off events.
+- **Actor context:** [[16-shift-tracking-on-one-device|16. Shift Tracking]] ay maaaring magpakita kung sinong active cashier ang naka-attribyut sa isang adjustment.
+
 ## Mga Open Question
 
 - Pagination: ang isang mabilis mabentang produkto ay maaaring magkaroon ng daan-daang timeline entry sa isang taon. Dapat magkaroon ng pagination ang timeline.

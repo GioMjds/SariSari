@@ -609,4 +609,30 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 16.');
   }
+
+  if (currentVersion < 17) {
+    console.log('Running migration to version 17 (Collection Queue)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS collection_followups (
+          id              INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id     INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+          follow_up_by    TEXT,
+          contacts_today  INTEGER NOT NULL DEFAULT 0,
+          last_contact_at TEXT,
+          status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','closed')),
+          created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_collection_followups_customer_id ON collection_followups(customer_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_collection_followups_status_follow_up_by ON collection_followups(status, follow_up_by);',
+      );
+      await db.execAsync('PRAGMA user_version = 17;');
+    });
+    console.log('Database migrated to version 17.');
+  }
 }

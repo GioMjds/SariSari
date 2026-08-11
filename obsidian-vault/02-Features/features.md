@@ -1,8 +1,10 @@
 # Hinaharap na Roadmap ng mga Tampok
 
-Ang bawat item sa ibaba ay isang maikling gabay patungo sa detalyadong dokumento. Basahin ang
-dokumento bago simulan ang gawain; inilalarawan nito ang problema, saklaw,
+Ang bawat item sa ibaba ay isang maikling gabay patungo sa detalyadong dokumento. Basahin ang dokumento bago simulan ang gawain; inilalarawan nito ang problema, saklaw,
 mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagiging posible na wala sa maikling buod sa ibaba.
+
+> Para sa aktwal na pagkakasunod-sunod ng pag-ship, tingnan ang
+> [[project-roadmap|SariSari Feature Release Roadmap]].
 
 ## Kasalukuyan (Now) — Pinakamataas na Halaga sa Araw-araw
 
@@ -65,3 +67,35 @@ mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagig
 18. [Printable na Price Label at Barcode Sheet](18-offline-price-label-and-barcode-sheets.md) —
     gumawa ng mai-print na labels mula sa umiiral na catalog para sa
     mga estante at repacked tingi items.
+
+## Mapa ng mga Kaugnayan
+
+Gamitin ang mga link na ito bilang mabilis na entry point. Ang bawat detalyadong note ay may
+Mga Kaugnay na Tampok section na nagpapaliwanag ng ugnayan nito.
+
+- **POS at utang:** [[01-pos-fast-lane|01. POS Fast Lane]] at
+  [[02-parked-sales|02. Parked Sales]] ay magkasamang nagpapabilis sa cart. Sa credit
+  checkout, [[05-utang-guardrails-at-checkout|05. Utang Guardrails]] ay nagbibigay ng
+  signal sa [[06-collection-queue|06. Collection Queue]],
+  [[12-customer-credit-statements|12. Credit Statements]], at
+  [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]].
+- **Kaha, correction, at accountability:** [[03-daily-cash-close-out|03. Daily Cash
+  Close-Out]] ay tumatanggap ng cash reversal mula sa
+  [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]].
+  [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang proteksiyon sa maselang
+  aksyon, at [[16-shift-tracking-on-one-device|16. Shift Tracking]] ang nagdaragdag ng
+  cashier attribution.
+- **Inventory at supplier loop:** [[08-supplier-delivery-receiving|08. Supplier Delivery
+  Receiving]] ang nagko-commit ng restock na pinaplano ng
+  [[09-offline-reorder-suggestions|09. Offline Reorder Suggestions]].
+  [[04-physical-stocktake|04. Physical Stocktake]],
+  [[07-safe-voids-refunds-corrections|07. Safe Corrections]], at
+  [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged Goods]] ay bumubuo ng
+  event trail na makikita sa [[10-stock-movement-timeline|10. Stock Movement Timeline]].
+- **Paliwanag at output:** [[14-transparent-local-store-insights|14. Transparent Local
+  Store Insights]] ay bumubuo ng maiintindihang tips mula sa sales, inventory, at credit
+  data. [[18-offline-price-label-and-barcode-sheets|18. Price Label at Barcode Sheets]]
+  ay kumokonekta sa POS barcode scan at sa PDF/share pattern ng statements.
+- **Proteksyon ng data:** [[17-manual-encrypted-backup-and-restore|17. Encrypted Backup
+  at Restore]] ay cross-cutting na nagpoprotekta sa mga local record ng pera, stock, suki,
+  at supplier.

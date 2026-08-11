@@ -38,6 +38,13 @@ Bilang may-ari ng tindahan, gusto kong mag-print o mag-share ng credit statement
 
 - Ang `lib/pdfGenerator.ts` module ay dapat sumusuporta sa mga primitives na kailangan ng tampok na ito (mga talahanayan, kabuuan, page breaks).
 
+## Mga Kaugnay na Tampok
+
+- **Parehong credit ledger:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ay gumagamit ng live balance na ipinapaliwanag ng statement sa mas mahabang panahon.
+- **Mga bayad sa koleksyon:** [[06-collection-queue|06. Collection Queue]] ay nagre-record ng payments na lumalabas bilang statement lines.
+- **Naiintindihang payment history:** [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]] ay bumabasa ng parehong payment history upang makapagpaliwanag ng suggested limit.
+- **Shared document output:** [[18-offline-price-label-and-barcode-sheets|18. Price Label at Barcode Sheets]] ay gumagamit din ng local PDF generation at native share flow.
+
 ## Mga Open Question
 
 - Default na date range: huling 30 araw.

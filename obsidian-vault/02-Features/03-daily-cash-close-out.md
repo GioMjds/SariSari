@@ -38,6 +38,12 @@ Bilang may-ari ng tindahan na nagsasara sa gabi, gusto kong maitala ang opening 
 
 - Tampok 7 (safe voids/refunds) — ang mga void at refund ay kailangang pumasok sa daily cash movement upang manatiling tama ang kalkulasyon sa pagsasara.
 
+## Mga Kaugnay na Tampok
+
+- **Cash reversals:** [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]] ay sumusulat ng cash-out reversal sa ledger na kino-compute ng close-out.
+- **Pananagutan bawat tao:** [[16-shift-tracking-on-one-device|16. Shift Tracking]] ay hinahati ang parehong cash records ayon sa cashier at shift.
+- **Pagbawi ng rekord:** [[17-manual-encrypted-backup-and-restore|17. Encrypted Backup at Restore]] ay pinoprotektahan ang daily close-out history kasama ng buong local database.
+
 ## Mga Open Question
 
 - Kailangan bang ma-edit ng may-ari ang nakaraang close-out (kung may maling bilang na natuklasan kinaumagahan)? Kung oo, ang mga edit ay dapat append-only na may `corrected_by` row sa halip na i-overwrite.

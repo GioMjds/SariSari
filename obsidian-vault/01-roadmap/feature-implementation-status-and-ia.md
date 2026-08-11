@@ -2,6 +2,8 @@
 
 > Audit performed 2026-08-06 against the working tree.
 > Read this before adding routes, moving screens, or planning a new feature so you don't duplicate work or scatter related screens across unrelated groups.
+> For the planned release sequence, see
+> [[project-roadmap|SariSari Feature Release Roadmap]].
 
 ---
 

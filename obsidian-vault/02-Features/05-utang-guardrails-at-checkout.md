@@ -38,6 +38,13 @@ Bilang may-ari ng tindahan na nagpoproseso ng credit sale, gusto kong makita ang
 - Tampok 11 (owner PIN) ay isang hard dependency para sa override flow. Kung walang PIN, ang override ay isang "reason" picker lamang na walang gate. Ang natitirang bahagi ng tampok na ito (display + warn, walang override) ay maaaring maipalabas nang mas maaga sa 11.
 - Tampok 15 (smarter credit profiles) ay nagtatayo rito.
 
+## Mga Kaugnay na Tampok
+
+- **POS entry point:** [[01-pos-fast-lane|01. POS Fast Lane]] ay isa sa mga paraan para bumuo ng cart; pareho silang humahantong sa credit decision sa checkout.
+- **Owner override:** [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang hard gate kapag lalampas sa itinakdang credit limit.
+- **Pagsingil:** [[06-collection-queue|06. Collection Queue]] ay bumabasa ng parehong balance, overdue, at near-limit signals.
+- **Paliwanag sa limit:** [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]] ang nagmumungkahi ng credit limit na ipinatutupad o binabalaan dito.
+
 ## Mga Open Question
 
 - Ang credit limit ba ay isang hard cap ("hindi pwedeng lumampas ang balanse") o soft cap ("magbabala kapag lumampas")? Ang default ay dapat soft na may per-owner toggle sa hard.

@@ -39,6 +39,13 @@ Bilang may-ari ng tindahan, gusto ko ng guided, category-by-category na pagbilan
 
 - Wala — malaya. Ang mga reason code ay may pagkakapareho sa tampok 13 (expiry/damaged tracking) ngunit ang stocktake reason code ay hiwalay.
 
+## Mga Kaugnay na Tampok
+
+- **Audit trail ng dami:** [[10-stock-movement-timeline|10. Stock Movement Timeline]] ay nagpapakita ng bawat adjustment na ginawa ng stocktake.
+- **Pagkakapareho ng dahilan:** [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged-Goods Tracking]] ay gumagamit ng kaugnay na reason-code vocabulary para maihiwalay ang spoilage sa ibang variance.
+- **Maselang adjustments:** [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang nagga-gate sa manual adjustments sa labas ng stocktake.
+- **Sino ang gumawa:** [[16-shift-tracking-on-one-device|16. Shift Tracking]] ay nag-a-attribute ng inventory adjustments sa active cashier.
+
 ## Mga Open Question
 
 - Ano ang default na dalas ng pag-imbentaryo? Lingguhan? Buwanan?

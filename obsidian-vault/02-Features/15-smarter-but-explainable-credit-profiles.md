@@ -40,6 +40,13 @@ Bilang may-ari ng tindahan, gusto ko ng mungkahing credit limit para sa bawat su
 - Tampok 6 (collection queue) ay nagbabahagi ng overdue at "near limit" signal.
 - Tampok 14 (local store insights) ay nagbabahagi ng kalkulasyon sa pola ng pagbabayad.
 
+## Mga Kaugnay na Tampok
+
+- **Limit na ipapatupad:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ang nagpapakita at nagga-gate sa credit limit na maaaring imungkahi ng profile.
+- **Priority ng paniningil:** [[06-collection-queue|06. Collection Queue]] ay maaaring gumamit ng profile signals sa pag-rank ng follow-up.
+- **Katibayan sa suki:** [[12-customer-credit-statements|12. Customer Credit Statements]] ang nagpapakita ng parehong credit at payment history na pinanggagalingan ng profile.
+- **Lokal na patterns:** [[14-transparent-local-store-insights|14. Transparent Local Store Insights]] ay nagbubuod ng payment patterns sa antas ng tindahan.
+
 ## Mga Open Question
 
 - Ano ang pormula? Halimbawa: `suggestedLimit = min(ceiling, max(recentAverageMonthlyPurchases * 1.5, recentMaxBalance * 1.2))` na iniaayos pababa sa pamamagitan ng penalty para sa overdue count.

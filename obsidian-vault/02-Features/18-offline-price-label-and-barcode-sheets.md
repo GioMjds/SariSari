@@ -36,6 +36,11 @@ Bilang may-ari ng tindahan, gusto kong mag-print ng malinis na maliliit na price
 - Ang PDF generator (umiiral na `lib/pdfGenerator.ts`) ay dapat sumusuporta sa small label layout.
 - Ang barcode rendering ay nangangailangan ng font o library na makakapagguhit ng napiling barcode symbology (CODE-128 ang karaniwan para sa sari-sari repacks).
 
+## Mga Kaugnay na Tampok
+
+- **Barcode sa register:** [[01-pos-fast-lane|01. POS Fast Lane]] ang magre-resolve at magdadagdag ng produktong may barcode sa cart.
+- **Parehong document pipeline:** [[12-customer-credit-statements|12. Customer Credit Statements]] ay gumagamit din ng local PDF generation at native share flow.
+
 ## Mga Open Question
 
 - Laki ng label: ano ang mga karaniwang sukat ng label sa merkado? 30x20mm? 50x25mm?

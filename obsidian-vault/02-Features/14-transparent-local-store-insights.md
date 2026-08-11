@@ -38,6 +38,13 @@ Bilang may-ari ng tindahan, gusto ko ng maliit na hanay ng mga simpleng pahiwati
 - Nagbabahagi ng velocity at signal math sa tampok 9 (reorder suggestions) at tampok 10 (stock movement timeline).
 - Tampok 15 (smarter credit profiles) ay nagbabahagi ng kalkulasyon sa pola ng pagbabayad ng suki.
 
+## Mga Kaugnay na Tampok
+
+- **Supplier reliability:** [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]] ang nagbibigay ng delivery-shortage data para sa supplier tips.
+- **Reorder at velocity:** [[09-offline-reorder-suggestions|09. Offline Reorder Suggestions]] ay gumagamit ng parehong sales at stock signals para sa aksyon sa restock.
+- **Paliwanag sa stock movement:** [[10-stock-movement-timeline|10. Stock Movement Timeline]] ang nagbibigay ng event-level na detalye sa likod ng stock tips.
+- **Pola ng pagbabayad:** [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]] ang bumubuo ng per-suki na paliwanag mula sa parehong credit data.
+
 ## Mga Open Question
 
 - Gaano kadalas nagre-regenerate ang listahan ng tips? Sa bawat pagbukas ng app.

@@ -43,6 +43,14 @@ Bilang may-ari ng tindahan, gusto kong i-void o i-refund ang isang benta sa pama
 - Tampok 11 (owner PIN) — ang mga void at price correction ay kailangang i-gate ng PIN.
 - Tampok 13 (expiry/damaged tracking) — ang mga refund reason code ay may pagkakapareho sa damaged-goods reason codes.
 
+## Mga Kaugnay na Tampok
+
+- **Cash reconciliation:** [[03-daily-cash-close-out|03. Daily Cash Close-Out]] ay kumukuha ng cash reversal para manatiling tama ang expected cash.
+- **PIN-protected correction:** [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang pumipigil sa hindi awtorisadong void, refund, at price correction.
+- **Inventory audit:** [[10-stock-movement-timeline|10. Stock Movement Timeline]] ay nagpapakita ng void reversal sa timeline ng produkto.
+- **Damaged returns:** [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged-Goods Tracking]] ay nagbabahagi ng reason codes para sa returned damaged goods.
+- **Cashier attribution:** [[16-shift-tracking-on-one-device|16. Shift Tracking]] ay nagdaragdag ng responsible cashier sa correction log.
+
 ## Mga Open Question
 
 - Ang void window ba ay dapat pwedeng baguhin bawat may-ari, o naka-hard-code sa 24h?

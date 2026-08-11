@@ -38,6 +38,13 @@ Bilang may-ari ng tindahan, gusto kong i-track ang expiry dates sa mga perishabl
 - Tampok 7 (voids/refunds) — ang damaged return ay maaari ding maging refund.
 - Tampok 4 (physical stocktake) — ang stocktake ay makakagawa ng damaged rows gamit ang parehong reason code vocabulary.
 
+## Mga Kaugnay na Tampok
+
+- **Pisikal na variance:** [[04-physical-stocktake|04. Physical Stocktake]] ay maaaring magtala ng spoilage bilang bahagi ng counted-stock adjustment.
+- **Returned item:** [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]] ay nag-aayos ng sale kapag ang nasirang item ay ibinalik ng customer.
+- **Makikitang audit trail:** [[10-stock-movement-timeline|10. Stock Movement Timeline]] ay nagpapakita ng damaged at write-off transaction.
+- **Protektadong write-off:** [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang natural na gate para sa sensitibong pagkawala ng stock.
+
 ## Mga Open Question
 
 - Paano ina-configure ang "near expiry" window bawat may-ari?

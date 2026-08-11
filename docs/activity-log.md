@@ -4,6 +4,67 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-08-11 — Chronological Feature Release Roadmap (Planned)
+
+### Overview
+
+Replaced the generic project roadmap with a dependency-aware release train for
+the existing 18-feature backlog. The plan uses the current implementation audit:
+nine capabilities are treated as the maintained baseline, while the remaining
+nine are sequenced into eight monthly releases from August 2026 through March
+2027.
+
+### Planning decisions
+
+- Collection Queue ships first because it completes the already shipped credit
+  guardrails.
+- Owner PIN ships before Safe Voids, Refunds, and Corrections because it is the
+  authority boundary for financial corrections.
+- Supplier Receiving and Loss Control precede Insights so inventory signals are
+  reliable before they are summarized.
+- Explainable Credit Profiles follow Collection Queue and Store Insights.
+- Shift Tracking is last because it adds attribution across cash, inventory,
+  and correction records.
+- The existing Drive backup variant remains out of this release train pending a
+  separate decision on whether to adopt the original manual encrypted model.
+
+### Verification
+
+- Reviewed the 18 feature notes, their relationship map, the current
+  implementation-status audit, and the previous project-roadmap note.
+- Linked the feature index and implementation-status audit to the new
+  chronological plan.
+
+---
+
+## 2026-08-11 — Feature Vault Relationship Map (Completed)
+
+### Overview
+
+Connected the 18 roadmap feature notes in Obsidian so a reader can follow the
+POS, credit, cash, inventory, security, reporting, and recovery relationships
+without inferring them from separate dependency sections.
+
+### What changed
+
+- Added a concise **Mga Kaugnay na Tampok** section to every numbered note in
+  obsidian-vault/02-Features/, with named Obsidian links and the reason for
+  each relationship.
+- Added **Mapa ng mga Kaugnayan** to
+  obsidian-vault/02-Features/features.md as a high-level entry point for the
+  POS and credit flow, cash and accountability flow, inventory and supplier
+  loop, insights and output, and encrypted backup.
+- Preserved the existing status update for Feature 6 and pre-existing roadmap
+  index formatting changes.
+
+### Verification
+
+- Confirmed all 18 numbered notes include the relationship section.
+- Confirmed all 67 Obsidian feature links resolve to a note in the same folder.
+- Ran git diff --check with no whitespace errors.
+
+---
+
 ## 2026-08-11 — Custom Tab Icons for StyledTab (Completed)
 
 ### Overview

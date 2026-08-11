@@ -37,6 +37,13 @@ Bilang may-ari ng tindahan, gusto kong manwal na mag-back up ng buong lokal na d
 - Wala sa data layer.
 - Dapat idisenyo kasabay ng dev reset path (`app/(tabs)/dev/reset.tsx`).
 
+## Mga Kaugnay na Tampok
+
+- **Mga rekord ng pera:** [[03-daily-cash-close-out|03. Daily Cash Close-Out]] ay kabilang sa kasaysayang kailangang mabawi kapag nagpalit o nasira ang device.
+- **Mga rekord ng stock:** [[04-physical-stocktake|04. Physical Stocktake]] at ang kanilang adjustments ay kasama sa SQLite snapshot.
+- **Mga rekord ng suki:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] at ang credit data nito ay nananatiling lokal at kasama sa backup.
+- **Mga rekord ng supplier:** [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]] ay nagpapanatili ng delivery receipts at lokal na resibo na kailangang isaalang-alang sa recovery policy.
+
 ## Mga Open Question
 
 - Saan nangyayari ang encryption — sa JS o sa native module?

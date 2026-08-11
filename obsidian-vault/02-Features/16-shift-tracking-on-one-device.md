@@ -39,6 +39,13 @@ Bilang may-ari ng tindahan, gusto kong markahan kung sinong cashier ang nasa reg
 - Nagtatayo sa tampok 7 (voids/refunds) — ang `sale_corrections` ay kailangang kumuha ng cashier_id.
 - Nagbabahagi ng hashing model sa tampok 11 (owner PIN).
 
+## Mga Kaugnay na Tampok
+
+- **Cash variance ayon sa shift:** [[03-daily-cash-close-out|03. Daily Cash Close-Out]] ang pinaghihiwalay sa bawat cashier at shift.
+- **Correction attribution:** [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]] ay nagtatala kung sino ang gumawa ng void, refund, o price correction.
+- **Inventory attribution:** [[04-physical-stocktake|04. Physical Stocktake]] at iba pang stock adjustments ay maaaring magdala ng active cashier.
+- **Magkaibang tungkulin:** [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang nagpapatunay ng owner authority; ang shift ay para sa cashier attribution lamang.
+
 ## Mga Open Question
 
 - Kailangan ba talaga ang cashier PIN, o sapat na ang pagpili ng pangalan sa listahan?

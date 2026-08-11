@@ -38,6 +38,12 @@ Bilang may-ari ng tindahan, gusto kong maitabi muna ang cart ng isang customer k
 
 - Wala — ganap na malaya. Nagtatayo sa umiiral na `useCart` hook ngunit hindi nangangailangan ng iba pang tampok sa roadmap.
 
+## Mga Kaugnay na Tampok
+
+- **Iisang cart workflow:** [[01-pos-fast-lane|01. POS Fast Lane]] at ang tampok na ito ay parehong nagpapabilis sa POS nang hindi binabago ang aktwal na checkout.
+- **Customer na may utang:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ay gumagamit ng napiling suki na kailangang maibalik kasama ng naka-park na cart.
+- **Pagpapanatili ng lokal na data:** [[17-manual-encrypted-backup-and-restore|17. Encrypted Backup at Restore]] ang sumasaklaw sa mga naka-save na cart kapag nag-back up ang may-ari ng buong database.
+
 ## Mga Open Question
 
 - Dapat bang isama sa naka-park na cart ang pangalan ng suki, o auto label lamang? Maaaring gusto ng may-ari ng mabilis na paraan para matandaan "ang may dalang bata."

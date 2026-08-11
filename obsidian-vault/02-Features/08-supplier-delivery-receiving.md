@@ -38,6 +38,12 @@ Bilang may-ari ng tindahan na tumatanggap ng delivery ng supplier, gusto kong ma
 - Tampok 9 (offline reorder suggestions) ay nagtatayo sa kasaysayan ng delivery.
 - Tampok 14 (local store insights) ay makakakuha ng "supplier reliability" mula sa mga shortage kapag umiiral na ang mga ito.
 
+## Mga Kaugnay na Tampok
+
+- **Feedback loop sa restock:** [[09-offline-reorder-suggestions|09. Offline Reorder Suggestions]] ang nagpaplano ng bibilhin; ang receiving flow ang nagkukumpirma sa aktwal na dumating.
+- **Traceable stock change:** [[10-stock-movement-timeline|10. Stock Movement Timeline]] ay nagpapakita ng restock transaction na nalikha sa pagtanggap ng delivery.
+- **Supplier signals:** [[14-transparent-local-store-insights|14. Transparent Local Store Insights]] ay maaaring magpaliwanag ng shortage at supplier-reliability patterns mula sa receipts.
+
 ## Mga Open Question
 
 - Patakaran sa cost basis: latest cost vs. weighted average. Inirerekomenda ang latest cost para sa pagiging simple.

@@ -1,5 +1,7 @@
 # 06. Pila ng Paniningil ng Utang (Collection Queue)
 
+## Status: In Progress
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema
@@ -36,6 +38,12 @@ Bilang may-ari ng tindahan, gusto ko ng malinaw na listahan ng mga suki na overd
 
 - Tampok 5 (utang guardrails at checkout) — ang per-suki balance, limit, at overdue data ay pareho; binabasa ito ng tampok na ito.
 - Tampok 15 (smarter credit profiles) — kapag mayroon nang profiles, maaari ding i-rank ng queue ang suki ayon sa profile.
+
+## Mga Kaugnay na Tampok
+
+- **Iisang credit signals:** [[05-utang-guardrails-at-checkout|05. Utang Guardrails at Checkout]] ang pinagmumulan ng balance, limit, at overdue data na inuuna ng queue.
+- **Naitatalang bayad:** [[12-customer-credit-statements|12. Customer Credit Statements]] ay nagpapakita ng mga payment na na-record mula sa queue sa statement ng suki.
+- **Mas matalinong pag-rank:** [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]] ay maaaring magdagdag ng malinaw na payment-pattern signal sa priority ng queue.
 
 ## Mga Open Question
 
