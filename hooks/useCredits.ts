@@ -513,12 +513,25 @@ export function useSetCollectionFollowUp() {
 
 export function useMarkCollectionContacted() {
   const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
   return useMutation({
     mutationFn: (customerId: number) => markCollectionContacted(customerId),
     onSuccess: (_d, customerId) => {
       queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
       queryClient.invalidateQueries({
         queryKey: ['collection-follow-up', customerId],
+      });
+      addToast({
+        message: 'Contact logged',
+        variant: 'success',
+        duration: 2500,
+      });
+    },
+    onError: () => {
+      addToast({
+        message: "Couldn't log contact. Try again.",
+        variant: 'danger',
+        duration: 5000,
       });
     },
   });

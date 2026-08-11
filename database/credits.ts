@@ -940,7 +940,7 @@ export const getCollectionQueue = async (
        c.credit_limit,
        c.overdue_threshold_days,
        COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount - ct.amount_paid ELSE 0 END), 0) AS outstanding_balance,
-       (SELECT CAST(MIN(julianday('now') - julianday(ct2.due_date)) AS INTEGER)
+       (SELECT CAST(MAX(julianday('now') - julianday(ct2.due_date)) AS INTEGER)
           FROM credit_transactions ct2
           WHERE ct2.customer_id = c.id
             AND ct2.status != 'paid'
@@ -953,7 +953,8 @@ export const getCollectionQueue = async (
             AND ct2.due_date IS NOT NULL) AS oldest_due_date,
        (SELECT MAX(ct2.date)
           FROM credit_transactions ct2
-          WHERE ct2.customer_id = c.id) AS last_transaction_date,
+          WHERE ct2.customer_id = c.id
+            AND ct2.status != 'paid') AS last_transaction_date,
        cf.id AS cf_id,
        cf.follow_up_by AS cf_follow_up_by,
        cf.contacts_today AS cf_contacts_today,
@@ -1077,9 +1078,11 @@ export const setCollectionFollowUp = async ({
     );
     await db.runAsync(
       `UPDATE collection_followups
-         SET follow_up_by = ?, updated_at = CURRENT_TIMESTAMP
+         SET follow_up_by = ?,
+             status = CASE WHEN ? IS NOT NULL THEN 'open' ELSE status END,
+             updated_at = CURRENT_TIMESTAMP
          WHERE customer_id = ?;`,
-      [followUpBy, customerId],
+      [followUpBy, followUpBy, customerId],
     );
   });
 };

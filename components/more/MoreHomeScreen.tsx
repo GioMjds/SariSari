@@ -123,7 +123,7 @@ function MoreTab() {
             <MoreTile
               label={t('common:moreHomeTileCollection')}
               icon="bell"
-              onPress={() => router.push(routes.creditOverdue)}
+              onPress={() => router.push(routes.collection)}
               accent="cinnamon"
             />
             <MoreTile

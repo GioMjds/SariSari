@@ -13,25 +13,27 @@ export function CollectionErrorState({ onRetry }: CollectionErrorStateProps) {
       <StyledText
         variant="extrabold"
         accessibilityRole="header"
-        className="text-lg text-cinnamon-700 mb-2"
+        className="text-lg text-semantic-danger mb-2"
       >
-        {t('collectionEmptyTitle')}
+        {t('collectionErrorTitle')}
       </StyledText>
       <StyledText
         variant="regular"
-        className="text-sm text-cinnamon-600 mb-4 text-center"
+        className="text-sm text-ink-600 mb-4 text-center"
       >
-        {t('collectionEmptyDescription')}
+        {t('collectionErrorDescription')}
       </StyledText>
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={onRetry}
         accessibilityRole="button"
-        accessibilityLabel="Retry"
-        className="bg-persimmon-500 rounded-pill px-7 py-3 flex-row items-center shadow-persimmon-glow"
+        accessibilityLabel={t('collectionErrorRetry')}
+        accessibilityHint={t('collectionErrorRetry')}
+        hitSlop={8}
+        className="bg-persimmon-500 rounded-pill px-7 py-3 min-h-12 flex-row items-center justify-center shadow-persimmon-glow"
       >
         <StyledText variant="extrabold" className="text-paper-50 text-sm">
-          Retry
+          {t('collectionErrorRetry')}
         </StyledText>
       </TouchableOpacity>
     </View>
