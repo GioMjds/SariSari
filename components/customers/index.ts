@@ -11,4 +11,6 @@ export * from './CustomersHeader';
 export * from './CustomersFloatingNav';
 export * from './CustomersSkeleton';
 export * from './CustomerInsightsSkeleton';
-
+export * from './CollectionTab';
+export * from './CollectionRow';
+export * from './CollectionErrorState';

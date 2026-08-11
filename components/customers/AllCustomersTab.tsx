@@ -72,14 +72,11 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
 
       {/* Directory Section Header */}
       <View className="px-4 py-2 flex-row justify-between items-center mb-1">
-        <StyledText variant="extrabold" className="text-ink-900 text-lg">
-          Directory
-        </StyledText>
         <TouchableOpacity
           onPress={toggleSort}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          className="flex-row items-center py-1 px-2"
+          className="flex-row items-end py-1 px-2"
         >
           <StyledText
             variant="extrabold"

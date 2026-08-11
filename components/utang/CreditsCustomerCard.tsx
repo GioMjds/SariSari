@@ -6,6 +6,7 @@ import { MotiView } from 'moti';
 import { Customer } from '@/types';
 import { MoneyText, StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
+
 interface CreditsCustomerCardProps {
   customer: Customer;
   index: number;
@@ -14,16 +15,6 @@ interface CreditsCustomerCardProps {
   onAddCredit: (customer: Customer) => void;
 }
 
-/**
- * CreditsCustomerCard — paper card for one suki. Reads like a
- * torn-out receipt page: customer name in heavy ink on the left,
- * amount owed anchored right, dashed divider, then two quick
- * actions for the most common follow-up moves (collect a payment
- * or extend more credit).
- *
- * Tapping the body opens customer details; the two pill buttons
- * route to the add-payment and add-credit forms respectively.
- */
 export const CreditsCustomerCard = memo(function CreditsCustomerCard({
   customer,
   index,
@@ -178,9 +169,7 @@ export const CreditsCustomerCard = memo(function CreditsCustomerCard({
 
         {/* Left danger stripe for overdue */}
         {isOverdue && (
-          <View
-            className="absolute left-0 top-0 bottom-0 w-1 bg-semantic-danger"
-          />
+          <View className="absolute left-0 top-0 bottom-0 w-1 bg-semantic-danger" />
         )}
       </Pressable>
     </MotiView>
