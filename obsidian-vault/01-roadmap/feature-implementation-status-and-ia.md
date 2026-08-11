@@ -24,7 +24,7 @@ Status legend:
 | 3   | Daily Cash Close-Out                    | Done                 | Now   |
 | 4   | Physical Stocktake                      | Done                 | Now   |
 | 5   | Utang Guardrails at Checkout            | Done                 | Now   |
-| 6   | Collection Queue                        | Partial              | Now   |
+| 6   | Collection Queue                        | Done                 | Now   |
 | 7   | Safe Voids / Refunds / Corrections      | Not started          | Next  |
 | 8   | Supplier Delivery Receiving             | Partial              | Next  |
 | 9   | Offline Reorder Suggestions             | Done                 | Next  |
@@ -38,7 +38,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 9 Done · 5 Partial · 4 Not started.
+**Tally:** 10 Done · 4 Partial · 4 Not started.
 
 ---
 
@@ -92,16 +92,17 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Guardrail semantics:** warn-soft (amber/soft red, proceeds without override) when the projected available would go below zero and `block_on_exceed = 0`; block-hard (submit disabled, must record a reason) when `block_on_exceed = 1` and no override is set yet.
 - **Caveat:** The plan's test files (`tests/database/migrations-v16.test.ts`, `tests/database/get-customer-credit-summary.test.ts`, `tests/database/insert-credit-with-override.test.ts`, `tests/database/insert-sale-with-override.test.ts`, `tests/components/utang/SukiPanel.test.tsx`, `tests/components/utang/OverrideReasonModal.test.tsx`) were not created. The code is shipped and consistent with the spec, but the implementation has no regression coverage added for this feature. Follow-up: port the test bodies from the plan into the `tests/` directory before the next refactor of the credits or sales write paths.
 
-### 2.6 Collection Queue — Partial
+### 2.6 Collection Queue — Done
 
-- **Routes:** `app/(tabs)/customers/credit.tsx` (renders `CreditLedgerTab`), `app/(edit-forms)/credit-details/[id].tsx`, `app/(edit-forms)/add-payment/[id].tsx`
-- **Hooks:** `hooks/useCredits.tsx` (`useCreditKPIs`, `useCustomers` with `sort=balance_desc`)
-- **DB:** `database/credits.ts` — `getCreditKPIs` returns `totalOverdueAmount` / `overdueCount`; FIFO allocation via `payment_allocations`
-- **Components:** `components/customers/CreditLedgerTab.tsx` (debtors list with name/debt sort), `components/customers/CustomerFilterChips.tsx`
-- **Gaps:**
-  - Sort is by balance or name, not overdue-first.
-  - No `collection_followups` table, no per-suki "follow up by" chip, no "mark contacted" log.
-  - `CustomerFilterChips.tsx` has no overdue / near-limit chip.
+- **Routes:** `app/(tabs)/customers/collection.tsx` (renders `CollectionTab`), `app/(edit-forms)/credit-details/[id].tsx`, `app/(edit-forms)/add-payment/[id].tsx`. `app/(tabs)/customers/credit.tsx` (legacy `CreditLedgerTab`) is still mounted as a separate sub-tab and serves a different surface (all-debtors list by balance/name) — IA cleanup deferred.
+- **Hooks:** `hooks/useCredits.ts` — `useCollectionQueue`, `useSetCollectionFollowUp`, `useMarkCollectionContacted`; `useCreditKPIs` for hero KPIs. Queue is invalidated by `useInsertCredit` and `useInsertPayment` (commit `f1a20ad`).
+- **DB:** `database/migrations.ts` — v17 creates `collection_followups` (id, customer_id FK with unique index, follow_up_by, contacts_today, last_contact_at, status `open|closed`, timestamps); v18 collapses duplicate rows and switches the customer index to UNIQUE so one row per customer. `database/credits.ts` — `getCollectionQueue({ overdueDays, nearLimitPct })` returns `CollectionQueueRow[]` with three buckets (`overdue | near_limit | oldest_balance`) and sort within bucket; `getCollectionFollowUp`, `setCollectionFollowUp`, `markCollectionContacted` round out the follow-up surface. FIFO allocation via `payment_allocations` is unchanged and reused by the queue's "Record payment" path.
+- **Components:** `components/customers/CollectionTab.tsx` (sectioned list + search), `components/customers/CollectionRow.tsx` (balance / overdue / near-limit chips + follow-up chip + mark-contacted button + record-payment button), `components/customers/CollectionErrorState.tsx`, `components/customers/CustomersSkeleton.tsx`, `components/customers/CustomersEmptyState.tsx`.
+- **i18n:** `locales/en/utang.json` — 36 new keys (`collectionEyebrow`, `collectionTitle`, `collectionSearchPlaceholder`, `collectionBucketOverdue`, `collectionBucketNearLimit`, `collectionBucketOldestBalance`, `collectionRowRecordPayment`, `collectionRowOpenDetails`, `collectionRowOpenDetailsHint`, `collectionRowRecordPaymentHint`, `collectionRowMarkContacted`, `collectionRowMarkContactedHint`, `collectionFollowUpSet`, `collectionFollowUpOverdue`, `collectionFollowUpContactedToday`, `collectionFollowUpNone`, `collectionFollowUpSheetTitle`, `collectionFollowUpToday`, `collectionFollowUpTomorrow`, `collectionFollowUpIn3Days`, `collectionFollowUpInAWeek`, `collectionFollowUpPickDate`, `collectionFollowUpClear`, `collectionFollowUpCancel`, `collectionMarkContactedA11y`, `collectionEmptyTitle`, `collectionEmptyDescription`, `collectionSearchEmptyTitle`, `collectionSearchEmptyDescription`, `collectionErrorTitle`, `collectionErrorDescription`, `collectionErrorRetry`, `collectionErrorRetryHint`, `collectionOverdueChip`, `collectionNearLimitChip`, `collectionToastFollowUpUpdated`).
+- **Accessibility:** accessibilityRole / accessibilityLabel / accessibilityHint on every interactive row element; "Try again" hint added in commit `e76b805`.
+- **Spec reconciliation:** All five In Scope items from `obsidian-vault/02-Features/06-collection-queue.md` are wired. One semantic drift to flag: the spec's "mga araw mula huling bayad" (days since last payment) is rendered as `lastTransactionDate` (last unpaid credit transaction date), not last payment date. Query in `database/credits.ts:954` reads `MAX(ct2.date)` from `credit_transactions`, not `payments`. In practice this is usually right and a downstream polish item, not a Done-blocker.
+- **Caveat — missing tests:** Following the project precedent set by Feature 5 (Utang Guardrails), no regression tests were added for `getCollectionQueue` bucket ranking, `setCollectionFollowUp` insert-or-update, `markCollectionContacted` counter logic, or the `<CollectionRow>` chip state machine. The release gate is closed by manual on-device smoke. Action: porter the planned test bodies (or write fresh ones against the current code) into `tests/` before the next refactor of the credits write paths.
+- **IA follow-up:** The roadmap's §7.1 step 5 "rename `credit.tsx` → `collection.tsx`" pre-dated the merge. Post-merge, `credit` and `collection` are two separate sub-tabs with different jobs (legacy all-debtors list vs. priority queue). Rename is no longer the right move; consider deprecating the legacy `CreditLedgerTab` separately.
 
 ### 2.7 Safe Voids / Refunds / Corrections — Not started
 
@@ -310,7 +311,7 @@ Proposed files:
 Proposed files:
 
 - `index.tsx` — customers list with filter chips (keep)
-- `collection.tsx` — **RENAME** from `credit.tsx` so it matches its real job (#6 partial, the debt-collection surface)
+- `collection.tsx` — priority queue (Done) — keep; consider deprecating the legacy `credit.tsx` separately (see §7.1)
 - **Delete** `insights.tsx` — belongs under Reports, not Customers
 - `_layout.tsx` — stack nav: customers → credit-details → add-payment, add-credit, statement share
 
@@ -329,26 +330,26 @@ Proposed files:
 
 ## 6. Per-feature placement table
 
-| #   | Feature                 | Status      | Where it lives now                                         | Where it **should** live                                     |
-| --- | ----------------------- | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
-| 1   | POS Fast Lane           | Partial     | `sales/pos.tsx`                                            | Sales tab — main screen                                      |
-| 2   | Parked Sales            | Done        | `app/(tabs)/sales/pos.tsx` (integrated)                    | Inside POS, cart toolbar button                              |
-| 3   | Daily Cash Close-Out    | Done        | split across 3 cash screens                                | More → Cash Session (consolidated)                           |
-| 4   | Physical Stocktake      | Done        | `app/(tabs)/inventory/stocktake.tsx`                       | Inventory → Stocktake tab/screen                             |
-| 5   | Utang Guardrails        | Partial     | customer detail only                                       | **Also POS CheckoutModal** (suki live panel)                 |
-| 6   | Collection Queue        | Partial     | `customers/credit.tsx`                                     | Customers → Collection (renamed)                             |
-| 7   | Safe Voids / Refunds    | Not started | `sale-details/[id].tsx` (delete only)                      | Sale Details → "Void / Refund" actions                       |
-| 8   | Supplier Delivery       | Partial     | `inventory/products.tsx` RestockSheet                      | Inventory → "Receive Delivery" (multi-line)                  |
-| 9   | Reorder Suggestions     | Done        | **orphaned** `app/inventory/recommendations.tsx`           | Inventory → Recommendations (move into tab stack)            |
-| 10  | Stock Movement Timeline | Done        | `inventory/movements.tsx` + `inventory-ledger/[productId]` | Inventory — keep as-is                                       |
-| 11  | Owner PIN               | Not started | —                                                          | More → Settings                                              |
-| 12  | Credit Statement (PDF)  | Done        | inline on `credit-details/[id]`                            | Customers → per-suki profile → Share                         |
-| 13  | Expiry & Damaged        | Partial     | only `type='damaged'` ledger filter                        | Inventory → Damaged (new screen) + product `perishable` flag |
-| 14  | Store Insights          | Partial     | `home/today.tsx` + `more/reports.tsx`                      | Home strip + More → Reports                                  |
-| 15  | Smarter Credit Profiles | Partial     | customer profile only                                      | Customers → per-suki profile (add explainer)                 |
-| 16  | Shift Tracking          | Not started | —                                                          | More → Settings (cashier list) + POS header chip             |
-| 17  | Backup & Restore        | Done        | `more/settings.tsx` (Drive variant)                        | More → Backup (split out of Settings)                        |
-| 18  | Price Labels            | Not started | —                                                          | Inventory → Labels                                           |
+| #   | Feature                 | Status      | Where it lives now                                         | Where it **should** live                                                                                         |
+| --- | ----------------------- | ----------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1   | POS Fast Lane           | Partial     | `sales/pos.tsx`                                            | Sales tab — main screen                                                                                          |
+| 2   | Parked Sales            | Done        | `app/(tabs)/sales/pos.tsx` (integrated)                    | Inside POS, cart toolbar button                                                                                  |
+| 3   | Daily Cash Close-Out    | Done        | split across 3 cash screens                                | More → Cash Session (consolidated)                                                                               |
+| 4   | Physical Stocktake      | Done        | `app/(tabs)/inventory/stocktake.tsx`                       | Inventory → Stocktake tab/screen                                                                                 |
+| 5   | Utang Guardrails        | Partial     | customer detail only                                       | **Also POS CheckoutModal** (suki live panel)                                                                     |
+| 6   | Collection Queue        | Done        | `customers/collection.tsx`                                 | Customers → Collection (priority queue) — keep; legacy `customers/credit.tsx` separate, deprecate or consolidate |
+| 7   | Safe Voids / Refunds    | Not started | `sale-details/[id].tsx` (delete only)                      | Sale Details → "Void / Refund" actions                                                                           |
+| 8   | Supplier Delivery       | Partial     | `inventory/products.tsx` RestockSheet                      | Inventory → "Receive Delivery" (multi-line)                                                                      |
+| 9   | Reorder Suggestions     | Done        | **orphaned** `app/inventory/recommendations.tsx`           | Inventory → Recommendations (move into tab stack)                                                                |
+| 10  | Stock Movement Timeline | Done        | `inventory/movements.tsx` + `inventory-ledger/[productId]` | Inventory — keep as-is                                                                                           |
+| 11  | Owner PIN               | Not started | —                                                          | More → Settings                                                                                                  |
+| 12  | Credit Statement (PDF)  | Done        | inline on `credit-details/[id]`                            | Customers → per-suki profile → Share                                                                             |
+| 13  | Expiry & Damaged        | Partial     | only `type='damaged'` ledger filter                        | Inventory → Damaged (new screen) + product `perishable` flag                                                     |
+| 14  | Store Insights          | Partial     | `home/today.tsx` + `more/reports.tsx`                      | Home strip + More → Reports                                                                                      |
+| 15  | Smarter Credit Profiles | Partial     | customer profile only                                      | Customers → per-suki profile (add explainer)                                                                     |
+| 16  | Shift Tracking          | Not started | —                                                          | More → Settings (cashier list) + POS header chip                                                                 |
+| 17  | Backup & Restore        | Done        | `more/settings.tsx` (Drive variant)                        | More → Backup (split out of Settings)                                                                            |
+| 18  | Price Labels            | Not started | —                                                          | Inventory → Labels                                                                                               |
 
 ---
 
@@ -362,7 +363,7 @@ Proposed files:
 4. **Split `app/(tabs)/more/settings.tsx`**:
    - Move `CloudBackupSection` + `LocalSnapshotsSection` into a new `app/(tabs)/more/backup.tsx`.
    - Keep just app prefs (and PIN / shifts once those features land) in `settings.tsx`.
-5. **Rename `app/(tabs)/customers/credit.tsx`** → `app/(tabs)/customers/collection.tsx`. So the file name matches its real job.
+5. **Deprecate `app/(tabs)/customers/credit.tsx`** (legacy `CreditLedgerTab`). Post-merge, the new `collection.tsx` is the priority queue and `credit.tsx` is a redundant surface. Decide whether to consolidate the two or keep them as separate views (legacy all-debtors vs. priority queue).
 
 ### 7.2 Delete (duplicates / stubs)
 
@@ -389,6 +390,6 @@ These features are 1-2 days of focused work away from Done, with the IA already 
 - **#13 Expiry & Damaged** — add `perishable` and `expiry_date` columns to `products` (migration v15), surface in `BasicInfoCard.tsx`, add `app/(tabs)/inventory/damaged.tsx`.
 - **#15 Smarter Credit Profiles** — implement `computeCreditProfile(customerId, { lookbackDays, ceiling })` in `database/credits.ts`; add an explainer card to `CustomerHeroCard.tsx`.
 - **#14 Store Insights** — add the missing "recurrent shelf-out" + "margin change" signals to `database/reports.ts:getReportInsights`.
-- **#6 Collection Queue** — change `CreditLedgerTab.tsx` sort default to overdue-first; add `collection_followups` table + UI.
+- **#6 Collection Queue** — shipped. Caveats: no regression tests added (deferred per project practice, see §2.6); one semantic drift to clean up (`lastTransactionDate` should arguably be `lastPaymentDate` in the queue row).
 
 The IA refactor in §7.1 is a prerequisite for the next "drill in" pass — once the routes are where users expect them, the missing UI per Partial becomes obvious and self-contained.

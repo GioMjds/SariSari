@@ -4,6 +4,42 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-08-11 — Collection Queue Graduate to Done (Completed)
+
+### Overview
+
+Reconciled the 2026-08-06 implementation audit against the post-merge `feat/collection-queue` branch (PR #21, merge commit `35307fc`) and graduated Feature 6 from Partial to Done. All five In Scope items from the spec are wired end-to-end. One semantic drift was identified and deferred as a non-blocker; one pre-merge IA instruction (rename `credit.tsx` → `collection.tsx`) no longer applies and was reworked into a separate cleanup item.
+
+### What shipped (cumulative, attributed to PR #21)
+
+- **Migrations** (`database/migrations.ts`)
+  - v17 — `collection_followups` table with status check, two indexes (customer_id, status+follow_up_by)
+  - v18 — collapses duplicate rows and converts the customer index to UNIQUE for one-row-per-customer
+- **DB layer** (`database/credits.ts`)
+  - `getCollectionQueue({ overdueDays, nearLimitPct })` — three priority buckets with intra-bucket sort
+  - `getCollectionFollowUp`, `setCollectionFollowUp`, `markCollectionContacted`
+- **Hooks** (`hooks/useCredits.ts`) — `useCollectionQueue`, `useSetCollectionFollowUp`, `useMarkCollectionContacted`; queue invalidated by `useInsertCredit` and `useInsertPayment` (commit `f1a20ad`)
+- **Components** (`components/customers/`) — `CollectionTab` (sectioned list + search), `CollectionRow` (balance / overdue / near-limit chips + follow-up chip + mark-contacted + record-payment buttons), `CollectionErrorState`
+- **Routes** — `app/(tabs)/customers/collection.tsx` wired as a third sub-tab alongside the legacy `all` and `credit` sub-tabs
+- **i18n** — 36 new keys in `locales/en/utang.json`
+- **Accessibility** — full accessibilityRole/Label/Hint coverage; "Try again" hint added in commit `e76b805`
+
+### Verification
+
+- Spec reconciliation: walked every In Scope item against the implementation; all five are wired.
+- Audit update: `obsidian-vault/01-Roadmap/feature-implementation-status-and-ia.md` §2.6 (entry), the §1 status row, the §6 placement table, the §7.1 refactor list, the §8 quick-wins list, and the tally line are all rewritten to reflect the new state. Total shifts: 10 Done · 4 Partial · 4 Not started (was 9 · 5 · 4).
+- Feature note: `obsidian-vault/02-Features/06-collection-queue.md` status line updated to `DONE` (matches project convention from Features 1-5); appended `## Tala ng Pagkatapos` with migration map, drift notes, and IA follow-up.
+- Manual on-device smoke gate deferred to the user. Checklist lives in the conversation thread.
+- Test coverage: explicitly skipped per user direction. Project precedent matches Feature 5 (Utang Guardrails), which also shipped without tests and noted the same follow-up caveat.
+
+### Caveat — deferred items
+
+- **Semantic drift:** `lastTransactionDate` in the queue row reads `MAX(ct2.date)` from `credit_transactions`, not from `payments`. Spec said "mga araw mula huling bayad." Correct in most cases; a downstream polish item.
+- **IA follow-up:** The roadmap §7.1 step 5 rename instruction pre-dated the merge. Post-merge, `credit` (legacy `CreditLedgerTab`) and `collection` (priority queue) are two separate sub-tabs with different jobs. Decision (consolidate, deprecate, or leave) deferred as a separate cleanup.
+- **Test coverage:** No regression tests for `getCollectionQueue`, `setCollectionFollowUp`, `markCollectionContacted`, or `<CollectionRow>` chip state machine. Port the planned test bodies (or write fresh ones against the current code) into `tests/` before the next refactor of the credits write paths.
+
+---
+
 ## 2026-08-11 — Chronological Feature Release Roadmap (Planned)
 
 ### Overview
@@ -11,8 +47,7 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 Replaced the generic project roadmap with a dependency-aware release train for
 the existing 18-feature backlog. The plan uses the current implementation audit:
 nine capabilities are treated as the maintained baseline, while the remaining
-nine are sequenced into eight monthly releases from August 2026 through March
-2027.
+nine are sequenced into eight monthly releases from August 2026 through March 2027.
 
 ### Planning decisions
 

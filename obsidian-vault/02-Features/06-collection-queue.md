@@ -1,6 +1,6 @@
 # 06. Pila ng Paniningil ng Utang (Collection Queue)
 
-## Status: In Progress
+## Status: DONE
 
 > Phase: Kasalukuyan (Now)
 
@@ -56,3 +56,16 @@ Bilang may-ari ng tindahan, gusto ko ng malinaw na listahan ng mga suki na overd
 - Ang credit/payment tables ay tama na: `payment_allocations` na may FIFO, reversible sa pagbura ng payment. Hindi ito nagpapakilala ng bagong money math — ipinapakita lamang nito ang umiiral na.
 - Ang "Record payment" tap ay pwedeng mag-deep-link sa umiiral na `add-payment` screen kung saan naka-pre-select na ang customer.
 - Ang mga follow-up ay lokal, single-device, single-user. Walang sync.
+
+## Tala ng Pagkatapos (Post-Merge Notes)
+
+Isinama sa PR #21 (`feat/collection-queue`, merge commit `35307fc`) noong 2026-08-11.
+
+- **Mga migration:** v17 — `collection_followups` (id, customer_id FK with index, follow_up_by, contacts_today, last_contact_at, status `open|closed`, timestamps). v18 — nag-collapse ng mga duplicate rows at ginawang UNIQUE ang index per customer para isang row lang bawat suki.
+- **Mga function sa DB:** `getCollectionQueue({ overdueDays, nearLimitPct })` — nagbabalik ng naka-rank na listahan na may tatlong bucket (`overdue → near_limit → oldest_balance`) at intra-bucket sort; `getCollectionFollowUp`, `setCollectionFollowUp`, `markCollectionContacted` para sa follow-up surface.
+- **Mga hook:** `useCollectionQueue`, `useSetCollectionFollowUp`, `useMarkCollectionContacted` sa `hooks/useCredits.ts`. Ang queue ay naka-invalidate ng `useInsertCredit` at `useInsertPayment` (commit `f1a20ad`).
+- **Mga component:** `CollectionTab`, `CollectionRow`, `CollectionErrorState` sa `components/customers/`. Naayos ang `_layout.tsx` ng Customers para may hiwalay na `collection` sub-tab na katabi ng legacy `credit` (all-debtors list).
+- **i18n:** 36 bagong key sa `locales/en/utang.json` para sa bawat string sa UI.
+- **Semantic drift:** Ang spec ay nagsasabing "mga araw mula huling bayad" ngunit ang query ay nagbabasa ng `MAX(ct2.date)` mula sa `credit_transactions` (last unpaid transaction date), hindi mula sa `payments`. Karaniwang tama ang signal ngunit maaaring iba sa isang suki na nagbayad kamakailan nang may mas lumang unpaid credit. Deferred polish, hindi Done-blocker.
+- **Caveat — walang tests:** Alinsunod sa gawi ng Feature 5 (Utang Guardrails), walang regression test na nadagdag para sa queue ranking, follow-up write paths, o chip state machine. Isinasara ang release gate sa manual on-device smoke. Susunod na hakbang: mag-port ng test bodies sa `tests/` bago ang susunod na refactor ng credits write paths.
+- **IA follow-up:** Hindi na nag-apply ang dating "rename `credit.tsx` → `collection.tsx`" na mungkahi mula sa roadmap §7.1, dahil ang `credit` (legacy) at `collection` (priority queue) ay magkasamang umiiral bilang dalawang sub-tab. Isang malinis na cleanup na hiwalay sa R1 ang magdedeside kung alin sa dalawa ang aalisin o pagsasamahin.
