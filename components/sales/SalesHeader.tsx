@@ -1,5 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
+import { SharedValue } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { SubTabControl, SubTabItem } from '@/components/navigation';
@@ -12,6 +13,7 @@ export interface SalesHeaderProps {
   todayTotal?: number;
   transactionCount?: number;
   onTabPress: (tab: SalesSubTab) => void;
+  progress?: SharedValue<number>;
 }
 
 export function SalesHeader({
@@ -19,6 +21,7 @@ export function SalesHeader({
   todayTotal = 0,
   transactionCount,
   onTabPress,
+  progress,
 }: SalesHeaderProps) {
   const tabs = [
     { key: 'pos', label: 'POS' },
@@ -42,6 +45,7 @@ export function SalesHeader({
         activeTab={effectiveActiveTab}
         onTabPress={onTabPress}
         containerClassName="mb-3.5"
+        {...(progress ? { progress } : {})}
       />
 
       <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-lg border border-cinnamon-400/40 relative overflow-hidden">

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { SalesHeader, SalesSubTab } from '@/components/sales';
 import { TopTabs } from '@/components/navigation/top-tabs';
 import { useTodayStats } from '@/hooks/useSales';
+import { useTabProgress } from '@/hooks';
+import { SALES_SUB_TABS } from '@/constants/tabs';
 
 export default function SalesLayout() {
   const router = useRouter();
@@ -17,6 +19,13 @@ export default function SalesLayout() {
     return 'pos';
   };
 
+  const effectiveActiveTab = useMemo<SalesSubTab>(() => {
+    const raw = getCurrentTab();
+    return raw === 'cart' || raw === 'checkout' ? 'pos' : raw;
+  }, [pathname]);
+
+  const progress = useTabProgress(effectiveActiveTab, SALES_SUB_TABS);
+
   const handleTabPress = (tab: SalesSubTab) => {
     router.push(`/(tabs)/sales/${tab}` as Href);
   };
@@ -27,6 +36,7 @@ export default function SalesLayout() {
         activeTab={getCurrentTab()}
         todayTotal={todayStats?.total || 0}
         onTabPress={handleTabPress}
+        progress={progress}
       />
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
