@@ -25,7 +25,7 @@ export const TAB_BAR_TOTAL_OFFSET = 72;
 
 export const TAB_BAR_RAIL_HEIGHT = 72;
 export const TAB_BAR_ACTION_OVERHANG = 0;
-export const TAB_BAR_MARGIN = 16;
+export const TAB_BAR_MARGIN = 50;
 
 export function getTabBarBottomOffset(bottomInset: number): number {
   return TAB_BAR_RAIL_HEIGHT + Math.max(bottomInset, TAB_BAR_MARGIN);

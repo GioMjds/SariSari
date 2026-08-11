@@ -2,10 +2,10 @@
 
 ## Project Documentation
 
-- [Project Vision](00-Vision/project-vision.md)
-- [Project Roadmap](01-Roadmap/project-roadmap.md)
-- [[Existing docs/vault/00-vision.md]]
-- [[Existing docs/vault/01-roadmap.md]]
+- [[00-Vision/project-vision|Project Vision]]
+- [[01-Roadmap/project-roadmap|Project Roadmap]]
+- [[features|02-Features Catalog]]
+- [[planning|07-Planning Index]]
 
 ## Technical References
 
@@ -43,4 +43,5 @@
 
 ## Last Updated
 
-2026-08-10
+2026-08-11
+

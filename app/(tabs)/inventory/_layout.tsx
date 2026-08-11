@@ -20,6 +20,7 @@ const SUB_TAB_SEGMENTS = [
   'movements',
   'stocktake',
   'damaged',
+  'recommendations',
 ] satisfies InventorySubTab[];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
@@ -110,6 +111,7 @@ export default function InventoryLayout() {
           <TopTabs.Screen name="movements" />
           <TopTabs.Screen name="stocktake" />
           <TopTabs.Screen name="damaged" />
+          <TopTabs.Screen name="recommendations" />
         </TopTabs>
 
         {!isDetail ? (

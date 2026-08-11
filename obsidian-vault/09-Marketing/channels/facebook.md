@@ -1,5 +1,7 @@
 # Channel: Facebook
 
+## Targeted FB Page: SariSari - Ang Iyong Tindahan Assistant
+
 ## Role in Mix
 
 Primary. This is where Mang Bert and Aling Nene already live. Most replies,

@@ -20,7 +20,7 @@ Status legend:
 | 1   | POS Fast Lane                           | Done                 | Now   |
 | 2   | Parked Sales                            | Done                 | Now   |
 | 3   | Daily Cash Close-Out                    | Done                 | Now   |
-| 4   | Physical Stocktake                      | Not started          | Now   |
+| 4   | Physical Stocktake                      | Done                 | Now   |
 | 5   | Utang Guardrails at Checkout            | Partial              | Now   |
 | 6   | Collection Queue                        | Partial              | Now   |
 | 7   | Safe Voids / Refunds / Corrections      | Not started          | Next  |
@@ -36,7 +36,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 7 Done · 5 Partial · 6 Not started.
+**Tally:** 8 Done · 6 Partial · 4 Not started.
 
 ---
 
@@ -68,13 +68,13 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Components:** `components/cash-session/*` (`OpenSessionView`, `ActiveSessionSummaryCard`, `CloseSessionFormCard`, `CashMovementsList`, `CashSessionHeader`), `components/cash-entry/*` (`CashEntryTypeCard`, `CashEntryDetailsCard`)
 - **Notes:** All spec items present. Spec used "cash_in / cash_out" but the impl uses the enum `expense / owner_addition / owner_drawing` — semantically equivalent.
 
-### 2.4 Physical Stocktake — Not started
+### 2.4 Physical Stocktake — Done
 
-- **Routes:** None
-- **Hooks:** None — `useStockMutations` covers single-product restock/adjust/damaged, not a stocktake session
-- **DB:** No `stocktake_sessions` or `stocktake_counts` tables. `inventory.ts` supports `type = 'adjustment'` writes (which the spec's commit path references) but no guided-count UI drives them
-- **Components:** None
-- **Notes:** `components/inventory/ledger/LogTransactionForm.tsx` allows one-off manual adjustment but is not a guided, category-by-category count.
+- **Routes:** `app/(tabs)/inventory/stocktake.tsx`
+- **Hooks:** `hooks/useStocktake.ts` (`useActiveStocktakeSession`, `useStocktakeHistory`, `useStartStocktake`, `useUpsertStocktakeCount`, `useCommitStocktake`, `useAbandonStocktake`)
+- **DB:** `database/stocktake.ts` — `stocktake_sessions` (`id`, `started_at`, `ended_at`, `status`, `note`) and `stocktake_counts` (`id`, `session_id`, `product_id`, `expected_qty`, `counted_qty`, `reason_code`, `note`, `committed_at`) tables; migration in `database/migrations.ts`. `commitStocktake` creates `inventory_transactions` (`type = 'adjustment'`) inside a transaction via `withTransactionAsync`.
+- **Components:** `components/inventory/stocktake/*` (`StocktakeBanner.tsx`, `StocktakeCategorySection.tsx`, `StocktakeHistoryList.tsx`, `StocktakeStartCard.tsx`, `StocktakeVarianceRow.tsx`); integrated into `app/(tabs)/inventory/_layout.tsx` and `components/inventory/InventoryHeader.tsx`
+- **Notes:** Category-by-category guided stocktake flow with expected vs counted variance tracking, monetary impact computation, reason coding per item, atomic transaction execution on commit, active session locking banner, and full audit history.
 
 ### 2.5 Utang Guardrails at Checkout — Partial
 
@@ -327,7 +327,7 @@ Proposed files:
 | 1   | POS Fast Lane           | Partial     | `sales/pos.tsx`                                            | Sales tab — main screen                                      |
 | 2   | Parked Sales            | Done        | `app/(tabs)/sales/pos.tsx` (integrated)                    | Inside POS, cart toolbar button                              |
 | 3   | Daily Cash Close-Out    | Done        | split across 3 cash screens                                | More → Cash Session (consolidated)                           |
-| 4   | Physical Stocktake      | Not started | —                                                          | Inventory → new "Stocktake" screen                           |
+| 4   | Physical Stocktake      | Done        | `app/(tabs)/inventory/stocktake.tsx`                       | Inventory → Stocktake tab/screen                             |
 | 5   | Utang Guardrails        | Partial     | customer detail only                                       | **Also POS CheckoutModal** (suki live panel)                 |
 | 6   | Collection Queue        | Partial     | `customers/credit.tsx`                                     | Customers → Collection (renamed)                             |
 | 7   | Safe Voids / Refunds    | Not started | `sale-details/[id].tsx` (delete only)                      | Sale Details → "Void / Refund" actions                       |

@@ -553,4 +553,60 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 15.');
   }
+
+  if (currentVersion < 16) {
+    console.log('Running migration to version 16 (Utang Guardrails)...');
+    await db.withTransactionAsync(async () => {
+      const customerCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(customers)',
+      );
+      const hasBlockOnExceed = customerCols.some(
+        (c) => c.name === 'block_on_exceed',
+      );
+      const hasOverdueDays = customerCols.some(
+        (c) => c.name === 'overdue_threshold_days',
+      );
+      if (!hasBlockOnExceed) {
+        await db.execAsync(
+          'ALTER TABLE customers ADD COLUMN block_on_exceed INTEGER NOT NULL DEFAULT 0;',
+        );
+      }
+      if (!hasOverdueDays) {
+        await db.execAsync(
+          'ALTER TABLE customers ADD COLUMN overdue_threshold_days INTEGER NOT NULL DEFAULT 30;',
+        );
+      }
+
+      const salesCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(sales)',
+      );
+      const hasSalesCode = salesCols.some(
+        (c) => c.name === 'override_reason_code',
+      );
+      if (!hasSalesCode) {
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN override_reason_code TEXT;',
+        );
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN override_reason_note TEXT;',
+        );
+      }
+
+      const ctCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(credit_transactions)',
+      );
+      const hasCtCode = ctCols.some((c) => c.name === 'override_reason_code');
+      if (!hasCtCode) {
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN override_reason_code TEXT;',
+        );
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN override_reason_note TEXT;',
+        );
+      }
+
+      await db.execAsync('PRAGMA user_version = 16;');
+    });
+    console.log('Database migrated to version 16.');
+  }
 }

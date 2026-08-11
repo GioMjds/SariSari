@@ -66,6 +66,7 @@ export const INVENTORY_SUB_TABS = [
   'movements',
   'stocktake',
   'damaged',
+  'recommendations',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'credit'] as const;
 export const MORE_SUB_TABS = [] as const;

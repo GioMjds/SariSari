@@ -23,7 +23,6 @@ export const CustomersFloatingNav: React.FC<CustomersFloatingNavProps> = ({
   }[] = [
     { key: 'all', label: 'ALL', icon: 'users' },
     { key: 'credit', label: 'CREDIT', icon: 'book' },
-    { key: 'insights', label: 'INSIGHTS', icon: 'bar-chart' },
   ];
 
   const handleSelect = (tab: CustomersSubTab) => {

@@ -28,7 +28,6 @@ export function CustomersHeader({
   const tabs: SubTabItem<CustomersSubTab>[] = [
     { key: 'all', label: 'ALL' },
     { key: 'credit', label: 'CREDIT', badgeCount: debtorCount },
-    { key: 'insights', label: 'INSIGHTS' },
   ];
 
   return (

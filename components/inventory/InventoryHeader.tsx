@@ -1,5 +1,4 @@
 import { View } from 'react-native';
-import type { FontAwesome } from '@expo/vector-icons';
 import { SearchBar } from '@/components/ui';
 import { SubTabControl, type SubTabItem } from '@/components/navigation';
 import { INVENTORY_SUB_TABS, InventorySubTab } from '@/constants/tabs';
@@ -16,15 +15,15 @@ export interface InventoryHeaderProps {
 }
 
 type InventoryTabMeta = {
-  icon: keyof typeof FontAwesome.glyphMap;
   label: string;
 };
 
 const INVENTORY_TAB_META = {
-  products: { icon: 'cube', label: 'PRODUCTS' },
-  movements: { icon: 'exchange', label: 'MOVEMENTS' },
-  damaged: { icon: 'exclamation-triangle', label: 'DAMAGED' },
-  stocktake: { icon: 'clipboard', label: 'STOCKTAKE' },
+  products: { label: 'PRODUCTS' },
+  movements: { label: 'MOVEMENTS' },
+  damaged: { label: 'DAMAGED' },
+  stocktake: { label: 'STOCKTAKE' },
+  recommendations: { label: 'RECOMMENDATIONS' },
 } satisfies Record<InventorySubTab, InventoryTabMeta>;
 
 export function InventoryHeader(props: InventoryHeaderProps) {
@@ -32,7 +31,6 @@ export function InventoryHeader(props: InventoryHeaderProps) {
   const tabs = INVENTORY_SUB_TABS.map((t) => ({
     key: t,
     label: INVENTORY_TAB_META[t].label,
-    icon: INVENTORY_TAB_META[t].icon,
   })) satisfies SubTabItem<InventorySubTab>[];
 
   return (

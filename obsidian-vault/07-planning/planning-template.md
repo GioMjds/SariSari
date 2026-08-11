@@ -1,6 +1,9 @@
 # Plan: [Plan Name - e.g., Sprint 1, Q3 Goals, etc.]
 
-**Time Period:** [Start Date] to [End Date]
+> **Parent Index**: [[planning|07-Planning Index]]  
+> **Master Roadmap**: [[01-Roadmap/project-roadmap|Project Roadmap]]
+
+**Time Period:** [Start Date] to [End Date]  
 **Created:** YYYY-MM-DD
 
 ## Goals and Objectives
@@ -54,7 +57,9 @@
 - What could be improved:
 - Lessons learned:
 
-## Related Plans
+## Related Plans & Notes
 
+- [[planning|07-Planning Index]]
 - [[Previous Plan]]
 - [[Related Plan]]
+

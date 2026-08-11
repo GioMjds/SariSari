@@ -7,7 +7,6 @@ import Animated, {
   SharedValue,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -73,7 +72,6 @@ export function SubTabControl<T extends string>({
 
   const internalProgress = useSharedValue(0);
   const activeIndexShared = useSharedValue(0);
-  const dragX = useSharedValue(0);
   const coldMountSeededRef = useRef(false);
 
   const initialActiveIndex = Math.max(
@@ -150,37 +148,25 @@ export function SubTabControl<T extends string>({
     [activeTab, onTabPress],
   );
 
-  const springConfig = { damping: 16, stiffness: 140 };
-
   const panGesture = Gesture.Pan()
     .enabled(!progress && dragToSwitch)
     .activeOffsetX([-10, 10])
     .failOffsetY([-10, 10])
-    .onUpdate((event) => {
-      const atStart = activeIndexShared.value === 0;
-      const atEnd = activeIndexShared.value === tabCount - 1;
-      let next = event.translationX;
-      if (atStart && next > 0) next *= 0.3;
-      if (atEnd && next < 0) next *= 0.3;
-      dragX.value = next;
-    })
-    .onEnd(() => {
+    .onEnd((event) => {
       const advancing =
-        dragX.value < -dragThreshold && activeIndexShared.value < tabCount - 1;
+        event.translationX < -dragThreshold &&
+        activeIndexShared.value < tabCount - 1;
       const retreating =
-        dragX.value > dragThreshold && activeIndexShared.value > 0;
+        event.translationX > dragThreshold && activeIndexShared.value > 0;
 
       if (advancing || retreating) {
         const nextIndex = activeIndexShared.value + (advancing ? 1 : -1);
         activeIndexShared.value = nextIndex;
         internalProgress.value = withTiming(nextIndex, { duration: 200 });
-        dragX.value = withSpring(0, springConfig);
         const nextKey = tabs[nextIndex]?.key;
         if (nextKey !== undefined) {
           scheduleOnRN(handleSelect, nextKey, 'gesture');
         }
-      } else {
-        dragX.value = withSpring(0, springConfig);
       }
     });
 
@@ -195,7 +181,7 @@ export function SubTabControl<T extends string>({
       Extrapolation.CLAMP,
     );
     return {
-      transform: [{ translateX: baseX + dragX.value }],
+      transform: [{ translateX: baseX }],
       width: baseWidth,
     };
   });

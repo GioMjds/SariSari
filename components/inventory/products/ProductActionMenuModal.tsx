@@ -78,6 +78,7 @@ export function ProductActionMenuModal({
               </Pressable>
             </View>
 
+            {/* Stock actions */}
             <View className="gap-y-1 mt-2">
               <ActionRow
                 icon="ban"
@@ -105,28 +106,6 @@ export function ProductActionMenuModal({
                 disabled={stocktakeGuard.isActive}
                 onPress={() => {
                   if (stocktakeGuard.isActive) return;
-                  onClose();
-                  onAdjustStock(product.id);
-                }}
-              />
-            </View>
-
-            {/* Stock actions */}
-            <View className="gap-y-1 mt-2">
-              <ActionRow
-                icon="ban"
-                iconColor="#C22D2D"
-                label="Mark Damaged"
-                onPress={() => {
-                  onClose();
-                  onMarkDamaged(product.id);
-                }}
-              />
-              <ActionRow
-                icon="sliders"
-                iconColor="#564E45"
-                label="Adjust Stock"
-                onPress={() => {
                   onClose();
                   onAdjustStock(product.id);
                 }}
