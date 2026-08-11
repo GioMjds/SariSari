@@ -28,7 +28,7 @@ export function CollectionErrorState({ onRetry }: CollectionErrorStateProps) {
         onPress={onRetry}
         accessibilityRole="button"
         accessibilityLabel={t('collectionErrorRetry')}
-        accessibilityHint={t('collectionErrorRetry')}
+        accessibilityHint={t('collectionErrorRetryHint')}
         hitSlop={8}
         className="bg-persimmon-500 rounded-pill px-7 py-3 min-h-12 flex-row items-center justify-center shadow-persimmon-glow"
       >

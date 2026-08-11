@@ -51,6 +51,7 @@
   "collectionErrorTitle": "Couldn't load the collection queue",
   "collectionErrorDescription": "Check your connection or try again in a moment.",
   "collectionErrorRetry": "Try again",
+  "collectionErrorRetryHint": "Reloads the collection queue",
   "collectionOverdueChip": "{{days}} days overdue",
   "collectionNearLimitChip": "Near limit",
   "collectionToastFollowUpUpdated": "Follow-up updated"

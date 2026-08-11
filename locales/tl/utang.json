@@ -51,6 +51,7 @@
   "collectionErrorTitle": "Hindi ma-load ang pila ng paniningil",
   "collectionErrorDescription": "Tingnan ang koneksyon o subukan muli sa ilang sandali.",
   "collectionErrorRetry": "Subukan muli",
+  "collectionErrorRetryHint": "I-reload ang pila ng paniningil",
   "collectionOverdueChip": "{{days}} araw nang overdue",
   "collectionNearLimitChip": "Malapit na sa limit",
   "collectionToastFollowUpUpdated": "Na-update ang follow-up"
