@@ -1,6 +1,8 @@
 import { DashboardHeader, HomeSubTab } from '@/components/home';
 import { TopTabs } from '@/components/navigation/top-tabs';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
+import { useTabProgress } from '@/hooks';
+import { HOME_SUB_TABS } from '@/constants/tabs';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { View } from 'react-native';
 
@@ -24,6 +26,8 @@ export default function HomeLayout() {
     return 'overview';
   };
 
+  const progress = useTabProgress(getCurrentTab(), HOME_SUB_TABS);
+
   const handleTabPress = (tab: HomeSubTab) => {
     if (tab === 'overview') {
       router.push('/(tabs)/home' as Href);
@@ -40,6 +44,7 @@ export default function HomeLayout() {
         activeTab={getCurrentTab()}
         showTopHeader={false}
         onTabPress={handleTabPress}
+        progress={progress}
       />
       <View className="flex-1 bg-paper-200">
         <TopTabs
