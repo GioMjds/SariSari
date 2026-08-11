@@ -1,22 +1,72 @@
 {
   "collapse-filter": true,
   "search": "",
-  "showTags": false,
+  "showTags": true,
   "showAttachments": false,
-  "hideUnresolved": false,
-  "showOrphans": true,
+  "hideUnresolved": true,
+  "showOrphans": false,
   "collapse-color-groups": true,
-  "colorGroups": [],
+  "colorGroups": [
+    {
+      "query": "#daily",
+      "color": {
+        "a": 1,
+        "rgb": 9079434
+      }
+    },
+    {
+      "query": "#project",
+      "color": {
+        "a": 1,
+        "rgb": 6000111
+      }
+    },
+    {
+      "query": "#person",
+      "color": {
+        "a": 1,
+        "rgb": 5025661
+      }
+    },
+    {
+      "query": "#concept",
+      "color": {
+        "a": 1,
+        "rgb": 15254855
+      }
+    },
+    {
+      "query": "#source",
+      "color": {
+        "a": 1,
+        "rgb": 10980346
+      }
+    },
+    {
+      "query": "#task",
+      "color": {
+        "a": 1,
+        "rgb": 16096779
+      }
+    },
+    {
+      "query": "#status/done",
+      "color": {
+        "a": 1,
+        "rgb": 6052956
+      }
+    }
+  ],
   "collapse-display": true,
   "showArrow": false,
   "textFadeMultiplier": 0,
   "nodeSizeMultiplier": 1,
   "lineSizeMultiplier": 1,
   "collapse-forces": true,
-  "centerStrength": 0.518713248970312,
-  "repelStrength": 10,
-  "linkStrength": 1,
-  "linkDistance": 250,
+  "centerStrength": 0.296203674867643,
+  "repelStrength": 6.027156649019,
+  "linkStrength": 0.296272189349112,
+  "linkDistance": 120,
   "scale": 0.6219571243656651,
   "close": true
 }
