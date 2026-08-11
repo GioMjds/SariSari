@@ -139,7 +139,7 @@ export type ExtendedCreditFilter =
 export type CreditSort =
   'name_asc' | 'name_desc' | 'balance_desc' | 'balance_asc' | 'recent';
 
-export type OverrideReasonCode = 
+export type OverrideReasonCode =
   | 'regular_customer'
   | 'long_term_suki'
   | 'partial_payment_promised'
@@ -158,4 +158,39 @@ export interface CustomerCreditSummary {
   isOverdue: boolean;
   isNearLimit: boolean;
   wouldExceedLimit: boolean;
+}
+
+export type CollectionBasket = 'overdue' | 'near_limit' | 'oldest_balance';
+
+export interface CollectionQueueParams {
+  overdueDays?: number;
+  nearLimitPct?: number;
+}
+
+export interface CollectionFollowUp {
+  customerId: number;
+  followUpBy: string | null;
+  contactsToday: number;
+  lastContactAt: string | null;
+  status: 'open' | 'closed';
+}
+
+export interface CollectionQueueRow {
+  customerId: number;
+  name: string;
+  phone: string | null;
+  photoUri: string | null;
+  creditLimit: number | null;
+  balance: number;
+  availableCredit: number | null;
+  oldestUnpaidDueDate: string | null;
+  overdueDays: number | null;
+  isNearLimit: boolean;
+  nearLimitPctUsed: number;
+  bucket: CollectionBasket;
+  followUp: {
+    followUpBy: string | null;
+    contactsToday: number;
+    lastContactAt: string | null;
+  } | null;
 }
