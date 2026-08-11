@@ -146,6 +146,9 @@ export function useInsertCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       Alert.alert('Success', 'Customer added successfully', [
         {
           text: 'OK',
@@ -171,6 +174,9 @@ export function useUpdateCustomer() {
         queryKey: ['customer-details', vars.id],
       });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
     },
   });
 }
@@ -184,6 +190,7 @@ export function useDeleteCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
       addToast({
         message: 'Customer deleted successfully',
         variant: 'success',
@@ -231,6 +238,9 @@ export function useInsertCredit() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Credit transaction(s) added successfully',
         variant: 'success',
@@ -267,6 +277,9 @@ export function useDeleteCredit() {
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
     },
   });
 }
@@ -295,6 +308,9 @@ export function useInsertPayment() {
         queryKey: ['credit-history', vars.customer_id],
       });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Payment added successfully',
         variant: 'success',
@@ -337,6 +353,7 @@ export function useDeletePayment() {
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
     },
   });
 }
@@ -357,6 +374,9 @@ export function useMarkAllCreditsAsPaid() {
       });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Customer deleted successfully',
         variant: 'success',
@@ -382,6 +402,7 @@ export function useUpdateCreditStatus() {
     onSuccess: (_res, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
     },
     onError: (error) => {
       console.error('Error updating credit status:', error);
