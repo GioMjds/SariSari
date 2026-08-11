@@ -1,5 +1,7 @@
 # 04. Pag-imbentaryo sa Estante (Physical Stocktake)
 
+## Status: DONE
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema

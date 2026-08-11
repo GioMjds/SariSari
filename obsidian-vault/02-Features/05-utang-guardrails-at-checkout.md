@@ -1,5 +1,7 @@
 # 05. Mga Proteksyon sa Utang sa Checkout (Utang Guardrails at Checkout)
 
+## Status: In Progress
+
 > Phase: Kasalukuyan (Now)
 
 ## Problema

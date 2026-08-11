@@ -101,6 +101,7 @@ export default function ScreensLayout() {
           tabBarStyle: { display: 'none' },
           lazy: true,
         }}
+        initialRouteName="home"
       />
       <StyledTab />
 
@@ -131,7 +132,7 @@ export default function ScreensLayout() {
 const styles = StyleSheet.create({
   toastContainer: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 120,
     left: 16,
     right: 16,
     alignItems: 'center',
