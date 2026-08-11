@@ -20,7 +20,7 @@ export default function NotFoundScreen() {
   }, [pathname]);
 
   const handleGoHome = () => {
-    router.replace('/(tabs)' as Href);
+    router.replace('/(tabs)/home' as Href);
   };
 
   return (
