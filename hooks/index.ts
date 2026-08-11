@@ -20,3 +20,4 @@ export * from './useNetworkStatus';
 export * from './useSystemNotifications';
 export * from './useParkedCarts';
 export * from './useStocktake';
+export * from './useTabProgress';
