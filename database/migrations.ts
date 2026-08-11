@@ -635,4 +635,35 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 17.');
   }
+
+  if (currentVersion < 18) {
+    console.log(
+      'Running migration to version 18 (Unique follow-up per customer)...',
+    );
+    await db.withTransactionAsync(async () => {
+      // Remove duplicate rows, keeping the most recently updated one per customer.
+      await db.execAsync(`
+        DELETE FROM collection_followups
+        WHERE id NOT IN (
+          SELECT id FROM (
+            SELECT id,
+                   ROW_NUMBER() OVER (
+                     PARTITION BY customer_id
+                     ORDER BY updated_at DESC, id DESC
+                   ) AS rn
+            FROM collection_followups
+          ) ranked
+          WHERE rn = 1
+        );
+      `);
+      await db.execAsync(
+        'DROP INDEX IF EXISTS idx_collection_followups_customer_id;',
+      );
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_collection_followups_customer_id ON collection_followups(customer_id);',
+      );
+      await db.execAsync('PRAGMA user_version = 18;');
+    });
+    console.log('Database migrated to version 18.');
+  }
 }

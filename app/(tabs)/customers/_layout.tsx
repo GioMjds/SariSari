@@ -23,6 +23,7 @@ export default function CustomersLayout() {
 
   const getCurrentTab = (): CustomersSubTab => {
     if (pathname.includes('credit')) return 'credit';
+    if (pathname.includes('collection')) return 'collection';
     return 'all';
   };
 
@@ -31,7 +32,7 @@ export default function CustomersLayout() {
 
   const isDetailScreen =
     pathname.includes('/customers/') &&
-    !['credit', 'insights', 'all', ''].includes(
+    !['credit', 'collection', 'insights', 'all', ''].includes(
       pathname.split('/customers/')[1] || '',
     );
 
@@ -57,6 +58,7 @@ export default function CustomersLayout() {
           debtorCount={debtorCount}
           loyalCount={loyalCount}
           totalCredit={kpis?.totalOutstanding || 0}
+          overdueCount={kpis?.overdueCount || 0}
           onTabPress={handleTabPress}
           onAddCustomer={handleAddCustomer}
           progress={progress}
@@ -74,6 +76,7 @@ export default function CustomersLayout() {
         >
           <TopTabs.Screen name="all" />
           <TopTabs.Screen name="credit" />
+          <TopTabs.Screen name="collection" />
         </TopTabs>
 
         {!isDetailScreen && (

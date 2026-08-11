@@ -30,7 +30,7 @@ const routes = {
   cashEntries: '/(tabs)/more/cash-entries',
   gastos: '/gastos-kaha',
   settings: '/(tabs)/more/settings',
-  collection: '/(tabs)/customers/credit',
+  collection: '/(tabs)/customers/collection',
 } satisfies Record<string, Href>;
 
 function MoreTab() {
@@ -123,7 +123,7 @@ function MoreTab() {
             <MoreTile
               label={t('common:moreHomeTileCollection')}
               icon="bell"
-              onPress={() => router.push(routes.creditOverdue)}
+              onPress={() => router.push(routes.collection)}
               accent="cinnamon"
             />
             <MoreTile

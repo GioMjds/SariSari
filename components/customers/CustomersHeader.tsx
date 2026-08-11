@@ -13,6 +13,7 @@ export interface CustomersHeaderProps {
   totalCustomers?: number;
   debtorCount?: number;
   loyalCount?: number;
+  overdueCount?: number;
   totalCredit?: number;
   onTabPress: (tab: CustomersSubTab) => void;
   onAddCustomer?: () => void;
@@ -24,14 +25,16 @@ export function CustomersHeader({
   totalCustomers = 142,
   debtorCount = 0,
   loyalCount = 28,
+  overdueCount = 0,
   totalCredit = 4850,
   onTabPress,
   progress,
 }: CustomersHeaderProps) {
-  const tabs: SubTabItem<CustomersSubTab>[] = [
+  const tabs = [
     { key: 'all', label: 'ALL' },
     { key: 'credit', label: 'CREDIT', badgeCount: debtorCount },
-  ];
+    { key: 'collection', label: 'COLLECTION', badgeCount: overdueCount },
+  ] satisfies SubTabItem<CustomersSubTab>[];
 
   return (
     <View className="bg-paper-200 px-4 pt-1 pb-1">

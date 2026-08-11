@@ -1,4 +1,8 @@
 import {
+  CollectionBucket,
+  CollectionFollowUp,
+  CollectionQueueParams,
+  CollectionQueueRow,
   CreditHistory,
   CreditKPIs,
   CreditSort,
@@ -626,8 +630,6 @@ export const markAllCreditsAsPaid = async (
   );
 };
 
-// ==================== UTILITY FUNCTIONS ====================
-
 function calculateCustomerTag(
   outstandingBalance: number,
   lastTransactionDate: string | null,
@@ -783,13 +785,13 @@ export const getCustomerInsights = async (): Promise<CustomerInsights> => {
     .sort((a, b) => b.total_orders - a.total_orders)
     .slice(0, 5);
 
-  const loyaltyDistribution: Record<LoyaltyTier, number> = {
+  const loyaltyDistribution = {
     new: 0,
     regular: 0,
     loyal: 0,
     vip: 0,
     elite: 0,
-  };
+  } satisfies Record<LoyaltyTier, number>;
 
   for (const c of customers) {
     const totalSpent = c.total_credits + c.total_payments;
@@ -895,4 +897,242 @@ export const getCustomerCreditSummary = async (
     isNearLimit,
     wouldExceedLimit,
   };
+};
+
+/**
+ * Returns a ranked list of customers who owe money, bucketed by collection
+ * priority: overdue (oldest first) → near_limit (highest % consumed first)
+ * → oldest_balance (longest outstanding balance first).
+ *
+ * Eligibility: customer must have outstanding_balance > 0.
+ *
+ * Money is integer pesos throughout; no float arithmetic on balances.
+ */
+export const getCollectionQueue = async (
+  params: CollectionQueueParams = {},
+): Promise<CollectionQueueRow[]> => {
+  const { overdueDays = 1, nearLimitPct = 0.2 } = params;
+
+  type RawRow = {
+    customer_id: number;
+    name: string;
+    phone: string | null;
+    photo_uri: string | null;
+    credit_limit: number | null;
+    overdue_threshold_days: number;
+    outstanding_balance: number;
+    days_overdue: number | null;
+    oldest_due_date: string | null;
+    last_transaction_date: string | null;
+    // collection_followups (LEFT JOIN; may be null)
+    cf_id: number | null;
+    cf_follow_up_by: string | null;
+    cf_contacts_today: number | null;
+    cf_last_contact_at: string | null;
+  };
+
+  const rows = await db.getAllAsync<RawRow>(
+    `SELECT
+       c.id AS customer_id,
+       c.name,
+       c.phone,
+       c.photo_uri,
+       c.credit_limit,
+       c.overdue_threshold_days,
+       COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount - ct.amount_paid ELSE 0 END), 0) AS outstanding_balance,
+       (SELECT CAST(MAX(julianday('now') - julianday(ct2.due_date)) AS INTEGER)
+          FROM credit_transactions ct2
+          WHERE ct2.customer_id = c.id
+            AND ct2.status != 'paid'
+            AND ct2.due_date IS NOT NULL
+            AND ct2.due_date < date('now')) AS days_overdue,
+       (SELECT MIN(ct2.due_date)
+          FROM credit_transactions ct2
+          WHERE ct2.customer_id = c.id
+            AND ct2.status != 'paid'
+            AND ct2.due_date IS NOT NULL) AS oldest_due_date,
+       (SELECT MAX(ct2.date)
+          FROM credit_transactions ct2
+          WHERE ct2.customer_id = c.id
+            AND ct2.status != 'paid') AS last_transaction_date,
+       cf.id AS cf_id,
+       cf.follow_up_by AS cf_follow_up_by,
+       cf.contacts_today AS cf_contacts_today,
+       cf.last_contact_at AS cf_last_contact_at
+     FROM customers c
+     LEFT JOIN credit_transactions ct ON ct.customer_id = c.id
+     LEFT JOIN collection_followups cf ON cf.customer_id = c.id
+     GROUP BY c.id
+     HAVING outstanding_balance > 0`,
+  );
+
+  const enriched = rows.map((r) => {
+    const balance = r.outstanding_balance;
+    const creditLimit = r.credit_limit;
+    const nearLimitPctUsed =
+      creditLimit != null && creditLimit > 0 ? balance / creditLimit : 0;
+    const isNearLimit =
+      creditLimit != null && 1 - nearLimitPctUsed <= nearLimitPct;
+    const overdueDaysActual = r.days_overdue ?? 0;
+    const isOverdue = overdueDaysActual >= overdueDays;
+    const bucket: CollectionBucket = isOverdue
+      ? 'overdue'
+      : isNearLimit
+        ? 'near_limit'
+        : 'oldest_balance';
+
+    return {
+      customerId: r.customer_id,
+      name: r.name,
+      phone: r.phone,
+      photoUri: r.photo_uri,
+      creditLimit,
+      balance,
+      availableCredit:
+        creditLimit != null ? Math.max(creditLimit - balance, 0) : null,
+      oldestUnpaidDueDate: r.oldest_due_date,
+      overdueDays: overdueDaysActual,
+      overdueThresholdDays: r.overdue_threshold_days,
+      isNearLimit,
+      nearLimitPctUsed,
+      bucket,
+      lastTransactionDate: r.last_transaction_date,
+      followUp:
+        r.cf_id != null
+          ? {
+              followUpBy: r.cf_follow_up_by,
+              contactsToday: r.cf_contacts_today ?? 0,
+              lastContactAt: r.cf_last_contact_at,
+            }
+          : null,
+    };
+  }) satisfies CollectionQueueRow[];
+
+  const bucketPriority = {
+    overdue: 0,
+    near_limit: 1,
+    oldest_balance: 2,
+  } satisfies Record<CollectionBucket, number>;
+
+  enriched.sort((a, b) => {
+    const bp = bucketPriority[a.bucket] - bucketPriority[b.bucket];
+    if (bp !== 0) return bp;
+    if (a.bucket === 'overdue') return b.overdueDays - a.overdueDays;
+    if (a.bucket === 'near_limit')
+      return b.nearLimitPctUsed - a.nearLimitPctUsed;
+
+    if (a.lastTransactionDate == null) return -1;
+    if (b.lastTransactionDate == null) return 1;
+    return a.lastTransactionDate.localeCompare(b.lastTransactionDate);
+  });
+
+  return enriched;
+};
+
+/**
+ * Reads the collection_followups row for a customer.
+ * Returns null if no follow-up has been set yet.
+ */
+export const getCollectionFollowUp = async (
+  customerId: number,
+): Promise<CollectionFollowUp | null> => {
+  const row = await db.getFirstAsync<{
+    customer_id: number;
+    follow_up_by: string | null;
+    contacts_today: number;
+    last_contact_at: string | null;
+    status: 'open' | 'closed';
+  }>(
+    `SELECT customer_id, follow_up_by, contacts_today, last_contact_at, status
+       FROM collection_followups
+       WHERE customer_id = ?`,
+    [customerId],
+  );
+  if (!row) return null;
+  return {
+    customerId: row.customer_id,
+    followUpBy: row.follow_up_by,
+    contactsToday: row.contacts_today,
+    lastContactAt: row.last_contact_at,
+    status: row.status,
+  };
+};
+
+/**
+ * Upsert: sets the follow-up date for a customer.
+ * Pass `followUpBy: null` to clear.
+ * Creates the row if it does not exist.
+ */
+export const setCollectionFollowUp = async ({
+  customerId,
+  followUpBy,
+}: {
+  customerId: number;
+  followUpBy: string | null;
+}): Promise<void> => {
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      `INSERT OR IGNORE INTO collection_followups (customer_id, status)
+         VALUES (?, 'open');`,
+      [customerId],
+    );
+    await db.runAsync(
+      `UPDATE collection_followups
+         SET follow_up_by = ?,
+             status = CASE WHEN ? IS NOT NULL THEN 'open' ELSE status END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE customer_id = ?;`,
+      [followUpBy, followUpBy, customerId],
+    );
+  });
+};
+
+/**
+ * Records that the owner contacted the customer today.
+ * Increments contacts_today if last_contact_at is from today; otherwise
+ * resets to 1 and updates last_contact_at. Sets status='closed'.
+ */
+export const markCollectionContacted = async (
+  customerId: number,
+): Promise<void> => {
+  const today = new Date().toDateString();
+  await db.withTransactionAsync(async () => {
+    const existing = await db.getFirstAsync<{
+      contacts_today: number;
+      last_contact_at: string | null;
+    }>(
+      `SELECT contacts_today, last_contact_at
+         FROM collection_followups
+         WHERE customer_id = ?`,
+      [customerId],
+    );
+
+    if (!existing) {
+      await db.runAsync(
+        `INSERT INTO collection_followups
+           (customer_id, contacts_today, last_contact_at, status)
+           VALUES (?, 1, CURRENT_TIMESTAMP, 'closed');`,
+        [customerId],
+      );
+      return;
+    }
+
+    const sameDay =
+      existing.last_contact_at != null &&
+      new Date(
+        existing.last_contact_at.replace(' ', 'T') + 'Z',
+      ).toDateString() === today;
+
+    const nextCount = sameDay ? existing.contacts_today + 1 : 1;
+
+    await db.runAsync(
+      `UPDATE collection_followups
+         SET contacts_today = ?,
+             last_contact_at = CURRENT_TIMESTAMP,
+             status = 'closed',
+             updated_at = CURRENT_TIMESTAMP
+         WHERE customer_id = ?;`,
+      [nextCount, customerId],
+    );
+  });
 };

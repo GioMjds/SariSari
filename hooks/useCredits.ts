@@ -4,6 +4,8 @@ import {
   deleteCustomer,
   deletePayment,
   getAllCustomers,
+  getCollectionFollowUp,
+  getCollectionQueue,
   getCreditHistory,
   getCreditKPIs,
   getCreditTransactionsByCustomer,
@@ -14,7 +16,9 @@ import {
   insertCustomer,
   insertPayment,
   markAllCreditsAsPaid,
+  markCollectionContacted,
   searchCustomers,
+  setCollectionFollowUp,
   updateCreditStatus,
   updateCustomer,
   getCustomerTimeline,
@@ -24,6 +28,9 @@ import {
 } from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import type {
+  CollectionFollowUp,
+  CollectionQueueParams,
+  CollectionQueueRow,
   CreditFilter,
   CreditHistory,
   CreditKPIs,
@@ -139,6 +146,9 @@ export function useInsertCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       Alert.alert('Success', 'Customer added successfully', [
         {
           text: 'OK',
@@ -164,6 +174,9 @@ export function useUpdateCustomer() {
         queryKey: ['customer-details', vars.id],
       });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
     },
   });
 }
@@ -177,6 +190,7 @@ export function useDeleteCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
       addToast({
         message: 'Customer deleted successfully',
         variant: 'success',
@@ -224,6 +238,9 @@ export function useInsertCredit() {
         });
       }
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Credit transaction(s) added successfully',
         variant: 'success',
@@ -260,6 +277,9 @@ export function useDeleteCredit() {
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
     },
   });
 }
@@ -288,6 +308,9 @@ export function useInsertPayment() {
         queryKey: ['credit-history', vars.customer_id],
       });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Payment added successfully',
         variant: 'success',
@@ -330,6 +353,7 @@ export function useDeletePayment() {
       }
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
     },
   });
 }
@@ -350,6 +374,9 @@ export function useMarkAllCreditsAsPaid() {
       });
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-queue'],
+      });
       addToast({
         message: 'Customer deleted successfully',
         variant: 'success',
@@ -375,6 +402,7 @@ export function useUpdateCreditStatus() {
     onSuccess: (_res, _variables) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
     },
     onError: (error) => {
       console.error('Error updating credit status:', error);
@@ -426,5 +454,85 @@ export function useCustomerCreditSummary(
     enabled: !!parsedId,
     staleTime: 60 * 1000,
     ...opts,
+  });
+}
+
+export function useCollectionQueue(
+  params: CollectionQueueParams = {},
+  opts: { enabled?: boolean } = {},
+) {
+  return useQuery<CollectionQueueRow[]>({
+    queryKey: ['collection-queue', params],
+    queryFn: () => getCollectionQueue(params),
+    staleTime: 60 * 1000,
+    ...opts,
+  });
+}
+
+export function useCollectionFollowUp(
+  customerId?: number,
+  opts: { enabled?: boolean } = {},
+) {
+  const parsed =
+    typeof customerId === 'string' ? parseInt(customerId) : customerId;
+
+  return useQuery<CollectionFollowUp | null>({
+    queryKey: ['collection-follow-up', parsed],
+    queryFn: () => getCollectionFollowUp(parsed!),
+    enabled: opts.enabled ?? !!parsed,
+    staleTime: 60 * 1000,
+    ...opts,
+  });
+}
+export function useSetCollectionFollowUp() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
+  return useMutation({
+    mutationFn: (vars: { customerId: number; followUpBy: string | null }) =>
+      setCollectionFollowUp(vars),
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-follow-up', vars.customerId],
+      });
+      addToast({
+        message: 'Follow-up updated',
+        variant: 'success',
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      addToast({
+        message: 'Failed to update follow-up',
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
+  });
+}
+
+export function useMarkCollectionContacted() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
+  return useMutation({
+    mutationFn: (customerId: number) => markCollectionContacted(customerId),
+    onSuccess: (_d, customerId) => {
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-follow-up', customerId],
+      });
+      addToast({
+        message: 'Contact logged',
+        variant: 'success',
+        duration: 2500,
+      });
+    },
+    onError: () => {
+      addToast({
+        message: "Couldn't log contact. Try again.",
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
   });
 }
