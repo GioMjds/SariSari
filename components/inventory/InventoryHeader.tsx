@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { SharedValue } from 'react-native-reanimated';
 import { SearchBar } from '@/components/ui';
 import { SubTabControl, type SubTabItem } from '@/components/navigation';
 import { INVENTORY_SUB_TABS, InventorySubTab } from '@/constants/tabs';
@@ -12,6 +13,7 @@ export interface InventoryHeaderProps {
   onOpenScanner: () => void;
   onTabChange: (t: InventorySubTab) => void;
   onPillPress: (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => void;
+  progress?: SharedValue<number>;
 }
 
 type InventoryTabMeta = {
@@ -28,6 +30,7 @@ const INVENTORY_TAB_META = {
 
 export function InventoryHeader(props: InventoryHeaderProps) {
   const overview = useInventoryOverview();
+  const { progress } = props;
   const tabs = INVENTORY_SUB_TABS.map((t) => ({
     key: t,
     label: INVENTORY_TAB_META[t].label,
@@ -39,6 +42,7 @@ export function InventoryHeader(props: InventoryHeaderProps) {
         tabs={tabs}
         activeTab={props.active}
         onTabPress={(k) => props.onTabChange(k as InventorySubTab)}
+        {...(progress ? { progress } : {})}
       />
       <SearchBar
         value={props.search}

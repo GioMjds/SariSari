@@ -11,7 +11,8 @@ import { TopTabs } from '@/components/navigation';
 import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
 import { StocktakeBanner } from '@/components/inventory/stocktake';
 import { LogTransactionForm } from '@/components/inventory/ledger';
-import type { InventorySubTab } from '@/constants/tabs';
+import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
+import { useTabProgress } from '@/hooks';
 import type { InventoryEventType } from '@/types/inventory.types';
 import { InventoryModalsHost } from './modals';
 
@@ -47,6 +48,8 @@ export default function InventoryLayout() {
     const last = segments[segments.length - 1] ?? '';
     return isInventorySubTab(last) ? last : 'products';
   }, [segments]);
+
+  const progress = useTabProgress(activeTab, INVENTORY_SUB_TABS);
 
   const lastSegment = segments[segments.length - 1] ?? '';
   const isDetail =
@@ -92,6 +95,7 @@ export default function InventoryLayout() {
             onOpenScanner={() => setScannerOpen(true)}
             onTabChange={handleTabChange}
             onPillPress={handlePillPress}
+            progress={progress}
           />
           <StocktakeBanner />
         </>
