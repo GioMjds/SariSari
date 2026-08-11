@@ -1,6 +1,6 @@
 # 05. Mga Proteksyon sa Utang sa Checkout (Utang Guardrails at Checkout)
 
-## Status: Partial
+## Status: DONE
 
 > Phase: Kasalukuyan (Now)
 
@@ -27,11 +27,11 @@ Bilang may-ari ng tindahan na nagpoproseso ng credit sale, gusto kong makita ang
 
 ## Mga Implikasyon sa Data (Data Implications)
 
-- Bagong columns sa `customers`: `credit_limit` INTEGER (nullable — null ibig sabihin "walang limit, i-track lang ang balanse"), `overdue_threshold_days` INTEGER.
-- Bagong computed view o function sa `database/credits.ts`: `getCustomerCreditSummary(customerId)` na nagbabalik ng `{ balance, availableCredit, oldestUnpaidDate, overdueDays, isOverdue }`.
-- Bagong hook sa `hooks/useCredits.tsx` para magpakain sa checkout screen.
-- Ang override ay naitala bilang column sa `sales` row: `override_reason_code` TEXT (nullable).
-- Bagong migration na nagtataas ng `user_version` lampas sa 9.
+- Bagong columns sa `customers`: `credit_limit` INTEGER (nullable — null ibig sabihin "walang limit, i-track lang ang balanse"), `overdue_threshold_days` INTEGER (default 30), `block_on_exceed` INTEGER (default 0).
+- Bagong columns sa `sales` at `credit_transactions`: `override_reason_code` TEXT (nullable), `override_reason_note` TEXT (nullable) — parehong naitala tuwing may owner override para sa audit.
+- Bagong computed view o function sa `database/credits.ts`: `getCustomerCreditSummary(customerId)` na nagbabalik ng `{ customerId, balance, creditLimit, availableCredit, blockOnExceed, oldestUnpaidDueDate, overdueDays, overdueThresholdDays, isOverdue, isNearLimit, wouldExceedLimit }`. Ang `isNearLimit` / `wouldExceedLimit` ay JS derivations sa caller side na nagpo-project ng `pendingTotal`.
+- Bagong hook sa `hooks/useCredits.ts`: `useCustomerCreditSummary(customerId)` (TanStack Query, 1-minute stale time). Invalidate ng `useInsertCredit` at `useInsertPayment` sa onSuccess.
+- Bagong migration na nagtataas ng `user_version` sa 16.
 
 ## Mga Dependency (Dependencies)
 

@@ -1,5 +1,13 @@
 import { getTabs, Tab } from '@/constants';
-import { FontAwesome } from '@expo/vector-icons';
+import {
+  Home,
+  Sales,
+  Inventory,
+  Customers,
+  More,
+  type TabIconProps,
+} from '../elements';
+import type { ComponentType } from 'react';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState, useEffect } from 'react';
 import { TouchableOpacity, View, Keyboard, Platform } from 'react-native';
@@ -42,6 +50,14 @@ interface TabButtonProps {
   onPress: () => void;
 }
 
+const TAB_ICONS: Record<string, ComponentType<TabIconProps>> = {
+  '/home': Home,
+  '/sales': Sales,
+  '/inventory': Inventory,
+  '/customers': Customers,
+  '/more': More,
+};
+
 const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
   const scale = useSharedValue(1);
   const shouldReduceMotion = useReducedMotion();
@@ -73,7 +89,11 @@ const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
       style={{ minWidth: 48, minHeight: 48 }}
     >
       <View className="items-center justify-center px-1">
-        <FontAwesome name={tab.icon} size={36} color={color} />
+        {(() => {
+          const hrefString = getHrefString(tab.href);
+          const Icon = TAB_ICONS[hrefString] ?? More;
+          return <Icon size={36} color={color} />;
+        })()}
       </View>
     </TouchableOpacity>
   );

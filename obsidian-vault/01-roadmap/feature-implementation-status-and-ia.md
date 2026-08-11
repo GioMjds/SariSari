@@ -21,7 +21,7 @@ Status legend:
 | 2   | Parked Sales                            | Done                 | Now   |
 | 3   | Daily Cash Close-Out                    | Done                 | Now   |
 | 4   | Physical Stocktake                      | Done                 | Now   |
-| 5   | Utang Guardrails at Checkout            | Partial              | Now   |
+| 5   | Utang Guardrails at Checkout            | Done                 | Now   |
 | 6   | Collection Queue                        | Partial              | Now   |
 | 7   | Safe Voids / Refunds / Corrections      | Not started          | Next  |
 | 8   | Supplier Delivery Receiving             | Partial              | Next  |
@@ -36,7 +36,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 8 Done · 6 Partial · 4 Not started.
+**Tally:** 9 Done · 5 Partial · 4 Not started.
 
 ---
 
@@ -76,14 +76,19 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Components:** `components/inventory/stocktake/*` (`StocktakeBanner.tsx`, `StocktakeCategorySection.tsx`, `StocktakeHistoryList.tsx`, `StocktakeStartCard.tsx`, `StocktakeVarianceRow.tsx`); integrated into `app/(tabs)/inventory/_layout.tsx` and `components/inventory/InventoryHeader.tsx`
 - **Notes:** Category-by-category guided stocktake flow with expected vs counted variance tracking, monetary impact computation, reason coding per item, atomic transaction execution on commit, active session locking banner, and full audit history.
 
-### 2.5 Utang Guardrails at Checkout — Partial
+### 2.5 Utang Guardrails at Checkout — Done
 
-- **Routes:** `app/(tabs)/customers/*`, `app/(edit-forms)/add-customer/index.tsx`, `app/(edit-forms)/credit-details/[id].tsx`, `app/(tabs)/sales/pos.tsx`
-- **Hooks:** `hooks/useCredits.tsx` (`useCustomerDetails`, `useCreditKPIs`, `useSearchCustomers`)
-- **DB:** `database/credits.ts` — `customers.credit_limit` column (`initCreditsTable:31`); `getOutstandingBalance`; `getCustomerWithDetails` returns `days_overdue`; live balance via `SUM(amount - amount_paid)` on `credit_transactions.status != 'paid'`
-- **Components:** `components/utang/credit-details/CustomerHeroCard.tsx` (balance + limit + overdue badge), `components/utang/credit-details/DebtLimitBar.tsx`, `components/sales/pos/CustomerPickerModal.tsx` (shows outstanding balance next to suki name)
-- **Gaps:**
-  - `components/sales/pos/CheckoutModal.tsx:340-510` does **not** show the live suki panel (balance / available credit / overdue / hard-block / override-reason picker / owner PIN). All the data is available; only the UI wiring is missing.
+- **Spec:** `docs/superpowers/specs/2026-08-11-utang-guardrails-at-checkout-design.md` — implementation plan: `docs/superpowers/plans/2026-08-11-utang-guardrails-at-checkout.md`
+- **Routes:** `app/(edit-forms)/add-credit/[id].tsx`, `app/(edit-forms)/add-sales/index.tsx`, `app/(edit-forms)/credit-details/[id].tsx`
+- **Hooks:** `hooks/useCredits.ts` — `useCustomerCreditSummary(id)` (TanStack Query, 1-minute stale time, invalidated by `useInsertCredit` and `useInsertPayment`)
+- **DB:** `database/migrations.ts` — v16 adds `customers.block_on_exceed`, `customers.overdue_threshold_days` (default 30), `sales.override_reason_code`, `sales.override_reason_note`, `credit_transactions.override_reason_code`, `credit_transactions.override_reason_note`. `database/credits.ts` — `getCustomerCreditSummary(customerId)` returns `{ customerId, balance, creditLimit, availableCredit, blockOnExceed, oldestUnpaidDueDate, overdueDays, overdueThresholdDays, isOverdue, isNearLimit, wouldExceedLimit }`. `isNearLimit` / `wouldExceedLimit` derived in JS (caller projects `pendingTotal`). `database/sales.ts` + `database/credits.ts` — `insertSale` and `insertCreditTransaction` thread the override fields to both `sales` and `credit_transactions` rows for audit.
+- **Components:** `components/utang/credit-guardrails/SukiPanel.tsx` (compact / detailed modes, projects `pendingTotal`, renders near-limit amber chip, soft "Over limit by" warning, and hard block banner with override CTA), `OverrideReasonModal.tsx` (5 codes: `regular_customer | long_term_suki | partial_payment_promised | owner_discretion | other`; `other` reveals a free-text note input), `OverrideReasonLabel.tsx`, `index.ts`.
+- **Screen integrations:**
+  - `app/(edit-forms)/add-credit/[id].tsx` — `<SukiPanel>` above the ticket sheet; soft-warn modal offers "Continue without override" or "Record override reason"; override modal chooses the reason code/note and forwards to `insertCredit`.
+  - `app/(edit-forms)/add-sales/index.tsx` — `<SukiPanel>` rendered only on the credit path when a real customer object is selected; same soft-warn / override flow.
+  - `app/(edit-forms)/credit-details/[id].tsx` — `<SukiPanel mode="detailed">` rendered below `<CustomerHeroCard>` so the live balance/limit/overdue state is visible alongside the per-credit ticket / payments / history tabs.
+- **Guardrail semantics:** warn-soft (amber/soft red, proceeds without override) when the projected available would go below zero and `block_on_exceed = 0`; block-hard (submit disabled, must record a reason) when `block_on_exceed = 1` and no override is set yet.
+- **Caveat:** The plan's test files (`tests/database/migrations-v16.test.ts`, `tests/database/get-customer-credit-summary.test.ts`, `tests/database/insert-credit-with-override.test.ts`, `tests/database/insert-sale-with-override.test.ts`, `tests/components/utang/SukiPanel.test.tsx`, `tests/components/utang/OverrideReasonModal.test.tsx`) were not created. The code is shipped and consistent with the spec, but the implementation has no regression coverage added for this feature. Follow-up: port the test bodies from the plan into the `tests/` directory before the next refactor of the credits or sales write paths.
 
 ### 2.6 Collection Queue — Partial
 

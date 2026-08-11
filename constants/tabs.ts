@@ -1,11 +1,9 @@
-import { FontAwesome } from '@expo/vector-icons';
 import { Href } from 'expo-router';
 import type { TFunction } from 'i18next';
 
 export interface Tab {
   name: string;
   href: Href;
-  icon: keyof typeof FontAwesome.glyphMap;
 }
 
 export const PRIMARY_TAB_PATHS = [
@@ -26,37 +24,22 @@ export function isPrimaryTabPath(path: Href): boolean {
 }
 
 export const getTabs = (t: TFunction): Tab[] => [
-  {
-    name: t('common:homeTitle', { defaultValue: 'Home' }),
-    href: '/home',
-    icon: 'home',
-  },
-  {
-    name: t('common:salesTitle', { defaultValue: 'Sales' }),
-    href: '/sales',
-    icon: 'shopping-cart',
-  },
+  { name: t('common:homeTitle', { defaultValue: 'Home' }), href: '/home' },
+  { name: t('common:salesTitle', { defaultValue: 'Sales' }), href: '/sales' },
   {
     name: t('common:inventoryTitle', { defaultValue: 'Inventory' }),
     href: '/inventory',
-    icon: 'cube',
   },
   {
     name: t('common:customersTitle', { defaultValue: 'Customers' }),
     href: '/customers',
-    icon: 'users',
   },
-  {
-    name: t('common:moreTitle', { defaultValue: 'More' }),
-    href: '/more',
-    icon: 'ellipsis-h',
-  },
+  { name: t('common:moreTitle', { defaultValue: 'More' }), href: '/more' },
 ];
 
 export const getSellAction = (t: TFunction): Tab => ({
   name: t('common:sellAction', { defaultValue: 'Sell' }),
   href: '/(tabs)/sales',
-  icon: 'shopping-cart',
 });
 
 export const HOME_SUB_TABS = ['overview', 'today'] as const;
