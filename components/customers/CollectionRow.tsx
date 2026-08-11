@@ -2,10 +2,15 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
+import {
+  useSetCollectionFollowUp,
+  useMarkCollectionContacted,
+} from '@/hooks/useCredits';
 import { StyledText } from '@/components/elements';
 import { CustomerAvatar } from '@/components/customers/CustomerAvatar';
 import { formatPesos } from '@/lib';
 import type { CollectionQueueRow } from '@/types/credits.types';
+import { Alert } from '@/utils';
 
 interface CollectionRowProps {
   row: CollectionQueueRow;
@@ -14,6 +19,43 @@ interface CollectionRowProps {
 export function CollectionRow({ row }: CollectionRowProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation('utang');
+
+  const setFollowUp = useSetCollectionFollowUp();
+  const markContacted = useMarkCollectionContacted();
+
+  const openFollowUpSheet = () => {
+    const today = new Date();
+    const isoOf = (d: Date) => d.toISOString().slice(0, 10);
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const in3 = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const inWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const options = [
+      { label: t('collectionFollowUpToday'), value: isoOf(today) },
+      { label: t('collectionFollowUpTomorrow'), value: isoOf(tomorrow) },
+      { label: t('collectionFollowUpIn3Days'), value: isoOf(in3) },
+      { label: t('collectionFollowUpInAWeek'), value: isoOf(inWeek) },
+    ] as const;
+    Alert.alert(t('collectionFollowUpSheetTitle'), undefined, [
+      ...options.map((o) => ({
+        text: o.label,
+        onPress: () =>
+          setFollowUp.mutate({
+            customerId: row.customerId,
+            followUpBy: o.value,
+          }),
+      })),
+      {
+        text: t('collectionFollowUpClear'),
+        onPress: () =>
+          setFollowUp.mutate({
+            customerId: row.customerId,
+            followUpBy: null,
+          }),
+      },
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
+  };
 
   const handleOpenDetails = () => {
     router.push(`/(edit-forms)/credit-details/${row.customerId}` as Href);
@@ -117,7 +159,7 @@ export function CollectionRow({ row }: CollectionRowProps) {
           <Pressable
             onPress={(e) => {
               e.stopPropagation();
-              // Action sheet handler stub — implemented in Task 15.
+              openFollowUpSheet();
             }}
             accessibilityRole="button"
             accessibilityLabel={chipLabel}
@@ -140,6 +182,24 @@ export function CollectionRow({ row }: CollectionRowProps) {
               }`}
             >
               {chipLabel}
+            </StyledText>
+          </Pressable>
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              markContacted.mutate(row.customerId);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t('collectionMarkContactedA11y', {
+              name: row.name,
+            })}
+            className="self-start mt-1 px-2 py-1"
+          >
+            <StyledText
+              variant="regular"
+              className="text-xs text-cinnamon-600"
+            >
+              Mark contacted
             </StyledText>
           </Pressable>
         </View>

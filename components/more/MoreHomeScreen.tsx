@@ -30,7 +30,7 @@ const routes = {
   cashEntries: '/(tabs)/more/cash-entries',
   gastos: '/gastos-kaha',
   settings: '/(tabs)/more/settings',
-  collection: '/(tabs)/customers/credit',
+  collection: '/(tabs)/customers/collection',
 } satisfies Record<string, Href>;
 
 function MoreTab() {
