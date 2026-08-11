@@ -4,6 +4,8 @@ import {
   deleteCustomer,
   deletePayment,
   getAllCustomers,
+  getCollectionFollowUp,
+  getCollectionQueue,
   getCreditHistory,
   getCreditKPIs,
   getCreditTransactionsByCustomer,
@@ -14,7 +16,9 @@ import {
   insertCustomer,
   insertPayment,
   markAllCreditsAsPaid,
+  markCollectionContacted,
   searchCustomers,
+  setCollectionFollowUp,
   updateCreditStatus,
   updateCustomer,
   getCustomerTimeline,
@@ -24,6 +28,9 @@ import {
 } from '@/database/credits';
 import { useToastStore } from '@/stores/ToastStore';
 import type {
+  CollectionFollowUp,
+  CollectionQueueParams,
+  CollectionQueueRow,
   CreditFilter,
   CreditHistory,
   CreditKPIs,
@@ -426,5 +433,72 @@ export function useCustomerCreditSummary(
     enabled: !!parsedId,
     staleTime: 60 * 1000,
     ...opts,
+  });
+}
+
+export function useCollectionQueue(
+  params: CollectionQueueParams = {},
+  opts: { enabled?: boolean } = {},
+) {
+  return useQuery<CollectionQueueRow[]>({
+    queryKey: ['collection-queue', params],
+    queryFn: () => getCollectionQueue(params),
+    staleTime: 60 * 1000,
+    ...opts,
+  });
+}
+
+export function useCollectionFollowUp(
+  customerId?: number,
+  opts: { enabled?: boolean } = {},
+) {
+  const parsed =
+    typeof customerId === 'string' ? parseInt(customerId) : customerId;
+
+  return useQuery<CollectionFollowUp | null>({
+    queryKey: ['collection-follow-up', parsed],
+    queryFn: () => getCollectionFollowUp(parsed!),
+    enabled: opts.enabled ?? !!parsed,
+    staleTime: 60 * 1000,
+    ...opts,
+  });
+}
+export function useSetCollectionFollowUp() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToastStore();
+  return useMutation({
+    mutationFn: (vars: { customerId: number; followUpBy: string | null }) =>
+      setCollectionFollowUp(vars),
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-follow-up', vars.customerId],
+      });
+      addToast({
+        message: 'Follow-up updated',
+        variant: 'success',
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      addToast({
+        message: 'Failed to update follow-up',
+        variant: 'danger',
+        duration: 5000,
+      });
+    },
+  });
+}
+
+export function useMarkCollectionContacted() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (customerId: number) => markCollectionContacted(customerId),
+    onSuccess: (_d, customerId) => {
+      queryClient.invalidateQueries({ queryKey: ['collection-queue'] });
+      queryClient.invalidateQueries({
+        queryKey: ['collection-follow-up', customerId],
+      });
+    },
   });
 }
