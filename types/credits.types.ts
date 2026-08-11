@@ -160,7 +160,7 @@ export interface CustomerCreditSummary {
   wouldExceedLimit: boolean;
 }
 
-export type CollectionBasket = 'overdue' | 'near_limit' | 'oldest_balance';
+export type CollectionBucket = 'overdue' | 'near_limit' | 'oldest_balance';
 
 export interface CollectionQueueParams {
   overdueDays?: number;
@@ -184,10 +184,12 @@ export interface CollectionQueueRow {
   balance: number;
   availableCredit: number | null;
   oldestUnpaidDueDate: string | null;
-  overdueDays: number | null;
+  overdueDays: number;
+  overdueThresholdDays: number;
   isNearLimit: boolean;
   nearLimitPctUsed: number;
-  bucket: CollectionBasket;
+  bucket: CollectionBucket;
+  lastTransactionDate: string | null;
   followUp: {
     followUpBy: string | null;
     contactsToday: number;
