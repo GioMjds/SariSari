@@ -3,8 +3,6 @@ import { SharedValue } from 'react-native-reanimated';
 import { SearchBar } from '@/components/ui';
 import { SubTabControl, type SubTabItem } from '@/components/navigation';
 import { INVENTORY_SUB_TABS, InventorySubTab } from '@/constants/tabs';
-import { InventoryAlertPills } from './InventoryAlertPills';
-import { useInventoryOverview } from '@/hooks/useInventoryOverview';
 
 export interface InventoryHeaderProps {
   active: InventorySubTab;
@@ -14,6 +12,8 @@ export interface InventoryHeaderProps {
   onTabChange: (t: InventorySubTab) => void;
   onPillPress: (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => void;
   progress?: SharedValue<number>;
+  onFilterPress?: (() => void) | undefined;
+  activeFilterCount?: number | undefined;
 }
 
 type InventoryTabMeta = {
@@ -29,7 +29,6 @@ const INVENTORY_TAB_META = {
 } satisfies Record<InventorySubTab, InventoryTabMeta>;
 
 export function InventoryHeader(props: InventoryHeaderProps) {
-  const overview = useInventoryOverview();
   const { progress } = props;
   const tabs = INVENTORY_SUB_TABS.map((t) => ({
     key: t,
@@ -48,12 +47,10 @@ export function InventoryHeader(props: InventoryHeaderProps) {
         value={props.search}
         onChange={props.onSearchChange}
         placeholder="Search products..."
-      />
-
-      <InventoryAlertPills
-        counts={overview.counts}
-        onPress={props.onPillPress}
+        onFilterPress={props.active === 'products' ? props.onFilterPress : undefined}
+        activeFilterCount={props.active === 'products' ? props.activeFilterCount : 0}
       />
     </View>
   );
 }
+

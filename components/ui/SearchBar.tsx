@@ -3,7 +3,6 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Text,
   type TextInputProps,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -16,8 +15,8 @@ type SearchBarProps = {
   placeholder?: string;
   accessibilityLabel?: string;
   debounceMs?: number;
-  onFilterPress?: () => void;
-  activeFilterCount?: number;
+  onFilterPress?: (() => void) | undefined;
+  activeFilterCount?: number | undefined;
 } & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
 export function SearchBar({

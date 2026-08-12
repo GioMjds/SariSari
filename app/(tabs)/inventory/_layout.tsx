@@ -31,8 +31,12 @@ function isInventorySubTab(segment: string): segment is InventorySubTab {
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
-  const { q } = useLocalSearchParams<{
+  const { q, category, filter, alert, supplier } = useLocalSearchParams<{
     q?: string;
+    category?: string;
+    filter?: string;
+    alert?: string;
+    supplier?: string;
   }>();
   const search = q ?? '';
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -43,6 +47,15 @@ export default function InventoryLayout() {
     visible: false,
     type: 'adjustment',
   });
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filter && filter !== 'all') count++;
+    if (category) count++;
+    if (alert) count++;
+    if (supplier) count++;
+    return count;
+  }, [filter, category, alert, supplier]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -72,6 +85,10 @@ export default function InventoryLayout() {
     [router],
   );
 
+  const handleFilterPress = useCallback(() => {
+    router.setParams({ openFilterModal: 'true' });
+  }, [router]);
+
   const handlePillPress = useCallback(
     (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => {
       router.push({ pathname: '/inventory/stock', params: { filter: kind } });
@@ -96,6 +113,8 @@ export default function InventoryLayout() {
             onTabChange={handleTabChange}
             onPillPress={handlePillPress}
             progress={progress}
+            onFilterPress={handleFilterPress}
+            activeFilterCount={activeFilterCount}
           />
           <StocktakeBanner />
         </>
