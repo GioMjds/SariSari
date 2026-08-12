@@ -38,8 +38,22 @@ export const productKeys = {
     [...productKeys.all, 'barcode', barcode] as const,
   sku: (sku: string) => [...productKeys.all, 'sku', sku] as const,
   detail: (id: number) => [...productKeys.all, 'detail', id] as const,
-  infinite: (search: string = '', filter: string = 'all') =>
-    [...productKeys.all, 'infinite', search, filter] as const,
+  infinite: (
+    search: string = '',
+    filter: string = 'all',
+    category?: string,
+    supplier?: string,
+    alert?: string,
+  ) =>
+    [
+      ...productKeys.all,
+      'infinite',
+      search,
+      filter,
+      category ?? '',
+      supplier ?? '',
+      alert ?? '',
+    ] as const,
   fastLaneProducts: () => [...productKeys.all, 'fastLaneProducts'] as const,
 };
 
@@ -93,12 +107,41 @@ export function useFindProductByBarcode(barcode: string | null | undefined) {
 export function usePaginatedProducts(
   search: string = '',
   filter: ProductFilterType = 'all',
+  options?: {
+    category?: string | undefined;
+    supplier?: string | undefined;
+    alert?: string | undefined;
+  },
 ) {
   return useInfiniteQuery({
-    queryKey: productKeys.infinite(search, filter),
+    queryKey: productKeys.infinite(
+      search,
+      filter,
+      options?.category,
+      options?.supplier,
+      options?.alert,
+    ),
     initialPageParam: null as ProductsPageCursor | null,
-    queryFn: ({ pageParam }) =>
-      getProductsPage({ cursor: pageParam, limit: PAGE_SIZE, search, filter }),
+    queryFn: ({ pageParam }) => {
+      const params: {
+        cursor: ProductsPageCursor | null;
+        limit: number;
+        search?: string;
+        filter?: ProductFilterType;
+        category?: string;
+        supplier?: string;
+        alert?: string;
+      } = {
+        cursor: pageParam,
+        limit: PAGE_SIZE,
+        search,
+        filter,
+      };
+      if (options?.category !== undefined) params.category = options.category;
+      if (options?.supplier !== undefined) params.supplier = options.supplier;
+      if (options?.alert !== undefined) params.alert = options.alert;
+      return getProductsPage(params);
+    },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     staleTime: 60_000,
   });

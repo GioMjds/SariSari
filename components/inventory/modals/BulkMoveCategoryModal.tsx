@@ -120,7 +120,7 @@ export function BulkMoveCategoryModal({ visible, productIds, onClose }: Props) {
               accessibilityRole="button"
               accessibilityLabel="Confirm bulk move"
               accessibilityState={{ disabled: !picked }}
-              className={`flex-1 min-h-[44px] rounded-xl items-center justify-center ${
+              className={`flex-1 flex-row min-h-[44px] rounded-xl items-center justify-center ${
                 picked && !updateProductCategoryMutation.isPending
                   ? 'bg-persimmon-500'
                   : 'bg-paper-300'

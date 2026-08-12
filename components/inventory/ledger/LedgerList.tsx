@@ -16,6 +16,7 @@ interface LedgerListProps {
   currentStock: number;
   searchQuery: string;
   selectedType: LedgerTypeFilter;
+  hideBalance?: boolean;
   isRefetching?: boolean;
   onRefresh?: () => void;
   ListHeaderComponent?: React.ReactElement | null;
@@ -35,6 +36,7 @@ export const LedgerList = memo(function LedgerList({
   currentStock,
   searchQuery,
   selectedType,
+  hideBalance = false,
   isRefetching,
   onRefresh,
   ListHeaderComponent,
@@ -86,10 +88,10 @@ export const LedgerList = memo(function LedgerList({
   const renderItem = useCallback(
     ({ item }: { item: LedgerRowData }) => (
       <View className="px-4 mb-2.5">
-        <LedgerRow row={item} />
+        <LedgerRow row={item} hideBalance={hideBalance} />
       </View>
     ),
-    [],
+    [hideBalance],
   );
 
   const renderSectionHeader = useCallback(
@@ -161,8 +163,10 @@ export const LedgerList = memo(function LedgerList({
 
 const LedgerRow = memo(function LedgerRow({
   row,
+  hideBalance,
 }: {
   row: InventoryTransaction & { runningBalance: number };
+  hideBalance?: boolean;
 }) {
   const qty = signedQuantity(row);
   const positive = qty > 0;
@@ -220,15 +224,17 @@ const LedgerRow = memo(function LedgerRow({
         >
           pcs
         </StyledText>
-        <View className="mt-2 px-2.5 py-1 rounded-pill bg-paper-100 border border-ink-200">
-          <StyledText
-            variant="extrabold"
-            className="text-mono text-ink-700"
-            style={{ fontSize: 11 }}
-          >
-            Bal {row.runningBalance}
-          </StyledText>
-        </View>
+        {!hideBalance && (
+          <View className="mt-2 px-2.5 py-1 rounded-pill bg-paper-100 border border-ink-200">
+            <StyledText
+              variant="extrabold"
+              className="text-mono text-ink-700"
+              style={{ fontSize: 11 }}
+            >
+              Bal {row.runningBalance}
+            </StyledText>
+          </View>
+        )}
       </View>
     </View>
   );

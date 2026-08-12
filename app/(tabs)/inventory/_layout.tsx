@@ -34,13 +34,6 @@ export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [fabForm, setFabForm] = useState<{
-    visible: boolean;
-    type: InventoryEventType;
-  }>({
-    visible: false,
-    type: 'adjustment',
-  });
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -103,13 +96,6 @@ export default function InventoryLayout() {
             onScanBarcode={() => setScannerOpen(true)}
           />
         ) : null}
-
-        <LogTransactionForm
-          initialType={fabForm.type}
-          visible={fabForm.visible}
-          onClose={() => setFabForm({ visible: false, type: fabForm.type })}
-          onSuccess={() => setFabForm({ visible: false, type: fabForm.type })}
-        />
       </View>
 
       <InventoryModalsHost

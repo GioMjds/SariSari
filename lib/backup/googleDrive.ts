@@ -1,23 +1,3 @@
-// lib/backup/googleDrive.ts
-// Google Drive `appDataFolder` client. Bare `fetch` + PKCE OAuth.
-//
-// Spec §4.1 (Authentication) + §4.5 (Drive API calls). This module is
-// the only consumer of `expo-auth-session` and `expo-secure-store`
-// in the backup pipeline — everything else reads through this surface.
-//
-// Why no SDK? The Drive SDK is ~250 KB and pulls in `google-auth-library`
-// which is hostile to React Native (uses Node `crypto` and `fs`). Bare
-// `fetch` covers the six operations we need:
-//
-//   findFile, create, update, download, delete, getMetadataSidecar
-//
-// Authentication uses PKCE (no client secret). The access token lives in
-// SecureStore; the refresh token does too. `ensureFreshToken()` is the
-// only entry point that touches tokens.
-//
-// See `docs/superpowers/specs/2026-06-27-data-backup-restore-design.md`
-// §4 for the full Drive design.
-
 import Constants from 'expo-constants';
 import * as AuthSession from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
@@ -27,9 +7,6 @@ import type { Metadata, BackupError } from './types';
 
 type AuthRequest = AuthSession.AuthRequest;
 
-// `expo-web-browser` registers a deep-link handler when this resolves.
-// Top-level side effect: required for the OAuth redirect to close the
-// in-app browser on iOS. See expo-auth-session docs.
 WebBrowser.maybeCompleteAuthSession();
 
 /* -------------------------------------------------------------------------- */
@@ -378,9 +355,9 @@ export const downloadFile = async (
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
   );
   const text = await r.text();
-  const FileSystem = await import('expo-file-system/legacy');
-  await FileSystem.writeAsStringAsync(destPath, text, {
-    encoding: FileSystem.EncodingType.UTF8,
+  const { File } = await import('expo-file-system');
+  new File(destPath).write(text, {
+    encoding: 'utf8',
   });
 };
 

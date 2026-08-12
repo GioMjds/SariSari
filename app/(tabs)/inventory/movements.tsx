@@ -98,6 +98,7 @@ export default function MovementsScreen() {
       <LedgerList
         transactions={transactions}
         currentStock={0}
+        hideBalance={true}
         searchQuery={searchQuery}
         selectedType={selectedType}
         isFetchingNextPage={txQuery.isFetchingNextPage}

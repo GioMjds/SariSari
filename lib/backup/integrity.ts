@@ -16,7 +16,7 @@
 // `SQLite.openDatabaseAsync` — see `tests/sqlite/single-handle.test.ts`
 // for the enforcement. The probe handle is read-only and short-lived.
 
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import * as SQLite from 'expo-sqlite';
 import { MIN_VALID_BYTES } from './snapshots';
 import type { IntegrityResult } from './types';
@@ -36,14 +36,21 @@ const SQLITE_HEADER_B64 = 'U1FMaXRlIGZvcm1hdCAzAA==';
  * guarantees the probe is closed even if `PRAGMA integrity_check` throws.
  */
 export const validate = async (filePath: string): Promise<IntegrityResult> => {
+  const file = new File(filePath);
+
   // 1. Magic header.
   let headerB64: string;
   try {
-    headerB64 = await FileSystem.readAsStringAsync(filePath, {
-      encoding: FileSystem.EncodingType.Base64,
-      position: 0,
-      length: 16,
-    });
+    if (!file.exists) {
+      return { ok: false, reason: 'unreasonable_size', detail: 'file missing' };
+    }
+    const handle = file.open();
+    try {
+      const bytes = handle.readBytes(16);
+      headerB64 = Buffer.from(bytes).toString('base64');
+    } finally {
+      handle.close();
+    }
   } catch (err) {
     return {
       ok: false,
@@ -57,11 +64,10 @@ export const validate = async (filePath: string): Promise<IntegrityResult> => {
 
   // 3. Size sanity (run before opening a handle so we reject the
   // half-written case cheaply — opening a 0-byte .db still works).
-  const info = await FileSystem.getInfoAsync(filePath);
-  if (!info.exists) {
+  if (!file.exists) {
     return { ok: false, reason: 'unreasonable_size', detail: 'file missing' };
   }
-  const size = (info as { size?: number }).size ?? 0;
+  const size = file.size;
   if (size < MIN_VALID_BYTES || size > MAX_VALID_BYTES) {
     return { ok: false, reason: 'unreasonable_size', detail: `size=${size}` };
   }

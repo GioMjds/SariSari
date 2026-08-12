@@ -10,7 +10,7 @@
 //
 // See `docs/superpowers/specs/2026-06-27-data-backup-restore-design.md` §3.
 
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Directory, Paths } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 import { db } from '@/configs/sqlite';
@@ -19,10 +19,11 @@ import type { Result, Snapshot } from './types';
 import { BackupError } from './types';
 
 const DB_NAME = 'sarisari.db';
-const DB_DIR = `${FileSystem.documentDirectory}SQLite/`;
+const docUri = Paths.document.uri.endsWith('/') ? Paths.document.uri : `${Paths.document.uri}/`;
+const DB_DIR = `${docUri}SQLite/`;
 export const DB_PATH = `${DB_DIR}${DB_NAME}`;
 
-const BACKUP_ROOT = `${FileSystem.documentDirectory}SQLiteBackups/`;
+const BACKUP_ROOT = `${docUri}SQLiteBackups/`;
 export const AUTO_DIR = `${BACKUP_ROOT}auto/`;
 export const SAFETY_DIR = `${BACKUP_ROOT}safety/`;
 
@@ -76,8 +77,14 @@ export const formatStamp = (date: Date = new Date()): string => {
  * (verified at the test level). Spec §3.1.
  */
 export const ensureBackupDirs = async (): Promise<void> => {
-  await FileSystem.makeDirectoryAsync(AUTO_DIR, { intermediates: true });
-  await FileSystem.makeDirectoryAsync(SAFETY_DIR, { intermediates: true });
+  const autoDir = new Directory(AUTO_DIR);
+  if (!autoDir.exists) {
+    autoDir.create({ intermediates: true, idempotent: true });
+  }
+  const safetyDir = new Directory(SAFETY_DIR);
+  if (!safetyDir.exists) {
+    safetyDir.create({ intermediates: true, idempotent: true });
+  }
 };
 
 /**
@@ -91,25 +98,23 @@ export const ensureBackupDirs = async (): Promise<void> => {
  * a snapshot of the other kind.
  */
 const toSnapshots = async (
-  entries: string[],
-  dir: string,
+  dirPath: string,
   kind: 'auto' | 'safety',
 ): Promise<Snapshot[]> => {
+  const dir = new Directory(dirPath);
+  if (!dir.exists) return [];
   const prefix = kind === 'auto' ? AUTO_PREFIX : SAFETY_PREFIX;
-  const filtered = entries.filter((f) => f.startsWith(prefix));
+  const items = dir.list();
   const out: Snapshot[] = [];
-  for (const f of filtered) {
-    const path = `${dir}${f}`;
-    const info = await FileSystem.getInfoAsync(path);
-    if (!info.exists) continue;
-    out.push({
-      path,
-      bytes: (info as { size?: number }).size ?? 0,
-      // ISO prefix sorts chronologically; for the timestamp we use
-      // mtime when available, falling back to the filename-encoded date.
-      createdAt: (info as { modificationTime?: number }).modificationTime ?? Date.now(),
-      kind,
-    });
+  for (const item of items) {
+    if (item instanceof File && item.name.startsWith(prefix) && item.exists) {
+      out.push({
+        path: item.uri,
+        bytes: item.size ?? 0,
+        createdAt: item.modificationTime ?? Date.now(),
+        kind,
+      });
+    }
   }
   // Newest first.
   out.sort((a, b) => b.path.localeCompare(a.path));
@@ -122,8 +127,7 @@ const toSnapshots = async (
  * cap and prune if needed.
  */
 export const listAutoSnapshots = async (): Promise<Snapshot[]> => {
-  const entries = await FileSystem.readDirectoryAsync(AUTO_DIR);
-  return toSnapshots(entries, AUTO_DIR, 'auto');
+  return toSnapshots(AUTO_DIR, 'auto');
 };
 
 /**
@@ -131,8 +135,7 @@ export const listAutoSnapshots = async (): Promise<Snapshot[]> => {
  * pruned by the rolling policy.
  */
 export const listSafetyCopies = async (): Promise<Snapshot[]> => {
-  const entries = await FileSystem.readDirectoryAsync(SAFETY_DIR);
-  return toSnapshots(entries, SAFETY_DIR, 'safety');
+  return toSnapshots(SAFETY_DIR, 'safety');
 };
 
 /**
@@ -160,7 +163,10 @@ export const pruneAutoSnapshots = async (keep: number = ROLLING_KEEP): Promise<v
   const toDelete = list.slice(keep);
   for (const snap of toDelete) {
     try {
-      await FileSystem.deleteAsync(snap.path, { idempotent: true });
+      const file = new File(snap.path);
+      if (file.exists) {
+        file.delete();
+      }
     } catch {
       // best-effort; the prune retries on the next snapshot.
     }
@@ -176,9 +182,8 @@ export const pruneAutoSnapshots = async (keep: number = ROLLING_KEEP): Promise<v
  * unavailable (it throws on some web targets); the snapshot still proceeds.
  */
 const assertDiskSpace = async (): Promise<void> => {
-  const dbInfo = await FileSystem.getInfoAsync(DB_PATH);
-  const dbBytes = (dbInfo as { size?: number }).size ?? 0;
-  if (dbBytes === 0) {
+  const dbFile = new File(DB_PATH);
+  if (!dbFile.exists || dbFile.size === 0) {
     // No DB on disk yet — nothing to snapshot. Caller should bail.
     throw {
       kind: 'insufficient_disk',
@@ -186,9 +191,10 @@ const assertDiskSpace = async (): Promise<void> => {
       needBytes: 0,
     } satisfies BackupError;
   }
+  const dbBytes = dbFile.size;
   let freeBytes: number;
   try {
-    freeBytes = await FileSystem.getFreeDiskStorageAsync();
+    freeBytes = Paths.availableDiskSpace;
   } catch {
     // Disk-space query unavailable (web, simulator quirks); let the
     // snapshot proceed. The OS will surface a real error on the copy.
@@ -214,6 +220,7 @@ const assertDiskSpace = async (): Promise<void> => {
  *      is corrupt on restore.
  *   3. `copyAsync` (NOT atomic — see spec §10 "App killed during snapshot")
  *   4. prune to 7
+
  *   5. write `last_backup_at` to AsyncStorage
  *   6. reset the counter
  *
@@ -256,8 +263,11 @@ export const createLocalSnapshot = async (): Promise<Result<Snapshot, BackupErro
   const filename = `${AUTO_PREFIX}${stamp}.db`;
   const dest = `${AUTO_DIR}${filename}`;
 
+  const dbFile = new File(DB_PATH);
+  const destFile = new File(dest);
+
   try {
-    await FileSystem.copyAsync({ from: DB_PATH, to: dest });
+    await dbFile.copy(destFile);
   } catch (err) {
     return {
       ok: false,
@@ -270,8 +280,7 @@ export const createLocalSnapshot = async (): Promise<Result<Snapshot, BackupErro
 
   await pruneAutoSnapshots(ROLLING_KEEP);
 
-  const info = await FileSystem.getInfoAsync(dest);
-  const bytes = (info as { size?: number }).size ?? 0;
+  const bytes = destFile.size;
 
   await AsyncStorage.setItem(AS_KEY_LAST_BACKUP_AT, String(Date.now()));
   useBackupCounter.getState().reset();
@@ -298,8 +307,8 @@ export const createLocalSnapshot = async (): Promise<Result<Snapshot, BackupErro
 export const createPreRestoreSafetyCopy = async (): Promise<Snapshot | null> => {
   await ensureBackupDirs();
 
-  const dbInfo = await FileSystem.getInfoAsync(DB_PATH);
-  if (!dbInfo.exists) return null;
+  const dbFile = new File(DB_PATH);
+  if (!dbFile.exists) return null;
 
   // WAL checkpoint first so the safety copy is internally consistent
   // — same rule as the auto snapshot.
@@ -313,12 +322,12 @@ export const createPreRestoreSafetyCopy = async (): Promise<Snapshot | null> => 
   const stamp = formatStamp();
   const filename = `${SAFETY_PREFIX}${stamp}.db`;
   const dest = `${SAFETY_DIR}${filename}`;
-  await FileSystem.copyAsync({ from: DB_PATH, to: dest });
+  const destFile = new File(dest);
+  await dbFile.copy(destFile);
 
-  const info = await FileSystem.getInfoAsync(dest);
   return {
     path: dest,
-    bytes: (info as { size?: number }).size ?? 0,
+    bytes: destFile.size,
     createdAt: Date.now(),
     kind: 'safety',
   };

@@ -60,24 +60,138 @@ jest.mock('expo-secure-store', () => ({
   __reset: () => mockSecureStoreMap.clear(),
 }));
 
-// Mock expo-file-system/legacy — the legacy namespace is a flat object
-// of functions. Tests inject per-test implementations via mockFs below.
-// Snapshot/restore tests need the real disk semantics, so the default
-// stubs are no-ops that tests replace with temp-dir implementations.
-const mockFs = {
-  documentDirectory: '/tmp/test/',
-  cacheDirectory: '/tmp/test/cache/',
-  getInfoAsync: jest.fn(async () => ({ exists: true, size: 1024 })),
-  copyAsync: jest.fn(async () => undefined),
-  deleteAsync: jest.fn(async () => undefined),
-  makeDirectoryAsync: jest.fn(async () => undefined),
-  readAsStringAsync: jest.fn(async () => 'U1FMaXRlIGZvcm1hdCAzAA=='),
-  writeAsStringAsync: jest.fn(async () => undefined),
-  readDirectoryAsync: jest.fn(async () => [] as string[]),
-  getFreeDiskStorageAsync: jest.fn(async () => 1024 * 1024 * 1024),
-  EncodingType: { Base64: 'base64' },
+// Mock expo-file-system (SDK 57 modern API: File, Directory, Paths, EncodingType, FileMode)
+class MockDirectory {
+  uri: string;
+  name: string;
+
+  constructor(...paths: (string | MockDirectory | MockFile)[]) {
+    const segments = paths.map((p) => (typeof p === 'string' ? p : p?.uri ?? ''));
+    let joined = segments.join('/');
+    if (!joined.startsWith('file://') && !joined.startsWith('/')) {
+      joined = '/' + joined;
+    }
+    this.uri = joined.replace(/([^:]\/)\/+/g, '$1');
+    if (!this.uri.endsWith('/')) {
+      this.uri += '/';
+    }
+    const parts = this.uri.split('/').filter(Boolean);
+    this.name = parts[parts.length - 1] || '';
+  }
+
+  get exists(): boolean {
+    return true;
+  }
+
+  get size(): number {
+    return 1024;
+  }
+
+  create(): void {}
+  delete(): void {}
+  list(): (MockFile | MockDirectory)[] {
+    return [];
+  }
+}
+
+class MockFile {
+  uri: string;
+  name: string;
+
+  constructor(...paths: (string | MockDirectory | MockFile)[]) {
+    const segments = paths.map((p) => (typeof p === 'string' ? p : p?.uri ?? ''));
+    let joined = segments.join('/');
+    if (!joined.startsWith('file://') && !joined.startsWith('/')) {
+      joined = '/' + joined;
+    }
+    this.uri = joined.replace(/([^:]\/)\/+/g, '$1');
+    const parts = this.uri.split('/').filter(Boolean);
+    this.name = parts[parts.length - 1] || '';
+  }
+
+  get exists(): boolean {
+    return true;
+  }
+
+  get size(): number {
+    return 1024;
+  }
+
+  get modificationTime(): number {
+    return Date.now();
+  }
+
+  get creationTime(): number {
+    return Date.now();
+  }
+
+  create(): void {}
+  delete(): void {}
+  async copy(): Promise<void> {}
+  copySync(): void {}
+  async move(): Promise<void> {}
+  moveSync(): void {}
+
+  async text(): Promise<string> {
+    return 'U1FMaXRlIGZvcm1hdCAzAA==';
+  }
+  textSync(): string {
+    return 'U1FMaXRlIGZvcm1hdCAzAA==';
+  }
+  async base64(): Promise<string> {
+    return 'U1FMaXRlIGZvcm1hdCAzAA==';
+  }
+  base64Sync(): string {
+    return 'U1FMaXRlIGZvcm1hdCAzAA==';
+  }
+  async bytes(): Promise<Uint8Array> {
+    return new Uint8Array([83, 81, 76, 105, 116, 101, 32, 102, 111, 114, 109, 97, 116, 32, 51, 0]);
+  }
+  bytesSync(): Uint8Array {
+    return new Uint8Array([83, 81, 76, 105, 116, 101, 32, 102, 111, 114, 109, 97, 116, 32, 51, 0]);
+  }
+  open(): { readBytes: (len: number) => Uint8Array; close: () => void } {
+    return {
+      readBytes: (len: number) =>
+        new Uint8Array([83, 81, 76, 105, 116, 101, 32, 102, 111, 114, 109, 97, 116, 32, 51, 0].slice(0, len)),
+      close: () => {},
+    };
+  }
+  write(): void {}
+}
+
+const mockPaths = {
+  document: new MockDirectory('/tmp/test/'),
+  cache: new MockDirectory('/tmp/test/cache/'),
+  bundle: new MockDirectory('/tmp/test/bundle/'),
+  availableDiskSpace: 1024 * 1024 * 1024,
+  totalDiskSpace: 10 * 1024 * 1024 * 1024,
+  join: (...paths: (string | MockDirectory | MockFile)[]) => {
+    const raw = paths.map((p) => (typeof p === 'string' ? p : p?.uri ?? '')).join('/');
+    return raw.replace(/([^:]\/)\/+/g, '$1');
+  },
 };
-jest.mock('expo-file-system/legacy', () => mockFs);
+
+const mockEncodingType = {
+  Base64: 'base64',
+  UTF8: 'utf8',
+};
+
+const mockFileMode = {
+  ReadOnly: 'r',
+  ReadWrite: 'rw',
+  WriteOnly: 'w',
+  Append: 'wa',
+  Truncate: 'wt',
+};
+
+jest.mock('expo-file-system', () => ({
+  File: MockFile,
+  Directory: MockDirectory,
+  Paths: mockPaths,
+  EncodingType: mockEncodingType,
+  FileMode: mockFileMode,
+}));
 
 // Mock expo-sqlite — the integrity checker opens a SEPARATE read-only
 // handle via openDatabaseAsync. Tests inject per-test behavior through

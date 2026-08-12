@@ -79,36 +79,20 @@ export default function ProductsScreen() {
 
   const searchTerm = (q ?? '').trim().toLowerCase();
 
-  const productsQuery = usePaginatedProducts(searchTerm, filter);
+  const filterOptions = useMemo(() => {
+    const opts: { category?: string; supplier?: string; alert?: string } = {};
+    if (category) opts.category = category;
+    if (supplier) opts.supplier = supplier;
+    if (alert) opts.alert = alert;
+    return opts;
+  }, [category, supplier, alert]);
 
-  const rawProducts = useMemo(
+  const productsQuery = usePaginatedProducts(searchTerm, filter, filterOptions);
+
+  const products = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [productsQuery.data],
   );
-
-  const products = useMemo(() => {
-    let list = rawProducts;
-    if (category) {
-      list = list.filter(
-        (p) => p.category?.toLowerCase() === category.toLowerCase(),
-      );
-    }
-    if (supplier) {
-      list = list.filter((p) => p.supplier_id === supplier);
-    }
-    if (alert) {
-      list = list.filter((p) => {
-        const qty = p.quantity ?? 0;
-        if (alert === 'out') return qty === 0;
-        if (alert === 'low') return getStatus(p as any) === 'low_stock';
-        if (alert === 'near_expiry')
-          return getStatus(p as any) === 'near_expiry';
-        if (alert === 'overstock') return qty > MAX_STOCK_THRESHOLD;
-        return true;
-      });
-    }
-    return list;
-  }, [rawProducts, category, supplier, alert]);
 
   const selectedIds = useMemo(
     () => Array.from(selection.selectedIds),
@@ -175,8 +159,11 @@ export default function ProductsScreen() {
         variant: 'success',
         duration: 4000,
       });
+    } catch {
+      // Mutations handle individual error toasts
+    } finally {
       selection.clear();
-    } catch {}
+    }
   }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
 
   const handleActionPress = useCallback((product: Product) => {

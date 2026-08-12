@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { useToastStore, useStockSheetSignal } from '@/stores';
 import { MoneyText } from '@/components/ui';
 import {
   useDeleteReorderPlan,
@@ -27,6 +28,7 @@ type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
 
 export default function RecommendationsScreen() {
   const router = useRouter();
+  const signal = useStockSheetSignal();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
 
   const {
@@ -162,10 +164,8 @@ export default function RecommendationsScreen() {
   };
 
   const handleRestock = (product: ReorderRecommendation) => {
-    router.replace({
-      pathname: '/inventory',
-      params: { restock: product.productId.toString() },
-    } as Href);
+    signal.requestRestock(product.productId);
+    router.push('/(tabs)/inventory/products' as Href);
   };
 
   const renderReorderItem = ({ item }: { item: ReorderRecommendation }) => {

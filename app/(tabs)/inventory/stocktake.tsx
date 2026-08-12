@@ -40,8 +40,8 @@ export default function StocktakeScreen() {
   const { data: recentSessions = [] } = useRecentStocktakeSessions();
   const { getAllProductsQuery } = useProducts();
   const products = useMemo(() => {
-    return getAllProductsQuery?.data;
-  }, [getAllProductsQuery?.data]) as Product[];
+    return getAllProductsQuery?.data ?? [];
+  }, [getAllProductsQuery?.data]);
 
   const startMut = useStartStocktake();
   const upsertMut = useUpsertStocktakeCount();

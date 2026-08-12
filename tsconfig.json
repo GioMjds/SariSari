@@ -12,8 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": true,
     "paths": {
-      "@/*": ["./*"],
-      "expo-file-system/legacy": ["./types/expo-file-system-shim/legacy.d.ts"]
+      "@/*": ["./*"]
     }
   },
   "include": [

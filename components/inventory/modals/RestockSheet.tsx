@@ -11,6 +11,7 @@ import { StyledText } from '@/components/elements';
 import { useProducts } from '@/hooks/useProducts';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useReceiveStock } from '@/hooks/useStockMutations';
+import { useStocktakeGuard } from '@/hooks/useStocktake';
 import { parsePesosInput } from '@/lib/money';
 import { Product } from '@/types/products.types';
 import { Supplier } from '@/types/suppliers.types';
@@ -91,7 +92,8 @@ export function RestockSheet({
     }
   }, [unitCostText]);
 
-  const valid = !!product && qty >= 1 && unitCost !== null;
+  const stocktakeGuard = useStocktakeGuard();
+  const valid = !!product && qty >= 1 && unitCost !== null && !stocktakeGuard.isActive;
 
   const handleSubmit = () => {
     if (!valid || !product || unitCost === null) return;

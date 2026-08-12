@@ -17,6 +17,9 @@ export const initInventoryTable = async () => {
         (type != 'adjustment' AND adjustment_sign IS NULL)
       )
     );
+
+    CREATE INDEX IF NOT EXISTS idx_inventory_tx_timestamp ON inventory_transactions(timestamp DESC, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_inventory_tx_product_id ON inventory_transactions(product_id);
   `);
 };
 

@@ -19,7 +19,7 @@
 // §4.4–§4.7 for the full state machine.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import * as Network from 'expo-network';
 import { db } from '@/configs/sqlite';
 import {
@@ -248,9 +248,8 @@ export const performCloudUpload = async (
     // uploaded bytes are internally consistent; otherwise the cloud
     // copy could differ from what the live app sees.
     await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
-    const dbBytes = await FileSystem.readAsStringAsync(DB_PATH, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    const dbFile = new File(DB_PATH);
+    const dbBytes = await dbFile.base64();
     const metadata = buildMetadata(inputs);
     await uploadBackup(dbBytes, metadata);
     await markIdle();
@@ -363,7 +362,7 @@ export const downloadCloudToTemp = async (): Promise<string> => {
       message: 'No cloud backup found in Drive.',
     } satisfies BackupError;
   }
-  const tmp = `${FileSystem.cacheDirectory}restore_${Date.now()}.db`;
-  await downloadFile(fileId, tmp);
-  return tmp;
+  const tmpFile = new File(Paths.cache, `restore_${Date.now()}.db`);
+  await downloadFile(fileId, tmpFile.uri);
+  return tmpFile.uri;
 };

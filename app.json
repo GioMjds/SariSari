@@ -60,6 +60,13 @@
         {
           "cameraPermission": "Allow SariSari to use the device camera to scan product barcodes."
         }
+      ],
+      [
+        "expo-file-system",
+        {
+          "supportOpeningDocumentsInPlace": true,
+          "enableFileSharing": true
+        }
       ]
     ],
     "experiments": {

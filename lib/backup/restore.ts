@@ -1,25 +1,4 @@
-// lib/backup/restore.ts
-// Single funnel for every destructive restore (spec §5). The pipeline:
-//
-//   1. validate source       — abort before any write if the file is corrupt
-//   2. take safety copy      — ALWAYS, before any other write, so we have
-//                              a rollback target if the overwrite partially
-//                              fails (spec §5 failure-mode table)
-//   3. close live DB handle  — `db.closeAsync()` releases the WAL lock so
-//                              we can safely overwrite the .db file
-//   4. delete WAL/SHM sidecars — must happen AFTER close, BEFORE overwrite
-//                              (stale sidecars would corrupt the restored DB)
-//   5. overwrite             — the destructive write; rollback on failure
-//   6. validate overwrite    — guard against a partial write that left a
-//                              valid-header / truncated body
-//   7. reload                — `Updates.reloadAsync()` to remount the new DB
-//                              and run any new migrations
-//
-// `restoreFromCloud` reuses `restoreFromLocal` after downloading to
-// `cacheDirectory`. The download lands in cache, not document, so the OS
-// reclaims it on the next cleanup pass.
-
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import * as Updates from 'expo-updates';
 import { db } from '@/configs/sqlite';
 import { validate } from './integrity';
@@ -94,18 +73,20 @@ export const restoreFromLocal = async (snapshotPath: string): Promise<void> => {
     }
 
     // 4. Delete WAL/SHM sidecars (idempotent).
-    await FileSystem.deleteAsync(`${DB_PATH}-wal`, { idempotent: true });
-    await FileSystem.deleteAsync(`${DB_PATH}-shm`, { idempotent: true });
+    const walFile = new File(`${DB_PATH}-wal`);
+    if (walFile.exists) walFile.delete();
+    const shmFile = new File(`${DB_PATH}-shm`);
+    if (shmFile.exists) shmFile.delete();
 
     // 5. Overwrite. On failure, roll back using the safety copy we just
     // made — the user's data is intact even if the restore aborts.
     try {
-      await FileSystem.copyAsync({ from: snapshotPath, to: DB_PATH });
+      await new File(snapshotPath).copy(new File(DB_PATH));
     } catch (err) {
       const safety = await findLatestSafetyCopy();
       if (safety) {
         try {
-          await FileSystem.copyAsync({ from: safety.path, to: DB_PATH });
+          await new File(safety.path).copy(new File(DB_PATH));
         } catch (rollbackErr) {
           console.error('Rollback failed after copy error', rollbackErr);
         }
@@ -123,7 +104,7 @@ export const restoreFromLocal = async (snapshotPath: string): Promise<void> => {
       const safety = await findLatestSafetyCopy();
       if (safety) {
         try {
-          await FileSystem.copyAsync({ from: safety.path, to: DB_PATH });
+          await new File(safety.path).copy(new File(DB_PATH));
         } catch (rollbackErr) {
           console.error('Rollback failed after integrity failure', rollbackErr);
         }
@@ -193,7 +174,8 @@ export const restoreFromCloud = async (_fileId: string): Promise<void> => {
     // want stale restore files lingering between attempts.
     if (tmp) {
       try {
-        await FileSystem.deleteAsync(tmp, { idempotent: true });
+        const tmpFile = new File(tmp);
+        if (tmpFile.exists) tmpFile.delete();
       } catch {
         // ignore
       }
@@ -206,18 +188,19 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
   restoredReceiptsCount: number;
 }> {
   const isZip =
-
     inputBuffer.length > 4 &&
     inputBuffer[0] === 0x50 &&
     inputBuffer[1] === 0x4b &&
     inputBuffer[2] === 0x03 &&
     inputBuffer[3] === 0x04;
 
+  const docUri = Paths.document.uri.endsWith('/') ? Paths.document.uri : `${Paths.document.uri}/`;
+
   if (isZip) {
     const { dbBuffer, receipts } = await extractBackupBundle(inputBuffer);
 
-    const dbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db`;
-    const backupDbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db.bak`;
+    const dbPath = `${docUri}SQLite/sarisari.db`;
+    const backupDbPath = `${docUri}SQLite/sarisari.db.bak`;
 
     // Receipts already validated by extractBackupBundle; revalidate before
     // staging to defend against manifest tampering and path collisions.
@@ -229,64 +212,72 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
     // Back up any pre-existing receipt files that the restore will overwrite,
     // so we can restore them if a subsequent write fails. Receipts with no
     // prior file are tracked so we can delete them on rollback.
-    const priorReceipts: Array<{
+    const priorReceipts: {
       relativePath: string;
       backupPath: string;
       existed: boolean;
-    }> = [];
+    }[] = [];
+
     for (const r of validReceipts) {
-      const targetPath = `${FileSystem.documentDirectory}${r.relativePath}`;
-      const info = await FileSystem.getInfoAsync(targetPath);
+      const targetPath = `${docUri}${r.relativePath}`;
+      const targetFile = new File(targetPath);
+      const exists = targetFile.exists;
       const backupPath = `${targetPath}.bak`;
+      const backupFile = new File(backupPath);
       try {
         // Remove any stale .bak file before creating a new one
-        await FileSystem.deleteAsync(backupPath, { idempotent: true });
-        if (info.exists) {
-          await FileSystem.copyAsync({ from: targetPath, to: backupPath });
+        if (backupFile.exists) backupFile.delete();
+        if (exists) {
+          await targetFile.copy(backupFile);
         }
-        priorReceipts.push({ relativePath: r.relativePath, backupPath, existed: info.exists });
+        priorReceipts.push({
+          relativePath: r.relativePath,
+          backupPath,
+          existed: exists,
+        });
       } catch (err) {
         // Preserve the original failure but roll back any backups we already made.
         await Promise.all(
           priorReceipts
             .filter((p) => p.existed)
-            .map((p) =>
-              FileSystem.deleteAsync(p.backupPath, { idempotent: true }).catch(
-                () => undefined,
-              ),
-            ),
+            .map(async (p) => {
+              try {
+                const bf = new File(p.backupPath);
+                if (bf.exists) bf.delete();
+              } catch {}
+            }),
         );
         throw err;
       }
     }
 
     let dbBackupSucceeded = false;
+    const dbFile = new File(dbPath);
+    const backupDbFile = new File(backupDbPath);
     try {
       // Remove any stale .bak file before creating a new one
-      await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
-      await FileSystem.copyAsync({ from: dbPath, to: backupDbPath });
+      if (backupDbFile.exists) backupDbFile.delete();
+      await dbFile.copy(backupDbFile);
       dbBackupSucceeded = true;
 
-      await FileSystem.writeAsStringAsync(
-        dbPath,
-        Buffer.from(dbBuffer).toString('base64'),
-        { encoding: FileSystem.EncodingType.Base64 },
-      );
+      dbFile.write(Buffer.from(dbBuffer).toString('base64'), {
+        encoding: 'base64',
+      });
 
       for (const r of validReceipts) {
-        const targetPath = `${FileSystem.documentDirectory}${r.relativePath}`;
+        const targetPath = `${docUri}${r.relativePath}`;
         canonicalReceiptPathOrThrow(r.relativePath);
-        await FileSystem.writeAsStringAsync(
-          targetPath,
-          Buffer.from(r.content).toString('base64'),
-          { encoding: FileSystem.EncodingType.Base64 },
-        );
+        const rFile = new File(targetPath);
+        rFile.write(Buffer.from(r.content).toString('base64'), {
+          encoding: 'base64',
+        });
       }
 
-      await FileSystem.deleteAsync(backupDbPath, { idempotent: true });
+      if (backupDbFile.exists) backupDbFile.delete();
       for (const p of priorReceipts) {
         if (p.existed) {
-          await FileSystem.deleteAsync(p.backupPath, { idempotent: true });
+          const bf = new File(p.backupPath);
+          if (bf.exists) bf.delete();
         }
       }
       return { success: true, restoredReceiptsCount: validReceipts.length };
@@ -294,7 +285,7 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       // Roll back the database only if the backup succeeded.
       if (dbBackupSucceeded) {
         try {
-          await FileSystem.copyAsync({ from: backupDbPath, to: dbPath });
+          await backupDbFile.copy(dbFile);
         } catch (rollbackErr) {
           console.error('Rollback failed for database', rollbackErr);
         }
@@ -302,29 +293,32 @@ export async function performRestore(inputBuffer: Uint8Array): Promise<{
       // Roll back receipts: restore overwritten files, delete new ones.
       await Promise.all(
         priorReceipts.map(async (p) => {
-          const targetPath = `${FileSystem.documentDirectory}${p.relativePath}`;
+          const targetPath = `${docUri}${p.relativePath}`;
+          const targetFile = new File(targetPath);
+          const backupFile = new File(p.backupPath);
           try {
             if (p.existed) {
-              await FileSystem.copyAsync({ from: p.backupPath, to: targetPath });
-              await FileSystem.deleteAsync(p.backupPath, { idempotent: true });
+              await backupFile.copy(targetFile);
+              if (backupFile.exists) backupFile.delete();
             } else {
-              await FileSystem.deleteAsync(targetPath, { idempotent: true });
+              if (targetFile.exists) targetFile.delete();
             }
           } catch (rollbackErr) {
-            console.error(`Rollback failed for receipt ${p.relativePath}`, rollbackErr);
+            console.error(
+              `Rollback failed for receipt ${p.relativePath}`,
+              rollbackErr,
+            );
           }
         }),
       );
       throw err;
     }
   } else {
-    const dbPath = `${FileSystem.documentDirectory}SQLite/sarisari.db`;
-    await FileSystem.writeAsStringAsync(
-      dbPath,
-      Buffer.from(inputBuffer).toString('base64'),
-      { encoding: FileSystem.EncodingType.Base64 },
-    );
+    const dbPath = `${docUri}SQLite/sarisari.db`;
+    const dbFile = new File(dbPath);
+    dbFile.write(Buffer.from(inputBuffer).toString('base64'), {
+      encoding: 'base64',
+    });
     return { success: true, restoredReceiptsCount: 0 };
   }
 }
-

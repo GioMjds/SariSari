@@ -6,7 +6,7 @@ import {
   SalesSkeleton,
 } from '@/components/sales';
 import { useTabBarBottomOffset } from '@/components/layout';
-import { Pagination } from '@/components/ui';
+import { Pagination, RefreshableFlatList } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useSales } from '@/hooks';
@@ -14,7 +14,7 @@ import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { Href, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import {
   endOfDay,
   endOfMonth,
@@ -251,21 +251,15 @@ export default function Receipts() {
   return (
     <View className="flex-1 bg-paper-200">
       <View className="flex-1">
-        <FlatList
+        <RefreshableFlatList<SaleWithItems>
           ref={flatListRef}
+          isRefreshing={refreshing}
+          onRefresh={onRefresh}
           data={paginatedSales}
           renderItem={renderSaleItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#E85A1F"
-              colors={['#E85A1F']}
-            />
-          }
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
           initialNumToRender={ITEMS_PER_PAGE}

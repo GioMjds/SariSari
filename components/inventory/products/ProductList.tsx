@@ -14,7 +14,7 @@ export interface ProductsListProps {
   onEndReached?: () => void;
 }
 
-export function ProductsList({
+export const ProductsList = memo(function ProductsList({
   products,
   onPress,
   onLongPress,
@@ -72,6 +72,4 @@ export function ProductsList({
       }
     />
   );
-}
-
-memo(ProductsList);
+});

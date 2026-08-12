@@ -1,6 +1,5 @@
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Directory, Paths } from 'expo-file-system';
 
-const RECEIPT_DIR = `${FileSystem.documentDirectory}receipts/`;
 const RECEIPT_PREFIX = 'receipts/';
 
 const SAFE_BASENAME_PATTERN = /^[A-Za-z0-9._-]+$/;
@@ -34,9 +33,9 @@ export const canonicalReceiptPathOrThrow = (relativePath: string): string => {
 };
 
 export async function ensureReceiptDir(): Promise<void> {
-  const info = await FileSystem.getInfoAsync(RECEIPT_DIR);
-  if (!info.exists) {
-    await FileSystem.makeDirectoryAsync(RECEIPT_DIR, { intermediates: true });
+  const dir = new Directory(Paths.document, 'receipts');
+  if (!dir.exists) {
+    dir.create({ intermediates: true, idempotent: true });
   }
 }
 
@@ -49,16 +48,16 @@ export async function saveStagedReceipt(
   if (!relativePath) {
     throw new Error(`Invalid receipt filename: ${filename}`);
   }
-  const targetUri = `${FileSystem.documentDirectory}${relativePath}`;
-  await FileSystem.copyAsync({ from: sourceUri, to: targetUri });
+  const sourceFile = new File(sourceUri);
+  const targetFile = new File(Paths.document, relativePath);
+  await sourceFile.copy(targetFile);
   return relativePath;
 }
 
 export async function removeReceiptFile(relativePath: string): Promise<void> {
   canonicalReceiptPathOrThrow(relativePath);
-  const fullPath = `${FileSystem.documentDirectory}${relativePath}`;
-  const info = await FileSystem.getInfoAsync(fullPath);
-  if (info.exists) {
-    await FileSystem.deleteAsync(fullPath, { idempotent: true });
+  const file = new File(Paths.document, relativePath);
+  if (file.exists) {
+    file.delete();
   }
 }

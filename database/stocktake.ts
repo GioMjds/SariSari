@@ -84,7 +84,7 @@ export async function startSession(note?: string): Promise<string> {
         `INSERT INTO stocktake_counts (
           id, session_id, product_id, expected_qty, counted_qty
         ) VALUES (?, ?, ?, ?, ?)`,
-        [countId, sessionId, p.id, p.quantity, 0],
+        [countId, sessionId, p.id, p.quantity, p.quantity],
       );
     }
   });

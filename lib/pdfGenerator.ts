@@ -1,6 +1,6 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, Paths } from 'expo-file-system';
 import { CreditTransaction } from '@/types/credits.types';
 import { formatPesos } from './money';
 import { parseStoredTimestamp } from '@/utils/timezone';
@@ -16,12 +16,17 @@ interface GeneratePdfOptions {
 /**
  * Generates an HTML template representing a premium, retro-inspired paper receipt (resibo) statement.
  */
-function buildStatementHtml({ storeName, customerName, credits, totalBalance }: GeneratePdfOptions): string {
+function buildStatementHtml({
+  storeName,
+  customerName,
+  credits,
+  totalBalance,
+}: GeneratePdfOptions): string {
   const currentDateStr = format(new Date(), 'MMMM dd, yyyy - hh:mm a');
-  
+
   // Filter only unpaid/partially paid credit items
   const activeCredits = credits.filter((c) => c.status !== 'paid');
-  
+
   // Sort by date descending
   const sortedCredits = [...activeCredits].sort((a, b) => {
     const aTime = parseStoredTimestamp(a.date)?.getTime() ?? 0;
@@ -29,16 +34,16 @@ function buildStatementHtml({ storeName, customerName, credits, totalBalance }: 
     return bTime - aTime;
   });
 
-  const creditRows = sortedCredits.map((c) => {
-    const date = parseStoredTimestamp(c.date);
-    const dateStr = date ? format(date, 'MMM dd, yyyy') : 'Unknown Date';
-    const product = c.product_name || 'Credit Account';
-    const totalAmount = formatPesos(c.amount);
-    const remaining = formatPesos(c.amount - c.amount_paid);
-    const statusLabel = c.status.toUpperCase();
-    const statusColor = c.status === 'partial' ? '#b45309' : '#b91c1c'; // Warm amber or red
-    
-    return `
+  const creditRows = sortedCredits
+    .map((c) => {
+      const date = parseStoredTimestamp(c.date);
+      const dateStr = date ? format(date, 'MMM dd, yyyy') : 'Unknown Date';
+      const product = c.product_name || 'Credit Account';
+      const totalAmount = formatPesos(c.amount);
+      const remaining = formatPesos(c.amount - c.amount_paid);
+      const statusColor = c.status === 'partial' ? '#b45309' : '#b91c1c'; // Warm amber or red
+
+      return `
       <tr>
         <td class="date-col">${dateStr}</td>
         <td>
@@ -49,7 +54,8 @@ function buildStatementHtml({ storeName, customerName, credits, totalBalance }: 
         <td class="text-right" style="color: ${statusColor}; font-weight: bold;">${remaining}</td>
       </tr>
     `;
-  }).join('');
+    })
+    .join('');
 
   return `
     <!DOCTYPE html>
@@ -285,13 +291,16 @@ function buildStatementHtml({ storeName, customerName, credits, totalBalance }: 
               </tr>
             </thead>
             <tbody>
-              ${creditRows || `
+              ${
+                creditRows ||
+                `
                 <tr>
                   <td colspan="4" style="text-align: center; color: #7b7167; padding: 20px 0;">
                     Walang aktibong utang (No active credits)
                   </td>
                 </tr>
-              `}
+              `
+              }
             </tbody>
           </table>
 
@@ -315,24 +324,30 @@ function buildStatementHtml({ storeName, customerName, credits, totalBalance }: 
 /**
  * Renders a suki's credit statement into a PDF file and launches the OS native share drawer.
  */
-export async function shareCreditStatementPdf(options: GeneratePdfOptions): Promise<boolean> {
+export async function shareCreditStatementPdf(
+  options: GeneratePdfOptions,
+): Promise<boolean> {
   try {
     const html = buildStatementHtml(options);
-    
+
     // Render HTML to PDF file on device
     const { uri } = await Print.printToFileAsync({
       html,
       base64: false,
     });
-    
+
     // Rename temp PDF to something readable by the recipient
-    const sanitizedCustomerName = options.customerName.replace(/[^a-zA-Z0-9]/g, '_');
-    const newPdfPath = `${FileSystem.cacheDirectory}SariSari_Statement_${sanitizedCustomerName}.pdf`;
-    
-    await FileSystem.copyAsync({
-      from: uri,
-      to: newPdfPath,
-    });
+    const sanitizedCustomerName = options.customerName.replace(
+      /[^a-zA-Z0-9]/g,
+      '_',
+    );
+    const newPdfFile = new File(
+      Paths.cache,
+      `SariSari_Statement_${sanitizedCustomerName}.pdf`,
+    );
+
+    const srcFile = new File(uri);
+    await srcFile.copy(newPdfFile);
 
     // Share PDF
     const isAvailable = await Sharing.isAvailableAsync();
@@ -341,14 +356,20 @@ export async function shareCreditStatementPdf(options: GeneratePdfOptions): Prom
       return false;
     }
 
-    await Sharing.shareAsync(newPdfPath, {
+    await Sharing.shareAsync(newPdfFile.uri, {
       mimeType: 'application/pdf',
       dialogTitle: `Statement for ${options.customerName}`,
       UTI: 'com.adobe.pdf',
     });
 
     // Clean up cache file asynchronously
-    FileSystem.deleteAsync(newPdfPath, { idempotent: true }).catch(() => {});
+    try {
+      if (newPdfFile.exists) {
+        newPdfFile.delete();
+      }
+    } catch {
+      // ignore
+    }
 
     return true;
   } catch (error) {

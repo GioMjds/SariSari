@@ -345,12 +345,18 @@ export interface ProductsPage {
 export const getProductsPage = async (params: {
   cursor: ProductsPageCursor | null;
   limit: number;
-  search?: string;
-  filter?: ProductFilterType;
+  search?: string | undefined;
+  filter?: ProductFilterType | undefined;
+  category?: string | undefined;
+  supplier?: string | undefined;
+  alert?: string | undefined;
 }): Promise<ProductsPage> => {
   const search = (params.search ?? '').trim();
   const searchPattern = `%${search.toLowerCase()}%`;
   const filter = params.filter ?? 'all';
+  const category = (params.category ?? '').trim();
+  const supplier = (params.supplier ?? '').trim();
+  const alert = (params.alert ?? '').trim();
   const cursorName = params.cursor?.name ?? '';
   const cursorId = params.cursor?.id ?? 0;
   const limit = Math.max(1, Math.floor(params.limit));
@@ -372,6 +378,15 @@ export const getProductsPage = async (params: {
     filterCondition = 'wholesale_unit_name IS NOT NULL';
   }
 
+  let alertCondition = '1=1';
+  if (alert === 'out') {
+    alertCondition = 'quantity = 0';
+  } else if (alert === 'low') {
+    alertCondition = 'quantity > 0 AND quantity <= 5';
+  } else if (alert === 'overstock') {
+    alertCondition = 'quantity >= 100';
+  }
+
   const rows = await db.getAllAsync<Product>(
     `SELECT * FROM products
      WHERE (
@@ -386,6 +401,9 @@ export const getProductsPage = async (params: {
        LOWER(category) LIKE ?
      )
      AND (${filterCondition})
+     AND (${alertCondition})
+     AND (? = '' OR LOWER(category) = LOWER(?))
+     AND (? = '' OR supplier_id = ?)
      ORDER BY LOWER(name), id
      LIMIT ?`,
     [
@@ -398,6 +416,10 @@ export const getProductsPage = async (params: {
       searchPattern,
       searchPattern,
       searchPattern,
+      category,
+      category,
+      supplier,
+      supplier,
       limit,
     ],
   );

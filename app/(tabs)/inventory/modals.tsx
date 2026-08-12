@@ -40,10 +40,14 @@ export function InventoryModalsHost({
     type: 'adjustment',
   });
 
-  const resolveProduct = useCallback(
-    (id: number | null) =>
-      id == null ? null : (products.find((p) => p.id === id) ?? null),
+  const productMap = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
     [products],
+  );
+
+  const resolveProduct = useCallback(
+    (id: number | null) => (id == null ? null : (productMap.get(id) ?? null)),
+    [productMap],
   );
 
   const lockedRestock = useMemo(
@@ -57,7 +61,7 @@ export function InventoryModalsHost({
       setTxForm({ visible: true, product: p, type: 'adjustment' });
       signal.clearAdjust();
     }
-  }, [signal.adjust.active, signal.adjust.productId, resolveProduct, signal]);
+  }, [signal.adjust.active, signal.adjust.productId, resolveProduct]);
 
   useEffect(() => {
     if (signal.restock.active) {
@@ -65,7 +69,7 @@ export function InventoryModalsHost({
       setRestockOpen(true);
       signal.clearRestock();
     }
-  }, [signal.restock.active, signal.restock.productId, signal]);
+  }, [signal.restock.active, signal.restock.productId]);
 
   useEffect(() => {
     if (signal.damaged.active) {
@@ -73,7 +77,7 @@ export function InventoryModalsHost({
       setTxForm({ visible: true, product: p, type: 'damaged' });
       signal.clearDamaged();
     }
-  }, [signal.damaged.active, signal.damaged.productId, resolveProduct, signal]);
+  }, [signal.damaged.active, signal.damaged.productId, resolveProduct]);
 
   const handleScanResult = (barcode: string) => {
     onCloseScanner();
