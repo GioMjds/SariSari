@@ -4,7 +4,6 @@ import { Href, useRouter, useSegments } from 'expo-router';
 import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
 import { TopTabs } from '@/components/navigation';
 import { InventorySpeedDialFab } from '@/components/inventory';
-import { StocktakeBanner } from '@/components/inventory/stocktake';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
 import { useTabProgress } from '@/hooks';
@@ -19,13 +18,13 @@ const SUB_TAB_SEGMENTS = [
   'recommendations',
 ] satisfies InventorySubTab[];
 
-const INVENTORY_TAB_DEFS: { key: InventorySubTab; label: string }[] = [
+const INVENTORY_TAB_DEFS = [
   { key: 'products', label: 'PRODUCTS' },
   { key: 'movements', label: 'MOVEMENTS' },
   { key: 'stocktake', label: 'STOCKTAKE' },
   { key: 'damaged', label: 'DAMAGED' },
   { key: 'recommendations', label: 'RECOMMENDATIONS' },
-];
+] satisfies { key: InventorySubTab; label: string }[];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
   return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
@@ -74,7 +73,6 @@ export default function InventoryLayout() {
       activeTab={activeTab}
       onTabPress={handleTabChange}
       progress={progress}
-      topSlot={!isDetail ? <StocktakeBanner /> : null}
     >
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs

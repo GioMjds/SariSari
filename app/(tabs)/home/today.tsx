@@ -42,6 +42,7 @@ import {
   profitSubline,
 } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
+import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
@@ -146,15 +147,14 @@ export default function TodayScreen() {
     ]);
   }, [invalidateReports, queryClient]);
 
-  const startOfDayDate = new Date(dateRange.startDate);
-  startOfDayDate.setHours(0, 0, 0, 0);
-
-  const endOfDayDate = new Date(dateRange.endDate);
-  endOfDayDate.setHours(23, 59, 59, 999);
+  const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
+  const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
 
   const filteredSessions = (sessions || []).filter((session: any) => {
-    const sessionDate = new Date(session.businessDate + 'T00:00:00');
-    return sessionDate >= startOfDayDate && sessionDate <= endOfDayDate;
+    if (!session?.businessDate) return false;
+    return (
+      session.businessDate >= startDateStr && session.businessDate <= endDateStr
+    );
   });
 
   const tabBarBottomOffset = useTabBarBottomOffset();

@@ -12,17 +12,17 @@ import type {
   CollectionQueueRow,
 } from '@/types/credits.types';
 
-const bucketLabelKey: Record<CollectionBucket, string> = {
+const bucketLabelKey = {
   overdue: 'collectionBucketOverdue',
   near_limit: 'collectionBucketNearLimit',
   oldest_balance: 'collectionBucketOldestBalance',
-};
+} satisfies Record<CollectionBucket, string>;
 
-const bucketOrder: CollectionBucket[] = [
+const bucketOrder = [
   'overdue',
   'near_limit',
   'oldest_balance',
-];
+] satisfies CollectionBucket[];
 
 interface RowItem {
   type: 'header' | 'row';

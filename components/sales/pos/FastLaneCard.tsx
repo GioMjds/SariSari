@@ -4,12 +4,11 @@ import { FontAwesome } from '@expo/vector-icons';
 import { FastLaneProduct } from '@/database/products';
 import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
-import { formatPesos } from '@/lib';
 
 const CARD_AVAILABLE_CLASS =
-  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[132px] justify-between shadow-paper active:bg-paper-200/60';
+  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[102px] justify-between shadow-paper active:bg-paper-200/60';
 const CARD_OUT_OF_STOCK_CLASS =
-  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[132px] justify-between shadow-paper active:bg-paper-200/60 opacity-60';
+  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[102px] justify-between shadow-paper active:bg-paper-200/60 opacity-60';
 
 interface FastLaneCardProps {
   product: FastLaneProduct;
@@ -82,10 +81,6 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
             </View>
           ) : null}
         </View>
-
-        <StyledText variant="extrabold" className="text-sage-700 text-xs">
-          {formatPesos(product.price)}
-        </StyledText>
       </View>
 
       {isOutOfStock ? (

@@ -1,43 +1,27 @@
 import { Href, usePathname, useRouter } from 'expo-router';
 import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
-import { DashboardHeader, HomeSubTab } from '@/components/home';
+import { HomeSubTab } from '@/components/home';
 import { TopTabs } from '@/components/navigation/top-tabs';
-import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabProgress } from '@/hooks';
 import { HOME_SUB_TABS, type HomeSubTab as HomeTabKey } from '@/constants/tabs';
 
-const HOME_TAB_DEFS: { key: HomeTabKey; label: string }[] = [
+const HOME_TAB_DEFS = [
   { key: 'overview', label: 'OVERVIEW' },
   { key: 'today', label: 'TODAY' },
-];
+] satisfies { key: HomeTabKey; label: string }[];
 
 export default function HomeLayout() {
   const router = useRouter();
   const pathname = usePathname();
-  const { profile } = useHomeDashboardData();
 
-  const storeName = profile?.storeName;
-  const ownerName = profile?.ownerName;
-
-  const ownerInitials = ownerName
-    ?.split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-  const activeTab: HomeSubTab = pathname.includes('today')
+  const activeTab: HomeSubTab = pathname.endsWith('/today')
     ? 'today'
     : 'overview';
 
   const progress = useTabProgress(activeTab, HOME_SUB_TABS);
 
   const handleTabPress = (tab: HomeTabKey) => {
-    if (tab === 'overview') {
-      router.push('/(tabs)/home' as Href);
-    } else {
-      router.push(`/(tabs)/home/${tab}` as Href);
-    }
+    router.push(`/(tabs)/home/${tab}` as Href);
   };
 
   return (
@@ -46,13 +30,6 @@ export default function HomeLayout() {
       activeTab={activeTab}
       onTabPress={handleTabPress}
       progress={progress}
-      topSlot={
-        <DashboardHeader
-          storeName={storeName || ''}
-          ownerInitials={ownerInitials || ''}
-          showTopHeader={true}
-        />
-      }
     >
       <TopTabs
         screenOptions={{

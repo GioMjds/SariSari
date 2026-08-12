@@ -14,12 +14,11 @@ export interface SubTabScreenShellProps<T extends string> {
   /** Shared progress value from `useTabProgress` driving the underline tween. */
   progress: SharedValue<number>;
   /**
-   * Header content rendered above the sub-tab bar. Pass `null` to suppress
-   * the header entirely (e.g., detail screens where the per-tab header
-   * is hidden). Accepts any ReactNode — typically the per-tab `*Header.tsx`
-   * component or a fragment composing header + banner.
+   * Content rendered between the sub-tab bar and the screen content.
+   * Use for cards/banners that should sit just under the tabs rather
+   * than at the very top of the screen.
    */
-  topSlot?: ReactNode;
+  belowTabsSlot?: ReactNode;
   /** The TopTabs navigator with screens mounted as children. */
   children: ReactNode;
   /**
@@ -34,14 +33,13 @@ export function SubTabScreenShell<T extends string>({
   activeTab,
   onTabPress,
   progress,
-  topSlot,
+  belowTabsSlot,
   children,
   containerClassName = 'flex-1 bg-paper-200',
 }: SubTabScreenShellProps<T>) {
   return (
     <View className={containerClassName}>
       <Stack.Screen options={{ headerShown: false }} />
-      {topSlot}
       {tabs.length > 0 ? (
         <View className="bg-paper-200 px-4 pt-1 pb-2">
           <SubTabControl
@@ -52,6 +50,7 @@ export function SubTabScreenShell<T extends string>({
           />
         </View>
       ) : null}
+      {belowTabsSlot}
       <View className="flex-1 bg-paper-200 relative">{children}</View>
     </View>
   );

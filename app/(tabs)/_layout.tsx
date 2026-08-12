@@ -48,7 +48,6 @@ export default function ScreensLayout() {
   }, [fadeAnim, hideExitToast]);
 
   useEffect(() => {
-    // Reset back press state & dismiss toast whenever screen/pathname changes
     hideExitToast();
   }, [pathname, hideExitToast]);
 

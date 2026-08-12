@@ -261,10 +261,6 @@ Note: there is **no `app/(tabs)/dev/reset.tsx`** referenced by features 11 and 1
 
 `(tabs)/inventory/` has 5 sibling screens — `products`, `stock`, `analytics`, `movements`, `modals`. The `modals.tsx` (3.3 KB) is a screen that just hosts modals — that's a layout concern, not a page. `stock.tsx` and `analytics.tsx` overlap with `products.tsx` and `more/reports.tsx`.
 
-### 4.4 Dev reset is missing
-
-`AGENTS.md` and feature #11 reference `app/(tabs)/dev/reset.tsx` — it doesn't exist. The only dev tool lives elsewhere.
-
 ---
 
 ## 5. Target Information Architecture — 5 tabs, each with a clear job

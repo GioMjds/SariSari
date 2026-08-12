@@ -64,7 +64,7 @@ export default function CustomersLayout() {
       activeTab={activeTab}
       onTabPress={handleTabPress}
       progress={progress}
-      topSlot={
+      belowTabsSlot={
         !isDetailScreen ? (
           <CustomersHeader
             totalCustomers={customers.length}

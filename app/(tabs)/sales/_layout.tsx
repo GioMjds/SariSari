@@ -40,7 +40,7 @@ export default function SalesLayout() {
       activeTab={effectiveTab}
       onTabPress={handleTabPress}
       progress={progress}
-      topSlot={<SalesHeader todayTotal={todayStats?.total || 0} />}
+      belowTabsSlot={<SalesHeader todayTotal={todayStats?.total || 0} />}
     >
       <TopTabs
         screenOptions={{

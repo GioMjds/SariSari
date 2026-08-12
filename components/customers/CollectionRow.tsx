@@ -18,27 +18,33 @@ interface CollectionRowProps {
 }
 
 const COLLECTION_ROW_BASE =
-  'mx-4 my-1.5 bg-cream-50 rounded-2xl p-4 flex-row items-center';
-const BADGE_CONTAINER_OVERDUE = 'px-2 py-0.5 rounded-full bg-cinnamon-700';
-const BADGE_CONTAINER_NORMAL = 'px-2 py-0.5 rounded-full bg-cinnamon-100';
-const BADGE_TEXT_OVERDUE = 'text-xs text-ink-600';
+  'mx-4 my-1.5 bg-paper-50 rounded-2xl p-4 flex-row items-center';
+const COLLECTION_ROW_BASE_OVERDUE =
+  'mx-4 my-1.5 rounded-2xl p-4 flex-row items-center bg-persimmon-50 border border-persimmon-100';
+
+// Balance badge: normal = neutral money chip, overdue = ink-strong with brand tint
+const BADGE_CONTAINER_OVERDUE = 'px-2 py-0.5 rounded-full bg-persimmon-700';
+const BADGE_CONTAINER_NORMAL = 'px-2 py-0.5 rounded-full bg-paper-100';
+const BADGE_TEXT_OVERDUE = 'text-xs text-paper-50';
 const BADGE_TEXT_NORMAL = 'text-xs text-cinnamon-700';
 
+// Follow-up chip — three states, each owns a distinct hue
 const CHIP_CONTAINER_OVERDUE =
-  'px-2 py-1 rounded-full border bg-semantic-danger-50 border-semantic-danger-100';
+  'px-2 py-1 rounded-full border bg-semantic-danger border-semantic-danger';
 const CHIP_CONTAINER_CONTACTED =
-  'px-2 py-1 rounded-full border bg-sage-50 border-sage-100';
+  'px-2 py-1 rounded-full border bg-sage-500 border-sage-500';
 const CHIP_CONTAINER_DEFAULT =
-  'px-2 py-1 rounded-full border bg-paper-200 border-paper-300';
+  'px-2 py-1 rounded-full border bg-paper-100 border-paper-300';
 
-const CHIP_TEXT_OVERDUE = 'text-xs text-semantic-danger';
-const CHIP_TEXT_CONTACTED = 'text-xs text-sage-700';
+const CHIP_TEXT_OVERDUE = 'text-xs text-paper-50';
+const CHIP_TEXT_CONTACTED = 'text-xs text-paper-50';
 const CHIP_TEXT_DEFAULT = 'text-xs text-cinnamon-700';
 
 const MARK_CONTACTED_BTN =
-  'px-2 py-1 rounded-full border border-paper-300 bg-paper-50 active:bg-paper-200 flex-row items-center';
+  'px-2 py-1 rounded-full border border-sage-200 bg-sage-50 active:bg-sage-100 flex-row items-center';
+// Saturated brand persimmon — the only place on this row that earns it.
 const RECORD_PAYMENT_BTN =
-  'ml-2 shrink-0 bg-cinnamon-500 px-3 py-2 rounded-xl min-h-12 min-w-[88px] items-center justify-center';
+  'ml-2 shrink-0 bg-persimmon-500 active:bg-persimmon-600 px-3 py-2 rounded-xl min-h-12 min-w-[88px] items-center justify-center shadow-paper';
 
 function CollectionRowComponent({ row }: CollectionRowProps) {
   const router = useRouter();
@@ -69,6 +75,7 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
       { label: t('collectionFollowUpIn3Days'), value: localIsoOf(in3) },
       { label: t('collectionFollowUpInAWeek'), value: localIsoOf(inWeek) },
     ] as const;
+
     Alert.alert(t('collectionFollowUpSheetTitle'), undefined, [
       ...options.map((o) => ({
         text: o.label,
@@ -171,7 +178,7 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
         return parts.join(', ');
       })()}
       accessibilityHint={t('collectionRowOpenDetailsHint')}
-      className={COLLECTION_ROW_BASE}
+      className={row.overdueDays > 0 ? COLLECTION_ROW_BASE_OVERDUE : COLLECTION_ROW_BASE}
     >
       <CustomerAvatar name={row.name} photoUri={row.photoUri ?? null} />
       <View className="flex-1 min-w-0 ml-3">
@@ -210,7 +217,7 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
             </StyledText>
           </View>
           {row.overdueDays > 0 ? (
-            <View className="ml-2 px-2 py-0.5 rounded-full bg-semantic-danger-50 border border-semantic-danger-100">
+            <View className="ml-2 px-2 py-0.5 rounded-full bg-paper-50 border border-semantic-danger">
               <StyledText
                 variant="medium"
                 className="text-xs text-semantic-danger"
@@ -220,7 +227,7 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
             </View>
           ) : null}
           {row.isNearLimit ? (
-            <View className="ml-2 px-2 py-0.5 rounded-full bg-semantic-warning-100 border border-semantic-warning-100">
+            <View className="ml-2 px-2 py-0.5 rounded-full bg-paper-50 border border-semantic-warning">
               <StyledText
                 variant="medium"
                 className="text-xs text-semantic-warning"
@@ -275,10 +282,10 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
             <FontAwesome
               name="check-circle"
               size={11}
-              color="#623418"
+              color="#3D5E1B"
               style={{ marginRight: 4 }}
             />
-            <StyledText variant="medium" className="text-xs text-cinnamon-700">
+            <StyledText variant="medium" className="text-xs text-sage-700">
               {t('collectionRowMarkContacted')}
             </StyledText>
           </Pressable>

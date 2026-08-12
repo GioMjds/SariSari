@@ -7,25 +7,18 @@ export type { HomeSubTab };
 export interface DashboardHeaderProps {
   storeName: string;
   ownerInitials: string;
-  showTopHeader: boolean;
 }
 
 export function DashboardHeader({
   storeName,
   ownerInitials,
-  showTopHeader,
 }: DashboardHeaderProps) {
-  if (!showTopHeader) return null;
-
   return (
     <View className="px-4 pt-2">
       <View className="flex-row items-center justify-between mb-1">
         <View className="flex-row items-center flex-1 mr-2">
           <View className="w-10 h-10 rounded-full bg-cinnamon-500 items-center justify-center mr-3 shadow-sm">
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-base"
-            >
+            <StyledText variant="extrabold" className="text-paper-50 text-base">
               {ownerInitials}
             </StyledText>
           </View>

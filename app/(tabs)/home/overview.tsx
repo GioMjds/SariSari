@@ -27,7 +27,7 @@ const routes = {
   cashSession: '/(edit-forms)/cash-session',
   newSale: '/(tabs)/sales/pos',
   reports: '/(tabs)/home/today',
-} satisfies Record<string, Href>;
+} satisfies Record<HomeDestination, Href>;
 
 export default function OverviewScreen() {
   const router = useRouter();
@@ -49,27 +49,11 @@ export default function OverviewScreen() {
   if (isLoading) return <HomeOverviewSkeleton />;
 
   const handleGoalAction = (rec: HomeRecommendation) => {
-    const map: Record<HomeRecommendation['destination'], Href> = {
-      addProduct: '/(edit-forms)/add-product',
-      inventory: '/inventory',
-      utang: '/(tabs)/customers/credit',
-      cashSession: '/(edit-forms)/cash-session',
-      newSale: '/(tabs)/sales/pos',
-      reports: '/(tabs)/home/today',
-    };
-    router.push(map[rec.destination] as Href);
+    router.push(routes[rec.destination]);
   };
 
   const handleSuggestionPress = (destination: HomeDestination) => {
-    const map: Record<HomeDestination, Href> = {
-      addProduct: '/(edit-forms)/add-product',
-      inventory: '/inventory',
-      utang: '/(tabs)/customers/credit',
-      cashSession: '/(edit-forms)/cash-session',
-      newSale: '/(tabs)/sales/pos',
-      reports: '/(tabs)/home/today',
-    };
-    router.push(map[destination] as Href);
+    router.push(routes[destination]);
   };
 
   return (
@@ -131,7 +115,7 @@ export default function OverviewScreen() {
               currentSession?.status === 'closed' ? 'Closed' : 'Open'
             }
             startingFloat={
-              currentSession?.startingFloat
+              currentSession?.startingFloat != null
                 ? currentSession.startingFloat / 100
                 : 500
             }
@@ -184,7 +168,7 @@ export default function OverviewScreen() {
             onOpenSale={(id) =>
               router.push(`/(edit-forms)/sale-details/${id}` as Href)
             }
-            onSeeAll={() => router.push('/sales' as Href)}
+            onSeeAll={() => router.push('/(tabs)/sales/receipts' as Href)}
           />
 
           {/* 8. Top Seller */}
