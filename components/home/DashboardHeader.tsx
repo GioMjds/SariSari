@@ -1,7 +1,5 @@
-import { SharedValue } from 'react-native-reanimated';
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
-import { SubTabControl, SubTabItem } from '@/components/navigation';
 import { HomeSubTab } from '@/constants/tabs';
 
 export type { HomeSubTab };
@@ -9,27 +7,16 @@ export type { HomeSubTab };
 export interface DashboardHeaderProps {
   storeName: string;
   ownerInitials: string;
-  activeTab: HomeSubTab;
   showTopHeader: boolean;
-  onTabPress: (tab: HomeSubTab) => void;
-  progress?: SharedValue<number>;
 }
 
 export function DashboardHeader({
   storeName,
   ownerInitials,
-  activeTab,
   showTopHeader,
-  onTabPress,
-  progress,
 }: DashboardHeaderProps) {
-  const tabs = [
-    { key: 'overview', label: 'OVERVIEW' },
-    { key: 'today', label: 'TODAY' },
-  ] satisfies SubTabItem<HomeSubTab>[];
-
   return (
-    <View className="bg-paper-200 px-4 pt-1 pb-3">
+    <View className="px-4 pt-1 pb-3">
       {showTopHeader && (
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center flex-1 mr-2">
@@ -53,13 +40,6 @@ export function DashboardHeader({
           </View>
         </View>
       )}
-      <SubTabControl
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabPress={onTabPress}
-        containerClassName="mb-0"
-        {...(progress ? { progress } : {})}
-      />
     </View>
   );
 }
