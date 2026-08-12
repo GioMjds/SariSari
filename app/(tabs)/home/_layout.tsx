@@ -1,10 +1,15 @@
+import { Href, usePathname, useRouter } from 'expo-router';
+import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
 import { DashboardHeader, HomeSubTab } from '@/components/home';
 import { TopTabs } from '@/components/navigation/top-tabs';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabProgress } from '@/hooks';
-import { HOME_SUB_TABS } from '@/constants/tabs';
-import { Href, usePathname, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { HOME_SUB_TABS, type HomeSubTab as HomeTabKey } from '@/constants/tabs';
+
+const HOME_TAB_DEFS: { key: HomeTabKey; label: string }[] = [
+  { key: 'overview', label: 'OVERVIEW' },
+  { key: 'today', label: 'TODAY' },
+];
 
 export default function HomeLayout() {
   const router = useRouter();
@@ -21,14 +26,13 @@ export default function HomeLayout() {
     .toUpperCase()
     .slice(0, 2);
 
-  const getCurrentTab = (): HomeSubTab => {
-    if (pathname.includes('today')) return 'today';
-    return 'overview';
-  };
+  const activeTab: HomeSubTab = pathname.includes('today')
+    ? 'today'
+    : 'overview';
 
-  const progress = useTabProgress(getCurrentTab(), HOME_SUB_TABS);
+  const progress = useTabProgress(activeTab, HOME_SUB_TABS);
 
-  const handleTabPress = (tab: HomeSubTab) => {
+  const handleTabPress = (tab: HomeTabKey) => {
     if (tab === 'overview') {
       router.push('/(tabs)/home' as Href);
     } else {
@@ -37,29 +41,31 @@ export default function HomeLayout() {
   };
 
   return (
-    <View className="flex-1 bg-paper-200">
-      <DashboardHeader
-        storeName={storeName || ''}
-        ownerInitials={ownerInitials || ''}
-        activeTab={getCurrentTab()}
-        showTopHeader={false}
-        onTabPress={handleTabPress}
-        progress={progress}
-      />
-      <View className="flex-1 bg-paper-200">
-        <TopTabs
-          screenOptions={{
-            tabBarStyle: { display: 'none' },
-            swipeEnabled: true,
-            lazy: true,
-            lazyPreloadDistance: 0,
-          }}
-          initialRouteName="overview"
-        >
-          <TopTabs.Screen name="overview" />
-          <TopTabs.Screen name="today" />
-        </TopTabs>
-      </View>
-    </View>
+    <SubTabScreenShell<HomeTabKey>
+      tabs={HOME_TAB_DEFS}
+      activeTab={activeTab}
+      onTabPress={handleTabPress}
+      progress={progress}
+      topSlot={
+        <DashboardHeader
+          storeName={storeName || ''}
+          ownerInitials={ownerInitials || ''}
+          showTopHeader={false}
+        />
+      }
+    >
+      <TopTabs
+        screenOptions={{
+          tabBarStyle: { display: 'none' },
+          swipeEnabled: true,
+          lazy: true,
+          lazyPreloadDistance: 0,
+        }}
+        initialRouteName="overview"
+      >
+        <TopTabs.Screen name="overview" />
+        <TopTabs.Screen name="today" />
+      </TopTabs>
+    </SubTabScreenShell>
   );
 }
