@@ -4,3 +4,5 @@ export * from './ProductImagePicker';
 export * from './ProductList';
 export * from './ProductFilterChips';
 export * from './ProductActionMenuModal';
+export * from './ProductFilterModal';
+
