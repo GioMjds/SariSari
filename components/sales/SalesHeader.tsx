@@ -1,36 +1,20 @@
 import React from 'react';
 import { View } from 'react-native';
-import { SharedValue } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
-import { SubTabControl, SubTabItem } from '@/components/navigation';
 import { formatPesos } from '@/lib';
 
 export type SalesSubTab = 'pos' | 'cart' | 'checkout' | 'receipts';
 
 export interface SalesHeaderProps {
-  activeTab: SalesSubTab;
   todayTotal?: number;
   transactionCount?: number;
-  onTabPress: (tab: SalesSubTab) => void;
-  progress?: SharedValue<number>;
 }
 
 export function SalesHeader({
-  activeTab,
   todayTotal = 0,
   transactionCount,
-  onTabPress,
-  progress,
 }: SalesHeaderProps) {
-  const tabs = [
-    { key: 'pos', label: 'POS' },
-    { key: 'receipts', label: 'RECEIPTS' },
-  ] satisfies SubTabItem<SalesSubTab>[];
-
-  const effectiveActiveTab: SalesSubTab =
-    activeTab === 'cart' || activeTab === 'checkout' ? 'pos' : activeTab;
-
   const todayFormatted = new Date()
     .toLocaleDateString('en-US', {
       month: 'short',
@@ -39,15 +23,7 @@ export function SalesHeader({
     .toUpperCase();
 
   return (
-    <View className="bg-paper-200 px-4 pt-2 pb-1">
-      <SubTabControl
-        tabs={tabs}
-        activeTab={effectiveActiveTab}
-        onTabPress={onTabPress}
-        containerClassName="mb-3.5"
-        {...(progress ? { progress } : {})}
-      />
-
+    <View className="px-4 pt-2">
       <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-lg border border-cinnamon-400/40 relative overflow-hidden">
         <View className="absolute -right-4 -bottom-4 opacity-15">
           <FontAwesome name="shopping-bag" size={140} color="#FFFFFF" />
