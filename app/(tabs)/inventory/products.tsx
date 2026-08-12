@@ -1,29 +1,33 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import {
   ProductsList,
   ProductsSkeleton,
-  ProductsFilterChips,
   ProductsEmptyState,
   ProductActionMenuModal,
+  ProductFilterModal,
   type ProductsFilter,
 } from '@/components/inventory/products';
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection, useToastStore } from '@/stores';
-import { BulkActionsToolbar, CategoryFilterBar } from '@/components/inventory';
+import { BulkActionsToolbar, type AlertKind } from '@/components/inventory';
 import type { Product } from '@/types/products.types';
-import type { InventoryEventType } from '@/types/inventory.types';
+import { getStatus, type InventoryEventType } from '@/types/inventory.types';
+import { MAX_STOCK_THRESHOLD } from '@/constants/stocks';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
 type SearchParams = {
-  q: string;
-  category: string;
-  supplier: string;
+  q?: string;
+  category?: string;
+  supplier?: string;
+  filter?: ProductsFilter;
+  alert?: AlertKind;
+  openFilterModal?: string;
 };
 
 function getEmptyVariant(
@@ -31,9 +35,10 @@ function getEmptyVariant(
   filter: ProductsFilter,
   category?: string,
   supplier?: string,
+  alert?: string,
 ): EmptyVariant {
   if (searchTerm) return 'no-search';
-  if (filter !== 'all' || category || supplier) return 'no-filter';
+  if (filter !== 'all' || category || supplier || alert) return 'no-filter';
   return 'no-products';
 }
 
@@ -43,13 +48,34 @@ export default function ProductsScreen() {
   const { bulkDeleteProductsMutation } = useProducts();
   const addToast = useToastStore((s) => s.addToast);
   const [filter, setFilter] = useState<ProductsFilter>('all');
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
 
   const [formProduct, setFormProduct] = useState<Product | null>(null);
   const [formType, setFormType] = useState<InventoryEventType | null>(null);
 
-  const { q, category, supplier } = useLocalSearchParams<SearchParams>();
+  const {
+    q,
+    category,
+    supplier,
+    filter: paramFilter,
+    alert,
+    openFilterModal,
+  } = useLocalSearchParams<SearchParams>();
+
+  useEffect(() => {
+    if (openFilterModal === 'true') {
+      setFilterModalOpen(true);
+    }
+  }, [openFilterModal]);
+
+  useEffect(() => {
+    if (paramFilter) {
+      setFilter(paramFilter);
+    }
+  }, [paramFilter]);
+
   const searchTerm = (q ?? '').trim().toLowerCase();
 
   const productsQuery = usePaginatedProducts(searchTerm, filter);
@@ -69,15 +95,32 @@ export default function ProductsScreen() {
     if (supplier) {
       list = list.filter((p) => p.supplier_id === supplier);
     }
+    if (alert) {
+      list = list.filter((p) => {
+        const qty = p.quantity ?? 0;
+        if (alert === 'out') return qty === 0;
+        if (alert === 'low') return getStatus(p as any) === 'low_stock';
+        if (alert === 'near_expiry')
+          return getStatus(p as any) === 'near_expiry';
+        if (alert === 'overstock') return qty > MAX_STOCK_THRESHOLD;
+        return true;
+      });
+    }
     return list;
-  }, [rawProducts, category, supplier]);
+  }, [rawProducts, category, supplier, alert]);
 
   const selectedIds = useMemo(
     () => Array.from(selection.selectedIds),
     [selection.selectedIds],
   );
 
-  const emptyVariant = getEmptyVariant(searchTerm, filter, category, supplier);
+  const emptyVariant = getEmptyVariant(
+    searchTerm,
+    filter,
+    category,
+    supplier,
+    alert,
+  );
 
   const handlePress = useCallback(
     (id: number) => router.push(`/(edit-forms)/product-details/${id}` as Href),
@@ -181,14 +224,6 @@ export default function ProductsScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <CategoryFilterBar
-        selectedCategory={category}
-        onSelectCategory={(cat) => router.setParams({ category: cat ?? '' })}
-        onOpenAddCategory={() =>
-          router.push('/(edit-forms)/add-category' as Href)
-        }
-      />
-      <ProductsFilterChips value={filter} onChange={setFilter} />
       {products.length === 0 ? (
         <ProductsEmptyState
           variant={emptyVariant}
@@ -197,7 +232,7 @@ export default function ProductsScreen() {
           onClearSearch={handleClearSearch}
           onClearFilters={() => {
             setFilter('all');
-            router.setParams({ category: '', supplier: '' });
+            router.setParams({ category: '', supplier: '', alert: '' });
           }}
         />
       ) : (
@@ -265,6 +300,28 @@ export default function ProductsScreen() {
           setFormType(null);
           if (selection.selectMode) selection.clear();
         }}
+      />
+
+      <ProductFilterModal
+        visible={filterModalOpen}
+        onClose={() => {
+          setFilterModalOpen(false);
+          router.setParams({ openFilterModal: undefined });
+        }}
+        currentFilters={{
+          status: filter,
+          alert,
+          category,
+        }}
+        onApplyFilters={(newFilters) => {
+          setFilter(newFilters.status);
+          router.setParams({
+            category: newFilters.category ?? '',
+            alert: newFilters.alert ?? '',
+            openFilterModal: undefined,
+          });
+        }}
+        onOpenAddCategory={() => router.push('/(edit-forms)/add-category' as Href)}
       />
     </View>
   );
