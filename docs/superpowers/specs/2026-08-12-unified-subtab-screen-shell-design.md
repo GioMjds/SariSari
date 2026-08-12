@@ -6,8 +6,6 @@ status: ready-for-review
 date: 2026-08-12
 ---
 
-# Unified Sub-Tab Screen Shell — Design Spec
-
 ## 1. Goal
 
 Four tab layouts (`home`, `sales`, `inventory`, `customers`) currently duplicate the same scaffold — header component on top, sub-tab bar from `SubTabControl`, `TopTabs` (react-native-pager-view) below with `swipeEnabled: true`. The duplication invites drift (e.g., `inventory/_layout.tsx:79-83` vs `home/_layout.tsx:50-57` already have subtly different `TopTabs` configs) and makes the cutout / overflow class of bugs recur tab by tab.
@@ -25,16 +23,24 @@ The four existing `*Header.tsx` files stay untouched — they become the slot co
 
 ## 3. Architecture
 
-```
+```folder
 components/
   layout/
     SubTabScreenShell.tsx       [NEW]
   navigation/
     SubTabControl.tsx           [MODIFIED — horizontal scroll]
+  home/
+    DashboardHeader.tsx         [MODIFIED — drop embedded SubTabControl]
+  sales/
+    SalesHeader.tsx             [MODIFIED — drop embedded SubTabControl]
+  inventory/
+    InventoryHeader.tsx         [DELETED — replaced by shell-owned bar]
+  customers/
+    CustomersHeader.tsx         [MODIFIED — drop embedded SubTabControl]
 app/(tabs)/
   home/_layout.tsx              [MODIFIED — use shell]
   sales/_layout.tsx             [MODIFIED — use shell]
-  inventory/_layout.tsx         [MODIFIED — use shell]
+  inventory/_layout.tsx         [MODIFIED — use shell, remove InventoryHeader import]
   customers/_layout.tsx         [MODIFIED — use shell]
 tests/
   components/layout/
@@ -43,7 +49,7 @@ tests/
     SubTabControl.test.tsx      [NEW — assert scroll wraps]
 ```
 
-The four `*Header.tsx` files (`DashboardHeader.tsx`, `SalesHeader.tsx`, `InventoryHeader.tsx`, `CustomersHeader.tsx`) are unchanged. They become presentation components rendered inside the shell's `topSlot`.
+The four `*Header.tsx` files become **content-only** presentation components rendered inside the shell's `topSlot`. Each currently embeds its own `<SubTabControl>` (`DashboardHeader.tsx:56`, `SalesHeader.tsx:43`, `CustomersHeader.tsx:42`). The shell becomes the sole owner of `<SubTabControl>`, so each header must drop its embedded bar and the `progress`, `onTabPress`, `activeTab`, `tabs`, and `SubTabItem`-related imports/props. The shell passes the active tab and progress to the bar. The `*Header` components keep their hero card / KPI / store-name content but no longer own navigation. `InventoryHeader.tsx` is a special case — it is currently a thin wrapper around `<SubTabControl>` with no other content. After this change it has no remaining responsibility, so the file is **deleted** and `inventory/_layout.tsx` mounts the bar through the shell directly.
 
 ## 4. Component shape
 
@@ -154,10 +160,7 @@ return (
       <DashboardHeader
         storeName={storeName ?? ''}
         ownerInitials={ownerInitials ?? ''}
-        activeTab={activeTab}
         showTopHeader={false}
-        onTabPress={handleTabPress}
-        progress={progress}
       />
     }
   >
@@ -177,19 +180,23 @@ return (
 );
 ```
 
-**`app/(tabs)/sales/_layout.tsx`** — same shape, passes `<SalesHeader>` as `topSlot`, mounts `pos` and `receipts` screens.
+`DashboardHeader` no longer accepts `activeTab`, `onTabPress`, or `progress` — those are owned by the shell.
 
-**`app/(tabs)/inventory/_layout.tsx`** — passes `<><InventoryHeader active={activeTab} onTabChange={handleTabChange} progress={progress} /><StocktakeBanner /></>` as `topSlot` so the banner still renders below the sub-tab bar.
+**`app/(tabs)/sales/_layout.tsx`** — same shape, passes `<SalesHeader todayTotal={...} />` as `topSlot`, mounts `pos` and `receipts` screens. `SalesHeader` no longer accepts `activeTab`, `onTabPress`, `progress`.
 
-**`app/(tabs)/customers/_layout.tsx`** — passes `<CustomersHeader>` as `topSlot`; the existing `TouchableOpacity` FAB stays outside the shell (it sits over the TopTabs area).
+**`app/(tabs)/inventory/_layout.tsx`** — passes `<StocktakeBanner />` as `topSlot` (the only inventory header content). `InventoryHeader.tsx` is deleted in this migration. The bar comes from the shell.
+
+**`app/(tabs)/customers/_layout.tsx`** — passes `<CustomersHeader totalCustomers={...} />` as `topSlot`; the existing `TouchableOpacity` FAB stays outside the shell (it sits over the TopTabs area). `CustomersHeader` no longer accepts `activeTab`, `onTabPress`, `progress`.
 
 ### 4.4 Why the existing `*Header` files are passed in as `topSlot`
 
 The four headers are 65, 115, 41, 145 lines respectively. Each owns tab-specific data (sales totals, credit KPIs, store name) and visual identity. Merging them into one would force a configuration object large enough to recreate them inline, with no readability win. Keeping them as discrete components and rendering inside the shell preserves their boundaries.
 
+**Header content-only refactor:** each `*Header.tsx` currently embeds its own `<SubTabControl>` (`DashboardHeader.tsx:56`, `SalesHeader.tsx:43`, `CustomersHeader.tsx:42`). The shell becomes the sole owner, so each header must drop its embedded bar and the now-unused `SubTabItem`, `progress`, `activeTab`, `onTabPress`, `tabs` props. `InventoryHeader.tsx` becomes a no-op (it only renders the bar); the file is deleted and the shell-owned bar replaces it.
+
 ## 5. Data flow
 
-```
+```folder
 SubTabScreenShell (props)
   ├── tabs          ← per-layout array of SubTabItem<T>
   ├── activeTab     ← derived from pathname (stays in each layout)
@@ -200,6 +207,7 @@ SubTabScreenShell (props)
 ```
 
 No state moves into the shell. The shell is purely structural. Each layout remains the owner of:
+
 - which hooks it calls
 - how `pathname` maps to `activeTab`
 - which TopTabs screens to mount
@@ -210,12 +218,12 @@ This is the minimum coupling that still removes the scaffold duplication.
 
 Per `components/navigation/top-tabs.tsx` and the four layout files:
 
-| Layout         | `swipeEnabled` | `lazy` | `lazyPreloadDistance` | `tabBarStyle`        | `initialRouteName` |
-| -------------- | -------------- | ------ | --------------------- | -------------------- | ------------------ |
-| home           | true           | true   | 0                     | `{ display: 'none' }`| `overview`         |
-| sales          | true           | true   | 0                     | `{ display: 'none' }`| `pos`              |
-| inventory      | true           | true   | 0                     | `{ display: 'none' }`| `products`         |
-| customers      | true           | true   | 0                     | `{ display: 'none' }`| `all`              |
+| Layout    | `swipeEnabled` | `lazy` | `lazyPreloadDistance` | `tabBarStyle`         | `initialRouteName` |
+| --------- | -------------- | ------ | --------------------- | --------------------- | ------------------ |
+| home      | true           | true   | 0                     | `{ display: 'none' }` | `overview`         |
+| sales     | true           | true   | 0                     | `{ display: 'none' }` | `pos`              |
+| inventory | true           | true   | 0                     | `{ display: 'none' }` | `products`         |
+| customers | true           | true   | 0                     | `{ display: 'none' }` | `all`              |
 
 All four match. **No parity changes needed.** The shell does not enforce a single `screenOptions` — each layout passes its own — but we document this audit here so future migrations don't accidentally regress any tab.
 
@@ -223,19 +231,20 @@ All four match. **No parity changes needed.** The shell does not enforce a singl
 
 ## 7. Error handling & edge cases
 
-| Case                                  | Behavior                                                                 |
-| ------------------------------------- | ----------------------------------------------------------------------- |
-| Detail screens (no header)            | Pass `topSlot={null}`. Shell renders without header content.           |
-| Tab group with zero sub-tabs          | `tabs.length === 0` → shell renders no `SubTabControl`.                 |
-| `progress` SharedValue not provided   | `SubTabControl` falls back to its internal animation (`SubTabControl.tsx:113-119`). Unchanged. |
-| Header padding double-count          | **Optional polish (not required by this spec):** each `*Header.tsx` may strip its outer `bg-paper-200 px-4 pt-* pb-*` classes so the shell is the sole owner of background/padding. Leaving them in place is visually identical at the cost of one redundant style application. Follow-up if any visual artifact appears. |
-| Horizontal scroll on RTL locales      | `ScrollView horizontal` flips automatically. The underline animation continues to read layout-derived `xs` values — no RTL regression. |
+| Case                                | Behavior                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Detail screens (no header)          | Pass `topSlot={null}`. Shell renders without header content.                                                                                                                                                                                                                                                              |
+| Tab group with zero sub-tabs        | `tabs.length === 0` → shell renders no `SubTabControl`.                                                                                                                                                                                                                                                                   |
+| `progress` SharedValue not provided | `SubTabControl` falls back to its internal animation (`SubTabControl.tsx:113-119`). Unchanged.                                                                                                                                                                                                                            |
+| Header padding double-count         | **Optional polish (not required by this spec):** each `*Header.tsx` may strip its outer `bg-paper-200 px-4 pt-* pb-*` classes so the shell is the sole owner of background/padding. Leaving them in place is visually identical at the cost of one redundant style application. Follow-up if any visual artifact appears. |
+| Horizontal scroll on RTL locales    | `ScrollView horizontal` flips automatically. The underline animation continues to read layout-derived `xs` values — no RTL regression.                                                                                                                                                                                    |
 
 ## 8. Testing
 
 ### 8.1 New: `tests/components/layout/SubTabScreenShell.test.tsx`
 
 Renders the shell with a mocked `tabs` array and asserts:
+
 - `topSlot` content appears above the sub-tab bar
 - `SubTabControl` receives `tabs`, `activeTab`, `onTabPress`, `progress` props
 - `children` (a `View` placeholder) appears below the sub-tab bar
@@ -257,9 +266,13 @@ Renders the shell with a mocked `tabs` array and asserts:
 
 - [ ] Create `components/layout/SubTabScreenShell.tsx`.
 - [ ] Modify `components/navigation/SubTabControl.tsx` — wrap `flex-row` in `ScrollView horizontal`.
+- [ ] Delete `components/inventory/InventoryHeader.tsx` (its sole responsibility was the sub-tab bar).
+- [ ] Modify `components/home/DashboardHeader.tsx` — drop embedded `SubTabControl` and `activeTab`/`onTabPress`/`progress`/`tabs` props.
+- [ ] Modify `components/sales/SalesHeader.tsx` — drop embedded `SubTabControl` and `activeTab`/`onTabPress`/`progress` props.
+- [ ] Modify `components/customers/CustomersHeader.tsx` — drop embedded `SubTabControl` and `activeTab`/`onTabPress`/`progress` props.
 - [ ] Migrate `app/(tabs)/home/_layout.tsx` to use shell.
 - [ ] Migrate `app/(tabs)/sales/_layout.tsx` to use shell.
-- [ ] Migrate `app/(tabs)/inventory/_layout.tsx` to use shell (preserve `StocktakeBanner`).
+- [ ] Migrate `app/(tabs)/inventory/_layout.tsx` to use shell (preserve `StocktakeBanner` as `topSlot`, remove `InventoryHeader` import).
 - [ ] Migrate `app/(tabs)/customers/_layout.tsx` to use shell (preserve FAB).
 - [ ] Add `tests/components/layout/SubTabScreenShell.test.tsx`.
 - [ ] Add `tests/components/navigation/SubTabControl.test.tsx`.
