@@ -1,5 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useProducts, productKeys } from '@/hooks/useProducts';
+import {
+  useProducts,
+  productKeys,
+  invalidateProductDependencies,
+} from '@/hooks/useProducts';
 import { deleteProduct } from '@/database/products';
 import { insertInventoryTransaction } from '@/database/inventory';
 import { useToastStore } from '@/stores/ToastStore';
@@ -41,8 +45,7 @@ function invalidateAll(
   qc: ReturnType<typeof useQueryClient>,
   refetch: () => void,
 ) {
-  qc.invalidateQueries({ queryKey: ['inventory'] });
-  qc.invalidateQueries({ queryKey: PRODUCTS_KEY });
+  invalidateProductDependencies(qc);
   refetch();
 }
 

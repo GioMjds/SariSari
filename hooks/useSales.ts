@@ -15,6 +15,7 @@ import {
 } from '@/types/sales.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inventoryKeys } from './useInventory';
+import { invalidateProductDependencies } from './useProducts';
 
 export const salesKeys = {
   all: ['sales'] as const,
@@ -117,6 +118,7 @@ export function useSales() {
         overrideReasonNote,
       ),
     onSuccess: () => {
+      invalidateProductDependencies(queryClient);
       queryClient.invalidateQueries({ queryKey: salesKeys.all });
       queryClient.invalidateQueries({ queryKey: salesKeys.salesStats });
       queryClient.invalidateQueries({

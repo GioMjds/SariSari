@@ -21,7 +21,7 @@
 
 ## File structure
 
-```
+```folder
 components/
   layout/
     SubTabScreenShell.tsx       [NEW] — generic shell component
@@ -83,11 +83,7 @@ describe('SubTabControl horizontal scroll', () => {
     const onTabPress = jest.fn();
 
     const { getByText } = render(
-      <SubTabControl
-        tabs={tabs}
-        activeTab="a"
-        onTabPress={onTabPress}
-      />,
+      <SubTabControl tabs={tabs} activeTab="a" onTabPress={onTabPress} />,
     );
 
     expect(getByText('RECOMMENDATIONS')).toBeTruthy();
@@ -100,7 +96,7 @@ describe('SubTabControl horizontal scroll', () => {
 - [ ] **Step 2: Run test (sanity check before edit)**
 
 Run: `npm test -- tests/components/navigation/SubTabControl.test.tsx`
-Expected: PASS — the tabs render with text on screen even today (the bug is the *viewport cutout*, not the absence of nodes). The test passes both before and after the change, but it documents the contract: all five labels must be present in the rendered tree. Keep the test as a regression guard.
+Expected: PASS — the tabs render with text on screen even today (the bug is the _viewport cutout_, not the absence of nodes). The test passes both before and after the change, but it documents the contract: all five labels must be present in the rendered tree. Keep the test as a regression guard.
 
 - [ ] **Step 3: Modify `SubTabControl.tsx` — wrap tabs in horizontal ScrollView**
 
@@ -330,9 +326,7 @@ export function SubTabScreenShell<T extends string>({
           />
         </View>
       ) : null}
-      <View className="flex-1 bg-paper-200 relative">
-        {children}
-      </View>
+      <View className="flex-1 bg-paper-200 relative">{children}</View>
     </View>
   );
 }
@@ -424,6 +418,7 @@ export function DashboardHeader({
 ```
 
 Notes:
+
 - The outer `bg-paper-200` is dropped because the shell now owns the background. The shell renders `<View className="bg-paper-200 px-4 pt-1 pb-2">` around `<SubTabControl>` (Task 2), so `DashboardHeader`'s header content sits above that, on the same paper-200 background, with px-4 pt-1 for consistency.
 - The `HomeSubTab` re-export is kept for backward compatibility since the `*Layout.tsx` file (and possibly other consumers) import `HomeSubTab` from `@/components/home`.
 
@@ -637,7 +632,10 @@ export function CustomersHeader({
         </View>
 
         <View className="flex-row items-baseline mb-3">
-          <StyledText variant="extrabold" className="text-white/90 text-2xl mr-1">
+          <StyledText
+            variant="extrabold"
+            className="text-white/90 text-2xl mr-1"
+          >
             ₱
           </StyledText>
           <StyledText
@@ -667,7 +665,10 @@ export function CustomersHeader({
           <View className="w-8 h-8 rounded-full bg-cinnamon-100 items-center justify-center mb-2">
             <FontAwesome name="users" size={14} color="#E85A1F" />
           </View>
-          <StyledText variant="extrabold" className="text-ink-900 text-2xl mb-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-2xl mb-0.5"
+          >
             {totalCustomers}
           </StyledText>
           <StyledText
@@ -682,7 +683,10 @@ export function CustomersHeader({
           <View className="w-8 h-8 rounded-full bg-amber-100 items-center justify-center mb-2">
             <FontAwesome name="star" size={14} color="#D97706" />
           </View>
-          <StyledText variant="extrabold" className="text-ink-900 text-2xl mb-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-2xl mb-0.5"
+          >
             {loyalCount}
           </StyledText>
           <StyledText
@@ -794,7 +798,9 @@ export default function HomeLayout() {
     .toUpperCase()
     .slice(0, 2);
 
-  const activeTab: HomeSubTab = pathname.includes('today') ? 'today' : 'overview';
+  const activeTab: HomeSubTab = pathname.includes('today')
+    ? 'today'
+    : 'overview';
 
   const progress = useTabProgress(activeTab, HOME_SUB_TABS);
 
@@ -916,11 +922,7 @@ export default function SalesLayout() {
       activeTab={effectiveTab}
       onTabPress={handleTabPress}
       progress={progress}
-      topSlot={
-        <SalesHeader
-          todayTotal={todayStats?.total || 0}
-        />
-      }
+      topSlot={<SalesHeader todayTotal={todayStats?.total || 0} />}
     >
       <TopTabs
         screenOptions={{
@@ -978,60 +980,58 @@ Remove the `InventoryHeader` import (line 5). Locate the section that renders `<
 Replace the `<View className="flex-1 bg-paper-200">` JSX with the shell call. Resulting render section:
 
 ```tsx
-  return (
-    <SubTabScreenShell<InventorySubTab>
-      tabs={INVENTORY_TAB_DEFS}
-      activeTab={activeTab}
-      onTabPress={handleTabChange}
-      progress={progress}
-      topSlot={
-        !isDetail ? <StocktakeBanner /> : null
-      }
-    >
-      <View className="flex-1 bg-paper-200 relative">
-        <TopTabs
-          initialRouteName="products"
-          screenOptions={{
-            swipeEnabled: true,
-            lazy: true,
-            lazyPreloadDistance: 0,
-            tabBarStyle: { display: 'none' },
-          }}
-        >
-          <TopTabs.Screen name="products" />
-          <TopTabs.Screen name="movements" />
-          <TopTabs.Screen name="stocktake" />
-          <TopTabs.Screen name="damaged" />
-          <TopTabs.Screen name="recommendations" />
-        </TopTabs>
+return (
+  <SubTabScreenShell<InventorySubTab>
+    tabs={INVENTORY_TAB_DEFS}
+    activeTab={activeTab}
+    onTabPress={handleTabChange}
+    progress={progress}
+    topSlot={!isDetail ? <StocktakeBanner /> : null}
+  >
+    <View className="flex-1 bg-paper-200 relative">
+      <TopTabs
+        initialRouteName="products"
+        screenOptions={{
+          swipeEnabled: true,
+          lazy: true,
+          lazyPreloadDistance: 0,
+          tabBarStyle: { display: 'none' },
+        }}
+      >
+        <TopTabs.Screen name="products" />
+        <TopTabs.Screen name="movements" />
+        <TopTabs.Screen name="stocktake" />
+        <TopTabs.Screen name="damaged" />
+        <TopTabs.Screen name="recommendations" />
+      </TopTabs>
 
-        {!isDetail ? (
-          <InventorySpeedDialFab
-            onAddProduct={openAddProduct}
-            onAddCategory={() =>
-              router.push('/(edit-forms)/add-category' as Href)
-            }
-            onAddSupplier={() =>
-              router.push('/(edit-forms)/add-supplier' as Href)
-            }
-            onScanBarcode={() => setScannerOpen(true)}
-          />
-        ) : null}
-
-        <LogTransactionForm
-          initialType={fabForm.type}
-          visible={fabForm.visible}
-          onClose={() => setFabForm({ visible: false, type: fabForm.type })}
-          onSuccess={() => setFabForm({ visible: false, type: fabForm.type })}
+      {!isDetail ? (
+        <InventorySpeedDialFab
+          onAddProduct={openAddProduct}
+          onAddCategory={() =>
+            router.push('/(edit-forms)/add-category' as Href)
+          }
+          onAddSupplier={() =>
+            router.push('/(edit-forms)/add-supplier' as Href)
+          }
+          onScanBarcode={() => setScannerOpen(true)}
         />
-      </View>
+      ) : null}
 
-      <InventoryModalsHost
-        scannerOpen={scannerOpen}
-        onCloseScanner={() => setScannerOpen(false)}
+      <LogTransactionForm
+        initialType={fabForm.type}
+        visible={fabForm.visible}
+        onClose={() => setFabForm({ visible: false, type: fabForm.type })}
+        onSuccess={() => setFabForm({ visible: false, type: fabForm.type })}
       />
-    </SubTabScreenShell>
-  );
+    </View>
+
+    <InventoryModalsHost
+      scannerOpen={scannerOpen}
+      onCloseScanner={() => setScannerOpen(false)}
+    />
+  </SubTabScreenShell>
+);
 ```
 
 Add near the top of the file (after the `SUB_TAB_SEGMENTS` declaration):
@@ -1278,19 +1278,20 @@ git commit -m "fix(subtab-shell): minor padding/spacing polish on smoke-test fee
 
 **1. Spec coverage:**
 
-| Spec section            | Task(s)                                          |
-| ----------------------- | ------------------------------------------------ |
-| §4.1 `SubTabScreenShell` API            | Task 2                                              |
-| §4.2 horizontal scroll on `SubTabControl`           | Task 1                                              |
-| §4.3 home/sales/inventory/customers migrations     | Tasks 7, 8, 9, 10                                   |
-| §4.4 keep `*Header` content-only + delete `InventoryHeader` | Tasks 3, 4, 5, 6                          |
-| §6 swipe-parity audit (no code change)             | Tasks 7–10 preserve `swipeEnabled: true, lazy: true, lazyPreloadDistance: 0` |
-| §7 edge cases (zero tabs, no topSlot, padding)     | Task 2 (`tabs.length > 0` guard), Task 2 (`topSlot` accepts null), Task 7–10 (shell owns background) |
-| §8 tests (new shell test, new scroll test)         | Task 1 (test), Task 2 (test), Task 11 (manual smoke) |
+| Spec section                                                | Task(s)                                                                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| §4.1 `SubTabScreenShell` API                                | Task 2                                                                                               |
+| §4.2 horizontal scroll on `SubTabControl`                   | Task 1                                                                                               |
+| §4.3 home/sales/inventory/customers migrations              | Tasks 7, 8, 9, 10                                                                                    |
+| §4.4 keep `*Header` content-only + delete `InventoryHeader` | Tasks 3, 4, 5, 6                                                                                     |
+| §6 swipe-parity audit (no code change)                      | Tasks 7–10 preserve `swipeEnabled: true, lazy: true, lazyPreloadDistance: 0`                         |
+| §7 edge cases (zero tabs, no topSlot, padding)              | Task 2 (`tabs.length > 0` guard), Task 2 (`topSlot` accepts null), Task 7–10 (shell owns background) |
+| §8 tests (new shell test, new scroll test)                  | Task 1 (test), Task 2 (test), Task 11 (manual smoke)                                                 |
 
 **2. Placeholder scan:** No TBDs, no "implement later," no "fill in details." All code is concrete. The NOTE comment in Task 10 documents an intentional follow-up (badge count carry-over), not an implementation gap.
 
 **3. Type consistency:**
+
 - `SubTabScreenShell<T>` generic is used in Tasks 7, 8, 9, 10 with `T = HomeSubTab | SalesSubTab | InventorySubTab | CustomersSubTab`. These types are imported from `@/components/home|@/components/sales|@/constants/tabs|@/components/customers` respectively, matching the constants in `constants/tabs.ts`.
 - The shell's `tabs` parameter is `SubTabItem<T>[]` — Tasks 7–10 each define a local `*_TAB_DEFS` array of literal `{ key, label }` objects matching this shape.
 - After Tasks 3–6, the `*Header` components no longer accept `activeTab`, `onTabPress`, or `progress`; Tasks 7–10 do not pass those props. No type mismatch.

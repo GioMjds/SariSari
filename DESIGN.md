@@ -179,6 +179,17 @@ The color palette is Restrained, utilizing warm-neutral background layers with s
 
 **The Receipt Contrast Rule.** Body text must be written in Soft Charcoal Ink (`#0E0C0A`) to guarantee readability against cream paper under intense daylight.
 
+### Alert-Kind Palette
+
+The Inventory Alerts surface uses a fixed semantic palette to identify each alert kind by color across every surface it appears on (`InventoryAlertPills`, `ProductFilterModal`, future alert-bearing components). These are **paired with text and iconography** — color is never the sole carrier.
+
+- **Low Stock** (`#B45309`, amber-700 family): caution, warm but not alarming.
+- **Out of Stock** (`#BE123C`, rose-700 family): hard stop, ink-strong.
+- **Near Expiry** (`#C2410C`, persimmon-600 family): urgency that bleeds into the brand accent.
+- **Overstock** (`#78350F`, cinnamon-700 family): quiet overage, no urgency.
+
+**The Alert Color Contract.** When an alert kind appears as a chip, pill, badge, or filter, its icon color must match this palette verbatim. Do not introduce a fifth literal — promote any new alert kind here first.
+
 ## 3. Typography
 
 **Display Font:** `StackSansText-Bold`  
@@ -248,6 +259,27 @@ The design system is flat-by-default to preserve the receipt paper aesthetic. De
 ### Alert Badge
 
 - Small badge indicating status (low stock, expiring, overdue) using secondary green background and icon.
+
+### Filter Pill
+
+- **Shape:** Fully rounded pill (`9999px`, `pill` token).
+- **Background:** Paper-100 unselected, tone-specific fill on selection — Cinnamon-500 (`#623418`) for primary (Stock Status), Ink-900 (`#0E0C0A`) for secondary (Inventory Alerts, Category).
+- **Border:** 1px `ink-200` unselected; tone fill on selection.
+- **Sizing:** Two sizes — `md` (vertical padding 10px + text-xs ≈ 38px visible + `hitSlop 8/8/4/4` → ≥44×44pt effective tap area, POS-grade); `lg` (vertical padding 12px + text-sm ≈ 44px visible, used for the primary Stock Status row).
+- **Optional adornments:** leading `FontAwesome` icon (alert kinds), trailing count badge (`px-1.5 py-0.5 rounded-full`, `paper-50` / `ink-700` on selection, `ink-900` on `paper-50` unselected).
+- **a11y:** `accessibilityRole="radio"`, `accessibilityState={{ selected, disabled }}`, `accessibilityHint` for single-vs-multi-select semantics.
+
+### Section Header (Filter)
+
+- **Composition:** 4×16px accent bar + label-caps title + optional hint ("Pick one" / "Pick any").
+- **Accent bar legend:** persimmon-500 = primary filter (Stock Status), amber-500 = secondary (Inventory Alerts), persimmon-400 = browse (Category).
+- **Hint copy:** names the selection model in plain language. Required when the model is non-obvious.
+
+### Active-Filter Summary Row
+
+- Renders below the filter header, above the scrollable sections. Visible only when at least one filter is set.
+- **Composition:** `Active` label-caps eyebrow + one chip per active filter (paper-100 bg, ink-200 border, label in ink-700) + an inline `× Reset` affordance.
+- **Purpose:** makes the current filter set glance-readable before the user scrolls, and gives Reset a contextual home so it never reads as a destructive orphan.
 
 ## 6. Layout
 

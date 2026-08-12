@@ -58,9 +58,9 @@ export function SearchBar({
     <View className="relative flex-row items-center">
       <FontAwesome
         name="search"
-        size={14}
+        size={20}
         color="#E85A1F"
-        style={{ position: 'absolute', left: 12, zIndex: 10 }}
+        style={{ position: 'absolute', left: 16, zIndex: 10 }}
       />
       <TextInput
         value={local}
@@ -76,7 +76,7 @@ export function SearchBar({
         returnKeyType="search"
         className={`w-full bg-surface-subtle border ${
           focused ? 'border-persimmon-300' : 'border-warm-100'
-        } rounded-xl px-4 py-3 pl-11 ${rightPaddingClass} text-warm-900 placeholder-warm-500`}
+        } rounded-xl px-4 py-5 pl-12 ${rightPaddingClass} text-warm-900 placeholder-warm-500`}
         {...props}
       />
       <View className="absolute right-2 flex-row items-center gap-1 z-10">
@@ -111,7 +111,7 @@ export function SearchBar({
             hitSlop={8}
             className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200 relative"
           >
-            <FontAwesome name="sliders" size={13} color="#564E45" />
+            <FontAwesome name="sliders" size={20} color="#564E45" />
             {Boolean(activeFilterCount && activeFilterCount > 0) && (
               <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-persimmon-500 items-center justify-center border border-paper-50">
                 <StyledText

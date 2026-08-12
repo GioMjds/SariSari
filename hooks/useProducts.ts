@@ -24,6 +24,7 @@ import {
   useQuery,
   useQueryClient,
   useInfiniteQuery,
+  type QueryClient,
 } from '@tanstack/react-query';
 import { saveProductImageLocal, deleteLocalProductImage } from '@/lib';
 import { catalogKeys } from './useCatalog';
@@ -41,6 +42,25 @@ export const productKeys = {
     [...productKeys.all, 'infinite', search, filter] as const,
   fastLaneProducts: () => [...productKeys.all, 'fastLaneProducts'] as const,
 };
+
+export function invalidateProductDependencies(
+  queryClient: QueryClient,
+  productId?: number,
+) {
+  queryClient.invalidateQueries({ queryKey: productKeys.all });
+  if (productId != null) {
+    queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+  }
+  queryClient.invalidateQueries({ queryKey: catalogKeys.all });
+  queryClient.invalidateQueries({ queryKey: ['categories'] });
+  queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
+  queryClient.invalidateQueries({ queryKey: ['category'] });
+  queryClient.invalidateQueries({ queryKey: ['inventory'] });
+  queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] });
+  queryClient.invalidateQueries({ queryKey: ['report-kpis'] });
+  queryClient.invalidateQueries({ queryKey: ['reports'] });
+  queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
+}
 
 export function useGetProduct(id: number) {
   return useQuery({
@@ -165,9 +185,7 @@ export function useProducts() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: catalogKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateProductDependencies(queryClient);
       addToast({
         message: 'Product added successfully',
         variant: 'success',
@@ -244,12 +262,7 @@ export function useProducts() {
       );
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: catalogKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: productKeys.detail(variables.id),
-      });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateProductDependencies(queryClient, variables.id);
       addToast({
         message: 'Product updated successfully',
         variant: 'success',
@@ -284,8 +297,7 @@ export function useProducts() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateProductDependencies(queryClient);
       addToast({
         message: 'Product deleted successfully',
         variant: 'success',
@@ -309,9 +321,8 @@ export function useProducts() {
       id: number;
       category: string | null;
     }) => updateProductCategory(id, category),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+    onSuccess: (_, variables) => {
+      invalidateProductDependencies(queryClient, variables.id);
     },
     onError: (error: Error) => {
       addToast({
@@ -332,8 +343,7 @@ export function useProducts() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      invalidateProductDependencies(queryClient);
     },
     onError: (error: Error) => {
       addToast({

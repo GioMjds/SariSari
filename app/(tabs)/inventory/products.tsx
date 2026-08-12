@@ -14,6 +14,7 @@ import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection, useToastStore } from '@/stores';
 import { BulkActionsToolbar, type AlertKind } from '@/components/inventory';
+import { SearchBar } from '@/components/ui';
 import type { Product } from '@/types/products.types';
 import { getStatus, type InventoryEventType } from '@/types/inventory.types';
 import { MAX_STOCK_THRESHOLD } from '@/constants/stocks';
@@ -122,6 +123,28 @@ export default function ProductsScreen() {
     alert,
   );
 
+  // Search and filter live on this screen, not the inventory layout —
+  // they only apply to products.
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filter !== 'all') count++;
+    if (category) count++;
+    if (alert) count++;
+    if (supplier) count++;
+    return count;
+  }, [filter, category, alert, supplier]);
+
+  const handleSearchChange = useCallback(
+    (next: string) => {
+      router.setParams({ q: next });
+    },
+    [router],
+  );
+
+  const handleFilterPress = useCallback(() => {
+    setFilterModalOpen(true);
+  }, []);
+
   const handlePress = useCallback(
     (id: number) => router.push(`/(edit-forms)/product-details/${id}` as Href),
     [router],
@@ -224,6 +247,15 @@ export default function ProductsScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
+      <View className="px-4 pb-2">
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search products..."
+          onFilterPress={handleFilterPress}
+          activeFilterCount={activeFilterCount}
+        />
+      </View>
       {products.length === 0 ? (
         <ProductsEmptyState
           variant={emptyVariant}
@@ -321,7 +353,9 @@ export default function ProductsScreen() {
             openFilterModal: undefined,
           });
         }}
-        onOpenAddCategory={() => router.push('/(edit-forms)/add-category' as Href)}
+        onOpenAddCategory={() =>
+          router.push('/(edit-forms)/add-category' as Href)
+        }
       />
     </View>
   );

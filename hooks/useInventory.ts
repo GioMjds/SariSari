@@ -17,6 +17,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { invalidateProductDependencies } from './useProducts';
 
 export const inventoryKeys = {
   all: ['inventory'] as const,
@@ -36,8 +37,7 @@ export function useInsertInventory() {
       return await insertInventoryTransaction(tx);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      invalidateProductDependencies(queryClient);
       addToast({
         message: 'Stock updated',
         variant: 'success',
@@ -111,8 +111,7 @@ export function useInventory() {
       return await insertInventoryTransaction(tx);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      invalidateProductDependencies(queryClient);
       addToast({
         message: 'Stock updated',
         variant: 'success',
