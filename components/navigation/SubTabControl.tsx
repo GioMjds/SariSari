@@ -198,6 +198,7 @@ export function SubTabControl<T extends string>({
                 tab.badgeAccessibilityLabel,
               )}
               hitSlop={{ top: 12, bottom: 12, left: 4, right: 4 }}
+              className="flex-row items-center py-2.5"
               style={{ flexShrink: 0 }}
               testID={`subtab-${tab.key}`}
             >
