@@ -116,7 +116,9 @@ export function InventoryAlertPills({
                 ? counts.nearExpiry
                 : counts.overstock;
 
+        // Replace the `any` type of the `Wrapper` variable for proper type invocation
         const Wrapper: any = reduceMotion ? View : MotiView;
+        
         const wrapperProps = reduceMotion
           ? {}
           : {

@@ -37,7 +37,7 @@ Add a discoverable, in-tab surface for owners to:
 
 Two new top-level directory routes inside the Inventory tab stack, plus two lightweight drilldown routes that mount the existing `ProductsList` with a pre-applied filter.
 
-```
+```folder
 Inventory tab (stack)
   ├─ products.tsx               [existing, gains header icons + overflow]
   ├─ categories.tsx             [new, browse + manage categories]
@@ -54,29 +54,29 @@ Unidirectional flow per `obsidian-vault/CONTEXT.md`: routes → hooks → `datab
 
 ### New routes (under `app/(tabs)/inventory/`)
 
-| Route | Owns |
-|-------|------|
-| `categories.tsx` | Reads `useCategories().getCategoriesWithCountQuery`; renders `<CategoryDirectoryList>` with search + FAB; long-press → action sheet; tap → drilldown; FAB → existing `add-category` |
-| `category-products/[name].tsx` | Reads `usePaginatedProducts('', 'all')`; filters client-side by category name; renders existing `<ProductsList>` with `no-filter` empty variant |
-| `suppliers.tsx` | Reads `useSuppliersWithCountQuery`; renders `<SupplierDirectoryList>` with search + FAB; tap → drilldown; swipe-left → delete confirm; FAB → existing `add-supplier` |
-| `supplier-products/[id].tsx` | Resolves supplier name via existing `getSupplierByIdQuery`; reads `useGetLastDeliveryForSupplier(id)`; renders existing `<ProductsList>` filtered by `supplier_id`; renders `<LastDeliveryChip>` below header |
+| Route                          | Owns                                                                                                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categories.tsx`               | Reads `useCategories().getCategoriesWithCountQuery`; renders `<CategoryDirectoryList>` with search + FAB; long-press → action sheet; tap → drilldown; FAB → existing `add-category`                           |
+| `category-products/[name].tsx` | Reads `usePaginatedProducts('', 'all')`; filters client-side by category name; renders existing `<ProductsList>` with `no-filter` empty variant                                                               |
+| `suppliers.tsx`                | Reads `useSuppliersWithCountQuery`; renders `<SupplierDirectoryList>` with search + FAB; tap → drilldown; swipe-left → delete confirm; FAB → existing `add-supplier`                                          |
+| `supplier-products/[id].tsx`   | Resolves supplier name via existing `getSupplierByIdQuery`; reads `useGetLastDeliveryForSupplier(id)`; renders existing `<ProductsList>` filtered by `supplier_id`; renders `<LastDeliveryChip>` below header |
 
 ### New components (under `components/inventory/directory/`)
 
-| File | Purpose |
-|------|---------|
-| `CategoryDirectoryList.tsx` | ScrollView + debounced search + render rows + empty state |
-| `CategoryDirectoryRow.tsx` | Row: name, product count chip, press + long-press handlers |
-| `CategoryDirectorySkeleton.tsx` | 5-row loading state |
-| `CategoryDirectoryEmptyState.tsx` | "Add your first category" CTA |
-| `CategoryRowActionSheet.tsx` | Bottom sheet for rename / delete actions |
-| `SupplierDirectoryList.tsx` | Same shape as Category but for suppliers; swipe-to-delete |
-| `SupplierDirectoryRow.tsx` | Row: name, contact preview, product count, last-delivered chip |
-| `SupplierDirectorySkeleton.tsx` | Loading state |
-| `SupplierDirectoryEmptyState.tsx` | "Add your first supplier" CTA |
-| `DirectoryEntryHeader.tsx` | Shared header: back button + title + count, for drilldown screens |
-| `LastDeliveryChip.tsx` | "Last delivery: 2 days ago" or "No deliveries yet" |
-| `index.ts` | Re-exports |
+| File                              | Purpose                                                           |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `CategoryDirectoryList.tsx`       | ScrollView + debounced search + render rows + empty state         |
+| `CategoryDirectoryRow.tsx`        | Row: name, product count chip, press + long-press handlers        |
+| `CategoryDirectorySkeleton.tsx`   | 5-row loading state                                               |
+| `CategoryDirectoryEmptyState.tsx` | "Add your first category" CTA                                     |
+| `CategoryRowActionSheet.tsx`      | Bottom sheet for rename / delete actions                          |
+| `SupplierDirectoryList.tsx`       | Same shape as Category but for suppliers; swipe-to-delete         |
+| `SupplierDirectoryRow.tsx`        | Row: name, contact preview, product count, last-delivered chip    |
+| `SupplierDirectorySkeleton.tsx`   | Loading state                                                     |
+| `SupplierDirectoryEmptyState.tsx` | "Add your first supplier" CTA                                     |
+| `DirectoryEntryHeader.tsx`        | Shared header: back button + title + count, for drilldown screens |
+| `LastDeliveryChip.tsx`            | "Last delivery: 2 days ago" or "No deliveries yet"                |
+| `index.ts`                        | Re-exports                                                        |
 
 ### Touched files
 
@@ -94,31 +94,31 @@ Unidirectional flow per `obsidian-vault/CONTEXT.md`: routes → hooks → `datab
 
 ### Reads
 
-| Hook | Source function | Shape |
-|------|----------------|-------|
-| `useCategories().getCategoriesWithCountQuery` (existing) | existing | `{ id, name, product_count }[]` |
-| `useSuppliersWithCountQuery()` (new) | `getSuppliersWithCount()` (new) | `{ id, name, contact, notes, createdAt, productCount }[]` |
-| `useGetSupplierByIdQuery(id)` (verify exists; add if missing) | `getSupplierById(id)` | `Supplier` |
-| `useGetLastDeliveryForSupplier(id)` (new) | `getLastDeliveryForSupplier(id)` (new) | `{ date, transactionId } \| null` |
-| `usePaginatedProducts('', 'all')` (existing) | existing | unchanged |
+| Hook                                                          | Source function                        | Shape                                                     |
+| ------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------- |
+| `useCategories().getCategoriesWithCountQuery` (existing)      | existing                               | `{ id, name, product_count }[]`                           |
+| `useSuppliersWithCountQuery()` (new)                          | `getSuppliersWithCount()` (new)        | `{ id, name, contact, notes, createdAt, productCount }[]` |
+| `useGetSupplierByIdQuery(id)` (verify exists; add if missing) | `getSupplierById(id)`                  | `Supplier`                                                |
+| `useGetLastDeliveryForSupplier(id)` (new)                     | `getLastDeliveryForSupplier(id)` (new) | `{ date, transactionId } \| null`                         |
+| `usePaginatedProducts('', 'all')` (existing)                  | existing                               | unchanged                                                 |
 
 Stale time: 60s for all new queries, matching the existing pattern.
 
 ### Mutations
 
-| Mutation | DB transaction |
-|----------|---------------|
-| `useRenameCategoryMutation` | single `UPDATE categories SET name = ?` |
+| Mutation                    | DB transaction                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `useRenameCategoryMutation` | single `UPDATE categories SET name = ?`                                                                                   |
 | `useDeleteCategoryMutation` | `withTransactionAsync` → re-point `products.category` to `null` where `category = oldName`, then `DELETE FROM categories` |
-| `useDeleteSupplierMutation` | `withTransactionAsync` → re-point `products.supplier_id` to `null`, then `DELETE FROM suppliers` |
+| `useDeleteSupplierMutation` | `withTransactionAsync` → re-point `products.supplier_id` to `null`, then `DELETE FROM suppliers`                          |
 
 **Re-point to null on delete** is the deliberate choice — it preserves user data and keeps the products list rendering correctly. The cascade-delete alternative would surprise owners; the refuse-if-attached alternative would block the most common cleanup case.
 
 ### Cache invalidation
 
-- `useRenameCategoryMutation` → invalidate `getCategoriesWithCountQuery` *and* `usePaginatedProducts`
+- `useRenameCategoryMutation` → invalidate `getCategoriesWithCountQuery` _and_ `usePaginatedProducts`
 - `useDeleteCategoryMutation` → invalidate the same two keys
-- `useDeleteSupplierMutation` → invalidate `useSuppliersWithCountQuery` *and* `usePaginatedProducts`
+- `useDeleteSupplierMutation` → invalidate `useSuppliersWithCountQuery` _and_ `usePaginatedProducts`
 - `useReceiveStock` (existing) → add `useGetLastDeliveryForSupplier` invalidation
 
 ### Search
@@ -134,18 +134,18 @@ Reuse the existing `usePaginatedProducts` cache. The drilldown screen filters th
 - **Read failures** (categories, suppliers, last-delivery): existing `InventoryErrorState` with a "Try again" wired to `query.refetch()`. No new error component.
 - **Mutation failures**: existing `useToastStore` pattern — `mutation.onError` posts an `error` toast with a user-friendly message ("Could not rename — name already exists"); `mutation.onSuccess` posts a `success` toast.
 - **Confirm-before-destructive**: a delete on a row with attached products triggers a confirm dialog with a count ("Delete 'Soft Drinks'? 12 products will lose their category."). Reuses `app/modal/confirm-action.tsx`.
-- **Empty rename**: client-side form validation. The Save button stays disabled until the trimmed new name is non-empty *and* differs from the current name.
+- **Empty rename**: client-side form validation. The Save button stays disabled until the trimmed new name is non-empty _and_ differs from the current name.
 
 ## Empty states
 
-| Screen | Variant | CTA |
-|--------|---------|-----|
-| `categories.tsx` (no categories) | `<CategoryDirectoryEmptyState>` | "Add your first category" → `add-category` |
-| `categories.tsx` (no search results) | adapted `no-search` empty state | "Clear search" |
-| `suppliers.tsx` (no suppliers) | `<SupplierDirectoryEmptyState>` | "Add your first supplier" → `add-supplier` |
-| `category-products/[name]` | existing `ProductsEmptyState` `no-filter` | "Back to categories" → `router.back()` |
-| `supplier-products/[id]` | same as above | same |
-| `supplier-products/[id]` (no last delivery) | `<LastDeliveryChip variant="never">` | — |
+| Screen                                      | Variant                                   | CTA                                        |
+| ------------------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| `categories.tsx` (no categories)            | `<CategoryDirectoryEmptyState>`           | "Add your first category" → `add-category` |
+| `categories.tsx` (no search results)        | adapted `no-search` empty state           | "Clear search"                             |
+| `suppliers.tsx` (no suppliers)              | `<SupplierDirectoryEmptyState>`           | "Add your first supplier" → `add-supplier` |
+| `category-products/[name]`                  | existing `ProductsEmptyState` `no-filter` | "Back to categories" → `router.back()`     |
+| `supplier-products/[id]`                    | same as above                             | same                                       |
+| `supplier-products/[id]` (no last delivery) | `<LastDeliveryChip variant="never">`      | —                                          |
 
 ## Loading states
 
@@ -162,7 +162,7 @@ Reuse the existing `usePaginatedProducts` cache. The drilldown screen filters th
 - All new i18n strings in `locales/{en,tl}/inventory.json` — no hard-coded English in components
 - Colors: reuse existing `ink-700` / `paper-50` / `persimmon-600` palette tokens from `CategoryFilterBar`
 
-## i18n keys (18 new)
+## i18n keys (19 new)
 
 - `directoryTitle`
 - `directoryCategories`
@@ -197,17 +197,17 @@ This duplication is intentional — discoverable icons for first-time users, mus
 
 ### In scope
 
-| Test | What it covers |
-|------|---------------|
-| `tests/database/get-suppliers-with-count.test.ts` | Counts correct for 0/1/many; sorted by name asc |
-| `tests/database/rename-category.test.ts` | Updates row; reflected on refetch; rejects duplicate name |
-| `tests/database/delete-category-repoints-products.test.ts` | Re-points `products.category` to `null` in one transaction; no products deleted |
-| `tests/database/delete-supplier-repoints-products.test.ts` | Same for `supplier_id` |
-| `tests/database/get-last-delivery-for-supplier.test.ts` | Most recent `inventory_transactions` row by `date DESC LIMIT 1`; `null` when none; ignores other types |
-| `tests/components/inventory/CategoriesScreen.test.tsx` | Renders list; long-press → sheet; tap → drilldown; FAB → `add-category` |
-| `tests/components/inventory/SuppliersScreen.test.tsx` | Same shape for suppliers; swipe-delete → confirm; confirm → mutation fires |
-| `tests/components/inventory/CategoryDirectoryEmptyState.test.tsx` | Renders CTA |
-| `tests/components/inventory/SupplierDirectoryEmptyState.test.tsx` | Same |
+| Test                                                              | What it covers                                                                                         |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `tests/database/get-suppliers-with-count.test.ts`                 | Counts correct for 0/1/many; sorted by name asc                                                        |
+| `tests/database/rename-category.test.ts`                          | Updates row; reflected on refetch; rejects duplicate name                                              |
+| `tests/database/delete-category-repoints-products.test.ts`        | Re-points `products.category` to `null` in one transaction; no products deleted                        |
+| `tests/database/delete-supplier-repoints-products.test.ts`        | Same for `supplier_id`                                                                                 |
+| `tests/database/get-last-delivery-for-supplier.test.ts`           | Most recent `inventory_transactions` row by `date DESC LIMIT 1`; `null` when none; ignores other types |
+| `tests/components/inventory/CategoriesScreen.test.tsx`            | Renders list; long-press → sheet; tap → drilldown; FAB → `add-category`                                |
+| `tests/components/inventory/SuppliersScreen.test.tsx`             | Same shape for suppliers; swipe-delete → confirm; confirm → mutation fires                             |
+| `tests/components/inventory/CategoryDirectoryEmptyState.test.tsx` | Renders CTA                                                                                            |
+| `tests/components/inventory/SupplierDirectoryEmptyState.test.tsx` | Same                                                                                                   |
 
 ### Out of scope
 

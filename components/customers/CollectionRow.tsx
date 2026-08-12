@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
@@ -16,7 +17,30 @@ interface CollectionRowProps {
   row: CollectionQueueRow;
 }
 
-export function CollectionRow({ row }: CollectionRowProps) {
+const COLLECTION_ROW_BASE =
+  'mx-4 my-1.5 bg-cream-50 rounded-2xl p-4 flex-row items-center';
+const BADGE_CONTAINER_OVERDUE = 'px-2 py-0.5 rounded-full bg-cinnamon-700';
+const BADGE_CONTAINER_NORMAL = 'px-2 py-0.5 rounded-full bg-cinnamon-100';
+const BADGE_TEXT_OVERDUE = 'text-xs text-ink-600';
+const BADGE_TEXT_NORMAL = 'text-xs text-cinnamon-700';
+
+const CHIP_CONTAINER_OVERDUE =
+  'px-2 py-1 rounded-full border bg-semantic-danger-50 border-semantic-danger-100';
+const CHIP_CONTAINER_CONTACTED =
+  'px-2 py-1 rounded-full border bg-sage-50 border-sage-100';
+const CHIP_CONTAINER_DEFAULT =
+  'px-2 py-1 rounded-full border bg-paper-200 border-paper-300';
+
+const CHIP_TEXT_OVERDUE = 'text-xs text-semantic-danger';
+const CHIP_TEXT_CONTACTED = 'text-xs text-sage-700';
+const CHIP_TEXT_DEFAULT = 'text-xs text-cinnamon-700';
+
+const MARK_CONTACTED_BTN =
+  'px-2 py-1 rounded-full border border-paper-300 bg-paper-50 active:bg-paper-200 flex-row items-center';
+const RECORD_PAYMENT_BTN =
+  'ml-2 shrink-0 bg-cinnamon-500 px-3 py-2 rounded-xl min-h-12 min-w-[88px] items-center justify-center';
+
+function CollectionRowComponent({ row }: CollectionRowProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation('utang');
 
@@ -147,7 +171,7 @@ export function CollectionRow({ row }: CollectionRowProps) {
         return parts.join(', ');
       })()}
       accessibilityHint={t('collectionRowOpenDetailsHint')}
-      className="mx-4 my-1.5 bg-cream-50 rounded-2xl p-4 flex-row items-center"
+      className={COLLECTION_ROW_BASE}
     >
       <CustomerAvatar name={row.name} photoUri={row.photoUri ?? null} />
       <View className="flex-1 min-w-0 ml-3">
@@ -170,15 +194,17 @@ export function CollectionRow({ row }: CollectionRowProps) {
         ) : null}
         <View className="flex-row items-center mt-1 flex-wrap">
           <View
-            className={`px-2 py-0.5 rounded-full ${
-              row.overdueDays > 0 ? 'bg-cinnamon-700' : 'bg-cinnamon-100'
-            }`}
+            className={
+              row.overdueDays > 0
+                ? BADGE_CONTAINER_OVERDUE
+                : BADGE_CONTAINER_NORMAL
+            }
           >
             <StyledText
               variant="medium"
-              className={`text-xs ${
-                row.overdueDays > 0 ? 'text-ink-600' : 'text-cinnamon-700'
-              }`}
+              className={
+                row.overdueDays > 0 ? BADGE_TEXT_OVERDUE : BADGE_TEXT_NORMAL
+              }
             >
               {formatPesos(row.balance)}
             </StyledText>
@@ -212,23 +238,23 @@ export function CollectionRow({ row }: CollectionRowProps) {
             }}
             accessibilityRole="button"
             accessibilityLabel={chipLabel}
-            className={`px-2 py-1 rounded-full border ${
+            className={
               followUpChipState === 'overdue'
-                ? 'bg-semantic-danger-50 border-semantic-danger-100'
+                ? CHIP_CONTAINER_OVERDUE
                 : followUpChipState === 'contacted'
-                  ? 'bg-sage-50 border-sage-100'
-                  : 'bg-paper-200 border-paper-300'
-            }`}
+                  ? CHIP_CONTAINER_CONTACTED
+                  : CHIP_CONTAINER_DEFAULT
+            }
           >
             <StyledText
               variant="medium"
-              className={`text-xs ${
+              className={
                 followUpChipState === 'overdue'
-                  ? 'text-semantic-danger'
+                  ? CHIP_TEXT_OVERDUE
                   : followUpChipState === 'contacted'
-                    ? 'text-sage-700'
-                    : 'text-cinnamon-700'
-              }`}
+                    ? CHIP_TEXT_CONTACTED
+                    : CHIP_TEXT_DEFAULT
+              }
             >
               {chipLabel}
             </StyledText>
@@ -244,7 +270,7 @@ export function CollectionRow({ row }: CollectionRowProps) {
             })}
             accessibilityHint={t('collectionRowMarkContactedHint')}
             hitSlop={8}
-            className="px-2 py-1 rounded-full border border-paper-300 bg-paper-50 active:bg-paper-200 flex-row items-center"
+            className={MARK_CONTACTED_BTN}
           >
             <FontAwesome
               name="check-circle"
@@ -269,7 +295,7 @@ export function CollectionRow({ row }: CollectionRowProps) {
         })}
         accessibilityHint={t('collectionRowRecordPaymentHint')}
         hitSlop={8}
-        className="ml-2 shrink-0 bg-cinnamon-500 px-3 py-2 rounded-xl min-h-12 min-w-[88px] items-center justify-center"
+        className={RECORD_PAYMENT_BTN}
       >
         <FontAwesome name="money" size={14} color="#FFFFFF" />
         <StyledText
@@ -283,3 +309,6 @@ export function CollectionRow({ row }: CollectionRowProps) {
     </Pressable>
   );
 }
+
+export const CollectionRow = memo(CollectionRowComponent);
+export default CollectionRow;

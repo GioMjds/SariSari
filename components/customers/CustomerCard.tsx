@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Customer } from '@/types/credits.types';
@@ -10,7 +10,10 @@ interface CustomerCardProps {
   onPress: (customer: Customer) => void;
 }
 
-export const CustomerCard: FC<CustomerCardProps> = ({ customer, onPress }) => {
+export const CustomerCard: FC<CustomerCardProps> = memo(function CustomerCard({
+  customer,
+  onPress,
+}) {
   const hasBalance = customer.outstanding_balance > 0;
 
   return (
@@ -20,7 +23,10 @@ export const CustomerCard: FC<CustomerCardProps> = ({ customer, onPress }) => {
       className="mx-4 mb-3 p-3.5 bg-paper-100 rounded-2xl border border-paper-200 flex-row items-center justify-between shadow-sm"
     >
       <View className="flex-row items-center flex-1 mr-2">
-        <CustomerAvatar name={customer.name} photoUri={customer.photo_uri} />
+        <CustomerAvatar
+          name={customer.name}
+          photoUri={customer.photo_uri ?? null}
+        />
         <View className="ml-3 flex-1">
           <View className="flex-row items-center flex-wrap gap-1.5">
             <StyledText variant="extrabold" className="text-ink-900 text-base">
@@ -62,4 +68,6 @@ export const CustomerCard: FC<CustomerCardProps> = ({ customer, onPress }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
+
+export default CustomerCard;

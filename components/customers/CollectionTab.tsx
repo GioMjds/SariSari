@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
@@ -66,6 +66,22 @@ export function CollectionTab() {
     return sections;
   }, [data, search]);
 
+  const renderItem = useCallback(
+    ({ item }: { item: RowItem }) =>
+      item.type === 'header' ? (
+        <StyledText
+          variant="medium"
+          accessibilityRole="header"
+          className="px-4 pt-5 pb-2 text-xs font-sans-bold text-cinnamon-600 uppercase tracking-wider"
+        >
+          {t(bucketLabelKey[item.bucket!])}
+        </StyledText>
+      ) : (
+        <CollectionRow row={item.row!} />
+      ),
+    [t],
+  );
+
   if (isLoading) return <CustomersSkeleton />;
   if (error) return <CollectionErrorState onRetry={() => void refetch()} />;
   if (items.length === 0) {
@@ -117,19 +133,7 @@ export function CollectionTab() {
       <FlatList
         data={items}
         keyExtractor={(item) => item.key}
-        renderItem={({ item }) =>
-          item.type === 'header' ? (
-            <StyledText
-              variant="medium"
-              accessibilityRole="header"
-              className="px-4 pt-5 pb-2 text-xs font-sans-bold text-cinnamon-600 uppercase tracking-wider"
-            >
-              {t(bucketLabelKey[item.bucket!])}
-            </StyledText>
-          ) : (
-            <CollectionRow row={item.row!} />
-          )
-        }
+        renderItem={renderItem}
         ItemSeparatorComponent={({ leadingItem }) =>
           leadingItem?.type === 'header' ? null : <View className="h-1" />
         }

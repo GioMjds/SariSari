@@ -4,7 +4,7 @@ import { StyledText } from '@/components/elements';
 
 interface CustomerAvatarProps {
   name: string;
-  photoUri?: string | null;
+  photoUri?: string | null | undefined;
   size?: number;
 }
 

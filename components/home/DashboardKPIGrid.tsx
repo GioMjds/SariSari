@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -33,6 +33,50 @@ type KPIItem = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+interface KPICardProps {
+  kpi: KPIItem;
+  animatedStyle: any;
+  onPress: (target: KPIItem['target']) => void;
+}
+
+const KPICard = memo(function KPICard({
+  kpi,
+  animatedStyle,
+  onPress,
+}: KPICardProps) {
+  const handlePress = useCallback(() => {
+    onPress(kpi.target);
+  }, [kpi.target, onPress]);
+
+  return (
+    <AnimatedPressable
+      style={animatedStyle}
+      accessibilityRole="button"
+      accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
+      onPress={handlePress}
+      className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px] ${kpi.topBorder}`}
+    >
+      <View className="flex-row items-center justify-between mb-2">
+        <StyledText
+          variant="extrabold"
+          className="text-ink-400 text-[11px] tracking-wider uppercase"
+        >
+          {kpi.title}
+        </StyledText>
+      </View>
+      <StyledText variant="extrabold" className="text-ink-900 text-xl">
+        {kpi.value}
+      </StyledText>
+      <View className="flex-row items-center justify-between mt-1.5">
+        <StyledText variant="regular" className="text-ink-500 text-[11px]">
+          {kpi.subtitle}
+        </StyledText>
+        <FontAwesome5 name={kpi.icon} size={11} color="#A89F90" />
+      </View>
+    </AnimatedPressable>
+  );
+});
+
 export function DashboardKPIGrid({
   profitMargin,
   cashSessionStatus = 'Open',
@@ -47,6 +91,18 @@ export function DashboardKPIGrid({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  const handleKpiPress = useCallback(
+    (target: KPIItem['target']) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      if (onKpiPress) {
+        onKpiPress(target);
+      } else {
+        onDetailsPress?.();
+      }
+    },
+    [onKpiPress, onDetailsPress],
+  );
 
   const kpis = [
     {
@@ -87,52 +143,14 @@ export function DashboardKPIGrid({
     <View className="mb-6">
       {/* 2x2 KPI Cards Grid */}
       <View className="flex-row flex-wrap gap-3 px-4">
-        {kpis.map((kpi, index) => {
-          return (
-            <AnimatedPressable
-              key={index}
-              style={animatedStyle}
-              accessibilityRole="button"
-              accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
-                  () => {},
-                );
-                if (onKpiPress) {
-                  onKpiPress(kpi.target);
-                } else {
-                  onDetailsPress?.();
-                }
-              }}
-              className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px] ${kpi.topBorder}`}
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-400 text-[11px] tracking-wider uppercase"
-                >
-                  {kpi.title}
-                </StyledText>
-              </View>
-              <StyledText variant="extrabold" className="text-ink-900 text-xl">
-                {kpi.value}
-              </StyledText>
-              <View className="flex-row items-center justify-between mt-1.5">
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-[11px]"
-                >
-                  {kpi.subtitle}
-                </StyledText>
-                <FontAwesome5
-                  name={kpi.icon}
-                  size={11}
-                  color="#A89F90"
-                />
-              </View>
-            </AnimatedPressable>
-          );
-        })}
+        {kpis.map((kpi, index) => (
+          <KPICard
+            key={index}
+            kpi={kpi}
+            animatedStyle={animatedStyle}
+            onPress={handleKpiPress}
+          />
+        ))}
       </View>
     </View>
   );

@@ -17,7 +17,7 @@ export const CustomerProfileHeader: React.FC<CustomerProfileHeaderProps> = ({
     <View className="bg-paper-100 p-4 rounded-xl border border-paper-200 items-center m-4">
       <CustomerAvatar
         name={customer.name}
-        photoUri={customer.photo_uri}
+        photoUri={customer.photo_uri ?? null}
         size={64}
       />
       <StyledText variant="extrabold" className="text-ink-800 text-lg mt-2">

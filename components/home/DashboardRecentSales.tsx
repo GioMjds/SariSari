@@ -24,6 +24,12 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+const SALE_ROW_CLASS_PRESETS = {
+  last: 'flex-row items-center justify-between py-3 active:opacity-70',
+  notLast:
+    'flex-row items-center justify-between py-3 active:opacity-70 border-b border-dashed border-ink-100',
+} as const;
+
 export const DashboardRecentSales = memo(function DashboardRecentSales({
   sales,
   onOpenSale,
@@ -87,9 +93,11 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
                     total: formatPesos(sale.total),
                   },
                 )}
-                className={`flex-row items-center justify-between py-3 active:opacity-70 ${
-                  !isLast ? 'border-b border-dashed border-ink-100' : ''
-                }`}
+                className={
+                  isLast
+                    ? SALE_ROW_CLASS_PRESETS.last
+                    : SALE_ROW_CLASS_PRESETS.notLast
+                }
               >
                 {/* Receipt icon */}
                 <View className="w-9 h-9 rounded-xl bg-paper-100 items-center justify-center mr-3 border border-ink-100">

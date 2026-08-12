@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { memo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -16,7 +16,14 @@ export interface CheckoutLineRowProps {
   onRemove: (productId: number, selectedUnit?: 'retail' | 'wholesale') => void;
 }
 
-export function CheckoutLineRow({
+const CHECKOUT_LINE_ROW_BASE =
+  'px-5 py-3 border-b border-paper-200 bg-paper-50';
+const CHECKOUT_LINE_TAG_WHOLESALE = 'bg-amber-100/90 border-amber-300/60';
+const CHECKOUT_LINE_TAG_RETAIL = 'bg-paper-200/80 border-paper-300/50';
+const CHECKOUT_LINE_TAG_TEXT_WHOLESALE = 'text-amber-900';
+const CHECKOUT_LINE_TAG_TEXT_RETAIL = 'text-ink-600';
+
+function CheckoutLineRowComponent({
   item,
   onUpdateQuantity,
   onRemove,
@@ -30,7 +37,7 @@ export function CheckoutLineRow({
     : item.retail_unit_name || 'Pc';
 
   return (
-    <View className="px-5 py-3 border-b border-paper-200 bg-paper-50">
+    <View className={CHECKOUT_LINE_ROW_BASE}>
       <Pressable
         onLongPress={() => setShowConfirmRemove(true)}
         delayLongPress={400}
@@ -51,14 +58,16 @@ export function CheckoutLineRow({
             <View
               className={`px-2 py-0.5 rounded-md border ${
                 isWholesale
-                  ? 'bg-amber-100/90 border-amber-300/60'
-                  : 'bg-paper-200/80 border-paper-300/50'
+                  ? CHECKOUT_LINE_TAG_WHOLESALE
+                  : CHECKOUT_LINE_TAG_RETAIL
               }`}
             >
               <StyledText
                 variant="extrabold"
                 className={`text-[10px] uppercase ${
-                  isWholesale ? 'text-amber-900' : 'text-ink-600'
+                  isWholesale
+                    ? CHECKOUT_LINE_TAG_TEXT_WHOLESALE
+                    : CHECKOUT_LINE_TAG_TEXT_RETAIL
                 }`}
               >
                 {unitName}
@@ -166,3 +175,6 @@ export function CheckoutLineRow({
     </View>
   );
 }
+
+export const CheckoutLineRow = memo(CheckoutLineRowComponent);
+export default CheckoutLineRow;

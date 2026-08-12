@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { FlatList, ListRenderItemInfo, Platform, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { ProductRow } from './ProductRow';
@@ -73,3 +73,5 @@ export function ProductsList({
     />
   );
 }
+
+memo(ProductsList);

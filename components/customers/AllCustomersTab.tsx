@@ -1,4 +1,4 @@
-import { useState, useMemo, FC } from 'react';
+import { useState, useMemo, useCallback, FC } from 'react';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { SearchBar } from '@/components/ui';
 import { CustomerFilterChips } from './CustomerFilterChips';
@@ -53,6 +53,20 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
     setSortAsc((prev) => !prev);
   };
 
+  const handleSelectCustomer = useCallback(
+    (customer: Customer) => {
+      onSelectCustomer(customer);
+    },
+    [onSelectCustomer],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: Customer }) => (
+      <CustomerCard customer={item} onPress={handleSelectCustomer} />
+    ),
+    [handleSelectCustomer],
+  );
+
   return (
     <View className="flex-1 bg-paper-200">
       {/* Search Input Bar */}
@@ -94,9 +108,7 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <CustomerCard customer={item} onPress={onSelectCustomer} />
-          )}
+          renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
         />

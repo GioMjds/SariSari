@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import {
   FlatList,
@@ -23,6 +24,90 @@ interface ProductPickerProps {
   onClear: () => void;
 }
 
+const TRIGGER_PRESSABLE_STYLE = ({ pressed }: { pressed: boolean }) => ({
+  backgroundColor: pressed ? '#E6E3D8' : '#F2F0E8',
+});
+
+const SCALE_PRESSABLE_STYLE = ({ pressed }: { pressed: boolean }) => ({
+  transform: [{ scale: pressed ? 0.97 : 1 }],
+});
+
+const PICKER_ROW_PRESSABLE_STYLE = ({ pressed }: { pressed: boolean }) => ({
+  transform: [{ scale: pressed ? 0.97 : 1 }],
+  backgroundColor: pressed ? '#F6F0E2' : 'transparent',
+});
+
+interface ProductPickerRowProps {
+  item: Product;
+  onSelectProduct: (product: Product) => void;
+}
+
+const ProductPickerRow = memo(function ProductPickerRow({
+  item,
+  onSelectProduct,
+}: ProductPickerRowProps) {
+  const placeholderText = item.name
+    ? item.name.trim().charAt(0).toUpperCase()
+    : '?';
+  const displayImageUri = getProductImageUri(item.image_uri);
+
+  const handlePress = useCallback(() => {
+    onSelectProduct(item);
+  }, [item, onSelectProduct]);
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`Pick ${item.name}`}
+      className="px-1 py-3 flex-row items-center justify-between"
+      style={PICKER_ROW_PRESSABLE_STYLE}
+    >
+      {/* Left Column: Tiny Image & Name/Stock info */}
+      <View className="flex-1 flex-row items-center pr-2">
+        {/* Tiny Image Thumbnail */}
+        <View className="w-8 h-8 rounded-lg bg-paper-100 border border-ink-150 overflow-hidden mr-2.5 justify-center items-center">
+          {displayImageUri ? (
+            <Image
+              source={{ uri: displayImageUri }}
+              className="w-full h-full"
+              contentFit="cover"
+            />
+          ) : (
+            <View className="w-full h-full bg-persimmon-50 items-center justify-center">
+              <StyledText
+                variant="black"
+                className="text-persimmon-600 text-xs"
+              >
+                {placeholderText}
+              </StyledText>
+            </View>
+          )}
+        </View>
+
+        <View className="flex-1">
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-sm"
+            numberOfLines={1}
+          >
+            {item.name}
+          </StyledText>
+          <StyledText
+            variant="regular"
+            className="text-ink-500 text-xs mt-0.5"
+          >
+            Stock: {item.quantity}
+          </StyledText>
+        </View>
+      </View>
+      <StyledText variant="extrabold" className="text-ink-900 text-sm">
+        {formatPesos(item.price)}
+      </StyledText>
+    </Pressable>
+  );
+});
+
 export function ProductPicker({
   value,
   suggestions,
@@ -33,6 +118,21 @@ export function ProductPicker({
   onSelect,
   onClear,
 }: ProductPickerProps) {
+  const handleSelectProduct = useCallback(
+    (product: Product) => {
+      onSelect(product);
+      onDropdownOpenChange(false);
+    },
+    [onSelect, onDropdownOpenChange],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: Product }) => (
+      <ProductPickerRow item={item} onSelectProduct={handleSelectProduct} />
+    ),
+    [handleSelectProduct],
+  );
+
   return (
     <View>
       <StyledText variant="black" className="label-caps text-ink-700">
@@ -48,9 +148,7 @@ export function ProductPicker({
             : 'Tap to choose an item'
         }
         className="mt-2 rounded-xl border border-ink-100 px-3 py-3 flex-row items-center"
-        style={({ pressed }) => ({
-          backgroundColor: pressed ? '#E6E3D8' : '#F2F0E8',
-        })}
+        style={TRIGGER_PRESSABLE_STYLE}
       >
         {selectedProduct ? (
           <View className="flex-1">
@@ -158,9 +256,7 @@ export function ProductPicker({
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Close dropdown"
-                style={({ pressed }) => ({
-                  transform: [{ scale: pressed ? 0.97 : 1 }],
-                })}
+                style={SCALE_PRESSABLE_STYLE}
               >
                 <FontAwesome name="times" size={18} color="#7A7165" />
               </Pressable>
@@ -184,9 +280,7 @@ export function ProductPicker({
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Clear item search"
-                  style={({ pressed }) => ({
-                    transform: [{ scale: pressed ? 0.97 : 1 }],
-                  })}
+                  style={SCALE_PRESSABLE_STYLE}
                 >
                   <FontAwesome name="times-circle" size={16} color="#A89F90" />
                 </Pressable>
@@ -203,73 +297,7 @@ export function ProductPicker({
                 ItemSeparatorComponent={() => (
                   <View className="border-t border-dashed border-ink-200" />
                 )}
-                renderItem={({ item }) => {
-                  const placeholderText = item.name
-                    ? item.name.trim().charAt(0).toUpperCase()
-                    : '?';
-                  const displayImageUri = getProductImageUri(item.image_uri);
-
-                  return (
-                    <Pressable
-                      onPress={() => {
-                        onSelect(item);
-                        onDropdownOpenChange(false);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Pick ${item.name}`}
-                      className="px-1 py-3 flex-row items-center justify-between"
-                      style={({ pressed }) => ({
-                        transform: [{ scale: pressed ? 0.97 : 1 }],
-                        backgroundColor: pressed ? '#F6F0E2' : 'transparent',
-                      })}
-                    >
-                      {/* Left Column: Tiny Image & Name/Stock info */}
-                      <View className="flex-1 flex-row items-center pr-2">
-                        {/* Tiny Image Thumbnail */}
-                        <View className="w-8 h-8 rounded-lg bg-paper-100 border border-ink-150 overflow-hidden mr-2.5 justify-center items-center">
-                          {displayImageUri ? (
-                            <Image
-                              source={{ uri: displayImageUri }}
-                              className="w-full h-full"
-                              contentFit="cover"
-                            />
-                          ) : (
-                            <View className="w-full h-full bg-persimmon-50 items-center justify-center">
-                              <StyledText
-                                variant="black"
-                                className="text-persimmon-600 text-xs"
-                              >
-                                {placeholderText}
-                              </StyledText>
-                            </View>
-                          )}
-                        </View>
-
-                        <View className="flex-1">
-                          <StyledText
-                            variant="extrabold"
-                            className="text-ink-900 text-sm"
-                            numberOfLines={1}
-                          >
-                            {item.name}
-                          </StyledText>
-                          <StyledText
-                            variant="regular"
-                            className="text-ink-500 text-xs mt-0.5"
-                          >
-                            Stock: {item.quantity}
-                          </StyledText>
-                        </View>
-                      </View>
-                      <StyledText
-                        variant="extrabold"
-                        className="text-ink-900 text-sm"
-                      >
-                        {formatPesos(item.price)}
-                      </StyledText>
-                    </Pressable>
-                  );
-                }}
+                renderItem={renderItem}
               />
             ) : (
               <View className="py-10 items-center">

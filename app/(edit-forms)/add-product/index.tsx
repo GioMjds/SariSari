@@ -86,15 +86,16 @@ export default function AddProduct() {
             initialStock={form.initialStock}
             onBumpStock={form.bumpStock}
           />
-
-          <ActionButtons
-            disabled={form.isSubmitDisabled}
-            isPending={form.insertProductMutation.isPending}
-            onSubmit={form.submit}
-            onCancel={form.confirmDiscard}
-          />
         </View>
       </KeyboardAwareScrollView>
+
+      {/* Docked Sticky Bottom Action Bar — Reachable without scrolling, clears gesture bar */}
+      <ActionButtons
+        disabled={form.isSubmitDisabled}
+        isPending={form.insertProductMutation.isPending}
+        onSubmit={form.submit}
+        onCancel={form.confirmDiscard}
+      />
 
       <Modal
         visible={form.showDialog}
