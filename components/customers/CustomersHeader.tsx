@@ -1,52 +1,28 @@
 import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { SharedValue } from 'react-native-reanimated';
 import { StyledText } from '@/components/elements';
-import { SubTabControl, SubTabItem } from '@/components/navigation';
 import { CustomersSubTab } from '@/constants/tabs';
 import { formatPesos } from '@/lib';
 
 export type { CustomersSubTab };
 
 export interface CustomersHeaderProps {
-  activeTab: CustomersSubTab;
   totalCustomers?: number;
   debtorCount?: number;
   loyalCount?: number;
   overdueCount?: number;
   totalCredit?: number;
-  onTabPress: (tab: CustomersSubTab) => void;
-  onAddCustomer?: () => void;
-  progress?: SharedValue<number>;
 }
 
 export function CustomersHeader({
-  activeTab,
   totalCustomers = 142,
   debtorCount = 0,
   loyalCount = 28,
   overdueCount = 0,
   totalCredit = 4850,
-  onTabPress,
-  progress,
 }: CustomersHeaderProps) {
-  const tabs = [
-    { key: 'all', label: 'ALL' },
-    { key: 'credit', label: 'CREDIT', badgeCount: debtorCount },
-    { key: 'collection', label: 'COLLECTION', badgeCount: overdueCount },
-  ] satisfies SubTabItem<CustomersSubTab>[];
-
   return (
-    <View className="bg-paper-200 px-4 pt-1 pb-1">
-      {/* Top Segmented Sub-Tab Navigation Control */}
-      <SubTabControl
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabPress={onTabPress}
-        containerClassName="mb-3"
-        {...(progress ? { progress } : {})}
-      />
-
+    <View className="px-4 pt-2">
       {/* Hero Card: Total Outstanding Credit */}
       <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-md relative overflow-hidden">
         {/* Background Watermark Wallet Icon */}
