@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { StyledText } from '@/components/elements';
-import { FontAwesome } from '@expo/vector-icons';
 import { useCategories } from '@/hooks/useCategories';
 import { useInventoryOverview } from '@/hooks/useInventoryOverview';
-import type { ProductsFilter } from './ProductFilterChips';
+import { FontAwesome } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
+import { Modal, ScrollView, TouchableOpacity, View } from 'react-native';
 import type { AlertKind } from '../InventoryAlertPills';
+import type { ProductsFilter } from './ProductFilterChips';
 
 export interface ProductFiltersState {
   status: ProductsFilter;
@@ -74,9 +74,7 @@ export function ProductFilterModal({
   const categories = getCategoriesWithCountQuery.data ?? [];
 
   useEffect(() => {
-    if (visible) {
-      setTempFilters(currentFilters);
-    }
+    if (visible) setTempFilters(currentFilters);
   }, [visible, currentFilters]);
 
   const handleApply = () => {
