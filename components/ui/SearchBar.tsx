@@ -3,10 +3,12 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Text,
   type TextInputProps,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AnimatePresence, MotiView } from 'moti';
+import { StyledText } from '../elements';
 
 type SearchBarProps = {
   value?: string;
@@ -14,6 +16,8 @@ type SearchBarProps = {
   placeholder?: string;
   accessibilityLabel?: string;
   debounceMs?: number;
+  onFilterPress?: () => void;
+  activeFilterCount?: number;
 } & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
 export function SearchBar({
@@ -22,6 +26,8 @@ export function SearchBar({
   placeholder = 'Search...',
   accessibilityLabel = 'Search',
   debounceMs = 0,
+  onFilterPress,
+  activeFilterCount,
   ...props
 }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
@@ -40,6 +46,14 @@ export function SearchBar({
   }, [local, debounceMs, onChange, value]);
 
   const hasContent = local.length > 0;
+  const hasFilter = Boolean(onFilterPress);
+
+  const rightPaddingClass =
+    hasContent && hasFilter
+      ? 'pr-20'
+      : hasContent || hasFilter
+      ? 'pr-11'
+      : 'pr-4';
 
   return (
     <View className="relative flex-row items-center">
@@ -63,33 +77,56 @@ export function SearchBar({
         returnKeyType="search"
         className={`w-full bg-surface-subtle border ${
           focused ? 'border-persimmon-300' : 'border-warm-100'
-        } rounded-xl px-4 py-3 pl-11 text-warm-900 placeholder-warm-500`}
+        } rounded-xl px-4 py-3 pl-11 ${rightPaddingClass} text-warm-900 placeholder-warm-500`}
         {...props}
       />
-      <AnimatePresence>
-        {hasContent && (
-          <MotiView
-            from={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: 'timing', duration: 140 }}
-            className="absolute right-2"
-          >
-            <TouchableOpacity
-              onPress={() => {
-                setLocal('');
-                onChange('');
-              }}
-              accessibilityLabel="Clear search"
-              accessibilityRole="button"
-              hitSlop={10}
-              className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200"
+      <View className="absolute right-2 flex-row items-center gap-1 z-10">
+        <AnimatePresence>
+          {hasContent && (
+            <MotiView
+              from={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ type: 'timing', duration: 140 }}
             >
-              <FontAwesome name="times" size={12} color="#564E45" />
-            </TouchableOpacity>
-          </MotiView>
+              <TouchableOpacity
+                onPress={() => {
+                  setLocal('');
+                  onChange('');
+                }}
+                accessibilityLabel="Clear search"
+                accessibilityRole="button"
+                hitSlop={10}
+                className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200"
+              >
+                <FontAwesome name="times" size={12} color="#564E45" />
+              </TouchableOpacity>
+            </MotiView>
+          )}
+        </AnimatePresence>
+        {onFilterPress && (
+          <TouchableOpacity
+            onPress={onFilterPress}
+            accessibilityLabel="Filter items"
+            accessibilityRole="button"
+            hitSlop={8}
+            className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200 relative"
+          >
+            <FontAwesome name="sliders" size={13} color="#564E45" />
+            {Boolean(activeFilterCount && activeFilterCount > 0) && (
+              <View className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-persimmon-500 items-center justify-center border border-paper-50">
+                <StyledText
+                  variant="extrabold"
+                  className="text-[9px] font-extrabold text-paper-50"
+                >
+                  {activeFilterCount}
+                </StyledText>
+              </View>
+            )}
+          </TouchableOpacity>
         )}
-      </AnimatePresence>
+      </View>
     </View>
   );
 }
+
