@@ -50,7 +50,7 @@ export default function HomeLayout() {
         <DashboardHeader
           storeName={storeName || ''}
           ownerInitials={ownerInitials || ''}
-          showTopHeader={false}
+          showTopHeader={true}
         />
       }
     >

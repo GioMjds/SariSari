@@ -24,7 +24,7 @@ export function SalesHeader({
 
   return (
     <View className="px-4 pt-2">
-      <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-lg border border-cinnamon-400/40 relative overflow-hidden">
+      <View className="bg-cinnamon-500 rounded-3xl p-5 mb-3 shadow-md relative overflow-hidden">
         <View className="absolute -right-4 -bottom-4 opacity-15">
           <FontAwesome name="shopping-bag" size={140} color="#FFFFFF" />
         </View>
