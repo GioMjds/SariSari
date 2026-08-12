@@ -1,8 +1,8 @@
+import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
 import { logger } from '@/lib/logger';
-import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LayoutChangeEvent, Pressable, View } from 'react-native';
+import { LayoutChangeEvent, Pressable, ScrollView, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -28,19 +28,7 @@ export interface SubTabControlProps<T extends string> {
   activeTab: T;
   onTabPress: (tab: T) => void;
   containerClassName?: string;
-  /**
-   * Optional UI-thread progress (continuous index across tab positions).
-   * When provided, the underline follows this value exactly. The owner of
-   * `progress` is responsible for animating it between integer indices
-   * (typically via the `useTabProgress` hook).
-   */
   progress?: SharedValue<number>;
-  /** @deprecated The component no longer owns a drag-to-switch gesture;
-   * the underlying pager (TopTabs / react-native-pager-view) does. Kept
-   * for API compatibility; the value is ignored. */
-  dragToSwitch?: boolean;
-  /** @deprecated See `dragToSwitch`. Ignored. */
-  dragThreshold?: number;
 }
 
 const BADGE_CLAMP_LIMIT = 999;
@@ -187,7 +175,11 @@ export function SubTabControl<T extends string>({
 
   return (
     <View accessibilityRole="tablist" className={resolvedContainerClassName}>
-      <View className="flex-row gap-4">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 16, paddingHorizontal: 4 }}
+      >
         {tabs.map((tab, index) => {
           const isActive = activeTab === tab.key;
           const badgeVisible =
@@ -206,7 +198,7 @@ export function SubTabControl<T extends string>({
                 tab.badgeAccessibilityLabel,
               )}
               hitSlop={{ top: 12, bottom: 12, left: 4, right: 4 }}
-              className="flex-row items-center py-2.5"
+              style={{ flexShrink: 0 }}
               testID={`subtab-${tab.key}`}
             >
               <StyledText
@@ -230,9 +222,7 @@ export function SubTabControl<T extends string>({
                   <StyledText
                     variant="extrabold"
                     className={`text-[11px] ${
-                      badgeTone === 'action'
-                        ? 'text-paper-50'
-                        : 'text-ink-700'
+                      badgeTone === 'action' ? 'text-paper-50' : 'text-ink-700'
                     }`}
                   >
                     {formatBadgeCount(tab.badgeCount as number)}
@@ -242,7 +232,7 @@ export function SubTabControl<T extends string>({
             </Pressable>
           );
         })}
-      </View>
+      </ScrollView>
 
       <View className="h-[3px] bg-paper-200">
         <Animated.View
