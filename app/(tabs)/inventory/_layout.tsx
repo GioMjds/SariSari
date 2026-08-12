@@ -1,14 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import {
-  Href,
-  Stack,
-  useLocalSearchParams,
-  useRouter,
-  useSegments,
-} from 'expo-router';
+import { Href, useRouter, useSegments } from 'expo-router';
+import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
 import { TopTabs } from '@/components/navigation';
-import { InventoryHeader, InventorySpeedDialFab } from '@/components/inventory';
+import { InventorySpeedDialFab } from '@/components/inventory';
 import { StocktakeBanner } from '@/components/inventory/stocktake';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
@@ -24,6 +19,14 @@ const SUB_TAB_SEGMENTS = [
   'recommendations',
 ] satisfies InventorySubTab[];
 
+const INVENTORY_TAB_DEFS: { key: InventorySubTab; label: string }[] = [
+  { key: 'products', label: 'PRODUCTS' },
+  { key: 'movements', label: 'MOVEMENTS' },
+  { key: 'stocktake', label: 'STOCKTAKE' },
+  { key: 'damaged', label: 'DAMAGED' },
+  { key: 'recommendations', label: 'RECOMMENDATIONS' },
+];
+
 function isInventorySubTab(segment: string): segment is InventorySubTab {
   return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
 }
@@ -31,14 +34,6 @@ function isInventorySubTab(segment: string): segment is InventorySubTab {
 export default function InventoryLayout() {
   const segments = useSegments();
   const router = useRouter();
-  const { q, category, filter, alert, supplier } = useLocalSearchParams<{
-    q?: string;
-    category?: string;
-    filter?: string;
-    alert?: string;
-    supplier?: string;
-  }>();
-  const search = q ?? '';
   const [scannerOpen, setScannerOpen] = useState(false);
   const [fabForm, setFabForm] = useState<{
     visible: boolean;
@@ -47,15 +42,6 @@ export default function InventoryLayout() {
     visible: false,
     type: 'adjustment',
   });
-
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filter && filter !== 'all') count++;
-    if (category) count++;
-    if (alert) count++;
-    if (supplier) count++;
-    return count;
-  }, [filter, category, alert, supplier]);
 
   const activeTab = useMemo<InventorySubTab>(() => {
     const last = segments[segments.length - 1] ?? '';
@@ -78,48 +64,18 @@ export default function InventoryLayout() {
     [router],
   );
 
-  const handleSearchChange = useCallback(
-    (next: string) => {
-      router.setParams({ q: next });
-    },
-    [router],
-  );
-
-  const handleFilterPress = useCallback(() => {
-    router.setParams({ openFilterModal: 'true' });
-  }, [router]);
-
-  const handlePillPress = useCallback(
-    (kind: 'low' | 'out' | 'near_expiry' | 'overstock') => {
-      router.push({ pathname: '/inventory/stock', params: { filter: kind } });
-    },
-    [router],
-  );
-
   const openAddProduct = useCallback(() => {
     router.push('/(edit-forms)/add-product' as Href);
   }, [router]);
 
   return (
-    <View className="flex-1 bg-paper-200">
-      <Stack.Screen options={{ headerShown: false }} />
-      {!isDetail ? (
-        <>
-          <InventoryHeader
-            active={activeTab}
-            search={search}
-            onSearchChange={handleSearchChange}
-            onOpenScanner={() => setScannerOpen(true)}
-            onTabChange={handleTabChange}
-            onPillPress={handlePillPress}
-            progress={progress}
-            onFilterPress={handleFilterPress}
-            activeFilterCount={activeFilterCount}
-          />
-          <StocktakeBanner />
-        </>
-      ) : null}
-
+    <SubTabScreenShell<InventorySubTab>
+      tabs={INVENTORY_TAB_DEFS}
+      activeTab={activeTab}
+      onTabPress={handleTabChange}
+      progress={progress}
+      topSlot={!isDetail ? <StocktakeBanner /> : null}
+    >
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
           initialRouteName="products"
@@ -162,6 +118,6 @@ export default function InventoryLayout() {
         scannerOpen={scannerOpen}
         onCloseScanner={() => setScannerOpen(false)}
       />
-    </View>
+    </SubTabScreenShell>
   );
 }
