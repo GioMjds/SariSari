@@ -1,3 +1,4 @@
+import i18n from '@/lib/i18n';
 import {
   deleteCategory,
   getAllCategories,
@@ -13,6 +14,7 @@ import {
   UpdateCategoryParams,
 } from '@/types/categories.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 
 export function useGetCategory(id: number) {
   return useQuery({
@@ -32,6 +34,7 @@ export function useGetCategoryByName(name: string) {
 
 export function useCategories() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const addToast = useToastStore((state) => state.addToast);
 
   // Query: Get all categories
@@ -54,18 +57,20 @@ export function useCategories() {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      router.replace('/(tabs)/inventory/products');
       addToast({
-        message: 'Category added successfully',
+        message: i18n.t('toastCategoryAdded', { ns: 'inventory' }),
         variant: 'success',
         duration: 5000,
       });
     },
-    onError: () => {
-      addToast({
-        message: "Your category doesn't add. Please try again.",
-        variant: 'danger',
-        duration: 5000,
-      });
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error &&
+        error.message.includes('UNIQUE constraint failed: categories.name')
+          ? i18n.t('toastCategoryAddDuplicate', { ns: 'inventory' })
+          : i18n.t('toastCategoryAddFailed', { ns: 'inventory' });
+      addToast({ message, variant: 'danger', duration: 5000 });
     },
   });
 
@@ -79,14 +84,14 @@ export function useCategories() {
       queryClient.invalidateQueries({ queryKey: ['category', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       addToast({
-        message: 'Category updated successfully',
+        message: i18n.t('toastCategoryUpdated', { ns: 'inventory' }),
         variant: 'success',
         duration: 5000,
       });
     },
     onError: () => {
       addToast({
-        message: "Your category doesn't update. Please try again.",
+        message: i18n.t('toastCategoryUpdateFailed', { ns: 'inventory' }),
         variant: 'danger',
         duration: 5000,
       });
@@ -101,14 +106,14 @@ export function useCategories() {
       queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       addToast({
-        message: 'Category deleted successfully',
+        message: i18n.t('toastCategoryDeleted', { ns: 'inventory' }),
         variant: 'success',
         duration: 5000,
       });
     },
     onError: () => {
       addToast({
-        message: 'Something went wrong. Please try again.',
+        message: i18n.t('toastCategoryDeleteFailed', { ns: 'inventory' }),
         variant: 'danger',
         duration: 5000,
       });

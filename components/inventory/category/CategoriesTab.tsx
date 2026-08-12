@@ -5,7 +5,7 @@ import { useCategories } from '@/hooks';
 import { CategoryWithCount } from '@/types';
 import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Href, useRouter } from 'expo-router';
 import { useState, memo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -109,7 +109,7 @@ function CategoriesTabComponent() {
     if (!selectedCategory) return;
     const id = selectedCategory.id;
     setSelectedCategory(null);
-    router.push(`/(edit-forms)/category/${id}` as any);
+    router.push(`/(edit-forms)/category/${id}` as Href);
   };
 
   const handleSheetEdit = () => {

@@ -52,5 +52,16 @@
   "noSupplier": "No Supplier",
   "inlineAddSupplier": "+ Add New Supplier",
   "addSupplier": "Add Supplier",
-  "editSupplier": "Edit Supplier"
+  "editSupplier": "Edit Supplier",
+
+  "toastCategoryAdded": "Category added successfully",
+  "toastCategoryAddFailed": "Failed to add category. Please try again.",
+  "toastCategoryAddDuplicate": "A category with this name already exists.",
+  "toastCategoryUpdated": "Category updated successfully",
+  "toastCategoryUpdateFailed": "Failed to update category. Please try again.",
+  "toastCategoryDeleted": "Category deleted successfully",
+  "toastCategoryDeleteFailed": "Something went wrong. Please try again.",
+
+  "loadingProducts": "Loading products…",
+  "errorLoadingProducts": "Could not load products. Please try again."
 }

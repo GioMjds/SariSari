@@ -1,13 +1,3 @@
-// components/settings/backup/CloudNewerBanner.tsx
-// Spec §8: dismissable banner that surfaces when Drive has a newer
-// backup than the most recent local snapshot. Mounted globally from
-// `app/_layout.tsx` so it appears above every screen right after a
-// successful link or after `getCloudNewerStatus` flips true.
-//
-// Tapping "Restore from cloud" opens the `RestorePickerModal` on its
-// Cloud tab (the modal is rendered separately by the screen that owns
-// the data — this banner only triggers the open state via a callback).
-
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -20,10 +10,6 @@ type CloudNewerBannerProps = {
   onDismiss: () => void;
 };
 
-/**
- * Format an epoch ms as a short relative string (e.g. "2h ago"). Uses
- * the same shape as `LocalSnapshotsSection` so the UI feels uniform.
- */
 const formatRelative = (
   epochMs: number | null | undefined,
   t: TFunction,

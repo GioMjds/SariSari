@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import { StyledText } from '@/components/elements';
 import { CategoryWithCount } from '@/types';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ interface CategoryCardProps {
   onMore: (category: CategoryWithCount) => void;
 }
 
-export const CategoryCard = React.memo(function CategoryCard({
+export const CategoryCard = memo(function CategoryCard({
   category,
   onPress,
   onMore,
@@ -29,10 +29,7 @@ export const CategoryCard = React.memo(function CategoryCard({
 
           {/* Category Info */}
           <View className="flex-1 pr-2">
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-base"
-            >
+            <StyledText variant="extrabold" className="text-ink-900 text-base">
               {category.name}
             </StyledText>
             <StyledText

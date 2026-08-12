@@ -13,6 +13,7 @@ export default function EditFormsLayout() {
           gestureEnabled: true,
           sheetGrabberVisible: true,
           sheetCornerRadius: 24,
+          sheetAllowedDetents: [1],
           sheetInitialDetentIndex: 'last',
           contentStyle: { backgroundColor: '#FAFAF7' },
         }}

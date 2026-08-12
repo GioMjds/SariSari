@@ -23,6 +23,7 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -45,7 +46,7 @@ const CUSTOM_THEME = {
     ...DefaultTheme.colors,
     background: '#F7F6F2',
   },
-};
+} as const;
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -153,26 +154,28 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={CUSTOM_THEME}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
-        <QueryClientProvider client={queryClient}>
-          <SafeAreaProvider>
-            <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: '#F7F6F2' },
-                }}
-              />
-              {fontsLoaded && i18nReady && !bannerDismissed ? (
-                <CloudNewerBanner
-                  onRestorePress={handleBannerRestore}
-                  onDismiss={handleBannerDismiss}
+        <KeyboardProvider>
+          <QueryClientProvider client={queryClient}>
+            <SafeAreaProvider>
+              <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: '#F7F6F2' },
+                  }}
                 />
-              ) : null}
-            </View>
-            <Toast />
-            <GlobalModal />
-          </SafeAreaProvider>
-        </QueryClientProvider>
+                {fontsLoaded && i18nReady && !bannerDismissed ? (
+                  <CloudNewerBanner
+                    onRestorePress={handleBannerRestore}
+                    onDismiss={handleBannerDismiss}
+                  />
+                ) : null}
+              </View>
+              <Toast />
+              <GlobalModal />
+            </SafeAreaProvider>
+          </QueryClientProvider>
+        </KeyboardProvider>
       </GestureHandlerRootView>
     </ThemeProvider>
   );

@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import { View, Platform, TextInput, Pressable } from 'react-native';
+import { useState, useMemo, useRef } from 'react';
+import { View, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { FontAwesome } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { useCategories } from '@/hooks/useCategories';
@@ -10,6 +10,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { formatPesos } from '@/lib/money';
 
 interface CategoryFormData {
@@ -19,9 +20,11 @@ interface CategoryFormData {
 export default function AddCategoryScreen() {
   const { t } = useTranslation('inventory');
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-  const [focusedField, setFocusedField] = useState<'name' | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [productSearch, setProductSearch] = useState('');
+
+  const nameInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+  const searchInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
 
   const { insertCategoryMutation, getAllCategoriesQuery } = useCategories();
   const existingCategories = useMemo(
@@ -33,6 +36,8 @@ export default function AddCategoryScreen() {
     () => getAllProductsQuery.data ?? [],
     [getAllProductsQuery.data],
   );
+  const isProductsLoading = getAllProductsQuery.isLoading;
+  const isProductsError = getAllProductsQuery.isError;
 
   const filteredProducts = useMemo(() => {
     if (!productSearch.trim()) return allProducts;
@@ -69,20 +74,10 @@ export default function AddCategoryScreen() {
     const trimmedName = data.name.trim();
     if (!trimmedName) return;
 
-    insertCategoryMutation.mutate(
-      {
-        name: trimmedName,
-        productIds: selectedProductIds,
-      },
-      {
-        onSuccess: () => {
-          router.replace({
-            pathname: '/(tabs)/inventory/products',
-            params: { category: trimmedName },
-          });
-        },
-      },
-    );
+    insertCategoryMutation.mutate({
+      name: trimmedName,
+      productIds: selectedProductIds,
+    });
   };
 
   return (
@@ -122,10 +117,8 @@ export default function AddCategoryScreen() {
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        enableAutomaticScroll
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
-        keyboardShouldPersistTaps="handled"
+        bottomOffset={20}
+        keyboardShouldPersistTaps="always"
         contentContainerStyle={{ paddingBottom: 20 }}
       >
         <View className="px-4 mt-2">
@@ -134,135 +127,124 @@ export default function AddCategoryScreen() {
           <View className="my-1 border-t border-dashed border-ink-300" />
 
           {/* Category Name Section */}
-          <View className="bg-paper-50 rounded-2xl border border-ink-100 p-4 shadow-paper mt-3 mb-4">
-            <View className="mb-4">
-              <StyledText
-                variant="black"
-                className="label-caps text-cinnamon-500"
-              >
-                {t('categoryBasicInfo', 'Category Info')}
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-ink-400 text-xs mt-0.5"
-              >
-                {t(
-                  'categoryBasicInfoDesc',
-                  'Pick a clear, short name to group your products.',
-                )}
-              </StyledText>
-            </View>
+          <View className="mb-4">
+            <StyledText
+              variant="black"
+              className="label-caps text-cinnamon-500"
+            >
+              {t('categoryBasicInfo', 'Category Info')}
+            </StyledText>
+            <StyledText
+              variant="regular"
+              className="text-ink-400 text-xs mt-0.5"
+            >
+              {t(
+                'categoryBasicInfoDesc',
+                'Pick a clear, short name to group your products.',
+              )}
+            </StyledText>
+          </View>
 
-            <View>
-              <StyledText
-                variant="semibold"
-                className="text-ink-900 text-sm mb-2"
-              >
-                {t('labelName', 'Category Name')}{' '}
-                <StyledText variant="semibold" className="text-persimmon-500">*</StyledText>
+          <View>
+            <StyledText
+              variant="semibold"
+              className="text-ink-900 text-sm mb-2"
+            >
+              {t('labelName', 'Category Name')}{' '}
+              <StyledText variant="semibold" className="text-persimmon-500">
+                *
               </StyledText>
-              <Controller
-                control={control}
-                rules={{
-                  required: t(
-                    'categoryNameRequired',
-                    'Category name is required',
-                  ),
-                  validate: {
-                    notBlank: (val) =>
-                      val.trim().length > 0 ||
-                      t('categoryNameBlank', 'Category name cannot be blank'),
-                    uniqueName: (val) => {
-                      const trimmed = val.trim().toLowerCase();
-                      const exists = existingCategories.some(
-                        (c) => c.name.toLowerCase() === trimmed,
-                      );
-                      return (
-                        !exists ||
-                        t(
-                          'categoryNameDuplicate',
-                          'A category with this name already exists',
-                        )
-                      );
-                    },
+            </StyledText>
+            <Controller
+              control={control}
+              rules={{
+                required: t(
+                  'categoryNameRequired',
+                  'Category name is required',
+                ),
+                validate: {
+                  notBlank: (val) =>
+                    val.trim().length > 0 ||
+                    t('categoryNameBlank', 'Category name cannot be blank'),
+                  uniqueName: (val) => {
+                    const trimmed = val.trim().toLowerCase();
+                    const exists = existingCategories.some(
+                      (c) => c.name.toLowerCase() === trimmed,
+                    );
+                    return (
+                      !exists ||
+                      t(
+                        'categoryNameDuplicate',
+                        'A category with this name already exists',
+                      )
+                    );
                   },
-                }}
-                name="name"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <View>
-                    <View
-                      className={`flex-row items-center border rounded-xl pl-11 pr-4 py-3.5 ${
-                        errors.name
-                          ? 'bg-white border-persimmon-500'
-                          : focusedField === 'name'
-                            ? 'bg-white border-persimmon-500 shadow-persimmon-glow'
-                            : 'bg-paper-100 border-ink-200 shadow-none'
-                      }`}
-                    >
-                      <View className="absolute left-4 z-10">
-                        <FontAwesome
-                          name="tag"
-                          size={16}
-                          color={
-                            focusedField === 'name' ? '#E85A1F' : '#564E45'
-                          }
-                        />
-                      </View>
-                      <TextInput
-                        className="flex-1 text-base text-ink-900 font-stack-sans p-0"
-                        placeholder={t(
-                          'categoryNamePlaceholder',
-                          'e.g. Beverages',
-                        )}
-                        placeholderTextColor="#A89F90"
-                        value={value}
-                        onChangeText={onChange}
-                        onFocus={() => setFocusedField('name')}
-                        onBlur={() => {
-                          onBlur();
-                          setFocusedField(null);
-                        }}
-                        autoCapitalize="words"
-                        returnKeyType="done"
-                        accessibilityLabel={t('labelName', 'Category Name')}
-                        accessibilityHint={t(
-                          'categoryNameHint',
-                          'Enter a short, unique name for this category.',
-                        )}
-                      />
-                      {value.length > 0 && (
-                        <Pressable
-                          onPress={() => onChange('')}
-                          accessibilityRole="button"
-                          accessibilityLabel={t(
-                            'clearField',
-                            'Clear category name field',
-                          )}
-                          className="p-1 active:opacity-70"
-                          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        >
-                          <FontAwesome
-                            name="times-circle"
-                            size={16}
-                            color="#A89F90"
-                          />
-                        </Pressable>
-                      )}
+                },
+              }}
+              name="name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View>
+                  <View
+                    className={`flex-row items-center border rounded-xl pl-11 pr-4 py-3.5 ${
+                      errors.name
+                        ? 'bg-white border-persimmon-500'
+                        : 'bg-paper-100 border-ink-200 shadow-none'
+                    }`}
+                  >
+                    <View className="absolute left-4 z-10">
+                      <FontAwesome name="tag" size={16} color="#564E45" />
                     </View>
-                    {errors.name && (
-                      <StyledText
-                        variant="medium"
-                        className="text-persimmon-500 text-xs mt-1.5 px-1"
-                        accessibilityRole="alert"
-                        accessibilityLiveRegion="polite"
+                    <TextInput
+                      ref={nameInputRef}
+                      className="flex-1 text-base text-ink-900 font-stack-sans p-0"
+                      placeholder={t(
+                        'categoryNamePlaceholder',
+                        'e.g. Beverages',
+                      )}
+                      placeholderTextColor="#A89F90"
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      autoCapitalize="words"
+                      returnKeyType="done"
+                      accessibilityLabel={t('labelName', 'Category Name')}
+                      accessibilityHint={t(
+                        'categoryNameHint',
+                        'Enter a short, unique name for this category.',
+                      )}
+                    />
+                    {value.length > 0 && (
+                      <Pressable
+                        onPress={() => onChange('')}
+                        accessibilityRole="button"
+                        accessibilityLabel={t(
+                          'clearField',
+                          'Clear category name field',
+                        )}
+                        className="p-1 active:opacity-70"
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        {errors.name.message}
-                      </StyledText>
+                        <FontAwesome
+                          name="times-circle"
+                          size={16}
+                          color="#A89F90"
+                        />
+                      </Pressable>
                     )}
                   </View>
-                )}
-              />
-            </View>
+                  {errors.name && (
+                    <StyledText
+                      variant="medium"
+                      className="text-persimmon-500 text-xs mt-1.5 px-1"
+                      accessibilityRole="alert"
+                      accessibilityLiveRegion="polite"
+                    >
+                      {errors.name.message}
+                    </StyledText>
+                  )}
+                </View>
+              )}
+            />
           </View>
 
           <View className="my-1 border-t border-dashed border-ink-300" />
@@ -291,7 +273,7 @@ export default function AddCategoryScreen() {
           </View>
 
           {/* Product Search Input */}
-          <View className="flex-row items-center bg-paper-100 border border-ink-200 rounded-xl px-3 py-2">
+          <View className="flex-row items-center border rounded-xl px-3 py-2 bg-paper-100 border-ink-200 shadow-none">
             <FontAwesome
               name="search"
               size={14}
@@ -299,11 +281,15 @@ export default function AddCategoryScreen() {
               style={{ marginRight: 8 }}
             />
             <TextInput
+              ref={searchInputRef}
               className="flex-1 text-sm text-ink-900 font-stack-sans p-0"
               placeholder={t('searchProducts', 'Search products...')}
+              autoFocus={false}
               placeholderTextColor="#A39C96"
               value={productSearch}
               onChangeText={setProductSearch}
+              returnKeyType="search"
+              blurOnSubmit={true}
               accessibilityLabel={t('searchProducts', 'Search products')}
             />
             {productSearch.length > 0 && (
@@ -320,8 +306,28 @@ export default function AddCategoryScreen() {
           </View>
 
           {/* Products List */}
-          <View className="max-h-72 mt-2">
-            {filteredProducts.length === 0 ? (
+          <View className="mt-2">
+            {isProductsLoading ? (
+              <View className="py-6 items-center gap-2">
+                <ActivityIndicator size="small" color="#E85A1F" />
+                <StyledText variant="medium" className="text-ink-400 text-xs">
+                  {t('loadingProducts', 'Loading products…')}
+                </StyledText>
+              </View>
+            ) : isProductsError ? (
+              <View className="py-4 items-center">
+                <StyledText
+                  variant="medium"
+                  className="text-persimmon-500 text-xs"
+                  accessibilityRole="alert"
+                >
+                  {t(
+                    'errorLoadingProducts',
+                    'Could not load products. Please try again.',
+                  )}
+                </StyledText>
+              </View>
+            ) : filteredProducts.length === 0 ? (
               <View className="py-4 items-center">
                 <StyledText variant="medium" className="text-ink-400 text-xs">
                   {t('noProductsFound', 'No products found')}
@@ -390,7 +396,7 @@ export default function AddCategoryScreen() {
           accessibilityRole="button"
           accessibilityLabel={t('saveCategory', 'Save category')}
           accessibilityState={{
-            disabled: !isValid,
+            disabled: !isValid || insertCategoryMutation.isPending,
             busy: insertCategoryMutation.isPending,
           }}
           className={`w-full py-4 rounded-xl items-center justify-center shadow-paper active:opacity-90 ${
@@ -444,8 +450,8 @@ export default function AddCategoryScreen() {
   );
 }
 
-// `t` must invoke translation types
-function ContextBanner({ t }: { t: any }) {
+// `t` receives a typed TFunction so TypeScript can check all translation call-sites.
+function ContextBanner({ t }: { t: TFunction }) {
   return (
     <View className="rounded-2xl overflow-hidden shadow-paper bg-cinnamon-50 p-4 mb-4">
       <View className="flex-row items-center gap-3">

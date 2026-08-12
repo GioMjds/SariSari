@@ -52,5 +52,16 @@
   "noSupplier": "Walang Supplier",
   "inlineAddSupplier": "+ Magdagdag ng Bagong Supplier",
   "addSupplier": "Magdagdag ng Supplier",
-  "editSupplier": "I-edit ang Supplier"
+  "editSupplier": "I-edit ang Supplier",
+
+  "toastCategoryAdded": "Matagumpay na naidagdag ang kategorya",
+  "toastCategoryAddFailed": "Hindi naidagdag ang kategorya. Subukang muli.",
+  "toastCategoryAddDuplicate": "Mayroon nang kategoryang may ganitong pangalan.",
+  "toastCategoryUpdated": "Matagumpay na na-update ang kategorya",
+  "toastCategoryUpdateFailed": "Hindi na-update ang kategorya. Subukang muli.",
+  "toastCategoryDeleted": "Matagumpay na natanggal ang kategorya",
+  "toastCategoryDeleteFailed": "May naganap na error. Subukang muli.",
+
+  "loadingProducts": "Nilo-load ang mga produkto…",
+  "errorLoadingProducts": "Hindi ma-load ang mga produkto. Subukang muli."
 }
