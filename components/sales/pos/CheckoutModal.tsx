@@ -285,7 +285,9 @@ export function CheckoutModal({
             <Animated.View
               accessibilityViewIsModal
               accessibilityRole="summary"
-              accessibilityLabel={isSuccess ? 'Sale receipt' : 'Checkout summary'}
+              accessibilityLabel={
+                isSuccess ? 'Sale receipt' : 'Checkout summary'
+              }
               style={[
                 sheetStyle,
                 isSuccess
@@ -1323,23 +1325,18 @@ function SwipeConfirmButton({
   const pan = useMemo(() => {
     return Gesture.Pan()
       .enabled(!disabled && !isSubmitting)
-
       .activeOffsetX([-10, 10])
       .failOffsetY([-10, 10])
-
       .onBegin(() => {
         scheduleOnRN(logSwipeBegin, containerWidth.value, translateX.value);
       })
-
       .onUpdate((e) => {
         const maxTranslate = Math.max(
           containerWidth.value - THUMB_SIZE - PADDING * 2,
           0,
         );
 
-        if (maxTranslate <= 0) {
-          return;
-        }
+        if (maxTranslate <= 0) return;
 
         translateX.value = Math.max(0, Math.min(e.translationX, maxTranslate));
 
@@ -1352,7 +1349,6 @@ function SwipeConfirmButton({
           scheduleOnRN(onConfirm);
         }
       })
-
       .onFinalize(() => {
         translateX.value = withSpring(0, {
           damping: 15,
@@ -1395,6 +1391,7 @@ function SwipeConfirmButton({
       : customerMissing
         ? 'Select Customer'
         : `Confirm · ${formatPesos(total)}`;
+
     return (
       <View className="h-[60px] rounded-[30px] flex-row items-center justify-center bg-paper-300 border border-paper-400">
         <View className="w-7 h-7 rounded-full items-center justify-center mr-2.5 bg-ink-400">

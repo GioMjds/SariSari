@@ -10,7 +10,7 @@ import { Alert, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,6 +36,11 @@ export default function SaleDetails() {
           onPress: async () => {
             try {
               await deleteSaleMutation.mutateAsync(numericId);
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)/sales/receipts' as Href);
+              }
             } catch {
               Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Error,

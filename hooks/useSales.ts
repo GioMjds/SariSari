@@ -42,11 +42,16 @@ export function useDeleteSale() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteSale(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      invalidateProductDependencies(queryClient);
       queryClient.invalidateQueries({ queryKey: salesKeys.all });
       queryClient.invalidateQueries({ queryKey: salesKeys.salesStats });
-      queryClient.invalidateQueries({ queryKey: salesKeys.byId(0) });
-      queryClient.invalidateQueries({ queryKey: salesKeys.saleItems(0) });
+      queryClient.invalidateQueries({ queryKey: salesKeys.byId(id) });
+      queryClient.invalidateQueries({ queryKey: salesKeys.saleItems(id) });
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      queryClient.invalidateQueries({ queryKey: salesKeys.creditTransactions });
+      queryClient.invalidateQueries({ queryKey: salesKeys.customers });
+      queryClient.invalidateQueries({ queryKey: salesKeys.creditKpis });
     },
   });
 }

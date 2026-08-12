@@ -10,14 +10,11 @@ import { useTabProgress } from '@/hooks';
 import { CUSTOMERS_SUB_TABS } from '@/constants/tabs';
 import { useTabBarBottomOffset } from '@/components/layout';
 
-// NOTE: tab bar badges (CREDIT = debtor count, COLLECTION = overdue count)
-// are omitted in this migration. The shell's SubTabItem shape supports
-// badgeCount; add per-tab badge entries here when refactoring tabs config.
-const CUSTOMERS_TAB_DEFS: { key: CustomersSubTab; label: string }[] = [
+const CUSTOMERS_TAB_DEFS = [
   { key: 'all', label: 'ALL' },
   { key: 'credit', label: 'CREDIT' },
   { key: 'collection', label: 'COLLECTION' },
-];
+] satisfies { key: CustomersSubTab; label: string }[];
 
 export default function CustomersLayout() {
   const router = useRouter();
@@ -47,7 +44,7 @@ export default function CustomersLayout() {
 
   const handleTabPress = (tab: CustomersSubTab) => {
     if (tab === 'all') {
-      router.push('/(tabs)/customers' as Href);
+      router.push('/(tabs)/customers/all' as Href);
     } else {
       router.push(`/(tabs)/customers/${tab}` as Href);
     }
