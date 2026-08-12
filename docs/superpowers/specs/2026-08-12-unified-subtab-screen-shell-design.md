@@ -40,7 +40,7 @@ tests/
   components/layout/
     SubTabScreenShell.test.tsx  [NEW]
   components/navigation/
-    SubTabControl.test.tsx      [MODIFIED — assert scroll wraps]
+    SubTabControl.test.tsx      [NEW — assert scroll wraps]
 ```
 
 The four `*Header.tsx` files (`DashboardHeader.tsx`, `SalesHeader.tsx`, `InventoryHeader.tsx`, `CustomersHeader.tsx`) are unchanged. They become presentation components rendered inside the shell's `topSlot`.
@@ -228,7 +228,7 @@ All four match. **No parity changes needed.** The shell does not enforce a singl
 | Detail screens (no header)            | Pass `topSlot={null}`. Shell renders without header content.           |
 | Tab group with zero sub-tabs          | `tabs.length === 0` → shell renders no `SubTabControl`.                 |
 | `progress` SharedValue not provided   | `SubTabControl` falls back to its internal animation (`SubTabControl.tsx:113-119`). Unchanged. |
-| Header padding double-count          | Each `*Header.tsx` strips its outer `bg-paper-200 px-4 pt-* pb-*` classes when migrated. Shell owns padding. |
+| Header padding double-count          | **Optional polish (not required by this spec):** each `*Header.tsx` may strip its outer `bg-paper-200 px-4 pt-* pb-*` classes so the shell is the sole owner of background/padding. Leaving them in place is visually identical at the cost of one redundant style application. Follow-up if any visual artifact appears. |
 | Horizontal scroll on RTL locales      | `ScrollView horizontal` flips automatically. The underline animation continues to read layout-derived `xs` values — no RTL regression. |
 
 ## 8. Testing
@@ -243,9 +243,9 @@ Renders the shell with a mocked `tabs` array and asserts:
 - When `topSlot` is `null`, no header element is rendered
 - When `tabs` is empty, no sub-tab bar is rendered
 
-### 8.2 Modified: `tests/components/navigation/SubTabControl.test.tsx`
+### 8.2 New: `tests/components/navigation/SubTabControl.test.tsx`
 
-Add a test: render with 5 long-label tabs in a viewport that overflows, assert the outer container is a `ScrollView` with `horizontal` prop and that all 5 tab labels render (none truncated).
+(No existing test file for this component.) Add a test that renders with 5 long-label tabs in a viewport that overflows, asserts the outer container is a `ScrollView` with `horizontal` prop, and verifies all 5 tab labels render (none truncated).
 
 ### 8.3 Manual on-device
 
@@ -261,9 +261,8 @@ Add a test: render with 5 long-label tabs in a viewport that overflows, assert t
 - [ ] Migrate `app/(tabs)/sales/_layout.tsx` to use shell.
 - [ ] Migrate `app/(tabs)/inventory/_layout.tsx` to use shell (preserve `StocktakeBanner`).
 - [ ] Migrate `app/(tabs)/customers/_layout.tsx` to use shell (preserve FAB).
-- [ ] Strip outer padding from `DashboardHeader.tsx`, `SalesHeader.tsx`, `InventoryHeader.tsx`, `CustomersHeader.tsx`.
 - [ ] Add `tests/components/layout/SubTabScreenShell.test.tsx`.
-- [ ] Update `tests/components/navigation/SubTabControl.test.tsx` to assert horizontal scroll.
+- [ ] Add `tests/components/navigation/SubTabControl.test.tsx`.
 - [ ] Manual on-device smoke across all four tabs.
 
 ## 10. Vault references
