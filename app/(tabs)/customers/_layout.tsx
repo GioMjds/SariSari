@@ -2,12 +2,22 @@ import { View, TouchableOpacity } from 'react-native';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
 import { CustomersHeader, CustomersSubTab } from '@/components/customers';
 import { TopTabs } from '@/components/navigation/top-tabs';
 import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
 import { useTabProgress } from '@/hooks';
 import { CUSTOMERS_SUB_TABS } from '@/constants/tabs';
 import { useTabBarBottomOffset } from '@/components/layout';
+
+// NOTE: tab bar badges (CREDIT = debtor count, COLLECTION = overdue count)
+// are omitted in this migration. The shell's SubTabItem shape supports
+// badgeCount; add per-tab badge entries here when refactoring tabs config.
+const CUSTOMERS_TAB_DEFS: { key: CustomersSubTab; label: string }[] = [
+  { key: 'all', label: 'ALL' },
+  { key: 'credit', label: 'CREDIT' },
+  { key: 'collection', label: 'COLLECTION' },
+];
 
 export default function CustomersLayout() {
   const router = useRouter();
@@ -21,20 +31,19 @@ export default function CustomersLayout() {
     (c) => c.loyalty_tier === 'loyal' || c.loyalty_tier === 'vip',
   ).length;
 
-  const getCurrentTab = (): CustomersSubTab => {
-    if (pathname.includes('credit')) return 'credit';
-    if (pathname.includes('collection')) return 'collection';
-    return 'all';
-  };
-
-  const activeTab = getCurrentTab();
-  const progress = useTabProgress(activeTab, CUSTOMERS_SUB_TABS);
+  const activeTab: CustomersSubTab = pathname.includes('credit')
+    ? 'credit'
+    : pathname.includes('collection')
+      ? 'collection'
+      : 'all';
 
   const isDetailScreen =
     pathname.includes('/customers/') &&
     !['credit', 'collection', 'insights', 'all', ''].includes(
       pathname.split('/customers/')[1] || '',
     );
+
+  const progress = useTabProgress(activeTab, CUSTOMERS_SUB_TABS);
 
   const handleTabPress = (tab: CustomersSubTab) => {
     if (tab === 'all') {
@@ -50,20 +59,23 @@ export default function CustomersLayout() {
   };
 
   return (
-    <View className="flex-1 bg-paper-200">
-      {!isDetailScreen && (
-        <CustomersHeader
-          activeTab={activeTab}
-          totalCustomers={customers.length}
-          debtorCount={debtorCount}
-          loyalCount={loyalCount}
-          totalCredit={kpis?.totalOutstanding || 0}
-          overdueCount={kpis?.overdueCount || 0}
-          onTabPress={handleTabPress}
-          onAddCustomer={handleAddCustomer}
-          progress={progress}
-        />
-      )}
+    <SubTabScreenShell<CustomersSubTab>
+      tabs={CUSTOMERS_TAB_DEFS}
+      activeTab={activeTab}
+      onTabPress={handleTabPress}
+      progress={progress}
+      topSlot={
+        !isDetailScreen ? (
+          <CustomersHeader
+            totalCustomers={customers.length}
+            debtorCount={debtorCount}
+            loyalCount={loyalCount}
+            totalCredit={kpis?.totalOutstanding || 0}
+            overdueCount={kpis?.overdueCount || 0}
+          />
+        ) : null
+      }
+    >
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
           initialRouteName="all"
@@ -92,6 +104,6 @@ export default function CustomersLayout() {
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </SubTabScreenShell>
   );
 }
