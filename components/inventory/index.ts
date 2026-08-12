@@ -1,4 +1,3 @@
-export * from './InventoryHeader';
 export * from './InventoryHeroCard';
 export * from './BulkActionsToolbar';
 export * from './InventoryAlertPills';

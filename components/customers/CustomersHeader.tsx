@@ -16,9 +16,7 @@ export interface CustomersHeaderProps {
 
 export function CustomersHeader({
   totalCustomers = 142,
-  debtorCount = 0,
   loyalCount = 28,
-  overdueCount = 0,
   totalCredit = 4850,
 }: CustomersHeaderProps) {
   return (
