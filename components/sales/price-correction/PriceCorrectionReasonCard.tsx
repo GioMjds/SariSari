@@ -22,11 +22,12 @@ const REASON_OPTIONS: ReasonOption[] = [
 type PriceCorrectionReasonCardProps = {
   selectedReason: PriceCorrectionReasonCode;
   onSelectReason: (reason: PriceCorrectionReasonCode) => void;
+  error?: string | undefined;
 };
 
 export const PriceCorrectionReasonCard: React.FC<
   PriceCorrectionReasonCardProps
-> = ({ selectedReason, onSelectReason }) => {
+> = ({ selectedReason, onSelectReason, error }) => {
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-4">
       <StyledText
@@ -94,6 +95,15 @@ export const PriceCorrectionReasonCard: React.FC<
           );
         })}
       </View>
+      {error && (
+        <StyledText
+          variant="medium"
+          className="text-semantic-danger text-xs mt-2 px-1"
+          accessibilityRole="alert"
+        >
+          {error}
+        </StyledText>
+      )}
     </View>
   );
 };

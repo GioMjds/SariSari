@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,7 +8,6 @@ import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
 import { useGetSale, useProfile, useRefundSale, useVoidSale } from '@/hooks';
 import { formatPesos } from '@/lib/money';
-import { useToastStore } from '@/stores';
 import { parseStoredTimestamp } from '@/utils';
 import type {
   RefundReasonCode,
@@ -42,10 +41,15 @@ const REFUND_REASONS = [
   { value: 'returned_other', label: 'Returned Other', icon: 'refresh' },
 ] satisfies ReasonOption<RefundReasonCode>[];
 
+interface SaleCorrectionFormData {
+  reason: string;
+  witness: string;
+  note: string;
+}
+
 export default function SaleCorrectionScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
-  const addToast = useToastStore((state) => state.addToast);
 
   const numericId = Number(id);
   const isVoid = mode === 'void';
@@ -56,12 +60,19 @@ export default function SaleCorrectionScreen() {
   const voidSaleMutation = useVoidSale();
   const refundSaleMutation = useRefundSale();
 
-  const [reason, setReason] = useState<string>(
-    isValidMode ? 'customer_changed_mind' : 'returned_damaged',
-  );
-  const [witness, setWitness] = useState('');
-  const [note, setNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SaleCorrectionFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      reason: isValidMode ? 'customer_changed_mind' : 'returned_damaged',
+      witness: '',
+      note: '',
+    },
+  });
 
   const voidOptions = VOID_REASONS;
   const refundOptions = REFUND_REASONS;
@@ -69,26 +80,9 @@ export default function SaleCorrectionScreen() {
   const screenTitle = isVoid ? 'Void Sale' : 'Refund Sale';
   const actionButtonText = isVoid ? 'Confirm Void Sale' : 'Confirm Refund';
 
-  const handleReasonSelect = (val: string) => {
-    Haptics.selectionAsync().catch(() => {});
-    setReason(val);
-  };
-
-  const handleSubmit = async () => {
-    if (!reason || !witness.trim()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
-      );
-      addToast({
-        message: 'Reason code and witness name are required',
-        variant: 'danger',
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
+  const onSubmit = async (data: SaleCorrectionFormData) => {
     const actorUser = profile?.ownerName?.trim() || 'owner';
-    const noteTrimmed = note.trim();
+    const noteTrimmed = data.note.trim();
     const notePayload = noteTrimmed ? { note: noteTrimmed } : {};
 
     try {
@@ -96,16 +90,16 @@ export default function SaleCorrectionScreen() {
         await voidSaleMutation.mutateAsync({
           saleId: numericId,
           actorUser,
-          witnessUser: witness.trim(),
-          reasonCode: reason,
+          witnessUser: data.witness.trim(),
+          reasonCode: data.reason,
           ...notePayload,
         });
       } else {
         await refundSaleMutation.mutateAsync({
           saleId: numericId,
           actorUser,
-          witnessUser: witness.trim(),
-          reasonCode: reason as RefundReasonCode,
+          witnessUser: data.witness.trim(),
+          reasonCode: data.reason as RefundReasonCode,
           ...notePayload,
         });
       }
@@ -113,21 +107,15 @@ export default function SaleCorrectionScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => {},
       );
-      addToast({
-        message: isVoid ? 'Sale successfully voided' : 'Refund recorded',
-        variant: 'success',
-      });
       router.back();
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
         () => {},
       );
-      addToast({
+      setError('root', {
+        type: 'manual',
         message: err?.message || 'Failed to submit correction',
-        variant: 'danger',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -365,71 +353,96 @@ export default function SaleCorrectionScreen() {
             Select the primary cause for this {isVoid ? 'void' : 'refund'}
           </StyledText>
 
-          <View className="gap-2">
-            {options.map((opt) => {
-              const isSelected = reason === opt.value;
-              return (
-                <Pressable
-                  key={opt.value}
-                  onPress={() => handleReasonSelect(opt.value)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={opt.label}
-                  className={`press-scale p-3.5 rounded-xl border flex-row items-center justify-between ${
-                    isSelected
-                      ? isVoid
-                        ? 'bg-rose-50 border-rose-500'
-                        : 'bg-cinnamon-50 border-cinnamon-500'
-                      : 'bg-paper-100 border-ink-100 active:bg-paper-200'
-                  }`}
-                >
-                  <View className="flex-row items-center gap-3">
-                    <View
-                      className={`w-8 h-8 rounded-lg items-center justify-center ${
-                        isSelected
-                          ? isVoid
-                            ? 'bg-rose-600'
-                            : 'bg-cinnamon-500'
-                          : 'bg-paper-200 border border-ink-100'
-                      }`}
-                    >
-                      <FontAwesome
-                        name={opt.icon}
-                        size={13}
-                        color={isSelected ? '#FBF7EE' : '#564E45'}
-                      />
-                    </View>
-                    <StyledText
-                      variant={isSelected ? 'extrabold' : 'medium'}
-                      className={`text-sm ${
-                        isSelected
-                          ? isVoid
-                            ? 'text-rose-950'
-                            : 'text-cinnamon-950'
-                          : 'text-ink-800'
-                      }`}
-                    >
-                      {opt.label}
-                    </StyledText>
-                  </View>
+          <Controller
+            control={control}
+            name="reason"
+            rules={{ required: 'Reason code is required' }}
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <View>
+                <View className="gap-2">
+                  {options.map((opt) => {
+                    const isSelected = value === opt.value;
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        onPress={() => {
+                          Haptics.selectionAsync().catch(() => {});
+                          onChange(opt.value);
+                        }}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: isSelected }}
+                        accessibilityLabel={opt.label}
+                        className={`press-scale p-3.5 rounded-xl border flex-row items-center justify-between ${
+                          isSelected
+                            ? isVoid
+                              ? 'bg-rose-50 border-rose-500'
+                              : 'bg-cinnamon-50 border-cinnamon-500'
+                            : 'bg-paper-100 border-ink-100 active:bg-paper-200'
+                        }`}
+                      >
+                        <View className="flex-row items-center gap-3">
+                          <View
+                            className={`w-8 h-8 rounded-lg items-center justify-center ${
+                              isSelected
+                                ? isVoid
+                                  ? 'bg-rose-600'
+                                  : 'bg-cinnamon-500'
+                                : 'bg-paper-200 border border-ink-100'
+                            }`}
+                          >
+                            <FontAwesome
+                              name={opt.icon}
+                              size={13}
+                              color={isSelected ? '#FBF7EE' : '#564E45'}
+                            />
+                          </View>
+                          <StyledText
+                            variant={isSelected ? 'extrabold' : 'medium'}
+                            className={`text-sm ${
+                              isSelected
+                                ? isVoid
+                                  ? 'text-rose-950'
+                                  : 'text-cinnamon-950'
+                                : 'text-ink-800'
+                            }`}
+                          >
+                            {opt.label}
+                          </StyledText>
+                        </View>
 
-                  <View
-                    className={`w-5 h-5 rounded-full border items-center justify-center ${
-                      isSelected
-                        ? isVoid
-                          ? 'border-rose-500 bg-rose-500'
-                          : 'border-cinnamon-500 bg-cinnamon-500'
-                        : 'border-ink-200 bg-paper-50'
-                    }`}
+                        <View
+                          className={`w-5 h-5 rounded-full border items-center justify-center ${
+                            isSelected
+                              ? isVoid
+                                ? 'border-rose-500 bg-rose-500'
+                                : 'border-cinnamon-500 bg-cinnamon-500'
+                              : 'border-ink-200 bg-paper-50'
+                          }`}
+                        >
+                          {isSelected && (
+                            <FontAwesome
+                              name="check"
+                              size={10}
+                              color="#FBF7EE"
+                            />
+                          )}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {error && (
+                  <StyledText
+                    variant="medium"
+                    className="text-semantic-danger text-xs mt-2 px-1"
+                    accessibilityRole="alert"
                   >
-                    {isSelected && (
-                      <FontAwesome name="check" size={10} color="#FBF7EE" />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            })}
-          </View>
+                    {error.message}
+                  </StyledText>
+                )}
+              </View>
+            )}
+          />
         </View>
 
         {/* Audit Verification: Witness & Notes */}
@@ -451,16 +464,48 @@ export default function SaleCorrectionScreen() {
             >
               Witness / Cashier Name *
             </StyledText>
-            <View className="bg-paper-100 rounded-xl border border-ink-100 flex-row items-center px-3 py-1 focus-within:border-persimmon-500">
-              <FontAwesome name="user" size={14} color="#7A7165" />
-              <TextInput
-                value={witness}
-                onChangeText={setWitness}
-                placeholder="e.g., Ate Nena / Cashier Shift A"
-                placeholderTextColor="#A89F90"
-                className="flex-1 py-2.5 px-2.5 text-ink-900 text-sm font-medium"
-              />
-            </View>
+            <Controller
+              control={control}
+              name="witness"
+              rules={{
+                required: 'Witness / Cashier name is required',
+                validate: (val) =>
+                  val.trim().length > 0 || 'Witness / Cashier name is required',
+              }}
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => (
+                <View>
+                  <View
+                    className={`bg-paper-100 rounded-xl border flex-row items-center px-3 py-1 ${
+                      error
+                        ? 'border-semantic-danger bg-white shadow-persimmon-glow'
+                        : 'border-ink-100 focus-within:border-persimmon-500'
+                    }`}
+                  >
+                    <FontAwesome name="user" size={14} color="#7A7165" />
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="e.g., Ate Nena / Cashier Shift A"
+                      placeholderTextColor="#A89F90"
+                      className="flex-1 py-2.5 px-2.5 text-ink-900 text-sm font-medium"
+                    />
+                  </View>
+                  {error && (
+                    <StyledText
+                      variant="medium"
+                      className="text-semantic-danger text-xs mt-1.5 px-1"
+                      accessibilityRole="alert"
+                    >
+                      {error.message}
+                    </StyledText>
+                  )}
+                </View>
+              )}
+            />
           </View>
 
           <View>
@@ -470,24 +515,44 @@ export default function SaleCorrectionScreen() {
             >
               Additional Note (Optional)
             </StyledText>
-            <View className="bg-paper-100 rounded-xl border border-ink-100 p-3 focus-within:border-persimmon-500">
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder="Describe reason details or customer notes..."
-                placeholderTextColor="#A89F90"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                className="text-ink-900 text-sm font-medium min-h-[70px]"
-              />
-            </View>
+            <Controller
+              control={control}
+              name="note"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View className="bg-paper-100 rounded-xl border border-ink-100 p-3 focus-within:border-persimmon-500">
+                  <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Describe reason details or customer notes..."
+                    placeholderTextColor="#A89F90"
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                    className="text-ink-900 text-sm font-medium min-h-[70px]"
+                  />
+                </View>
+              )}
+            />
           </View>
         </View>
 
+        {errors.root && (
+          <View className="mb-4 p-3 rounded-xl bg-semantic-danger/10 border border-semantic-danger/20 flex-row items-center gap-2">
+            <FontAwesome name="exclamation-circle" size={14} color="#DC2626" />
+            <StyledText
+              variant="medium"
+              className="text-semantic-danger text-xs flex-1"
+              accessibilityRole="alert"
+            >
+              {errors.root.message}
+            </StyledText>
+          </View>
+        )}
+
         {/* Primary Action Submit Button */}
         <Pressable
-          onPress={handleSubmit}
+          onPress={handleSubmit(onSubmit)}
           disabled={isSubmitting || isLoading}
           accessibilityRole="button"
           accessibilityLabel={actionButtonText}

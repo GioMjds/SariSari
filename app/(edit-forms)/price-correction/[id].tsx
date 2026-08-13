@@ -1,4 +1,3 @@
-import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -59,6 +58,7 @@ export default function PriceCorrectionScreen() {
         <PriceCorrectionReasonCard
           selectedReason={form.reason}
           onSelectReason={form.handleReasonSelect}
+          error={form.errors.reason?.message}
         />
 
         {/* Audit Verification */}
@@ -67,6 +67,7 @@ export default function PriceCorrectionScreen() {
           onWitnessChange={form.setWitness}
           note={form.note}
           onNoteChange={form.setNote}
+          error={form.errors.witness?.message}
         />
 
         {/* Primary Action Submit Button */}
@@ -74,6 +75,7 @@ export default function PriceCorrectionScreen() {
           onSubmit={form.handleSubmit}
           isSubmitting={form.isSubmitting}
           isLoading={form.isLoading}
+          error={form.errors.root?.message}
         />
       </KeyboardAwareScrollView>
 

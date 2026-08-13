@@ -104,26 +104,53 @@ export function EditPricingCard({
           Selling Price (₱){' '}
           <StyledText variant="extrabold" className="text-persimmon-500">*</StyledText>
         </StyledText>
-        <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
-          <StyledText variant="medium" className="text-ink-600 text-base mr-2">
-            ₱
-          </StyledText>
-          <Controller
-            control={control}
-            name="price"
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                placeholder="0.00"
-                placeholderTextColor="#A89F90"
-                value={value}
-                onChangeText={onChange}
-                keyboardType="decimal-pad"
-                accessibilityLabel="Selling price"
-                className="flex-1 text-ink-900 text-base"
-              />
-            )}
-          />
-        </View>
+        <Controller
+          control={control}
+          name="price"
+          rules={{
+            required: 'Selling price is required',
+            validate: (val) => {
+              const parsed = tryParsePesosInput(val);
+              return parsed > 0 || 'Selling price must be greater than ₱0.00';
+            },
+          }}
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <View className="flex-1">
+              <View
+                className={`bg-paper-100 border rounded-xl px-4 py-3 flex-row items-center ${
+                  error
+                    ? 'border-semantic-danger bg-white shadow-persimmon-glow'
+                    : 'border-ink-200'
+                }`}
+              >
+                <StyledText
+                  variant="medium"
+                  className="text-ink-600 text-base mr-2"
+                >
+                  ₱
+                </StyledText>
+                <TextInput
+                  placeholder="0.00"
+                  placeholderTextColor="#A89F90"
+                  value={value}
+                  onChangeText={onChange}
+                  keyboardType="decimal-pad"
+                  accessibilityLabel="Selling price"
+                  className="flex-1 text-ink-900 text-base"
+                />
+              </View>
+              {error && (
+                <StyledText
+                  variant="medium"
+                  className="text-semantic-danger text-xs mt-1.5 px-1"
+                  accessibilityRole="alert"
+                >
+                  {error.message}
+                </StyledText>
+              )}
+            </View>
+          )}
+        />
       </View>
 
       {/* Live Profit / Markup Preview */}

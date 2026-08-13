@@ -1,13 +1,10 @@
 import { useState, useMemo, useRef, useCallback, memo } from 'react';
-import {
-  View,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import { View, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { FontAwesome } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';

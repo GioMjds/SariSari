@@ -1,5 +1,5 @@
-import { FontAwesome } from '@expo/vector-icons';
 import type { RefObject } from 'react';
+import { FontAwesome } from '@expo/vector-icons';
 import { Control, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements';
@@ -8,7 +8,11 @@ import {
   formatPesos,
   tryParsePesosInput,
 } from '@/lib';
-import { MARKUP_PRESETS, MarkupPreset, AddProductFormData } from './useAddProductForm';
+import {
+  MARKUP_PRESETS,
+  MarkupPreset,
+  AddProductFormData,
+} from './useAddProductForm';
 
 interface PricingProfitCardProps {
   control: Control<AddProductFormData>;
@@ -249,32 +253,59 @@ export function PricingProfitCard({
       {/* Selling price */}
       <View className="mb-1">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
-          Selling Price (per piece)
-        </StyledText>
-        <View className="bg-paper-100 border border-ink-200 rounded-xl px-4 py-3 flex-row items-center">
-          <StyledText
-            variant="extrabold"
-            className="text-ink-700 text-base mr-2"
-          >
-            ₱
+          Selling Price (per piece){' '}
+          <StyledText variant="regular" className="text-persimmon-500">
+            *
           </StyledText>
-          <Controller
-            control={control}
-            name="price"
-            render={({ field: { value, onChange } }) => (
-              <TextInput
-                ref={priceInputRef}
-                placeholder="0.00"
-                placeholderTextColor="#A89F90"
-                value={value}
-                onChangeText={onChange}
-                keyboardType="decimal-pad"
-                accessibilityLabel="Selling price per piece"
-                className="flex-1 text-ink-900 text-base"
-              />
-            )}
-          />
-        </View>
+        </StyledText>
+        <Controller
+          control={control}
+          name="price"
+          rules={{
+            required: 'Selling price is required',
+            validate: (val) => {
+              const parsed = tryParsePesosInput(val);
+              return parsed > 0 || 'Selling price must be greater than ₱0.00';
+            },
+          }}
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <View>
+              <View
+                className={`bg-paper-100 border rounded-xl px-4 py-3 flex-row items-center ${
+                  error
+                    ? 'border-semantic-danger bg-white shadow-persimmon-glow'
+                    : 'border-ink-200'
+                }`}
+              >
+                <StyledText
+                  variant="extrabold"
+                  className="text-ink-700 text-base mr-2"
+                >
+                  ₱
+                </StyledText>
+                <TextInput
+                  ref={priceInputRef}
+                  placeholder="0.00"
+                  placeholderTextColor="#A89F90"
+                  value={value}
+                  onChangeText={onChange}
+                  keyboardType="decimal-pad"
+                  accessibilityLabel="Selling price per piece"
+                  className="flex-1 text-ink-900 text-base"
+                />
+              </View>
+              {error && (
+                <StyledText
+                  variant="medium"
+                  className="text-semantic-danger text-xs mt-1.5 px-1"
+                  accessibilityRole="alert"
+                >
+                  {error.message}
+                </StyledText>
+              )}
+            </View>
+          )}
+        />
 
         {isLossWarning && (
           <View className="mt-2 flex-row items-center bg-semantic-warning/10 rounded-xl px-3 py-2 border border-semantic-warning/20">

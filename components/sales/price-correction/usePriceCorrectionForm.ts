@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useForm } from 'react-hook-form';
 import * as Haptics from 'expo-haptics';
 import { useCorrectSalePrice, useGetSale, useProfile } from '@/hooks';
 import { tryParsePesosInput } from '@/lib/money';
-import { useToastStore } from '@/stores';
 import type { PriceCorrectionReasonCode } from '@/types/corrections.types';
+
+export interface PriceCorrectionFormData {
+  reason: PriceCorrectionReasonCode;
+  witness: string;
+  note: string;
+}
 
 export function usePriceCorrectionForm(saleId: number) {
   const router = useRouter();
-  const addToast = useToastStore((state) => state.addToast);
 
   const saleQuery = useGetSale(saleId);
   const { data: sale, isLoading } = saleQuery;
@@ -16,41 +21,79 @@ export function usePriceCorrectionForm(saleId: number) {
   const correctSalePriceMutation = useCorrectSalePrice();
 
   const [edits, setEdits] = useState<Record<number, string>>({});
-  const [reason, setReason] =
-    useState<PriceCorrectionReasonCode>('misprinted_price');
-  const [witness, setWitness] = useState('');
-  const [note, setNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
+  const {
+    control,
+    handleSubmit: rhfHandleSubmit,
+    setError,
+    clearErrors,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<PriceCorrectionFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      reason: 'misprinted_price',
+      witness: '',
+      note: '',
+    },
+  });
+
+  const reason = watch('reason');
+  const witness = watch('witness');
+  const note = watch('note');
+
+  const setWitness = useCallback(
+    (val: string) => {
+      clearErrors('witness');
+      setValue('witness', val, { shouldDirty: true });
+    },
+    [clearErrors, setValue],
+  );
+
+  const setNote = useCallback(
+    (val: string) => {
+      setValue('note', val, { shouldDirty: true });
+    },
+    [setValue],
+  );
+
+  const handleReasonSelect = useCallback(
+    (val: PriceCorrectionReasonCode) => {
+      Haptics.selectionAsync().catch(() => {});
+      clearErrors('reason');
+      setValue('reason', val, { shouldDirty: true });
+    },
+    [clearErrors, setValue],
+  );
+
   const handleEditChange = useCallback((saleItemId: number, value: string) => {
+    clearErrors('root');
     setEdits((prev) => ({
       ...prev,
       [saleItemId]: value,
     }));
-  }, []);
+  }, [clearErrors]);
 
   const handleResetItem = useCallback((saleItemId: number) => {
     Haptics.selectionAsync().catch(() => {});
+    clearErrors('root');
     setEdits((prev) => {
       const next = { ...prev };
       delete next[saleItemId];
       return next;
     });
-  }, []);
+  }, [clearErrors]);
 
   const handleResetAll = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
+    clearErrors();
     setEdits({});
-    setWitness('');
-    setNote('');
-    setReason('misprinted_price');
-  }, []);
-
-  const handleReasonSelect = useCallback((val: PriceCorrectionReasonCode) => {
-    Haptics.selectionAsync().catch(() => {});
-    setReason(val);
-  }, []);
+    setValue('witness', '');
+    setValue('note', '');
+    setValue('reason', 'misprinted_price');
+  }, [clearErrors, setValue]);
 
   const originalTotal = sale?.total ?? 0;
 
@@ -88,15 +131,30 @@ export function usePriceCorrectionForm(saleId: number) {
     }
   }, [isDirty, router]);
 
-  const handleSubmit = async () => {
-    if (!reason || !witness.trim()) {
+  const onSubmit = rhfHandleSubmit(async (data) => {
+    clearErrors();
+    let hasValidationError = false;
+
+    if (!data.witness.trim()) {
+      setError('witness', {
+        type: 'manual',
+        message: 'Witness / Cashier name is required',
+      });
+      hasValidationError = true;
+    }
+
+    if (!data.reason) {
+      setError('reason', {
+        type: 'manual',
+        message: 'Reason code is required',
+      });
+      hasValidationError = true;
+    }
+
+    if (hasValidationError) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
         () => {},
       );
-      addToast({
-        message: 'Reason code and witness name are required',
-        variant: 'danger',
-      });
       return;
     }
 
@@ -121,9 +179,9 @@ export function usePriceCorrectionForm(saleId: number) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
         () => {},
       );
-      addToast({
+      setError('root', {
+        type: 'manual',
         message: `Invalid price for: ${invalidItems.join(', ')}`,
-        variant: 'danger',
       });
       return;
     }
@@ -132,23 +190,22 @@ export function usePriceCorrectionForm(saleId: number) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
         () => {},
       );
-      addToast({
+      setError('root', {
+        type: 'manual',
         message: 'No price changes were made',
-        variant: 'danger',
       });
       return;
     }
 
-    setIsSubmitting(true);
     const actorUser = profile?.ownerName?.trim() || 'owner';
-    const noteTrimmed = note.trim();
+    const noteTrimmed = data.note.trim();
 
     try {
       await correctSalePriceMutation.mutateAsync({
         saleId,
         actorUser,
-        witnessUser: witness.trim(),
-        reasonCode: reason,
+        witnessUser: data.witness.trim(),
+        reasonCode: data.reason,
         priceChanges,
         ...(noteTrimmed ? { note: noteTrimmed } : {}),
       });
@@ -156,22 +213,21 @@ export function usePriceCorrectionForm(saleId: number) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => {},
       );
-      addToast({ message: 'Price correction recorded', variant: 'success' });
       router.back();
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
         () => {},
       );
-      addToast({
+      setError('root', {
+        type: 'manual',
         message: err?.message || 'Failed to record price correction',
-        variant: 'danger',
       });
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  });
 
   return {
+    control,
+    errors,
     sale,
     isLoading,
     edits,
@@ -193,6 +249,6 @@ export function usePriceCorrectionForm(saleId: number) {
     handleResetItem,
     handleResetAll,
     handleBack,
-    handleSubmit,
+    handleSubmit: onSubmit,
   };
 }

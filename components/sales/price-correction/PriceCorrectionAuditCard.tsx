@@ -8,11 +8,12 @@ type PriceCorrectionAuditCardProps = {
   onWitnessChange: (val: string) => void;
   note: string;
   onNoteChange: (val: string) => void;
+  error?: string | undefined;
 };
 
 export const PriceCorrectionAuditCard: React.FC<
   PriceCorrectionAuditCardProps
-> = ({ witness, onWitnessChange, note, onNoteChange }) => {
+> = ({ witness, onWitnessChange, note, onNoteChange, error }) => {
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-5">
       <StyledText
@@ -32,7 +33,13 @@ export const PriceCorrectionAuditCard: React.FC<
         >
           Witness / Cashier Name *
         </StyledText>
-        <View className="bg-paper-100 rounded-xl border border-ink-100 flex-row items-center px-3 py-1 focus-within:border-persimmon-500">
+        <View
+          className={`bg-paper-100 rounded-xl border flex-row items-center px-3 py-1 ${
+            error
+              ? 'border-semantic-danger bg-white shadow-persimmon-glow'
+              : 'border-ink-100 focus-within:border-persimmon-500'
+          }`}
+        >
           <FontAwesome name="user" size={14} color="#7A7165" />
           <TextInput
             value={witness}
@@ -42,6 +49,15 @@ export const PriceCorrectionAuditCard: React.FC<
             className="flex-1 py-2.5 px-2.5 text-ink-900 text-sm font-medium"
           />
         </View>
+        {error && (
+          <StyledText
+            variant="medium"
+            className="text-semantic-danger text-xs mt-1.5 px-1"
+            accessibilityRole="alert"
+          >
+            {error}
+          </StyledText>
+        )}
       </View>
 
       <View>

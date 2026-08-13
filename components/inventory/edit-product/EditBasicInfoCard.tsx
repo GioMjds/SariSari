@@ -71,15 +71,35 @@ export function EditBasicInfoCard({
         <Controller
           control={control}
           name="name"
-          render={({ field: { value, onChange } }) => (
-            <TextInput
-              placeholder="e.g., Lucky Me Pancit Canton"
-              placeholderTextColor="#A89F90"
-              value={value}
-              onChangeText={onChange}
-              accessibilityLabel="Product name"
-              className="bg-paper-100 text-ink-900 text-base border border-ink-200 rounded-xl px-4 py-3"
-            />
+          rules={{
+            required: 'Product name is required',
+            validate: (val) =>
+              val.trim().length > 0 || 'Product name cannot be blank',
+          }}
+          render={({ field: { value, onChange }, fieldState: { error } }) => (
+            <View>
+              <TextInput
+                placeholder="e.g., Lucky Me Pancit Canton"
+                placeholderTextColor="#A89F90"
+                value={value}
+                onChangeText={onChange}
+                accessibilityLabel="Product name"
+                className={`bg-paper-100 text-ink-900 text-base border rounded-xl px-4 py-3 ${
+                  error
+                    ? 'border-semantic-danger bg-white shadow-persimmon-glow'
+                    : 'border-ink-200'
+                }`}
+              />
+              {error && (
+                <StyledText
+                  variant="medium"
+                  className="text-semantic-danger text-xs mt-1.5 px-1"
+                  accessibilityRole="alert"
+                >
+                  {error.message}
+                </StyledText>
+              )}
+            </View>
           )}
         />
       </View>

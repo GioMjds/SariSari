@@ -1,11 +1,5 @@
 import { useState, useMemo } from 'react';
-import {
-  View,
-  Platform,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-} from 'react-native';
+import { View, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -418,7 +412,9 @@ function BasicInfoCard({
       <View className="mb-4">
         <StyledText variant="semibold" className="text-ink-900 text-sm mb-2">
           {t('labelName', 'Supplier Name')}{' '}
-          <StyledText variant="semibold" className="text-persimmon-500">*</StyledText>
+          <StyledText variant="semibold" className="text-persimmon-500">
+            *
+          </StyledText>
         </StyledText>
         <Controller
           control={control}
