@@ -482,6 +482,8 @@ git commit -m "feat(auth): add database auth functions and zustand auth store"
 
 ### Task 3: UI Challenge, Setup & Recovery Modals
 
+> **Architecture constraint:** Never use the bare `Text` from `react-native` in these components. All text rendering MUST use `StyledText` from `@/components/elements/StyledText` with an appropriate `variant` prop (`semibold` for headings/buttons/errors, `regular` for labels/subtexts, `extrabold` for the recovery code display, `medium` for secondary links). Remove `fontWeight` from any `StyleSheet` entries where `StyledText` variant handles it.
+
 **Files:**
 
 - Create: `components/auth/OwnerPinModal.tsx`
@@ -492,7 +494,7 @@ git commit -m "feat(auth): add database auth functions and zustand auth store"
 
 **Interfaces:**
 
-- Consumes: `database/auth.ts`, `stores/useAuthStore.ts`, `expo-haptics`, `expo-clipboard`
+- Consumes: `database/auth.ts`, `stores/useAuthStore.ts`, `expo-haptics`, `expo-clipboard`, `components/elements/StyledText`
 - Produces: `components/auth/OwnerPinModal.tsx`, `components/auth/OwnerPinSetupModal.tsx`, `components/auth/OwnerPinRecoveryModal.tsx`
 
 - [ ] **Step 1: Add localization keys to `locales/en/settings.json` & `locales/tl/settings.json`**
@@ -1495,13 +1497,32 @@ const styles = StyleSheet.create({
 });
 ```
 
-- [ ] **Step 3: Integrate `OwnerPinSettingsCard` into `app/settings/index.tsx`**
+- [ ] **Step 3: Integrate `OwnerPinSettingsCard` into `app/(tabs)/more/settings.tsx`**
 
-Add `OwnerPinSettingsCard` to `app/settings/index.tsx` screen inside the settings scroll view.
+`app/(tabs)/more/settings.tsx` is the main tab-bar Settings hub (store profile, language, backup). `app/settings/index.tsx` is a narrow owner-only screen just for void window hours — not the right home.
 
-- [ ] **Step 4: Wrap top layout or test Provider**
+Add a new Security `SettingsSection` to `app/(tabs)/more/settings.tsx` immediately above the Database section:
 
-Ensure `OwnerPinGuardProvider` is mounted in root app tree or layout.
+```tsx
+import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
+
+// Inside the <ScrollView>, above <SettingsSection title={t('common:settingsDatabaseSection')} ...>:
+<SettingsSection
+  title={t('common:settingsSecuritySection')}
+  subtitle={t('common:settingsSecuritySectionSub')}
+>
+  <OwnerPinSettingsCard />
+</SettingsSection>;
+```
+
+Also add the matching i18n keys:
+
+- `locales/en/common.json`: `"settingsSecuritySection": "Security"`, `"settingsSecuritySectionSub": "Protect sensitive store actions with a PIN."`
+- `locales/tl/common.json`: `"settingsSecuritySection": "Seguridad"`, `"settingsSecuritySectionSub": "Protektahan ang mahahalagang aksyon gamit ang PIN."`
+
+- [ ] **Step 4: Verify `OwnerPinGuardProvider` is mounted in root layout**
+
+`OwnerPinGuardProvider` has already been added to `app/_layout.tsx` wrapping the `SafeAreaProvider` children. Confirm it is present — no further change needed.
 
 - [ ] **Step 5: Run typecheck & tests**
 

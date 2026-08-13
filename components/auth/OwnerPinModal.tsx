@@ -1,9 +1,10 @@
 import { useState, useEffect, FC } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { verifyOwnerPin } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { StyledText } from '@/components/elements/StyledText';
 
 interface Props {
   visible: boolean;
@@ -88,15 +89,19 @@ export const OwnerPinModal: FC<Props> = ({
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Text style={styles.title}>{title || t('pin.title')}</Text>
+          <StyledText variant="semibold" style={styles.title}>
+            {title || t('pin.title')}
+          </StyledText>
           {Boolean(actionDescription) && (
-            <Text style={styles.subtext}>{actionDescription}</Text>
+            <StyledText variant="regular" style={styles.subtext}>
+              {actionDescription}
+            </StyledText>
           )}
 
           {locked ? (
-            <Text style={styles.errorText}>
+            <StyledText variant="semibold" style={styles.errorText}>
               {t('pin.locked_out', { seconds: secondsLeft })}
-            </Text>
+            </StyledText>
           ) : (
             <>
               <View style={styles.dotsContainer}>
@@ -109,7 +114,9 @@ export const OwnerPinModal: FC<Props> = ({
               </View>
 
               {Boolean(errorMsg) && (
-                <Text style={styles.errorText}>{errorMsg}</Text>
+                <StyledText variant="semibold" style={styles.errorText}>
+                  {errorMsg}
+                </StyledText>
               )}
 
               <View style={styles.keypad}>
@@ -119,26 +126,34 @@ export const OwnerPinModal: FC<Props> = ({
                     style={styles.keyBtn}
                     onPress={() => handleKeyPress(digit)}
                   >
-                    <Text style={styles.keyText}>{digit}</Text>
+                    <StyledText variant="semibold" style={styles.keyText}>
+                      {digit}
+                    </StyledText>
                   </TouchableOpacity>
                 ))}
                 <TouchableOpacity
                   style={styles.keyBtn}
                   onPress={() => setPin('')}
                 >
-                  <Text style={styles.keyActionText}>C</Text>
+                  <StyledText variant="semibold" style={styles.keyActionText}>
+                    C
+                  </StyledText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.keyBtn}
                   onPress={() => handleKeyPress('0')}
                 >
-                  <Text style={styles.keyText}>0</Text>
+                  <StyledText variant="semibold" style={styles.keyText}>
+                    0
+                  </StyledText>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.keyBtn}
                   onPress={handleBackspace}
                 >
-                  <Text style={styles.keyActionText}>⌫</Text>
+                  <StyledText variant="semibold" style={styles.keyActionText}>
+                    ⌫
+                  </StyledText>
                 </TouchableOpacity>
               </View>
             </>
@@ -146,7 +161,9 @@ export const OwnerPinModal: FC<Props> = ({
 
           <View style={styles.btnRow}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <StyledText variant="semibold" style={styles.cancelText}>
+                Cancel
+              </StyledText>
             </TouchableOpacity>
             {!locked && (
               <TouchableOpacity
@@ -154,14 +171,18 @@ export const OwnerPinModal: FC<Props> = ({
                 disabled={pin.length < 4}
                 onPress={handleSubmit}
               >
-                <Text style={styles.submitText}>Submit</Text>
+                <StyledText variant="semibold" style={styles.submitText}>
+                  Submit
+                </StyledText>
               </TouchableOpacity>
             )}
           </View>
 
           {Boolean(onForgotPin) && (
             <TouchableOpacity style={styles.forgotBtn} onPress={onForgotPin}>
-              <Text style={styles.forgotText}>{t('pin.forgot_pin')}</Text>
+              <StyledText variant="medium" style={styles.forgotText}>
+                {t('pin.forgot_pin')}
+              </StyledText>
             </TouchableOpacity>
           )}
         </View>
@@ -186,7 +207,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 6 },
+  title: { fontSize: 18, color: '#1F2937', marginBottom: 6 },
   subtext: {
     fontSize: 14,
     color: '#4B5563',
@@ -206,7 +227,6 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontSize: 13,
     marginVertical: 8,
-    fontWeight: '600',
     textAlign: 'center',
   },
   keypad: {
@@ -225,8 +245,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  keyText: { fontSize: 22, fontWeight: '600', color: '#111827' },
-  keyActionText: { fontSize: 18, fontWeight: '600', color: '#4B5563' },
+  keyText: { fontSize: 22, color: '#111827' },
+  keyActionText: { fontSize: 18, color: '#4B5563' },
   btnRow: { flexDirection: 'row', gap: 12, marginTop: 12, width: '100%' },
   cancelBtn: {
     flex: 1,
@@ -235,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
   },
-  cancelText: { color: '#374151', fontWeight: '600' },
+  cancelText: { color: '#374151' },
   submitBtn: {
     flex: 1,
     paddingVertical: 12,
@@ -243,8 +263,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     alignItems: 'center',
   },
-  submitText: { color: '#fff', fontWeight: '600' },
+  submitText: { color: '#fff' },
   btnDisabled: { opacity: 0.5 },
   forgotBtn: { marginTop: 14 },
-  forgotText: { color: '#2563EB', fontSize: 13, fontWeight: '500' },
+  forgotText: { color: '#2563EB', fontSize: 13 },
 });

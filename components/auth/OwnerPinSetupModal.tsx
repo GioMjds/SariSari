@@ -2,7 +2,6 @@ import { FC, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -11,6 +10,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { setupOwnerPin } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { StyledText } from '@/components/elements/StyledText';
 
 interface Props {
   visible: boolean;
@@ -60,10 +60,12 @@ export const OwnerPinSetupModal: FC<Props> = ({
         <View style={styles.card}>
           {step !== 'code' ? (
             <>
-              <Text style={styles.title}>{t('pin.setup_title')}</Text>
-              <Text style={styles.label}>
+              <StyledText variant="semibold" style={styles.title}>
+                {t('pin.setup_title')}
+              </StyledText>
+              <StyledText variant="regular" style={styles.label}>
                 {step === 'create' ? t('pin.enter_pin') : t('pin.confirm_pin')}
-              </Text>
+              </StyledText>
               <TextInput
                 style={styles.input}
                 keyboardType="number-pad"
@@ -80,31 +82,45 @@ export const OwnerPinSetupModal: FC<Props> = ({
                 }}
               />
               {Boolean(errorMsg) && (
-                <Text style={styles.errorText}>{errorMsg}</Text>
+                <StyledText variant="semibold" style={styles.errorText}>
+                  {errorMsg}
+                </StyledText>
               )}
               <View style={styles.btnRow}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <StyledText variant="semibold" style={styles.cancelText}>
+                    Cancel
+                  </StyledText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
-                  <Text style={styles.submitText}>Next</Text>
+                  <StyledText variant="semibold" style={styles.submitText}>
+                    Next
+                  </StyledText>
                 </TouchableOpacity>
               </View>
             </>
           ) : (
             <>
-              <Text style={styles.title}>{t('pin.recovery_title')}</Text>
-              <Text style={styles.subtext}>{t('pin.recovery_desc')}</Text>
+              <StyledText variant="semibold" style={styles.title}>
+                {t('pin.recovery_title')}
+              </StyledText>
+              <StyledText variant="regular" style={styles.subtext}>
+                {t('pin.recovery_desc')}
+              </StyledText>
               <View style={styles.codeCard}>
-                <Text style={styles.codeText}>{recoveryCode}</Text>
+                <StyledText variant="extrabold" style={styles.codeText}>
+                  {recoveryCode}
+                </StyledText>
               </View>
               <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
-                <Text style={styles.copyText}>
+                <StyledText variant="semibold" style={styles.copyText}>
                   {copied ? t('pin.code_copied') : t('pin.copy_code')}
-                </Text>
+                </StyledText>
               </TouchableOpacity>
               <TouchableOpacity style={styles.doneBtn} onPress={onSuccess}>
-                <Text style={styles.doneText}>Done</Text>
+                <StyledText variant="semibold" style={styles.doneText}>
+                  Done
+                </StyledText>
               </TouchableOpacity>
             </>
           )}
@@ -130,7 +146,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#1F2937', marginBottom: 8 },
+  title: { fontSize: 18, color: '#1F2937', marginBottom: 8 },
   label: { fontSize: 14, color: '#4B5563', marginBottom: 12 },
   subtext: {
     fontSize: 13,
@@ -157,7 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
   },
-  cancelText: { color: '#374151', fontWeight: '600' },
+  cancelText: { color: '#374151' },
   submitBtn: {
     flex: 1,
     paddingVertical: 12,
@@ -165,7 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     alignItems: 'center',
   },
-  submitText: { color: '#fff', fontWeight: '600' },
+  submitText: { color: '#fff' },
   codeCard: {
     backgroundColor: '#F3F4F6',
     paddingVertical: 16,
@@ -175,12 +191,11 @@ const styles = StyleSheet.create({
   },
   codeText: {
     fontSize: 24,
-    fontWeight: '800',
     letterSpacing: 3,
     color: '#1E40AF',
   },
   copyBtn: { paddingVertical: 8, paddingHorizontal: 16, marginBottom: 16 },
-  copyText: { color: '#2563EB', fontWeight: '600' },
+  copyText: { color: '#2563EB' },
   doneBtn: {
     width: '100%',
     paddingVertical: 12,
@@ -188,5 +203,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#16A34A',
     alignItems: 'center',
   },
-  doneText: { color: '#fff', fontWeight: '700' },
+  doneText: { color: '#fff' },
 });

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { FC, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { verifyAndResetOwnerPinWithRecoveryCode } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { StyledText } from '@/components/elements/StyledText';
 
 interface Props {
   visible: boolean;
@@ -17,7 +17,7 @@ interface Props {
   onCancel: () => void;
 }
 
-export const OwnerPinRecoveryModal: React.FC<Props> = ({
+export const OwnerPinRecoveryModal: FC<Props> = ({
   visible,
   onSuccess,
   onCancel,
@@ -43,9 +43,13 @@ export const OwnerPinRecoveryModal: React.FC<Props> = ({
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Text style={styles.title}>{t('pin.reset_title')}</Text>
+          <StyledText variant="semibold" style={styles.title}>
+            {t('pin.reset_title')}
+          </StyledText>
 
-          <Text style={styles.label}>{t('pin.enter_recovery_code')}</Text>
+          <StyledText variant="regular" style={styles.label}>
+            {t('pin.enter_recovery_code')}
+          </StyledText>
           <TextInput
             style={styles.input}
             autoCapitalize="characters"
@@ -57,9 +61,9 @@ export const OwnerPinRecoveryModal: React.FC<Props> = ({
             }}
           />
 
-          <Text style={[styles.label, { marginTop: 12 }]}>
+          <StyledText variant="regular" style={[styles.label, { marginTop: 12 }]}>
             {t('pin.enter_pin')}
-          </Text>
+          </StyledText>
           <TextInput
             style={styles.input}
             keyboardType="number-pad"
@@ -73,15 +77,21 @@ export const OwnerPinRecoveryModal: React.FC<Props> = ({
           />
 
           {Boolean(errorMsg) && (
-            <Text style={styles.errorText}>{errorMsg}</Text>
+            <StyledText variant="semibold" style={styles.errorText}>
+              {errorMsg}
+            </StyledText>
           )}
 
           <View style={styles.btnRow}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-              <Text style={styles.cancelText}>Cancel</Text>
+              <StyledText variant="semibold" style={styles.cancelText}>
+                Cancel
+              </StyledText>
             </TouchableOpacity>
             <TouchableOpacity style={styles.submitBtn} onPress={handleReset}>
-              <Text style={styles.submitText}>Reset</Text>
+              <StyledText variant="semibold" style={styles.submitText}>
+                Reset
+              </StyledText>
             </TouchableOpacity>
           </View>
         </View>
@@ -108,7 +118,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
     color: '#1F2937',
     marginBottom: 12,
   },
@@ -136,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5E7EB',
     alignItems: 'center',
   },
-  cancelText: { color: '#374151', fontWeight: '600' },
+  cancelText: { color: '#374151' },
   submitBtn: {
     flex: 1,
     paddingVertical: 12,
@@ -144,5 +153,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB',
     alignItems: 'center',
   },
-  submitText: { color: '#fff', fontWeight: '600' },
+  submitText: { color: '#fff' },
 });

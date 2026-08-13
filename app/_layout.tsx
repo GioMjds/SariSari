@@ -24,6 +24,7 @@ import {
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { OwnerPinGuardProvider } from '@/components/auth/OwnerPinGuardProvider';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -157,22 +158,24 @@ export default function RootLayout() {
         <KeyboardProvider>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
-              <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: '#F7F6F2' },
-                  }}
-                />
-                {fontsLoaded && i18nReady && !bannerDismissed ? (
-                  <CloudNewerBanner
-                    onRestorePress={handleBannerRestore}
-                    onDismiss={handleBannerDismiss}
+              <OwnerPinGuardProvider>
+                <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: '#F7F6F2' },
+                    }}
                   />
-                ) : null}
-              </View>
-              <Toast />
-              <GlobalModal />
+                  {fontsLoaded && i18nReady && !bannerDismissed ? (
+                    <CloudNewerBanner
+                      onRestorePress={handleBannerRestore}
+                      onDismiss={handleBannerDismiss}
+                    />
+                  ) : null}
+                </View>
+                <Toast />
+                <GlobalModal />
+              </OwnerPinGuardProvider>
             </SafeAreaProvider>
           </QueryClientProvider>
         </KeyboardProvider>
