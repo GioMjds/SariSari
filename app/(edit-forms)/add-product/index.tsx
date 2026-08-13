@@ -1,7 +1,7 @@
-import { View, Platform } from 'react-native';
+import { View } from 'react-native';
 import { router, Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { StatusBar } from 'expo-status-bar';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
 import {
@@ -22,9 +22,7 @@ export default function AddProduct() {
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        enableAutomaticScroll
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        bottomOffset={80}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 40 }}
       >

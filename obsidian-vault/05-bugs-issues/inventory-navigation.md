@@ -6,7 +6,7 @@ Started from Analytics sub-tab then switched to Movements sub-tab swiping left, 
 
 ## Platform
 
-- [x] Android
+- [x] Android ✅ 2026-08-13
 - [ ] iOS
 
 ## Profile Build

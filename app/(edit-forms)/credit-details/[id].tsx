@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Platform, RefreshControl, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { Href, router, useLocalSearchParams } from 'expo-router';
@@ -177,9 +177,7 @@ export default function CustomerDetails() {
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        enableAutomaticScroll
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={SCROLL_CONTENT_STYLE}

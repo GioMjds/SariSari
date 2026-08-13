@@ -25,9 +25,14 @@ export interface CashSessionSummary {
   ownerAdditions: Pesos;
   expenses: Pesos;
   ownerDrawings: Pesos;
+  cashRefunds?: Pesos;
 }
 
-export type CashEntryType = 'expense' | 'owner_drawing' | 'owner_addition';
+export type CashEntryType =
+  | 'expense'
+  | 'owner_drawing'
+  | 'owner_addition'
+  | 'cash_refund';
 
 export interface CashEntry {
   id: string;

@@ -8,6 +8,8 @@ import salesEn from '../locales/en/sales.json';
 import utangEn from '../locales/en/utang.json';
 import onboardingEn from '../locales/en/onboarding.json';
 import stocktakeEn from '../locales/en/stocktake.json';
+import correctionsEn from '../locales/en/corrections.json';
+import settingsEn from '../locales/en/settings.json';
 
 import commonTl from '../locales/tl/common.json';
 import inventoryTl from '../locales/tl/inventory.json';
@@ -15,6 +17,8 @@ import salesTl from '../locales/tl/sales.json';
 import utangTl from '../locales/tl/utang.json';
 import onboardingTl from '../locales/tl/onboarding.json';
 import stocktakeTl from '../locales/tl/stocktake.json';
+import correctionsTl from '../locales/tl/corrections.json';
+import settingsTl from '../locales/tl/settings.json';
 
 const LANGUAGE_KEY = 'sarisari_language_preference';
 
@@ -28,6 +32,8 @@ const resources = {
     utang: utangEn,
     onboarding: onboardingEn,
     stocktake: stocktakeEn,
+    corrections: correctionsEn,
+    settings: settingsEn,
   },
   tl: {
     common: commonTl,
@@ -36,6 +42,8 @@ const resources = {
     utang: utangTl,
     onboarding: onboardingTl,
     stocktake: stocktakeTl,
+    corrections: correctionsTl,
+    settings: settingsTl,
   },
 } satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
@@ -54,7 +62,16 @@ export const initI18n = async (): Promise<void> => {
     resources,
     lng: initialLanguage,
     fallbackLng: 'en',
-    ns: ['common', 'inventory', 'sales', 'utang', 'onboarding', 'stocktake'],
+    ns: [
+      'common',
+      'inventory',
+      'sales',
+      'utang',
+      'onboarding',
+      'stocktake',
+      'corrections',
+      'settings',
+    ],
     defaultNS: 'common',
     interpolation: {
       escapeValue: false,

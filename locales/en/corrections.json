@@ -1,0 +1,23 @@
+{
+  "kind_void": "Void sale",
+  "kind_refund": "Refund sale",
+  "kind_price_correction": "Correct price",
+  "reason_label": "Reason",
+  "reason_customer_changed_mind": "Customer changed mind",
+  "reason_misprinted_price": "Misprinted price",
+  "reason_wrong_item_scanned": "Wrong item scanned",
+  "reason_returned_damaged": "Returned — damaged",
+  "reason_returned_other": "Returned — other",
+  "reason_shelf_price_changed": "Shelf price changed",
+  "reason_other": "Other",
+  "witness_label": "Cashier on shift",
+  "witness_required": "Pick the cashier who rang up the sale",
+  "confirm_and_pin": "Confirm with PIN",
+  "report_title": "Corrections",
+  "empty_report": "No corrections yet.",
+  "view_sale": "View sale",
+  "voided_banner": "This sale was voided.",
+  "refunded_banner": "This sale was refunded.",
+  "void_window_locked": "Correction window has closed (settings: {{hours}}h).",
+  "session_closed": "Cash session is closed — contact your bookkeeper."
+}

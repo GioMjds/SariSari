@@ -1,13 +1,16 @@
-import type { OverrideReasonCode } from "./credits.types";
+import type { OverrideReasonCode } from './credits.types';
 
 export interface Sale {
   id: number;
   total: number;
-  timestamp: string;
   payment_type: 'cash' | 'credit';
   customer_name?: string;
   customer_credit_id?: number;
   credit_transaction_id?: number | null;
+  timestamp: string;
+  cancelled_at?: string | null;
+  cancelled_by_kind?: 'void' | 'refund' | 'price_correction' | null;
+  cancelled_by_correction_id?: number | null;
 }
 
 export interface SaleItem {

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Modal, Pressable, Platform } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, TextInput, Modal, Pressable } from 'react-native';
 import {
-  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
   KeyboardController,
 } from 'react-native-keyboard-controller';
 import { StyledText } from '@/components/elements';
@@ -45,9 +45,7 @@ export function ParkCartModal({
     : `Cart • ${itemCount} ${itemCount === 1 ? 'item' : 'items'} (${formatPesos(total)})`;
 
   useEffect(() => {
-    if (visible) {
-      setNote('');
-    }
+    if (visible) setNote('');
   }, [visible]);
 
   const isFull = parkedCartsCount >= 3;
@@ -71,10 +69,7 @@ export function ParkCartModal({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
+      <KeyboardAwareScrollView bottomOffset={64} className="flex-1">
         <Pressable
           onPress={handleClose}
           className="flex-1 bg-black/50 justify-center items-center p-4"
@@ -83,7 +78,10 @@ export function ParkCartModal({
             onPress={(e) => e.stopPropagation()}
             className="bg-paper-100 w-full max-w-sm rounded-2xl p-5 shadow-lg border border-paper-300"
           >
-            <StyledText variant="extrabold" className="text-xl text-ink-900 mb-1">
+            <StyledText
+              variant="extrabold"
+              className="text-xl text-ink-900 mb-1"
+            >
               Park Active Cart
             </StyledText>
             <StyledText variant="regular" className="text-sm text-ink-600 mb-4">
@@ -92,28 +90,45 @@ export function ParkCartModal({
 
             {isFull && (
               <View className="bg-amber-50 border border-amber-300 p-3 rounded-xl mb-4">
-                <StyledText variant="semibold" className="text-xs text-amber-900">
-                  Maximum 3 parked carts reached. Resume or discard an existing cart before parking another.
+                <StyledText
+                  variant="semibold"
+                  className="text-xs text-amber-900"
+                >
+                  Maximum 3 parked carts reached. Resume or discard an existing
+                  cart before parking another.
                 </StyledText>
               </View>
             )}
 
             <View className="bg-paper-200 p-3 rounded-xl mb-4 border border-paper-300">
-              <StyledText variant="extrabold" className="text-xs text-ink-500 uppercase tracking-wider mb-1">
+              <StyledText
+                variant="extrabold"
+                className="text-xs text-ink-500 uppercase tracking-wider mb-1"
+              >
                 Summary
               </StyledText>
-              <StyledText variant="extrabold" className="text-base text-ink-900">
+              <StyledText
+                variant="extrabold"
+                className="text-base text-ink-900"
+              >
                 {itemCount} {itemCount === 1 ? 'item' : 'items'} •{' '}
                 {formatPesos(total)}
               </StyledText>
               {customerDisplayName && (
-                <StyledText variant="semibold" className="text-sm text-cinnamon-700 mt-1">
-                  Suki: {customerDisplayName} ({paymentType === 'credit' ? 'Utang' : 'Cash'})
+                <StyledText
+                  variant="semibold"
+                  className="text-sm text-cinnamon-700 mt-1"
+                >
+                  Suki: {customerDisplayName} (
+                  {paymentType === 'credit' ? 'Utang' : 'Cash'})
                 </StyledText>
               )}
             </View>
 
-            <StyledText variant="semibold" className="text-sm text-ink-800 mb-1.5">
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-800 mb-1.5"
+            >
               Note / Label (Optional)
             </StyledText>
             <TextInput
@@ -144,15 +159,17 @@ export function ParkCartModal({
                     : 'bg-cinnamon-500 active:bg-cinnamon-600 shadow-persimmon-glow'
                 }`}
               >
-                <StyledText variant="extrabold" className="text-paper-50 text-sm">
+                <StyledText
+                  variant="extrabold"
+                  className="text-paper-50 text-sm"
+                >
                   Park Cart
                 </StyledText>
               </Pressable>
             </View>
           </Pressable>
         </Pressable>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </Modal>
   );
 }
-

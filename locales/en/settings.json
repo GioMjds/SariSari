@@ -1,0 +1,10 @@
+{
+  "title": "Settings",
+  "void_window_hours": "Void window (hours)",
+  "void_window_help": "How many hours after a sale it can still be corrected. Default 24.",
+  "save": "Save",
+  "saved": "Saved.",
+  "invalid_hours": "Please enter a valid positive number of hours.",
+  "owner_auth_required": "Owner authorization required",
+  "save_failed": "Failed to save settings."
+}

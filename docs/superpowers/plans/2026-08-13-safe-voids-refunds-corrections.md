@@ -19,7 +19,7 @@ These apply to every task below; individual task descriptions assume them:
 - Screens (`app/**`) never call SQLite. All data access via hooks in `hooks/`.
 - Multi-statement writes that touch a ledger use `db.withTransactionAsync` — and tests assert rollback on intermediate failure.
 - TypeScript strict mode plus `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`, `noFallthroughCasesInSwitch`, `useUnknownInCatchVariables`.
-- i18n namespace `corrections` for correction UI and `settings` for owner settings. See `locales/en.json` and `locales/fil.json`.
+- i18n namespace `corrections` for correction UI and `settings` for owner settings. See `locales/en/corrections.json`, `locales/en/settings.json`, `locales/tl/corrections.json`, `locales/tl/settings.json`, and `lib/i18n.ts`.
 - No emojis in code, tests, or comments. Filenames kebab-case.
 - Existing `database/sales.ts:469 deleteSale` stays untouched. New write functions live alongside it.
 
@@ -41,16 +41,19 @@ The plan produces these files in the order tasks introduce them:
 | `database/cash.ts`                      | Modified       | Add `'cash_refund'` arm in `getCashSessionSummary`'s CASE expression.                  |
 | `database/credits.ts`                   | Modified       | No new exports; sibling reversal writes reuse existing patterns.                       |
 | `hooks/useAppSetting.ts`                | New            | TanStack Query wrapper over `database/settings.ts`.                                    |
-| `hooks/useSales.tsx`                    | Modified       | Add `useVoidSale`, `useRefundSale`, `useCorrectSalePrice`, `useSaleCorrections`.       |
-| `hooks/useCorrections.tsx`              | New            | `useCorrectionsReport(...)` with paginated query key.                                  |
+| `hooks/useSales.ts`                     | Modified       | Add `useVoidSale`, `useRefundSale`, `useCorrectSalePrice`, `useSaleCorrections`.       |
+| `hooks/useCorrections.ts`               | New            | `useCorrectionsReport(...)` with paginated query key.                                  |
 | `app/settings/index.tsx`                | New            | Owner-only `void_window_hours` editor.                                                 |
 | `app/sales/[id]/correction.tsx`         | New            | Void / Refund action screen.                                                           |
 | `app/sales/[id]/price-correction.tsx`   | New            | Per-line price editor.                                                                 |
 | `app/reports/corrections.tsx`           | New            | Audit log list.                                                                        |
 | `app/sales/_layout.tsx`                 | Modified       | Register correction stack routes.                                                      |
 | `app/(tabs)/sales.tsx`                  | Modified       | Header link to corrections report.                                                     |
-| `locales/en.json`                       | Modified       | `corrections.*`, `settings.*` keys.                                                    |
-| `locales/fil.json`                      | Modified       | Same.                                                                                  |
+| `locales/en/corrections.json`           | New            | `corrections.*` English keys.                                                          |
+| `locales/en/settings.json`              | New            | `settings.*` English keys.                                                             |
+| `locales/tl/corrections.json`           | New            | `corrections.*` Tagalog keys.                                                          |
+| `locales/tl/settings.json`              | New            | `settings.*` Tagalog keys.                                                             |
+| `lib/i18n.ts`                           | Modified       | Register `corrections` and `settings` namespaces in `resources` and `ns` array.        |
 | `tests/database/settings.test.ts`       | New            | `app_settings` get/set, default seed.                                                  |
 | `tests/database/migrations-v19.test.ts` | New            | Schema migration preserves existing data.                                              |
 | `tests/database/corrections.test.ts`    | New            | DB-layer tests for the three write functions and named errors.                         |
@@ -2048,145 +2051,173 @@ git commit -m "feat(corrections): useCorrectionsReport + void/refund/price hooks
 
 **Files:**
 
-- Modify: `locales/en.json`
-- Modify: `locales/fil.json`
+- Create: `locales/en/corrections.json`
+- Create: `locales/en/settings.json`
+- Create: `locales/tl/corrections.json`
+- Create: `locales/tl/settings.json`
+- Modify: `lib/i18n.ts`
 - Test: type-only via `npm run typecheck`; key coverage verified in Task 11-13 via the screens that consume them.
 
 **Interfaces:**
 
-- Consumes: existing locale JSON shape
-- Produces: a new `corrections` namespace with reason codes and copy for all three screens, plus a `settings` namespace with `void_window_hours` label/help/success.
+- Consumes: existing namespace-based locale JSON structure in `locales/en/` and `locales/tl/`
+- Produces: new `corrections` and `settings` namespaces in `locales/en/` and `locales/tl/`, registered in `lib/i18n.ts`
 
-- [ ] **Step 1: Read each locale's current shape**
+- [ ] **Step 1: Check existing locale files and i18n configuration**
 
-Read the top 40 lines of `locales/en.json` and `locales/fil.json` to find the correct spot to splice in. Match the existing indentation (likely 2 spaces) and key grouping style.
+Read `lib/i18n.ts` and inspect existing locale files in `locales/en/` and `locales/tl/` to match structure and language codes (`en`, `tl`).
 
-- [ ] **Step 2: Add keys to `locales/en.json`**
+- [ ] **Step 2: Create `locales/en/corrections.json` and `locales/en/settings.json`**
 
-Add at the appropriate location (e.g., just before the closing `}` of the resource object):
-
-```json
-  "corrections": {
-    "kind_void": "Void sale",
-    "kind_refund": "Refund sale",
-    "kind_price_correction": "Correct price",
-    "reason_label": "Reason",
-    "reason_customer_changed_mind": "Customer changed mind",
-    "reason_misprinted_price": "Misprinted price",
-    "reason_wrong_item_scanned": "Wrong item scanned",
-    "reason_returned_damaged": "Returned — damaged",
-    "reason_returned_other": "Returned — other",
-    "reason_shelf_price_changed": "Shelf price changed",
-    "reason_other": "Other",
-    "witness_label": "Cashier on shift",
-    "witness_required": "Pick the cashier who rang up the sale",
-    "confirm_and_pin": "Confirm with PIN",
-    "report_title": "Corrections",
-    "empty_report": "No corrections yet.",
-    "view_sale": "View sale",
-    "voided_banner": "This sale was voided.",
-    "refunded_banner": "This sale was refunded.",
-    "void_window_locked": "Correction window has closed (settings: {{hours}}h).",
-    "session_closed": "Cash session is closed — contact your bookkeeper."
-  },
-  "settings": {
-    "title": "Settings",
-    "void_window_hours": "Void window (hours)",
-    "void_window_help": "How many hours after a sale it can still be corrected. Default 24.",
-    "save": "Save",
-    "saved": "Saved."
-  }
-```
-
-(If the locale file already has top-level namespaces, place each block at the right alphabetical/declared position.)
-
-- [ ] **Step 3: Add the same keys to `locales/fil.json`**
-
-Match the structure. Use the same keys. Suggested Filipino copy mirroring spec language:
+Create `locales/en/corrections.json`:
 
 ```json
-  "corrections": {
-    "kind_void": "I-void ang benta",
-    "kind_refund": "I-refund ang benta",
-    "kind_price_correction": "Itama ang presyo",
-    "reason_label": "Dahilan",
-    "reason_customer_changed_mind": "Nag-bago ang isip ng suki",
-    "reason_misprinted_price": "Maling presyo",
-    "reason_wrong_item_scanned": "Maling item ang na-scan",
-    "reason_returned_damaged": "Ibinalik — sira",
-    "reason_returned_other": "Ibinalik — iba pa",
-    "reason_shelf_price_changed": "Bago ang presyo sa estante",
-    "reason_other": "Iba pa",
-    "witness_label": "Cashier na naka-duty",
-    "witness_required": "Pumili ng cashier na nag-benta nito",
-    "confirm_and_pin": "Kumpirmahin gamit ang PIN",
-    "report_title": "Mga Pagtatama",
-    "empty_report": "Walang pagtatama pa.",
-    "view_sale": "Tingnan ang benta",
-    "voided_banner": "Na-void ang benta na ito.",
-    "refunded_banner": "Na-refund ang benta na ito.",
-    "void_window_locked": "Sarado na ang oras ng pagtatama ({{hours}}h).",
-    "session_closed": "Sarado ang session — makipag-ugnayan sa bookkeeper."
-  },
-  "settings": {
-    "title": "Mga Setting",
-    "void_window_hours": "Oras ng pag-void (oras)",
-    "void_window_help": "Gaano katagal pagkatapos ng benta maaari itong itama. Default na 24.",
-    "save": "I-save",
-    "saved": "Na-save."
-  }
+{
+  "kind_void": "Void sale",
+  "kind_refund": "Refund sale",
+  "kind_price_correction": "Correct price",
+  "reason_label": "Reason",
+  "reason_customer_changed_mind": "Customer changed mind",
+  "reason_misprinted_price": "Misprinted price",
+  "reason_wrong_item_scanned": "Wrong item scanned",
+  "reason_returned_damaged": "Returned — damaged",
+  "reason_returned_other": "Returned — other",
+  "reason_shelf_price_changed": "Shelf price changed",
+  "reason_other": "Other",
+  "witness_label": "Cashier on shift",
+  "witness_required": "Pick the cashier who rang up the sale",
+  "confirm_and_pin": "Confirm with PIN",
+  "report_title": "Corrections",
+  "empty_report": "No corrections yet.",
+  "view_sale": "View sale",
+  "voided_banner": "This sale was voided.",
+  "refunded_banner": "This sale was refunded.",
+  "void_window_locked": "Correction window has closed (settings: {{hours}}h).",
+  "session_closed": "Cash session is closed — contact your bookkeeper."
+}
 ```
 
-- [ ] **Step 4: Run typecheck and validate JSON**
+Create `locales/en/settings.json`:
+
+```json
+{
+  "title": "Settings",
+  "void_window_hours": "Void window (hours)",
+  "void_window_help": "How many hours after a sale it can still be corrected. Default 24.",
+  "save": "Save",
+  "saved": "Saved.",
+  "invalid_hours": "Please enter a valid positive number of hours."
+}
+```
+
+- [ ] **Step 3: Create `locales/tl/corrections.json` and `locales/tl/settings.json`**
+
+Create `locales/tl/corrections.json`:
+
+```json
+{
+  "kind_void": "I-void ang benta",
+  "kind_refund": "I-refund ang benta",
+  "kind_price_correction": "Itama ang presyo",
+  "reason_label": "Dahilan",
+  "reason_customer_changed_mind": "Nag-bago ang isip ng suki",
+  "reason_misprinted_price": "Maling presyo",
+  "reason_wrong_item_scanned": "Maling item ang na-scan",
+  "reason_returned_damaged": "Ibinalik — sira",
+  "reason_returned_other": "Ibinalik — iba pa",
+  "reason_shelf_price_changed": "Bago ang presyo sa estante",
+  "reason_other": "Iba pa",
+  "witness_label": "Cashier na naka-duty",
+  "witness_required": "Pumili ng cashier na nag-benta nito",
+  "confirm_and_pin": "Kumpirmahin gamit ang PIN",
+  "report_title": "Mga Pagtatama",
+  "empty_report": "Walang pagtatama pa.",
+  "view_sale": "Tingnan ang benta",
+  "voided_banner": "Na-void ang benta na ito.",
+  "refunded_banner": "Na-refund ang benta na ito.",
+  "void_window_locked": "Sarado na ang oras ng pagtatama ({{hours}}h).",
+  "session_closed": "Sarado ang session — makipag-ugnayan sa bookkeeper."
+}
+```
+
+Create `locales/tl/settings.json`:
+
+```json
+{
+  "title": "Mga Setting",
+  "void_window_hours": "Oras ng pag-void (oras)",
+  "void_window_help": "Gaano katagal pagkatapos ng benta maaari itong itama. Default na 24.",
+  "save": "I-save",
+  "saved": "Na-save.",
+  "invalid_hours": "Mangyaring maglagay ng wastong numero ng oras."
+}
+```
+
+- [ ] **Step 4: Register namespaces in `lib/i18n.ts`**
+
+Import the new JSON files in `lib/i18n.ts` and add `corrections` and `settings` to `resources.en` and `resources.tl`, and include `'corrections'` and `'settings'` in the `ns` array.
+
+- [ ] **Step 5: Run typecheck and validate JSON**
 
 Run: `npm run typecheck`
-Manually open each JSON file and ensure it parses (`node -e "JSON.parse(require('fs').readFileSync('locales/en.json','utf8'))"` parses without throwing).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add locales/en.json locales/fil.json
-git commit -m "feat(corrections): i18n keys for corrections and settings screens"
+git add locales/en/corrections.json locales/en/settings.json locales/tl/corrections.json locales/tl/settings.json lib/i18n.ts
+git commit -m "feat(corrections): i18n keys for corrections and settings namespaces in en and tl"
 ```
 
 ---
 
-## Task 11: Settings screen — `app/settings/index.tsx`
+## Task 11: Settings screen — `app/settings/index.tsx` & `components/settings/SettingsScreen.tsx`
 
 **Files:**
 
-- Create: `app/settings/index.tsx`
-- Modify: route registration in `app/_layout.tsx` (or wherever other top-level screens register; check existing pattern)
-- Test: behavioral — `npx jest` smoke only (no new file); visual review is the deliverable.
+- Modify / Update: `app/settings/index.tsx`
+- Modify: `components/settings/SettingsScreen.tsx` (integrate Sales / Void Window setting section)
+- Test: behavioral — `npx jest` smoke test; visual review is the deliverable.
 
 **Interfaces:**
 
-- Consumes: `useAppSetting('void_window_hours')`, `useSetAppSetting` from Task 8; `useTranslation` from `react-i18next`; existing form input components in `components/`.
-- Produces: a single screen with an integer input prefilled from the current setting, a Save button that calls `setAppSetting`, and a transient success toast.
+- Consumes: `useAppSetting('void_window_hours')`, `useSetAppSetting` from Task 8; `useTranslation` from `react-i18next`; `useToastStore` from `@/stores`.
+- Produces: void window hours setting integrated with the app design system (Cinnamon header, paper cards, `StyledText`, `useToastStore`).
 
-- [ ] **Step 1: Find the screen-registration convention**
+- [ ] **Step 1: Check existing screen and design tokens**
 
-Open the project's root `_layout.tsx` (likely `app/_layout.tsx`) and see how other settings-shaped screens register (e.g., does the file use a `<Stack.Screen name="settings" />` declaration?). Also look at an existing simple screen like an inventory or utility sub-screen to copy its wrapper (header bar, safe area, etc.).
+Observe that standard settings screens in SariSari use `bg-paper-200` background, `bg-cinnamon-500` header banner with back button arrow (`FontAwesome name="arrow-left"`), `StyledText` typography, paper container cards (`bg-paper-50 border border-warm-100 rounded-2xl`), and `useToastStore` for toasts. `app/_layout.tsx` uses file-based Expo Router (`<Stack screenOptions={{ headerShown: false }} />`) so no manual `<Stack.Screen>` registration is required.
 
-- [ ] **Step 2: Implement the screen**
+- [ ] **Step 2: Update `app/settings/index.tsx` to match codebase design system**
 
-Create `app/settings/index.tsx`:
+Update `app/settings/index.tsx` with project-aligned tokens and toast notifications:
 
 ```typescript
-import React from 'react';
-import { View, Text, TextInput, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  TextInput,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { FontAwesome } from '@expo/vector-icons';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
-import { ScreenContainer } from '@/components/ScreenContainer';
-import { Toast } from '@/components/Toast';
+import { useToastStore } from '@/stores';
+import { StyledText } from '@/components/elements';
 
 export default function SettingsScreen() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('settings');
+  const { t: tCommon } = useTranslation('common');
+  const addToast = useToastStore((s) => s.addToast);
   const { value, isLoading } = useAppSetting('void_window_hours');
-  const { mutateAsync: save, isPending } = useSetAppSetting('void_window_hours');
-  const [draft, setDraft] = React.useState<string>('');
+  const { mutateAsync: save, isPending } =
+    useSetAppSetting('void_window_hours');
+  const [draft, setDraft] = useState<string>('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (value !== null && draft === '') {
       setDraft(value);
     }
@@ -2195,237 +2226,365 @@ export default function SettingsScreen() {
   const onSave = async () => {
     const parsed = Number.parseInt(draft, 10);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      Toast.show(t('settings.invalid_hours'));
+      Alert.alert(t('title'), t('invalid_hours'));
       return;
     }
     await save(draft);
-    Toast.show(t('settings.saved'));
+    addToast({ message: t('saved'), variant: 'success' });
   };
 
-  if (isLoading) return <ScreenContainer><Text>...</Text></ScreenContainer>;
+  if (isLoading) {
+    return (
+      <View className="flex-1 bg-paper-200 items-center justify-center">
+        <ActivityIndicator size="large" color="#623418" />
+      </View>
+    );
+  }
 
   return (
-    <ScreenContainer>
-      <Text>{t('settings.title')}</Text>
-
-      <View>
-        <Text>{t('settings.void_window_hours')}</Text>
-        <TextInput
-          value={draft}
-          onChangeText={setDraft}
-          keyboardType="number-pad"
-          accessibilityLabel={t('settings.void_window_hours')}
-        />
-        <Text>{t('settings.void_window_help')}</Text>
+    <View className="flex-1 bg-paper-200">
+      {/* Cinnamon Header */}
+      <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
+        <View className="flex-row items-center justify-between mb-3">
+          {router.canGoBack() ? (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={tCommon('settingsGoBackA11y')}
+              className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15 active:opacity-70"
+            >
+              <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
+            </Pressable>
+          ) : <View />}
+        </View>
+        <StyledText
+          variant="extrabold"
+          className="text-h1 text-paper-50 text-3xl"
+          style={{ letterSpacing: -0.28 }}
+        >
+          {t('title')}
+        </StyledText>
       </View>
 
-      <Pressable onPress={onSave} disabled={isPending}>
-        <Text>{t('settings.save')}</Text>
-      </Pressable>
-    </ScreenContainer>
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-6">
+          <StyledText variant="semibold" className="text-sm text-ink-700 mb-1">
+            {t('void_window_hours')}
+          </StyledText>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            keyboardType="number-pad"
+            className="border border-warm-200 rounded-xl p-3 bg-paper-50 text-ink-700 text-base mb-2 font-medium"
+            accessibilityLabel={t('void_window_hours')}
+          />
+          <StyledText variant="regular" className="text-xs text-ink-400">
+            {t('void_window_help')}
+          </StyledText>
+        </View>
+
+        <Pressable
+          onPress={onSave}
+          disabled={isPending}
+          className="bg-cinnamon-500 p-4 rounded-2xl items-center active:opacity-80 disabled:opacity-50"
+        >
+          <StyledText variant="extrabold" className="text-paper-50 text-base">
+            {t('save')}
+          </StyledText>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 ```
 
-If the project uses `react-hook-form` here (it's a dependency — line 73 in `package.json`), wrap the input in a controller the same way other forms do. Match the existing styling tokens (NativeWind classes, etc.) rather than free-form.
+- [ ] **Step 3: Integrate row/section into `components/settings/SettingsScreen.tsx`**
 
-- [ ] **Step 3: Register the route**
-
-In the root `_layout.tsx` (or equivalent), ensure the route exists. If the app uses `expo-router`'s file-based routing, no further registration is needed — `app/settings/index.tsx` is automatically at `/settings`. If a `<Stack.Screen>` declaration is needed, mirror how an existing screen is added.
+Add a "Sales & Security" section in `components/settings/SettingsScreen.tsx` so users can access the Void Window setting from the main settings menu.
 
 - [ ] **Step 4: Run the full verify pipeline**
 
 Run: `npm run verify`
-Expected: typecheck passes; jest still green.
+Expected: typecheck passes; jest tests pass.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/settings/index.tsx
-git commit -m "feat(corrections): settings screen with void_window_hours editor"
+git add app/settings/index.tsx components/settings/SettingsScreen.tsx docs/superpowers/plans/2026-08-13-safe-voids-refunds-corrections.md
+git commit -m "feat(corrections): update Task 11 and settings screen to match SariSari design system"
 ```
 
 ---
 
-## Task 12: Correction screen — `app/sales/[id]/correction.tsx`
+## Task 12: Correction screen — `app/(edit-forms)/sale-correction/[id].tsx`
 
 **Files:**
 
-- Create: `app/sales/[id]/correction.tsx`
-- Modify: `app/sales/_layout.tsx` (register the correction route under the stack)
-- Test: type-only via `typecheck`; no new test (visual + manual review)
+- Create: `app/(edit-forms)/sale-correction/[id].tsx`
+- Modify: `app/(edit-forms)/_layout.tsx` (register route under form sheet stack)
+- Test: type-only via `typecheck`; visual review.
 
 **Interfaces:**
 
-- Consumes: `useSale(id)` (find existing), `useVoidSale`, `useRefundSale` from Task 9; `useTranslation`; `Toast`; the existing PIN-entry primitive (`useOwnerPin` if shipped, else a placeholder PIN sheet — pick the one present).
-- Produces: a screen with three sections: sale summary, reason code picker, witness input. Bottom action bar: Cancel + Confirm & PIN.
+- Consumes: `useGetSale(id)`, `useVoidSale`, `useRefundSale` from `hooks/useSales`; `useTranslation`; `useToastStore` from `@/stores/ToastStore`.
+- Produces: a modal action screen with sale summary, reason code picker, witness input, and confirm action.
 
-- [ ] **Step 1: Read `app/sales/_layout.tsx` to understand the existing stack**
+- [ ] **Step 1: Check existing modal sheet conventions in `app/(edit-forms)/_layout.tsx`**
 
-Look at how a current detail-screen route like `app/sales/[id].tsx` is mounted. Mirror that pattern when adding a new sibling `[id]/correction.tsx` route (or convert `_layout.tsx` to a stack and register it there).
+Observe how detail action sheets register in `app/(edit-forms)/_layout.tsx` (e.g., `<Stack.Screen name="add-payment/[id]" options={{ presentation: 'card', animation: 'fade' }} />`).
 
-- [ ] **Step 2: Implement the screen**
+- [ ] **Step 2: Implement `app/(edit-forms)/sale-correction/[id].tsx`**
 
-Create `app/sales/[id]/correction.tsx`. Key behaviors:
+Create `app/(edit-forms)/sale-correction/[id].tsx`:
 
 ```typescript
+import React, { useState } from 'react';
+import { View, Pressable, ScrollView, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-import { useVoidSale, useRefundSale } from '@/hooks/useSales';
-import { useOwnerPin } from '@/lib/pin'; // (or the existing primitive)
-import { ScreenContainer } from '@/components/ScreenContainer';
-import { Toast } from '@/components/Toast';
+import { FontAwesome } from '@expo/vector-icons';
+import { useGetSale, useVoidSale, useRefundSale } from '@/hooks/useSales';
+import { useToastStore } from '@/stores/ToastStore';
+import { StyledText } from '@/components/elements';
+import { formatPesos } from '@/lib/money';
 
 type Mode = 'void' | 'refund';
 
-export default function CorrectionScreen() {
+export default function SaleCorrectionScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode: Mode }>();
   const saleId = Number(id);
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t } = useTranslation('corrections');
+  const addToast = useToastStore((s) => s.addToast);
 
+  const { data: sale } = useGetSale(saleId);
   const [reason, setReason] = useState<string>('');
   const [witness, setWitness] = useState<string>('');
-  const [pinOpen, setPinOpen] = useState(false);
-  const { verifyPin } = useOwnerPin();
 
-  const { mutateAsync: voidSale } = useVoidSale();
-  const { mutateAsync: refundSale } = useRefundSale();
+  const { mutateAsync: voidSale, isPending: isVoiding } = useVoidSale();
+  const { mutateAsync: refundSale, isPending: isRefunding } = useRefundSale();
 
-  const onConfirm = () => {
-    if (!reason) return Toast.show(t('corrections.reason_required'));
-    if (!witness) return Toast.show(t('corrections.witness_required'));
-    setPinOpen(true);
-  };
-
-  const onPinAccepted = async (pin: string) => {
-    const ok = await verifyPin(pin);
-    if (!ok) return Toast.show(t('corrections.pin_wrong'));
-    setPinOpen(false);
+  const onConfirm = async () => {
+    if (!reason) {
+      addToast({ message: t('reason_required', 'Please select a reason'), variant: 'danger' });
+      return;
+    }
+    if (!witness) {
+      addToast({ message: t('witness_required', 'Witness required'), variant: 'danger' });
+      return;
+    }
     try {
       if (mode === 'void') {
         await voidSale({ saleId, actorUser: 'owner', witnessUser: witness, reasonCode: reason });
       } else {
-        await refundSale({ saleId, actorUser: 'owner', witnessUser: witness, reasonCode: reason as 'returned_damaged' | 'returned_other' });
+        await refundSale({
+          saleId,
+          actorUser: 'owner',
+          witnessUser: witness,
+          reasonCode: reason as 'returned_damaged' | 'returned_other',
+        });
       }
+      addToast({ message: t('correction_success', 'Correction recorded'), variant: 'success' });
       router.back();
     } catch (err) {
-      Toast.show(err instanceof Error ? err.message : 'failed');
+      addToast({ message: err instanceof Error ? err.message : 'Correction failed', variant: 'danger' });
     }
   };
 
   return (
-    <ScreenContainer>
-      {/* ... mode-specific copy, reason picker, witness TextInput ... */}
-      {/* Bottom action bar with Cancel + t('corrections.confirm_and_pin') */}
-      <PinSheet visible={pinOpen} onAccept={onPinAccepted} onCancel={() => setPinOpen(false)} />
-    </ScreenContainer>
+    <View className="flex-1 bg-paper-200">
+      <View className="bg-cinnamon-500 px-5 pt-3 pb-6 flex-row items-center justify-between">
+        <Pressable onPress={() => router.back()} className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15">
+          <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
+        </Pressable>
+        <StyledText variant="extrabold" className="text-xl text-paper-50">
+          {mode === 'void' ? t('kind_void') : t('kind_refund')}
+        </StyledText>
+        <View className="w-8" />
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        {sale ? (
+          <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-4">
+            <StyledText variant="bold" className="text-ink-700 mb-1">
+              Sale #{sale.id}
+            </StyledText>
+            <StyledText variant="regular" className="text-sm text-ink-500">
+              Total: {formatPesos(sale.total)}
+            </StyledText>
+          </View>
+        ) : null}
+
+        <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-6">
+          <StyledText variant="semibold" className="text-sm text-ink-700 mb-2">
+            Witness (Cashier) Name
+          </StyledText>
+          <TextInput
+            value={witness}
+            onChangeText={setWitness}
+            placeholder="e.g. Maria"
+            className="border border-warm-200 rounded-xl p-3 bg-paper-50 text-ink-700 text-base font-medium mb-4"
+          />
+        </View>
+
+        <Pressable
+          onPress={onConfirm}
+          disabled={isVoiding || isRefunding}
+          className="bg-cinnamon-500 p-4 rounded-2xl items-center active:opacity-80 disabled:opacity-50"
+        >
+          <StyledText variant="extrabold" className="text-paper-50 text-base">
+            Confirm Correction
+          </StyledText>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 ```
 
-The exact component shapes depend on the project's existing patterns — copy the styling, layout primitives, and PIN-sheet from a current screen in `app/`. **Do not invent new visual primitives**.
+- [ ] **Step 3: Register route in `app/(edit-forms)/_layout.tsx`**
 
-- [ ] **Step 3: Register the route**
-
-If `app/sales/_layout.tsx` is a stack, add `<Stack.Screen name="[id]/correction" options={{ title: t('corrections.kind_void') }} />` (or whatever existing declaration pattern applies).
+Add `<Stack.Screen name="sale-correction/[id]" options={{ presentation: 'card', animation: 'fade' }} />`.
 
 - [ ] **Step 4: Run verify**
 
-Run: `npm run verify`
-Expected: green.
+Run: `npm run typecheck`
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add app/sales/_layout.tsx app/sales/[id]/correction.tsx
-git commit -m "feat(corrections): void/refund action screen with PIN gate"
+git add app/(edit-forms)/sale-correction/[id].tsx app/(edit-forms)/_layout.tsx
+git commit -m "feat(corrections): void/refund action screen under edit-forms"
 ```
 
 ---
 
-## Task 13: Price correction screen — `app/sales/[id]/price-correction.tsx`
+## Task 13: Price correction screen — `app/(edit-forms)/price-correction/[id].tsx`
 
 **Files:**
 
-- Create: `app/sales/[id]/price-correction.tsx`
-- Modify: `app/sales/_layout.tsx` (register the route)
+- Create: `app/(edit-forms)/price-correction/[id].tsx`
+- Modify: `app/(edit-forms)/_layout.tsx` (register route)
 - Test: type-only via `typecheck`
 
 **Interfaces:**
 
-- Consumes: `useSale(id)`, `useCorrectSalePrice` from Task 9, PIN primitive.
-- Produces: a per-line editor screen showing `oldPrice -> [newPrice]` for each line, a live-recomputed subtotal, and the same reason + witness + PIN flow as Task 12.
+- Consumes: `useGetSale(id)`, `useCorrectSalePrice` from `hooks/useSales`; `parsePesosInput`, `formatPesos` from `lib/money.ts`.
+- Produces: per-line price editor with live subtotal recomputation and toast notifications.
 
-- [ ] **Step 1: Implement the screen**
+- [ ] **Step 1: Implement `app/(edit-forms)/price-correction/[id].tsx`**
 
-Create `app/sales/[id]/price-correction.tsx`. This screen has more state than Task 12 (a per-line map of `saleItemId -> newPrice`), but follows the same shape:
+Create `app/(edit-forms)/price-correction/[id].tsx`:
 
 ```typescript
+import React, { useState } from 'react';
+import { View, Pressable, ScrollView, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
-import { useCorrectSalePrice } from '@/hooks/useSales';
-import { useOwnerPin } from '@/lib/pin';
-import { ScreenContainer } from '@/components/ScreenContainer';
-import { Toast } from '@/components/Toast';
+import { FontAwesome } from '@expo/vector-icons';
+import { useGetSale, useCorrectSalePrice } from '@/hooks/useSales';
+import { useToastStore } from '@/stores/ToastStore';
+import { StyledText } from '@/components/elements';
+import { parsePesosInput, formatPesos } from '@/lib/money';
 
 export default function PriceCorrectionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const saleId = Number(id);
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t } = useTranslation('corrections');
+  const addToast = useToastStore((s) => s.addToast);
 
+  const { data: sale } = useGetSale(saleId);
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [reason, setReason] = useState<string>('');
   const [witness, setWitness] = useState<string>('');
-  const [pinOpen, setPinOpen] = useState(false);
-  const { verifyPin } = useOwnerPin();
-  const { mutateAsync: correct } = useCorrectSalePrice();
+  const { mutateAsync: correct, isPending } = useCorrectSalePrice();
 
   const onSubmit = async () => {
     const priceChanges = Object.entries(edits)
       .map(([k, v]) => ({
         saleItemId: Number(k),
-        newPrice: Number.parseInt(v, 10),
+        newPrice: parsePesosInput(v),
       }))
-      .filter((c) => Number.isFinite(c.newPrice) && c.newPrice > 0);
-    if (priceChanges.length === 0)
-      return Toast.show(t('corrections.no_changes'));
-    await correct({
-      saleId,
-      actorUser: 'owner',
-      witnessUser: witness,
-      reasonCode: reason,
-      priceChanges,
-    });
-    router.back();
+      .filter((c) => c.newPrice > 0);
+
+    if (priceChanges.length === 0) {
+      addToast({ message: t('no_changes', 'No price changes made'), variant: 'danger' });
+      return;
+    }
+    try {
+      await correct({
+        saleId,
+        actorUser: 'owner',
+        witnessUser: witness,
+        reasonCode: reason,
+        priceChanges,
+      });
+      addToast({ message: t('price_corrected', 'Prices updated'), variant: 'success' });
+      router.back();
+    } catch (err) {
+      addToast({ message: err instanceof Error ? err.message : 'Correction failed', variant: 'danger' });
+    }
   };
 
-  // Render each line item with:
-  //   [productName]   old: ₱{oldPrice}   [TextInput: newPrice]
-  //                                   subtotal: ₱{recomputedTotal}
-  // Bottom: reason picker, witness, Save (opens PIN sheet).
+  return (
+    <View className="flex-1 bg-paper-200">
+      <View className="bg-cinnamon-500 px-5 pt-3 pb-6 flex-row items-center justify-between">
+        <Pressable onPress={() => router.back()} className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15">
+          <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
+        </Pressable>
+        <StyledText variant="extrabold" className="text-xl text-paper-50">
+          {t('kind_price_correction')}
+        </StyledText>
+        <View className="w-8" />
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        {sale?.items.map((item) => (
+          <View key={item.id} className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-3 flex-row items-center justify-between">
+            <View className="flex-1 mr-3">
+              <StyledText variant="bold" className="text-ink-700">{item.product_name}</StyledText>
+              <StyledText variant="regular" className="text-xs text-ink-400">Old: {formatPesos(item.price)}</StyledText>
+            </View>
+            <TextInput
+              value={edits[item.id] ?? ''}
+              onChangeText={(val) => setEdits((prev) => ({ ...prev, [item.id]: val }))}
+              keyboardType="decimal-pad"
+              placeholder={formatPesos(item.price)}
+              className="border border-warm-200 rounded-xl p-2 w-28 text-right bg-paper-50 text-ink-700 font-medium"
+            />
+          </View>
+        ))}
+
+        <Pressable
+          onPress={onSubmit}
+          disabled={isPending}
+          className="bg-cinnamon-500 p-4 rounded-2xl items-center active:opacity-80 disabled:opacity-50 mt-4"
+        >
+          <StyledText variant="extrabold" className="text-paper-50 text-base">
+            Save Price Changes
+          </StyledText>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
 }
 ```
 
-The exact rendering — whether to use a flat vertical layout, a per-line card, or a table — should match the existing sale-detail screen's visual rhythm. Copy any existing `FlatList`-with-TextInput pattern.
+- [ ] **Step 2: Register route in `app/(edit-forms)/_layout.tsx`**
 
-- [ ] **Step 2: Register the route**
-
-In `app/sales/_layout.tsx`, add the same way as Task 12.
+Add `<Stack.Screen name="price-correction/[id]" options={{ presentation: 'card', animation: 'fade' }} />`.
 
 - [ ] **Step 3: Run verify**
 
-Run: `npm run verify`
-Expected: green.
+Run: `npm run typecheck`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add app/sales/[id]/price-correction.tsx app/sales/_layout.tsx
-git commit -m "feat(corrections): per-line price correction screen with PIN gate"
+git add app/(edit-forms)/price-correction/[id].tsx app/(edit-forms)/_layout.tsx
+git commit -m "feat(corrections): price correction screen under edit-forms"
 ```
 
 ---
@@ -2435,62 +2594,99 @@ git commit -m "feat(corrections): per-line price correction screen with PIN gate
 **Files:**
 
 - Create: `app/reports/corrections.tsx`
-- Modify: `app/(tabs)/sales.tsx` (header link to the report)
-- Modify: `app/_layout.tsx` if `/reports/corrections` needs explicit registration
+- Modify: `app/(tabs)/sales/receipts.tsx` (header link to report)
 - Test: type-only via `typecheck`
 
 **Interfaces:**
 
-- Consumes: `useCorrectionsReport` from Task 9, `useTranslation`, `FlatList` (or the project's list component), `useRouter`.
-- Produces: a paginated list. Each row renders `{kind} | Sale #{saleId} · ₱{total} · {relativeTime}` plus `by {actorUser}, witness: {witnessUser}` plus `reason: {actorReasonCode}`. Empty state copy when no corrections.
+- Consumes: `useCorrectionsReport` from `hooks/useCorrections`, `useTranslation`, `useRouter`, `formatPesos` from `lib/money.ts`.
+- Produces: paginated audit log list integrated with the app design system.
 
-- [ ] **Step 1: Implement the screen**
+- [ ] **Step 1: Implement `app/reports/corrections.tsx`**
 
 Create `app/reports/corrections.tsx`:
 
 ```typescript
+import React from 'react';
+import { View, FlatList, ActivityIndicator, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { FontAwesome } from '@expo/vector-icons';
 import { useCorrectionsReport } from '@/hooks/useCorrections';
-import { ScreenContainer } from '@/components/ScreenContainer';
+import { StyledText } from '@/components/elements';
+import { formatPesos } from '@/lib/money';
 
 export default function CorrectionsReportScreen() {
-  const { t } = useTranslation();
+  const router = useRouter();
+  const { t } = useTranslation('corrections');
   const { data, fetchNextPage, hasNextPage, isLoading } = useCorrectionsReport({ limit: 50 });
 
-  if (isLoading) return <ScreenContainer><Text>...</Text></ScreenContainer>;
-
   const items = data?.pages.flatMap((p) => p.items) ?? [];
-  if (items.length === 0) {
-    return <ScreenContainer><Text>{t('corrections.empty_report')}</Text></ScreenContainer>;
-  }
 
   return (
-    <FlatList
-      data={items}
-      keyExtractor={(item) => `${item.id}`}
-      renderItem={({ item }) => <CorrectionRow row={item} />}
-      onEndReached={() => hasNextPage && fetchNextPage()}
-    />
+    <View className="flex-1 bg-paper-200">
+      {/* Cinnamon Header */}
+      <View className="bg-cinnamon-500 px-5 pt-3 pb-6 flex-row items-center justify-between">
+        <Pressable onPress={() => router.back()} className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15">
+          <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
+        </Pressable>
+        <StyledText variant="extrabold" className="text-xl text-paper-50">
+          Corrections Audit Log
+        </StyledText>
+        <View className="w-8" />
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#623418" />
+        </View>
+      ) : items.length === 0 ? (
+        <View className="flex-1 items-center justify-center p-4">
+          <StyledText variant="medium" className="text-sm text-ink-500">
+            {t('empty_report', 'No corrections recorded')}
+          </StyledText>
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => `${item.id}`}
+          contentContainerStyle={{ padding: 16 }}
+          renderItem={({ item }) => (
+            <View className="p-4 mb-3 rounded-2xl border border-warm-100 bg-paper-50">
+              <View className="flex-row items-center justify-between mb-1">
+                <StyledText variant="bold" className="text-sm text-ink-700 uppercase">
+                  {item.kind} · Sale #{item.saleId}
+                </StyledText>
+                <StyledText variant="semibold" className="text-sm text-ink-700">
+                  {formatPesos(item.saleTotalAtCorrection)}
+                </StyledText>
+              </View>
+              <StyledText variant="regular" className="text-xs text-ink-400">
+                By {item.actorUser} {item.witnessUser ? `(Witness: ${item.witnessUser})` : ''} · Reason: {item.actorReasonCode}
+              </StyledText>
+            </View>
+          )}
+          onEndReached={() => hasNextPage && fetchNextPage()}
+        />
+      )}
+    </View>
   );
 }
 ```
 
-Use a `useRelativeTime` helper if the project has one, otherwise plain `"X min ago"` strings.
+- [ ] **Step 2: Add header link in `app/(tabs)/sales/receipts.tsx`**
 
-- [ ] **Step 2: Add a link from the Sales sub-tab header**
-
-Find the header component inside `app/(tabs)/sales.tsx` (likely a `Stack.Screen` `headerRight` or a top-level action row). Add a button that calls `router.push('/reports/corrections')`. Use whatever icon component the project uses for navigation actions.
+Add a header icon/button in `app/(tabs)/sales/receipts.tsx` that navigates to `/reports/corrections`.
 
 - [ ] **Step 3: Run verify**
 
 Run: `npm run verify`
-Expected: green.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add app/reports/corrections.tsx app/(tabs)/sales.tsx
-git commit -m "feat(corrections): corrections report screen with header link from Sales"
+git add app/reports/corrections.tsx app/(tabs)/sales/receipts.tsx
+git commit -m "feat(corrections): corrections report audit log and sales header link"
 ```
 
 ---

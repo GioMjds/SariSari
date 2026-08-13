@@ -1,6 +1,10 @@
 # 07. Ligtas na Pagbawi, Pag-refund, at Pagtatama (Safe Voids, Refunds, and Corrections)
 
+## Status: DONE
+
 > Phase: Susunod (Next)
+>
+> Owner-facing test walkthrough: [[07-safe-voids-refunds-corrections-owner-guide]]
 
 ## Problema
 

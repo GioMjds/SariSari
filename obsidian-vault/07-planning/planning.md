@@ -15,6 +15,12 @@ Welcome to the **Planning & Tactical Execution Hub** for SariSari. This director
 
 ## 📋 Active Planning Documents
 
+### 0. Feature Roadmap & Next Priorities
+
+- **[[07-Planning/next-feature-recommendations|Next Feature Recommendations (Post-Feature #7)]]**
+  - Strategic feature breakdown and implementation recommendations following Feature #7 release.
+  - Linked Specs: [[02-Features/07-safe-voids-refunds-corrections|07-Safe Voids, Refunds & Corrections]], [[02-Features/11-owner-pin-for-sensitive-actions|11-Owner PIN for Sensitive Actions]], [[02-Features/08-supplier-delivery-receiving|08-Supplier Delivery Receiving]]
+
 ### 1. Information Architecture & Navigation
 
 - **[[07-Planning/features-needs-to-move|Features Needed to Move in Respective Screen Routes]]**

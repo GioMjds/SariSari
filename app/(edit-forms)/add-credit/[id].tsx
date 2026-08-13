@@ -1,5 +1,6 @@
 import { Modal, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   AddCreditHeader,
   CreditTicketSheet,
@@ -34,49 +35,57 @@ export default function AddCreditTransaction() {
         onBack={() => form.router.back()}
       />
 
-      <View className="px-4 gap-3">
-        {form.creditSummary && (
-          <SukiPanel
-            summary={form.creditSummary}
-            pendingTotal={form.total}
-            mode="compact"
-            onRequestOverride={() => form.setShowOverrideModal(true)}
+      <KeyboardAwareScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={64}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        <View className="px-4 gap-3">
+          {form.creditSummary && (
+            <SukiPanel
+              summary={form.creditSummary}
+              pendingTotal={form.total}
+              mode="compact"
+              onRequestOverride={() => form.setShowOverrideModal(true)}
+            />
+          )}
+
+          <CreditTicketSheet
+            control={form.control}
+            quantity={form.quantity}
+            amount={form.amount}
+            dueDate={form.dueDate}
+            productName={form.productName}
+            selectedProduct={form.selectedProduct}
+            productDropdownOpen={form.productDropdownOpen}
+            setProductDropdownOpen={form.setProductDropdownOpen}
+            duePreset={form.duePreset}
+            productSuggestions={productSuggestions}
+            qtyNum={form.qtyNum}
+            unitPrice={form.unitPrice}
+            total={form.total}
+            ticketItems={form.ticketItems}
+            itemCount={form.itemCount}
+            onProductSelect={form.handleProductSelect}
+            onProductNameChange={form.handleProductNameChange}
+            onBumpQuantity={form.bumpQuantity}
+            onPresetSelect={form.handlePresetSelect}
+            onClearProduct={form.clearProduct}
+            onAddItemToTicket={form.addCurrentToTicket}
+            onRemoveItemFromTicket={form.removeTicketItem}
           />
-        )}
 
-        <CreditTicketSheet
-          control={form.control}
-          quantity={form.quantity}
-          amount={form.amount}
-          dueDate={form.dueDate}
-          productName={form.productName}
-          selectedProduct={form.selectedProduct}
-          productDropdownOpen={form.productDropdownOpen}
-          setProductDropdownOpen={form.setProductDropdownOpen}
-          duePreset={form.duePreset}
-          productSuggestions={productSuggestions}
-          qtyNum={form.qtyNum}
-          unitPrice={form.unitPrice}
-          total={form.total}
-          ticketItems={form.ticketItems}
-          itemCount={form.itemCount}
-          onProductSelect={form.handleProductSelect}
-          onProductNameChange={form.handleProductNameChange}
-          onBumpQuantity={form.bumpQuantity}
-          onPresetSelect={form.handlePresetSelect}
-          onClearProduct={form.clearProduct}
-          onAddItemToTicket={form.addCurrentToTicket}
-          onRemoveItemFromTicket={form.removeTicketItem}
-        />
-
-        <SubmitButton
-          disabled={form.isSubmitDisabled}
-          isPending={form.insertCredit.isPending}
-          total={form.total}
-          hasProductName={form.ticketItems.length > 0 || !!form.productName}
-          onPress={form.submit}
-        />
-      </View>
+          <SubmitButton
+            disabled={form.isSubmitDisabled}
+            isPending={form.insertCredit.isPending}
+            total={form.total}
+            hasProductName={form.ticketItems.length > 0 || !!form.productName}
+            onPress={form.submit}
+          />
+        </View>
+      </KeyboardAwareScrollView>
 
       {/* Soft warn modal */}
       <Modal

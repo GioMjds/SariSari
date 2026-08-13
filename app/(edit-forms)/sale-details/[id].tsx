@@ -58,6 +58,21 @@ export default function SaleDetails() {
     router.back();
   };
 
+  const handleVoid = () => {
+    Haptics.selectionAsync().catch(() => {});
+    router.push(`/sale-correction/${numericId}?mode=void` as Href);
+  };
+
+  const handleRefund = () => {
+    Haptics.selectionAsync().catch(() => {});
+    router.push(`/sale-correction/${numericId}?mode=refund` as Href);
+  };
+
+  const handlePriceCorrection = () => {
+    Haptics.selectionAsync().catch(() => {});
+    router.push(`/price-correction/${numericId}` as Href);
+  };
+
   const isCredit = sale?.payment_type === 'credit';
   const ts = parseStoredTimestamp(sale?.timestamp) || new Date();
   const dateLine = format(ts, 'MMM dd, yyyy · hh:mm a');
@@ -141,6 +156,9 @@ export default function SaleDetails() {
             'Salamat sa iyong pagbili.\nKeep this resibo for your records.'
           }
           onDelete={handleDeleteSale}
+          onVoid={handleVoid}
+          onRefund={handleRefund}
+          onPriceCorrection={handlePriceCorrection}
         />
       </ScrollView>
     </View>
