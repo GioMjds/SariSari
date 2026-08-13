@@ -60,8 +60,8 @@ export class BarcodeAlreadyExistsError extends Error {
 
 function isUniqueBarcodeError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
-  const anyErr = err as { code?: number | string; message?: string };
-  const message = anyErr.message ?? '';
+  const sqliteErr = err as { code?: number | string; message?: string };
+  const message = sqliteErr.message ?? '';
   return (
     message.includes('UNIQUE constraint failed: products.barcode') ||
     message.includes('idx_products_barcode') ||

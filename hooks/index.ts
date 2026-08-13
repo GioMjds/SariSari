@@ -21,3 +21,4 @@ export * from './useSystemNotifications';
 export * from './useParkedCarts';
 export * from './useStocktake';
 export * from './useTabProgress';
+export * from './useAppSetting';

@@ -150,7 +150,7 @@ export const deleteCustomer = async (id: number): Promise<void> => {
 };
 
 export const getCustomer = async (id: number): Promise<Customer | null> => {
-  const result = await db.getFirstAsync<any>(
+  const result = await db.getFirstAsync<Customer>(
     `SELECT 
 			c.*,
 			COALESCE(ct.total_credits, 0) as total_credits,
@@ -239,7 +239,7 @@ export const getAllCustomers = async (
       break;
   }
 
-  const results = await db.getAllAsync<any>(
+  const results = await db.getAllAsync<Customer>(
     `SELECT 
 			c.*,
 			COALESCE(ct.total_credits, 0) as total_credits,
@@ -299,7 +299,7 @@ export const getCustomerWithDetails = async (
     [id],
   );
 
-  const overdueCredit = await db.getFirstAsync<any>(
+  const overdueCredit = await db.getFirstAsync<{ days_overdue: number | null }>(
     `SELECT MIN(julianday('now') - julianday(due_date)) as days_overdue
 		 FROM credit_transactions
 		 WHERE customer_id = ? AND status != 'paid' AND due_date < date('now')`,
@@ -615,13 +615,26 @@ export const getCreditHistory = async (
   const history: CreditHistory[] = [];
 
   // Get all credits and payments
-  const credits = await db.getAllAsync<any>(
+  const credits = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    date: string;
+    product_name?: string | null;
+    notes?: string | null;
+    type: 'credit';
+  }>(
     `SELECT id, amount, date, product_name, notes, 'credit' as type 
      FROM credit_transactions WHERE customer_id = ?`,
     [customerId],
   );
 
-  const payments = await db.getAllAsync<any>(
+  const payments = await db.getAllAsync<{
+    id: number;
+    amount: number;
+    date: string;
+    notes?: string | null;
+    type: 'payment';
+  }>(
     `SELECT id, amount, date, notes, 'payment' as type 
      FROM payments WHERE customer_id = ?`,
     [customerId],
@@ -737,7 +750,7 @@ function calculateCustomerTag(
 }
 
 export const searchCustomers = async (query: string): Promise<Customer[]> => {
-  const results = await db.getAllAsync<any>(
+  const results = await db.getAllAsync<Customer>(
     `SELECT 
 			c.*,
 			COALESCE(ct.total_credits, 0) as total_credits,

@@ -1,4 +1,5 @@
 import { db } from '@/configs';
+import { Pesos } from '@/lib';
 import {
   SaleCorrection,
   SaleCorrectionLine,
@@ -9,8 +10,32 @@ interface SaleCorrectionWithLines extends SaleCorrection {
   lines: SaleCorrectionLine[];
 }
 
-// `any` type for now, must be replaced with a proper type for the row returned from the database query
-const mapRow = (row: any): SaleCorrection => ({
+interface RawSaleCorrectionRow {
+  id: number;
+  sale_id: number;
+  kind: SaleCorrection['kind'];
+  actor_reason_code: string;
+  actor_note: string | null;
+  actor_user: string;
+  witness_user: string | null;
+  refund_payment_type: SaleCorrection['refundPaymentType'] | null;
+  created_at: Date;
+}
+
+interface RawSaleCorrectionLineRow {
+  id: number;
+  correction_id: number;
+  sale_item_id: number;
+  old_price: number;
+  new_price: number;
+  price_delta: number;
+}
+
+interface RawSaleCorrectionReportRow extends RawSaleCorrectionRow {
+  sale_total: number | null;
+}
+
+const mapRow = (row: RawSaleCorrectionRow): SaleCorrection => ({
   id: row.id,
   saleId: row.sale_id,
   kind: row.kind,
@@ -25,7 +50,7 @@ const mapRow = (row: any): SaleCorrection => ({
 export const getCorrectionsForSale = async (
   saleId: number,
 ): Promise<SaleCorrectionWithLines[]> => {
-  const headerRows = await db.getAllAsync<any>(
+  const headerRows = await db.getAllAsync<RawSaleCorrectionRow>(
     `SELECT * FROM sale_corrections WHERE sale_id = ? ORDER BY created_at ASC, id ASC`,
     [saleId],
   );
@@ -33,7 +58,7 @@ export const getCorrectionsForSale = async (
 
   const correctionIds = headerRows.map((r) => r.id);
   const placeholders = correctionIds.map(() => '?').join(',');
-  const lineRows = await db.getAllAsync<any>(
+  const lineRows = await db.getAllAsync<RawSaleCorrectionLineRow>(
     `SELECT * FROM sale_correction_lines WHERE correction_id IN (${placeholders})`,
     correctionIds,
   );
@@ -44,8 +69,8 @@ export const getCorrectionsForSale = async (
       id: row.id,
       correctionId: row.correction_id,
       saleItemId: row.sale_item_id,
-      oldPrice: row.old_price,
-      newPrice: row.new_price,
+      oldPrice: row.old_price as Pesos,
+      newPrice: row.new_price as Pesos,
       priceDelta: row.price_delta,
     } satisfies SaleCorrectionLine;
     const list = linesByCorrection.get(row.correction_id) ?? [];
@@ -77,7 +102,7 @@ export const getCorrectionsReport = async (
   const limit = Math.max(1, Math.floor(opts.limit ?? 50));
   const cursor = opts.cursor ?? Number.MAX_SAFE_INTEGER;
 
-  const rows = await db.getAllAsync<any>(
+  const rows = await db.getAllAsync<RawSaleCorrectionReportRow>(
     `SELECT sc.*, s.total AS sale_total
      FROM sale_corrections sc
      LEFT JOIN sales s ON s.id = sc.sale_id
@@ -89,7 +114,7 @@ export const getCorrectionsReport = async (
 
   const items = rows.map((row) => ({
     ...mapRow(row),
-    saleTotalAtCorrection: row.sale_total ?? 0,
+    saleTotalAtCorrection: (row.sale_total ?? 0) as Pesos,
   })) satisfies SaleCorrectionReportRow[];
 
   const lastId = items[items.length - 1]?.id ?? null;

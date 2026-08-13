@@ -1,6 +1,7 @@
 import { db } from '../configs/sqlite';
 import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
 import { useBackupCounter } from '../stores/backupCounter';
+import * as Crypto from 'expo-crypto';
 import {
   Sale,
   SaleItemWithProduct,
@@ -8,6 +9,7 @@ import {
   SaleStats,
 } from '@/types/sales.types';
 import { OverrideReasonCode } from '@/types';
+import { getAppSetting } from './settings';
 
 export const initSalesTables = async () => {
   await db.execAsync(`
@@ -109,16 +111,6 @@ export interface InsertSaleItemInput {
   cost_price?: number | null;
 }
 
-/**
- * Insert a sale, its items, the stock deductions, the inventory movement
- * history, and (for credit sales) the utang ledger entry — all inside a
- * single SQLite transaction.
- *
- * Stock availability is validated against the current quantity BEFORE any
- * write happens, so a failed sale leaves no partial state behind. If the
- * caller relies on optimistic quantity caching on the client, validate
- * again with a fresh read inside the transaction (we do that here).
- */
 export const insertSale = async (
   items: InsertSaleItemInput[],
   payment_type: 'cash' | 'credit' = 'cash',
@@ -137,13 +129,9 @@ export const insertSale = async (
   );
   const timestamp = getCurrentLocalTimestamp();
 
-  // Use execAsync with BEGIN/COMMIT so the whole sale is one transaction.
-  // expo-sqlite's runAsync implicitly commits each call; we want all-or-nothing.
   try {
     await db.execAsync('BEGIN TRANSACTION;');
 
-    // 1. Re-read each product's quantity inside the transaction so we can
-    //    fail fast on a stale optimistic cache from the caller.
     for (const item of items) {
       const productRow = await db.getFirstAsync<{
         quantity: number;
@@ -179,7 +167,6 @@ export const insertSale = async (
       }
     }
 
-    // 2. Insert the sale header.
     const saleResult = await db.runAsync(
       'INSERT INTO sales (total, payment_type, customer_name, customer_credit_id, timestamp, override_reason_code, override_reason_note) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
@@ -194,9 +181,6 @@ export const insertSale = async (
     );
     const saleId = saleResult.lastInsertRowId;
 
-    // 3. For each line: insert sale_item, deduct stock, record inventory
-    //    movement. Doing them in this order keeps the audit trail consistent:
-    //    if any line fails the whole transaction rolls back.
     for (const item of items) {
       const productRow = await db.getFirstAsync<{
         cost_price: number | null;
@@ -259,11 +243,6 @@ export const insertSale = async (
       );
     }
 
-    // 4. For credit sales, write a linked ledger entry. This is what the
-    //    customer detail screen reads to compute the running balance, so it
-    //    must land in the same transaction as the sale header. We capture
-    //    the new credit_transactions.id and store it on the sales row so
-    //    `deleteSale` can reverse the credit entry.
     if (payment_type === 'credit') {
       if (!customer_credit_id) {
         throw new Error(
@@ -289,23 +268,15 @@ export const insertSale = async (
 
     await db.execAsync('COMMIT;');
 
-    // Fire-and-forget backup counter bump. A failed bump MUST NOT
-    // affect the sale — the sale is the source of truth; backups are
-    // best-effort. The 20-sale scheduler will retry on the next sale.
     try {
       useBackupCounter.getState().bump();
-    } catch {
-      // intentional swallow — see spec §7 "What never throws across a sale"
-    }
+    } catch {}
 
     return saleId;
   } catch (err) {
-    // ROLLBACK ignores failures (e.g. no active txn) — best-effort cleanup.
     try {
       await db.execAsync('ROLLBACK;');
-    } catch {
-      // already rolled back or no transaction; safe to ignore
-    }
+    } catch {}
     throw err;
   }
 };
@@ -530,19 +501,11 @@ export const deleteSale = async (id: number) => {
       );
     }
     const items = await getSaleItems(id);
-    // 1. Reverse the credit transaction (if this was a credit sale) before
-    //    we lose the sales.credit_transaction_id back-pointer. The CASCADE
-    //    on payment_allocations.credit_transaction_id cleans up the FIFO
-    //    slice rows; the SET NULL on payments.credit_transaction_id just
-    //    nulls the back-pointer on payment rows (we don't want to delete
-    //    them — payment history is independent of sale history).
     if (sale.credit_transaction_id) {
       await db.runAsync('DELETE FROM credit_transactions WHERE id = ?', [
         sale.credit_transaction_id,
       ]);
     }
-    // 2. Restore stock for each item and record the reversal in the
-    //    inventory movement history so the ledger agrees with the column.
     for (const item of items) {
       await db.runAsync(
         'UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -557,4 +520,349 @@ export const deleteSale = async (id: number) => {
     await db.runAsync('DELETE FROM sale_items WHERE sale_id = ?', [id]);
     await db.runAsync('DELETE FROM sales WHERE id = ?', [id]);
   });
+};
+
+interface CorrectionActor {
+  actorUser: string;
+  witnessUser: string | null;
+  reasonCode: string;
+  note?: string;
+}
+
+interface CorrectionSaleRow {
+  id: number;
+  total: number;
+  payment_type: 'cash' | 'credit';
+  timestamp: string;
+  cancelled_at: string | null;
+  credit_transaction_id: number | null;
+}
+
+const assertCanCorrectSale = async (
+  saleId: number,
+  correctionKind: 'void' | 'refund' | 'price_correction',
+): Promise<{
+  sale: CorrectionSaleRow;
+  items: SaleItemWithProduct[];
+  voidWindowHours: number;
+}> => {
+  const sale = await db.getFirstAsync<CorrectionSaleRow>(
+    'SELECT id, total, payment_type, timestamp, cancelled_at, credit_transaction_id FROM sales WHERE id = ?',
+    [saleId],
+  );
+  if (!sale) {
+    throw new Error(`Sale ${saleId} not found`);
+  }
+  if (sale.cancelled_at) {
+    throw new SaleAlreadyCancelledError(saleId);
+  }
+
+  // The locked-cash-session guard mirrors `deleteSale` at line 477-489.
+  const isLocked = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM cash_sessions
+     WHERE status = 'closed'
+       AND ? >= opening_timestamp
+       AND ? <= closing_timestamp
+     LIMIT 1`,
+    [sale.timestamp, sale.timestamp],
+  );
+  if (isLocked) {
+    throw new SaleLockedError(saleId);
+  }
+
+  const windowSetting = await getAppSetting('void_window_hours');
+  const voidWindowHours = windowSetting ? Number(windowSetting) : 24;
+  const saleMs = Date.parse(sale.timestamp);
+  const hoursSinceSale = (Date.now() - saleMs) / 36e5;
+  if (
+    correctionKind !== 'price_correction' &&
+    hoursSinceSale > voidWindowHours
+  ) {
+    throw new VoidWindowExceededError(saleId, voidWindowHours, hoursSinceSale);
+  }
+
+  const items = await getSaleItems(saleId);
+  return { sale, items, voidWindowHours };
+};
+
+export const voidSale = async (
+  saleId: number,
+  args: CorrectionActor,
+): Promise<number> => {
+  let correctionId = 0;
+  await db.withTransactionAsync(async () => {
+    const { sale, items } = await assertCanCorrectSale(saleId, 'void');
+
+    const correctionResult = await db.runAsync(
+      `INSERT INTO sale_corrections (
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user
+      ) VALUES (?, 'void', ?, ?, ?, ?)`,
+      [
+        saleId,
+        args.reasonCode,
+        args.note ?? null,
+        args.actorUser,
+        args.witnessUser,
+      ],
+    );
+    correctionId = Number(correctionResult.lastInsertRowId);
+
+    for (const item of items) {
+      await db.runAsync(
+        'UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [item.quantity, item.product_id],
+      );
+      await db.runAsync(
+        `INSERT INTO inventory_transactions
+          (product_id, type, quantity, adjustment_sign, note)
+         VALUES (?, 'adjustment', ?, 'positive', ?)`,
+        [item.product_id, item.quantity, `void:${correctionId}`],
+      );
+    }
+
+    if (sale.payment_type === 'cash') {
+      const session = await db.getFirstAsync<{ id: string }>(
+        `SELECT id FROM cash_sessions
+         WHERE status = 'open'
+           AND substr(?, 1, 10) = business_date
+         LIMIT 1`,
+        [sale.timestamp],
+      );
+      if (!session) throw new NoOpenCashSessionError();
+      await db.runAsync(
+        `INSERT INTO cash_entries (
+          id, session_id, type, amount, notes, timestamp, created_at
+        ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+        [
+          Crypto.randomUUID(),
+          session.id,
+          sale.total,
+          `void:${saleId}:${correctionId}`,
+          getCurrentLocalTimestamp(),
+          Date.now(),
+        ],
+      );
+    } else {
+      await db.runAsync(
+        `UPDATE credit_transactions
+         SET status = 'cancelled',
+             cancelled_at = ?,
+             cancelled_by_correction_id = ?
+         WHERE id = ?`,
+        [getCurrentLocalTimestamp(), correctionId, sale.credit_transaction_id],
+      );
+    }
+
+    await db.runAsync(
+      `UPDATE sales
+       SET cancelled_at = ?,
+           cancelled_by_kind = 'void',
+           cancelled_by_correction_id = ?
+       WHERE id = ?`,
+      [getCurrentLocalTimestamp(), correctionId, saleId],
+    );
+  });
+  return correctionId;
+};
+
+export const refundSale = async (
+  saleId: number,
+  args: CorrectionActor & { reasonCode: 'returned_damaged' | 'returned_other' },
+): Promise<number> => {
+  let correctionId = 0;
+  await db.withTransactionAsync(async () => {
+    const { sale, items } = await assertCanCorrectSale(saleId, 'refund');
+
+    const correctionResult = await db.runAsync(
+      `INSERT INTO sale_corrections (
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user, refund_payment_type
+      ) VALUES (?, 'refund', ?, ?, ?, ?, 'cash')`,
+      [
+        saleId,
+        args.reasonCode,
+        args.note ?? null,
+        args.actorUser,
+        args.witnessUser,
+      ],
+    );
+    correctionId = Number(correctionResult.lastInsertRowId);
+
+    for (const item of items) {
+      await db.runAsync(
+        'UPDATE products SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [item.quantity, item.product_id],
+      );
+      await db.runAsync(
+        `INSERT INTO inventory_transactions
+          (product_id, type, quantity, adjustment_sign, note)
+         VALUES (?, 'adjustment', ?, 'positive', ?)`,
+        [
+          item.product_id,
+          item.quantity,
+          `refund:${correctionId}:${args.reasonCode}`,
+        ],
+      );
+    }
+
+    if (sale.payment_type === 'cash') {
+      const session = await db.getFirstAsync<{ id: string }>(
+        `SELECT id FROM cash_sessions
+         WHERE status = 'open'
+           AND substr(?, 1, 10) = business_date
+         LIMIT 1`,
+        [sale.timestamp],
+      );
+      if (!session) throw new NoOpenCashSessionError();
+      await db.runAsync(
+        `INSERT INTO cash_entries (
+          id, session_id, type, amount, notes, timestamp, created_at
+        ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+        [
+          Crypto.randomUUID(),
+          session.id,
+          sale.total,
+          `refund:${saleId}:${correctionId}`,
+          getCurrentLocalTimestamp(),
+          Date.now(),
+        ],
+      );
+    } else {
+      await db.runAsync(
+        `UPDATE credit_transactions
+         SET status = 'cancelled',
+             cancelled_at = ?,
+             cancelled_by_correction_id = ?
+         WHERE id = ?`,
+        [getCurrentLocalTimestamp(), correctionId, sale.credit_transaction_id],
+      );
+    }
+
+    await db.runAsync(
+      `UPDATE sales
+       SET cancelled_at = ?,
+           cancelled_by_kind = 'refund',
+           cancelled_by_correction_id = ?
+       WHERE id = ?`,
+      [getCurrentLocalTimestamp(), correctionId, saleId],
+    );
+  });
+  return correctionId;
+};
+
+export const correctSalePrice = async (
+  saleId: number,
+  args: CorrectionActor & {
+    priceChanges: { saleItemId: number; newPrice: number }[];
+  },
+): Promise<number> => {
+  let correctionId = 0;
+  await db.withTransactionAsync(async () => {
+    const { sale, items } = await assertCanCorrectSale(
+      saleId,
+      'price_correction',
+    );
+
+    const correctionResult = await db.runAsync(
+      `INSERT INTO sale_corrections (
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user
+      ) VALUES (?, 'price_correction', ?, ?, ?, ?)`,
+      [
+        saleId,
+        args.reasonCode,
+        args.note ?? null,
+        args.actorUser,
+        args.witnessUser,
+      ],
+    );
+    correctionId = Number(correctionResult.lastInsertRowId);
+
+    let totalDelta = 0;
+    for (const change of args.priceChanges) {
+      const item = items.find((i) => i.id === change.saleItemId);
+      if (!item) continue;
+      if (change.newPrice === item.price) continue;
+      const priceDelta = change.newPrice - item.price;
+      totalDelta += priceDelta * item.quantity;
+
+      await db.runAsync(
+        `INSERT INTO sale_correction_lines (
+          correction_id, sale_item_id, old_price, new_price, price_delta
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [
+          correctionId,
+          change.saleItemId,
+          item.price,
+          change.newPrice,
+          priceDelta,
+        ],
+      );
+      await db.runAsync('UPDATE sale_items SET price = ? WHERE id = ?', [
+        change.newPrice,
+        change.saleItemId,
+      ]);
+    }
+
+    if (totalDelta === 0) {
+      return;
+    }
+
+    // Recompute the sale total from the line items (price × quantity).
+    const recomputed = await db.getFirstAsync<{ total: number }>(
+      `SELECT COALESCE(SUM(price * quantity), 0) as total FROM sale_items WHERE sale_id = ?`,
+      [saleId],
+    );
+    const newTotal = recomputed?.total ?? sale.total;
+    await db.runAsync('UPDATE sales SET total = ? WHERE id = ?', [
+      newTotal,
+      saleId,
+    ]);
+
+    if (sale.payment_type === 'cash') {
+      const session = await db.getFirstAsync<{ id: string }>(
+        `SELECT id FROM cash_sessions
+         WHERE status = 'open'
+           AND substr(?, 1, 10) = business_date
+         LIMIT 1`,
+        [sale.timestamp],
+      );
+      if (!session) throw new NoOpenCashSessionError();
+
+      if (totalDelta < 0) {
+        await db.runAsync(
+          `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
+           VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+          [
+            Crypto.randomUUID(),
+            session.id,
+            -totalDelta,
+            `price_correction:${saleId}:${correctionId}`,
+            getCurrentLocalTimestamp(),
+            Date.now(),
+          ],
+        );
+      } else {
+        await db.runAsync(
+          `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
+           VALUES (?, ?, 'owner_addition', ?, ?, ?, ?)`,
+          [
+            Crypto.randomUUID(),
+            session.id,
+            totalDelta,
+            `price_correction:${saleId}:${correctionId}`,
+            getCurrentLocalTimestamp(),
+            Date.now(),
+          ],
+        );
+      }
+    } else if (sale.credit_transaction_id) {
+      // Credit case: amount = amount + totalDelta (lowering the debt
+      // means reducing amount). The customer's running balance
+      // recomputes live per project convention.
+      await db.runAsync(
+        'UPDATE credit_transactions SET amount = amount + ? WHERE id = ?',
+        [totalDelta, sale.credit_transaction_id],
+      );
+    }
+  });
+  return correctionId;
 };

@@ -297,7 +297,7 @@ export const getInventoryMovement = async (
 export const getLowStockItems = async (
   threshold: number = 10,
 ): Promise<StockItem[]> => {
-  const results = await db.getAllAsync<any>(
+  const results = await db.getAllAsync<StockItem>(
     `SELECT
        id,
        name,
@@ -314,7 +314,7 @@ export const getLowStockItems = async (
 };
 
 export const getOutOfStockItems = async (): Promise<StockItem[]> => {
-  const results = await db.getAllAsync<any>(
+  const results = await db.getAllAsync<StockItem>(
     `SELECT
        id,
        name,
@@ -365,7 +365,7 @@ export const getSlowMovingProducts = async (
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
   const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
 
-  const results = await db.getAllAsync<any>(
+  const results = await db.getAllAsync<StockItem>(
     `WITH sales_in_range AS (
        SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
      ),
