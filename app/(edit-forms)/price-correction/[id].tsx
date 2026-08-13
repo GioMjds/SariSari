@@ -22,7 +22,6 @@ export default function PriceCorrectionScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      {/* Header card matching sale-correction/[id].tsx */}
       <PriceCorrectionHeader
         saleId={numericId}
         onBack={form.handleBack}

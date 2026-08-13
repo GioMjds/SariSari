@@ -1,5 +1,7 @@
 # 11. PIN ng May-ari para sa Maselang Aksyon (Owner PIN for Sensitive Actions)
 
+## Status: In Progress
+
 > Phase: Susunod (Next)
 
 ## Problema
