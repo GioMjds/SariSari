@@ -1,7 +1,16 @@
 import * as Crypto from 'expo-crypto';
 
 export async function generateSalt(): Promise<string> {
-  const randomBytes = await Crypto.getRandomBytesAsync(16);
+  let randomBytes: Uint8Array;
+  if (typeof Crypto.getRandomBytesAsync === 'function') {
+    randomBytes = await Crypto.getRandomBytesAsync(16);
+  } else if (typeof (Crypto as any).getRandomBytes === 'function') {
+    randomBytes = (Crypto as any).getRandomBytes(16);
+  } else {
+    randomBytes = new Uint8Array(16);
+    for (let i = 0; i < 16; i++)
+      randomBytes[i] = Math.floor(Math.random() * 256);
+  }
   return Array.from(randomBytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');

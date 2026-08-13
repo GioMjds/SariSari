@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { StyledText } from '@/components/elements';
 import { useGetSale, useProfile, useRefundSale, useVoidSale } from '@/hooks';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { formatPesos } from '@/lib/money';
 import { parseStoredTimestamp } from '@/utils';
 import type {
@@ -80,43 +81,51 @@ export default function SaleCorrectionScreen() {
   const screenTitle = isVoid ? 'Void Sale' : 'Refund Sale';
   const actionButtonText = isVoid ? 'Confirm Void Sale' : 'Confirm Refund';
 
+  const { runWithPinGuard } = useOwnerPinGuard();
+
   const onSubmit = async (data: SaleCorrectionFormData) => {
-    const actorUser = profile?.ownerName?.trim() || 'owner';
-    const noteTrimmed = data.note.trim();
-    const notePayload = noteTrimmed ? { note: noteTrimmed } : {};
+    await runWithPinGuard({
+      title: isVoid ? 'Authorize Void Sale' : 'Authorize Refund',
+      actionDescription: `${isVoid ? 'Void' : 'Refund'} for Sale #${id}`,
+      onApproved: async () => {
+        const actorUser = profile?.ownerName?.trim() || 'owner';
+        const noteTrimmed = data.note.trim();
+        const notePayload = noteTrimmed ? { note: noteTrimmed } : {};
 
-    try {
-      if (isVoid) {
-        await voidSaleMutation.mutateAsync({
-          saleId: numericId,
-          actorUser,
-          witnessUser: data.witness.trim(),
-          reasonCode: data.reason,
-          ...notePayload,
-        });
-      } else {
-        await refundSaleMutation.mutateAsync({
-          saleId: numericId,
-          actorUser,
-          witnessUser: data.witness.trim(),
-          reasonCode: data.reason as RefundReasonCode,
-          ...notePayload,
-        });
-      }
+        try {
+          if (isVoid) {
+            await voidSaleMutation.mutateAsync({
+              saleId: numericId,
+              actorUser,
+              witnessUser: data.witness.trim(),
+              reasonCode: data.reason,
+              ...notePayload,
+            });
+          } else {
+            await refundSaleMutation.mutateAsync({
+              saleId: numericId,
+              actorUser,
+              witnessUser: data.witness.trim(),
+              reasonCode: data.reason as RefundReasonCode,
+              ...notePayload,
+            });
+          }
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
-      router.back();
-    } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
-      );
-      setError('root', {
-        type: 'manual',
-        message: err?.message || 'Failed to submit correction',
-      });
-    }
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          ).catch(() => {});
+          router.back();
+        } catch (err: any) {
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Error,
+          ).catch(() => {});
+          setError('root', {
+            type: 'manual',
+            message: err?.message || 'Failed to submit correction',
+          });
+        }
+      },
+    });
   };
 
   const saleDateFormatted = sale?.timestamp

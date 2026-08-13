@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
-import { useRouter } from 'expo-router';
-import { useForm } from 'react-hook-form';
-import * as Haptics from 'expo-haptics';
 import { useCorrectSalePrice, useGetSale, useProfile } from '@/hooks';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { tryParsePesosInput } from '@/lib/money';
 import type { PriceCorrectionReasonCode } from '@/types/corrections.types';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 export interface PriceCorrectionFormData {
   reason: PriceCorrectionReasonCode;
@@ -19,6 +20,7 @@ export function usePriceCorrectionForm(saleId: number) {
   const { data: sale, isLoading } = saleQuery;
   const { profile } = useProfile();
   const correctSalePriceMutation = useCorrectSalePrice();
+  const { runWithPinGuard } = useOwnerPinGuard();
 
   const [edits, setEdits] = useState<Record<number, string>>({});
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -68,23 +70,29 @@ export function usePriceCorrectionForm(saleId: number) {
     [clearErrors, setValue],
   );
 
-  const handleEditChange = useCallback((saleItemId: number, value: string) => {
-    clearErrors('root');
-    setEdits((prev) => ({
-      ...prev,
-      [saleItemId]: value,
-    }));
-  }, [clearErrors]);
+  const handleEditChange = useCallback(
+    (saleItemId: number, value: string) => {
+      clearErrors('root');
+      setEdits((prev) => ({
+        ...prev,
+        [saleItemId]: value,
+      }));
+    },
+    [clearErrors],
+  );
 
-  const handleResetItem = useCallback((saleItemId: number) => {
-    Haptics.selectionAsync().catch(() => {});
-    clearErrors('root');
-    setEdits((prev) => {
-      const next = { ...prev };
-      delete next[saleItemId];
-      return next;
-    });
-  }, [clearErrors]);
+  const handleResetItem = useCallback(
+    (saleItemId: number) => {
+      Haptics.selectionAsync().catch(() => {});
+      clearErrors('root');
+      setEdits((prev) => {
+        const next = { ...prev };
+        delete next[saleItemId];
+        return next;
+      });
+    },
+    [clearErrors],
+  );
 
   const handleResetAll = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
@@ -115,7 +123,9 @@ export function usePriceCorrectionForm(saleId: number) {
   const updatedTotal = calculateUpdatedTotal();
   const totalDelta = updatedTotal - originalTotal;
 
-  const hasEdits = Object.values(edits).some((v) => v !== undefined && v.trim() !== '');
+  const hasEdits = Object.values(edits).some(
+    (v) => v !== undefined && v.trim() !== '',
+  );
   const isDirty =
     hasEdits ||
     witness.trim().length > 0 ||
@@ -200,29 +210,35 @@ export function usePriceCorrectionForm(saleId: number) {
     const actorUser = profile?.ownerName?.trim() || 'owner';
     const noteTrimmed = data.note.trim();
 
-    try {
-      await correctSalePriceMutation.mutateAsync({
-        saleId,
-        actorUser,
-        witnessUser: data.witness.trim(),
-        reasonCode: data.reason,
-        priceChanges,
-        ...(noteTrimmed ? { note: noteTrimmed } : {}),
-      });
+    await runWithPinGuard({
+      title: 'Authorize Price Correction',
+      actionDescription: `Correct prices for Sale #${saleId}`,
+      onApproved: async () => {
+        try {
+          await correctSalePriceMutation.mutateAsync({
+            saleId,
+            actorUser,
+            witnessUser: data.witness.trim(),
+            reasonCode: data.reason,
+            priceChanges,
+            ...(noteTrimmed ? { note: noteTrimmed } : {}),
+          });
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => {},
-      );
-      router.back();
-    } catch (err: any) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(
-        () => {},
-      );
-      setError('root', {
-        type: 'manual',
-        message: err?.message || 'Failed to record price correction',
-      });
-    }
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          ).catch(() => {});
+          router.back();
+        } catch (err: any) {
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Error,
+          ).catch(() => {});
+          setError('root', {
+            type: 'manual',
+            message: err?.message || 'Failed to record price correction',
+          });
+        }
+      },
+    });
   });
 
   return {

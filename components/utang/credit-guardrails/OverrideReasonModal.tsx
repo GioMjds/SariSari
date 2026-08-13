@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import type { OverrideReasonCode } from '@/types/credits.types';
 
 export interface OverrideReasonResult {
@@ -58,15 +59,22 @@ export function OverrideReasonModal({
   const [selectedCode, setSelectedCode] = useState<OverrideReasonCode | null>(
     null,
   );
+  const { runWithPinGuard } = useOwnerPinGuard();
   const [note, setNote] = useState('');
 
   if (!visible) return null;
 
   const handleSelect = (code: OverrideReasonCode) => {
     if (code !== 'other') {
-      setSelectedCode(null);
-      setNote('');
-      onSubmit({ code, note: null });
+      runWithPinGuard({
+        title: 'Authorize Credit Override',
+        actionDescription: `Credit limit override (${OVERRIDE_REASON_LABELS[code].label})`,
+        onApproved: () => {
+          setSelectedCode(null);
+          setNote('');
+          onSubmit({ code, note: null });
+        },
+      });
     } else {
       setSelectedCode(code);
     }
@@ -75,9 +83,15 @@ export function OverrideReasonModal({
   const handleSubmitOther = () => {
     const trimmed = note.trim();
     if (!trimmed) return;
-    onSubmit({ code: 'other', note: trimmed });
-    setSelectedCode(null);
-    setNote('');
+    runWithPinGuard({
+      title: 'Authorize Credit Override',
+      actionDescription: 'Credit limit override (Other reason)',
+      onApproved: () => {
+        onSubmit({ code: 'other', note: trimmed });
+        setSelectedCode(null);
+        setNote('');
+      },
+    });
   };
 
   return (

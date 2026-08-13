@@ -20,6 +20,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductPicker } from '@/components/inventory/modals';
 import { useStocktakeGuard } from '@/hooks';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 
 const titleMap = {
   restock: 'Restock Product',
@@ -77,6 +78,21 @@ function LogTransactionFormInner({
   if (initialType) formOptions.initialType = initialType;
 
   const form = useLogTransactionForm(product, formOptions);
+  const { runWithPinGuard } = useOwnerPinGuard();
+
+  const handleFormSubmit = () => {
+    if (form.type === 'adjustment') {
+      runWithPinGuard({
+        title: 'Authorize Stock Adjustment',
+        actionDescription: `Adjust stock for ${product.name}`,
+        onApproved: () => {
+          form.submit();
+        },
+      });
+    } else {
+      form.submit();
+    }
+  };
 
   const activeTitle = titleMap[form.type];
   const activeConfirmLabel = confirmLabels[form.type];
@@ -555,7 +571,7 @@ function LogTransactionFormInner({
                   className="flex-1"
                 >
                   <TouchableOpacity
-                    onPress={form.submit}
+                    onPress={handleFormSubmit}
                     disabled={!form.isValid || form.isPending}
                     accessibilityRole="button"
                     accessibilityLabel={activeConfirmLabel}
