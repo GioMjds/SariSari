@@ -41,6 +41,48 @@ export const initSalesTables = async () => {
   `);
 };
 
+export class SaleAlreadyCancelledError extends Error {
+  saleId: number;
+  constructor(saleId: number) {
+    super(`Sale ${saleId} has already been cancelled`);
+    this.name = 'SaleAlreadyCancelledError';
+    this.saleId = saleId;
+  }
+}
+
+export class SaleLockedError extends Error {
+  saleId: number;
+  constructor(saleId: number) {
+    super(
+      `Sale ${saleId} belongs to a closed cash session and cannot be corrected`,
+    );
+    this.name = 'SaleLockedError';
+    this.saleId = saleId;
+  }
+}
+
+export class VoidWindowExceededError extends Error {
+  saleId: number;
+  windowHours: number;
+  hoursSinceSale: number;
+  constructor(saleId: number, windowHours: number, hoursSinceSale: number) {
+    super(
+      `Sale ${saleId} is outside the ${windowHours}-hour correction window (${hoursSinceSale.toFixed(1)}h since sale)`,
+    );
+    this.name = 'VoidWindowExceededError';
+    this.saleId = saleId;
+    this.windowHours = windowHours;
+    this.hoursSinceSale = hoursSinceSale;
+  }
+}
+
+export class NoOpenCashSessionError extends Error {
+  constructor() {
+    super('No open cash session exists for today');
+    this.name = 'NoOpenCashSessionError';
+  }
+}
+
 export class InsufficientStockError extends Error {
   productId: number;
   available: number;

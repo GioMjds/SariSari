@@ -40,14 +40,14 @@ export const getCorrectionsForSale = async (
 
   const linesByCorrection = new Map<number, SaleCorrectionLine[]>();
   for (const row of lineRows) {
-    const line: SaleCorrectionLine = {
+    const line = {
       id: row.id,
       correctionId: row.correction_id,
       saleItemId: row.sale_item_id,
       oldPrice: row.old_price,
       newPrice: row.new_price,
       priceDelta: row.price_delta,
-    };
+    } satisfies SaleCorrectionLine;
     const list = linesByCorrection.get(row.correction_id) ?? [];
     list.push(line);
     linesByCorrection.set(row.correction_id, list);
@@ -87,10 +87,10 @@ export const getCorrectionsReport = async (
     [cursor, limit],
   );
 
-  const items: SaleCorrectionReportRow[] = rows.map((row) => ({
+  const items = rows.map((row) => ({
     ...mapRow(row),
     saleTotalAtCorrection: row.sale_total ?? 0,
-  }));
+  })) satisfies SaleCorrectionReportRow[];
 
   const lastId = items[items.length - 1]?.id ?? null;
   const nextCursor = items.length === limit && lastId !== null ? lastId : null;
