@@ -137,7 +137,7 @@ export const getCashSessionSummary = async (
     throw new Error(`Cash session ${sessionId} not found`);
   }
 
-  const session: CashSession = {
+  const session = {
     id: sessionRow.id,
     businessDate: sessionRow.business_date,
     openingCash: sessionRow.opening_cash as Pesos,
@@ -150,7 +150,7 @@ export const getCashSessionSummary = async (
     closingTimestamp: sessionRow.closing_timestamp,
     createdAt: sessionRow.created_at,
     updatedAt: sessionRow.updated_at,
-  };
+  } satisfies CashSession;
 
   const endTimestamp = session.closingTimestamp;
 
@@ -176,11 +176,13 @@ export const getCashSessionSummary = async (
     owner_additions: number;
     expenses: number;
     owner_drawings: number;
+    cash_refunds: number;
   }>(
     `SELECT
        COALESCE(SUM(CASE WHEN type = 'owner_addition' THEN amount ELSE 0 END), 0) as owner_additions,
        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expenses,
-       COALESCE(SUM(CASE WHEN type = 'owner_drawing' THEN amount ELSE 0 END), 0) as owner_drawings
+       COALESCE(SUM(CASE WHEN type = 'owner_drawing' THEN amount ELSE 0 END), 0) as owner_drawings,
+       COALESCE(SUM(CASE WHEN type = 'cash_refund' THEN amount ELSE 0 END), 0) as cash_refunds
      FROM cash_entries
      WHERE session_id = ?`,
     [sessionId],
@@ -189,6 +191,7 @@ export const getCashSessionSummary = async (
   const ownerAdditions = entriesResult?.owner_additions ?? 0;
   const expenses = entriesResult?.expenses ?? 0;
   const ownerDrawings = entriesResult?.owner_drawings ?? 0;
+  const cashRefunds = entriesResult?.cash_refunds ?? 0;
 
   const expectedCash =
     session.openingCash +
@@ -196,7 +199,8 @@ export const getCashSessionSummary = async (
     cashUtangPayments +
     ownerAdditions -
     expenses -
-    ownerDrawings;
+    ownerDrawings -
+    cashRefunds;
 
   return {
     session,
