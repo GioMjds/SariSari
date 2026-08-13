@@ -1,0 +1,23 @@
+{
+  "kind_void": "I-void ang benta",
+  "kind_refund": "I-refund ang benta",
+  "kind_price_correction": "Itama ang presyo",
+  "reason_label": "Dahilan",
+  "reason_customer_changed_mind": "Nag-bago ang isip ng suki",
+  "reason_misprinted_price": "Maling presyo",
+  "reason_wrong_item_scanned": "Maling item ang na-scan",
+  "reason_returned_damaged": "Ibinalik — sira",
+  "reason_returned_other": "Ibinalik — iba pa",
+  "reason_shelf_price_changed": "Bago ang presyo sa estante",
+  "reason_other": "Iba pa",
+  "witness_label": "Cashier na naka-duty",
+  "witness_required": "Pumili ng cashier na nag-benta nito",
+  "confirm_and_pin": "Kumpirmahin gamit ang PIN",
+  "report_title": "Mga Pagtatama",
+  "empty_report": "Walang pagtatama pa.",
+  "view_sale": "Tingnan ang benta",
+  "voided_banner": "Na-void ang benta na ito.",
+  "refunded_banner": "Na-refund ang benta na ito.",
+  "void_window_locked": "Sarado na ang oras ng pagtatama ({{hours}}h).",
+  "session_closed": "Sarado ang session — makipag-ugnayan sa bookkeeper."
+}
