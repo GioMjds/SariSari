@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
+import { useProfile } from '@/hooks/useProfile';
 import { useToastStore } from '@/stores';
 import { StyledText } from '@/components/elements';
 
@@ -18,6 +19,9 @@ export default function SettingsScreen() {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
   const addToast = useToastStore((s) => s.addToast);
+  const { profile, loading: profileLoading } = useProfile();
+  const isOwner = Boolean(profile?.ownerName?.trim());
+
   const { value, isLoading } = useAppSetting('void_window_hours');
   const { mutateAsync: save, isPending } =
     useSetAppSetting('void_window_hours');
@@ -30,19 +34,37 @@ export default function SettingsScreen() {
   }, [value, draft]);
 
   const onSave = async () => {
-    const parsed = Number.parseInt(draft, 10);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
+    if (!isOwner) {
+      Alert.alert(t('title'), 'Owner authorization required');
+      return;
+    }
+    const trimmed = draft.trim();
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!/^\d+$/.test(trimmed) || !Number.isFinite(parsed) || parsed <= 0) {
       Alert.alert(t('title'), t('invalid_hours'));
       return;
     }
-    await save(draft);
+    await save(parsed.toString());
     addToast({ message: t('saved'), variant: 'success' });
   };
 
-  if (isLoading) {
+  if (profileLoading || isLoading) {
     return (
       <View className="flex-1 bg-paper-200 items-center justify-center">
         <ActivityIndicator size="large" color="#623418" />
+      </View>
+    );
+  }
+
+  if (!isOwner) {
+    return (
+      <View className="flex-1 bg-paper-200 items-center justify-center p-6">
+        <StyledText
+          variant="semibold"
+          className="text-ink-500 text-base text-center"
+        >
+          Owner authorization required
+        </StyledText>
       </View>
     );
   }

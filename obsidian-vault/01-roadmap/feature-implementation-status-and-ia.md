@@ -25,7 +25,7 @@ Status legend:
 | 4   | Physical Stocktake                      | Done                 | Now   |
 | 5   | Utang Guardrails at Checkout            | Done                 | Now   |
 | 6   | Collection Queue                        | Done                 | Now   |
-| 7   | Safe Voids / Refunds / Corrections      | Not started          | Next  |
+| 7   | Safe Voids / Refunds / Corrections      | Done                 | Next  |
 | 8   | Supplier Delivery Receiving             | Partial              | Next  |
 | 9   | Offline Reorder Suggestions             | Done                 | Next  |
 | 10  | Stock Movement Timeline                 | Done                 | Next  |
@@ -38,7 +38,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 10 Done · 4 Partial · 4 Not started.
+**Tally:** 11 Done · 4 Partial · 3 Not started.
 
 ---
 
@@ -104,13 +104,14 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Caveat — missing tests:** Following the project precedent set by Feature 5 (Utang Guardrails), no regression tests were added for `getCollectionQueue` bucket ranking, `setCollectionFollowUp` insert-or-update, `markCollectionContacted` counter logic, or the `<CollectionRow>` chip state machine. The release gate is closed by manual on-device smoke. Action: porter the planned test bodies (or write fresh ones against the current code) into `tests/` before the next refactor of the credits write paths.
 - **IA follow-up:** The roadmap's §7.1 step 5 "rename `credit.tsx` → `collection.tsx`" pre-dated the merge. Post-merge, `credit` and `collection` are two separate sub-tabs with different jobs (legacy all-debtors list vs. priority queue). Rename is no longer the right move; consider deprecating the legacy `CreditLedgerTab` separately.
 
-### 2.7 Safe Voids / Refunds / Corrections — Not started
+### 2.7 Safe Voids / Refunds / Corrections — Done
 
-- **Routes:** `app/(edit-forms)/sale-details/[id].tsx` (footer has only a `Delete Sale` action)
-- **Hooks:** `hooks/useSales.tsx` exposes `useDeleteSale` only
-- **DB:** `database/sales.ts:458-507` (`deleteSale` wraps in transaction, restores stock, deletes credit txn — accidentally compliant with the spirit of void/refund). No `sale_corrections` table, no `cancelled_at` column, no dedicated `voidSale / refundSale / correctSalePrice`
-- **Components:** `components/sales/sale-details/SaleDetailsFooter.tsx` (trash button only)
-- **Notes:** Repo grep for `voidSale | refundSale | cancelSale | price_correction` matches only the feature doc.
+- **Spec:** `docs/superpowers/specs/2026-08-13-safe-voids-refunds-corrections-design.md` — implementation plan: `docs/superpowers/plans/2026-08-13-safe-voids-refunds-corrections.md` — owner guide: `obsidian-vault/02-Features/owner-guide/07-safe-voids-refunds-corrections-owner-guide.md`
+- **Routes:** `app/(edit-forms)/sale-correction/[id].tsx` (void/refund modal action screen), `app/(edit-forms)/price-correction/[id].tsx` (per-line price editor), `app/reports/corrections.tsx` (audit log report), `app/settings/index.tsx` (owner settings screen)
+- **Hooks:** `hooks/useSales.tsx` (`useVoidSale`, `useRefundSale`, `useCorrectSalePrice`, `useSaleCorrections`), `hooks/useCorrections.tsx` (`useCorrectionsReport`), `hooks/useAppSetting.ts` (`useAppSetting`, `useSetAppSetting`)
+- **DB:** `database/migrations.ts` — v19 creates `sale_corrections`, `sale_correction_lines`, `app_settings` (seeded with `void_window_hours=24`), widens `cash_entries.type` check to accept `'cash_refund'`, and adds cancellation columns (`cancelled_at`, `cancelled_by_kind`, `cancelled_by_correction_id`) to `sales` and `credit_transactions`. `database/sales.ts` — `voidSale`, `refundSale`, `correctSalePrice` write functions wrapping ledger writes in `db.withTransactionAsync` with strict precondition checks (`assertCanCorrectSale`). Named refusal errors: `SaleAlreadyCancelledError`, `SaleLockedError`, `VoidWindowExceededError`, `NoOpenCashSessionError`. `database/corrections.ts` — `getCorrectionsForSale`, `getCorrectionsReport`. `database/cash.ts` — `getCashSessionSummary` subtracts `cash_refund` entries.
+- **Components & i18n:** `app/(edit-forms)/sale-correction/[id].tsx`, `app/(edit-forms)/price-correction/[id].tsx`, `app/reports/corrections.tsx`, `app/settings/index.tsx`, `components/settings/SettingsScreen.tsx` (void window setting section), `app/(tabs)/sales/receipts.tsx` (header link to corrections report). Translations registered in `locales/{en,tl}/{corrections,settings}.json` and `lib/i18n.ts`.
+- **Notes:** Full owner-gated audit-preserving reversal flow shipped. Voids and refunds restore product inventory via `inventory_transactions` (`type='adjustment'`, `adjustment_sign='positive'`) and balance cash/credit ledgers without hard-deleting rows. Price corrections update unit price & recompute totals, logging cash refunds or owner additions accordingly.
 
 ### 2.8 Supplier Delivery Receiving — Partial
 
@@ -230,13 +231,16 @@ app/
     edit-product/[id].tsx
     edit-supplier/[id].tsx
     inventory-ledger/[productId].tsx
+    price-correction/[id].tsx
     product-details/[id].txz
+    sale-correction/[id].tsx
     sale-details/[id].tsx
   gastos-kaha/index.tsx
   inventory/recommendations.tsx
   modal/{add-customer, add-product, add-sale-note, confirm-action, scan}.tsx
   onboarding/index.tsx
-  settings/index.tsx          (277-byte stub)
+  reports/corrections.tsx
+  settings/index.tsx          (Owner-only app settings screen)
 ```
 
 Note: there is **no `app/(tabs)/dev/reset.tsx`** referenced by features 11 and 17. Feature 17's actual setting surface lives at `app/(tabs)/more/settings.tsx`, not the `app/(tabs)/dev/...` path the docs cite.
@@ -334,7 +338,7 @@ Proposed files:
 | 4   | Physical Stocktake      | Done        | `app/(tabs)/inventory/stocktake.tsx`                       | Inventory → Stocktake tab/screen                                                                                 |
 | 5   | Utang Guardrails        | Partial     | customer detail only                                       | **Also POS CheckoutModal** (suki live panel)                                                                     |
 | 6   | Collection Queue        | Done        | `customers/collection.tsx`                                 | Customers → Collection (priority queue) — keep; legacy `customers/credit.tsx` separate, deprecate or consolidate |
-| 7   | Safe Voids / Refunds    | Not started | `sale-details/[id].tsx` (delete only)                      | Sale Details → "Void / Refund" actions                                                                           |
+| 7   | Safe Voids / Refunds    | Done        | `app/(edit-forms)/sale-correction/[id].tsx`, `price-correction/[id].tsx`, `reports/corrections.tsx` | Sale Details / Settings → Void, Refund, Price Correction, Corrections Report |
 | 8   | Supplier Delivery       | Partial     | `inventory/products.tsx` RestockSheet                      | Inventory → "Receive Delivery" (multi-line)                                                                      |
 | 9   | Reorder Suggestions     | Done        | **orphaned** `app/inventory/recommendations.tsx`           | Inventory → Recommendations (move into tab stack)                                                                |
 | 10  | Stock Movement Timeline | Done        | `inventory/movements.tsx` + `inventory-ledger/[productId]` | Inventory — keep as-is                                                                                           |

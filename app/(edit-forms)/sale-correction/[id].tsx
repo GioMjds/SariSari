@@ -40,7 +40,8 @@ export default function SaleCorrectionScreen() {
   const addToast = useToastStore((state) => state.addToast);
 
   const numericId = Number(id);
-  const isVoid = mode === 'void' || mode !== 'refund';
+  const isVoid = mode === 'void';
+  const isValidMode = isVoid || mode === 'refund';
 
   const { data: sale, isLoading } = useGetSale(numericId);
   const { profile } = useProfile();
@@ -48,15 +49,15 @@ export default function SaleCorrectionScreen() {
   const refundSaleMutation = useRefundSale();
 
   const [reason, setReason] = useState<string>(
-    isVoid ? 'customer_changed_mind' : 'returned_damaged',
+    isValidMode ? 'customer_changed_mind' : 'returned_damaged',
   );
   const [witness, setWitness] = useState('');
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const options = isVoid ? VOID_REASONS : REFUND_REASONS;
-  const screenTitle = isVoid ? 'Void Sale' : 'Refund Sale';
-  const actionButtonText = isVoid ? 'Confirm Void' : 'Confirm Refund';
+  const options = isValidMode ? VOID_REASONS : REFUND_REASONS;
+  const screenTitle = isValidMode ? 'Void Sale' : 'Refund Sale';
+  const actionButtonText = isValidMode ? 'Confirm Void' : 'Confirm Refund';
 
   const handleSubmit = async () => {
     if (!reason || !witness.trim()) {

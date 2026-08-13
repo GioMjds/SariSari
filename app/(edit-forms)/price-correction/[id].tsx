@@ -12,14 +12,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useCorrectSalePrice, useGetSale, useProfile } from '@/hooks';
-import { formatPesos, parsePesosInput, tryParsePesosInput } from '@/lib/money';
+import { formatPesos, tryParsePesosInput } from '@/lib/money';
 import { useToastStore } from '@/stores';
 import type { PriceCorrectionReasonCode } from '@/types/corrections.types';
 
-const REASON_OPTIONS: { value: PriceCorrectionReasonCode; label: string }[] = [
+const REASON_OPTIONS = [
   { value: 'misprinted_price', label: 'Misprinted Price' },
   { value: 'shelf_price_changed', label: 'Shelf Price Changed' },
-];
+] satisfies { value: PriceCorrectionReasonCode; label: string }[];
 
 export default function PriceCorrectionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,7 +33,8 @@ export default function PriceCorrectionScreen() {
   const correctSalePriceMutation = useCorrectSalePrice();
 
   const [edits, setEdits] = useState<Record<number, string>>({});
-  const [reason, setReason] = useState<PriceCorrectionReasonCode>('misprinted_price');
+  const [reason, setReason] =
+    useState<PriceCorrectionReasonCode>('misprinted_price');
   const [witness, setWitness] = useState('');
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,24 +72,28 @@ export default function PriceCorrectionScreen() {
     }
 
     const priceChanges: { saleItemId: number; newPrice: number }[] = [];
+    const invalidItems: string[] = [];
 
     if (sale?.items) {
       for (const item of sale.items) {
         const editVal = edits[item.id];
         if (editVal !== undefined && editVal.trim() !== '') {
-          try {
-            const parsedPrice = parsePesosInput(editVal);
-            if (parsedPrice !== item.price && parsedPrice > 0) {
-              priceChanges.push({
-                saleItemId: item.id,
-                newPrice: parsedPrice,
-              });
-            }
-          } catch {
-            // invalid input format
+          const parsedPrice = tryParsePesosInput(editVal);
+          if (!(parsedPrice > 0)) {
+            invalidItems.push(item.product_name);
+          } else if (parsedPrice !== item.price) {
+            priceChanges.push({ saleItemId: item.id, newPrice: parsedPrice });
           }
         }
       }
+    }
+
+    if (invalidItems.length > 0) {
+      addToast({
+        message: `Invalid price for: ${invalidItems.join(', ')}`,
+        variant: 'danger',
+      });
+      return;
     }
 
     if (priceChanges.length === 0) {
@@ -139,7 +144,10 @@ export default function PriceCorrectionScreen() {
           <FontAwesome name="arrow-left" size={16} color="#FBF7EE" />
         </Pressable>
 
-        <StyledText variant="extrabold" className="text-paper-50 text-xl flex-1">
+        <StyledText
+          variant="extrabold"
+          className="text-paper-50 text-xl flex-1"
+        >
           Price Correction
         </StyledText>
       </View>
@@ -156,7 +164,10 @@ export default function PriceCorrectionScreen() {
         >
           {/* Per-line items list card */}
           <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-4">
-            <StyledText variant="extrabold" className="text-ink-900 text-base mb-3">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-base mb-3"
+            >
               Sale Items
             </StyledText>
 
@@ -183,13 +194,19 @@ export default function PriceCorrectionScreen() {
                       >
                         {item.product_name}
                       </StyledText>
-                      <StyledText variant="regular" className="text-ink-500 text-xs mt-0.5">
+                      <StyledText
+                        variant="regular"
+                        className="text-ink-500 text-xs mt-0.5"
+                      >
                         Qty: {item.quantity} · Orig: {formatPesos(item.price)}
                       </StyledText>
                     </View>
 
                     <View className="flex-row items-center gap-1">
-                      <StyledText variant="semibold" className="text-ink-600 text-sm">
+                      <StyledText
+                        variant="semibold"
+                        className="text-ink-600 text-sm"
+                      >
                         ₱
                       </StyledText>
                       <TextInput
@@ -209,7 +226,10 @@ export default function PriceCorrectionScreen() {
 
           {/* Live Subtotal Recalculation Card */}
           <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-4">
-            <StyledText variant="extrabold" className="text-ink-900 text-base mb-3">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-base mb-3"
+            >
               Subtotal Recalculation
             </StyledText>
             <View className="gap-2">
@@ -223,10 +243,16 @@ export default function PriceCorrectionScreen() {
               </View>
 
               <View className="flex-row justify-between items-center pt-2 border-t border-warm-100 mt-1">
-                <StyledText variant="extrabold" className="text-ink-900 text-base">
+                <StyledText
+                  variant="extrabold"
+                  className="text-ink-900 text-base"
+                >
                   Updated Total
                 </StyledText>
-                <StyledText variant="extrabold" className="text-cinnamon-600 text-lg">
+                <StyledText
+                  variant="extrabold"
+                  className="text-cinnamon-600 text-lg"
+                >
                   {formatPesos(updatedTotal)}
                 </StyledText>
               </View>
@@ -235,7 +261,10 @@ export default function PriceCorrectionScreen() {
 
           {/* Reason Picker Section */}
           <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-4">
-            <StyledText variant="extrabold" className="text-ink-900 text-base mb-3">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-base mb-3"
+            >
               Reason Code *
             </StyledText>
 
@@ -270,7 +299,10 @@ export default function PriceCorrectionScreen() {
 
           {/* Witness & Note Inputs */}
           <View className="bg-paper-50 p-4 rounded-2xl border border-warm-100 mb-4">
-            <StyledText variant="semibold" className="text-ink-800 text-sm mb-1.5">
+            <StyledText
+              variant="semibold"
+              className="text-ink-800 text-sm mb-1.5"
+            >
               Witness / Cashier Name *
             </StyledText>
             <TextInput
@@ -281,7 +313,10 @@ export default function PriceCorrectionScreen() {
               className="border border-warm-200 rounded-xl p-3 bg-paper-50 text-ink-700 text-base font-medium mb-4"
             />
 
-            <StyledText variant="semibold" className="text-ink-800 text-sm mb-1.5">
+            <StyledText
+              variant="semibold"
+              className="text-ink-800 text-sm mb-1.5"
+            >
               Additional Note (Optional)
             </StyledText>
             <TextInput

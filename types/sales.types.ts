@@ -8,9 +8,9 @@ export interface Sale {
   customer_credit_id?: number;
   credit_transaction_id?: number | null;
   timestamp: string;
-  cancelledAt?: string | null;
-  cancelledByKind?: 'void' | 'refund' | 'price_correction' | null;
-  cancelledByCorrectionId?: number | null;
+  cancelled_at?: string | null;
+  cancelled_by_kind?: 'void' | 'refund' | 'price_correction' | null;
+  cancelled_by_correction_id?: number | null;
 }
 
 export interface SaleItem {

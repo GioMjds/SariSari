@@ -755,10 +755,19 @@ export async function runMigrations() {
         actor_user TEXT NOT NULL,
         witness_user TEXT,
         refund_payment_type TEXT CHECK(refund_payment_type IN ('cash') OR refund_payment_type IS NULL),
+        sale_total INTEGER,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CHECK (kind <> 'refund' OR refund_payment_type IS NOT NULL)
       );
     `);
+      const scCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(sale_corrections)',
+      );
+      if (scCols.length > 0 && !scCols.some((c) => c.name === 'sale_total')) {
+        await db.execAsync(
+          'ALTER TABLE sale_corrections ADD COLUMN sale_total INTEGER;',
+        );
+      }
       await db.execAsync(
         'CREATE INDEX IF NOT EXISTS idx_sale_corrections_sale_id ON sale_corrections(sale_id);',
       );

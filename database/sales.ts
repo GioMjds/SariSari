@@ -595,14 +595,15 @@ export const voidSale = async (
 
     const correctionResult = await db.runAsync(
       `INSERT INTO sale_corrections (
-        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user
-      ) VALUES (?, 'void', ?, ?, ?, ?)`,
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user, sale_total
+      ) VALUES (?, 'void', ?, ?, ?, ?, ?)`,
       [
         saleId,
         args.reasonCode,
         args.note ?? null,
         args.actorUser,
         args.witnessUser,
+        sale.total,
       ],
     );
     correctionId = Number(correctionResult.lastInsertRowId);
@@ -675,14 +676,15 @@ export const refundSale = async (
 
     const correctionResult = await db.runAsync(
       `INSERT INTO sale_corrections (
-        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user, refund_payment_type
-      ) VALUES (?, 'refund', ?, ?, ?, ?, 'cash')`,
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user, refund_payment_type, sale_total
+      ) VALUES (?, 'refund', ?, ?, ?, ?, 'cash', ?)`,
       [
         saleId,
         args.reasonCode,
         args.note ?? null,
         args.actorUser,
         args.witnessUser,
+        sale.total,
       ],
     );
     correctionId = Number(correctionResult.lastInsertRowId);
@@ -764,25 +766,28 @@ export const correctSalePrice = async (
 
     const correctionResult = await db.runAsync(
       `INSERT INTO sale_corrections (
-        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user
-      ) VALUES (?, 'price_correction', ?, ?, ?, ?)`,
+        sale_id, kind, actor_reason_code, actor_note, actor_user, witness_user, sale_total
+      ) VALUES (?, 'price_correction', ?, ?, ?, ?, ?)`,
       [
         saleId,
         args.reasonCode,
         args.note ?? null,
         args.actorUser,
         args.witnessUser,
+        sale.total,
       ],
     );
     correctionId = Number(correctionResult.lastInsertRowId);
 
     let totalDelta = 0;
+    let changedLines = 0;
     for (const change of args.priceChanges) {
       const item = items.find((i) => i.id === change.saleItemId);
       if (!item) continue;
       if (change.newPrice === item.price) continue;
       const priceDelta = change.newPrice - item.price;
       totalDelta += priceDelta * item.quantity;
+      changedLines += 1;
 
       await db.runAsync(
         `INSERT INTO sale_correction_lines (
@@ -802,9 +807,7 @@ export const correctSalePrice = async (
       ]);
     }
 
-    if (totalDelta === 0) {
-      return;
-    }
+    if (changedLines === 0) return;
 
     // Recompute the sale total from the line items (price × quantity).
     const recomputed = await db.getFirstAsync<{ total: number }>(
@@ -817,9 +820,14 @@ export const correctSalePrice = async (
       saleId,
     ]);
 
+    if (totalDelta === 0) return;
+
     if (sale.payment_type === 'cash') {
-      const session = await db.getFirstAsync<{ id: string }>(
-        `SELECT id FROM cash_sessions
+      const session = await db.getFirstAsync<{
+        id: string;
+        opening_timestamp: string;
+      }>(
+        `SELECT id, opening_timestamp FROM cash_sessions
          WHERE status = 'open'
            AND substr(?, 1, 10) = business_date
          LIMIT 1`,
@@ -827,32 +835,34 @@ export const correctSalePrice = async (
       );
       if (!session) throw new NoOpenCashSessionError();
 
-      if (totalDelta < 0) {
-        await db.runAsync(
-          `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
-           VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
-          [
-            Crypto.randomUUID(),
-            session.id,
-            -totalDelta,
-            `price_correction:${saleId}:${correctionId}`,
-            getCurrentLocalTimestamp(),
-            Date.now(),
-          ],
-        );
-      } else {
-        await db.runAsync(
-          `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
-           VALUES (?, ?, 'owner_addition', ?, ?, ?, ?)`,
-          [
-            Crypto.randomUUID(),
-            session.id,
-            totalDelta,
-            `price_correction:${saleId}:${correctionId}`,
-            getCurrentLocalTimestamp(),
-            Date.now(),
-          ],
-        );
+      if (sale.timestamp < session.opening_timestamp) {
+        if (totalDelta < 0) {
+          await db.runAsync(
+            `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
+             VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+            [
+              Crypto.randomUUID(),
+              session.id,
+              -totalDelta,
+              `price_correction:${saleId}:${correctionId}`,
+              getCurrentLocalTimestamp(),
+              Date.now(),
+            ],
+          );
+        } else {
+          await db.runAsync(
+            `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)
+             VALUES (?, ?, 'owner_addition', ?, ?, ?, ?)`,
+            [
+              Crypto.randomUUID(),
+              session.id,
+              totalDelta,
+              `price_correction:${saleId}:${correctionId}`,
+              getCurrentLocalTimestamp(),
+              Date.now(),
+            ],
+          );
+        }
       }
     } else if (sale.credit_transaction_id) {
       // Credit case: amount = amount + totalDelta (lowering the debt

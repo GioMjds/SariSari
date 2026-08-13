@@ -19,6 +19,7 @@ interface RawSaleCorrectionRow {
   actor_user: string;
   witness_user: string | null;
   refund_payment_type: SaleCorrection['refundPaymentType'] | null;
+  sale_total: number | null;
   created_at: Date;
 }
 
@@ -31,9 +32,7 @@ interface RawSaleCorrectionLineRow {
   price_delta: number;
 }
 
-interface RawSaleCorrectionReportRow extends RawSaleCorrectionRow {
-  sale_total: number | null;
-}
+interface RawSaleCorrectionReportRow extends RawSaleCorrectionRow {}
 
 const mapRow = (row: RawSaleCorrectionRow): SaleCorrection => ({
   id: row.id,
@@ -103,11 +102,10 @@ export const getCorrectionsReport = async (
   const cursor = opts.cursor ?? Number.MAX_SAFE_INTEGER;
 
   const rows = await db.getAllAsync<RawSaleCorrectionReportRow>(
-    `SELECT sc.*, s.total AS sale_total
-     FROM sale_corrections sc
-     LEFT JOIN sales s ON s.id = sc.sale_id
-     WHERE sc.id < ?
-     ORDER BY sc.id DESC
+    `SELECT *
+     FROM sale_corrections
+     WHERE id < ?
+     ORDER BY id DESC
      LIMIT ?`,
     [cursor, limit],
   );
