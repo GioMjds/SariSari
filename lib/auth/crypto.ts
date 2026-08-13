@@ -24,7 +24,7 @@ export function generateRecoveryCode(): string {
     for (let i = 0; i < 8; i++) bytes[i] = Math.floor(Math.random() * 256);
   }
   for (let i = 0; i < 8; i++) {
-    result += chars[bytes[i] % chars.length];
+    result += chars[bytes[i]! % chars.length];
   }
   return `${result.slice(0, 4)}-${result.slice(4)}`;
 }

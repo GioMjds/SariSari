@@ -43,4 +43,4 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const remainingMs = lockoutUntil - Date.now();
     return Math.max(0, Math.ceil(remainingMs / 1000));
   },
-}));
+}))
