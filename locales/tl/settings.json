@@ -4,5 +4,7 @@
   "void_window_help": "Gaano katagal pagkatapos ng benta maaari itong itama. Default na 24.",
   "save": "I-save",
   "saved": "Na-save.",
-  "invalid_hours": "Mangyaring maglagay ng wastong numero ng oras."
+  "invalid_hours": "Mangyaring maglagay ng wastong numero ng oras.",
+  "owner_auth_required": "Kailangan ang pahintulot ng may-ari",
+  "save_failed": "Bigo sa pag-save ng mga setting."
 }

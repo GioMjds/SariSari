@@ -1,6 +1,6 @@
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   AddCustomerHeader,
   AddCustomerFormSheet,
@@ -15,9 +15,7 @@ export default function AddCustomer() {
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        enableAutomaticScroll
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 40 }}
       >

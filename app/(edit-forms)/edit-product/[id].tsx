@@ -1,5 +1,6 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { Modal } from '@/components/ui';
 import {
   EditActionButtons,
@@ -23,71 +24,68 @@ export default function EditProduct() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <EditProductHeader onBack={form.handleBack} />
+
+      <KeyboardAwareScrollView
         className="flex-1"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={80}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
       >
-        <EditProductHeader onBack={form.handleBack} />
+        <EditBasicInfoCard
+          control={form.control}
+          categories={form.categories}
+          selectedCategory={form.category}
+          onSelectCategory={form.selectCategory}
+        />
 
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <EditBasicInfoCard
+        <View className="mt-3">
+          <EditPricingCard
             control={form.control}
-            categories={form.categories}
-            selectedCategory={form.category}
-            onSelectCategory={form.selectCategory}
+            profitPerPiece={form.profitPerPiece}
+            markupPercent={form.markupPercent}
+            isLossWarning={form.isLossWarning}
+            price={form.price}
+            enableWholesale={form.enableWholesale}
+            onToggleWholesale={() =>
+              form.setValue('enableWholesale', !form.enableWholesale, {
+                shouldDirty: true,
+              })
+            }
+            retailUnitName={form.retailUnitName}
+            wholesaleUnitName={form.wholesaleUnitName}
+            conversionFactor={form.conversionFactor}
+            wholesalePrice={form.wholesalePrice}
+            wholesaleCostPrice={form.wholesaleCostPrice}
           />
+        </View>
 
-          <View className="mt-3">
-            <EditPricingCard
-              control={form.control}
-              profitPerPiece={form.profitPerPiece}
-              markupPercent={form.markupPercent}
-              isLossWarning={form.isLossWarning}
-              price={form.price}
-              enableWholesale={form.enableWholesale}
-              onToggleWholesale={() =>
-                form.setValue('enableWholesale', !form.enableWholesale, {
-                  shouldDirty: true,
-                })
-              }
-              retailUnitName={form.retailUnitName}
-              wholesaleUnitName={form.wholesaleUnitName}
-              conversionFactor={form.conversionFactor}
-              wholesalePrice={form.wholesalePrice}
-              wholesaleCostPrice={form.wholesaleCostPrice}
-            />
-          </View>
+        <View className="mt-3">
+          <ProductMetaCard
+            createdAt={product.created_at}
+            updatedAt={product.updated_at}
+          />
+        </View>
 
-          <View className="mt-3">
-            <ProductMetaCard
-              createdAt={product.created_at}
-              updatedAt={product.updated_at}
-            />
-          </View>
+        <View className="mt-6 mb-2">
+          <EditDangerZone onDelete={form.openDeleteModal} />
+        </View>
+      </KeyboardAwareScrollView>
 
-          <View className="mt-6 mb-2">
-            <EditDangerZone onDelete={form.openDeleteModal} />
-          </View>
-        </ScrollView>
-
-        {/* Sticky footer — always reachable without scrolling */}
-        <SafeAreaView
-          edges={['bottom']}
-          className="bg-background border-t border-ink-100"
-        >
-          <View className="px-4 pt-3 pb-2">
-            <EditActionButtons
-              onSubmit={form.submit}
-              onCancel={form.handleBack}
-              isSubmitting={form.updateProductMutation.isPending}
-            />
-          </View>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+      {/* Sticky footer — always reachable without scrolling */}
+      <SafeAreaView
+        edges={['bottom']}
+        className="bg-background border-t border-ink-100"
+      >
+        <View className="px-4 pt-3 pb-2">
+          <EditActionButtons
+            onSubmit={form.submit}
+            onCancel={form.handleBack}
+            isSubmitting={form.updateProductMutation.isPending}
+          />
+        </View>
+      </SafeAreaView>
 
       {/* Discard-changes confirmation */}
       <Modal

@@ -34,16 +34,20 @@ export function SaleDetailsFooter({
         transition={{ type: 'timing', duration: 480, delay: 320 }}
       >
         {(onVoid || onRefund || onPriceCorrection) && (
-          <View className="flex-row gap-2 mx-4 mt-6">
+          <View className="flex-row gap-2.5 mx-4 mt-6">
             {onVoid && (
               <Pressable
                 onPress={onVoid}
                 accessibilityRole="button"
                 accessibilityLabel="Void sale"
-                className="flex-1 bg-paper-50 border border-cinnamon-500 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+                className="flex-1 bg-rose-50 border border-rose-200 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
               >
-                <FontAwesome name="ban" size={13} color="#E85A1F" />
-                <StyledText variant="semibold" className="text-cinnamon-600 text-xs" numberOfLines={1}>
+                <FontAwesome name="ban" size={13} color="#991B1B" />
+                <StyledText
+                  variant="extrabold"
+                  className="text-rose-900 text-xs"
+                  numberOfLines={1}
+                >
                   Void Sale
                 </StyledText>
               </Pressable>
@@ -53,11 +57,15 @@ export function SaleDetailsFooter({
                 onPress={onRefund}
                 accessibilityRole="button"
                 accessibilityLabel="Refund sale"
-                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+                className="flex-1 bg-amber-50 border border-amber-200 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
               >
-                <FontAwesome name="undo" size={13} color="#4A453E" />
-                <StyledText variant="semibold" className="text-ink-700 text-xs" numberOfLines={1}>
-                  Refund Sale
+                <FontAwesome name="undo" size={13} color="#92400E" />
+                <StyledText
+                  variant="extrabold"
+                  className="text-amber-900 text-xs"
+                  numberOfLines={1}
+                >
+                  Refund
                 </StyledText>
               </Pressable>
             )}
@@ -66,10 +74,14 @@ export function SaleDetailsFooter({
                 onPress={onPriceCorrection}
                 accessibilityRole="button"
                 accessibilityLabel="Correct price"
-                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
               >
-                <FontAwesome name="pencil" size={13} color="#4A453E" />
-                <StyledText variant="semibold" className="text-ink-700 text-xs" numberOfLines={1}>
+                <FontAwesome name="pencil" size={13} color="#623418" />
+                <StyledText
+                  variant="extrabold"
+                  className="text-ink-800 text-xs"
+                  numberOfLines={1}
+                >
                   Edit Price
                 </StyledText>
               </Pressable>

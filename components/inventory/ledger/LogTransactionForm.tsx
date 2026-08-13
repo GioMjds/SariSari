@@ -16,7 +16,7 @@ import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useLogTransactionForm } from './useLogTransactionForm';
 import { formatDualStock } from '@/lib';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductPicker } from '@/components/inventory/modals';
 import { useStocktakeGuard } from '@/hooks';
@@ -158,9 +158,7 @@ function LogTransactionFormInner({
 
             <KeyboardAwareScrollView
               showsVerticalScrollIndicator={false}
-              enableAutomaticScroll
-              enableOnAndroid
-              extraScrollHeight={Platform.OS === 'ios' ? 140 : 120}
+              bottomOffset={64}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={{ paddingBottom: 24 }}
             >

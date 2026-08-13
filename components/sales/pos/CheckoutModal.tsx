@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   Easing,
@@ -229,7 +229,7 @@ export function CheckoutModal({
 
   const handleViewReceipts = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/sales/receipts');
+    router.push('/(tabs)/sales/receipts' as Href);
     handleDismissSuccess();
   }, [handleDismissSuccess, triggerHaptic]);
 
@@ -268,7 +268,7 @@ export function CheckoutModal({
     <>
       <Modal
         visible={visible}
-        transparent
+        // transparent
         animationType="fade"
         onRequestClose={handleClose}
         statusBarTranslucent

@@ -10,6 +10,7 @@ import {
 } from '../database';
 import {
   getAppSetting,
+  isOwnerAuthorized,
   setAppSetting,
   UnauthorizedError,
 } from '../database/settings';
@@ -36,6 +37,50 @@ describe('app_settings owner authorization and settings validation', () => {
     await initCashTables();
     await runMigrations();
     await AsyncStorage.clear();
+  });
+
+  describe('isOwnerAuthorized policy', () => {
+    it('returns true when pre-onboarding (no state exists)', async () => {
+      await AsyncStorage.clear();
+      const authorized = await isOwnerAuthorized();
+      expect(authorized).toBe(true);
+    });
+
+    it('returns false when onboarding is incomplete', async () => {
+      await AsyncStorage.setItem(
+        'onboarding_state_v1',
+        JSON.stringify({
+          completed: false,
+          profile: { ownerName: 'Owner', storeName: 'My Store' },
+        }),
+      );
+      const authorized = await isOwnerAuthorized();
+      expect(authorized).toBe(false);
+    });
+
+    it('returns false when onboarding completed but ownerName is empty', async () => {
+      await AsyncStorage.setItem(
+        'onboarding_state_v1',
+        JSON.stringify({
+          completed: true,
+          profile: { ownerName: '   ', storeName: 'My Store' },
+        }),
+      );
+      const authorized = await isOwnerAuthorized();
+      expect(authorized).toBe(false);
+    });
+
+    it('returns true when onboarding completed with ownerName', async () => {
+      await AsyncStorage.setItem(
+        'onboarding_state_v1',
+        JSON.stringify({
+          completed: true,
+          profile: { ownerName: 'Maria', storeName: 'Maria Store' },
+        }),
+      );
+      const authorized = await isOwnerAuthorized();
+      expect(authorized).toBe(true);
+    });
   });
 
   it('rejects void_window_hours read/write when onboarding/owner profile is missing', async () => {

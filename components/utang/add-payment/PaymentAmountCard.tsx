@@ -25,16 +25,13 @@ interface PaymentAmountCardProps {
 
 /**
  * PaymentAmountCard — the large peso input, additive quick-pay
- * chips (+₱20/50/100/500), the Pay Full shortcut, the Clear button,
- * and the live remaining-balance status pill.
- *
- * Pure presentation; values and handlers are supplied by the route
- * file from `useAddPaymentForm`.
+ * chips (+₱20/50/100/500), the Pay Full & Half shortcuts, Clear button,
+ * and live remaining-balance status pill.
  */
 export function PaymentAmountCard({
   control,
   amount,
-  outstandingBalance,
+  outstandingBalance: _outstandingBalance,
   parsedAmount,
   remainingBalance,
   willClearAll,
@@ -74,7 +71,7 @@ export function PaymentAmountCard({
               placeholderTextColor="#A89F90"
               keyboardType="decimal-pad"
               accessibilityLabel="Payment amount"
-              className="flex-1 text-ink-900 text-h2"
+              className="flex-1 text-ink-900 text-h2 font-black"
             />
             {value?.length > 0 && (
               <Pressable
@@ -82,10 +79,7 @@ export function PaymentAmountCard({
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel="Clear amount"
-                className="press-scale w-8 h-8 items-center justify-center rounded-full bg-paper-200"
-                style={({ pressed }) => ({
-                  backgroundColor: pressed ? '#E6E3D8' : '#F7F6F2',
-                })}
+                className="press-scale w-8 h-8 items-center justify-center rounded-full bg-paper-200 active:bg-paper-300"
               >
                 <FontAwesome name="times" size={14} color="#564E45" />
               </Pressable>
@@ -111,7 +105,7 @@ export function PaymentAmountCard({
         ))}
       </View>
 
-      {/* Pay Full + Clear row */}
+      {/* Pay Full / Pay Half / Clear preset actions */}
       <View className="mt-2 flex-row gap-2">
         <Pressable
           onPress={onPayFull}
@@ -120,7 +114,7 @@ export function PaymentAmountCard({
           accessibilityLabel="Pay full outstanding balance"
           className={`press-scale flex-1 items-center justify-center flex-row py-2.5 rounded-xl border ${
             hasOutstanding
-              ? 'bg-cinnamon-500 border-cinnamon-500'
+              ? 'bg-cinnamon-600 border-cinnamon-600 active:bg-cinnamon-700'
               : 'bg-paper-100 border-ink-100 opacity-50'
           }`}
         >
@@ -132,12 +126,13 @@ export function PaymentAmountCard({
           <StyledText
             variant="extrabold"
             className={`text-sm ml-1.5 ${
-              hasOutstanding ? 'text-paper-50' : 'text-cinnamon-500'
+              hasOutstanding ? 'text-paper-50' : 'text-ink-400'
             }`}
           >
             Pay Full
           </StyledText>
         </Pressable>
+
         <Pressable
           onPress={onHalfPay}
           disabled={!hasOutstanding}
@@ -145,24 +140,25 @@ export function PaymentAmountCard({
           accessibilityLabel="Pay half outstanding balance"
           className={`press-scale flex-1 items-center justify-center flex-row py-2.5 rounded-xl border ${
             hasOutstanding
-              ? 'bg-cinnamon-500 border-cinnamon-500'
+              ? 'bg-amber-700 border-amber-700 active:bg-amber-800'
               : 'bg-paper-100 border-ink-100 opacity-50'
           }`}
         >
           <FontAwesome
-            name="check-circle"
+            name="adjust"
             size={12}
             color={hasOutstanding ? '#FBF7EE' : '#7A7165'}
           />
           <StyledText
             variant="extrabold"
             className={`text-sm ml-1.5 ${
-              hasOutstanding ? 'text-paper-50' : 'text-cinnamon-500'
+              hasOutstanding ? 'text-paper-50' : 'text-ink-400'
             }`}
           >
             Pay Half
           </StyledText>
         </Pressable>
+
         <Pressable
           onPress={onClear}
           disabled={!amount}
@@ -170,8 +166,8 @@ export function PaymentAmountCard({
           accessibilityLabel="Clear amount"
           className={`press-scale flex-1 items-center justify-center flex-row py-2.5 rounded-xl border ${
             amount
-              ? 'bg-paper-100 border-ink-100 active:bg-paper-200'
-              : 'bg-paper-100 border-ink-100'
+              ? 'bg-paper-100 border-ink-200 active:bg-paper-200'
+              : 'bg-paper-100 border-ink-100 opacity-50'
           }`}
         >
           <FontAwesome name="eraser" size={12} color="#564E45" />
@@ -181,56 +177,58 @@ export function PaymentAmountCard({
         </Pressable>
       </View>
 
-      {/* Remaining balance alert */}
-      {amount && parsedAmount > 0 && (
+      {/* Remaining balance status card */}
+      {amount && parsedAmount > 0 ? (
         <View
-          className={`mt-3 rounded-xl px-3 py-2.5 flex-row items-center ${
+          className={`mt-3 rounded-xl p-3 flex-row items-center justify-between border ${
             willClearAll
-              ? 'bg-sage-50 border border-sage-200'
+              ? 'bg-sage-50 border-sage-200'
               : remainingBalance < 0
-                ? 'bg-semantic-warning-50 border border-semantic-warning'
-                : 'bg-paper-100 border border-ink-100'
+              ? 'bg-amber-50 border-amber-200'
+              : 'bg-paper-100 border-ink-100'
           }`}
         >
-          <FontAwesome
-            name={willClearAll ? 'check-circle' : 'info-circle'}
-            size={14}
-            color={willClearAll ? '#4F7A24' : '#564E45'}
-          />
-          <View className="flex-1 ml-2">
-            <StyledText
-              variant="semibold"
-              className={`text-xs ${
-                willClearAll ? 'text-semantic-success' : 'text-ink-700'
-              }`}
-            >
-              {willClearAll
-                ? 'This payment will clear all outstanding balance'
-                : remainingBalance < 0
-                  ? `Overpayment of ${formatPesos(Math.abs(remainingBalance))}`
-                  : 'Remaining Balance'}
-            </StyledText>
-            {!willClearAll && (
+          <View className="flex-row items-center flex-1 mr-2">
+            <FontAwesome
+              name={willClearAll ? 'check-circle' : remainingBalance < 0 ? 'exclamation-circle' : 'info-circle'}
+              size={15}
+              color={willClearAll ? '#4F7A24' : remainingBalance < 0 ? '#B45309' : '#564E45'}
+            />
+            <View className="ml-2 flex-1">
               <StyledText
                 variant="extrabold"
-                className={`text-base mt-0.5 ${
-                  remainingBalance < 0 ? 'text-semantic-warning' : 'text-ink-900'
+                className={`text-xs ${
+                  willClearAll
+                    ? 'text-sage-600'
+                    : remainingBalance < 0
+                    ? 'text-amber-900'
+                    : 'text-ink-700'
                 }`}
               >
-                {formatPesos(Math.max(0, remainingBalance))}
+                {willClearAll
+                  ? 'Payment clears total balance'
+                  : remainingBalance < 0
+                  ? `Overpayment / Change: ${formatPesos(Math.abs(remainingBalance))}`
+                  : 'Remaining Balance'}
               </StyledText>
-            )}
+              {!willClearAll && remainingBalance >= 0 && (
+                <StyledText variant="extrabold" className="text-ink-900 text-sm mt-0.5">
+                  {formatPesos(remainingBalance)}
+                </StyledText>
+              )}
+            </View>
           </View>
-          {!hasOutstanding && outstandingBalance > 0 && (
-            <StyledText
-              variant="medium"
-              className="text-ink-400 text-[10px] uppercase tracking-wider"
-            >
-              Owes {formatPesos(outstandingBalance)}
-            </StyledText>
+
+          {willClearAll && (
+            <View className="bg-sage-500 px-2.5 py-1 rounded-full">
+              <StyledText variant="extrabold" className="text-paper-50 text-[10px] uppercase tracking-wider">
+                CLEARED
+              </StyledText>
+            </View>
           )}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
+

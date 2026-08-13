@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { FontAwesome } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { useCategories } from '@/hooks/useCategories';
@@ -168,9 +168,7 @@ export default function AddCategoryScreen() {
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        enableAutomaticScroll
-        enableOnAndroid
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 100}
+        bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 24 }}
       >

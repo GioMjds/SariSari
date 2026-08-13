@@ -11,7 +11,7 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
-import { useProfile } from '@/hooks/useProfile';
+import { isOwnerAuthorized } from '@/database/settings';
 import { useToastStore } from '@/stores';
 import { StyledText } from '@/components/elements';
 
@@ -19,8 +19,20 @@ export default function SettingsScreen() {
   const { t } = useTranslation('settings');
   const { t: tCommon } = useTranslation('common');
   const addToast = useToastStore((s) => s.addToast);
-  const { profile, loading: profileLoading } = useProfile();
-  const isOwner = Boolean(profile?.ownerName?.trim());
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let active = true;
+    isOwnerAuthorized().then((authorized) => {
+      if (!active) return;
+      setIsOwner(authorized);
+      setAuthLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const { value, isLoading } = useAppSetting('void_window_hours');
   const { mutateAsync: save, isPending } =
@@ -35,7 +47,7 @@ export default function SettingsScreen() {
 
   const onSave = async () => {
     if (!isOwner) {
-      Alert.alert(t('title'), 'Owner authorization required');
+      Alert.alert(t('title'), t('owner_auth_required'));
       return;
     }
     const trimmed = draft.trim();
@@ -44,11 +56,15 @@ export default function SettingsScreen() {
       Alert.alert(t('title'), t('invalid_hours'));
       return;
     }
-    await save(parsed.toString());
-    addToast({ message: t('saved'), variant: 'success' });
+    try {
+      await save(parsed.toString());
+      addToast({ message: t('saved'), variant: 'success' });
+    } catch {
+      Alert.alert(t('title'), t('save_failed'));
+    }
   };
 
-  if (profileLoading || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <View className="flex-1 bg-paper-200 items-center justify-center">
         <ActivityIndicator size="large" color="#623418" />
@@ -63,7 +79,7 @@ export default function SettingsScreen() {
           variant="semibold"
           className="text-ink-500 text-base text-center"
         >
-          Owner authorization required
+          {t('owner_auth_required')}
         </StyledText>
       </View>
     );
