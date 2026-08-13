@@ -95,8 +95,8 @@ export interface CorrectionsReportPage {
  */
 export const getCorrectionsReport = async (
   opts: {
-    cursor?: number;
-    limit?: number;
+    cursor?: number | undefined;
+    limit?: number | undefined;
   } = {},
 ): Promise<CorrectionsReportPage> => {
   const limit = Math.max(1, Math.floor(opts.limit ?? 50));

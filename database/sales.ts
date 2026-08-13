@@ -526,7 +526,7 @@ interface CorrectionActor {
   actorUser: string;
   witnessUser: string | null;
   reasonCode: string;
-  note?: string;
+  note?: string | undefined;
 }
 
 interface CorrectionSaleRow {

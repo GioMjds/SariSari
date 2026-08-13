@@ -210,6 +210,7 @@ export const getCashSessionSummary = async (
     ownerAdditions: ownerAdditions as Pesos,
     expenses: expenses as Pesos,
     ownerDrawings: ownerDrawings as Pesos,
+    cashRefunds: cashRefunds as Pesos,
   };
 };
 
