@@ -164,8 +164,6 @@ export default function POSScreen() {
 
         if (warnings.length > 0) {
           addToast({ message: warnings.join(' '), variant: 'warning' });
-        } else {
-          addToast({ message: 'Parked cart resumed.', variant: 'success' });
         }
       } catch {
         addToast({ message: 'Failed to resume cart.', variant: 'danger' });
@@ -234,8 +232,6 @@ export default function POSScreen() {
 
         if (warnings.length > 0) {
           addToast({ message: warnings.join(' '), variant: 'warning' });
-        } else {
-          addToast({ message: 'Parked cart resumed.', variant: 'success' });
         }
       } catch (error) {
         addToast({
