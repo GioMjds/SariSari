@@ -28,6 +28,14 @@ export default function EditFormsLayout() {
           name="add-credit/[id]"
           options={{ presentation: 'card', animation: 'fade' }}
         />
+        <Stack.Screen
+          name="sale-correction/[id]"
+          options={{ presentation: 'card', animation: 'fade' }}
+        />
+        <Stack.Screen
+          name="price-correction/[id]"
+          options={{ presentation: 'card', animation: 'fade' }}
+        />
       </Stack>
     </>
   );

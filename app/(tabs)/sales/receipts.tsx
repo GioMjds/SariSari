@@ -179,6 +179,10 @@ export default function Receipts() {
     setFilterModalVisible(false);
   }, []);
 
+  const handleOpenCorrectionsReport = useCallback(() => {
+    router.push('/reports/corrections' as Href);
+  }, [router]);
+
   const renderSaleItem = useCallback(
     ({ item }: { item: SaleWithItems }) => {
       return <SaleRow sale={item} onPress={handleSalePress} />;
@@ -199,6 +203,7 @@ export default function Receipts() {
           onOpenMore={handleOpenFilters}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          onOpenCorrectionsReport={handleOpenCorrectionsReport}
         />
 
         {filteredSales.length > 0 && (

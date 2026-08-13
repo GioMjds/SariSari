@@ -8,6 +8,7 @@ interface FilterChipsProps {
   onOpenMore: () => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  onOpenCorrectionsReport?: () => void;
 }
 
 export const FilterChips = memo(function FilterChips({
@@ -15,6 +16,7 @@ export const FilterChips = memo(function FilterChips({
   onOpenMore,
   searchQuery = '',
   onSearchChange,
+  onOpenCorrectionsReport,
 }: FilterChipsProps) {
   const hasActiveModalFilters =
     filters.paymentType !== 'all' || filters.dateRange !== 'all';
@@ -67,6 +69,17 @@ export const FilterChips = memo(function FilterChips({
             <View className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-persimmon-500 border-2 border-paper-100" />
           )}
         </TouchableOpacity>
+
+        {onOpenCorrectionsReport && (
+          <TouchableOpacity
+            onPress={onOpenCorrectionsReport}
+            activeOpacity={0.8}
+            accessibilityLabel="Corrections Audit Log"
+            className="w-12 h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-paper-100 border border-paper-300 items-center justify-center ml-2 relative"
+          >
+            <FontAwesome name="history" size={16} color="#564E45" />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

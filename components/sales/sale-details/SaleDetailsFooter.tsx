@@ -5,47 +5,78 @@ import { MotiView } from 'moti';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 interface SaleDetailsFooterProps {
-  /** Pre-formatted grand-total label (e.g. "Utang total" / "Grand total"). */
   grandTotalLabel: string;
-  /** Pre-formatted grand-total amount in display format (e.g. "1,234.50"). */
   grandTotalDisplay: string;
-  /** Pre-rendered thank-you message body. */
   thankYouMessage: string;
-  /** Optional divider label (defaults to "thank you"). */
   dividerLabel?: string;
-  /** Tap handler for the trash CTA on the sticky grand-total plate. */
   onDelete: () => void;
+  onVoid?: () => void;
+  onRefund?: () => void;
+  onPriceCorrection?: () => void;
 }
 
-/**
- * SaleDetailsFooter — bottom-most stack of the Sale Details screen.
- *
- * Two parts:
- *   1. In-flow "thank you" message + sage divider, wrapped in a fade-in
- *      MotiView so it lands after the items.
- *   2. Sticky grand-total plate anchored to the bottom of the screen —
- *      cinnamon fill, grand-total label + value, and a trash CTA on the
- *      right. Pressable surfaces the destructive delete action without
- *      the screen needing to render any navigation chrome itself.
- *
- * Pure presentational — every label and number is pre-formatted by the
- * screen so this component has zero formatting logic.
- */
 export function SaleDetailsFooter({
   grandTotalLabel,
   grandTotalDisplay,
   thankYouMessage,
   dividerLabel,
   onDelete,
+  onVoid,
+  onRefund,
+  onPriceCorrection,
 }: SaleDetailsFooterProps) {
   return (
     <>
-      {/* In-flow thank-you note */}
+      {/* In-flow thank-you note and correction action buttons */}
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ type: 'timing', duration: 480, delay: 320 }}
       >
+        {(onVoid || onRefund || onPriceCorrection) && (
+          <View className="flex-row gap-2 mx-4 mt-6">
+            {onVoid && (
+              <Pressable
+                onPress={onVoid}
+                accessibilityRole="button"
+                accessibilityLabel="Void sale"
+                className="flex-1 bg-paper-50 border border-cinnamon-500 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+              >
+                <FontAwesome name="ban" size={13} color="#E85A1F" />
+                <StyledText variant="semibold" className="text-cinnamon-600 text-xs" numberOfLines={1}>
+                  Void Sale
+                </StyledText>
+              </Pressable>
+            )}
+            {onRefund && (
+              <Pressable
+                onPress={onRefund}
+                accessibilityRole="button"
+                accessibilityLabel="Refund sale"
+                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+              >
+                <FontAwesome name="undo" size={13} color="#4A453E" />
+                <StyledText variant="semibold" className="text-ink-700 text-xs" numberOfLines={1}>
+                  Refund Sale
+                </StyledText>
+              </Pressable>
+            )}
+            {onPriceCorrection && (
+              <Pressable
+                onPress={onPriceCorrection}
+                accessibilityRole="button"
+                accessibilityLabel="Correct price"
+                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-paper"
+              >
+                <FontAwesome name="pencil" size={13} color="#4A453E" />
+                <StyledText variant="semibold" className="text-ink-700 text-xs" numberOfLines={1}>
+                  Edit Price
+                </StyledText>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <View className="mx-4 mt-7">
           <ReceiptHeroDivider label={dividerLabel ?? 'thank you'} tone="sage" />
           <StyledText

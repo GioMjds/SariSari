@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { useProfile } from '@/hooks/useProfile';
+import { useAppSetting } from '@/hooks/useAppSetting';
 import { FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -7,13 +8,11 @@ import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SupportedLanguage } from '@/lib/i18n';
 import { LanguagePickerDialog } from './LanguagePickerDialog';
-import {
-  CloudBackupSection,
-  LocalSnapshotsSection,
-} from './backup';
+import { CloudBackupSection, LocalSnapshotsSection } from './backup';
 
 export const SettingsScreen = () => {
   const { profile, loading: profileLoading } = useProfile();
+  const { value: voidWindowHours } = useAppSetting('void_window_hours');
   const { t, i18n } = useTranslation();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
 
@@ -22,6 +21,10 @@ export const SettingsScreen = () => {
     activeLang === 'tl'
       ? t('common:languageTagalog')
       : t('common:languageEnglish');
+
+  const voidWindowDisplay = voidWindowHours
+    ? `${voidWindowHours} hours`
+    : '24h default';
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -96,6 +99,17 @@ export const SettingsScreen = () => {
               icon="globe"
               interactive
               onPress={() => setLanguagePickerOpen(true)}
+            />
+          </SettingsSection>
+
+          {/* Section 3 — Sales & Security */}
+          <SettingsSection title="Sales & Security">
+            <SettingsRow
+              label="Void window (hours)"
+              value={voidWindowDisplay}
+              icon="clock-o"
+              interactive
+              onPress={() => router.push('/settings')}
             />
           </SettingsSection>
 
