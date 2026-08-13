@@ -15,3 +15,4 @@ export * from './ui/Modal.types';
 export * from './ui/Toast.types';
 export * from './ui/Tooltip.types';
 export * from './stocktake.types';
+export * from './settings.types';
