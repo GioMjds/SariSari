@@ -117,8 +117,9 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
       ? 'none'
       : row.followUp.contactsToday > 0 &&
           row.followUp.lastContactAt &&
-          new Date(row.followUp.lastContactAt).toDateString() ===
-            new Date().toDateString()
+          new Date(
+            row.followUp.lastContactAt.replace(' ', 'T') + 'Z',
+          ).toDateString() === new Date().toDateString()
         ? 'contacted'
         : row.followUp.followUpBy &&
             localMidnight(row.followUp.followUpBy) <
@@ -169,7 +170,8 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
               days: Math.max(
                 1,
                 Math.round(
-                  (Date.now() - new Date(row.followUp.followUpBy).getTime()) /
+                  (Date.now() -
+                    localMidnight(row.followUp.followUpBy).getTime()) /
                     (24 * 60 * 60 * 1000),
                 ),
               ),

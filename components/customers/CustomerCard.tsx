@@ -4,6 +4,7 @@ import { StyledText } from '@/components/elements';
 import { Customer } from '@/types/credits.types';
 import { CustomerAvatar } from './CustomerAvatar';
 import { LoyaltyBadge } from './LoyaltyBadge';
+import { formatPesos } from '@/lib';
 
 interface CustomerCardProps {
   customer: Customer;
@@ -49,8 +50,14 @@ export const CustomerCard: FC<CustomerCardProps> = memo(function CustomerCard({
         {hasBalance ? (
           <View className="bg-cinnamon-50 px-3 py-1.5 rounded-xl border border-cinnamon-200 items-end">
             <StyledText
+              variant="extrabold"
+              className="text-cinnamon-700 text-sm"
+            >
+              {formatPesos(customer.outstanding_balance)}
+            </StyledText>
+            <StyledText
               variant="semibold"
-              className="text-cinnamon-600 text-[10px] uppercase tracking-wider"
+              className="text-cinnamon-500 text-[9px] uppercase tracking-wider"
             >
               Outstanding
             </StyledText>

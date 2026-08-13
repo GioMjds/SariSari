@@ -58,6 +58,7 @@ export function useCustomers(
   return useQuery<Customer[]>({
     queryKey: ['customers', filter, sort],
     queryFn: () => getAllCustomers(filter, sort),
+    staleTime: 60 * 1000, // 1 minute
     ...opts,
   });
 }
@@ -68,6 +69,7 @@ export function useCustomer(id?: number | string, opts = {}) {
     queryKey: ['customer', parsedId],
     queryFn: () => (parsedId ? getCustomer(parsedId) : Promise.resolve(null)),
     enabled: !!parsedId,
+    staleTime: 60 * 1000,
     ...opts,
   });
 }
@@ -93,6 +95,7 @@ export function useCustomerCredits(id?: number | string, opts = {}) {
         ? getCreditTransactionsByCustomer(parsedId)
         : Promise.resolve([]),
     enabled: !!parsedId,
+    staleTime: 60 * 1000,
     ...opts,
   });
 }
@@ -104,6 +107,7 @@ export function usePaymentsByCustomer(id?: number | string, opts = {}) {
     queryFn: () =>
       parsedId ? getPaymentsByCustomer(parsedId) : Promise.resolve([]),
     enabled: !!parsedId,
+    staleTime: 60 * 1000,
     ...opts,
   });
 }
@@ -112,6 +116,7 @@ export function useCreditKPIs(opts = {}) {
   return useQuery<CreditKPIs>({
     queryKey: ['credit-kpis'],
     queryFn: getCreditKPIs,
+    staleTime: 60 * 1000, // 1 minute
     ...opts,
   });
 }
@@ -360,7 +365,6 @@ export function useDeletePayment() {
 
 export function useMarkAllCreditsAsPaid() {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const { addToast } = useToastStore();
   return useMutation({
     mutationFn: (customerId: number) => markAllCreditsAsPaid(customerId),
@@ -368,6 +372,12 @@ export function useMarkAllCreditsAsPaid() {
       queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
       queryClient.invalidateQueries({
         queryKey: ['customer-details', customerId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['customer-credits', customerId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['payments-by-customer', customerId],
       });
       queryClient.invalidateQueries({
         queryKey: ['credit-history', customerId],
@@ -378,15 +388,14 @@ export function useMarkAllCreditsAsPaid() {
         queryKey: ['collection-queue'],
       });
       addToast({
-        message: 'Customer deleted successfully',
+        message: 'All credits marked as paid successfully',
         variant: 'success',
         duration: 5000,
       });
-      router.back();
     },
     onError: (error) => {
       addToast({
-        message: error.message || 'Failed to delete customer',
+        message: error.message || 'Failed to mark credits as paid',
         variant: 'danger',
         duration: 5000,
       });

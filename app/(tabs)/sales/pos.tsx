@@ -19,9 +19,8 @@ import {
   useParkedCarts,
   validateParkedCartItems,
 } from '@/hooks';
-import { ParkedCart } from '@/database/parkedCarts';
 import { Customer, NewSaleItem, Product } from '@/types';
-import { getAllProducts } from '@/database';
+import { getAllProducts, getCustomer, ParkedCart } from '@/database';
 
 export default function POSScreen() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
@@ -75,13 +74,35 @@ export default function POSScreen() {
     setShowCustomerPicker(false);
   }, []);
 
+  const resolveCustomerForCart = useCallback(
+    async (
+      customerId: number | null,
+      customerName: string | null,
+    ): Promise<Customer | string | null> => {
+      if (customerId != null) {
+        const foundInList = customers.find((c) => c.id === customerId);
+        if (foundInList) return foundInList;
+        try {
+          const fetched = await getCustomer(customerId);
+          if (fetched) return fetched;
+        } catch {
+          // ignore lookup error
+        }
+      }
+      return customerName ?? null;
+    },
+    [customers],
+  );
+
   const handleParkCurrentCart = useCallback(
-    async (label: string): Promise<boolean> => {
+    async (label: string, suppressToast = false): Promise<boolean> => {
       if (cartItems.length === 0) {
-        addToast({
-          variant: 'danger',
-          message: 'Cannot park an empty cart.',
-        });
+        if (!suppressToast) {
+          addToast({
+            variant: 'danger',
+            message: 'Cannot park an empty cart.',
+          });
+        }
         return false;
       }
       try {
@@ -100,17 +121,21 @@ export default function POSScreen() {
         });
         clearCart();
         setShowParkModal(false);
-        addToast({
-          variant: 'success',
-          message: 'Cart parked successfully.',
-        });
+        if (!suppressToast) {
+          addToast({
+            variant: 'success',
+            message: 'Cart parked successfully.',
+          });
+        }
         return true;
       } catch (error) {
-        addToast({
-          variant: 'danger',
-          message:
-            error instanceof Error ? error.message : 'Failed to park cart.',
-        });
+        if (!suppressToast) {
+          addToast({
+            variant: 'danger',
+            message:
+              error instanceof Error ? error.message : 'Failed to park cart.',
+          });
+        }
         return false;
       }
     },
@@ -123,14 +148,10 @@ export default function POSScreen() {
         const { validatedItems, warnings } = await resumeCart(cartToResume);
         clearCart();
 
-        let restoredCustomer: Customer | string | null =
-          cartToResume.customerName ?? null;
-        if (cartToResume.customerId != null && customers.length > 0) {
-          const found = customers.find((c) => c.id === cartToResume.customerId);
-          if (found) {
-            restoredCustomer = found;
-          }
-        }
+        const restoredCustomer = await resolveCustomerForCart(
+          cartToResume.customerId,
+          cartToResume.customerName,
+        );
 
         useCartStore.setState({
           cartItems: validatedItems,
@@ -150,7 +171,7 @@ export default function POSScreen() {
         addToast({ message: 'Failed to resume cart.', variant: 'danger' });
       }
     },
-    [resumeCart, clearCart, customers, addToast],
+    [resumeCart, clearCart, resolveCustomerForCart, addToast],
   );
 
   const handleSelectResume = useCallback(
@@ -197,16 +218,10 @@ export default function POSScreen() {
 
         clearCart();
 
-        let restoredCustomer: Customer | string | null =
-          targetResumeCart.customerName ?? null;
-        if (targetResumeCart.customerId != null && customers.length > 0) {
-          const found = customers.find(
-            (c) => c.id === targetResumeCart.customerId,
-          );
-          if (found) {
-            restoredCustomer = found;
-          }
-        }
+        const restoredCustomer = await resolveCustomerForCart(
+          targetResumeCart.customerId,
+          targetResumeCart.customerName,
+        );
 
         useCartStore.setState({
           cartItems: items,
@@ -230,7 +245,7 @@ export default function POSScreen() {
         });
       }
     } else {
-      const success = await handleParkCurrentCart(autoLabel);
+      const success = await handleParkCurrentCart(autoLabel, true);
       if (success) {
         await handleExecuteResume(targetResumeCart);
       }
@@ -243,7 +258,7 @@ export default function POSScreen() {
     paymentType,
     swapCart,
     clearCart,
-    customers,
+    resolveCustomerForCart,
     handleParkCurrentCart,
     handleExecuteResume,
     addToast,
@@ -338,6 +353,7 @@ export default function POSScreen() {
         cartItems={cartItems}
         selectedCustomer={selectedCustomer}
         paymentType={paymentType}
+        parkedCartsCount={parkedCarts.length}
         onClose={() => setShowParkModal(false)}
         onConfirm={handleParkCurrentCart}
       />

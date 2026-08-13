@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, FC } from 'react';
-import { View, FlatList, TouchableOpacity } from 'react-native';
+import { View, FlatList, TouchableOpacity, Platform } from 'react-native';
 import { SearchBar } from '@/components/ui';
 import { CustomerFilterChips } from './CustomerFilterChips';
 import { CustomerCard } from './CustomerCard';
@@ -40,6 +40,15 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
     });
 
     result.sort((a, b) => {
+      if (activeFilter === 'recent') {
+        const dateA = a.last_transaction_date
+          ? new Date(a.last_transaction_date).getTime()
+          : 0;
+        const dateB = b.last_transaction_date
+          ? new Date(b.last_transaction_date).getTime()
+          : 0;
+        return sortAsc ? dateA - dateB : dateB - dateA;
+      }
       return sortAsc
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
@@ -109,6 +118,10 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
           data={filtered}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           contentContainerStyle={{ paddingBottom: 80 }}
           showsVerticalScrollIndicator={false}
         />

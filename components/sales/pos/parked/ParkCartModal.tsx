@@ -9,6 +9,7 @@ interface ParkCartModalProps {
   cartItems: NewSaleItem[];
   selectedCustomer: Customer | string | null;
   paymentType: 'cash' | 'credit';
+  parkedCartsCount?: number;
   onClose: () => void;
   onConfirm: (label: string) => void;
 }
@@ -18,6 +19,7 @@ export function ParkCartModal({
   cartItems,
   selectedCustomer,
   paymentType,
+  parkedCartsCount = 0,
   onClose,
   onConfirm,
 }: ParkCartModalProps) {
@@ -44,7 +46,10 @@ export function ParkCartModal({
     }
   }, [visible]);
 
+  const isFull = parkedCartsCount >= 3;
+
   const handleConfirm = () => {
+    if (isFull) return;
     const finalLabel = note.trim() !== '' ? note.trim() : defaultLabel;
     onConfirm(finalLabel);
   };
@@ -64,6 +69,14 @@ export function ParkCartModal({
           <StyledText variant="regular" className="text-sm text-ink-600 mb-4">
             Hold this cart so you can serve another suki.
           </StyledText>
+
+          {isFull && (
+            <View className="bg-amber-50 border border-amber-300 p-3 rounded-xl mb-4">
+              <StyledText variant="semibold" className="text-xs text-amber-900">
+                Maximum 3 parked carts reached. Resume or discard an existing cart before parking another.
+              </StyledText>
+            </View>
+          )}
 
           <View className="bg-paper-200 p-3 rounded-xl mb-4 border border-paper-300">
             <StyledText variant="extrabold" className="text-xs text-ink-500 uppercase tracking-wider mb-1">
@@ -90,6 +103,7 @@ export function ParkCartModal({
             value={note}
             onChangeText={setNote}
             autoFocus
+            editable={!isFull}
           />
 
           <View className="flex-row justify-end space-x-3 gap-2">
@@ -103,7 +117,12 @@ export function ParkCartModal({
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              className="px-5 py-3 rounded-xl bg-cinnamon-500 active:bg-cinnamon-600 min-h-[44px] justify-center items-center shadow-persimmon-glow"
+              disabled={isFull}
+              className={`px-5 py-3 rounded-xl min-h-[44px] justify-center items-center ${
+                isFull
+                  ? 'bg-paper-400 opacity-60'
+                  : 'bg-cinnamon-500 active:bg-cinnamon-600 shadow-persimmon-glow'
+              }`}
             >
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
                 Park Cart

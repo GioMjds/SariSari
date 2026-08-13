@@ -12,3 +12,4 @@ export * from './catalog';
 export * from './financial';
 export * from './receipts';
 export * from './stocktake';
+export * from './parkedCarts';

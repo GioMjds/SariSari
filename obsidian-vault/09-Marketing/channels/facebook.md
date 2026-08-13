@@ -79,7 +79,7 @@ Rotate - do not post the same five every time. Pin the brand hashtag
 > ba?" sa Messenger. Textin mo na lang ang resibo. Mas mahirap i-decline
 > ang resibo.
 >
-> #SariSari #SukingTracker #TindahanTracker
+> #SariSari #TindahanTracker
 
 ## Response Patterns
 

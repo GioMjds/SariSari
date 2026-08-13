@@ -666,4 +666,24 @@ export async function runMigrations() {
     });
     console.log('Database migrated to version 18.');
   }
+
+  if (currentVersion < 19) {
+    console.log('Running migration to version 19 (Ensure Parked Carts Table)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS parked_carts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          label TEXT NOT NULL,
+          customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+          customer_name TEXT,
+          payment_type TEXT NOT NULL DEFAULT 'cash',
+          payload_json TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          expires_at TEXT NOT NULL
+        );
+      `);
+      await db.execAsync('PRAGMA user_version = 19;');
+    });
+    console.log('Database migrated to version 19.');
+  }
 }

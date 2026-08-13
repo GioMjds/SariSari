@@ -7,6 +7,7 @@ import { NewPayment, Payment } from '@/types';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { CreditTransaction } from '@/types/credits.types';
 import { useCustomer, useCustomerCredits, useInsertPayment } from '@/hooks';
+import { getCurrentLocalTimestamp } from '@/utils/timezone';
 
 /**
  * Form values for the Add Payment screen.
@@ -248,7 +249,7 @@ export function useAddPaymentForm() {
       amount: parsePesosInput(data.amount),
       payment_method: data.paymentMethod,
       notes: data.notes?.trim() ?? null,
-      date: format(new Date(), 'yyyy-MM-dd'),
+      date: getCurrentLocalTimestamp(),
     };
 
     insertPayment.mutate(payload);

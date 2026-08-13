@@ -15,9 +15,11 @@ export interface CustomersHeaderProps {
 }
 
 export function CustomersHeader({
-  totalCustomers = 142,
-  loyalCount = 28,
-  totalCredit = 4850,
+  totalCustomers = 0,
+  debtorCount = 0,
+  loyalCount = 0,
+  overdueCount = 0,
+  totalCredit = 0,
 }: CustomersHeaderProps) {
   return (
     <View className="px-4 pt-2">
@@ -63,13 +65,15 @@ export function CustomersHeader({
         {/* Dynamic Badge Pill */}
         <View className="self-start bg-white/25 px-3 py-1 rounded-full flex-row items-center">
           <FontAwesome
-            name="arrow-up"
+            name={overdueCount > 0 ? 'exclamation-circle' : 'users'}
             size={10}
             color="#FFFFFF"
             style={{ marginRight: 4 }}
           />
           <StyledText variant="extrabold" className="text-white text-xs">
-            +₱320 this week
+            {overdueCount > 0
+              ? `${overdueCount} overdue ${overdueCount === 1 ? 'account' : 'accounts'}`
+              : `${debtorCount} active ${debtorCount === 1 ? 'debtor' : 'debtors'}`}
           </StyledText>
         </View>
       </View>

@@ -77,27 +77,11 @@ function RefreshableFlatListInner<T>(
   const pullY = useSharedValue(0);
   const virtualScrollY = useDerivedValue(() => -pullY.value);
 
-  // `FlatList.onScroll` is called by RN with a native event on the JS
-  // thread — it must be a real function. `useAnimatedScrollHandler`
-  // returns an `EventHandlerProcessed` (a callable that dispatches into
-  // the UI thread), but the dependency-array form of useEvent inside
-  // reanimated occasionally mutates the returned handler identity, so
-  // we cache the identity in a ref and wrap it in a stable JS function.
-  // (An `Animated.ScrollView` does this wiring internally; `FlatList`
-  // does not, which is why this differs from `RefreshableScrollView`.)
+  // `useAnimatedScrollHandler` returns a Reanimated event handler object
+  // that runs on the UI thread and must be passed directly to `Animated.FlatList`.
   const scrollHandler = useAnimatedScrollHandler((event) => {
     isAtTop.value = event.contentOffset.y <= 0;
   });
-  const scrollHandlerRef = useRef(scrollHandler);
-  useEffect(() => {
-    scrollHandlerRef.current = scrollHandler;
-  }, [scrollHandler]);
-  const handleScroll = useCallback(
-    (event: Parameters<NonNullable<FlatListProps<T>['onScroll']>>[0]) => {
-      scrollHandlerRef.current(event);
-    },
-    [],
-  );
 
   const triggerRefresh = useCallback(() => {
     onRefresh();
@@ -139,6 +123,8 @@ function RefreshableFlatListInner<T>(
     }
   }, [isRefreshing, pullY, refreshThreshold]);
 
+  const AnimatedFlatList = Animated.FlatList as any;
+
   return (
     <GestureDetector gesture={panGesture}>
       <View className={`flex-1 ${className}`}>
@@ -147,10 +133,10 @@ function RefreshableFlatListInner<T>(
           scrollY={virtualScrollY}
           refreshThreshold={refreshThreshold}
         />
-        <FlatList<T>
+        <AnimatedFlatList
           {...rest}
           ref={flatListRef}
-          onScroll={handleScroll}
+          onScroll={scrollHandler}
           scrollEventThrottle={16}
           contentContainerStyle={contentContainerStyle}
           bounces={false}

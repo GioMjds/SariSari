@@ -153,13 +153,28 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
   const result = await db.getFirstAsync<any>(
     `SELECT 
 			c.*,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
-			COALESCE(SUM(p.amount), 0) as total_payments,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount - ct.amount_paid ELSE 0 END), 0) as outstanding_balance,
-			MAX(COALESCE(ct.date, p.date)) as last_transaction_date
+			COALESCE(ct.total_credits, 0) as total_credits,
+			COALESCE(p.total_payments, 0) as total_payments,
+			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
+			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
 		FROM customers c
-		LEFT JOIN credit_transactions ct ON c.id = ct.customer_id
-		LEFT JOIN payments p ON c.id = p.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END) as total_credits,
+				SUM(CASE WHEN status != 'paid' THEN amount - amount_paid ELSE 0 END) as outstanding_balance,
+				MAX(date) as last_credit_date
+			FROM credit_transactions
+			GROUP BY customer_id
+		) ct ON c.id = ct.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(amount) as total_payments,
+				MAX(date) as last_payment_date
+			FROM payments
+			GROUP BY customer_id
+		) p ON c.id = p.customer_id
 		WHERE c.id = ?
 		GROUP BY c.id`,
     [id],
@@ -167,8 +182,15 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
 
   if (!result) return null;
 
+  const totalSpent = (result.total_credits || 0) + (result.total_payments || 0);
+  const loyalty_tier = calculateLoyaltyTier(
+    result.total_credits > 0 ? 5 : 1,
+    totalSpent,
+  );
+
   return {
     ...result,
+    loyalty_tier,
     tag: calculateCustomerTag(
       result.outstanding_balance,
       result.last_transaction_date,
@@ -220,22 +242,45 @@ export const getAllCustomers = async (
   const results = await db.getAllAsync<any>(
     `SELECT 
 			c.*,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
-			COALESCE(SUM(p.amount), 0) as total_payments,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount - ct.amount_paid ELSE 0 END), 0) as outstanding_balance,
-			MAX(COALESCE(ct.date, p.date)) as last_transaction_date
+			COALESCE(ct.total_credits, 0) as total_credits,
+			COALESCE(p.total_payments, 0) as total_payments,
+			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
+			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
 		FROM customers c
-		LEFT JOIN credit_transactions ct ON c.id = ct.customer_id
-		LEFT JOIN payments p ON c.id = p.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END) as total_credits,
+				SUM(CASE WHEN status != 'paid' THEN amount - amount_paid ELSE 0 END) as outstanding_balance,
+				MAX(date) as last_credit_date
+			FROM credit_transactions
+			GROUP BY customer_id
+		) ct ON c.id = ct.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(amount) as total_payments,
+				MAX(date) as last_payment_date
+			FROM payments
+			GROUP BY customer_id
+		) p ON c.id = p.customer_id
 		GROUP BY c.id
 		${whereClause}
 		ORDER BY ${orderByClause}`,
   );
 
-  return results.map((r) => ({
-    ...r,
-    tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
-  }));
+  return results.map((r) => {
+    const totalSpent = (r.total_credits || 0) + (r.total_payments || 0);
+    const loyalty_tier = calculateLoyaltyTier(
+      r.total_credits > 0 ? 5 : 1,
+      totalSpent,
+    );
+    return {
+      ...r,
+      loyalty_tier,
+      tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
+    };
+  });
 };
 
 export const getCustomerWithDetails = async (
@@ -622,12 +667,47 @@ export const getCreditHistory = async (
 export const markAllCreditsAsPaid = async (
   customerId: number,
 ): Promise<void> => {
-  await db.runAsync(
-    `UPDATE credit_transactions 
-     SET status = 'paid', amount_paid = amount, updated_at = CURRENT_TIMESTAMP 
-     WHERE customer_id = ? AND status != 'paid'`,
-    [customerId],
-  );
+  await db.withTransactionAsync(async () => {
+    const unpaidCredits = await db.getAllAsync<{
+      id: number;
+      amount: number;
+      amount_paid: number;
+    }>(
+      `SELECT id, amount, amount_paid FROM credit_transactions WHERE customer_id = ? AND status != 'paid'`,
+      [customerId],
+    );
+
+    if (unpaidCredits.length === 0) return;
+
+    await db.runAsync(
+      `UPDATE credit_transactions 
+       SET status = 'paid', amount_paid = amount, updated_at = CURRENT_TIMESTAMP 
+       WHERE customer_id = ? AND status != 'paid'`,
+      [customerId],
+    );
+
+    const totalSettled = unpaidCredits.reduce(
+      (sum, c) => sum + (c.amount - c.amount_paid),
+      0,
+    );
+
+    if (totalSettled > 0) {
+      const result = await db.runAsync(
+        `INSERT INTO payments (customer_id, amount, payment_method, notes) VALUES (?, ?, 'cash', 'Full settlement of all outstanding credits')`,
+        [customerId, totalSettled],
+      );
+      const paymentId = result.lastInsertRowId;
+      for (const credit of unpaidCredits) {
+        const amountSettled = credit.amount - credit.amount_paid;
+        if (amountSettled > 0) {
+          await db.runAsync(
+            `INSERT INTO payment_allocations (payment_id, credit_transaction_id, amount) VALUES (?, ?, ?)`,
+            [paymentId, credit.id, amountSettled],
+          );
+        }
+      }
+    }
+  });
 };
 
 function calculateCustomerTag(
@@ -660,23 +740,46 @@ export const searchCustomers = async (query: string): Promise<Customer[]> => {
   const results = await db.getAllAsync<any>(
     `SELECT 
 			c.*,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount ELSE 0 END), 0) as total_credits,
-			COALESCE(SUM(p.amount), 0) as total_payments,
-			COALESCE(SUM(CASE WHEN ct.status != 'paid' THEN ct.amount - ct.amount_paid ELSE 0 END), 0) as outstanding_balance,
-			MAX(COALESCE(ct.date, p.date)) as last_transaction_date
+			COALESCE(ct.total_credits, 0) as total_credits,
+			COALESCE(p.total_payments, 0) as total_payments,
+			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
+			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
 		FROM customers c
-		LEFT JOIN credit_transactions ct ON c.id = ct.customer_id
-		LEFT JOIN payments p ON c.id = p.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(CASE WHEN status != 'paid' THEN amount ELSE 0 END) as total_credits,
+				SUM(CASE WHEN status != 'paid' THEN amount - amount_paid ELSE 0 END) as outstanding_balance,
+				MAX(date) as last_credit_date
+			FROM credit_transactions
+			GROUP BY customer_id
+		) ct ON c.id = ct.customer_id
+		LEFT JOIN (
+			SELECT 
+				customer_id,
+				SUM(amount) as total_payments,
+				MAX(date) as last_payment_date
+			FROM payments
+			GROUP BY customer_id
+		) p ON c.id = p.customer_id
 		WHERE c.name LIKE ? OR c.phone LIKE ?
 		GROUP BY c.id
 		ORDER BY c.name ASC`,
     [`%${query}%`, `%${query}%`],
   );
 
-  return results.map((r) => ({
-    ...r,
-    tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
-  }));
+  return results.map((r) => {
+    const totalSpent = (r.total_credits || 0) + (r.total_payments || 0);
+    const loyalty_tier = calculateLoyaltyTier(
+      r.total_credits > 0 ? 5 : 1,
+      totalSpent,
+    );
+    return {
+      ...r,
+      loyalty_tier,
+      tag: calculateCustomerTag(r.outstanding_balance, r.last_transaction_date),
+    };
+  });
 };
 
 export const calculateLoyaltyTier = (

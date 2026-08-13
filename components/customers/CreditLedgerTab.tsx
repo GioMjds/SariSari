@@ -10,22 +10,30 @@ import * as Haptics from 'expo-haptics';
 interface CreditLedgerTabProps {
   customers: Customer[];
   onSelectCustomer: (customer: Customer) => void;
+  defaultFilter?: string;
 }
 
 export const CreditLedgerTab: FC<CreditLedgerTabProps> = ({
   customers,
   onSelectCustomer,
+  defaultFilter,
 }) => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'highest' | 'name'>('highest');
 
   const debtorCustomers = useMemo(() => {
-    let debtors = customers.filter(
-      (c) =>
-        c.outstanding_balance > 0 &&
-        (c.name.toLowerCase().includes(search.toLowerCase()) ||
-          (c.phone && c.phone.includes(search))),
-    );
+    let debtors = customers.filter((c) => {
+      if (c.outstanding_balance <= 0) return false;
+      const matchSearch =
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.phone && c.phone.includes(search));
+      if (!matchSearch) return false;
+
+      if (defaultFilter === 'overdue') {
+        return c.tag === 'overdue';
+      }
+      return true;
+    });
 
     if (sortBy === 'highest') {
       return debtors.sort(
@@ -33,7 +41,7 @@ export const CreditLedgerTab: FC<CreditLedgerTabProps> = ({
       );
     }
     return debtors.sort((a, b) => a.name.localeCompare(b.name));
-  }, [customers, search, sortBy]);
+  }, [customers, search, sortBy, defaultFilter]);
 
   const toggleSort = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});

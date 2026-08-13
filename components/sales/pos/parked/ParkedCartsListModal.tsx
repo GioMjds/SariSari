@@ -121,6 +121,11 @@ export function ParkedCartsListModal({
                         {formatPesos(total)} • {itemCount}{' '}
                         {itemCount === 1 ? 'item' : 'items'}
                       </StyledText>
+                      {cart.customerName && cart.customerName !== cart.label && (
+                        <StyledText variant="medium" className="text-xs text-ink-600 mt-0.5">
+                          Suki: {cart.customerName}
+                        </StyledText>
+                      )}
                     </View>
 
                     <View className="flex-row items-center space-x-2 gap-2">

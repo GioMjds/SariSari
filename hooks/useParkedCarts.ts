@@ -37,20 +37,44 @@ export function validateParkedCartItems(
       continue;
     }
 
+    let selectedUnit: 'retail' | 'wholesale' =
+      item.selected_unit === 'wholesale' ? 'wholesale' : 'retail';
+
+    if (
+      selectedUnit === 'wholesale' &&
+      (product.wholesale_price == null ||
+        !product.wholesale_unit_name ||
+        !product.conversion_factor ||
+        product.conversion_factor <= 0)
+    ) {
+      selectedUnit = 'retail';
+      warnings.push(
+        `${product.name} wholesale option is no longer available; reset to retail.`,
+      );
+    }
+
     const currentPrice =
-      item.selected_unit === 'wholesale' && product.wholesale_price != null
+      selectedUnit === 'wholesale' && product.wholesale_price != null
         ? product.wholesale_price
         : product.price;
 
+    const conversionFactor =
+      selectedUnit === 'wholesale' ? (product.conversion_factor ?? 1) : 1;
+    const maxAvailableUnitQty = Math.floor(product.quantity / conversionFactor);
+
     let adjustedQty = item.quantity;
-    if (adjustedQty > product.quantity) {
-      adjustedQty = Math.max(0, product.quantity);
+    if (adjustedQty > maxAvailableUnitQty) {
+      adjustedQty = Math.max(0, maxAvailableUnitQty);
       if (adjustedQty === 0) {
         warnings.push(`${product.name} is out of stock and was removed.`);
         continue;
       }
+      const unitLabel =
+        selectedUnit === 'wholesale'
+          ? (product.wholesale_unit_name || 'pack')
+          : (product.retail_unit_name || 'pc');
       warnings.push(
-        `${product.name} stock reduced to ${adjustedQty} based on current inventory.`,
+        `${product.name} stock reduced to ${adjustedQty} ${unitLabel} based on current inventory.`,
       );
     }
 
@@ -64,6 +88,7 @@ export function validateParkedCartItems(
       price: currentPrice,
       quantity: adjustedQty,
       stock: product.quantity,
+      selected_unit: selectedUnit,
       retail_price: product.price,
       retail_unit_name: product.retail_unit_name || 'Pc',
       wholesale_unit_name: product.wholesale_unit_name ?? null,
