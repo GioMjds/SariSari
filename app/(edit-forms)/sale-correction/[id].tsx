@@ -237,7 +237,7 @@ export default function SaleCorrectionScreen() {
 
         {/* Sale Receipt & Items Summary Section */}
         <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-4">
-          <View className="flex-row items-center justify-between pb-3 border-b border-ink-200 divider-dotted">
+          <View className="flex-row items-center justify-between pb-3">
             <View className="flex-row items-center gap-2">
               <FontAwesome name="file-text-o" size={14} color="#623418" />
               <StyledText
@@ -264,16 +264,16 @@ export default function SaleCorrectionScreen() {
           ) : (
             <View className="pt-3 gap-2.5">
               <View className="flex-row justify-between items-center">
-                <StyledText variant="regular" className="text-ink-500 text-xs">
+                <StyledText variant="regular" className="text-ink-500 text-sm">
                   Date & Time
                 </StyledText>
-                <StyledText variant="semibold" className="text-ink-800 text-xs">
+                <StyledText variant="semibold" className="text-ink-800 text-sm">
                   {saleDateFormatted}
                 </StyledText>
               </View>
 
               <View className="flex-row justify-between items-center">
-                <StyledText variant="regular" className="text-ink-500 text-xs">
+                <StyledText variant="regular" className="text-ink-500 text-sm">
                   Payment Type
                 </StyledText>
                 <View className="flex-row items-center gap-1.5">
@@ -284,10 +284,10 @@ export default function SaleCorrectionScreen() {
                   />
                   <StyledText
                     variant="semibold"
-                    className="text-ink-800 text-xs capitalize"
+                    className="text-ink-800 text-sm capitalize"
                   >
                     {sale.payment_type === 'credit'
-                      ? `Utang (${sale.customer_name || 'Suki'})`
+                      ? `Utang (${sale.customer_name})`
                       : 'Cash Sale'}
                   </StyledText>
                 </View>
