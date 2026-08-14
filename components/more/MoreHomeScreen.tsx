@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
-import { withFeatureGuard } from '@/components/withFeatureGuard';
 import { useFinancialTotals, useLocalSnapshots } from '@/hooks';
 import { getTodayDateString } from '@/utils';
 import {
@@ -15,7 +14,7 @@ import { MoreScreenHeader } from './MoreScreenHeader';
 import { MoreSection } from './MoreSection';
 import { useMoreDestinationNavigation } from './useMoreDestinationNavigation';
 
-function MoreTab() {
+export function MoreHomeScreen() {
   const { t, i18n } = useTranslation();
   const today = getTodayDateString();
   const financialTotals = useFinancialTotals(today, today);
@@ -111,5 +110,3 @@ function MoreTab() {
     </View>
   );
 }
-
-export const MoreHomeScreen = withFeatureGuard(MoreTab, !__DEV__);
