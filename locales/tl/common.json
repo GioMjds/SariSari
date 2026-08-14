@@ -70,6 +70,8 @@
   "settingsCreateBackup": "Gumawa ng backup snapshot",
   "settingsGoBackA11y": "Bumalik",
   "settingsFooter": "SariSari — isang gumaganang prototype.",
+  "settingsSecuritySection": "Seguridad",
+  "settingsSecuritySectionSub": "Protektahan ang mahahalagang aksyon gamit ang PIN.",
 
   "languagePickerTitle": "Piliin ang iyong wika",
   "languagePickerSubtitle": "Piliin ang wika na gusto mong gamitin ni Sari.",

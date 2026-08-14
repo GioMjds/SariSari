@@ -70,6 +70,8 @@
   "settingsCreateBackup": "Create Backup Snapshot",
   "settingsGoBackA11y": "Go back",
   "settingsFooter": "SariSari — a working prototype.",
+  "settingsSecuritySection": "Security",
+  "settingsSecuritySectionSub": "Protect sensitive store actions with a PIN.",
 
   "languagePickerTitle": "Choose your language",
   "languagePickerSubtitle": "Pick the language you want Sari to speak.",

@@ -6,5 +6,27 @@
   "saved": "Na-save.",
   "invalid_hours": "Mangyaring maglagay ng wastong numero ng oras.",
   "owner_auth_required": "Kailangan ang pahintulot ng may-ari",
-  "save_failed": "Bigo sa pag-save ng mga setting."
+  "save_failed": "Bigo sa pag-save ng mga setting.",
+  "pin": {
+    "title": "Kailangan ng Owner PIN",
+    "enter_pin": "Ilagay ang 4-6 digit Owner PIN",
+    "wrong_pin": "Maling PIN. Subukang muli.",
+    "locked_out": "Sobrang maling subok. Subukang muli sa {{seconds}}s.",
+    "forgot_pin": "Nakalimutan ang PIN?",
+    "setup_title": "Mag-set up ng Owner PIN",
+    "confirm_pin": "Kumpirmahin ang 4-6 digit PIN",
+    "pin_mismatch": "Hindi magkatugma ang PIN. Subukang muli.",
+    "recovery_title": "I-save ang Recovery Code",
+    "recovery_desc": "Isulat o kopyahin ang recovery code na ito. Ipinapakita lamang ito nang minsan at kailangan kung makalimutan ang PIN.",
+    "copy_code": "Kopyahin ang Code",
+    "code_copied": "Naka-copy na sa clipboard!",
+    "reset_title": "I-reset ang PIN gamit ang Recovery Code",
+    "enter_recovery_code": "Ilagay ang 8-character Recovery Code",
+    "invalid_code": "Maling recovery code.",
+    "status_configured": "PIN Naka-setup",
+    "status_not_configured": "Walang PIN",
+    "btn_setup": "Mag-set up ng Owner PIN",
+    "btn_change": "Palitan ang PIN",
+    "btn_reset": "I-reset gamit ang Recovery Code"
+  }
 }

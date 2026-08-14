@@ -796,4 +796,42 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v19.');
   }
+
+  if (currentVersion < 20) {
+    console.log(
+      'Running migration to v20 (Owner PIN for Sensitive Actions)...',
+    );
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS auth_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          pin_hash TEXT NOT NULL,
+          pin_salt TEXT NOT NULL,
+          recovery_code_hash TEXT NOT NULL,
+          recovery_code_salt TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('owner_pin_discount_threshold_pesos', '50', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('owner_pin_discount_threshold_percent', '10', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+
+      await db.execAsync('PRAGMA user_version = 20;');
+    });
+    console.log('Database migrated to v20.');
+  }
+
 }

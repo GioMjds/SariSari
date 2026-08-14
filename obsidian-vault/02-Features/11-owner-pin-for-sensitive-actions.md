@@ -1,5 +1,7 @@
 # 11. PIN ng May-ari para sa Maselang Aksyon (Owner PIN for Sensitive Actions)
 
+## Status: In Progress
+
 > Phase: Susunod (Next)
 
 ## Problema
@@ -30,11 +32,13 @@ Bilang may-ari ng tindahan, gusto ko ng PIN na nagha-harang sa mga pinakamahahal
 
 ## Mga Implikasyon sa Data (Data Implications)
 
-- Bagong talahanayan na `auth_settings`: `id` (singleton row, id = 1), `pin_hash` TEXT (Argon2 o scrypt hash), `pin_salt` TEXT, `recovery_code_hash` TEXT, `failed_attempts` INTEGER, `lockout_until` INTEGER, `set_at` TEXT, `updated_at` TEXT.
-- Ang lockout state (in-memory cooldown) ay nakatira sa isang maliit na Zustand store sa ilalim ng `stores/auth.ts`.
-- Bagong mga function sa `database/auth.ts`: `isPinConfigured()`, `setPin(pin)`, `verifyPin(pin)`, `verifyRecoveryCode(code)`.
-- Bagong hook sa `hooks/useAuth.tsx`.
-- Bagong migration na nagtataas ng `user_version` lampas sa 9.
+- Bagong talahanayan na `auth_settings`: `id` (singleton row, id = 1), `pin_hash` TEXT (Argon2 o scrypt/PBKDF2 hash), `pin_salt` TEXT, `recovery_code_hash` TEXT, `recovery_code_salt` TEXT, `created_at` INTEGER, `updated_at` INTEGER.
+- Paggamit ng `app_settings` (mula sa tampok 7 / ADR-002) para sa configurable discount thresholds: `owner_pin_discount_threshold_pesos` (default: 50) at `owner_pin_discount_threshold_percent` (default: 10).
+- Ang lockout state (in-memory cooldown) ay nakatira sa Zustand store sa ilalim ng `stores/useAuthStore.ts`.
+- Mga function sa `database/auth.ts`: `initAuthTable()`, `isOwnerPinConfigured()`, `setupOwnerPin(pin)`, `verifyOwnerPin(pin)`, `verifyAndResetOwnerPinWithRecoveryCode(code, newPin)`, `changeOwnerPin(currentPin, newPin)`.
+- Mga hook at provider sa `hooks/useOwnerPin.ts`, `hooks/useOwnerPinGuard.ts`, at `components/auth/OwnerPinGuardProvider.tsx`.
+- Migration v20 para sa `auth_settings` at `app_settings` seeding.
+
 
 ## Mga Dependency (Dependencies)
 

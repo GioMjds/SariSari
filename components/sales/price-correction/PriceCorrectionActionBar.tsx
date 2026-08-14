@@ -33,14 +33,11 @@ export const PriceCorrectionActionBar: React.FC<
         disabled={isSubmitting || isLoading}
         accessibilityRole="button"
         accessibilityLabel="Save Price Correction"
-        className={`rounded-2xl py-4 flex-row items-center justify-center ${
+        className={`rounded-2xl py-4 flex-row items-center justify-center press-scale active:opacity-80 ${
           isSubmitting || isLoading
             ? 'bg-ink-100 shadow-none'
             : 'bg-cinnamon-600 shadow-paper'
         }`}
-        style={({ pressed }) => ({
-          transform: [{ scale: !isSubmitting && pressed ? 0.98 : 1 }],
-        })}
       >
         <FontAwesome
           name={isSubmitting ? 'spinner' : 'check-circle'}

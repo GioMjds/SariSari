@@ -4,10 +4,10 @@ import {
   TextInput,
   Pressable,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Alert } from '@/utils';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';

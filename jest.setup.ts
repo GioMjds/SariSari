@@ -281,9 +281,14 @@ jest.mock('expo-web-browser', () => ({
 // Mock expo-crypto — `googleDrive.ts` uses `Crypto.digestStringAsync`
 // for PKCE. Tests stub.
 jest.mock('expo-crypto', () => ({
-  digestStringAsync: jest.fn(async () => 'hashed'),
+  digestStringAsync: jest.fn(async (_algo: any, str: string) => `hashed_${str}`),
+  getRandomBytesAsync: jest.fn(async (len: number) => {
+    const arr = new Uint8Array(len);
+    for (let i = 0; i < len; i++) arr[i] = (i + 1) * 15 % 256;
+    return arr;
+  }),
   randomUUID: jest.fn(() => 'uuid'),
-  Random: { getRandomBytesAsync: jest.fn(async () => new Uint8Array(32)) },
+  Random: { getRandomBytesAsync: jest.fn(async (len: number) => new Uint8Array(len)) },
   CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
 }));
 
@@ -396,6 +401,12 @@ jest.mock('expo-image-picker', () => ({
     canceled: true,
     assets: [],
   })),
+}));
+
+// Mock expo-clipboard
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn(async () => true),
+  getStringAsync: jest.fn(async () => ''),
 }));
 
 // Mock expo-notifications to prevent EventEmitter failures in Node/Jest

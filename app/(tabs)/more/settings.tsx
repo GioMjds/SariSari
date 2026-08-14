@@ -3,7 +3,6 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
-
 import { StyledText } from '@/components/elements';
 import { useProfile } from '@/hooks/useProfile';
 import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog';
@@ -12,6 +11,7 @@ import {
   LocalSnapshotsSection,
 } from '@/components/settings/backup';
 import { SupportedLanguage } from '@/lib/i18n';
+import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
@@ -95,6 +95,13 @@ export default function Settings() {
           <CloudBackupSection />
           <LocalSnapshotsSection />
         </SettingsSection>
+
+        <SettingsSection
+          title={t('common:settingsSecuritySection')}
+          subtitle={t('common:settingsSecuritySectionSub')}
+        >
+          <OwnerPinSettingsCard />
+        </SettingsSection>
       </ScrollView>
 
       <LanguagePickerDialog
@@ -148,7 +155,7 @@ function SettingsRow({
   label: string;
   value: string;
   subtitle?: string;
-  icon?: string;
+  icon?: keyof typeof FontAwesome.glyphMap;
   interactive?: boolean;
   onPress?: () => void;
 }) {
@@ -160,7 +167,7 @@ function SettingsRow({
     >
       {icon ? (
         <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
-          <FontAwesome name={icon as any} size={15} color="#623418" />
+          <FontAwesome name={icon} size={15} color="#623418" />
         </View>
       ) : null}
       <View className="flex-1">

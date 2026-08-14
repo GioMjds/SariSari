@@ -6,5 +6,27 @@
   "saved": "Saved.",
   "invalid_hours": "Please enter a valid positive number of hours.",
   "owner_auth_required": "Owner authorization required",
-  "save_failed": "Failed to save settings."
+  "save_failed": "Failed to save settings.",
+  "pin": {
+    "title": "Owner PIN Required",
+    "enter_pin": "Enter 4-6 digit Owner PIN",
+    "wrong_pin": "Incorrect PIN. Try again.",
+    "locked_out": "Too many failed attempts. Try again in {{seconds}}s.",
+    "forgot_pin": "Forgot PIN?",
+    "setup_title": "Set Up Owner PIN",
+    "confirm_pin": "Confirm 4-6 digit PIN",
+    "pin_mismatch": "PINs do not match. Try again.",
+    "recovery_title": "Save Your Recovery Code",
+    "recovery_desc": "Write down or copy this recovery code. It will only be shown once and is required if you forget your PIN.",
+    "copy_code": "Copy Code",
+    "code_copied": "Code copied to clipboard!",
+    "reset_title": "Reset PIN with Recovery Code",
+    "enter_recovery_code": "Enter 8-character Recovery Code",
+    "invalid_code": "Invalid recovery code.",
+    "status_configured": "PIN Set Up",
+    "status_not_configured": "No PIN Set",
+    "btn_setup": "Set Up Owner PIN",
+    "btn_change": "Change Owner PIN",
+    "btn_reset": "Reset with Recovery Code"
+  }
 }
