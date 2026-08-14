@@ -73,16 +73,6 @@ export function MoreHomeScreen() {
               state={cashState}
               onPress={() => navigate(MORE_ROUTES.cash)}
             />
-            <MoreDestinationRow
-              icon="bar-chart"
-              title={t('common:moreHomeReportsLabel')}
-              supportingText={t('common:moreHomeReportsSub')}
-              onPress={() => navigate(MORE_ROUTES.reports)}
-              accessibilityLabel={`${t('common:moreHomeReportsLabel')}. ${t(
-                'common:moreHomeReportsSub',
-              )}`}
-              accessibilityHint={t('common:moreHomeReportsHint')}
-            />
           </MoreSection>
 
           <MoreSection label={t('common:moreHomeStoreDataSection')}>

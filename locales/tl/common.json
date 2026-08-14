@@ -149,8 +149,7 @@
   "reportsTitle": "Mga Ulat",
 
   "moreHomeTitle": "Iba pa",
-  "moreHomeSubtitle": "Tingnan, i-set up, at pangalagaan ang tindahan",
-  "moreHomeBackupSub": "Cloud backup at lokal na snapshot",
+  "moreHomeSubtitle": "Asikasuhin ang araw, unawain ang tindahan, at panatilihing ligtas ang iyong data.",
   "moreHomeEyebrow": "Mga gamit ng tindahan",
   "moreHomeCashLabel": "Kaha at gastos",
   "moreHomeCashLoading": "Tinitingnan ang galaw ngayong araw",
@@ -161,9 +160,6 @@
   "moreHomeCashReviewAction": "Suriin ang kaha",
   "moreHomeCashCheckAction": "Tingnan ang kaha",
   "moreHomeCashHint": "Binubuksan ang gastos at kuha ng may-ari ngayong araw",
-  "moreHomeReportsLabel": "Mga ulat at insight",
-  "moreHomeReportsSub": "Takbo ng benta, stock, suki, at kaha",
-  "moreHomeReportsHint": "Binubuksan ang pinagsamang ulat ng tindahan",
   "moreHomeStoreDataSection": "Tindahan at data",
   "moreHomeBackupLabel": "Backup at pag-restore",
   "moreHomeBackupLoading": "Tinitingnan ang lokal na backup",
@@ -294,6 +290,5 @@
       "sub": "Mag-restock bago maubos",
       "cta": "Mag-restock"
     }
-  },
-  "moreHomeQuickActions": "Mabilisang aksyon"
+  }
 }

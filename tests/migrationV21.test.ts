@@ -66,10 +66,12 @@ describe('Migration v21 Schema Alignment', () => {
 
     expect(correctionId).toBeGreaterThan(0);
 
-    const updatedSale = await db.getFirstAsync<{ cancelled_at: string | null; cancelled_by_kind: string | null }>(
-      'SELECT cancelled_at, cancelled_by_kind FROM sales WHERE id = ?',
-      [saleId],
-    );
+    const updatedSale = await db.getFirstAsync<{
+      cancelled_at: string | null;
+      cancelled_by_kind: string | null;
+    }>('SELECT cancelled_at, cancelled_by_kind FROM sales WHERE id = ?', [
+      saleId,
+    ]);
     expect(updatedSale?.cancelled_at).not.toBeNull();
     expect(updatedSale?.cancelled_by_kind).toBe('void');
   });
@@ -110,10 +112,61 @@ describe('Migration v21 Schema Alignment', () => {
 
     expect(correctionId).toBeGreaterThan(0);
 
-    const refundEntry = await db.getFirstAsync<{ type: string; amount: number }>(
+    const refundEntry = await db.getFirstAsync<{
+      type: string;
+      amount: number;
+    }>(
       `SELECT type, amount FROM cash_entries WHERE session_id = 'session-v21-refund' AND type = 'cash_refund'`,
     );
     expect(refundEntry?.type).toBe('cash_refund');
     expect(refundEntry?.amount).toBe(15);
+  });
+
+  it('repairs legacy v20 customer columns without losing customer data', async () => {
+    await db.execAsync('PRAGMA foreign_keys = OFF;');
+    await db.execAsync(`
+      DROP TABLE customers;
+
+      CREATE TABLE customers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        phone TEXT,
+        address TEXT,
+        notes TEXT,
+        credit_limit INTEGER,
+        block_on_exceed INTEGER NOT NULL DEFAULT 0,
+        overdue_threshold_days INTEGER NOT NULL DEFAULT 30,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      INSERT INTO customers (id, name, phone)
+      VALUES (41, 'Legacy Customer', '09171234567');
+
+      PRAGMA user_version = 20;
+    `);
+    await db.execAsync('PRAGMA foreign_keys = ON;');
+
+    await runMigrations();
+
+    const customerColumns = await db.getAllAsync<{ name: string }>(
+      'PRAGMA table_info(customers)',
+    );
+    expect(customerColumns.map((column) => column.name)).toEqual(
+      expect.arrayContaining(['birthday', 'photo_uri']),
+    );
+
+    const preservedCustomer = await db.getFirstAsync<{
+      id: number;
+      name: string;
+      birthday: string | null;
+      photo_uri: string | null;
+    }>('SELECT id, name, birthday, photo_uri FROM customers WHERE id = 41');
+    expect(preservedCustomer).toEqual({
+      id: 41,
+      name: 'Legacy Customer',
+      birthday: null,
+      photo_uri: null,
+    });
   });
 });

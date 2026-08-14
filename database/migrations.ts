@@ -839,7 +839,18 @@ export async function runMigrations() {
       'Running migration to v21 (Schema alignment and repair for cancellations)...',
     );
     await db.withTransactionAsync(async () => {
-      // 1. Ensure sales cancellation and reference columns exist
+      // 1. Repair customer columns that predate the profile fields.
+      const customerCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(customers)',
+      );
+      if (!customerCols.some((column) => column.name === 'birthday')) {
+        await db.execAsync('ALTER TABLE customers ADD COLUMN birthday TEXT;');
+      }
+      if (!customerCols.some((column) => column.name === 'photo_uri')) {
+        await db.execAsync('ALTER TABLE customers ADD COLUMN photo_uri TEXT;');
+      }
+
+      // 2. Ensure sales cancellation and reference columns exist
       const salesCols = await db.getAllAsync<{ name: string }>(
         'PRAGMA table_info(sales)',
       );
@@ -875,7 +886,7 @@ export async function runMigrations() {
         'CREATE INDEX IF NOT EXISTS idx_sales_credit_txn ON sales(credit_transaction_id);',
       );
 
-      // 2. Ensure credit_transactions cancellation columns exist
+      // 3. Ensure credit_transactions cancellation columns exist
       const ctCols = await db.getAllAsync<{ name: string }>(
         'PRAGMA table_info(credit_transactions)',
       );
@@ -900,7 +911,7 @@ export async function runMigrations() {
         );
       }
 
-      // 3. Ensure cash_entries supports 'cash_refund'
+      // 4. Ensure cash_entries supports 'cash_refund'
       const cashEntriesTableInfo = await db.getFirstAsync<{ sql: string }>(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='cash_entries'",
       );
@@ -936,7 +947,7 @@ export async function runMigrations() {
         await db.execAsync('PRAGMA foreign_keys=ON;');
       }
 
-      // 4. Ensure sale_corrections and sale_correction_lines tables exist
+      // 5. Ensure sale_corrections and sale_correction_lines tables exist
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS sale_corrections (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -982,7 +993,7 @@ export async function runMigrations() {
         'CREATE INDEX IF NOT EXISTS idx_sale_correction_lines_correction_id ON sale_correction_lines(correction_id);',
       );
 
-      // 5. Ensure app_settings defaults
+      // 6. Ensure app_settings defaults
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS app_settings (
           key TEXT PRIMARY KEY,

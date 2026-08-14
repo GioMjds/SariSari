@@ -149,8 +149,7 @@
   "reportsTitle": "Reports",
 
   "moreHomeTitle": "More",
-  "moreHomeSubtitle": "Review, set up, and safeguard your store",
-  "moreHomeBackupSub": "Cloud backup and local snapshots",
+  "moreHomeSubtitle": "Manage the day, understand the store, and keep your data safe.",
   "moreHomeEyebrow": "Store tools",
   "moreHomeCashLabel": "Cash & expenses",
   "moreHomeCashLoading": "Checking today's movements",
@@ -161,9 +160,6 @@
   "moreHomeCashReviewAction": "Review cash",
   "moreHomeCashCheckAction": "Check cash",
   "moreHomeCashHint": "Opens today's expenses and owner drawings",
-  "moreHomeReportsLabel": "Reports & insights",
-  "moreHomeReportsSub": "Sales, stock, suki, and cash trends",
-  "moreHomeReportsHint": "Opens consolidated store reports",
   "moreHomeStoreDataSection": "Store & data",
   "moreHomeBackupLabel": "Backup & restore",
   "moreHomeBackupLoading": "Checking local backup",
@@ -294,6 +290,5 @@
       "sub": "Restock before you run out",
       "cta": "Restock"
     }
-  },
-  "moreHomeQuickActions": "Quick actions"
+  }
 }

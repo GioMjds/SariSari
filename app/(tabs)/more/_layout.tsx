@@ -1,5 +1,5 @@
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 
 export default function MoreLayout() {
-  return <Slot />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

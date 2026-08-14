@@ -14,9 +14,6 @@ const REQUIRED_MORE_KEYS = [
   'moreHomeCashReviewAction',
   'moreHomeCashCheckAction',
   'moreHomeCashHint',
-  'moreHomeReportsLabel',
-  'moreHomeReportsSub',
-  'moreHomeReportsHint',
   'moreHomeStoreDataSection',
   'moreHomeBackupLabel',
   'moreHomeBackupLoading',
@@ -82,6 +79,11 @@ const REMOVED_DIRECTORY_KEYS = [
   'moreHomeHelpSub',
   'moreHomeAboutLabel',
   'moreHomeAboutSub',
+  'moreHomeBackupSub',
+  'moreHomeQuickActions',
+  'moreHomeReportsLabel',
+  'moreHomeReportsSub',
+  'moreHomeReportsHint',
 ] as const;
 
 describe('More localization contract', () => {
@@ -99,6 +101,15 @@ describe('More localization contract', () => {
     expect(tl.moreHomeCashSummary).toContain('{{drawings}}');
     expect(en.moreHomeBackupLatest).toContain('{{when}}');
     expect(tl.moreHomeBackupLatest).toContain('{{when}}');
+  });
+
+  it('uses the approved bilingual More subtitle copy', () => {
+    expect(en.moreHomeSubtitle).toBe(
+      'Manage the day, understand the store, and keep your data safe.',
+    );
+    expect(tl.moreHomeSubtitle).toBe(
+      'Asikasuhin ang araw, unawain ang tindahan, at panatilihing ligtas ang iyong data.',
+    );
   });
 
   it.each(REMOVED_DIRECTORY_KEYS)('removes obsolete key %s', (key) => {

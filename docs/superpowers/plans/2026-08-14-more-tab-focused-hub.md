@@ -7,8 +7,9 @@
 > completion.
 
 **Goal:** Replace the development-only, app-wide More shortcut directory with
-a production-ready four-destination owner hub: Cash & expenses, Reports &
-insights, Backup & restore, and Settings & security.
+a production-ready owner hub for Cash & expenses, Backup & restore, and
+Settings & security. Keep Reports available as a direct route while its future
+placement is redesigned.
 
 **Architecture:** Keep `MoreHomeScreen` as a thin composition layer. It reads
 today's financial totals and local snapshot metadata through existing TanStack
@@ -85,9 +86,6 @@ const REQUIRED_MORE_KEYS = [
   'moreHomeCashReviewAction',
   'moreHomeCashCheckAction',
   'moreHomeCashHint',
-  'moreHomeReportsLabel',
-  'moreHomeReportsSub',
-  'moreHomeReportsHint',
   'moreHomeStoreDataSection',
   'moreHomeBackupLabel',
   'moreHomeBackupLoading',
@@ -155,9 +153,6 @@ approved copy:
 "moreHomeCashReviewAction": "Review cash",
 "moreHomeCashCheckAction": "Check cash",
 "moreHomeCashHint": "Opens today's expenses and owner drawings",
-"moreHomeReportsLabel": "Reports & insights",
-"moreHomeReportsSub": "Sales, stock, suki, and cash trends",
-"moreHomeReportsHint": "Opens consolidated store reports",
 "moreHomeStoreDataSection": "Store & data",
 "moreHomeBackupLabel": "Backup & restore",
 "moreHomeBackupLoading": "Checking local backup",
@@ -199,9 +194,6 @@ than literal word order:
 "moreHomeCashReviewAction": "Suriin ang kaha",
 "moreHomeCashCheckAction": "Tingnan ang kaha",
 "moreHomeCashHint": "Binubuksan ang gastos at kuha ng may-ari ngayong araw",
-"moreHomeReportsLabel": "Mga ulat at insight",
-"moreHomeReportsSub": "Takbo ng benta, stock, suki, at kaha",
-"moreHomeReportsHint": "Binubuksan ang pinagsamang ulat ng tindahan",
 "moreHomeStoreDataSection": "Tindahan at data",
 "moreHomeBackupLabel": "Backup at pag-restore",
 "moreHomeBackupLoading": "Tinitingnan ang lokal na backup",
@@ -254,7 +246,7 @@ git commit -m "test: define focused More tab copy"
 - Create: `app/(tabs)/more/backup.tsx`
 - Create: `components/more/__tests__/moreNavigation.test.tsx`
 - Create: `components/more/__tests__/MoreDetailHeader.test.tsx`
-- Create: `app/(tabs)/more/__tests__/backupSettingsSplit.test.tsx`
+- Create: `tests/routes/more/backupSettingsSplit.test.tsx`
 - Modify: `app/(tabs)/more/settings.tsx`
 - Modify: `components/more/index.ts`
 
@@ -411,7 +403,7 @@ component mocks so the test does not exercise OAuth or snapshot I/O.
 ### Step 5: Run the split test and verify RED
 
 ```powershell
-pnpm test -- --runInBand "app/(tabs)/more/__tests__/backupSettingsSplit.test.tsx"
+pnpm test -- --runInBand tests/routes/more/backupSettingsSplit.test.tsx
 ```
 
 Expected: FAIL because `backup.tsx` does not exist and Settings still renders
@@ -636,7 +628,7 @@ Confirm `.expo/types/router.d.ts` contains `more/backup`. Do not stage `.expo`.
 ### Step 11: Run tests and typecheck for GREEN
 
 ```powershell
-pnpm test -- --runInBand components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx "app/(tabs)/more/__tests__/backupSettingsSplit.test.tsx"
+pnpm test -- --runInBand components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx tests/routes/more/backupSettingsSplit.test.tsx
 pnpm typecheck
 ```
 
@@ -645,7 +637,7 @@ Expected: PASS.
 ### Step 12: Commit only the route split and navigation foundation
 
 ```powershell
-git add -- "app/(tabs)/more/backup.tsx" "app/(tabs)/more/settings.tsx" "app/(tabs)/more/__tests__/backupSettingsSplit.test.tsx" components/more/moreNavigation.ts components/more/useMoreDestinationNavigation.ts components/more/useScreenHeadingFocus.ts components/more/MoreDetailHeader.tsx components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx components/more/index.ts components/settings/SettingsPrimitives.tsx
+git add -- "app/(tabs)/more/backup.tsx" "app/(tabs)/more/settings.tsx" tests/routes/more/backupSettingsSplit.test.tsx components/more/moreNavigation.ts components/more/useMoreDestinationNavigation.ts components/more/useScreenHeadingFocus.ts components/more/MoreDetailHeader.tsx components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx components/more/index.ts components/settings/SettingsPrimitives.tsx
 git diff --cached --name-only
 git diff --cached --check
 git commit -m "feat: split backup into More destination"
@@ -1140,7 +1132,7 @@ git commit -m "feat: add focused More hub components"
 
 - Create: `components/more/formatLocalBackupTimestamp.ts`
 - Create: `components/more/__tests__/MoreHomeScreen.test.tsx`
-- Create: `app/(tabs)/more/__tests__/productionAvailability.test.tsx`
+- Create: `tests/routes/more/productionAvailability.test.tsx`
 - Modify: `components/more/MoreHomeScreen.tsx`
 - Modify: `app/(tabs)/more/_layout.tsx`
 - Modify: `app/(tabs)/more/index.tsx`
@@ -1159,8 +1151,9 @@ Locally mock:
 
 Render with `initI18n()` and verify:
 
-1. Exactly four destination buttons appear in this reading order:
-   Cash, Reports, Backup, Settings.
+1. Exactly three destination buttons appear in this reading order:
+   Cash, Backup, Settings. Reports remains available by direct route but is
+   intentionally not linked from this temporary landing screen.
 2. POS, Receipts, Products, Customers, Help, About, and individual report
    shortcuts are absent.
 3. `useFinancialTotals` receives `('2026-08-14', '2026-08-14')`.
@@ -1179,17 +1172,30 @@ afterward.
 
 ### Step 2: Write the failing production-availability test
 
-Mock Expo Router's `Slot` and `MoreHomeScreen` with test-ID Views. Temporarily
-set `global.__DEV__ = false` and render both route files:
+Mock Expo Router's `Stack` with a test-ID View, but exercise the real
+`MoreHomeScreen` export. Temporarily set `global.__DEV__ = false`, isolate the
+route-module import, and verify both route boundaries:
 
 ```tsx
-it('renders the More stack in production', () => {
+it('uses a headerless native stack for More destinations', async () => {
+  const layout = await render(<MoreLayout />);
+  expect(layout.getByTestId('more-stack').props.accessibilityLabel).toBe(
+    JSON.stringify({ headerShown: false }),
+  );
+  await layout.unmount();
+});
+
+it('renders the real More home in production', () => {
   const runtime = global as typeof global & { __DEV__: boolean };
   const previous = runtime.__DEV__;
   try {
     runtime.__DEV__ = false;
-    expect(render(<MoreLayout />).getByTestId('more-slot')).toBeTruthy();
-    expect(render(<MoreIndex />).getByTestId('more-home')).toBeTruthy();
+    jest.isolateModules(() => {
+      const MoreIndex = require('@/app/(tabs)/more/index').default;
+      const { MoreHomeScreen } = require('@/components/more');
+      expect(MoreHomeScreen.name).toBe('MoreHomeScreen');
+      expect(MoreIndex().type).toBe(MoreHomeScreen);
+    });
   } finally {
     runtime.__DEV__ = previous;
   }
@@ -1201,7 +1207,7 @@ Use `try/finally` in the real test so `__DEV__` is restored even on failure.
 ### Step 3: Run both tests and verify RED
 
 ```powershell
-pnpm test -- --runInBand components/more/__tests__/MoreHomeScreen.test.tsx "app/(tabs)/more/__tests__/productionAvailability.test.tsx"
+pnpm test -- --runInBand components/more/__tests__/MoreHomeScreen.test.tsx tests/routes/more/productionAvailability.test.tsx
 ```
 
 Expected: FAIL because the old directory, redirects, and feature guards remain.
@@ -1276,10 +1282,9 @@ Compose only:
 
 1. `MoreScreenHeader`;
 2. `CashSummaryFeatureCard`;
-3. Reports `MoreDestinationRow`;
-4. `MoreSection` labeled Store & data;
-5. Backup row;
-6. Settings row.
+3. `MoreSection` labeled Store & data;
+4. Backup row;
+5. Settings row.
 
 Use an inner content View with:
 
@@ -1301,10 +1306,10 @@ cash and backup metadata must degrade independently.
 Replace `app/(tabs)/more/_layout.tsx` with:
 
 ```tsx
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 
 export default function MoreLayout() {
-  return <Slot />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 ```
 
@@ -1324,7 +1329,7 @@ Remove every `withFeatureGuard` import and wrapper from
 ### Step 7: Run focused tests and typecheck for GREEN
 
 ```powershell
-pnpm test -- --runInBand components/more/__tests__/MoreHomeScreen.test.tsx "app/(tabs)/more/__tests__/productionAvailability.test.tsx"
+pnpm test -- --runInBand components/more/__tests__/MoreHomeScreen.test.tsx tests/routes/more/productionAvailability.test.tsx
 pnpm typecheck
 ```
 
@@ -1333,7 +1338,7 @@ Expected: PASS.
 ### Step 8: Commit the production landing screen
 
 ```powershell
-git add -- "app/(tabs)/more/_layout.tsx" "app/(tabs)/more/index.tsx" "app/(tabs)/more/__tests__/productionAvailability.test.tsx" components/more/MoreHomeScreen.tsx components/more/formatLocalBackupTimestamp.ts components/more/__tests__/MoreHomeScreen.test.tsx components/more/index.ts
+git add -- "app/(tabs)/more/_layout.tsx" "app/(tabs)/more/index.tsx" tests/routes/more/productionAvailability.test.tsx components/more/MoreHomeScreen.tsx components/more/formatLocalBackupTimestamp.ts components/more/__tests__/MoreHomeScreen.test.tsx components/more/index.ts
 git diff --cached --name-only
 git diff --cached --check
 git commit -m "feat: launch focused More tab hub"
@@ -1505,6 +1510,11 @@ const REMOVED_DIRECTORY_KEYS = [
   'moreHomeTileLanguage',
   'moreHomeTileBackup',
   'moreHomeTileDeveloperReset',
+  'moreHomeBackupSub',
+  'moreHomeQuickActions',
+  'moreHomeReportsLabel',
+  'moreHomeReportsSub',
+  'moreHomeReportsHint',
 ] as const;
 
 it.each(REMOVED_DIRECTORY_KEYS)('removes obsolete key %s', (key) => {
@@ -1531,8 +1541,8 @@ consumers:
 - `moreHomeAboutLabel`
 - `moreHomeAboutSub`
 
-Do not remove retained keys such as `moreHomeTitle`,
-`moreHomeReportsLabel`, `moreHomeReportsSub`, or `moreHomeBackupLabel`.
+Do not remove retained keys such as `moreHomeTitle`, `moreHomeSubtitle`, or
+`moreHomeBackupLabel`.
 
 ### Step 3: Run the cleanup test and verify RED
 
@@ -1599,7 +1609,7 @@ git commit -m "refactor: remove obsolete More directory UI"
 ### Step 1: Run all focused More tests together
 
 ```powershell
-pnpm test -- --runInBand tests/moreLocalization.test.ts components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx components/more/__tests__/CashSummaryFeatureCard.test.tsx components/more/__tests__/MoreDestinationRow.test.tsx components/more/__tests__/MoreHomeScreen.test.tsx "app/(tabs)/more/__tests__/backupSettingsSplit.test.tsx" "app/(tabs)/more/__tests__/productionAvailability.test.tsx" components/reports/__tests__/AlmanacMasthead.test.tsx
+pnpm test -- --runInBand tests/moreLocalization.test.ts tests/routeHygiene.test.ts components/more/__tests__/moreNavigation.test.tsx components/more/__tests__/MoreDetailHeader.test.tsx components/more/__tests__/CashSummaryFeatureCard.test.tsx components/more/__tests__/MoreDestinationRow.test.tsx components/more/__tests__/MoreHomeScreen.test.tsx tests/routes/more/backupSettingsSplit.test.tsx tests/routes/more/productionAvailability.test.tsx components/reports/__tests__/AlmanacMasthead.test.tsx
 ```
 
 Expected: PASS with no open handles or console errors.
@@ -1638,7 +1648,7 @@ Expected:
 
 Confirm:
 
-- exactly four landing-screen Pressables;
+- exactly three landing-screen Pressables;
 - all have button roles, labels, and hints;
 - every touch target is at least 48dp;
 - text has no fixed heights or `numberOfLines`;
@@ -1699,14 +1709,16 @@ Do not create an empty verification commit.
 
 - More renders in production with no development guard or unimplemented
   redirect.
-- The landing screen contains exactly Cash, Reports, Backup, and Settings.
+- The temporary landing screen contains exactly Cash, Backup, and Settings;
+  Reports remains available by direct route pending its future placement.
 - Cash shows local paid-expense and owner-drawing totals and opens
   `/(tabs)/more/cash-entries`.
 - Backup helper text uses only newest local snapshot metadata; no Drive query
   runs from More.
 - Backup has its own route; Settings retains Store, Language, Owner PIN, and
   preferences.
-- All four destination routes support normal Back and deep-link fallback.
+- The three landing destinations and retained Reports route support normal
+  Back and deep-link fallback.
 - English and Tagalog copy, accessibility, responsive layout, safe bottom
   inset, and reduced-motion requirements pass.
 - Focused tests, `pnpm lint`, and `pnpm verify` pass.

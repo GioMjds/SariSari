@@ -42,7 +42,10 @@ export function AlmanacMasthead({
             <FontAwesome name="arrow-left" size={16} color="#FAFAF7" />
           </Pressable>
 
-          <View className="ml-2 flex-row items-center">
+          <View
+            className="ml-2 flex-row items-center"
+            style={{ flexShrink: 1, minWidth: 0 }}
+          >
             <View className="w-8 h-8 rounded-full bg-persimmon-500 items-center justify-center mr-2 shadow-paper">
               <StyledText variant="black" className="text-paper-50 text-lg">
                 ₱
@@ -62,7 +65,8 @@ export function AlmanacMasthead({
           onPress={onRefresh}
           accessibilityRole="button"
           accessibilityLabel="Refresh reports"
-          className="w-9 h-9 rounded-full bg-paper-50/15 items-center justify-center active:opacity-70"
+          style={{ minWidth: 48, minHeight: 48 }}
+          className="rounded-full bg-paper-50/15 items-center justify-center active:opacity-70"
         >
           <MotiView
             animate={{ rotate: isRefreshing ? '360deg' : '0deg' }}

@@ -102,17 +102,16 @@ describe('MoreHomeScreen', () => {
     expect(MoreHomeScreen.name).toBe('MoreHomeScreen');
   });
 
-  it('renders exactly the four focused destinations in reading order', async () => {
+  it('renders the three current destinations in reading order', async () => {
     const screen = await render(<MoreHomeScreen />);
     const buttons = screen.container.queryAll(
       (node) => node.props['accessibilityRole'] === 'button',
     );
 
-    expect(buttons).toHaveLength(4);
+    expect(buttons).toHaveLength(3);
     expect(buttons.map((button) => button.props['accessibilityLabel'])).toEqual(
       [
         'Cash & expenses. Expenses ₱125.00 · Owner drawings ₱25.00. Review cash',
-        'Reports & insights. Sales, stock, suki, and cash trends',
         'Backup & restore. No backup yet',
         'Settings & security. Store, language, Owner PIN, and preferences',
       ],
@@ -235,10 +234,6 @@ describe('MoreHomeScreen', () => {
         'Cash & expenses. Expenses ₱125.00 · Owner drawings ₱25.00. Review cash',
         MORE_ROUTES.cash,
       ],
-      [
-        'Reports & insights. Sales, stock, suki, and cash trends',
-        MORE_ROUTES.reports,
-      ],
       ['Backup & restore. No backup yet', MORE_ROUTES.backup],
       [
         'Settings & security. Store, language, Owner PIN, and preferences',
@@ -255,11 +250,9 @@ describe('MoreHomeScreen', () => {
     }
 
     mockRouter.navigate.mockClear();
-    const reports = screen.getByLabelText(
-      'Reports & insights. Sales, stock, suki, and cash trends',
-    );
-    await fireEvent.press(reports);
-    await fireEvent.press(reports);
+    const backup = screen.getByLabelText('Backup & restore. No backup yet');
+    await fireEvent.press(backup);
+    await fireEvent.press(backup);
     expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
 
     await screen.unmount();

@@ -60,8 +60,37 @@ describe('AlmanacMasthead', () => {
     await fireEvent.press(backButton);
     expect(onBack).toHaveBeenCalledTimes(1);
 
-    await fireEvent.press(screen.getByLabelText('Refresh reports'));
+    const refreshButton = screen.getByLabelText('Refresh reports');
+    expect(
+      StyleSheet.flatten(refreshButton.props['style']) ?? {},
+    ).toMatchObject({
+      minWidth: 48,
+      minHeight: 48,
+    });
+    await fireEvent.press(refreshButton);
     expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    await screen.unmount();
+  });
+
+  it('allows the report identity to shrink around the header actions', async () => {
+    const screen = await render(
+      <AlmanacMasthead
+        dateRange={dateRange}
+        onBack={jest.fn()}
+        onRefresh={jest.fn()}
+        isRefreshing={false}
+      />,
+    );
+
+    const identityRow = screen.getByText('GENERAL REPORTS').parent;
+    expect(identityRow).not.toBeNull();
+    expect(StyleSheet.flatten(identityRow?.props['style']) ?? {}).toMatchObject(
+      {
+        flexShrink: 1,
+        minWidth: 0,
+      },
+    );
 
     await screen.unmount();
   });
