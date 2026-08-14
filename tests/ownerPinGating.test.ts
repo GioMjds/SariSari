@@ -6,6 +6,8 @@ import {
   initSalesTables,
   initSuppliersTable,
   initCashTables,
+  initSettingsTable,
+  initAuthTable,
   runMigrations,
 } from '../database';
 import { getAppSetting, setAppSetting } from '../database/settings';
@@ -27,6 +29,8 @@ describe('Owner PIN Gating & Threshold Settings', () => {
     await initCategoriesTable();
     await initSuppliersTable();
     await initCashTables();
+    await initSettingsTable();
+    await initAuthTable();
     await runMigrations();
     await AsyncStorage.clear();
     await AsyncStorage.setItem(
@@ -39,19 +43,19 @@ describe('Owner PIN Gating & Threshold Settings', () => {
   });
 
   it('seeds default discount thresholds during v20 migration', async () => {
-    const pesoLimit = await getAppSetting('owner_pin_discount_threshold_pesos' as any);
-    const percentLimit = await getAppSetting('owner_pin_discount_threshold_percent' as any);
+    const pesoLimit = await getAppSetting('owner_pin_discount_threshold_pesos');
+    const percentLimit = await getAppSetting('owner_pin_discount_threshold_percent');
 
     expect(pesoLimit).toBe('50');
     expect(percentLimit).toBe('10');
   });
 
   it('updates discount thresholds in app_settings', async () => {
-    await setAppSetting('owner_pin_discount_threshold_pesos' as any, '100');
-    await setAppSetting('owner_pin_discount_threshold_percent' as any, '20');
+    await setAppSetting('owner_pin_discount_threshold_pesos', '100');
+    await setAppSetting('owner_pin_discount_threshold_percent', '20');
 
-    const updatedPesos = await getAppSetting('owner_pin_discount_threshold_pesos' as any);
-    const updatedPercent = await getAppSetting('owner_pin_discount_threshold_percent' as any);
+    const updatedPesos = await getAppSetting('owner_pin_discount_threshold_pesos');
+    const updatedPercent = await getAppSetting('owner_pin_discount_threshold_percent');
 
     expect(updatedPesos).toBe('100');
     expect(updatedPercent).toBe('20');

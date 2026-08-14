@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -30,21 +30,47 @@ export const OwnerPinSetupModal: FC<Props> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const setIsPinConfigured = useAuthStore((s) => s.setIsPinConfigured);
 
+  // TODO: This `useEffect` might not be the best solution here, it is just a band-aid solution fix for now.
+  // The problem is that when the modal is closed, the state of the modal is not reset, so when the modal is opened again, it will still have the previous state.
+  // This is because the modal is not unmounted when it is closed, it is just hidden.
+  // A better solution would be to unmount the modal when it is closed, but that would require a bigger refactor of the modal component.
+  useEffect(() => {
+    if (visible) return;
+    setStep('create');
+    setPin('');
+    setConfirmPin('');
+    setErrorMsg('');
+    setRecoveryCode('');
+    setCopied(false);
+  }, [visible]);
+
   const handleNext = async () => {
+    if (isSubmitting) return;
     if (step === 'create') {
-      if (pin.length < 4 || pin.length > 6) return;
+      if (pin.length < 4 || pin.length > 6) {
+        setErrorMsg(t('pin.pin_length_invalid'));
+        return;
+      }
       setStep('confirm');
     } else if (step === 'confirm') {
       if (pin !== confirmPin) {
         setErrorMsg(t('pin.pin_mismatch'));
         return;
       }
-      const res = await setupOwnerPin(pin);
-      setIsPinConfigured(true);
-      setRecoveryCode(res.recoveryCode);
-      setStep('code');
+      setIsSubmitting(true);
+      try {
+        const res = await setupOwnerPin(pin);
+        setIsPinConfigured(true);
+        setRecoveryCode(res.recoveryCode);
+        setStep('code');
+      } catch {
+        setErrorMsg(t('pin.setup_failed'));
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

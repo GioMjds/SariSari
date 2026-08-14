@@ -6,6 +6,8 @@ import {
   initSalesTables,
   initSuppliersTable,
   initCashTables,
+  initSettingsTable,
+  initAuthTable,
   runMigrations,
 } from '../database';
 import {
@@ -35,6 +37,8 @@ describe('app_settings owner authorization and settings validation', () => {
     await initCategoriesTable();
     await initSuppliersTable();
     await initCashTables();
+    await initSettingsTable();
+    await initAuthTable();
     await runMigrations();
     await AsyncStorage.clear();
   });

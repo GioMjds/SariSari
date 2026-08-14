@@ -1,16 +1,21 @@
 import { useContext } from 'react';
-import { OwnerPinGuardContext } from '@/components/auth/OwnerPinGuardProvider';
+import {
+  GuardOptions,
+  OwnerPinGuardContext,
+  OwnerPinGuardContextType,
+} from '@/components/auth/OwnerPinGuardProvider';
 
-export const useOwnerPinGuard = () => {
+export const useOwnerPinGuard = (): OwnerPinGuardContextType => {
   const ctx = useContext(OwnerPinGuardContext);
   if (!ctx) {
     return {
-      runWithPinGuard: async (options: {
-        onApproved: () => Promise<void> | void;
-      }) => {
-        await options.onApproved();
+      runWithPinGuard: async (_options: GuardOptions) => {
+        console.error(
+          'OwnerPinGuardProvider is missing from component tree. Action denied.',
+        );
       },
     };
   }
   return ctx;
 };
+

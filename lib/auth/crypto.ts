@@ -7,9 +7,7 @@ export async function generateSalt(): Promise<string> {
   } else if (typeof (Crypto as any).getRandomBytes === 'function') {
     randomBytes = (Crypto as any).getRandomBytes(16);
   } else {
-    randomBytes = new Uint8Array(16);
-    for (let i = 0; i < 16; i++)
-      randomBytes[i] = Math.floor(Math.random() * 256);
+    throw new Error('No secure random source available for salt generation');
   }
   return Array.from(randomBytes)
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -53,15 +51,32 @@ export async function hashRecoveryCode(
   );
 }
 
+export async function verifyPin(
+  pin: string,
+  salt: string,
+  expectedHash: string,
+): Promise<boolean> {
+  return (await hashPin(pin, salt)) === expectedHash;
+}
+
+export async function verifyRecoveryCode(
+  code: string,
+  salt: string,
+  expectedHash: string,
+): Promise<boolean> {
+  return (await hashRecoveryCode(code, salt)) === expectedHash;
+}
+
 export async function verifyHash(
   input: string,
   salt: string,
   expectedHash: string,
 ): Promise<boolean> {
-  const normalized = normalizeCode(input);
   const calculatedHash = await Crypto.digestStringAsync(
     Crypto.CryptoDigestAlgorithm.SHA256,
-    `${normalized}:${salt}`,
+    `${input}:${salt}`,
   );
   return calculatedHash === expectedHash;
 }
+
+

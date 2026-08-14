@@ -7,6 +7,7 @@ interface AuthState {
   setIsPinConfigured: (status: boolean) => void;
   registerFailedAttempt: () => void;
   resetFailedAttempts: () => void;
+  clearExpiredLockout: () => void;
   isLockedOut: () => boolean;
   getLockoutSecondsRemaining: () => number;
 }
@@ -28,6 +29,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
   resetFailedAttempts: () => set({ failedAttempts: 0, lockoutUntil: null }),
+  clearExpiredLockout: () => {
+    const lockoutUntil = get().lockoutUntil;
+    if (lockoutUntil && Date.now() > lockoutUntil) {
+      set({ lockoutUntil: null, failedAttempts: 0 });
+    }
+  },
   isLockedOut: () => {
     const lockoutUntil = get().lockoutUntil;
     if (!lockoutUntil) return false;

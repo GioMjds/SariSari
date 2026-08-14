@@ -14,3 +14,6 @@ export * from './receipts';
 export * from './stocktake';
 export * from './parkedCarts';
 export * from './corrections';
+export * from './settings';
+export * from './auth';
+

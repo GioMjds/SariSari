@@ -803,6 +803,14 @@ export async function runMigrations() {
     );
     await db.withTransactionAsync(async () => {
       await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+
+      await db.execAsync(`
         CREATE TABLE IF NOT EXISTS auth_settings (
           id INTEGER PRIMARY KEY CHECK (id = 1),
           pin_hash TEXT NOT NULL,
@@ -825,4 +833,5 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v20.');
   }
+
 }

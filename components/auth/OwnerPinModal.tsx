@@ -26,9 +26,11 @@ export const OwnerPinModal: FC<Props> = ({
   const { t } = useTranslation('settings');
   const [pin, setPin] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
   const {
     registerFailedAttempt,
     resetFailedAttempts,
+    clearExpiredLockout,
     isLockedOut,
     getLockoutSecondsRemaining,
   } = useAuthStore();
@@ -42,12 +44,13 @@ export const OwnerPinModal: FC<Props> = ({
     }
 
     const interval = setInterval(() => {
+      clearExpiredLockout();
       if (isLockedOut()) {
         setSecondsLeft(getLockoutSecondsRemaining());
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [visible, isLockedOut, getLockoutSecondsRemaining]);
+  }, [visible, clearExpiredLockout, isLockedOut, getLockoutSecondsRemaining]);
 
   const locked = isLockedOut();
 
@@ -65,18 +68,26 @@ export const OwnerPinModal: FC<Props> = ({
   };
 
   const handleSubmit = async () => {
-    if (locked || pin.length < 4) return;
-    const isValid = await verifyOwnerPin(pin);
-    if (isValid) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      resetFailedAttempts();
-      setPin('');
-      onSuccess();
-    } else {
+    if (locked || isVerifying || pin.length < 4) return;
+    setIsVerifying(true);
+    try {
+      const isValid = await verifyOwnerPin(pin);
+      if (isValid) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        resetFailedAttempts();
+        setPin('');
+        onSuccess();
+        return;
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       registerFailedAttempt();
       setPin('');
       setErrorMsg(t('pin.wrong_pin'));
+    } catch {
+      setPin('');
+      setErrorMsg(t('pin.verify_failed'));
+    } finally {
+      setIsVerifying(false);
     }
   };
 

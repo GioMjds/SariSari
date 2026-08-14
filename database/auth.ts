@@ -4,7 +4,8 @@ import {
   hashPin,
   generateRecoveryCode,
   hashRecoveryCode,
-  verifyHash,
+  verifyPin,
+  verifyRecoveryCode,
 } from '@/lib/auth/crypto';
 
 export interface AuthSettingsRow {
@@ -17,7 +18,22 @@ export interface AuthSettingsRow {
   updated_at: number;
 }
 
+export const initAuthTable = async (): Promise<void> => {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS auth_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      pin_hash TEXT NOT NULL,
+      pin_salt TEXT NOT NULL,
+      recovery_code_hash TEXT NOT NULL,
+      recovery_code_salt TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+};
+
 export const isOwnerPinConfigured = async (): Promise<boolean> => {
+
   const row = await db.getFirstAsync<AuthSettingsRow>(
     'SELECT id FROM auth_settings WHERE id = 1',
   );
@@ -55,7 +71,7 @@ export const verifyOwnerPin = async (pin: string): Promise<boolean> => {
     'SELECT pin_hash, pin_salt FROM auth_settings WHERE id = 1',
   );
   if (!row) return false;
-  return await verifyHash(pin, row.pin_salt, row.pin_hash);
+  return await verifyPin(pin, row.pin_salt, row.pin_hash);
 };
 
 export const verifyAndResetOwnerPinWithRecoveryCode = async (
@@ -67,7 +83,7 @@ export const verifyAndResetOwnerPinWithRecoveryCode = async (
   );
   if (!row) return false;
 
-  const codeValid = await verifyHash(
+  const codeValid = await verifyRecoveryCode(
     code,
     row.recovery_code_salt,
     row.recovery_code_hash,

@@ -18,23 +18,17 @@ export const OwnerPinSettingsCard: React.FC = () => {
 
   useEffect(() => {
     isOwnerPinConfigured().then(setIsPinConfigured);
-    getAppSetting('owner_pin_discount_threshold_pesos' as any).then((v) => {
+    getAppSetting('owner_pin_discount_threshold_pesos').then((v) => {
       if (v) setPesosLimit(v);
     });
-    getAppSetting('owner_pin_discount_threshold_percent' as any).then((v) => {
+    getAppSetting('owner_pin_discount_threshold_percent').then((v) => {
       if (v) setPercentLimit(v);
     });
   }, [setIsPinConfigured]);
 
   const handleSaveThresholds = async () => {
-    await setAppSetting(
-      'owner_pin_discount_threshold_pesos' as any,
-      pesosLimit,
-    );
-    await setAppSetting(
-      'owner_pin_discount_threshold_percent' as any,
-      percentLimit,
-    );
+    await setAppSetting('owner_pin_discount_threshold_pesos', pesosLimit);
+    await setAppSetting('owner_pin_discount_threshold_percent', percentLimit);
   };
 
   return (

@@ -18,9 +18,10 @@ export interface OwnerPinGuardContextType {
 export const OwnerPinGuardContext =
   createContext<OwnerPinGuardContextType | null>(null);
 
-export const OwnerPinGuardProvider: FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const OwnerPinGuardProvider: FC<{
+  children: React.ReactNode;
+  isReady?: boolean;
+}> = ({ children, isReady = true }) => {
   const { setIsPinConfigured } = useAuthStore();
   const [activeOptions, setActiveOptions] = useState<GuardOptions | null>(null);
   const [showChallenge, setShowChallenge] = useState(false);
@@ -28,17 +29,37 @@ export const OwnerPinGuardProvider: FC<{ children: React.ReactNode }> = ({
   const [showRecovery, setShowRecovery] = useState(false);
 
   useEffect(() => {
-    isOwnerPinConfigured().then(setIsPinConfigured);
-  }, [setIsPinConfigured]);
+    if (!isReady) return;
+    let isMounted = true;
+    isOwnerPinConfigured()
+      .then((configured) => {
+        if (isMounted) {
+          setIsPinConfigured(configured);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsPinConfigured(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isReady, setIsPinConfigured]);
 
   const runWithPinGuard = async (options: GuardOptions) => {
     setActiveOptions(options);
-    const configured = await isOwnerPinConfigured();
-    setIsPinConfigured(configured);
-    if (!configured) {
+    try {
+      const configured = await isOwnerPinConfigured();
+      setIsPinConfigured(configured);
+      if (!configured) {
+        setShowSetup(true);
+      } else {
+        setShowChallenge(true);
+      }
+    } catch {
+      setIsPinConfigured(false);
       setShowSetup(true);
-    } else {
-      setShowChallenge(true);
     }
   };
 
@@ -76,8 +97,12 @@ export const OwnerPinGuardProvider: FC<{ children: React.ReactNode }> = ({
       {children}
       <OwnerPinModal
         visible={showChallenge}
-        {...(activeOptions?.title !== undefined && { title: activeOptions.title })}
-        {...(activeOptions?.actionDescription !== undefined && { actionDescription: activeOptions.actionDescription })}
+        {...(activeOptions?.title !== undefined && {
+          title: activeOptions.title,
+        })}
+        {...(activeOptions?.actionDescription !== undefined && {
+          actionDescription: activeOptions.actionDescription,
+        })}
         onSuccess={handleChallengeSuccess}
         onCancel={handleCancel}
         onForgotPin={() => {

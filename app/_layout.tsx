@@ -158,7 +158,7 @@ export default function RootLayout() {
         <KeyboardProvider>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
-              <OwnerPinGuardProvider>
+              <OwnerPinGuardProvider isReady={dbReady}>
                 <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
                   <Stack
                     screenOptions={{

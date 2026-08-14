@@ -9,6 +9,17 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export const initSettingsTable = async (): Promise<void> => {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+};
+
+
 export const isOwnerAuthorized = async (): Promise<boolean> => {
   const state = await loadOnboardingState();
   if (!state) return true;
