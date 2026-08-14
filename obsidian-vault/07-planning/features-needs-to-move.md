@@ -16,7 +16,7 @@ This is to repurpose the features that are currently in the home screen to be mo
 2. **Sarado Na!** (currently not yet implemented in all screen routes, feature to planned)
    - Store end-of-day closing ritual and cash drawer reconciliation.
    - Feature Spec: [[02-Features/03-daily-cash-close-out|03-Daily Cash Close Out]]
-   
+
    If the store is closed, the system will not allow any transactions to be made and will show a message that the store is closed.
 
 3. **Pa-Void** (currently not yet implemented, feature to be planned)
@@ -50,4 +50,3 @@ This is to repurpose the features that are currently in the home screen to be mo
 - [[02-Features/03-daily-cash-close-out|03-Daily Cash Close Out]]
 - [[02-Features/07-safe-voids-refunds-corrections|07-Safe Voids, Refunds & Corrections]]
 - [[01-Roadmap/feature-implementation-status-and-ia|Feature Implementation Status & IA]]
-
