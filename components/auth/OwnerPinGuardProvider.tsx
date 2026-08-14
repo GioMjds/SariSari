@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { OwnerPinModal } from '@/components/auth/OwnerPinModal';
 import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
 import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
+import { Alert } from '@/utils';
 
 export interface GuardOptions {
   title?: string;
@@ -58,8 +59,11 @@ export const OwnerPinGuardProvider: FC<{
         setShowChallenge(true);
       }
     } catch {
-      setIsPinConfigured(false);
-      setShowSetup(true);
+      setActiveOptions(null);
+      Alert.alert(
+        'Owner PIN Unavailable',
+        'Owner PIN verification is currently unavailable. Please try again.',
+      );
     }
   };
 
