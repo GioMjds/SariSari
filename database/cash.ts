@@ -33,7 +33,7 @@ export const initCashTables = async (): Promise<void> => {
     CREATE TABLE IF NOT EXISTS cash_entries (
       id TEXT PRIMARY KEY,
       session_id TEXT NOT NULL REFERENCES cash_sessions(id) ON DELETE CASCADE,
-      type TEXT NOT NULL CHECK(type IN ('expense', 'owner_drawing', 'owner_addition')),
+      type TEXT NOT NULL CHECK(type IN ('expense', 'owner_drawing', 'owner_addition', 'cash_refund')),
       amount INTEGER NOT NULL,
       notes TEXT NOT NULL,
       timestamp TEXT NOT NULL,

@@ -30,18 +30,20 @@ export const initCreditsTable = async () => {
 			name TEXT NOT NULL,
 			phone TEXT,
 			address TEXT,
-      birthday TEXT,
-      photo_uri TEXT,
+			birthday TEXT,
+			photo_uri TEXT,
 			notes TEXT,
 			credit_limit INTEGER,
+			block_on_exceed INTEGER NOT NULL DEFAULT 0,
+			overdue_threshold_days INTEGER NOT NULL DEFAULT 30,
 			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 			updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 		);
 
 		CREATE TABLE IF NOT EXISTS credit_transactions (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			customer_id INTEGER NOT NULL,
-			product_id INTEGER,
+			customer_id INTEGER NOT NULL REFERENCES customers (id) ON DELETE CASCADE,
+			product_id INTEGER REFERENCES products (id),
 			product_name TEXT,
 			quantity INTEGER,
 			amount INTEGER NOT NULL,
@@ -52,36 +54,39 @@ export const initCreditsTable = async () => {
 			notes TEXT,
 			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 			updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
+			override_reason_code TEXT,
+			override_reason_note TEXT,
+			cancelled_at TEXT,
+			cancelled_by_correction_id INTEGER REFERENCES sale_corrections(id)
 		);
 
 		CREATE TABLE IF NOT EXISTS payments (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			customer_id INTEGER NOT NULL,
-			credit_transaction_id INTEGER,
+			customer_id INTEGER NOT NULL REFERENCES customers (id) ON DELETE CASCADE,
+			credit_transaction_id INTEGER REFERENCES credit_transactions (id) ON DELETE SET NULL,
 			amount INTEGER NOT NULL,
 			payment_method TEXT,
 			date TEXT DEFAULT CURRENT_TIMESTAMP,
 			notes TEXT,
-			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE,
-			FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL
+			created_at TEXT DEFAULT CURRENT_TIMESTAMP
+		);
+
+		CREATE TABLE IF NOT EXISTS payment_allocations (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			payment_id INTEGER NOT NULL REFERENCES payments(id) ON DELETE CASCADE,
+			credit_transaction_id INTEGER NOT NULL REFERENCES credit_transactions(id),
+			amount INTEGER NOT NULL
 		);
 
 		CREATE INDEX IF NOT EXISTS idx_credit_transactions_customer_id ON credit_transactions(customer_id);
 		CREATE INDEX IF NOT EXISTS idx_credit_transactions_date ON credit_transactions(date);
 		CREATE INDEX IF NOT EXISTS idx_credit_transactions_status ON credit_transactions(status);
+		CREATE INDEX IF NOT EXISTS idx_credit_transactions_status_date ON credit_transactions(status, date);
 		CREATE INDEX IF NOT EXISTS idx_payments_customer_id ON payments(customer_id);
 		CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);
+		CREATE INDEX IF NOT EXISTS idx_payment_allocations_payment_id ON payment_allocations(payment_id);
 		CREATE INDEX IF NOT EXISTS idx_customer_name ON customers (name);
 	`);
-
-  try {
-    await db.execAsync(`ALTER TABLE customers ADD COLUMN birthday TEXT;`);
-  } catch {}
-  try {
-    await db.execAsync(`ALTER TABLE customers ADD COLUMN photo_uri TEXT;`);
-  } catch {}
 };
 
 // ==================== CUSTOMER OPERATIONS ====================

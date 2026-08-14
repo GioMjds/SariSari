@@ -834,4 +834,174 @@ export async function runMigrations() {
     console.log('Database migrated to v20.');
   }
 
+  if (currentVersion < 21) {
+    console.log(
+      'Running migration to v21 (Schema alignment and repair for cancellations)...',
+    );
+    await db.withTransactionAsync(async () => {
+      // 1. Ensure sales cancellation and reference columns exist
+      const salesCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(sales)',
+      );
+      if (!salesCols.some((c) => c.name === 'cancelled_at')) {
+        await db.execAsync('ALTER TABLE sales ADD COLUMN cancelled_at TEXT;');
+      }
+      if (!salesCols.some((c) => c.name === 'cancelled_by_kind')) {
+        await db.execAsync(
+          "ALTER TABLE sales ADD COLUMN cancelled_by_kind TEXT CHECK(cancelled_by_kind IN ('void','refund','price_correction') OR cancelled_by_kind IS NULL);",
+        );
+      }
+      if (!salesCols.some((c) => c.name === 'cancelled_by_correction_id')) {
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN cancelled_by_correction_id INTEGER REFERENCES sale_corrections(id);',
+        );
+      }
+      if (!salesCols.some((c) => c.name === 'credit_transaction_id')) {
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN credit_transaction_id INTEGER REFERENCES credit_transactions(id) ON DELETE SET NULL;',
+        );
+      }
+      if (!salesCols.some((c) => c.name === 'override_reason_code')) {
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN override_reason_code TEXT;',
+        );
+      }
+      if (!salesCols.some((c) => c.name === 'override_reason_note')) {
+        await db.execAsync(
+          'ALTER TABLE sales ADD COLUMN override_reason_note TEXT;',
+        );
+      }
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sales_credit_txn ON sales(credit_transaction_id);',
+      );
+
+      // 2. Ensure credit_transactions cancellation columns exist
+      const ctCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(credit_transactions)',
+      );
+      if (!ctCols.some((c) => c.name === 'cancelled_at')) {
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN cancelled_at TEXT;',
+        );
+      }
+      if (!ctCols.some((c) => c.name === 'cancelled_by_correction_id')) {
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN cancelled_by_correction_id INTEGER REFERENCES sale_corrections(id);',
+        );
+      }
+      if (!ctCols.some((c) => c.name === 'override_reason_code')) {
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN override_reason_code TEXT;',
+        );
+      }
+      if (!ctCols.some((c) => c.name === 'override_reason_note')) {
+        await db.execAsync(
+          'ALTER TABLE credit_transactions ADD COLUMN override_reason_note TEXT;',
+        );
+      }
+
+      // 3. Ensure cash_entries supports 'cash_refund'
+      const cashEntriesTableInfo = await db.getFirstAsync<{ sql: string }>(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='cash_entries'",
+      );
+      if (
+        cashEntriesTableInfo &&
+        !cashEntriesTableInfo.sql.includes('cash_refund')
+      ) {
+        await db.execAsync('PRAGMA foreign_keys=OFF;');
+        await db.execAsync(`
+          CREATE TABLE cash_entries_new (
+            id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL REFERENCES cash_sessions(id) ON DELETE CASCADE,
+            type TEXT NOT NULL CHECK(type IN ('expense','owner_drawing','owner_addition','cash_refund')),
+            amount INTEGER NOT NULL,
+            notes TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+          );
+        `);
+        await db.execAsync(
+          'INSERT INTO cash_entries_new SELECT * FROM cash_entries;',
+        );
+        await db.execAsync('DROP TABLE cash_entries;');
+        await db.execAsync(
+          'ALTER TABLE cash_entries_new RENAME TO cash_entries;',
+        );
+        await db.execAsync(
+          'CREATE INDEX IF NOT EXISTS idx_cash_entries_session ON cash_entries(session_id);',
+        );
+        await db.execAsync(
+          'CREATE INDEX IF NOT EXISTS idx_cash_entries_timestamp ON cash_entries(timestamp);',
+        );
+        await db.execAsync('PRAGMA foreign_keys=ON;');
+      }
+
+      // 4. Ensure sale_corrections and sale_correction_lines tables exist
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS sale_corrections (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sale_id INTEGER NOT NULL REFERENCES sales(id),
+          kind TEXT NOT NULL CHECK(kind IN ('void','refund','price_correction')),
+          actor_reason_code TEXT NOT NULL,
+          actor_note TEXT,
+          actor_user TEXT NOT NULL,
+          witness_user TEXT,
+          refund_payment_type TEXT CHECK(refund_payment_type IN ('cash') OR refund_payment_type IS NULL),
+          sale_total INTEGER,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CHECK (kind <> 'refund' OR refund_payment_type IS NOT NULL)
+        );
+      `);
+      const scCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(sale_corrections)',
+      );
+      if (scCols.length > 0 && !scCols.some((c) => c.name === 'sale_total')) {
+        await db.execAsync(
+          'ALTER TABLE sale_corrections ADD COLUMN sale_total INTEGER;',
+        );
+      }
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sale_corrections_sale_id ON sale_corrections(sale_id);',
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sale_corrections_created_at ON sale_corrections(created_at DESC, id DESC);',
+      );
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS sale_correction_lines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          correction_id INTEGER NOT NULL REFERENCES sale_corrections(id) ON DELETE CASCADE,
+          sale_item_id INTEGER NOT NULL REFERENCES sale_items(id),
+          old_price INTEGER NOT NULL,
+          new_price INTEGER NOT NULL,
+          price_delta INTEGER NOT NULL,
+          CHECK (price_delta <> 0)
+        );
+      `);
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_sale_correction_lines_correction_id ON sale_correction_lines(correction_id);',
+      );
+
+      // 5. Ensure app_settings defaults
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('void_window_hours', '24', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('owner_pin_discount_threshold_pesos', '50', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('owner_pin_discount_threshold_percent', '10', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+
+      await db.execAsync('PRAGMA user_version = 21;');
+    });
+    console.log('Database migrated to v21.');
+  }
 }

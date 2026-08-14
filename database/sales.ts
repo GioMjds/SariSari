@@ -18,26 +18,30 @@ export const initSalesTables = async () => {
       total INTEGER NOT NULL,
       payment_type TEXT NOT NULL DEFAULT 'cash' CHECK(payment_type IN ('cash', 'credit')),
       customer_name TEXT,
-      customer_credit_id INTEGER,
+      customer_credit_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
+      credit_transaction_id INTEGER REFERENCES credit_transactions(id) ON DELETE SET NULL,
       timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (customer_credit_id) REFERENCES customer_credits(id)
+      override_reason_code TEXT,
+      override_reason_note TEXT,
+      cancelled_at TEXT,
+      cancelled_by_kind TEXT CHECK(cancelled_by_kind IN ('void','refund','price_correction') OR cancelled_by_kind IS NULL),
+      cancelled_by_correction_id INTEGER REFERENCES sale_corrections(id)
     );
 
     CREATE TABLE IF NOT EXISTS sale_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      sale_id INTEGER NOT NULL,
-      product_id INTEGER NOT NULL,
+      sale_id INTEGER NOT NULL REFERENCES sales(id),
+      product_id INTEGER NOT NULL REFERENCES products(id),
       quantity INTEGER NOT NULL,
       price INTEGER NOT NULL,
       sold_unit_name TEXT,
       sold_unit_qty INTEGER,
       conversion_factor INTEGER,
-      cost_price INTEGER,
-      FOREIGN KEY (sale_id) REFERENCES sales(id),
-      FOREIGN KEY (product_id) REFERENCES products(id)
+      cost_price INTEGER
     );
 
     CREATE INDEX IF NOT EXISTS idx_sales_timestamp ON sales(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_sales_credit_txn ON sales(credit_transaction_id);
     CREATE INDEX IF NOT EXISTS idx_sale_items_sale_id ON sale_items(sale_id);
     CREATE INDEX IF NOT EXISTS idx_sale_items_product_id ON sale_items(product_id);
   `);

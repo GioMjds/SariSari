@@ -632,7 +632,7 @@ Start Expo once after `backup.tsx` exists, wait until Metro reports ready, then
 stop it:
 
 ```powershell
-pnpm exec expo start --offline
+npm expo start --offline
 ```
 
 Confirm `.expo/types/router.d.ts` contains `more/backup`. Do not stage `.expo`.
