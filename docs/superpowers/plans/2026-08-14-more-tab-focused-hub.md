@@ -546,11 +546,7 @@ heading after route navigation:
 
 ```ts
 import { useEffect, useRef } from 'react';
-import {
-  AccessibilityInfo,
-  findNodeHandle,
-  type View,
-} from 'react-native';
+import { AccessibilityInfo, findNodeHandle, type View } from 'react-native';
 
 export function useScreenHeadingFocus() {
   const headingRef = useRef<View>(null);
@@ -671,62 +667,190 @@ git commit -m "feat: split backup into More destination"
 
 ### Step 1: Write failing Cash card state tests
 
-Define a discriminated state type in the component API:
-
-```ts
-export type CashSummaryState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | {
-      status: 'ready';
-      paidExpenses: Pesos;
-      ownerDrawings: Pesos;
-    };
-```
-
-The tests must cover:
-
-- loading copy and `Open cash` action;
-- ready with two zero totals and the valid empty copy;
-- ready with expenses only;
-- ready with owner drawings only;
-- ready with both totals, including `formatPesos` output;
-- query error copy and `Check cash` action;
-- one semantic button with an accessible label containing the visible state and
-  action;
-- pressing anywhere on the card invokes `onPress` once.
-
-Representative test:
+Create `components/more/__tests__/CashSummaryFeatureCard.test.tsx` with this
+complete content:
 
 ```tsx
-it('formats both populated financial totals', () => {
-  const onPress = jest.fn();
-  const { getByText, getByRole } = render(
-    <CashSummaryFeatureCard
-      state={{
-        status: 'ready',
-        paidExpenses: 1250.5 as Pesos,
-        ownerDrawings: 500 as Pesos,
-      }}
-      onPress={onPress}
-    />,
-  );
+import React from 'react';
+import { fireEvent, render } from '@testing-library/react-native';
+import { CashSummaryFeatureCard } from '@/components/more/CashSummaryFeatureCard';
+import i18n, { initI18n } from '@/lib/i18n';
+import type { Pesos } from '@/lib/money';
 
-  expect(
-    getByText('Expenses ₱1,250.50 · Owner drawings ₱500.00'),
-  ).toBeTruthy();
-  fireEvent.press(getByRole('button'));
-  expect(onPress).toHaveBeenCalledTimes(1);
+describe('CashSummaryFeatureCard', () => {
+  beforeAll(async () => {
+    await initI18n();
+    await i18n.changeLanguage('en');
+  });
+
+  it('shows loading copy with the Open cash action', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{ status: 'loading' }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Checking today's movements")).toBeTruthy();
+    expect(screen.getByText('Open cash')).toBeTruthy();
+  });
+
+  it('shows valid empty copy when both ready totals are zero', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{
+          status: 'ready',
+          paidExpenses: 0 as Pesos,
+          ownerDrawings: 0 as Pesos,
+        }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText('No expenses or owner drawings recorded today'),
+    ).toBeTruthy();
+    expect(screen.getByText('Review cash')).toBeTruthy();
+  });
+
+  it('formats an expenses-only ready state', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{
+          status: 'ready',
+          paidExpenses: 1250.5 as Pesos,
+          ownerDrawings: 0 as Pesos,
+        }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText('Expenses ₱1,250.50 · Owner drawings ₱0.00'),
+    ).toBeTruthy();
+  });
+
+  it('formats an owner-drawings-only ready state', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{
+          status: 'ready',
+          paidExpenses: 0 as Pesos,
+          ownerDrawings: 500 as Pesos,
+        }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText('Expenses ₱0.00 · Owner drawings ₱500.00'),
+    ).toBeTruthy();
+  });
+
+  it('formats both populated financial totals', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{
+          status: 'ready',
+          paidExpenses: 1250.5 as Pesos,
+          ownerDrawings: 500 as Pesos,
+        }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText('Expenses ₱1,250.50 · Owner drawings ₱500.00'),
+    ).toBeTruthy();
+  });
+
+  it('shows query-error copy with the Check cash action', async () => {
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{ status: 'error' }}
+        onPress={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText("Open to check today's expenses and owner drawings"),
+    ).toBeTruthy();
+    expect(screen.getByText('Check cash')).toBeTruthy();
+  });
+
+  it('is one labeled button and presses from anywhere on the card', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <CashSummaryFeatureCard
+        state={{ status: 'loading' }}
+        onPress={onPress}
+      />,
+    );
+
+    const card = screen.getByLabelText(
+      "Cash & expenses. Checking today's movements. Open cash",
+    );
+    expect(card.props['accessibilityRole']).toBe('button');
+    expect(card.props['accessibilityHint']).toBe(
+      "Opens today's expenses and owner drawings",
+    );
+
+    fireEvent.press(card);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
 });
 ```
 
-Call `initI18n()` in `beforeAll`. Do not snapshot the component.
+The installed React Native test renderer is asynchronous, so keep every
+`render(...)` call awaited exactly as shown. Do not snapshot the component.
 
 ### Step 2: Write failing destination-row tests
 
-Test title/subtitle rendering, button role, accessibility label/hint, press
-callback, chevron presence, and a minimum 48dp touch target. Do not assert
-single-line truncation; the production component must omit `numberOfLines`.
+Create `components/more/__tests__/MoreDestinationRow.test.tsx` with this
+complete content:
+
+```tsx
+import React from 'react';
+import { fireEvent, render } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
+import { MoreDestinationRow } from '@/components/more/MoreDestinationRow';
+
+describe('MoreDestinationRow', () => {
+  it('renders an accessible, flexible destination control', async () => {
+    const onPress = jest.fn();
+    const screen = await render(
+      <MoreDestinationRow
+        icon="bar-chart"
+        title="Reports & insights"
+        supportingText="Sales, stock, suki, and cash trends"
+        onPress={onPress}
+        accessibilityLabel="Reports & insights"
+        accessibilityHint="Opens consolidated store reports"
+      />,
+    );
+
+    expect(screen.getByText('Reports & insights')).toBeTruthy();
+    const supportingText = screen.getByText(
+      'Sales, stock, suki, and cash trends',
+    );
+    expect(supportingText).toBeTruthy();
+    expect(supportingText.props['numberOfLines']).toBeUndefined();
+    expect(screen.getByText('chevron-right')).toBeTruthy();
+
+    const row = screen.getByLabelText('Reports & insights');
+    expect(row.props['accessibilityRole']).toBe('button');
+    expect(row.props['accessibilityHint']).toBe(
+      'Opens consolidated store reports',
+    );
+    expect(StyleSheet.flatten(row.props['style'])).toMatchObject({
+      minHeight: 64,
+    });
+
+    fireEvent.press(row);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+```
 
 ### Step 3: Run the component tests and verify RED
 
@@ -738,52 +862,110 @@ Expected: FAIL because the new components do not exist.
 
 ### Step 4: Implement `CashSummaryFeatureCard`
 
-Map the discriminated state to translated supporting/action text:
+Replace the complete contents of
+`components/more/CashSummaryFeatureCard.tsx` with:
 
 ```tsx
-const isEmpty =
-  state.status === 'ready' &&
-  state.paidExpenses === 0 &&
-  state.ownerDrawings === 0;
+import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { Pressable, View } from 'react-native';
+import { StyledText } from '@/components/elements';
+import { formatPesos, type Pesos } from '@/lib/money';
 
-const supportingText =
-  state.status === 'loading'
-    ? t('common:moreHomeCashLoading')
-    : state.status === 'error'
-      ? t('common:moreHomeCashError')
-      : isEmpty
-        ? t('common:moreHomeCashEmpty')
-        : t('common:moreHomeCashSummary', {
-            expenses: formatPesos(state.paidExpenses),
-            drawings: formatPesos(state.ownerDrawings),
-          });
+export type CashSummaryState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | {
+      status: 'ready';
+      paidExpenses: Pesos;
+      ownerDrawings: Pesos;
+    };
 
-const actionText =
-  state.status === 'loading'
-    ? t('common:moreHomeCashOpenAction')
-    : state.status === 'error'
-      ? t('common:moreHomeCashCheckAction')
-      : t('common:moreHomeCashReviewAction');
+export type CashSummaryFeatureCardProps = {
+  state: CashSummaryState;
+  onPress: () => void;
+};
+
+export function CashSummaryFeatureCard({
+  state,
+  onPress,
+}: CashSummaryFeatureCardProps) {
+  const { t } = useTranslation();
+  const title = t('common:moreHomeCashLabel');
+  const isEmpty =
+    state.status === 'ready' &&
+    state.paidExpenses === 0 &&
+    state.ownerDrawings === 0;
+
+  const supportingText =
+    state.status === 'loading'
+      ? t('common:moreHomeCashLoading')
+      : state.status === 'error'
+        ? t('common:moreHomeCashError')
+        : isEmpty
+          ? t('common:moreHomeCashEmpty')
+          : t('common:moreHomeCashSummary', {
+              expenses: formatPesos(state.paidExpenses),
+              drawings: formatPesos(state.ownerDrawings),
+            });
+
+  const actionText =
+    state.status === 'loading'
+      ? t('common:moreHomeCashOpenAction')
+      : state.status === 'error'
+        ? t('common:moreHomeCashCheckAction')
+        : t('common:moreHomeCashReviewAction');
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}. ${supportingText}. ${actionText}`}
+      accessibilityHint={t('common:moreHomeCashHint')}
+      style={{ minHeight: 164 }}
+      className="rounded-[20px] bg-persimmon-600 p-5 active:opacity-80"
+    >
+      <View className="flex-1 justify-between">
+        <View className="h-12 w-12 items-center justify-center rounded-full bg-paper-50/15">
+          <FontAwesome name="money" size={22} color="#FAFAF7" />
+        </View>
+
+        <View className="mt-5">
+          <StyledText variant="extrabold" className="text-xl text-paper-50">
+            {title}
+          </StyledText>
+          <StyledText
+            variant="regular"
+            className="mt-2 text-sm text-paper-50 opacity-90"
+          >
+            {supportingText}
+          </StyledText>
+        </View>
+
+        <View className="mt-5 flex-row items-center justify-between">
+          <StyledText variant="semibold" className="text-sm text-paper-50">
+            {actionText}
+          </StyledText>
+          <FontAwesome name="arrow-right" size={16} color="#FAFAF7" />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
 ```
 
-Render one `Pressable`:
-
-- `bg-persimmon-600`, `rounded-[20px]`, and `paper-50` text;
-- `minHeight: 164` with generous padding so every query state reserves the
-  same baseline space while still expanding for Dynamic Type;
-- one FontAwesome money icon and a trailing arrow;
-- no shimmer, scale animation, fixed text height, or truncation;
-- `active:opacity-80` for immediate, reduced-motion-safe feedback;
-- accessible label assembled from title, supporting text, and action;
-- hint from `moreHomeCashHint`.
-
-The card must not import any hook or database module.
+This complete file intentionally imports no query hook or database module.
 
 ### Step 5: Implement `MoreDestinationRow`
 
-Use this public interface:
+Replace the complete contents of `components/more/MoreDestinationRow.tsx`
+with:
 
-```ts
+```tsx
+import { FontAwesome } from '@expo/vector-icons';
+import { Pressable, View } from 'react-native';
+import { StyledText } from '@/components/elements';
+
 export type MoreDestinationRowProps = {
   icon: keyof typeof FontAwesome.glyphMap;
   title: string;
@@ -792,34 +974,145 @@ export type MoreDestinationRowProps = {
   accessibilityLabel: string;
   accessibilityHint?: string;
 };
+
+export function MoreDestinationRow({
+  icon,
+  title,
+  supportingText,
+  onPress,
+  accessibilityLabel,
+  accessibilityHint,
+}: MoreDestinationRowProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      style={{ minHeight: 64 }}
+      className="flex-row items-center rounded-2xl border border-paper-300 bg-paper-50 px-4 py-3 active:opacity-80"
+    >
+      <View className="mr-3 h-10 w-10 items-center justify-center rounded-full bg-paper-100">
+        <FontAwesome name={icon} size={20} color="#564E45" />
+      </View>
+
+      <View className="mr-3 flex-1">
+        <StyledText variant="semibold" className="text-base text-ink-800">
+          {title}
+        </StyledText>
+        <StyledText variant="regular" className="mt-1 text-sm text-ink-500">
+          {supportingText}
+        </StyledText>
+      </View>
+
+      <FontAwesome name="chevron-right" size={16} color="#7A7165" />
+    </Pressable>
+  );
+}
 ```
-
-Render one paper-surface `Pressable` with:
-
-- `rounded-2xl`, `border-paper-300`, and `bg-paper-50`;
-- `minHeight: 64` and at least a 48dp touch target;
-- a consistent 40dp icon container and 20dp FontAwesome icon;
-- `ink-500` supporting text and flexible text without `numberOfLines`;
-- trailing chevron;
-- `active:opacity-80` press feedback.
 
 ### Step 6: Implement the header and section wrappers
 
-`MoreScreenHeader` accepts eyebrow, title, and supporting text. Use existing
-`h1`/Stack Sans roles, `ink-500` supporting copy, natural wrapping, and no
-fixed height. Wrap the title in an accessible View with
-`accessibilityRole="header"` and `useScreenHeadingFocus()`.
+Replace the complete contents of `components/more/MoreScreenHeader.tsx` with:
 
-`MoreSection` accepts an optional label and children. The label is uppercase
-and uses `ink-500` for AA contrast; children remain a vertical stack with at
-least 8dp between separate controls. Do not wrap the rows in an extra opaque
-card because each row is already a distinct surface.
+```tsx
+import { View } from 'react-native';
+import { StyledText } from '@/components/elements';
+import { useScreenHeadingFocus } from './useScreenHeadingFocus';
+
+export type MoreScreenHeaderProps = {
+  eyebrow: string;
+  title: string;
+  supportingText: string;
+};
+
+export function MoreScreenHeader({
+  eyebrow,
+  title,
+  supportingText,
+}: MoreScreenHeaderProps) {
+  const headingRef = useScreenHeadingFocus();
+
+  return (
+    <View className="pb-2 pt-2">
+      <StyledText
+        variant="extrabold"
+        className="mb-2 text-xs uppercase text-persimmon-600"
+        style={{ letterSpacing: 1.2 }}
+      >
+        {eyebrow}
+      </StyledText>
+      <View ref={headingRef} accessible accessibilityRole="header">
+        <StyledText
+          variant="extrabold"
+          className="text-h1 text-3xl text-ink-900"
+          style={{ letterSpacing: -0.28 }}
+        >
+          {title}
+        </StyledText>
+      </View>
+      <StyledText variant="regular" className="mt-2 text-sm text-ink-500">
+        {supportingText}
+      </StyledText>
+    </View>
+  );
+}
+```
+
+Replace the complete contents of `components/more/MoreSection.tsx` with:
+
+```tsx
+import type { ReactNode } from 'react';
+import { View } from 'react-native';
+import { StyledText } from '@/components/elements';
+
+export type MoreSectionProps = {
+  label?: string;
+  children: ReactNode;
+};
+
+export function MoreSection({ label, children }: MoreSectionProps) {
+  return (
+    <View className="mt-6">
+      {label ? (
+        <StyledText
+          variant="extrabold"
+          className="mb-2 text-xs uppercase text-ink-500"
+          style={{ letterSpacing: 1.2 }}
+        >
+          {label}
+        </StyledText>
+      ) : null}
+      <View className="gap-2">{children}</View>
+    </View>
+  );
+}
+```
 
 ### Step 7: Export the focused components
 
-Update `components/more/index.ts` to export the four new components and their
-public types. Leave legacy exports temporarily; Task 6 removes them only after
-the landing screen no longer consumes them.
+Replace the complete contents of `components/more/index.ts` with:
+
+```ts
+export * from './MoreHomeScreen';
+export * from './CashSummaryFeatureCard';
+export * from './MoreDestinationRow';
+export * from './MoreScreenHeader';
+export * from './MoreSection';
+export * from './MoreGroupSection';
+export * from './MoreLinkRow';
+export * from './MoreTile';
+export * from './MoreTileGrid';
+export * from './MoreHeroStrip';
+export * from './MoreIconSection';
+export * from './MoreDetailHeader';
+export * from './moreNavigation';
+export * from './useMoreDestinationNavigation';
+export * from './useScreenHeadingFocus';
+```
+
+Keep the legacy exports in this step. Task 6 removes them after the rewritten
+landing screen no longer imports the legacy components.
 
 ### Step 8: Run tests and typecheck for GREEN
 
@@ -1133,8 +1426,7 @@ pnpm test -- --runInBand components/reports/__tests__/AlmanacMasthead.test.tsx c
 pnpm typecheck
 ```
 
-Expected: PASS, including both history and deep-link fallback tests from Task
-2.
+Expected: PASS, including both history and deep-link fallback tests from Task 2.
 
 ### Step 6: Commit only the navigation integration
 
