@@ -85,7 +85,7 @@ export default function SaleDetails() {
   const itemsCount = sale?.items_count ?? 0;
   const buyerName = sale?.customer_name?.trim() ?? null;
 
-  // Must replace with loading skeleton
+  // TODO: Must replace with loading skeleton
   if (isLoading || !sale) {
     return (
       <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>

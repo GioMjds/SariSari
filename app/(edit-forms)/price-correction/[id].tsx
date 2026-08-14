@@ -1,6 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { StyleSheet } from 'react-native';
 import { Modal } from '@/components/ui';
 import {
   usePriceCorrectionForm,
@@ -22,14 +23,11 @@ export default function PriceCorrectionScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <PriceCorrectionHeader
-        saleId={numericId}
-        onBack={form.handleBack}
-      />
+      <PriceCorrectionHeader saleId={numericId} onBack={form.handleBack} />
 
       <KeyboardAwareScrollView
         className="flex-1 px-4 pt-1"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={64}
@@ -105,3 +103,14 @@ export default function PriceCorrectionScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+});

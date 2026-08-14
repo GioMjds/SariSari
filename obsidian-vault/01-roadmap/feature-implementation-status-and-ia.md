@@ -29,7 +29,7 @@ Status legend:
 | 8   | Supplier Delivery Receiving             | Partial              | Next  |
 | 9   | Offline Reorder Suggestions             | Done                 | Next  |
 | 10  | Stock Movement Timeline                 | Done                 | Next  |
-| 11  | Owner PIN for Sensitive Actions         | Not started          | Next  |
+| 11  | Owner PIN for Sensitive Actions         | Done                 | Next  |
 | 12  | Customer Credit Statements (PDF)        | Done                 | Next  |
 | 13  | Expiry & Damaged Goods Tracking         | Partial              | Later |
 | 14  | Transparent Local Store Insights        | Partial              | Later |
@@ -38,7 +38,7 @@ Status legend:
 | 17  | Manual Backup & Restore                 | Done (Drive variant) | Later |
 | 18  | Offline Price-Label & Barcode Sheets    | Not started          | Later |
 
-**Tally:** 11 Done · 4 Partial · 3 Not started.
+**Tally:** 12 Done · 4 Partial · 2 Not started.
 
 ---
 
@@ -137,13 +137,20 @@ For each feature: which routes, hooks, and DB files back it, and what is missing
 - **Components:** `components/inventory/ledger/{LedgerList,LedgerHero,LedgerToolbar,LogTransactionForm,DayHeader,MovementChip}.tsx`
 - **Notes:** No global timeline per spec ("per-product is sufficient for v1"). The "linked sale" affordance is implicit — adjustment rows carry a `note` referencing the reason.
 
-### 2.11 Owner PIN for Sensitive Actions — Not started
+### 2.11 Owner PIN for Sensitive Actions — Done
 
-- **Routes:** None
-- **Hooks:** None — no `useAuth`, no `stores/auth.ts`
-- **DB:** No `auth_settings` table. PRAGMA `user_version` is 14 (`database/migrations.ts:493`); no migration adds PIN storage
-- **Components:** None
-- **Notes:** None of the gated actions (voids, price correction, credit-limit override, large discount, dev reset) check a PIN. The `app/(tabs)/dev/reset.tsx` referenced by the spec also does not exist under `app/(tabs)/`.
+- **Routes:** `app/(tabs)/more/settings.tsx` (Owner PIN management card), `app/settings/index.tsx` (owner auth gating)
+- **Hooks:** `hooks/useOwnerPinGuard.ts` (`useOwnerPinGuard` exposing `runWithPinGuard`), `hooks/useAppSetting.ts` (`useAppSetting`, `useSetAppSetting`)
+- **DB & Migrations:** `database/migrations.ts` — v20 creates `auth_settings` (singleton row `id=1`, `pin_hash`, `pin_salt`, `recovery_code_hash`, `recovery_code_salt`, timestamps) and seeds default discount thresholds in `app_settings` (`owner_pin_discount_threshold_pesos=50`, `owner_pin_discount_threshold_percent=10`). `database/auth.ts` (`initAuthTable`, `isOwnerPinConfigured`, `setupOwnerPin`, `verifyOwnerPin`, `verifyAndResetOwnerPinWithRecoveryCode`, `changeOwnerPin`). `database/settings.ts` (`getAppSetting`, `setAppSetting`, `isOwnerAuthorized`, `assertOwnerAuthorized`).
+- **Crypto & Store:** `lib/auth/crypto.ts` — SHA-256 via `expo-crypto` with 16-byte random salt; 8-character base-32 recovery code (`XXXX-XXXX`). `stores/useAuthStore.ts` — Zustand store tracking `isPinConfigured`, failed attempts counter, and 3-attempt 60-second in-memory lockout cooldown.
+- **Components & Provider:** `components/auth/OwnerPinGuardProvider.tsx` (mounted globally at `app/_layout.tsx`), `components/auth/OwnerPinModal.tsx` (challenge PIN entry), `components/auth/OwnerPinSetupModal.tsx` (2-step setup + recovery code display), `components/auth/OwnerPinRecoveryModal.tsx` (recovery code reset flow), `components/settings/OwnerPinSettingsCard.tsx` (status badge, setup/change/reset buttons, discount threshold inputs).
+- **Gated Touchpoints:**
+  - Voids & Refunds: `app/(edit-forms)/sale-correction/[id].tsx` (`voidSale`, `refundSale`)
+  - Price Corrections: `app/(edit-forms)/price-correction/[id].tsx` and `components/sales/price-correction/usePriceCorrectionForm.ts`
+  - Utang Guardrails: `components/utang/credit-guardrails/OverrideReasonModal.tsx` (credit-limit override)
+  - Inventory Ledger: `components/inventory/ledger/LogTransactionForm.tsx` (manual stock adjustments)
+  - Settings & Preferences: `app/(tabs)/more/settings.tsx` and `app/settings/index.tsx`
+- **Tests:** `tests/ownerPinGating.test.ts` (unit tests for DB auth and crypto), `tests/useOwnerPinGuard.test.tsx` (component and hook integration tests).
 
 ### 2.12 Customer Credit Statements (PDF) — Done
 
@@ -342,7 +349,7 @@ Proposed files:
 | 8   | Supplier Delivery       | Partial     | `inventory/products.tsx` RestockSheet                      | Inventory → "Receive Delivery" (multi-line)                                                                      |
 | 9   | Reorder Suggestions     | Done        | **orphaned** `app/inventory/recommendations.tsx`           | Inventory → Recommendations (move into tab stack)                                                                |
 | 10  | Stock Movement Timeline | Done        | `inventory/movements.tsx` + `inventory-ledger/[productId]` | Inventory — keep as-is                                                                                           |
-| 11  | Owner PIN               | Not started | —                                                          | More → Settings                                                                                                  |
+| 11  | Owner PIN               | Done        | `app/(tabs)/more/settings.tsx` + gated modal touchpoints    | More → Settings (keep; integrated into modals across flows)                                                       |
 | 12  | Credit Statement (PDF)  | Done        | inline on `credit-details/[id]`                            | Customers → per-suki profile → Share                                                                             |
 | 13  | Expiry & Damaged        | Partial     | only `type='damaged'` ledger filter                        | Inventory → Damaged (new screen) + product `perishable` flag                                                     |
 | 14  | Store Insights          | Partial     | `home/today.tsx` + `more/reports.tsx`                      | Home strip + More → Reports                                                                                      |

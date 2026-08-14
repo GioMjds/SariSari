@@ -54,7 +54,7 @@ Shipping next week.
 
   v1 was correct. v1 was unusable.
 
-  v3 lets the owner count out of order, save in place, and resume if
+  v2 lets the owner count out of order, save in place, and resume if
   a customer walks in. Variance shows up at the end. Reason codes are
   pre-filled with the four most common ones.
 

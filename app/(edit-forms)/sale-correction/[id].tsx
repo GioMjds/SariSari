@@ -1,5 +1,5 @@
 import { useForm, Controller } from 'react-hook-form';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
@@ -43,7 +43,7 @@ const REFUND_REASONS = [
 ] satisfies ReasonOption<RefundReasonCode>[];
 
 interface SaleCorrectionFormData {
-  reason: string;
+  reason: VoidReasonCode | RefundReasonCode;
   witness: string;
   note: string;
 }
@@ -54,7 +54,6 @@ export default function SaleCorrectionScreen() {
 
   const numericId = Number(id);
   const isVoid = mode === 'void';
-  const isValidMode = isVoid || mode === 'refund';
 
   const { data: sale, isLoading } = useGetSale(numericId);
   const { profile } = useProfile();
@@ -69,7 +68,7 @@ export default function SaleCorrectionScreen() {
   } = useForm<SaleCorrectionFormData>({
     mode: 'onChange',
     defaultValues: {
-      reason: isValidMode ? 'customer_changed_mind' : 'returned_damaged',
+      reason: isVoid ? 'customer_changed_mind' : 'returned_damaged',
       witness: '',
       note: '',
     },
@@ -80,6 +79,8 @@ export default function SaleCorrectionScreen() {
   const options = isVoid ? voidOptions : refundOptions;
   const screenTitle = isVoid ? 'Void Sale' : 'Refund Sale';
   const actionButtonText = isVoid ? 'Confirm Void Sale' : 'Confirm Refund';
+  const isProcessing =
+    isSubmitting || voidSaleMutation.isPending || refundSaleMutation.isPending;
 
   const { runWithPinGuard } = useOwnerPinGuard();
 
@@ -98,7 +99,7 @@ export default function SaleCorrectionScreen() {
               saleId: numericId,
               actorUser,
               witnessUser: data.witness.trim(),
-              reasonCode: data.reason,
+              reasonCode: data.reason as VoidReasonCode,
               ...notePayload,
             });
           } else {
@@ -115,13 +116,14 @@ export default function SaleCorrectionScreen() {
             Haptics.NotificationFeedbackType.Success,
           ).catch(() => {});
           router.back();
-        } catch (err: any) {
+        } catch (err: unknown) {
           Haptics.notificationAsync(
             Haptics.NotificationFeedbackType.Error,
           ).catch(() => {});
           setError('root', {
             type: 'manual',
-            message: err?.message || 'Failed to submit correction',
+            message:
+              err instanceof Error ? err.message : 'An unknown error occurred',
           });
         }
       },
@@ -183,8 +185,8 @@ export default function SaleCorrectionScreen() {
       </View>
 
       <KeyboardAwareScrollView
-        className="flex-1 px-4 pt-1"
-        contentContainerStyle={{ paddingBottom: 40 }}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bottomOffset={64}
@@ -562,11 +564,11 @@ export default function SaleCorrectionScreen() {
         {/* Primary Action Submit Button */}
         <Pressable
           onPress={handleSubmit(onSubmit)}
-          disabled={isSubmitting || isLoading}
+          disabled={isProcessing || isLoading}
           accessibilityRole="button"
           accessibilityLabel={actionButtonText}
           className={`rounded-2xl py-4 flex-row items-center justify-center press-scale active:opacity-80 ${
-            isSubmitting || isLoading
+            isProcessing || isLoading
               ? 'bg-ink-100 shadow-none'
               : isVoid
                 ? 'bg-rose-700 shadow-paper'
@@ -574,18 +576,29 @@ export default function SaleCorrectionScreen() {
           }`}
         >
           <FontAwesome
-            name={isSubmitting ? 'spinner' : isVoid ? 'ban' : 'check-circle'}
+            name={isProcessing ? 'spinner' : isVoid ? 'ban' : 'check-circle'}
             size={16}
-            color={isSubmitting ? '#7A7165' : '#FBF7EE'}
+            color={isProcessing ? '#7A7165' : '#FBF7EE'}
           />
           <StyledText
             variant="extrabold"
             className="text-paper-50 text-base ml-2"
           >
-            {isSubmitting ? 'Processing Correction...' : actionButtonText}
+            {isProcessing ? 'Processing Correction...' : actionButtonText}
           </StyledText>
         </Pressable>
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+});
