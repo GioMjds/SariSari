@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { goBackToMore } from '@/components/more';
 import {
   CreditAgingChart,
   StockMovementDetails,
@@ -202,6 +203,7 @@ export default function Reports() {
       <View className="flex-1 bg-paper-200">
         <AlmanacMasthead
           dateRange={dateRange}
+          onBack={goBackToMore}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
         />

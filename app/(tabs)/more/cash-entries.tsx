@@ -2,8 +2,12 @@ import { useState, useCallback } from 'react';
 import { View, FlatList, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import {
+  goBackToMore,
+  useScreenHeadingFocus,
+} from '@/components/more';
 import { MoneyText } from '@/components/ui';
 import {
   useFinancialEntries,
@@ -50,6 +54,8 @@ const CASH_IN_TYPES: FinancialEntryType[] = [];
 const CASH_OUT_TYPES: FinancialEntryType[] = ['expense', 'owner_drawing'];
 
 export default function CashEntriesScreen() {
+  const { t } = useTranslation();
+  const headingRef = useScreenHeadingFocus();
   const todayStr = formatDateString(new Date());
   const [activePreset, setActivePreset] = useState<DateRangeType>('today');
   const [startDate, setStartDate] = useState<string>(todayStr);
@@ -97,14 +103,6 @@ export default function CashEntriesScreen() {
     );
   };
 
-  const handleBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/more');
-    }
-  };
-
   const filteredEntries =
     activeTab === 'cash-in'
       ? entries?.filter((e) => CASH_IN_TYPES.includes(e.type))
@@ -130,20 +128,28 @@ export default function CashEntriesScreen() {
         <View className="bg-cinnamon-500 px-4 pt-3 pb-4 shadow-sm">
           <View className="flex-row items-center mb-1">
             <Pressable
-              onPress={handleBack}
+              onPress={goBackToMore}
               testID="back-button"
               accessibilityRole="button"
-              accessibilityLabel="Go back to more"
-              className="w-9 h-9 rounded-full bg-paper-50/20 active:bg-paper-50/30 items-center justify-center mr-3"
+              accessibilityLabel={t('common:moreBackA11y')}
+              style={{ minWidth: 48, minHeight: 48 }}
+              className="rounded-full bg-paper-50/20 active:bg-paper-50/30 items-center justify-center mr-3"
             >
               <FontAwesome5 name="arrow-left" size={14} color="#FBF7EE" />
             </Pressable>
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-xl flex-1"
+            <View
+              ref={headingRef}
+              accessible
+              accessibilityRole="header"
+              className="flex-1"
             >
-              Cash Movements
-            </StyledText>
+              <StyledText
+                variant="extrabold"
+                className="text-paper-50 text-xl"
+              >
+                Cash Movements
+              </StyledText>
+            </View>
           </View>
           <StyledText
             variant="medium"
