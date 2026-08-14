@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import type { OverrideReasonCode } from '@/types/credits.types';
@@ -95,12 +95,7 @@ export function OverrideReasonModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <View style={StyleSheet.absoluteFillObject} className="z-50">
       <View className="flex-1 bg-black/50 justify-end">
         <View className="bg-paper-50 rounded-t-2xl p-4 gap-4">
           <View className="flex-row items-center justify-between">
@@ -159,6 +154,6 @@ export function OverrideReasonModal({
           )}
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }

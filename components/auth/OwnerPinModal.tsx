@@ -1,5 +1,5 @@
 import { useState, useEffect, FC } from 'react';
-import { Modal, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { verifyOwnerPin } from '@/database/auth';
@@ -52,6 +52,8 @@ export const OwnerPinModal: FC<Props> = ({
     return () => clearInterval(interval);
   }, [visible, clearExpiredLockout, isLockedOut, getLockoutSecondsRemaining]);
 
+  if (!visible) return null;
+
   const locked = isLockedOut();
 
   const handleKeyPress = (num: string) => {
@@ -92,123 +94,118 @@ export const OwnerPinModal: FC<Props> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <StyledText variant="semibold" style={styles.title}>
-            {title || t('pin.title')}
+    <View style={styles.backdrop}>
+      <View style={styles.card}>
+        <StyledText variant="semibold" style={styles.title}>
+          {title || t('pin.title')}
+        </StyledText>
+        {Boolean(actionDescription) && (
+          <StyledText variant="regular" style={styles.subtext}>
+            {actionDescription}
           </StyledText>
-          {Boolean(actionDescription) && (
-            <StyledText variant="regular" style={styles.subtext}>
-              {actionDescription}
-            </StyledText>
-          )}
+        )}
 
-          {locked ? (
-            <StyledText variant="semibold" style={styles.errorText}>
-              {t('pin.locked_out', { seconds: secondsLeft })}
-            </StyledText>
-          ) : (
-            <>
-              <View style={styles.dotsContainer}>
-                {[0, 1, 2, 3, 4, 5].map((idx) => (
-                  <View
-                    key={idx}
-                    style={[styles.dot, pin.length > idx && styles.dotFilled]}
-                  />
-                ))}
-              </View>
+        {locked ? (
+          <StyledText variant="semibold" style={styles.errorText}>
+            {t('pin.locked_out', { seconds: secondsLeft })}
+          </StyledText>
+        ) : (
+          <>
+            <View style={styles.dotsContainer}>
+              {[0, 1, 2, 3, 4, 5].map((idx) => (
+                <View
+                  key={idx}
+                  style={[styles.dot, pin.length > idx && styles.dotFilled]}
+                />
+              ))}
+            </View>
 
-              {Boolean(errorMsg) && (
-                <StyledText variant="semibold" style={styles.errorText}>
-                  {errorMsg}
-                </StyledText>
-              )}
+            {Boolean(errorMsg) && (
+              <StyledText variant="semibold" style={styles.errorText}>
+                {errorMsg}
+              </StyledText>
+            )}
 
-              <View style={styles.keypad}>
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                  <TouchableOpacity
-                    key={digit}
-                    style={styles.keyBtn}
-                    onPress={() => handleKeyPress(digit)}
-                  >
-                    <StyledText variant="semibold" style={styles.keyText}>
-                      {digit}
-                    </StyledText>
-                  </TouchableOpacity>
-                ))}
+            <View style={styles.keypad}>
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <TouchableOpacity
+                  key={digit}
                   style={styles.keyBtn}
-                  onPress={() => setPin('')}
-                >
-                  <StyledText variant="semibold" style={styles.keyActionText}>
-                    C
-                  </StyledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.keyBtn}
-                  onPress={() => handleKeyPress('0')}
+                  onPress={() => handleKeyPress(digit)}
                 >
                   <StyledText variant="semibold" style={styles.keyText}>
-                    0
+                    {digit}
                   </StyledText>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.keyBtn}
-                  onPress={handleBackspace}
-                >
-                  <StyledText variant="semibold" style={styles.keyActionText}>
-                    ⌫
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </>
-          )}
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-              <StyledText variant="semibold" style={styles.cancelText}>
-                Cancel
-              </StyledText>
-            </TouchableOpacity>
-            {!locked && (
+              ))}
               <TouchableOpacity
-                style={[styles.submitBtn, pin.length < 4 && styles.btnDisabled]}
-                disabled={pin.length < 4}
-                onPress={handleSubmit}
+                style={styles.keyBtn}
+                onPress={() => setPin('')}
               >
-                <StyledText variant="semibold" style={styles.submitText}>
-                  Submit
+                <StyledText variant="semibold" style={styles.keyActionText}>
+                  C
                 </StyledText>
               </TouchableOpacity>
-            )}
-          </View>
+              <TouchableOpacity
+                style={styles.keyBtn}
+                onPress={() => handleKeyPress('0')}
+              >
+                <StyledText variant="semibold" style={styles.keyText}>
+                  0
+                </StyledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.keyBtn}
+                onPress={handleBackspace}
+              >
+                <StyledText variant="semibold" style={styles.keyActionText}>
+                  ⌫
+                </StyledText>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
 
-          {Boolean(onForgotPin) && (
-            <TouchableOpacity style={styles.forgotBtn} onPress={onForgotPin}>
-              <StyledText variant="medium" style={styles.forgotText}>
-                {t('pin.forgot_pin')}
+        <View style={styles.btnRow}>
+          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+            <StyledText variant="semibold" style={styles.cancelText}>
+              Cancel
+            </StyledText>
+          </TouchableOpacity>
+          {!locked && (
+            <TouchableOpacity
+              style={[styles.submitBtn, pin.length < 4 && styles.btnDisabled]}
+              disabled={pin.length < 4}
+              onPress={handleSubmit}
+            >
+              <StyledText variant="semibold" style={styles.submitText}>
+                Submit
               </StyledText>
             </TouchableOpacity>
           )}
         </View>
+
+        {Boolean(onForgotPin) && (
+          <TouchableOpacity style={styles.forgotBtn} onPress={onForgotPin}>
+            <StyledText variant="medium" style={styles.forgotText}>
+              {t('pin.forgot_pin')}
+            </StyledText>
+          </TouchableOpacity>
+        )}
       </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    zIndex: 99999,
+    elevation: 99999,
   },
   card: {
     width: '100%',

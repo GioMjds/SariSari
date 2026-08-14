@@ -1,6 +1,5 @@
 import { FC, useEffect, useState } from 'react';
 import {
-  Modal,
   View,
   TextInput,
   TouchableOpacity,
@@ -33,10 +32,6 @@ export const OwnerPinSetupModal: FC<Props> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const setIsPinConfigured = useAuthStore((s) => s.setIsPinConfigured);
 
-  // TODO: This `useEffect` might not be the best solution here, it is just a band-aid solution fix for now.
-  // The problem is that when the modal is closed, the state of the modal is not reset, so when the modal is opened again, it will still have the previous state.
-  // This is because the modal is not unmounted when it is closed, it is just hidden.
-  // A better solution would be to unmount the modal when it is closed, but that would require a bigger refactor of the modal component.
   useEffect(() => {
     if (visible) return;
     setStep('create');
@@ -46,6 +41,8 @@ export const OwnerPinSetupModal: FC<Props> = ({
     setRecoveryCode('');
     setCopied(false);
   }, [visible]);
+
+  if (!visible) return null;
 
   const handleNext = async () => {
     if (isSubmitting) return;
@@ -81,88 +78,88 @@ export const OwnerPinSetupModal: FC<Props> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          {step !== 'code' ? (
-            <>
-              <StyledText variant="semibold" style={styles.title}>
-                {t('pin.setup_title')}
+    <View style={styles.backdrop}>
+      <View style={styles.card}>
+        {step !== 'code' ? (
+          <>
+            <StyledText variant="semibold" style={styles.title}>
+              {t('pin.setup_title')}
+            </StyledText>
+            <StyledText variant="regular" style={styles.label}>
+              {step === 'create' ? t('pin.enter_pin') : t('pin.confirm_pin')}
+            </StyledText>
+            <TextInput
+              style={styles.input}
+              keyboardType="number-pad"
+              secureTextEntry
+              maxLength={6}
+              value={step === 'create' ? pin : confirmPin}
+              onChangeText={(val: string) => {
+                setErrorMsg('');
+                if (step === 'create') {
+                  setPin(val);
+                } else {
+                  setConfirmPin(val);
+                }
+              }}
+            />
+            {Boolean(errorMsg) && (
+              <StyledText variant="semibold" style={styles.errorText}>
+                {errorMsg}
               </StyledText>
-              <StyledText variant="regular" style={styles.label}>
-                {step === 'create' ? t('pin.enter_pin') : t('pin.confirm_pin')}
-              </StyledText>
-              <TextInput
-                style={styles.input}
-                keyboardType="number-pad"
-                secureTextEntry
-                maxLength={6}
-                value={step === 'create' ? pin : confirmPin}
-                onChangeText={(val: string) => {
-                  setErrorMsg('');
-                  if (step === 'create') {
-                    setPin(val);
-                  } else {
-                    setConfirmPin(val);
-                  }
-                }}
-              />
-              {Boolean(errorMsg) && (
-                <StyledText variant="semibold" style={styles.errorText}>
-                  {errorMsg}
-                </StyledText>
-              )}
-              <View style={styles.btnRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                  <StyledText variant="semibold" style={styles.cancelText}>
-                    Cancel
-                  </StyledText>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
-                  <StyledText variant="semibold" style={styles.submitText}>
-                    Next
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <>
-              <StyledText variant="semibold" style={styles.title}>
-                {t('pin.recovery_title')}
-              </StyledText>
-              <StyledText variant="regular" style={styles.subtext}>
-                {t('pin.recovery_desc')}
-              </StyledText>
-              <View style={styles.codeCard}>
-                <StyledText variant="extrabold" style={styles.codeText}>
-                  {recoveryCode}
-                </StyledText>
-              </View>
-              <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
-                <StyledText variant="semibold" style={styles.copyText}>
-                  {copied ? t('pin.code_copied') : t('pin.copy_code')}
+            )}
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+                <StyledText variant="semibold" style={styles.cancelText}>
+                  Cancel
                 </StyledText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.doneBtn} onPress={onSuccess}>
-                <StyledText variant="semibold" style={styles.doneText}>
-                  Done
+              <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
+                <StyledText variant="semibold" style={styles.submitText}>
+                  Next
                 </StyledText>
               </TouchableOpacity>
-            </>
-          )}
-        </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <StyledText variant="semibold" style={styles.title}>
+              {t('pin.recovery_title')}
+            </StyledText>
+            <StyledText variant="regular" style={styles.subtext}>
+              {t('pin.recovery_desc')}
+            </StyledText>
+            <View style={styles.codeCard}>
+              <StyledText variant="extrabold" style={styles.codeText}>
+                {recoveryCode}
+              </StyledText>
+            </View>
+            <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
+              <StyledText variant="semibold" style={styles.copyText}>
+                {copied ? t('pin.code_copied') : t('pin.copy_code')}
+              </StyledText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.doneBtn} onPress={onSuccess}>
+              <StyledText variant="semibold" style={styles.doneText}>
+                Done
+              </StyledText>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    zIndex: 99999,
+    elevation: 99999,
   },
   card: {
     width: '100%',

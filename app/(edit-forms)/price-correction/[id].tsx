@@ -81,6 +81,7 @@ export default function PriceCorrectionScreen() {
       {/* Unsaved Changes Confirmation Modal */}
       <Modal
         visible={form.showDiscardModal}
+        useNativeModal={false}
         onClose={() => form.setShowDiscardModal(false)}
         title="Discard Unsaved Changes?"
         description="You have modified price inputs or details that haven't been saved yet. Are you sure you want to discard them?"

@@ -1,6 +1,5 @@
 import { FC, useState } from 'react';
 import {
-  Modal,
   View,
   TextInput,
   TouchableOpacity,
@@ -28,6 +27,8 @@ export const OwnerPinRecoveryModal: FC<Props> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const resetFailedAttempts = useAuthStore((s) => s.resetFailedAttempts);
 
+  if (!visible) return null;
+
   const handleReset = async () => {
     if (!code.trim() || newPin.length < 4) return;
     const success = await verifyAndResetOwnerPinWithRecoveryCode(code, newPin);
@@ -40,73 +41,73 @@ export const OwnerPinRecoveryModal: FC<Props> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <StyledText variant="semibold" style={styles.title}>
-            {t('pin.reset_title')}
-          </StyledText>
+    <View style={styles.backdrop}>
+      <View style={styles.card}>
+        <StyledText variant="semibold" style={styles.title}>
+          {t('pin.reset_title')}
+        </StyledText>
 
-          <StyledText variant="regular" style={styles.label}>
-            {t('pin.enter_recovery_code')}
-          </StyledText>
-          <TextInput
-            style={styles.input}
-            autoCapitalize="characters"
-            maxLength={10}
-            value={code}
-            onChangeText={(val) => {
-              setErrorMsg('');
-              setCode(val);
-            }}
-          />
+        <StyledText variant="regular" style={styles.label}>
+          {t('pin.enter_recovery_code')}
+        </StyledText>
+        <TextInput
+          style={styles.input}
+          autoCapitalize="characters"
+          maxLength={10}
+          value={code}
+          onChangeText={(val) => {
+            setErrorMsg('');
+            setCode(val);
+          }}
+        />
 
-          <StyledText variant="regular" style={[styles.label, { marginTop: 12 }]}>
-            {t('pin.enter_pin')}
-          </StyledText>
-          <TextInput
-            style={styles.input}
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={6}
-            value={newPin}
-            onChangeText={(val) => {
-              setErrorMsg('');
-              setNewPin(val);
-            }}
-          />
+        <StyledText variant="regular" style={[styles.label, { marginTop: 12 }]}>
+          {t('pin.enter_pin')}
+        </StyledText>
+        <TextInput
+          style={styles.input}
+          keyboardType="number-pad"
+          secureTextEntry
+          maxLength={6}
+          value={newPin}
+          onChangeText={(val) => {
+            setErrorMsg('');
+            setNewPin(val);
+          }}
+        />
 
-          {Boolean(errorMsg) && (
-            <StyledText variant="semibold" style={styles.errorText}>
-              {errorMsg}
+        {Boolean(errorMsg) && (
+          <StyledText variant="semibold" style={styles.errorText}>
+            {errorMsg}
+          </StyledText>
+        )}
+
+        <View style={styles.btnRow}>
+          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+            <StyledText variant="semibold" style={styles.cancelText}>
+              Cancel
             </StyledText>
-          )}
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-              <StyledText variant="semibold" style={styles.cancelText}>
-                Cancel
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.submitBtn} onPress={handleReset}>
-              <StyledText variant="semibold" style={styles.submitText}>
-                Reset
-              </StyledText>
-            </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.submitBtn} onPress={handleReset}>
+            <StyledText variant="semibold" style={styles.submitText}>
+              Reset
+            </StyledText>
+          </TouchableOpacity>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    zIndex: 99999,
+    elevation: 99999,
   },
   card: {
     width: '100%',

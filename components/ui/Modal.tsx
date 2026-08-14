@@ -113,7 +113,7 @@ export function Modal({
   const finalCloseOnOverlay = activeModal?.closeOnOverlay ?? closeOnOverlay;
   const finalShowCloseButton = activeModal?.showCloseButton ?? showCloseButton;
 
-  const finalUseNativeModal = useNativeModal ?? (id ? false : true);
+  const finalUseNativeModal = useNativeModal ?? false;
 
   const handleClose = () => {
     if (id) closeModal(id);
@@ -143,42 +143,32 @@ export function Modal({
     switch (finalVariant) {
       case 'danger':
         return {
-          // Using bg-semantic-danger-50 for background and text-semantic-danger for icon
-          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-danger-50',
-          iconColor: 'text-semantic-danger',
+          iconColor: '#C13030',
           defaultIcon: 'exclamation-triangle',
         };
       case 'success':
         return {
-          // Using bg-sage-50 for background and text-semantic-success for icon
-          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-sage-50',
-          iconColor: 'text-semantic-success',
+          iconColor: '#4F7A24',
           defaultIcon: 'check-circle',
         };
       case 'warning':
         return {
-          // Using bg-semantic-warning-50 for background and text-semantic-warning for icon
-          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-warning-50',
-          iconColor: 'text-semantic-warning',
+          iconColor: '#C77B0E',
           defaultIcon: 'exclamation-circle',
         };
       case 'info':
         return {
-          // Using bg-semantic-info-50 for background and text-semantic-info for icon
-          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-semantic-info-50',
-          iconColor: 'text-semantic-info',
+          iconColor: '#2E6FA8',
           defaultIcon: 'info-circle',
         };
       default:
         return {
-          // Using bg-surface-warm for background and text-semantic-info for icon
-          // These tokens automatically adapt to light/dark themes
           iconBg: 'bg-surface-warm',
-          iconColor: 'text-semantic-info', // or appropriate default
+          iconColor: '#2E6FA8',
           defaultIcon: 'info-circle',
         };
     }

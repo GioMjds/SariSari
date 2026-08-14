@@ -66,8 +66,9 @@ export const OwnerPinGuardProvider: FC<{
   const handleChallengeSuccess = async () => {
     setShowChallenge(false);
     if (activeOptions) {
-      await activeOptions.onApproved();
+      const opts = activeOptions;
       setActiveOptions(null);
+      await opts.onApproved();
     }
   };
 
@@ -75,8 +76,9 @@ export const OwnerPinGuardProvider: FC<{
     setShowSetup(false);
     setIsPinConfigured(true);
     if (activeOptions) {
-      await activeOptions.onApproved();
+      const opts = activeOptions;
       setActiveOptions(null);
+      await opts.onApproved();
     }
   };
 
@@ -95,31 +97,37 @@ export const OwnerPinGuardProvider: FC<{
   return (
     <OwnerPinGuardContext.Provider value={{ runWithPinGuard }}>
       {children}
-      <OwnerPinModal
-        visible={showChallenge}
-        {...(activeOptions?.title !== undefined && {
-          title: activeOptions.title,
-        })}
-        {...(activeOptions?.actionDescription !== undefined && {
-          actionDescription: activeOptions.actionDescription,
-        })}
-        onSuccess={handleChallengeSuccess}
-        onCancel={handleCancel}
-        onForgotPin={() => {
-          setShowChallenge(false);
-          setShowRecovery(true);
-        }}
-      />
-      <OwnerPinSetupModal
-        visible={showSetup}
-        onSuccess={handleSetupSuccess}
-        onCancel={handleCancel}
-      />
-      <OwnerPinRecoveryModal
-        visible={showRecovery}
-        onSuccess={handleRecoverySuccess}
-        onCancel={handleCancel}
-      />
+      {showChallenge && (
+        <OwnerPinModal
+          visible={showChallenge}
+          {...(activeOptions?.title !== undefined && {
+            title: activeOptions.title,
+          })}
+          {...(activeOptions?.actionDescription !== undefined && {
+            actionDescription: activeOptions.actionDescription,
+          })}
+          onSuccess={handleChallengeSuccess}
+          onCancel={handleCancel}
+          onForgotPin={() => {
+            setShowChallenge(false);
+            setShowRecovery(true);
+          }}
+        />
+      )}
+      {showSetup && (
+        <OwnerPinSetupModal
+          visible={showSetup}
+          onSuccess={handleSetupSuccess}
+          onCancel={handleCancel}
+        />
+      )}
+      {showRecovery && (
+        <OwnerPinRecoveryModal
+          visible={showRecovery}
+          onSuccess={handleRecoverySuccess}
+          onCancel={handleCancel}
+        />
+      )}
     </OwnerPinGuardContext.Provider>
   );
 };

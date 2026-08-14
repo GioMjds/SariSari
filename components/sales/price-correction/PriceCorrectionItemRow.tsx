@@ -16,6 +16,15 @@ type PriceCorrectionItemRowProps = {
   onResetItem: (saleItemId: number) => void;
 };
 
+const INPUT_CONTAINER_INVALID =
+  'flex-row items-center gap-1 bg-paper-50 border rounded-xl px-2.5 py-1 border-semantic-danger bg-semantic-danger-50';
+const INPUT_CONTAINER_CHANGED =
+  'flex-row items-center gap-1 bg-paper-50 border rounded-xl px-2.5 py-1 border-cinnamon-500 bg-cinnamon-50/40';
+const INPUT_CONTAINER_FOCUSED =
+  'flex-row items-center gap-1 bg-paper-50 border rounded-xl px-2.5 py-1 border-persimmon-500';
+const INPUT_CONTAINER_DEFAULT =
+  'flex-row items-center gap-1 bg-paper-50 border rounded-xl px-2.5 py-1 border-ink-200';
+
 export const PriceCorrectionItemRow: React.FC<PriceCorrectionItemRowProps> = ({
   item,
   editValue = '',
@@ -32,6 +41,14 @@ export const PriceCorrectionItemRow: React.FC<PriceCorrectionItemRowProps> = ({
   const origLineTotal = item.price * item.quantity;
   const newLineTotal = parsedNewPrice * item.quantity;
   const itemDelta = newLineTotal - origLineTotal;
+
+  const inputContainerClass = isInvalid
+    ? INPUT_CONTAINER_INVALID
+    : isPriceChanged
+      ? INPUT_CONTAINER_CHANGED
+      : isFocused
+        ? INPUT_CONTAINER_FOCUSED
+        : INPUT_CONTAINER_DEFAULT;
 
   return (
     <View className="bg-paper-100/70 p-3 rounded-xl border border-ink-100 gap-2">
@@ -70,17 +87,7 @@ export const PriceCorrectionItemRow: React.FC<PriceCorrectionItemRowProps> = ({
             </Pressable>
           )}
 
-          <View
-            className={`flex-row items-center gap-1 bg-paper-50 border rounded-xl px-2.5 py-1 ${
-              isInvalid
-                ? 'border-semantic-danger bg-semantic-danger-50'
-                : isPriceChanged
-                  ? 'border-cinnamon-500 bg-cinnamon-50/40'
-                  : isFocused
-                    ? 'border-persimmon-500'
-                    : 'border-ink-200'
-            }`}
-          >
+          <View className={inputContainerClass}>
             <StyledText variant="semibold" className="text-ink-600 text-sm">
               ₱
             </StyledText>

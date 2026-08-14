@@ -565,16 +565,13 @@ export default function SaleCorrectionScreen() {
           disabled={isSubmitting || isLoading}
           accessibilityRole="button"
           accessibilityLabel={actionButtonText}
-          className={`rounded-2xl py-4 flex-row items-center justify-center ${
+          className={`rounded-2xl py-4 flex-row items-center justify-center press-scale active:opacity-80 ${
             isSubmitting || isLoading
               ? 'bg-ink-100 shadow-none'
               : isVoid
                 ? 'bg-rose-700 shadow-paper'
                 : 'bg-cinnamon-600 shadow-paper'
           }`}
-          style={({ pressed }) => ({
-            transform: [{ scale: !isSubmitting && pressed ? 0.98 : 1 }],
-          })}
         >
           <FontAwesome
             name={isSubmitting ? 'spinner' : isVoid ? 'ban' : 'check-circle'}
