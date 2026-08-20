@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 12, color: '#166534' },
   btnRow: { flexDirection: 'row', gap: 8 },
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E85A1F',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,

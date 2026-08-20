@@ -177,8 +177,10 @@ export function Modal({
   const variantStyles = getVariantStyles();
   const displayIcon = finalIcon || variantStyles.defaultIcon;
 
+  const Wrapper = finalUseNativeModal ? View : MotiView;
+
   const ModalContent = (
-    <View
+    <Wrapper
       style={[
         StyleSheet.absoluteFill,
         {
@@ -190,6 +192,7 @@ export function Modal({
         },
       ]}
       pointerEvents={isVisible ? 'auto' : 'none'}
+      exit={{ opacity: 0 }}
     >
       <MotiView
         from={{ opacity: 0 }}
@@ -236,7 +239,7 @@ export function Modal({
           <View className="items-center mb-4">
             {(finalIcon || finalVariant !== 'default') && (
               <View
-                className={`${variantStyles.iconBg} rounded-full px-3 py-2 mb-3`}
+                className={`${variantStyles.iconBg} rounded-full w-14 h-14 items-center justify-center mb-3`}
               >
                 <FontAwesome
                   name={displayIcon as any}
@@ -336,7 +339,7 @@ export function Modal({
             </Pressable>
           )}
       </MotiView>
-    </View>
+    </Wrapper>
   );
 
   if (finalUseNativeModal) {

@@ -172,18 +172,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    color: '#1F2937',
+    color: '#28231D',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
-    color: '#4B5563',
+    color: '#564E45',
     marginBottom: 32,
     textAlign: 'center',
   },
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#E85A1F',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 10,
@@ -201,5 +201,5 @@ const styles = StyleSheet.create({
     minWidth: 220,
     alignItems: 'center',
   },
-  secondaryText: { color: '#374151', fontSize: 15 },
+  secondaryText: { color: '#3E3831', fontSize: 15 },
 });

@@ -91,23 +91,23 @@ export const RecordEntryModal: FC<Props> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View className="flex-1 justify-end bg-black/50">
-        <View className="bg-white dark:bg-gray-800 p-5 rounded-t-3xl">
-          <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+        <View className="bg-paper-50 p-5 rounded-t-2xl">
+          <Text className="text-lg font-bold text-ink-900 mb-4">
             {type === 'expense'
               ? 'Record Operating Expense'
               : 'Record Owner Drawing'}
           </Text>
 
           {type === 'expense' && category === 'supplies_packaging' && (
-            <View className="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl mb-3 border border-blue-200 dark:border-blue-800">
-              <Text className="text-xs text-blue-800 dark:text-blue-300">
+            <View className="bg-semantic-info-50 p-3 rounded-xl mb-3 border border-semantic-info-200">
+              <Text className="text-xs text-semantic-info-800">
                 Note: Inventory bought for resale is not an operating expense.
                 Use Restock in Inventory for store stock.
               </Text>
             </View>
           )}
 
-          <Text className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <Text className="text-xs font-semibold text-ink-700 mb-1">
             Amount (Whole Pesos)
           </Text>
           <TextInput
@@ -116,10 +116,10 @@ export const RecordEntryModal: FC<Props> = ({
             value={amountStr}
             onChangeText={setAmountStr}
             placeholder="0"
-            className="border border-gray-300 dark:border-gray-600 rounded-xl p-3 mb-3 text-base text-gray-900 dark:text-white"
+            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-3 text-base text-ink-900"
           />
 
-          <Text className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <Text className="text-xs font-semibold text-ink-700 mb-1">
             Date (YYYY-MM-DD)
           </Text>
           <TextInput
@@ -127,12 +127,12 @@ export const RecordEntryModal: FC<Props> = ({
             value={businessDate}
             onChangeText={setBusinessDate}
             placeholder="YYYY-MM-DD"
-            className="border border-gray-300 dark:border-gray-600 rounded-xl p-3 mb-3 text-base text-gray-900 dark:text-white"
+            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-3 text-base text-ink-900"
           />
 
           {type === 'expense' && (
             <>
-              <Text className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              <Text className="text-xs font-semibold text-ink-700 mb-1">
                 Category
               </Text>
               <View className="flex-row flex-wrap gap-2 mb-3">
@@ -142,15 +142,15 @@ export const RecordEntryModal: FC<Props> = ({
                     onPress={() => setCategory(c.value)}
                     className={`px-3 py-2 rounded-xl border ${
                       category === c.value
-                        ? 'bg-emerald-600 border-emerald-600'
-                        : 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                        ? 'bg-sage-600 border-sage-600'
+                        : 'bg-paper-100 border-paper-300'
                     }`}
                   >
                     <Text
                       className={`text-xs font-medium ${
                         category === c.value
                           ? 'text-white'
-                          : 'text-gray-800 dark:text-gray-200'
+                          : 'text-ink-800'
                       }`}
                     >
                       {c.label}
@@ -161,14 +161,14 @@ export const RecordEntryModal: FC<Props> = ({
             </>
           )}
 
-          <Text className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <Text className="text-xs font-semibold text-ink-700 mb-1">
             Note / Description
           </Text>
           <TextInput
             value={note}
             onChangeText={setNote}
             placeholder="Optional note"
-            className="border border-gray-300 dark:border-gray-600 rounded-xl p-3 mb-4 text-sm text-gray-900 dark:text-white"
+            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-4 text-sm text-ink-900"
           />
 
           {type === 'expense' && (
@@ -199,9 +199,9 @@ export const RecordEntryModal: FC<Props> = ({
           <View className="flex-row justify-end space-x-3">
             <Pressable
               onPress={onClose}
-              className="px-5 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 mr-2"
+              className="px-5 py-3 rounded-xl bg-paper-200 mr-2"
             >
-              <Text className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <Text className="text-sm font-semibold text-ink-800">
                 Cancel
               </Text>
             </Pressable>
@@ -209,7 +209,7 @@ export const RecordEntryModal: FC<Props> = ({
               testID="save-entry-button"
               onPress={handleSave}
               disabled={loading}
-              className="px-5 py-3 rounded-xl bg-emerald-600"
+              className="px-5 py-3 rounded-xl bg-sage-600"
             >
               <Text className="text-sm font-semibold text-white">
                 {loading ? 'Saving...' : 'Save Entry'}
