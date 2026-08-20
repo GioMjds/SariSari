@@ -8,4 +8,3 @@ export * from './units';
 export * from './onboardingStepMachine';
 export * from './onboardingStorage';
 export * from './images';
-export * from './biometric';

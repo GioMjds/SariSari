@@ -25,6 +25,10 @@ import {
 } from 'react-native-reanimated';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { OwnerPinGuardProvider } from '@/components/auth/OwnerPinGuardProvider';
+import { AppLockGate } from '@/components/auth/AppLockGate';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { isBiometricPromptActive } from '@/lib/auth/biometrics';
+import { shouldRelockOnResume } from '@/lib/auth/appLock';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -63,6 +67,8 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState<boolean>(false);
   const [i18nReady, setI18nReady] = useState<boolean>(false);
   const schedulerInputs = useSchedulerInputs();
+  const markBackgrounded = useAuthStore((s) => s.markBackgrounded);
+  const requireUnlock = useAuthStore((s) => s.requireUnlock);
 
   const runDbInit = useCallback(async () => {
     setDbInitError(null);
@@ -113,7 +119,19 @@ export default function RootLayout() {
     void runStartupChecks(schedulerInputs);
     const unsubCounter = subscribeCounter(schedulerInputs);
     const subAppState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
+      if (state === 'background' || state === 'inactive') {
+        markBackgrounded();
+      } else if (state === 'active') {
+        const { lastBackgroundedAt } = useAuthStore.getState();
+        if (
+          shouldRelockOnResume(
+            lastBackgroundedAt,
+            Date.now(),
+            isBiometricPromptActive(),
+          )
+        ) {
+          requireUnlock();
+        }
         void consumeQueue(schedulerInputs);
       }
     });
@@ -121,7 +139,15 @@ export default function RootLayout() {
       unsubCounter();
       subAppState.remove();
     };
-  }, [fontsLoaded, i18nReady, dbReady, dbInitError, schedulerInputs]);
+  }, [
+    fontsLoaded,
+    i18nReady,
+    dbReady,
+    dbInitError,
+    schedulerInputs,
+    markBackgrounded,
+    requireUnlock,
+  ]);
 
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
 
@@ -159,22 +185,24 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
               <OwnerPinGuardProvider isReady={dbReady}>
-                <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      contentStyle: { backgroundColor: '#F7F6F2' },
-                    }}
-                  />
-                  {fontsLoaded && i18nReady && !bannerDismissed ? (
-                    <CloudNewerBanner
-                      onRestorePress={handleBannerRestore}
-                      onDismiss={handleBannerDismiss}
+                <AppLockGate isReady={dbReady}>
+                  <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+                    <Stack
+                      screenOptions={{
+                        headerShown: false,
+                        contentStyle: { backgroundColor: '#F7F6F2' },
+                      }}
                     />
-                  ) : null}
-                </View>
-                <Toast />
-                <GlobalModal />
+                    {fontsLoaded && i18nReady && !bannerDismissed ? (
+                      <CloudNewerBanner
+                        onRestorePress={handleBannerRestore}
+                        onDismiss={handleBannerDismiss}
+                      />
+                    ) : null}
+                  </View>
+                  <Toast />
+                  <GlobalModal />
+                </AppLockGate>
               </OwnerPinGuardProvider>
             </SafeAreaProvider>
           </QueryClientProvider>

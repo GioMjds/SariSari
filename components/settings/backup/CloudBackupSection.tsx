@@ -1,22 +1,3 @@
-// components/settings/backup/CloudBackupSection.tsx
-// Cloud (Google Drive) backup section. Spec §8.
-//
-// Three observable states plus one "not configured" state:
-//
-//   1. NOT_CONFIGURED  — `extra.googleClientId` is empty. Renders a
-//                        static "Drive is not configured" row.
-//   2. UNLINKED        — OAuth client is set but the user hasn't
-//                        linked. Shows the Link button → triggers the
-//                        `useGoogleAuthRequest` PKCE flow.
-//   3. LINKED          — tokens in SecureStore. Shows the last-synced
-//                        timestamp and the Unlink button.
-//   4. REAUTH          — surfaced via `useCloudNewerStatus` (when a
-//                        prior upload produced a 401). Banner-style.
-//
-// Spec also describes a "Pending sync" indicator when the queue is
-// pending and the network gate is closed. We read the pending flag
-// from `lib/backup/syncQueue.isPending` on a polling loop.
-
 import Constants from 'expo-constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
@@ -38,6 +19,7 @@ import {
   useSchedulerInputs,
   useUnlinkGoogleDrive,
 } from '@/hooks/useBackup';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 
 const getGoogleClientId = (): string | null => {
   const id = Constants.expoConfig?.extra?.['googleClientId'];
@@ -98,10 +80,6 @@ export function CloudBackupSection() {
 
   return isLinked ? <LinkedCloudRow /> : <UnlinkedCloudRow />;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Unlinked                                                                  */
-/* -------------------------------------------------------------------------- */
 
 function UnlinkedCloudRow() {
   const { t } = useTranslation();
@@ -171,12 +149,9 @@ function UnlinkedCloudRow() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Linked                                                                    */
-/* -------------------------------------------------------------------------- */
-
 function LinkedCloudRow() {
   const { t } = useTranslation();
+  const { runWithPinGuard } = useOwnerPinGuard();
   const inputs = useSchedulerInputs();
   const unlink = useUnlinkGoogleDrive();
   const addToast = useToastStore((s) => s.addToast);
@@ -185,9 +160,6 @@ function LinkedCloudRow() {
   const [cellularAllowed, setCellularAllowed] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
 
-  // Read the last-sync timestamp from AsyncStorage on mount and
-  // re-read whenever the link-status flips. The scheduler writes
-  // `cloud_last_sync_at` after every successful upload.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -225,12 +197,18 @@ function LinkedCloudRow() {
     };
   }, []);
 
-  const handleUnlink = async () => {
-    try {
-      await unlink.mutateAsync();
-    } catch {
-      // Toast surfaced by useUnlinkGoogleDrive.
-    }
+  const handleUnlink = () => {
+    void runWithPinGuard({
+      title: t('settings:biometrics.lock_title'),
+      actionDescription: t('settings:biometrics.reason_unlink'),
+      onApproved: async () => {
+        try {
+          await unlink.mutateAsync();
+        } catch {
+          // Toast surfaced by useUnlinkGoogleDrive.
+        }
+      },
+    });
   };
 
   const handleBackupNow = async () => {
