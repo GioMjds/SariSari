@@ -1015,4 +1015,26 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v21.');
   }
+
+  if (currentVersion < 22) {
+    console.log('Running migration to v22 (Biometric owner auth settings)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS app_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+      `);
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('biometric_unlock_enabled', '0', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+      await db.runAsync(
+        "INSERT OR IGNORE INTO app_settings (key, value, updated_at) VALUES ('app_launch_lock_enabled', '0', CAST(strftime('%s','now') AS INTEGER) * 1000)",
+      );
+
+      await db.execAsync('PRAGMA user_version = 22;');
+    });
+    console.log('Database migrated to v22.');
+  }
 }

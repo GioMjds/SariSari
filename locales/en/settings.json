@@ -27,6 +27,29 @@
     "status_not_configured": "No PIN Set",
     "btn_setup": "Set Up Owner PIN",
     "btn_change": "Change Owner PIN",
-    "btn_reset": "Reset with Recovery Code"
+    "btn_reset": "Reset with Recovery Code",
+    "verify_failed": "Could not verify your PIN. Please try again."
+  },
+  "biometrics": {
+    "cancel_label": "Cancel",
+    "toggle_use_biometrics": "Use fingerprint or face",
+    "toggle_use_biometrics_help": "Approve owner actions with your fingerprint or face instead of typing the PIN. The PIN always still works.",
+    "toggle_launch_lock": "Lock app on launch",
+    "toggle_launch_lock_help": "Ask for your fingerprint, face, or PIN when the app opens. Reopening within five minutes will not ask again.",
+    "requires_pin": "Set up an Owner PIN first.",
+    "not_available": "This phone has no fingerprint or face sensor.",
+    "not_enrolled": "Register a fingerprint or face in your phone settings first.",
+    "risk_title": "Anyone enrolled on this phone can approve",
+    "risk_body": "Every fingerprint and face registered on this phone will be able to approve voids, refunds, credit limit overrides, stock adjustments, and restores without knowing your PIN. Turn this on only if you are the only person enrolled.",
+    "risk_confirm": "I understand, turn it on",
+    "risk_cancel": "Cancel",
+    "reason_unlock": "Unlock SariSari",
+    "reason_restore": "Approve restoring a backup",
+    "reason_unlink": "Approve unlinking cloud backup",
+    "reason_default": "Approve this owner action",
+    "lock_title": "SariSari is locked",
+    "lock_subtitle": "Confirm it is you to continue.",
+    "lock_retry": "Try again",
+    "lock_use_pin": "Use Owner PIN"
   }
 }

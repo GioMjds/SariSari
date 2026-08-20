@@ -1,6 +1,11 @@
 # SariSari — Feature Status & Information Architecture
 
 > Audit performed 2026-08-06 against the working tree.
+> This is now a historical snapshot. For the current implementation status and
+> documentation gaps audited on 2026-08-14, use
+> [[current-implemented-feature-inventory|Current Implemented Feature Inventory]].
+> Keep this note for its information-architecture analysis; do not use its tally
+> as the current feature count.
 > Read this before adding routes, moving screens, or planning a new feature so you don't duplicate work or scatter related screens across unrelated groups.
 > For the planned release sequence, see
 > [[project-roadmap|SariSari Feature Release Roadmap]].

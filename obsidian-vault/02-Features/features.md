@@ -5,6 +5,10 @@ mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagig
 
 > Para sa aktwal na pagkakasunod-sunod ng pag-ship, tingnan ang
 > [[project-roadmap|SariSari Feature Release Roadmap]].
+>
+> Para sa kasalukuyang code-level status, mga implemented na feature na wala pa sa
+> numbered backlog, at mga integration gap, tingnan ang
+> [[01-Roadmap/current-implemented-feature-inventory|Current Implemented Feature Inventory]].
 
 ## Kasalukuyan (Now) — Pinakamataas na Halaga sa Araw-araw
 
