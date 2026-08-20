@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Switch,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { getAppSetting, setAppSetting } from '@/database/settings';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
+import {
+  authenticateOwner,
+  getBiometricCapability,
+  type BiometricCapability,
+} from '@/lib/auth/biometrics';
 import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
 import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { StyledText } from '@/components/elements/StyledText';
@@ -13,11 +25,24 @@ export const OwnerPinSettingsCard: React.FC = () => {
   const { isPinConfigured, setIsPinConfigured } = useAuthStore();
   const [showSetup, setShowSetup] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
+  const { value: biometricRaw } = useAppSetting('biometric_unlock_enabled');
+  const biometricEnabled = biometricRaw === '1';
+  const { mutateAsync: setBiometricEnabled } = useSetAppSetting('biometric_unlock_enabled');
+  const { value: launchLockRaw } = useAppSetting('app_launch_lock_enabled');
+  const launchLockEnabled = launchLockRaw === '1';
+  const { mutateAsync: setLaunchLockEnabled } = useSetAppSetting('app_launch_lock_enabled');
+  const [capability, setCapability] = useState<BiometricCapability>({
+    available: false,
+    enrolled: false,
+    label: 'none',
+  });
+  const [showRiskConfirm, setShowRiskConfirm] = useState(false);
   const [pesosLimit, setPesosLimit] = useState('50');
   const [percentLimit, setPercentLimit] = useState('10');
 
   useEffect(() => {
     isOwnerPinConfigured().then(setIsPinConfigured);
+    getBiometricCapability().then(setCapability);
     getAppSetting('owner_pin_discount_threshold_pesos').then((v) => {
       if (v) setPesosLimit(v);
     });
@@ -30,6 +55,38 @@ export const OwnerPinSettingsCard: React.FC = () => {
     await setAppSetting('owner_pin_discount_threshold_pesos', pesosLimit);
     await setAppSetting('owner_pin_discount_threshold_percent', percentLimit);
   };
+
+  const handleBiometricToggle = async (next: boolean) => {
+    if (!next) {
+      await setBiometricEnabled('0');
+      return;
+    }
+    setShowRiskConfirm(true);
+  };
+
+  const handleRiskConfirmed = async () => {
+    setShowRiskConfirm(false);
+    const result = await authenticateOwner(t('biometrics.reason_default'));
+    if (result === 'success') {
+      await setBiometricEnabled('1');
+    }
+  };
+
+  const handleLaunchLockToggle = async (next: boolean) => {
+    await setLaunchLockEnabled(next ? '1' : '0');
+  };
+
+  const biometricDisabledReason: string | null = !isPinConfigured
+    ? t('biometrics.requires_pin')
+    : !capability.available
+      ? t('biometrics.not_available')
+      : !capability.enrolled
+        ? t('biometrics.not_enrolled')
+        : null;
+
+  const launchLockDisabledReason: string | null = !isPinConfigured
+    ? t('biometrics.requires_pin')
+    : null;
 
   return (
     <View style={styles.card}>
@@ -88,6 +145,42 @@ export const OwnerPinSettingsCard: React.FC = () => {
 
       <View style={styles.divider} />
 
+      <View style={styles.toggleRow}>
+        <View style={styles.toggleText}>
+          <StyledText variant="semibold" style={styles.toggleTitle}>
+            {t('biometrics.toggle_use_biometrics')}
+          </StyledText>
+          <StyledText variant="regular" style={styles.toggleSubtitle}>
+            {biometricDisabledReason ?? t('biometrics.toggle_use_biometrics_help')}
+          </StyledText>
+        </View>
+        <Switch
+          testID="biometric-toggle"
+          value={biometricEnabled}
+          disabled={biometricDisabledReason !== null}
+          onValueChange={(v) => { void handleBiometricToggle(v); }}
+        />
+      </View>
+
+      <View style={styles.toggleRow}>
+        <View style={styles.toggleText}>
+          <StyledText variant="semibold" style={styles.toggleTitle}>
+            {t('biometrics.toggle_launch_lock')}
+          </StyledText>
+          <StyledText variant="regular" style={styles.toggleSubtitle}>
+            {launchLockDisabledReason ?? t('biometrics.toggle_launch_lock_help')}
+          </StyledText>
+        </View>
+        <Switch
+          testID="launch-lock-toggle"
+          value={launchLockEnabled}
+          disabled={launchLockDisabledReason !== null}
+          onValueChange={(v) => { void handleLaunchLockToggle(v); }}
+        />
+      </View>
+
+      <View style={styles.divider} />
+
       <StyledText variant="semibold" style={styles.sectionSubTitle}>
         Discount PIN Thresholds
       </StyledText>
@@ -129,6 +222,36 @@ export const OwnerPinSettingsCard: React.FC = () => {
         onSuccess={() => setShowRecovery(false)}
         onCancel={() => setShowRecovery(false)}
       />
+      {showRiskConfirm ? (
+        <View style={styles.riskOverlay}>
+          <View style={styles.riskCard}>
+            <StyledText variant="semibold" style={styles.riskTitle}>
+              {t('biometrics.risk_title')}
+            </StyledText>
+            <StyledText variant="regular" style={styles.riskBody}>
+              {t('biometrics.risk_body')}
+            </StyledText>
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={() => {
+                void handleRiskConfirmed();
+              }}
+            >
+              <StyledText variant="semibold" style={styles.btnText}>
+                {t('biometrics.risk_confirm')}
+              </StyledText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryBtn, { marginTop: 8 }]}
+              onPress={() => setShowRiskConfirm(false)}
+            >
+              <StyledText variant="semibold" style={styles.secondaryBtnText}>
+                {t('biometrics.risk_cancel')}
+              </StyledText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -188,4 +311,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
   },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+  toggleText: { flex: 1, marginRight: 12 },
+  toggleTitle: { fontSize: 14, color: '#1F2937', marginBottom: 2 },
+  toggleSubtitle: { fontSize: 12, color: '#6B7280' },
+  riskOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  riskCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 24,
+  },
+  riskTitle: { fontSize: 16, color: '#1F2937', marginBottom: 12 },
+  riskBody: { fontSize: 13, color: '#4B5563', marginBottom: 24, lineHeight: 20 },
 });
