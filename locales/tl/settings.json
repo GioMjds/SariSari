@@ -27,6 +27,29 @@
     "status_not_configured": "Walang PIN",
     "btn_setup": "Mag-set up ng Owner PIN",
     "btn_change": "Palitan ang PIN",
-    "btn_reset": "I-reset gamit ang Recovery Code"
+    "btn_reset": "I-reset gamit ang Recovery Code",
+    "verify_failed": "Hindi na-verify ang PIN. Pakisubukan muli."
+  },
+  "biometrics": {
+    "cancel_label": "Kanselahin",
+    "toggle_use_biometrics": "Gamitin ang fingerprint o mukha",
+    "toggle_use_biometrics_help": "Aprubahan ang owner actions gamit ang fingerprint o mukha, hindi na kailangang i-type ang PIN. Gumagana pa rin ang PIN palagi.",
+    "toggle_launch_lock": "I-lock ang app kapag binuksan",
+    "toggle_launch_lock_help": "Magtatanong ng fingerprint, mukha, o PIN kapag binuksan ang app. Hindi na magtatanong kung babalik sa loob ng limang minuto.",
+    "requires_pin": "Mag-set up muna ng Owner PIN.",
+    "not_available": "Walang fingerprint o face sensor ang teleponong ito.",
+    "not_enrolled": "Magrehistro muna ng fingerprint o mukha sa settings ng telepono.",
+    "risk_title": "Kahit sino na nakarehistro ay makaka-aprubahan",
+    "risk_body": "Lahat ng fingerprint at mukha na nakarehistro sa teleponong ito ay makaka-aprubahan ng void, refund, credit limit override, stock adjustment, at restore kahit hindi alam ang PIN. I-on lamang ito kung ikaw lang ang nakarehistro.",
+    "risk_confirm": "Naiintindihan ko, i-on",
+    "risk_cancel": "Huwag",
+    "reason_unlock": "I-unlock ang SariSari",
+    "reason_restore": "Aprubahan ang pag-restore ng backup",
+    "reason_unlink": "Aprubahan ang pag-unlink ng cloud backup",
+    "reason_default": "Aprubahan ang owner action na ito",
+    "lock_title": "Naka-lock ang SariSari",
+    "lock_subtitle": "Kumpirmahin na ikaw ito para magpatuloy.",
+    "lock_retry": "Subukang muli",
+    "lock_use_pin": "Gamitin ang Owner PIN"
   }
 }

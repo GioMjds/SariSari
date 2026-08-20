@@ -1,22 +1,22 @@
-import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
-import { router } from 'expo-router';
+import { useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { FontAwesome } from '@expo/vector-icons';
-import { StyledText } from '@/components/elements';
+import { useTabBarBottomOffset } from '@/components/layout';
+import { goBackToMore, MoreDetailHeader } from '@/components/more';
 import { useProfile } from '@/hooks/useProfile';
 import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog';
-import {
-  CloudBackupSection,
-  LocalSnapshotsSection,
-} from '@/components/settings/backup';
 import { SupportedLanguage } from '@/lib/i18n';
 import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
+import {
+  SettingsRow,
+  SettingsSection,
+} from '@/components/settings/SettingsPrimitives';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { profile, loading: profileLoading } = useProfile();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
+  const bottomOffset = useTabBarBottomOffset();
 
   const activeLang = i18n.language as SupportedLanguage;
   const languageValue =
@@ -26,38 +26,14 @@ export default function Settings() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <View className="bg-cinnamon-500 px-5 pt-3 pb-6">
-        {router.canGoBack() ? (
-          <View className="flex-row items-center justify-between mb-3">
-            <View className="flex-row items-center">
-              <Pressable
-                onPress={() => router.back()}
-                hitSlop={12}
-                accessibilityRole="button"
-                accessibilityLabel={t('common:settingsGoBackA11y')}
-                className="w-8 h-8 items-center justify-center rounded-full bg-paper-50/15 active:opacity-70"
-              >
-                <FontAwesome name="arrow-left" size={14} color="#FBF7EE" />
-              </Pressable>
-            </View>
-          </View>
-        ) : null}
-        <StyledText
-          variant="extrabold"
-          className="text-h1 text-paper-50 text-3xl"
-          style={{ letterSpacing: -0.28 }}
-        >
-          {t('common:settingsTitle')}
-        </StyledText>
-        <StyledText
-          variant="regular"
-          className="text-sm text-paper-200 opacity-90 mt-1"
-        >
-          {t('common:settingsSubtitle')}
-        </StyledText>
-      </View>
+      <MoreDetailHeader
+        title={t('common:settingsTitle')}
+        subtitle={t('common:settingsSubtitle')}
+        onBack={goBackToMore}
+        backAccessibilityLabel={t('common:moreBackA11y')}
+      />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: bottomOffset + 16 }}>
         <SettingsSection
           title={t('common:settingsStoreSection')}
           subtitle={t('common:settingsStoreSectionSub')}
@@ -89,14 +65,6 @@ export default function Settings() {
         </SettingsSection>
 
         <SettingsSection
-          title={t('common:settingsDatabaseSection')}
-          subtitle={t('common:settingsDatabaseSub')}
-        >
-          <CloudBackupSection />
-          <LocalSnapshotsSection />
-        </SettingsSection>
-
-        <SettingsSection
           title={t('common:settingsSecuritySection')}
           subtitle={t('common:settingsSecuritySectionSub')}
         >
@@ -109,83 +77,5 @@ export default function Settings() {
         onClose={() => setLanguagePickerOpen(false)}
       />
     </View>
-  );
-}
-
-function SettingsSection({
-  title,
-  subtitle,
-  children,
-}: {
-  title?: string;
-  subtitle?: string;
-  children: ReactNode;
-}) {
-  return (
-    <View className="px-5 mt-6">
-      {title ? (
-        <StyledText
-          variant="extrabold"
-          className="text-xs uppercase text-ink-400 mb-1"
-          style={{ letterSpacing: 1.2 }}
-        >
-          {title}
-        </StyledText>
-      ) : null}
-      {subtitle ? (
-        <StyledText variant="regular" className="text-xs text-ink-400 mb-2">
-          {subtitle}
-        </StyledText>
-      ) : null}
-      <View className="bg-paper-50 rounded-2xl border border-warm-100 overflow-hidden">
-        {children}
-      </View>
-    </View>
-  );
-}
-
-function SettingsRow({
-  label,
-  value,
-  subtitle,
-  icon,
-  interactive,
-  onPress,
-}: {
-  label: string;
-  value: string;
-  subtitle?: string;
-  icon?: keyof typeof FontAwesome.glyphMap;
-  interactive?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!interactive}
-      className="px-4 py-3 border-b border-warm-100 last:border-b-0 flex-row items-center active:opacity-80"
-    >
-      {icon ? (
-        <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
-          <FontAwesome name={icon} size={15} color="#623418" />
-        </View>
-      ) : null}
-      <View className="flex-1">
-        <StyledText variant="semibold" className="text-sm text-ink-700">
-          {label}
-        </StyledText>
-        <StyledText variant="regular" className="text-sm text-ink-500 mt-0.5">
-          {value}
-        </StyledText>
-        {subtitle ? (
-          <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
-            {subtitle}
-          </StyledText>
-        ) : null}
-      </View>
-      {interactive ? (
-        <FontAwesome name="chevron-right" size={14} color="#9C8E7E" />
-      ) : null}
-    </Pressable>
   );
 }

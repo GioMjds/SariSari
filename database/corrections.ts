@@ -6,6 +6,39 @@ import {
   SaleCorrectionReportRow,
 } from '@/types/corrections.types';
 
+export const initCorrectionsTable = async (): Promise<void> => {
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS sale_corrections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id INTEGER NOT NULL REFERENCES sales(id),
+      kind TEXT NOT NULL CHECK(kind IN ('void','refund','price_correction')),
+      actor_reason_code TEXT NOT NULL,
+      actor_note TEXT,
+      actor_user TEXT NOT NULL,
+      witness_user TEXT,
+      refund_payment_type TEXT CHECK(refund_payment_type IN ('cash') OR refund_payment_type IS NULL),
+      sale_total INTEGER,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CHECK (kind <> 'refund' OR refund_payment_type IS NOT NULL)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sale_corrections_sale_id ON sale_corrections(sale_id);
+    CREATE INDEX IF NOT EXISTS idx_sale_corrections_created_at ON sale_corrections(created_at DESC, id DESC);
+
+    CREATE TABLE IF NOT EXISTS sale_correction_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      correction_id INTEGER NOT NULL REFERENCES sale_corrections(id) ON DELETE CASCADE,
+      sale_item_id INTEGER NOT NULL REFERENCES sale_items(id),
+      old_price INTEGER NOT NULL,
+      new_price INTEGER NOT NULL,
+      price_delta INTEGER NOT NULL,
+      CHECK (price_delta <> 0)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sale_correction_lines_correction_id ON sale_correction_lines(correction_id);
+  `);
+};
+
 interface SaleCorrectionWithLines extends SaleCorrection {
   lines: SaleCorrectionLine[];
 }

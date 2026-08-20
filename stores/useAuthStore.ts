@@ -4,18 +4,25 @@ interface AuthState {
   isPinConfigured: boolean;
   failedAttempts: number;
   lockoutUntil: number | null;
+  isAppUnlocked: boolean;
+  lastBackgroundedAt: number | null;
   setIsPinConfigured: (status: boolean) => void;
   registerFailedAttempt: () => void;
   resetFailedAttempts: () => void;
   clearExpiredLockout: () => void;
   isLockedOut: () => boolean;
   getLockoutSecondsRemaining: () => number;
+  markUnlocked: () => void;
+  markBackgrounded: () => void;
+  requireUnlock: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   isPinConfigured: false,
   failedAttempts: 0,
   lockoutUntil: null,
+  isAppUnlocked: false,
+  lastBackgroundedAt: null,
   setIsPinConfigured: (status: boolean) => set({ isPinConfigured: status }),
   registerFailedAttempt: () => {
     const nextAttempts = get().failedAttempts + 1;
@@ -50,4 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const remainingMs = lockoutUntil - Date.now();
     return Math.max(0, Math.ceil(remainingMs / 1000));
   },
-}))
+  markUnlocked: () => set({ isAppUnlocked: true, lastBackgroundedAt: null }),
+  markBackgrounded: () => set({ lastBackgroundedAt: Date.now() }),
+  requireUnlock: () => set({ isAppUnlocked: false }),
+}));

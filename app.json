@@ -67,6 +67,19 @@
           "supportOpeningDocumentsInPlace": true,
           "enableFileSharing": true
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow SariSari to approve owner actions like voids, refunds, and restores."
+        }
+      ],
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Allow SariSari to approve owner actions like voids, refunds, and restores."
+        }
       ]
     ],
     "experiments": {

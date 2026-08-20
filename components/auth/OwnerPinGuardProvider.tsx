@@ -1,10 +1,16 @@
 import { createContext, useState, useEffect, FC } from 'react';
+import { getAppSetting } from '@/database/settings';
+import {
+  authenticateOwner,
+  getBiometricCapability,
+} from '@/lib/auth/biometrics';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { OwnerPinModal } from '@/components/auth/OwnerPinModal';
 import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
 import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { Alert } from '@/utils';
+import { t } from 'i18next';
 
 export interface GuardOptions {
   title?: string;
@@ -48,22 +54,59 @@ export const OwnerPinGuardProvider: FC<{
     };
   }, [isReady, setIsPinConfigured]);
 
+  const tryBiometricApproval = async (
+    options: GuardOptions,
+  ): Promise<'approved' | 'aborted' | 'fall-through'> => {
+    if (useAuthStore.getState().isLockedOut()) return 'fall-through';
+    let enabled: boolean = false;
+    try {
+      enabled = (await getAppSetting('biometric_unlock_enabled')) === '1';
+    } catch {
+      return 'fall-through';
+    }
+    if (!enabled) return 'fall-through';
+
+    const capability = await getBiometricCapability();
+    if (!capability.available || !capability.enrolled) return 'fall-through';
+
+    const reason =
+      options.actionDescription ??
+      t('biometrics.reason_default', { ns: 'settings' });
+    const result = await authenticateOwner(reason);
+
+    if (result === 'success') {
+      useAuthStore.getState().resetFailedAttempts();
+      setActiveOptions(null);
+      await options.onApproved();
+      return 'approved';
+    }
+    if (result === 'cancelled') {
+      setActiveOptions(null);
+      return 'aborted';
+    }
+    return 'fall-through';
+  };
+
   const runWithPinGuard = async (options: GuardOptions) => {
     setActiveOptions(options);
+    let configured = false;
     try {
-      const configured = await isOwnerPinConfigured();
-      setIsPinConfigured(configured);
-      if (!configured) {
-        setShowSetup(true);
-      } else {
-        setShowChallenge(true);
-      }
+      configured = await isOwnerPinConfigured();
     } catch {
       setActiveOptions(null);
       Alert.alert(
         'Owner PIN Unavailable',
         'Owner PIN verification is currently unavailable. Please try again.',
       );
+      return;
+    }
+    setIsPinConfigured(configured);
+    if (!configured) {
+      setShowSetup(true);
+      return;
+    }
+    if ((await tryBiometricApproval(options)) === 'fall-through') {
+      setShowChallenge(true);
     }
   };
 

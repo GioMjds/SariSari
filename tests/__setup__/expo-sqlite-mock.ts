@@ -60,6 +60,12 @@ export const resetMockDb = () => {
     'customers',
     'product_catalog',
     'parked_carts',
+    'sale_correction_lines',
+    'sale_corrections',
+    'cash_entries',
+    'cash_sessions',
+    'app_settings',
+    'auth_settings',
     'stocktake_counts',
     'stocktake_sessions',
   ];

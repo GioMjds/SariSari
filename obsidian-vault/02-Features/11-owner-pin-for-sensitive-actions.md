@@ -25,9 +25,9 @@ Bilang may-ari ng tindahan, gusto ko ng PIN na nagha-harang sa mga pinakamahahal
 - Isang maikling lockout window pagkatapos ng 3 nabigong subok (60-segundong in-memory cooldown via `stores/useAuthStore.ts`).
 - "Forgot PIN" recovery flow gamit ang 8-character base-32 owner recovery code (`XXXX-XXXX`) na ginagawa sa setup at naka-hash sa database.
 
-## Hindi Kasama sa Saklaw (Out of Scope)
+## Hindi Kasama sa Saklaw (Out of Scope) — Updated
 
-- Biometric unlock (ang telepono ng tindahan ay maaaring walang maaasahang biometrics; ang PIN ay sapat na).
+- ~~Biometric unlock (ang telepono ng tindahan ay maaaring walang maaasahang biometrics; ang PIN ay sapat na).~~ **Scope change:** Implemented as opt-in biometric authentication in `docs/superpowers/specs/2026-08-19-biometric-owner-auth-design.md`. The PIN remains the fallback; biometrics are off by default and require a configured PIN.
 - Per-user PINs. Single-owner model; ang tampok 16 (shift tracking) ang lugar kung saan idadagdag ang per-cashier attribution kung kinakailangan.
 - Server-side PIN validation. Walang server (offline-first).
 

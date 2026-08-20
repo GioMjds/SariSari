@@ -328,6 +328,17 @@ jest.mock('expo-haptics', () => ({
   },
 }));
 
+// Mock expo-local-authentication -- lib/auth/biometrics.ts imports this
+// module at load time. Defaults describe a phone with an enrolled
+// fingerprint; individual tests override with mockResolvedValue.
+jest.mock('expo-local-authentication', () => ({
+  hasHardwareAsync: jest.fn(async () => true),
+  isEnrolledAsync: jest.fn(async () => true),
+  supportedAuthenticationTypesAsync: jest.fn(async () => [1]),
+  authenticateAsync: jest.fn(async () => ({ success: true })),
+  AuthenticationType: { FINGERPRINT: 1, FACIAL_RECOGNITION: 2, IRIS: 3 },
+}));
+
 // Mock expo-camera — `components/ui/BarcodeScannerModal.tsx` imports
 // `CameraView`, `useCameraPermissions`, and the permission-status enum.
 // Tests don't render the camera surface; default to a granted
