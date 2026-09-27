@@ -157,14 +157,10 @@ export default function RootLayout() {
 
   const handleBannerDismiss = useCallback(async () => {
     setBannerDismissed(true);
-    try {
-      await AsyncStorage.setItem(
-        'cloud_newer_banner_dismissed_at',
-        String(Date.now()),
-      );
-    } catch {
-      // ignore
-    }
+    await AsyncStorage.setItem(
+      'cloud_newer_banner_dismissed_at',
+      String(Date.now()),
+    );
   }, []);
 
   if (dbInitError) {

@@ -61,19 +61,52 @@ export function invalidateProductDependencies(
   queryClient: QueryClient,
   productId?: number,
 ) {
-  queryClient.invalidateQueries({ queryKey: productKeys.all });
+  queryClient.invalidateQueries({
+    queryKey: productKeys.all,
+    refetchType: 'all',
+  });
   if (productId != null) {
-    queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) });
+    queryClient.invalidateQueries({
+      queryKey: productKeys.detail(productId),
+      refetchType: 'all',
+    });
   }
-  queryClient.invalidateQueries({ queryKey: catalogKeys.all });
-  queryClient.invalidateQueries({ queryKey: ['categories'] });
-  queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
-  queryClient.invalidateQueries({ queryKey: ['category'] });
-  queryClient.invalidateQueries({ queryKey: ['inventory'] });
-  queryClient.invalidateQueries({ queryKey: ['inventory_transactions'] });
-  queryClient.invalidateQueries({ queryKey: ['report-kpis'] });
-  queryClient.invalidateQueries({ queryKey: ['reports'] });
-  queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
+  queryClient.invalidateQueries({
+    queryKey: catalogKeys.all,
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['categories'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['categories-with-count'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['category'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['inventory'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['inventory_transactions'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['report-kpis'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['reports'],
+    refetchType: 'all',
+  });
+  queryClient.invalidateQueries({
+    queryKey: ['sales-stats'],
+    refetchType: 'all',
+  });
 }
 
 export function useGetProduct(id: number) {

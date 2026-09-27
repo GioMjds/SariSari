@@ -320,7 +320,7 @@ export function useEditProductForm() {
     confirmDelete: async () => {
       setShowDeleteModal(false);
       await deleteProductMutation.mutateAsync(productId);
-      router.replace('/inventory');
+      router.back();
     },
     isScannerOpen,
     openScanner,

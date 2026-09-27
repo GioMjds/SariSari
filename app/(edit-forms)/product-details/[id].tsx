@@ -1,22 +1,21 @@
 import { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  ScrollView,
-  Pressable,
-  RefreshControl,
-} from 'react-native';
+import { View, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { StyledText } from '@/components/elements';
-import { useGetProduct, useGetSupplier } from '@/hooks';
+import { useGetProduct, useGetSupplier, useProducts } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
+import { Modal } from '@/components/ui';
+import { LogTransactionForm } from '@/components/inventory/ledger';
+import type { InventoryEventType } from '@/types/inventory.types';
 import {
   ProductDetailsHero,
   ProductDetailsTabs,
   ProductHistoryTab,
+  ProductOverviewTab,
   ProductSupplierTab,
   type ProductDetailTab,
 } from '@/components/inventory/products/details';
@@ -38,6 +37,11 @@ export default function ProductDetailsPage() {
   const supplierQuery = useGetSupplier(product?.supplier_id ?? '');
 
   const [activeTab, setActiveTab] = useState<ProductDetailTab>('overview');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [logFormType, setLogFormType] = useState<InventoryEventType | null>(
+    null,
+  );
+  const { deleteProductMutation } = useProducts();
 
   const handleBack = useCallback(() => {
     Haptics.selectionAsync().catch(() => {});
@@ -50,6 +54,29 @@ export default function ProductDetailsPage() {
       router.push(`/(edit-forms)/edit-product/${product.id}` as Href);
     }
   }, [product]);
+
+  const handleRestock = useCallback(() => {
+    setLogFormType('restock');
+  }, []);
+
+  const handleAdjust = useCallback(() => {
+    setLogFormType('adjustment');
+  }, []);
+
+  const handleDamaged = useCallback(() => {
+    setLogFormType('damaged');
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    setDeleteModalOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!product) return;
+    setDeleteModalOpen(false);
+    await deleteProductMutation.mutateAsync(product.id);
+    router.back();
+  }, [product, deleteProductMutation]);
 
   const handleTabChange = useCallback((next: ProductDetailTab) => {
     Haptics.selectionAsync().catch(() => {});
@@ -176,6 +203,17 @@ export default function ProductDetailsPage() {
 
         {/* ── Tab content ────────────────────────────────────── */}
         <View className="mt-4">
+          {activeTab === 'overview' && (
+            <ProductOverviewTab
+              product={product}
+              onEdit={handleEdit}
+              onRestock={handleRestock}
+              onAdjust={handleAdjust}
+              onDamaged={handleDamaged}
+              onDelete={handleDelete}
+            />
+          )}
+
           {activeTab === 'history' && (
             <ProductHistoryTab
               transactions={transactionsQuery.data ?? []}
@@ -193,6 +231,39 @@ export default function ProductDetailsPage() {
           )}
         </View>
       </ScrollView>
+
+      <LogTransactionForm
+        product={product}
+        initialType={logFormType ?? 'restock'}
+        visible={logFormType !== null}
+        onClose={() => setLogFormType(null)}
+        onSuccess={() => {
+          setLogFormType(null);
+          productQuery.refetch();
+          transactionsQuery.refetch();
+        }}
+      />
+
+      <Modal
+        visible={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        variant="danger"
+        title="Delete Product?"
+        description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
+        buttons={[
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setDeleteModalOpen(false),
+          },
+          {
+            text: 'Yes, Delete Product',
+            style: 'destructive',
+            onPress: handleConfirmDelete,
+          },
+        ]}
+        loading={deleteProductMutation.isPending}
+      />
     </SafeAreaView>
   );
 }

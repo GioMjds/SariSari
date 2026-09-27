@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import {
@@ -16,8 +16,7 @@ import { useInventorySelection, useToastStore } from '@/stores';
 import { BulkActionsToolbar, type AlertKind } from '@/components/inventory';
 import { SearchBar } from '@/components/ui';
 import type { Product } from '@/types/products.types';
-import { getStatus, type InventoryEventType } from '@/types/inventory.types';
-import { MAX_STOCK_THRESHOLD } from '@/constants/stocks';
+import { type InventoryEventType } from '@/types/inventory.types';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
@@ -88,6 +87,12 @@ export default function ProductsScreen() {
   }, [category, supplier, alert]);
 
   const productsQuery = usePaginatedProducts(searchTerm, filter, filterOptions);
+
+  useFocusEffect(
+    useCallback(() => {
+      productsQuery.refetch();
+    }, [productsQuery]),
+  );
 
   const products = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.items) ?? [],

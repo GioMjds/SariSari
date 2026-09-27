@@ -158,7 +158,7 @@ export function useAddProductForm() {
   const isSubmitDisabled =
     insertProductMutation.isPending ||
     !safeTrim(productName) ||
-    !safeTrim(sku) ||
+    (!safeTrim(sku) && !trimmedBarcode) ||
     !price ||
     parsedPrice <= 0 ||
     isBarcodeDuplicate;
@@ -364,6 +364,8 @@ export function useAddProductForm() {
       ? parsePesosInput(data.costPerPiece)
       : null;
     const trimmedBarcode = safeTrim(data.barcode);
+    const trimmedSupplier = safeTrim(data.supplierId);
+    const trimmedCategory = safeTrim(data.category);
 
     const enableWholesale = data.enableWholesale;
     const retailUnitName = safeTrim(data.retailUnitName) || 'Pc';
@@ -387,45 +389,38 @@ export function useAddProductForm() {
         ? safeTrim(data.wholesaleBarcode)
         : null;
 
+    const finalSku =
+      safeTrim(data.sku) ||
+      (autoGenerateSku ? generateSku(data.productName, '') : '') ||
+      trimmedBarcode ||
+      generateSku(data.productName, '');
+
     insertProductMutation.mutate(
       {
         name: safeTrim(data.productName),
-        sku: safeTrim(data.sku),
-        ...(trimmedBarcode != null ? { barcode: trimmedBarcode } : {}),
+        sku: finalSku,
+        barcode: trimmedBarcode || null,
         price: priceValue,
-        ...(Number.isFinite(stockValue) ? { quantity: stockValue } : {}),
+        quantity: Number.isFinite(stockValue) ? stockValue : 0,
         ...(costPriceValue != null ? { cost_price: costPriceValue } : {}),
-        ...(safeTrim(data.category) != null
-          ? { category: safeTrim(data.category) as string }
-          : {}),
-        ...(data.supplierId != null
-          ? { supplier_id: data.supplierId }
-          : {}),
-        ...(data.imageUri
-          ? { image_uri: safeTrim(data.imageUri) }
-          : {}),
-        ...(retailUnitName != null ? { retail_unit_name: retailUnitName } : {}),
-        ...(wholesaleUnitName != null
-          ? { wholesale_unit_name: wholesaleUnitName }
-          : {}),
-        ...(wholesalePriceVal != null
-          ? { wholesale_price: wholesalePriceVal }
-          : {}),
-        ...(wholesaleCostVal != null
-          ? { wholesale_cost_price: wholesaleCostVal }
-          : {}),
-        ...(conversionFactorNum &&
-        Number.isFinite(conversionFactorNum) &&
-        conversionFactorNum >= 2
-          ? { conversion_factor: conversionFactorNum }
-          : {}),
-        ...(wholesaleBarcodeVal != null
-          ? { wholesale_barcode: wholesaleBarcodeVal }
-          : {}),
+        ...(trimmedCategory ? { category: trimmedCategory } : {}),
+        supplier_id: trimmedSupplier || null,
+        image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
+        retail_unit_name: retailUnitName,
+        wholesale_unit_name: wholesaleUnitName,
+        wholesale_price: wholesalePriceVal,
+        wholesale_cost_price: wholesaleCostVal,
+        conversion_factor:
+          conversionFactorNum &&
+          Number.isFinite(conversionFactorNum) &&
+          conversionFactorNum >= 2
+            ? conversionFactorNum
+            : null,
+        wholesale_barcode: wholesaleBarcodeVal,
       },
       {
         onSuccess: () => {
-          router.push('/(tabs)' as Href);
+          router.replace('/(tabs)/inventory/products' as Href);
         },
       },
     );

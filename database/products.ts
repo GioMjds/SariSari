@@ -134,6 +134,10 @@ export const insertProduct = async (
 ): Promise<number> => {
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
+  const normalizedSupplierId =
+    supplier_id && supplier_id.trim().length > 0 ? supplier_id.trim() : null;
+  const normalizedCategory =
+    category && category.trim().length > 0 ? category.trim() : null;
 
   let productId = 0;
 
@@ -156,9 +160,9 @@ export const insertProduct = async (
           price,
           quantity,
           cost_price ?? null,
-          category ?? null,
+          normalizedCategory,
           normalizedBarcode,
-          supplier_id ?? null,
+          normalizedSupplierId,
           image_uri ?? null,
           retail_unit_name || 'Pc',
           wholesale_unit_name ?? null,
@@ -178,7 +182,7 @@ export const insertProduct = async (
             'restock',
             quantity,
             cost_price ?? null,
-            supplier_id ?? null,
+            normalizedSupplierId,
           ],
         );
       }
@@ -239,6 +243,10 @@ export const updateProduct = async (
 ) => {
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
+  const normalizedSupplierId =
+    supplier_id && supplier_id.trim().length > 0 ? supplier_id.trim() : null;
+  const normalizedCategory =
+    category && category.trim().length > 0 ? category.trim() : null;
 
   try {
     await db.withTransactionAsync(async () => {
@@ -265,9 +273,9 @@ export const updateProduct = async (
           price,
           quantity,
           cost_price ?? null,
-          category ?? null,
+          normalizedCategory,
           normalizedBarcode,
-          supplier_id ?? null,
+          normalizedSupplierId,
           image_uri ?? null,
           retail_unit_name || 'Pc',
           wholesale_unit_name ?? null,
@@ -280,10 +288,23 @@ export const updateProduct = async (
       );
       if (current && current.quantity !== quantity) {
         const delta = quantity - current.quantity;
-        await db.runAsync(
-          'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
-          [id, 'restock', delta, cost_price ?? null, supplier_id ?? null],
-        );
+        if (delta > 0) {
+          await db.runAsync(
+            'INSERT INTO inventory_transactions (product_id, type, quantity, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?)',
+            [id, 'restock', delta, cost_price ?? null, normalizedSupplierId],
+          );
+        } else if (delta < 0) {
+          await db.runAsync(
+            'INSERT INTO inventory_transactions (product_id, type, quantity, adjustment_sign, note) VALUES (?, ?, ?, ?, ?)',
+            [
+              id,
+              'adjustment',
+              Math.abs(delta),
+              'negative',
+              'Stock update adjustment',
+            ],
+          );
+        }
       }
 
       if (normalizedBarcode) {
@@ -478,7 +499,29 @@ export async function toggleProductFavorite(
 }
 
 export const deleteProduct = async (id: number) => {
-  await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
+  await db.withTransactionAsync(async () => {
+    const saleItem = await db.getFirstAsync<{ count: number }>(
+      'SELECT COUNT(*) as count FROM sale_items WHERE product_id = ?',
+      [id],
+    );
+    if (saleItem && saleItem.count > 0) {
+      throw new Error('Cannot delete product with recorded sales history.');
+    }
+
+    await db.runAsync(
+      'UPDATE credit_transactions SET product_id = NULL WHERE product_id = ?',
+      [id],
+    );
+    await db.runAsync(
+      'DELETE FROM stocktake_counts WHERE product_id = ?',
+      [id],
+    );
+    await db.runAsync(
+      'DELETE FROM inventory_transactions WHERE product_id = ?',
+      [id],
+    );
+    await db.runAsync('DELETE FROM products WHERE id = ?', [id]);
+  });
 };
 
 export const updateProductCategory = async (

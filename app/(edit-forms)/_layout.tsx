@@ -8,34 +8,22 @@ export default function EditFormsLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          presentation: 'formSheet',
+          presentation: 'card',
           animation: 'fade',
           gestureEnabled: true,
-          sheetGrabberVisible: true,
-          sheetCornerRadius: 24,
-          sheetAllowedDetents: [1],
-          sheetInitialDetentIndex: 'last',
           contentStyle: { backgroundColor: '#FAFAF7' },
         }}
       >
+        <Stack.Screen name="add-product/index" />
+        <Stack.Screen name="edit-product/[id]" />
+        <Stack.Screen name="product-details/[id]" />
+        <Stack.Screen name="inventory-ledger/[productId]" />
         <Stack.Screen name="add-category/index" />
         <Stack.Screen name="add-supplier/index" />
-        <Stack.Screen
-          name="add-payment/[id]"
-          options={{ presentation: 'card', animation: 'fade' }}
-        />
-        <Stack.Screen
-          name="add-credit/[id]"
-          options={{ presentation: 'card', animation: 'fade' }}
-        />
-        <Stack.Screen
-          name="sale-correction/[id]"
-          options={{ presentation: 'card', animation: 'fade' }}
-        />
-        <Stack.Screen
-          name="price-correction/[id]"
-          options={{ presentation: 'card', animation: 'fade' }}
-        />
+        <Stack.Screen name="add-payment/[id]" />
+        <Stack.Screen name="add-credit/[id]" />
+        <Stack.Screen name="sale-correction/[id]" />
+        <Stack.Screen name="price-correction/[id]" />
       </Stack>
     </>
   );
