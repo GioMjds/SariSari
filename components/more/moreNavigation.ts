@@ -2,10 +2,10 @@ import { type Href, router } from 'expo-router';
 
 export const MORE_ROUTES = {
   home: '/(tabs)/more',
-  cash: '/(tabs)/more/cash-entries',
-  reports: '/(tabs)/more/reports',
-  backup: '/(tabs)/more/backup',
-  settings: '/(tabs)/more/settings',
+  cash: '/settings/cash-entries',
+  reports: '/settings/reports',
+  backup: '/settings/backup',
+  settings: '/settings/settings',
 } as const satisfies Record<string, Href>;
 
 export type MoreDestination =

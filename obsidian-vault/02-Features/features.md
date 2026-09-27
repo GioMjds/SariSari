@@ -72,6 +72,15 @@ mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagig
     gumawa ng mai-print na labels mula sa umiiral na catalog para sa
     mga estante at repacked tingi items.
 
+## Mga Bagong Karagdagang Tampok (Operational & Digital Expansions)
+
+- [Pagtala ng Konsumo ng Bahay at Pang-Ulam](owner-inventory-consumption-pang-ulam.md) —
+  pagtala ng kinuha ng pamilya sa puhunan (cost price) nang hindi nagkakamali sa sales at shrinkage.
+- [Pagtala ng E-Load at Digital Cash-In/Out](e-loading-and-digital-cash-services.md) —
+  nakalaang ledger para sa GCash, Maya, at telco load float at service fee (_patong_).
+- [Listahan ng Bibilhin sa Palengke at Badyet](palengke-restock-sheet.md) —
+  pinagsama-samang reorder checklist na may total working capital calculation at printable PDF.
+
 ## Mapa ng mga Kaugnayan
 
 Gamitin ang mga link na ito bilang mabilis na entry point. Ang bawat detalyadong note ay may
@@ -84,22 +93,22 @@ Mga Kaugnay na Tampok section na nagpapaliwanag ng ugnayan nito.
   [[12-customer-credit-statements|12. Credit Statements]], at
   [[15-smarter-but-explainable-credit-profiles|15. Explainable Credit Profiles]].
 - **Kaha, correction, at accountability:** [[03-daily-cash-close-out|03. Daily Cash
-  Close-Out]] ay tumatanggap ng cash reversal mula sa
+      Close-Out]] ay tumatanggap ng cash reversal mula sa
   [[07-safe-voids-refunds-corrections|07. Safe Voids, Refunds, at Corrections]].
   [[11-owner-pin-for-sensitive-actions|11. Owner PIN]] ang proteksiyon sa maselang
-  aksyon, at [[16-shift-tracking-on-one-device|16. Shift Tracking]] ang nagdaragdag ng
-  cashier attribution.
+      aksyon, at [[16-shift-tracking-on-one-device|16. Shift Tracking]] ang nagdaragdag ng
+      cashier attribution.
 - **Inventory at supplier loop:** [[08-supplier-delivery-receiving|08. Supplier Delivery
-  Receiving]] ang nagko-commit ng restock na pinaplano ng
+      Receiving]] ang nagko-commit ng restock na pinaplano ng
   [[09-offline-reorder-suggestions|09. Offline Reorder Suggestions]].
   [[04-physical-stocktake|04. Physical Stocktake]],
   [[07-safe-voids-refunds-corrections|07. Safe Corrections]], at
   [[13-expiry-and-damaged-goods-tracking|13. Expiry at Damaged Goods]] ay bumubuo ng
-  event trail na makikita sa [[10-stock-movement-timeline|10. Stock Movement Timeline]].
+      event trail na makikita sa [[10-stock-movement-timeline|10. Stock Movement Timeline]].
 - **Paliwanag at output:** [[14-transparent-local-store-insights|14. Transparent Local
-  Store Insights]] ay bumubuo ng maiintindihang tips mula sa sales, inventory, at credit
-  data. [[18-offline-price-label-and-barcode-sheets|18. Price Label at Barcode Sheets]]
-  ay kumokonekta sa POS barcode scan at sa PDF/share pattern ng statements.
+      Store Insights]] ay bumubuo ng maiintindihang tips mula sa sales, inventory, at credit
+      data. [[18-offline-price-label-and-barcode-sheets|18. Price Label at Barcode Sheets]]
+      ay kumokonekta sa POS barcode scan at sa PDF/share pattern ng statements.
 - **Proteksyon ng data:** [[17-manual-encrypted-backup-and-restore|17. Encrypted Backup
-  at Restore]] ay cross-cutting na nagpoprotekta sa mga local record ng pera, stock, suki,
-  at supplier.
+      at Restore]] ay cross-cutting na nagpoprotekta sa mga local record ng pera, stock, suki,
+      at supplier.

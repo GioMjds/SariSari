@@ -27,6 +27,15 @@ describe('More navigation', () => {
     jest.useRealTimers();
   });
 
+  it('keeps More detail destinations outside the tabs route group', () => {
+    expect(MORE_ROUTES).toMatchObject({
+      cash: '/settings/cash-entries',
+      reports: '/settings/reports',
+      backup: '/settings/backup',
+      settings: '/settings/settings',
+    });
+  });
+
   it('falls back to More when a deep link has no history', () => {
     mockRouter.canGoBack.mockReturnValue(false);
 
