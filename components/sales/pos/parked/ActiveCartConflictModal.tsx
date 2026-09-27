@@ -20,9 +20,16 @@ export function ActiveCartConflictModal({
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View className="flex-1 bg-black/50 justify-center items-center p-4">
-        <View className="bg-paper-100 w-full max-w-sm rounded-2xl p-5 shadow-lg border border-paper-300">
+      <Pressable
+        onPress={onClose}
+        className="flex-1 bg-black/50 justify-center items-center p-4"
+      >
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          className="bg-paper-100 w-full max-w-sm rounded-2xl p-5 shadow-lg border border-paper-300"
+        >
           <StyledText variant="extrabold" className="text-lg text-ink-900 mb-1">
             Active Cart Has Items
           </StyledText>
@@ -59,8 +66,8 @@ export function ActiveCartConflictModal({
               </StyledText>
             </Pressable>
           </View>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

@@ -4,6 +4,9 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
@@ -42,8 +45,6 @@ export const OwnerPinSetupModal: FC<Props> = ({
     setCopied(false);
   }, [visible]);
 
-  if (!visible) return null;
-
   const handleNext = async () => {
     if (isSubmitting) return;
     if (step === 'create') {
@@ -78,88 +79,97 @@ export const OwnerPinSetupModal: FC<Props> = ({
   };
 
   return (
-    <View style={styles.backdrop}>
-      <View style={styles.card}>
-        {step !== 'code' ? (
-          <>
-            <StyledText variant="semibold" style={styles.title}>
-              {t('pin.setup_title')}
-            </StyledText>
-            <StyledText variant="regular" style={styles.label}>
-              {step === 'create' ? t('pin.enter_pin') : t('pin.confirm_pin')}
-            </StyledText>
-            <TextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={6}
-              value={step === 'create' ? pin : confirmPin}
-              onChangeText={(val: string) => {
-                setErrorMsg('');
-                if (step === 'create') {
-                  setPin(val);
-                } else {
-                  setConfirmPin(val);
-                }
-              }}
-            />
-            {Boolean(errorMsg) && (
-              <StyledText variant="semibold" style={styles.errorText}>
-                {errorMsg}
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+      statusBarTranslucent
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.backdrop}
+      >
+        <View style={styles.card}>
+          {step !== 'code' ? (
+            <>
+              <StyledText variant="semibold" style={styles.title}>
+                {t('pin.setup_title')}
               </StyledText>
-            )}
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-                <StyledText variant="semibold" style={styles.cancelText}>
-                  Cancel
+              <StyledText variant="regular" style={styles.label}>
+                {step === 'create' ? t('pin.enter_pin') : t('pin.confirm_pin')}
+              </StyledText>
+              <TextInput
+                style={styles.input}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={6}
+                value={step === 'create' ? pin : confirmPin}
+                onChangeText={(val: string) => {
+                  setErrorMsg('');
+                  if (step === 'create') {
+                    setPin(val);
+                  } else {
+                    setConfirmPin(val);
+                  }
+                }}
+              />
+              {Boolean(errorMsg) && (
+                <StyledText variant="semibold" style={styles.errorText}>
+                  {errorMsg}
+                </StyledText>
+              )}
+              <View style={styles.btnRow}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
+                  <StyledText variant="semibold" style={styles.cancelText}>
+                    Cancel
+                  </StyledText>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
+                  <StyledText variant="semibold" style={styles.submitText}>
+                    Next
+                  </StyledText>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <StyledText variant="semibold" style={styles.title}>
+                {t('pin.recovery_title')}
+              </StyledText>
+              <StyledText variant="regular" style={styles.subtext}>
+                {t('pin.recovery_desc')}
+              </StyledText>
+              <View style={styles.codeCard}>
+                <StyledText variant="extrabold" style={styles.codeText}>
+                  {recoveryCode}
+                </StyledText>
+              </View>
+              <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
+                <StyledText variant="semibold" style={styles.copyText}>
+                  {copied ? t('pin.code_copied') : t('pin.copy_code')}
                 </StyledText>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.submitBtn} onPress={handleNext}>
-                <StyledText variant="semibold" style={styles.submitText}>
-                  Next
+              <TouchableOpacity style={styles.doneBtn} onPress={onSuccess}>
+                <StyledText variant="semibold" style={styles.doneText}>
+                  Done
                 </StyledText>
               </TouchableOpacity>
-            </View>
-          </>
-        ) : (
-          <>
-            <StyledText variant="semibold" style={styles.title}>
-              {t('pin.recovery_title')}
-            </StyledText>
-            <StyledText variant="regular" style={styles.subtext}>
-              {t('pin.recovery_desc')}
-            </StyledText>
-            <View style={styles.codeCard}>
-              <StyledText variant="extrabold" style={styles.codeText}>
-                {recoveryCode}
-              </StyledText>
-            </View>
-            <TouchableOpacity style={styles.copyBtn} onPress={handleCopyCode}>
-              <StyledText variant="semibold" style={styles.copyText}>
-                {copied ? t('pin.code_copied') : t('pin.copy_code')}
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.doneBtn} onPress={onSuccess}>
-              <StyledText variant="semibold" style={styles.doneText}>
-                Done
-              </StyledText>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-    </View>
+            </>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(23, 20, 15, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    zIndex: 99999,
-    elevation: 99999,
   },
   card: {
     width: '100%',

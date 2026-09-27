@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
+  Alert,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';
@@ -36,7 +37,6 @@ export const OwnerPinSettingsCard: React.FC = () => {
     enrolled: false,
     label: 'none',
   });
-  const [showRiskConfirm, setShowRiskConfirm] = useState(false);
   const [pesosLimit, setPesosLimit] = useState('50');
   const [percentLimit, setPercentLimit] = useState('10');
 
@@ -61,15 +61,22 @@ export const OwnerPinSettingsCard: React.FC = () => {
       await setBiometricEnabled('0');
       return;
     }
-    setShowRiskConfirm(true);
-  };
-
-  const handleRiskConfirmed = async () => {
-    setShowRiskConfirm(false);
-    const result = await authenticateOwner(t('biometrics.reason_default'));
-    if (result === 'success') {
-      await setBiometricEnabled('1');
-    }
+    Alert.alert(
+      t('biometrics.risk_title'),
+      t('biometrics.risk_body'),
+      [
+        { text: t('biometrics.risk_cancel'), style: 'cancel' },
+        {
+          text: t('biometrics.risk_confirm'),
+          onPress: async () => {
+            const result = await authenticateOwner(t('biometrics.reason_default'));
+            if (result === 'success') {
+              await setBiometricEnabled('1');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const handleLaunchLockToggle = async (next: boolean) => {
@@ -222,36 +229,6 @@ export const OwnerPinSettingsCard: React.FC = () => {
         onSuccess={() => setShowRecovery(false)}
         onCancel={() => setShowRecovery(false)}
       />
-      {showRiskConfirm ? (
-        <View style={styles.riskOverlay}>
-          <View style={styles.riskCard}>
-            <StyledText variant="semibold" style={styles.riskTitle}>
-              {t('biometrics.risk_title')}
-            </StyledText>
-            <StyledText variant="regular" style={styles.riskBody}>
-              {t('biometrics.risk_body')}
-            </StyledText>
-            <TouchableOpacity
-              style={styles.primaryBtn}
-              onPress={() => {
-                void handleRiskConfirmed();
-              }}
-            >
-              <StyledText variant="semibold" style={styles.btnText}>
-                {t('biometrics.risk_confirm')}
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.secondaryBtn, { marginTop: 8 }]}
-              onPress={() => setShowRiskConfirm(false)}
-            >
-              <StyledText variant="semibold" style={styles.secondaryBtnText}>
-                {t('biometrics.risk_cancel')}
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 };
@@ -320,17 +297,4 @@ const styles = StyleSheet.create({
   toggleText: { flex: 1, marginRight: 12 },
   toggleTitle: { fontSize: 14, color: '#1F2937', marginBottom: 2 },
   toggleSubtitle: { fontSize: 12, color: '#6B7280' },
-  riskOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  riskCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 24,
-  },
-  riskTitle: { fontSize: 16, color: '#1F2937', marginBottom: 12 },
-  riskBody: { fontSize: 13, color: '#4B5563', marginBottom: 24, lineHeight: 20 },
 });

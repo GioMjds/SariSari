@@ -1,5 +1,5 @@
 import { useState, useEffect, FC } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { verifyOwnerPin } from '@/database/auth';
@@ -52,8 +52,6 @@ export const OwnerPinModal: FC<Props> = ({
     return () => clearInterval(interval);
   }, [visible, clearExpiredLockout, isLockedOut, getLockoutSecondsRemaining]);
 
-  if (!visible) return null;
-
   const locked = isLockedOut();
 
   const handleKeyPress = (num: string) => {
@@ -94,7 +92,14 @@ export const OwnerPinModal: FC<Props> = ({
   };
 
   return (
-    <View style={styles.backdrop}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+      statusBarTranslucent
+    >
+      <View style={styles.backdrop}>
       <View style={styles.card}>
         <StyledText variant="semibold" style={styles.title}>
           {title || t('pin.title')}
@@ -194,18 +199,17 @@ export const OwnerPinModal: FC<Props> = ({
         )}
       </View>
     </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: 'rgba(23, 20, 15, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    zIndex: 99999,
-    elevation: 99999,
   },
   card: {
     width: '100%',

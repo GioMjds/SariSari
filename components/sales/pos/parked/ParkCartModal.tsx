@@ -68,8 +68,13 @@ export function ParkCartModal({
       transparent
       animationType="fade"
       onRequestClose={handleClose}
+      statusBarTranslucent
     >
-      <KeyboardAwareScrollView bottomOffset={64} className="flex-1">
+      <KeyboardAwareScrollView
+        bottomOffset={64}
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+      >
         <Pressable
           onPress={handleClose}
           className="flex-1 bg-black/50 justify-center items-center p-4"

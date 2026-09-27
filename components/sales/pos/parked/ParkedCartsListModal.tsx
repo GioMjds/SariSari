@@ -25,9 +25,13 @@ export function ParkedCartsListModal({
       transparent
       animationType="fade"
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <View className="flex-1 bg-black/50 justify-end">
-        <View className="bg-paper-100 rounded-t-3xl p-5 max-h-[80%] shadow-2xl border-t border-paper-300">
+      <Pressable onPress={onClose} className="flex-1 bg-black/50 justify-end">
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          className="bg-paper-100 rounded-t-3xl p-5 max-h-[80%] shadow-2xl border-t border-paper-300"
+        >
           <View className="flex-row items-center justify-between mb-4">
             <View className="flex-row items-center space-x-2 gap-2">
               <StyledText variant="extrabold" className="text-xl text-ink-900">
@@ -151,8 +155,8 @@ export function ParkedCartsListModal({
               })}
             </ScrollView>
           )}
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
