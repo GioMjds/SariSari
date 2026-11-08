@@ -63,7 +63,6 @@ export function MoreHomeScreen() {
           }}
         >
           <MoreScreenHeader
-            eyebrow={t('common:moreHomeEyebrow')}
             title={t('common:moreHomeTitle')}
             supportingText={t('common:moreHomeSubtitle')}
           />
@@ -76,6 +75,26 @@ export function MoreHomeScreen() {
           </MoreSection>
 
           <MoreSection label={t('common:moreHomeStoreDataSection')}>
+            <MoreDestinationRow
+              icon="bar-chart"
+              title={t('common:moreHomeReportsLabel')}
+              supportingText={t('common:moreHomeReportsSub')}
+              onPress={() => navigate(MORE_ROUTES.reports)}
+              accessibilityLabel={`${t('common:moreHomeReportsLabel')}. ${t(
+                'common:moreHomeReportsSub',
+              )}`}
+              accessibilityHint={t('common:moreHomeReportsHint')}
+            />
+            <MoreDestinationRow
+              icon="undo"
+              title={t('common:moreHomeCorrectionsLabel')}
+              supportingText={t('common:moreHomeCorrectionsSub')}
+              onPress={() => navigate(MORE_ROUTES.corrections)}
+              accessibilityLabel={`${t('common:moreHomeCorrectionsLabel')}. ${t(
+                'common:moreHomeCorrectionsSub',
+              )}`}
+              accessibilityHint={t('common:moreHomeCorrectionsHint')}
+            />
             <MoreDestinationRow
               icon="cloud"
               title={t('common:moreHomeBackupLabel')}

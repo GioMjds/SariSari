@@ -17,7 +17,8 @@ const formatRelative = (
   if (!epochMs) return '';
   const diffMs = Date.now() - epochMs;
   const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 60) return t('common:settingsBackupMinutesAgo', { count: diffMin });
+  if (diffMin < 60)
+    return t('common:settingsBackupMinutesAgo', { count: diffMin });
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return t('common:settingsBackupHoursAgo', { count: diffHr });
   const diffDay = Math.floor(diffHr / 24);
@@ -60,11 +61,7 @@ export function CloudNewerBanner({
             accessibilityLabel={t('common:cloudNewerBannerRestoreCta')}
             className="bg-persimmon-500 rounded-lg px-4 py-2 mr-2 active:opacity-80"
           >
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-xs uppercase"
-              style={{ letterSpacing: 0.8 }}
-            >
+            <StyledText variant="extrabold" className="text-paper-50 text-sm">
               {t('common:cloudNewerBannerRestoreCta')}
             </StyledText>
           </Pressable>
@@ -74,10 +71,7 @@ export function CloudNewerBanner({
             accessibilityLabel={t('common:cloudNewerBannerDismiss')}
             className="rounded-lg px-4 py-2 bg-paper-50 border border-warm-100 active:opacity-80"
           >
-            <StyledText
-              variant="semibold"
-              className="text-ink-700 text-xs"
-            >
+            <StyledText variant="semibold" className="text-ink-700 text-xs">
               {t('common:cloudNewerBannerDismiss')}
             </StyledText>
           </Pressable>

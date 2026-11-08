@@ -1,6 +1,7 @@
 import { StyledTab, StoreHeader } from '@/components/layout';
 import { StyledText } from '@/components/elements';
 import { Tabs, usePathname } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, BackHandler, StyleSheet, View } from 'react-native';
@@ -8,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { isPrimaryTabPath } from '@/constants';
 
 export default function ScreensLayout() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [toastVisible, setToastVisible] = useState(false);
   const lastBackPressedRef = useRef<number>(0);
@@ -119,7 +121,7 @@ export default function ScreensLayout() {
               style={styles.toastText}
               className="text-paper-100 text-xs text-center"
             >
-              Press back again to exit
+              {t('common:exitToast')}
             </StyledText>
           </View>
         </Animated.View>

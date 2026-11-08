@@ -13,16 +13,6 @@ export interface FeatureMetadata {
 }
 
 export const UNIMPLEMENTED_FEATURES: Record<string, FeatureMetadata> = {
-  '/gastos-kaha': {
-    id: 'gastos-kaha',
-    route: '/gastos-kaha',
-    title: 'Gastos at Kaha Management',
-    description:
-      'Petty cash tracking, daily drawer reconciliation, and expense logging.',
-    status: 'in-progress',
-    targetRelease: 'v1.1',
-    iconName: 'money',
-  },
   '/reports/export': {
     id: 'reports-export',
     route: '/reports/export',

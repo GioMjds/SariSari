@@ -14,62 +14,24 @@ export default function EntryGate() {
 
   useEffect(() => {
     let isMounted = true;
-    console.log(JSON.stringify({ event: 'entry_gate_check_start' }));
 
     const run = async () => {
-      const startTime = Date.now();
+      let target: '/onboarding' | '/home' = '/onboarding';
       try {
         const state = await loadOnboardingState();
-
-        // Ensure at least 1000ms delay for welcoming animation to play out
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 1000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remainingDelay));
+        if (
+          process.env.EXPO_PUBLIC_FORCE_ONBOARDING !== 'true' &&
+          state?.completed
+        ) {
+          target = '/home';
         }
-
-        if (!isMounted) return;
-
-        let targetRoute: '/onboarding' | '/home' = '/onboarding';
-        let reason = 'onboarding_incomplete';
-
-        if (process.env.EXPO_PUBLIC_FORCE_ONBOARDING === 'true') {
-          targetRoute = '/onboarding';
-          reason = 'force_onboarding';
-        } else if (state?.completed) {
-          targetRoute = '/home';
-          reason = 'onboarding_completed';
-        }
-
-        console.log(
-          JSON.stringify({
-            event: 'entry_gate_redirect',
-            target: targetRoute,
-            reason,
-          }),
-        );
-
-        router.replace(targetRoute);
-      } catch (error) {
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, 1000 - elapsed);
-        if (remainingDelay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remainingDelay));
-        }
-
-        if (!isMounted) return;
-        console.error(
-          JSON.stringify({
-            event: 'entry_gate_error',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          }),
-        );
-        // Fallback safely to onboarding on error
-        router.replace('/onboarding');
+      } catch {
+        // Unreadable onboarding state: fall back to onboarding.
       }
+      if (isMounted) router.replace(target);
     };
 
-    run();
+    void run();
 
     return () => {
       isMounted = false;
@@ -93,7 +55,7 @@ export default function EntryGate() {
         </StyledText>
         <StyledText
           variant="semibold"
-          className="text-cinnamon-400 text-label uppercase tracking-widest mt-1 text-center"
+          className="text-cinnamon-600 text-base mt-1 text-center"
         >
           Ang Iyong Tindahan Assistant!
         </StyledText>
@@ -131,26 +93,7 @@ export default function EntryGate() {
         </MotiView>
       </View>
 
-      {/* Welcome & Progress Indicator */}
-      <View className="items-center w-full px-8 mb-8">
-        {/* Loading Progress Bar */}
-        <MotiView
-          from={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ type: 'timing', duration: 600, delay: 500 }}
-          className="w-48 h-1.5 bg-paper-300 rounded-full overflow-hidden shadow-card"
-        >
-          <MotiView
-            from={{ width: '0%' }}
-            animate={{ width: '100%' }}
-            transition={{
-              type: 'timing',
-              duration: 1000,
-            }}
-            className="h-full bg-persimmon-500 rounded-full"
-          />
-        </MotiView>
-      </View>
+      <View className="mb-8" />
     </SafeAreaView>
   );
 }

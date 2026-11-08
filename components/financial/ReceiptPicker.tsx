@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { View, Pressable, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { StyledText } from '@/components/elements';
 import { FinancialReceipt } from '@/database/receipts';
 
 interface Props {
@@ -29,18 +30,24 @@ export const ReceiptPicker: React.FC<Props> = ({
 
   return (
     <View className="mb-4">
-      <Text className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+      <StyledText variant="semibold" className="text-sm text-ink-700 mb-2">
         Receipts ({receipts.length}/5)
-      </Text>
+      </StyledText>
       <View className="flex-row flex-wrap gap-2">
         {receipts.map((r) => (
-          <View key={r.id} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200">
+          <View
+            key={r.id}
+            className="relative w-16 h-16 rounded-xl overflow-hidden border border-paper-300"
+          >
             <Image source={{ uri: r.relativePath }} className="w-full h-full" />
             <Pressable
               onPress={() => onDeleteReceipt(r.id)}
-              className="absolute top-1 right-1 bg-black/60 rounded-full w-4 h-4 items-center justify-center"
+              accessibilityRole="button"
+              accessibilityLabel="Remove receipt"
+              hitSlop={8}
+              className="absolute top-0.5 right-0.5 bg-ink-900/70 rounded-full w-6 h-6 items-center justify-center"
             >
-              <Text className="text-white text-[10px] font-bold">×</Text>
+              <FontAwesome name="times" size={12} color="#FAFAF7" />
             </Pressable>
           </View>
         ))}
@@ -48,10 +55,14 @@ export const ReceiptPicker: React.FC<Props> = ({
         {receipts.length < 5 && (
           <Pressable
             onPress={handlePickImage}
-            className="w-16 h-16 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 items-center justify-center bg-gray-50 dark:bg-gray-800"
+            accessibilityRole="button"
+            accessibilityLabel="Add receipt photo"
+            className="w-16 h-16 rounded-xl border border-dashed border-ink-300 items-center justify-center bg-paper-100 active:opacity-70"
           >
-            <FontAwesome5 name="camera" size={16} color="#6B7280" />
-            <Text className="text-[10px] text-gray-500 mt-1">Add</Text>
+            <FontAwesome name="camera" size={16} color="#564E45" />
+            <StyledText variant="medium" className="text-xs text-ink-600 mt-1">
+              Add
+            </StyledText>
           </Pressable>
         )}
       </View>

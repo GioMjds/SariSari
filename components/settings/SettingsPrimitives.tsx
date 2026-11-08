@@ -19,18 +19,17 @@ export function SettingsSection({
       {title ? (
         <StyledText
           variant="extrabold"
-          className="text-xs uppercase text-ink-400 mb-1"
-          style={{ letterSpacing: 1.2 }}
+          className="text-sm text-ink-800 mb-1"
         >
           {title}
         </StyledText>
       ) : null}
       {subtitle ? (
-        <StyledText variant="regular" className="text-xs text-ink-500 mb-2">
+        <StyledText variant="regular" className="text-sm text-ink-600 mb-2">
           {subtitle}
         </StyledText>
       ) : null}
-      <View className="bg-paper-50 rounded-2xl border border-paper-300 overflow-hidden">
+      <View className="bg-paper-50 rounded-2xl border border-paper-300 overflow-hidden divide-y divide-paper-300">
         {children}
       </View>
     </View>
@@ -64,7 +63,7 @@ export function SettingsRow({
       accessibilityLabel={interactive ? label : undefined}
       accessibilityHint={interactive ? accessibilityHint : undefined}
       style={{ minHeight: 48 }}
-      className="px-4 py-3 border-b border-paper-300 last:border-b-0 flex-row items-center active:opacity-80"
+      className="px-4 py-3 flex-row items-center active:opacity-80"
     >
       {icon ? (
         <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">

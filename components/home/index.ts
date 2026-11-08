@@ -1,5 +1,4 @@
 export * from './home-state';
-export * from './DashboardContextHeader';
 export * from './DashboardGoalCard';
 export * from './DashboardSuggestions';
 export * from './DashboardStockAlert';

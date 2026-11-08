@@ -49,8 +49,12 @@ export default function UnimplementedScreen() {
   };
 
   const statusLabel = featureMeta?.status
-    ? `FEATURE ${featureMeta.status.toUpperCase().replace('-', ' ')}`
-    : 'IN DEVELOPMENT · GUARD ROUTE';
+    ? featureMeta.status === 'in-progress'
+      ? t('common:statusInProgress')
+      : featureMeta.status === 'testing'
+        ? t('common:statusTesting')
+        : t('common:statusPlanned')
+    : t('common:statusComingSoon');
 
   return (
     <>
@@ -102,7 +106,7 @@ export default function UnimplementedScreen() {
               />
               <StyledText
                 variant="extrabold"
-                className="text-[11px] uppercase text-persimmon-700 tracking-wider"
+                className="text-xs text-persimmon-700"
               >
                 {statusLabel}
               </StyledText>
@@ -155,8 +159,7 @@ export default function UnimplementedScreen() {
               <Pressable
                 onPress={handleGoHome}
                 accessibilityRole="button"
-                accessibilityLabel="Go to Home Screen"
-                accessibilityHint="Returns to main counter dashboard"
+                accessibilityLabel={t('common:goHomeAction', 'Pumunta sa Home')}
                 className="bg-paper-100 active:bg-paper-200 border border-ink-200 min-h-[48px] px-6 py-3.5 rounded-2xl flex-row items-center justify-center w-full active:scale-[0.99]"
               >
                 <FontAwesome

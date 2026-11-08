@@ -21,7 +21,7 @@ export default function BackupScreen() {
         backAccessibilityLabel={t('common:moreBackA11y')}
       />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: bottomOffset + 16 }}
+        contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
         <SettingsSection

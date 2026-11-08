@@ -4,6 +4,7 @@ export const MORE_ROUTES = {
   home: '/(tabs)/more',
   cash: '/settings/cash-entries',
   reports: '/settings/reports',
+  corrections: '/reports/corrections',
   backup: '/settings/backup',
   settings: '/settings/settings',
 } as const satisfies Record<string, Href>;
@@ -11,6 +12,7 @@ export const MORE_ROUTES = {
 export type MoreDestination =
   | typeof MORE_ROUTES.cash
   | typeof MORE_ROUTES.reports
+  | typeof MORE_ROUTES.corrections
   | typeof MORE_ROUTES.backup
   | typeof MORE_ROUTES.settings;
 

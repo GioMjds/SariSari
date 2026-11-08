@@ -11,9 +11,8 @@ import { CUSTOMERS_SUB_TABS } from '@/constants/tabs';
 import { useTabBarBottomOffset } from '@/components/layout';
 
 const CUSTOMERS_TAB_DEFS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'credit', label: 'CREDIT' },
-  { key: 'collection', label: 'COLLECTION' },
+  { key: 'all', label: 'All suki' },
+  { key: 'collection', label: 'To collect' },
 ] satisfies { key: CustomersSubTab; label: string }[];
 
 export default function CustomersLayout() {
@@ -28,15 +27,13 @@ export default function CustomersLayout() {
     (c) => c.loyalty_tier === 'loyal' || c.loyalty_tier === 'vip',
   ).length;
 
-  const activeTab: CustomersSubTab = pathname.includes('credit')
-    ? 'credit'
-    : pathname.includes('collection')
-      ? 'collection'
-      : 'all';
+  const activeTab: CustomersSubTab = pathname.includes('collection')
+    ? 'collection'
+    : 'all';
 
   const isDetailScreen =
     pathname.includes('/customers/') &&
-    !['credit', 'collection', 'insights', 'all', ''].includes(
+    !['collection', 'all', ''].includes(
       pathname.split('/customers/')[1] || '',
     );
 
@@ -84,7 +81,6 @@ export default function CustomersLayout() {
           }}
         >
           <TopTabs.Screen name="all" />
-          <TopTabs.Screen name="credit" />
           <TopTabs.Screen name="collection" />
         </TopTabs>
 

@@ -113,10 +113,9 @@ export function RestorePickerModal({
           >
             <StyledText
               variant={tab === 'local' ? 'extrabold' : 'semibold'}
-              className={`text-xs uppercase ${
+              className={`text-xs ${
                 tab === 'local' ? 'text-persimmon-600' : 'text-ink-500'
               }`}
-              style={{ letterSpacing: 0.8 }}
             >
               {t('common:restorePickerTabLocal', {
                 count: snapshots.length,
@@ -134,10 +133,9 @@ export function RestorePickerModal({
           >
             <StyledText
               variant={tab === 'cloud' ? 'extrabold' : 'semibold'}
-              className={`text-xs uppercase ${
+              className={`text-xs ${
                 tab === 'cloud' ? 'text-persimmon-600' : 'text-ink-500'
               }`}
-              style={{ letterSpacing: 0.8 }}
             >
               {t('common:restorePickerTabCloud', {
                 count: cloudBackups.length,
@@ -165,9 +163,9 @@ export function RestorePickerModal({
                   .replace(/^sarisari_snapshot_/, '')
                   .replace(/\.db$/, '');
                 const isSelected =
-                selected != null &&
-                'path' in selected &&
-                selected.path === snap.path;
+                  selected != null &&
+                  'path' in selected &&
+                  selected.path === snap.path;
                 return (
                   <Pressable
                     key={snap.path}
@@ -223,10 +221,7 @@ export function RestorePickerModal({
             </StyledText>
           </View>
         ) : (
-          <ScrollView
-            className="max-h-72"
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView className="max-h-72" showsVerticalScrollIndicator={false}>
             {cloudBackups.map((backup) => {
               const dt = new Date(backup.metadata.updatedAt);
               const monthNames = [
@@ -330,10 +325,7 @@ export function RestorePickerModal({
           >
             <StyledText
               variant="extrabold"
-              className={`text-sm uppercase ${
-                !selected ? 'text-ink-400' : 'text-white'
-              }`}
-              style={{ letterSpacing: 0.8 }}
+              className={`text-sm ${!selected ? 'text-ink-400' : 'text-white'}`}
             >
               {confirming
                 ? t('common:restoreInProgress')

@@ -42,19 +42,16 @@ export const getSellAction = (t: TFunction): Tab => ({
   href: '/(tabs)/sales',
 });
 
-export const HOME_SUB_TABS = ['overview', 'today'] as const;
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
   'movements',
   'stocktake',
-  'damaged',
   'recommendations',
 ] as const;
-export const CUSTOMERS_SUB_TABS = ['all', 'credit', 'collection'] as const;
+export const CUSTOMERS_SUB_TABS = ['all', 'collection'] as const;
 export const MORE_SUB_TABS = [] as const;
 
-export type HomeSubTab = (typeof HOME_SUB_TABS)[number];
 export type SalesSubTab = (typeof SALES_SUB_TABS)[number];
 export type InventorySubTab = (typeof INVENTORY_SUB_TABS)[number];
 export type CustomersSubTab = (typeof CUSTOMERS_SUB_TABS)[number];

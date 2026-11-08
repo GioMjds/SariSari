@@ -8,22 +8,20 @@ import { LogTransactionForm } from '@/components/inventory/ledger';
 import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
 import { useTabProgress } from '@/hooks';
 import type { InventoryEventType } from '@/types/inventory.types';
-import { InventoryModalsHost } from './modals';
+import { InventoryModalsHost } from '@/components/inventory/InventoryModalsHost';
 
 const SUB_TAB_SEGMENTS = [
   'products',
   'movements',
   'stocktake',
-  'damaged',
   'recommendations',
 ] satisfies InventorySubTab[];
 
 const INVENTORY_TAB_DEFS = [
-  { key: 'products', label: 'PRODUCTS' },
-  { key: 'movements', label: 'MOVEMENTS' },
-  { key: 'stocktake', label: 'STOCKTAKE' },
-  { key: 'damaged', label: 'DAMAGED' },
-  { key: 'recommendations', label: 'RECOMMENDATIONS' },
+  { key: 'products', label: 'Products' },
+  { key: 'movements', label: 'Movements' },
+  { key: 'stocktake', label: 'Stocktake' },
+  { key: 'recommendations', label: 'Restock' },
 ] satisfies { key: InventorySubTab; label: string }[];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
@@ -80,7 +78,6 @@ export default function InventoryLayout() {
           <TopTabs.Screen name="products" />
           <TopTabs.Screen name="movements" />
           <TopTabs.Screen name="stocktake" />
-          <TopTabs.Screen name="damaged" />
           <TopTabs.Screen name="recommendations" />
         </TopTabs>
 

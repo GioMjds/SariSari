@@ -102,16 +102,18 @@ describe('MoreHomeScreen', () => {
     expect(MoreHomeScreen.name).toBe('MoreHomeScreen');
   });
 
-  it('renders the three current destinations in reading order', async () => {
+  it('renders the current destinations in reading order', async () => {
     const screen = await render(<MoreHomeScreen />);
     const buttons = screen.container.queryAll(
       (node) => node.props['accessibilityRole'] === 'button',
     );
 
-    expect(buttons).toHaveLength(3);
+    expect(buttons).toHaveLength(5);
     expect(buttons.map((button) => button.props['accessibilityLabel'])).toEqual(
       [
         'Cash & expenses. Expenses ₱125.00 · Owner drawings ₱25.00. Review cash',
+        'Reports. Sales, profit, stock and utang for any date range',
+        'Voids and corrections. Review voided, refunded and price-corrected sales',
         'Backup & restore. No backup yet',
         'Settings & security. Store, language, Owner PIN, and preferences',
       ],

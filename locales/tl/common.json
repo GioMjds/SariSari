@@ -171,6 +171,28 @@
   "moreHomeSettingsSub": "Tindahan, wika, Owner PIN, at mga preference",
   "moreHomeSettingsHint": "Binubuksan ang setting at seguridad ng tindahan",
   "moreBackA11y": "Bumalik sa Iba pa",
+  "cashMovementsSubtitle": "Mga gastos at perang kinukuha mo sa tindahan",
+  "loadingCashDrawer": "Kinukuha ang kaha...",
+  "notFoundTitle": "Hindi nahanap ang pahina",
+  "notFoundBody": "Walang ganitong screen o nailipat na ito.",
+  "notFoundAction": "Pumunta sa Home",
+  "exitToast": "Pindutin ulit ang back para lumabas",
+  "statusInProgress": "Ginagawa pa",
+  "statusPlanned": "Nakaplano",
+  "statusTesting": "Sinusubukan",
+  "statusComingSoon": "Malapit na",
+  "homeSalesToday": "Benta ngayon",
+  "homeTransactionsToday": "{{count}} benta ang naitala",
+  "settingsSalesSection": "Mga void at pagwawasto",
+  "settingsSalesSectionSub": "Gaano katagal pagkatapos ng benta puwede pa itong i-void o itama.",
+  "reportsTitle": "Mga Ulat",
+  "reportsSubtitle": "Benta, tubo, stock at utang sa anumang petsa",
+  "moreHomeReportsLabel": "Mga Ulat",
+  "moreHomeReportsSub": "Benta, tubo, stock at utang sa anumang petsa",
+  "moreHomeReportsHint": "Binubuksan ang mga ulat ng tindahan",
+  "moreHomeCorrectionsLabel": "Mga void at pagwawasto",
+  "moreHomeCorrectionsSub": "Tingnan ang mga na-void, na-refund at naitamang presyo",
+  "moreHomeCorrectionsHint": "Binubuksan ang ulat ng pagwawasto",
   "backupTitle": "Backup at pag-restore",
   "backupSubtitle": "Protektahan ang data ng tindahan sa device na ito at sa Google Drive.",
   "backupCloudSection": "Google Drive",
@@ -218,21 +240,6 @@
         "description_one": "May {{count}} suki na kailangang singilin sa utang.",
         "description_other": "May {{count}} suki na kailangang singilin sa utang.",
         "cta": "Singilin ang Utang"
-      },
-      "cashShortfall": {
-        "title": "May kulang sa rehistro ng pera",
-        "description": "Ang isinarang sesyon ngayong araw ay may kulang sa cash drawer.",
-        "cta": "Suriin ang Cash Session"
-      },
-      "openDrawer": {
-        "title": "Simulan ang araw ng tindahan",
-        "description": "Buksan ang cash drawer para mag-record ng mga benta at subaybayan ang pera.",
-        "cta": "Buksan ang Cash Drawer"
-      },
-      "reviewClose": {
-        "title": "Nakasara na ang cash drawer",
-        "description": "Isinara na ang cash drawer ngayong araw. Suriin ang detalye kung kailangan.",
-        "cta": "Tingnan ang Detalye"
       },
       "firstSale": {
         "title": "Handa na para sa unang benta",

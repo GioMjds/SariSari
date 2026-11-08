@@ -372,7 +372,7 @@ export default function CorrectionsReportScreen() {
             </View>
 
             {item.actorNote ? (
-              <View className="mt-1 pt-2 border-t flex-row gap-2 items-start bg-paper-50/80 p-2.5 rounded-lg border-l-2 border-persimmon-400">
+              <View className="mt-1 flex-row gap-2 items-start bg-persimmon-50 p-2.5 rounded-lg">
                 <FontAwesome
                   name="quote-left"
                   size={10}

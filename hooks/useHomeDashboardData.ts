@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCurrentSession } from './useCash';
+import { format } from 'date-fns';
+import { useFinancialTotals } from './useFinancial';
 import { useCreditKPIs, useCustomers } from './useCredits';
 import { useProducts } from './useProducts';
 import { useRecentSales, useSales } from './useSales';
@@ -22,6 +23,8 @@ export interface DashboardStatsSummary {
   lowStockCount: number;
   overdueCount: number;
   overdueAmount: number;
+  expensesToday: number;
+  drawingsToday: number;
 }
 
 export interface DynamicHomeAlert {
@@ -44,14 +47,17 @@ export function useHomeDashboardData() {
   const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
   const { data: overdueCustomers, isLoading: customersLoading } =
     useCustomers('overdue');
-  const { data: currentSession, isLoading: sessionLoading } =
-    useCurrentSession();
   const { profile, loading: profileLoading } = useProfile();
 
   const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
   const { data: products, isLoading: productsLoading } = getAllProductsQuery;
 
   const todayRange = useMemo(() => getDateRangeFromType('today'), []);
+  const todayDate = useMemo(
+    () => format(todayRange.startDate, 'yyyy-MM-dd'),
+    [todayRange],
+  );
+  const { data: todayCashOut } = useFinancialTotals(todayDate, todayDate);
   const { data: todayKpisData, error: todayKpisError } =
     useReportKPIs(todayRange);
 
@@ -64,17 +70,9 @@ export function useHomeDashboardData() {
       productQuantities: (products ?? []).map((p) => p.quantity ?? 0),
       hasAnySales: (stats?.transaction_count ?? 0) > 0,
       overdueCount: creditKpis?.overdueCount ?? 0,
-      cashSession: currentSession
-        ? {
-            status: (currentSession.status === 'closed'
-              ? 'closed'
-              : 'open') as 'open' | 'closed',
-            variance: currentSession.variance ?? null,
-          }
-        : null,
       hour: new Date().getHours(),
     }),
-    [products, stats, creditKpis, currentSession],
+    [products, stats, creditKpis],
   );
 
   const { goal, suggestions } = useMemo(
@@ -112,7 +110,7 @@ export function useHomeDashboardData() {
           title: c.name,
           subtitle: `${formatPesos(c.outstanding_balance ?? 0)} overdue`,
           actionLabel: 'Collect',
-          targetPath: '/(tabs)/customers/credit',
+          targetPath: '/(tabs)/customers/collection',
         });
       });
     }
@@ -182,6 +180,8 @@ export function useHomeDashboardData() {
       lowStockCount: lowStockProducts.length,
       overdueCount: creditKpis?.overdueCount ?? 0,
       overdueAmount: creditKpis?.totalOverdueAmount ?? 0,
+      expensesToday: todayCashOut?.paidExpenses ?? 0,
+      drawingsToday: todayCashOut?.ownerDrawings ?? 0,
     },
     products: products ?? [],
     recentSales,
@@ -193,11 +193,9 @@ export function useHomeDashboardData() {
     suggestions,
     isError,
     profile,
-    currentSession,
     isLoading:
       statsLoading ||
       productsLoading ||
-      sessionLoading ||
       profileLoading ||
       recentLoading ||
       creditKpisLoading ||

@@ -1,20 +1,28 @@
 import { FC, useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from 'react-native';
+import { StyledText } from '@/components/elements';
 import {
   ExpenseCategory,
   FinancialEntryType,
   NewFinancialEntry,
 } from '@/types/financial.types';
-import { parsePesosInput } from '@/lib/money';
-import { Alert } from '@/utils';
+import { tryParsePesosInput } from '@/lib/money';
+import { getTodayDateString } from '@/utils/timezone';
 import { ReceiptPicker } from './ReceiptPicker';
 
 interface Props {
   visible: boolean;
   type: FinancialEntryType;
-  initialBusinessDate: string;
   onClose: () => void;
-  onSubmit: (data: NewFinancialEntry) => Promise<void>;
+  onSubmit: (data: NewFinancialEntry, receiptUris: string[]) => Promise<void>;
 }
 
 interface CategoryOption {
@@ -31,10 +39,35 @@ const CATEGORIES = [
   { label: 'Other', value: 'other' },
 ] satisfies CategoryOption[];
 
+const toDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getYesterdayDateString = (): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return toDateString(date);
+};
+
+/** True for a real calendar date written as YYYY-MM-DD, not in the future. */
+const isValidBusinessDate = (value: string): boolean => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const [, y, m, d] = match;
+  const parsed = new Date(Number(y), Number(m) - 1, Number(d));
+  const roundTrips =
+    parsed.getFullYear() === Number(y) &&
+    parsed.getMonth() === Number(m) - 1 &&
+    parsed.getDate() === Number(d);
+  return roundTrips && value <= getTodayDateString();
+};
+
 export const RecordEntryModal: FC<Props> = ({
   visible,
   type,
-  initialBusinessDate,
   onClose,
   onSubmit,
 }) => {
@@ -43,181 +76,297 @@ export const RecordEntryModal: FC<Props> = ({
   const [note, setNote] = useState('');
   const [stagedReceiptUris, setStagedReceiptUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [businessDate, setBusinessDate] =
+    useState<string>(getTodayDateString());
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const fallbackDate = initialBusinessDate ?? todayStr;
-  const [businessDate, setBusinessDate] = useState<string>(fallbackDate);
+  const isExpense = type === 'expense';
+  const todayStr = getTodayDateString();
+  const yesterdayStr = getYesterdayDateString();
 
   const handleSave = async () => {
+    if (loading) return;
+
+    const parsedAmount = tryParsePesosInput(amountStr);
+    if (!Number.isInteger(parsedAmount) || parsedAmount <= 0) {
+      setError('Enter a whole peso amount above zero.');
+      return;
+    }
+
+    const formattedDate = businessDate.trim();
+    if (!isValidBusinessDate(formattedDate)) {
+      setError('Enter a real date that is not in the future, like 2026-11-08.');
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
     try {
-      const parsedAmount = parsePesosInput(amountStr);
-      if (!Number.isInteger(parsedAmount) || parsedAmount <= 0) {
-        Alert.alert(
-          'Invalid Amount',
-          'Please enter a positive whole peso amount.',
-        );
-        return;
-      }
-
-      const formattedDate = businessDate.trim();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
-        Alert.alert(
-          'Invalid Date',
-          'Please enter a valid date in YYYY-MM-DD format.',
-        );
-        return;
-      }
-
-      setLoading(true);
-      await onSubmit({
-        type,
-        amount: parsedAmount,
-        businessDate: formattedDate,
-        expenseCategory: type === 'expense' ? category : null,
-        note: note.trim() || null,
-      });
-
-      setAmountStr('');
-      setNote('');
-      setBusinessDate(fallbackDate);
+      await onSubmit(
+        {
+          type,
+          amount: parsedAmount,
+          businessDate: formattedDate,
+          expenseCategory: isExpense ? category : null,
+          note: note.trim() || null,
+        },
+        isExpense ? stagedReceiptUris : [],
+      );
       onClose();
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to save entry');
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Could not save this entry. Try again.',
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View className="flex-1 justify-end bg-black/50">
-        <View className="bg-paper-50 p-5 rounded-t-2xl">
-          <Text className="text-lg font-bold text-ink-900 mb-4">
-            {type === 'expense'
-              ? 'Record Operating Expense'
-              : 'Record Owner Drawing'}
-          </Text>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1 justify-end bg-black/50"
+      >
+        <View className="bg-paper-50 rounded-t-3xl max-h-[92%]">
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 20, paddingBottom: 28 }}
+          >
+            <StyledText variant="extrabold" className="text-xl text-ink-900">
+              {isExpense ? 'Record an expense' : 'Record owner draw'}
+            </StyledText>
+            <StyledText
+              variant="regular"
+              className="text-sm text-ink-600 mt-1 mb-4"
+            >
+              {isExpense
+                ? 'Gastos for running the store. Comes out of your profit.'
+                : 'Cash you take out for yourself. Not counted as an expense.'}
+            </StyledText>
 
-          {type === 'expense' && category === 'supplies_packaging' && (
-            <View className="bg-semantic-info-50 p-3 rounded-xl mb-3 border border-semantic-info-200">
-              <Text className="text-xs text-semantic-info-800">
-                Note: Inventory bought for resale is not an operating expense.
-                Use Restock in Inventory for store stock.
-              </Text>
-            </View>
-          )}
+            {isExpense && category === 'supplies_packaging' && (
+              <View className="bg-semantic-info-50 p-3 rounded-xl mb-4 border border-semantic-info-200">
+                <StyledText
+                  variant="regular"
+                  className="text-sm text-semantic-info-800"
+                >
+                  Stock you buy to resell is not an expense. Record it with
+                  Restock in Inventory.
+                </StyledText>
+              </View>
+            )}
 
-          <Text className="text-xs font-semibold text-ink-700 mb-1">
-            Amount (Whole Pesos)
-          </Text>
-          <TextInput
-            testID="amount-input"
-            keyboardType="number-pad"
-            value={amountStr}
-            onChangeText={setAmountStr}
-            placeholder="0"
-            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-3 text-base text-ink-900"
-          />
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mb-1"
+            >
+              Amount (whole pesos)
+            </StyledText>
+            <TextInput
+              testID="amount-input"
+              keyboardType="number-pad"
+              value={amountStr}
+              onChangeText={(text) => {
+                setAmountStr(text);
+                setError(null);
+              }}
+              placeholder="0"
+              placeholderTextColor="#7A7165"
+              accessibilityLabel="Amount in pesos"
+              style={{ minHeight: 48 }}
+              className="border border-paper-300 bg-paper-100 rounded-xl px-3 mb-4 text-base text-ink-900"
+            />
 
-          <Text className="text-xs font-semibold text-ink-700 mb-1">
-            Date (YYYY-MM-DD)
-          </Text>
-          <TextInput
-            testID="date-input"
-            value={businessDate}
-            onChangeText={setBusinessDate}
-            placeholder="YYYY-MM-DD"
-            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-3 text-base text-ink-900"
-          />
-
-          {type === 'expense' && (
-            <>
-              <Text className="text-xs font-semibold text-ink-700 mb-1">
-                Category
-              </Text>
-              <View className="flex-row flex-wrap gap-2 mb-3">
-                {CATEGORIES.map((c) => (
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mb-1"
+            >
+              Date
+            </StyledText>
+            <View className="flex-row gap-2 mb-2">
+              {[
+                { label: 'Today', value: todayStr },
+                { label: 'Yesterday', value: yesterdayStr },
+              ].map((option) => {
+                const active = businessDate === option.value;
+                return (
                   <Pressable
-                    key={c.value}
-                    onPress={() => setCategory(c.value)}
-                    className={`px-3 py-2 rounded-xl border ${
-                      category === c.value
-                        ? 'bg-sage-600 border-sage-600'
-                        : 'bg-paper-100 border-paper-300'
+                    key={option.label}
+                    onPress={() => {
+                      setBusinessDate(option.value);
+                      setError(null);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    style={{ minHeight: 40 }}
+                    className={`px-4 rounded-full border items-center justify-center ${
+                      active
+                        ? 'bg-ink-900 border-ink-900'
+                        : 'bg-paper-50 border-ink-200'
                     }`}
                   >
-                    <Text
-                      className={`text-xs font-medium ${
-                        category === c.value
-                          ? 'text-white'
-                          : 'text-ink-800'
+                    <StyledText
+                      variant="semibold"
+                      className={`text-sm ${
+                        active ? 'text-paper-50' : 'text-ink-700'
                       }`}
                     >
-                      {c.label}
-                    </Text>
+                      {option.label}
+                    </StyledText>
                   </Pressable>
-                ))}
-              </View>
-            </>
-          )}
-
-          <Text className="text-xs font-semibold text-ink-700 mb-1">
-            Note / Description
-          </Text>
-          <TextInput
-            value={note}
-            onChangeText={setNote}
-            placeholder="Optional note"
-            className="border border-paper-300 bg-paper-100 rounded-xl p-3 mb-4 text-sm text-ink-900"
-          />
-
-          {type === 'expense' && (
-            <ReceiptPicker
-              receipts={stagedReceiptUris.map((uri, index) => ({
-                id: `staged-${index}`,
-                financialEntryId: '',
-                relativePath: uri,
-                slot: index,
-                createdAt: Date.now(),
-              }))}
-              onAddReceipt={async (uri) => {
-                if (stagedReceiptUris.length < 5) {
-                  setStagedReceiptUris([...stagedReceiptUris, uri]);
-                }
+                );
+              })}
+            </View>
+            <TextInput
+              testID="date-input"
+              value={businessDate}
+              onChangeText={(text) => {
+                setBusinessDate(text);
+                setError(null);
               }}
-              onDeleteReceipt={async (id) => {
-                const index = parseInt(id.replace('staged-', ''), 10);
-                if (!isNaN(index)) {
-                  setStagedReceiptUris(
-                    stagedReceiptUris.filter((_, i) => i !== index),
-                  );
-                }
-              }}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#7A7165"
+              accessibilityLabel="Date, year-month-day"
+              autoCapitalize="none"
+              style={{ minHeight: 48 }}
+              className="border border-paper-300 bg-paper-100 rounded-xl px-3 mb-4 text-base text-ink-900"
             />
-          )}
 
-          <View className="flex-row justify-end space-x-3">
-            <Pressable
-              onPress={onClose}
-              className="px-5 py-3 rounded-xl bg-paper-200 mr-2"
+            {isExpense && (
+              <>
+                <StyledText
+                  variant="semibold"
+                  className="text-sm text-ink-700 mb-2"
+                >
+                  Category
+                </StyledText>
+                <View className="flex-row flex-wrap gap-2 mb-4">
+                  {CATEGORIES.map((c) => {
+                    const active = category === c.value;
+                    return (
+                      <Pressable
+                        key={c.value}
+                        onPress={() => setCategory(c.value)}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: active }}
+                        style={{ minHeight: 40 }}
+                        className={`px-3 rounded-xl border items-center justify-center ${
+                          active
+                            ? 'bg-ink-900 border-ink-900'
+                            : 'bg-paper-100 border-paper-300'
+                        }`}
+                      >
+                        <StyledText
+                          variant="semibold"
+                          className={`text-sm ${
+                            active ? 'text-paper-50' : 'text-ink-800'
+                          }`}
+                        >
+                          {c.label}
+                        </StyledText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mb-1"
             >
-              <Text className="text-sm font-semibold text-ink-800">
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
-              testID="save-entry-button"
-              onPress={handleSave}
-              disabled={loading}
-              className="px-5 py-3 rounded-xl bg-sage-600"
-            >
-              <Text className="text-sm font-semibold text-white">
-                {loading ? 'Saving...' : 'Save Entry'}
-              </Text>
-            </Pressable>
-          </View>
+              Note (optional)
+            </StyledText>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder="e.g. ice, tricycle fare"
+              placeholderTextColor="#7A7165"
+              accessibilityLabel="Note"
+              style={{ minHeight: 48 }}
+              className="border border-paper-300 bg-paper-100 rounded-xl px-3 mb-4 text-base text-ink-900"
+            />
+
+            {isExpense && (
+              <ReceiptPicker
+                receipts={stagedReceiptUris.map((uri, index) => ({
+                  id: `staged-${index}`,
+                  financialEntryId: '',
+                  relativePath: uri,
+                  slot: index,
+                  createdAt: Date.now(),
+                }))}
+                onAddReceipt={async (uri) => {
+                  setStagedReceiptUris((prev) =>
+                    prev.length < 5 ? [...prev, uri] : prev,
+                  );
+                }}
+                onDeleteReceipt={async (id) => {
+                  const index = Number.parseInt(id.replace('staged-', ''), 10);
+                  if (!Number.isNaN(index)) {
+                    setStagedReceiptUris((prev) =>
+                      prev.filter((_, i) => i !== index),
+                    );
+                  }
+                }}
+              />
+            )}
+
+            {error ? (
+              <StyledText
+                variant="semibold"
+                accessibilityRole="alert"
+                className="text-sm text-semantic-danger mb-3"
+              >
+                {error}
+              </StyledText>
+            ) : null}
+
+            <View className="flex-row gap-3">
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                style={{ minHeight: 48 }}
+                className="flex-1 rounded-2xl bg-paper-200 border border-paper-300 items-center justify-center active:opacity-70"
+              >
+                <StyledText
+                  variant="semibold"
+                  className="text-base text-ink-800"
+                >
+                  Cancel
+                </StyledText>
+              </Pressable>
+              <Pressable
+                testID="save-entry-button"
+                onPress={handleSave}
+                disabled={loading}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: loading }}
+                style={{ minHeight: 48 }}
+                className={`flex-1 rounded-2xl bg-persimmon-600 items-center justify-center active:opacity-80 ${
+                  loading ? 'opacity-60' : ''
+                }`}
+              >
+                <StyledText
+                  variant="extrabold"
+                  className="text-base text-white"
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </StyledText>
+              </Pressable>
+            </View>
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

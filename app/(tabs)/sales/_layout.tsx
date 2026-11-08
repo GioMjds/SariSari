@@ -7,8 +7,8 @@ import { useTabProgress } from '@/hooks';
 import { SALES_SUB_TABS } from '@/constants/tabs';
 
 const SALES_TAB_DEFS = [
-  { key: 'pos', label: 'POS' },
-  { key: 'receipts', label: 'RECEIPTS' },
+  { key: 'pos', label: 'Sell' },
+  { key: 'receipts', label: 'Receipts' },
 ] satisfies { key: SalesSubTab; label: string }[];
 
 export default function SalesLayout() {

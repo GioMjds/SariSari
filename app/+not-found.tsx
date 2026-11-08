@@ -1,23 +1,13 @@
-import { Href, Stack, router, usePathname } from 'expo-router';
-import { useEffect } from 'react';
+import { Href, Stack, router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
+import { useTranslation } from 'react-i18next';
 
 export default function NotFoundScreen() {
-  const pathname = usePathname();
-
-  useEffect(() => {
-    console.warn(
-      JSON.stringify({
-        event: 'unmatched_route_accessed',
-        pathname,
-        timestamp: Date.now(),
-      }),
-    );
-  }, [pathname]);
+  const { t } = useTranslation();
 
   const handleGoHome = () => {
     router.replace('/(tabs)/home' as Href);
@@ -26,7 +16,7 @@ export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen
-        options={{ title: 'Oops! Page Not Found', headerShown: false }}
+        options={{ title: t('common:notFoundTitle'), headerShown: false }}
       />
       <SafeAreaView className="flex-1 bg-paper-200 justify-center">
         <MotiView
@@ -42,22 +32,22 @@ export default function NotFoundScreen() {
             variant="black"
             className="text-3xl text-ink-900 text-center mb-2"
           >
-            Page Not Found
+            {t('common:notFoundTitle')}
           </StyledText>
           <StyledText
             variant="regular"
             className="text-sm text-ink-500 text-center mb-8 px-4"
           >
-            The page you are looking for doesn&apos;t exist or has been moved.
+            {t('common:notFoundBody')}
           </StyledText>
           <Pressable
             onPress={handleGoHome}
             accessibilityRole="button"
-            accessibilityLabel="Go to Home Screen"
-            className="bg-persimmon-500 rounded-pill px-8 py-3.5 shadow-persimmon-glow press-scale active:opacity-80"
+            accessibilityLabel={t('common:notFoundAction')}
+            className="bg-persimmon-600 rounded-pill px-8 py-3.5 shadow-persimmon-glow press-scale active:opacity-80"
           >
             <StyledText variant="extrabold" className="text-paper-50 text-base">
-              Go to Home Screen
+              {t('common:notFoundAction')}
             </StyledText>
           </Pressable>
         </MotiView>

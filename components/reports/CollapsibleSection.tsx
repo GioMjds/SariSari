@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { FontAwesome } from '@expo/vector-icons';
 import { AnimatePresence, MotiView } from 'moti';
 import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
@@ -15,7 +16,7 @@ import { Pressable, View } from 'react-native';
 
 type CollapsibleSectionProps = {
   id?: string;
-  number: string;
+  number?: string;
   title: string;
   subtitle?: string;
   tone?: 'persimmon' | 'sage' | 'cinnamon' | 'ink';
@@ -99,16 +100,19 @@ export function CollapsibleSection({
           </View>
 
           <View className="flex-1">
-            <View className="flex-row items-center">
-              <StyledText
-                variant="extrabold"
-                className={`text-label ${TONE_NUMBER_COLOR[tone]} mr-2`}
-                style={{ letterSpacing: 1.6 }}
-              >
-                {number}
-              </StyledText>
-              {rightBadge}
-            </View>
+            {number || rightBadge ? (
+              <View className="flex-row items-center">
+                {number ? (
+                  <StyledText
+                    variant="extrabold"
+                    className={`text-xs ${TONE_NUMBER_COLOR[tone]} mr-2`}
+                  >
+                    {number}
+                  </StyledText>
+                ) : null}
+                {rightBadge}
+              </View>
+            ) : null}
             <StyledText
               variant="extrabold"
               className="text-ink-900 text-lg"
@@ -119,7 +123,7 @@ export function CollapsibleSection({
             {subtitle && (
               <StyledText
                 variant="medium"
-                className="text-ink-400 text-xs mt-0.5"
+                className="text-ink-500 text-xs mt-0.5"
               >
                 {subtitle}
               </StyledText>
@@ -132,9 +136,7 @@ export function CollapsibleSection({
             transition={{ type: 'timing', duration: 180 }}
             className="w-7 h-7 rounded-full border border-ink-200 items-center justify-center"
           >
-            <StyledText variant="extrabold" className="text-ink-700 text-xs">
-              ▾
-            </StyledText>
+            <FontAwesome name="chevron-down" size={11} color="#564E45" />
           </MotiView>
         </View>
 

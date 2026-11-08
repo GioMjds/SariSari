@@ -50,8 +50,7 @@ export const BentoHero = memo(function BentoHero({
           {icon && <View className="mr-2 opacity-90">{icon}</View>}
           <StyledText
             variant="extrabold"
-            className="text-label text-paper-100 opacity-80"
-            style={{ letterSpacing: 2 }}
+            className="text-sm text-paper-100"
           >
             {kicker}
           </StyledText>
@@ -158,8 +157,7 @@ export const BentoKPICard = memo(function BentoKPICard({
 
         <StyledText
           variant="extrabold"
-          className="text-label text-ink-400 mb-1"
-          style={{ letterSpacing: 1.4 }}
+          className="text-xs text-ink-600 mb-1"
         >
           {kicker}
         </StyledText>
