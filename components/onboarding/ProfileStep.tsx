@@ -3,7 +3,7 @@ import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { OnboardingProfile } from '@/types/onboarding.types';
-import { SARI_PROFILE_ASSET } from '@/constants/onboardingTour.assets';
+import { SARI_WELCOME_ASSET } from '@/constants/onboardingTour.assets';
 import { useTranslation } from 'react-i18next';
 import {
 	changeAppLanguage,
@@ -50,13 +50,27 @@ export function ProfileStep({ profile, onChange }: Props) {
 			transition={{ type: 'timing', duration: 480, delay: 80 }}
 			className="flex-1"
 		>
-			<View className="items-center" style={{ height: 220 }}>
-				<Image
-					source={SARI_PROFILE_ASSET}
-					resizeMode="contain"
-					accessibilityIgnoresInvertColors
-					className="w-full h-full"
-				/>
+			<View className="items-center">
+				<View style={{ height: 160, width: '100%' }}>
+					<Image
+						source={SARI_WELCOME_ASSET}
+						resizeMode="contain"
+						accessibilityIgnoresInvertColors
+						className="w-full h-full"
+					/>
+				</View>
+				<StyledText
+					variant="extrabold"
+					className="text-ink-900 text-h1 text-center mt-2"
+				>
+					{t('onboarding:profileHeroTitle')}
+				</StyledText>
+				<StyledText
+					variant="regular"
+					className="text-ink-600 text-body text-center mt-1 mb-5 px-2"
+				>
+					{t('onboarding:profileHeroSub')}
+				</StyledText>
 			</View>
 
 			{/* Language picker — sits at the top of the form so the rest
