@@ -1,3 +1,5 @@
+import type { SariState } from './onboardingTour.assets';
+
 export type TabKey = 'home' | 'sales' | 'inventory' | 'customers' | 'more';
 
 export const TOUR_ORDER: TabKey[] = [
@@ -8,56 +10,61 @@ export const TOUR_ORDER: TabKey[] = [
   'more',
 ];
 
+/** All text fields are i18n keys in the `onboarding` namespace. */
 export type TourStepContent = {
   tab: TabKey;
-  label: string; // "DASHBOARD" — rendered as an all-caps pill
-  headline: string; // large display-weight line
-  whatItDoes: string; // 1–2 lines
-  whenToUseIt: string; // 1 line, italic in UI
+  pose: SariState; // Sari pose when the step opens
+  labelKey: string;
+  headlineKey: string;
+  whatItDoesKey: string;
+  whenToUseItKey: string;
+  bubbleKey: string; // Sari's opening speech bubble
 };
 
 export const ONBOARDING_TOUR_STEPS: TourStepContent[] = [
   {
     tab: 'home',
-    label: 'HOME',
-    headline: 'Your counter at a glance',
-    whatItDoes:
-      "See today's sales, items sold, and credit totals without opening anything else.",
-    whenToUseIt:
-      'First thing in the morning, or between rushes, to know where you stand.',
+    pose: 'default',
+    labelKey: 'tourHomeLabel',
+    headlineKey: 'tourHomeHeadline',
+    whatItDoesKey: 'tourHomeWhatItDoes',
+    whenToUseItKey: 'tourHomeWhen',
+    bubbleKey: 'tourHomeBubble',
   },
   {
     tab: 'sales',
-    label: 'SALES',
-    headline: 'Ring up a sale in seconds',
-    whatItDoes:
-      'Pick items, set quantity, choose cash or utang. Works without internet.',
-    whenToUseIt: 'Every time a suki is at the counter.',
+    pose: 'default',
+    labelKey: 'tourSalesLabel',
+    headlineKey: 'tourSalesHeadline',
+    whatItDoesKey: 'tourSalesWhatItDoes',
+    whenToUseItKey: 'tourSalesWhen',
+    bubbleKey: 'tourSalesBubble',
   },
   {
     tab: 'inventory',
-    label: 'INVENTORY',
-    headline: "Know what's on the shelf",
-    whatItDoes:
-      "Add products, set prices, and restock. Sari flags low stock so you don't run out.",
-    whenToUseIt:
-      'When new stock arrives or when you notice something running low.',
+    pose: 'lowStock',
+    labelKey: 'tourInventoryLabel',
+    headlineKey: 'tourInventoryHeadline',
+    whatItDoesKey: 'tourInventoryWhatItDoes',
+    whenToUseItKey: 'tourInventoryWhen',
+    bubbleKey: 'tourInventoryBubble',
   },
   {
     tab: 'customers',
-    label: 'CUSTOMERS',
-    headline: 'Track suki balances',
-    whatItDoes:
-      'Log credit sales and payments. Balances are computed from each suki’s transactions and always add up.',
-    whenToUseIt: 'When a suki says "tabi muna" or comes in to pay.',
+    pose: 'utang',
+    labelKey: 'tourCustomersLabel',
+    headlineKey: 'tourCustomersHeadline',
+    whatItDoesKey: 'tourCustomersWhatItDoes',
+    whenToUseItKey: 'tourCustomersWhen',
+    bubbleKey: 'tourCustomersBubble',
   },
   {
     tab: 'more',
-    label: 'MORE',
-    headline: 'See how the store is doing',
-    whatItDoes:
-      'Daily, weekly, and monthly totals. Best sellers, slow movers, and credit aging.',
-    whenToUseIt:
-      "At the end of the day, or when you want to plan tomorrow's stock.",
+    pose: 'reports',
+    labelKey: 'tourMoreLabel',
+    headlineKey: 'tourMoreHeadline',
+    whatItDoesKey: 'tourMoreWhatItDoes',
+    whenToUseItKey: 'tourMoreWhen',
+    bubbleKey: 'tourMoreBubble',
   },
 ];
