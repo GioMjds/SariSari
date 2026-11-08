@@ -633,20 +633,23 @@ export const voidSale = async (
          LIMIT 1`,
         [sale.timestamp],
       );
-      if (!session) throw new NoOpenCashSessionError();
-      await db.runAsync(
-        `INSERT INTO cash_entries (
-          id, session_id, type, amount, notes, timestamp, created_at
-        ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
-        [
-          Crypto.randomUUID(),
-          session.id,
-          sale.total,
-          `void:${saleId}:${correctionId}`,
-          getCurrentLocalTimestamp(),
-          Date.now(),
-        ],
-      );
+      // Drawer sessions are legacy. Only mirror the refund into a session
+      // that is still open; never block the void because none exists.
+      if (session) {
+        await db.runAsync(
+          `INSERT INTO cash_entries (
+            id, session_id, type, amount, notes, timestamp, created_at
+          ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+          [
+            Crypto.randomUUID(),
+            session.id,
+            sale.total,
+            `void:${saleId}:${correctionId}`,
+            getCurrentLocalTimestamp(),
+            Date.now(),
+          ],
+        );
+      }
     } else {
       await db.runAsync(
         `UPDATE credit_transactions
@@ -718,20 +721,21 @@ export const refundSale = async (
          LIMIT 1`,
         [sale.timestamp],
       );
-      if (!session) throw new NoOpenCashSessionError();
-      await db.runAsync(
-        `INSERT INTO cash_entries (
-          id, session_id, type, amount, notes, timestamp, created_at
-        ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
-        [
-          Crypto.randomUUID(),
-          session.id,
-          sale.total,
-          `refund:${saleId}:${correctionId}`,
-          getCurrentLocalTimestamp(),
-          Date.now(),
-        ],
-      );
+      if (session) {
+        await db.runAsync(
+          `INSERT INTO cash_entries (
+            id, session_id, type, amount, notes, timestamp, created_at
+          ) VALUES (?, ?, 'cash_refund', ?, ?, ?, ?)`,
+          [
+            Crypto.randomUUID(),
+            session.id,
+            sale.total,
+            `refund:${saleId}:${correctionId}`,
+            getCurrentLocalTimestamp(),
+            Date.now(),
+          ],
+        );
+      }
     } else {
       await db.runAsync(
         `UPDATE credit_transactions
@@ -837,9 +841,7 @@ export const correctSalePrice = async (
          LIMIT 1`,
         [sale.timestamp],
       );
-      if (!session) throw new NoOpenCashSessionError();
-
-      if (sale.timestamp < session.opening_timestamp) {
+      if (session && sale.timestamp < session.opening_timestamp) {
         if (totalDelta < 0) {
           await db.runAsync(
             `INSERT INTO cash_entries (id, session_id, type, amount, notes, timestamp, created_at)

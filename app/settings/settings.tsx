@@ -7,6 +7,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog';
 import { SupportedLanguage } from '@/lib/i18n';
 import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
+import { VoidWindowCard } from '@/components/settings/VoidWindowCard';
 import {
   SettingsRow,
   SettingsSection,
@@ -33,7 +34,10 @@ export default function Settings() {
         backAccessibilityLabel={t('common:moreBackA11y')}
       />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: bottomOffset + 16 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         <SettingsSection
           title={t('common:settingsStoreSection')}
           subtitle={t('common:settingsStoreSectionSub')}
@@ -52,9 +56,6 @@ export default function Settings() {
             }
             icon="user"
           />
-        </SettingsSection>
-
-        <SettingsSection>
           <SettingsRow
             label={t('common:settingsLanguage')}
             value={languageValue}
@@ -69,6 +70,13 @@ export default function Settings() {
           subtitle={t('common:settingsSecuritySectionSub')}
         >
           <OwnerPinSettingsCard />
+        </SettingsSection>
+
+        <SettingsSection
+          title={t('common:settingsSalesSection')}
+          subtitle={t('common:settingsSalesSectionSub')}
+        >
+          <VoidWindowCard />
         </SettingsSection>
       </ScrollView>
 

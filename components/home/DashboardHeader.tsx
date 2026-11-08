@@ -1,8 +1,5 @@
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
-import { HomeSubTab } from '@/constants/tabs';
-
-export type { HomeSubTab };
 
 export interface DashboardHeaderProps {
   storeName: string;

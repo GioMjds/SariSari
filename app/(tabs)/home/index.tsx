@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
 import { StyledText } from '@/components/elements';
 import {
@@ -24,13 +25,15 @@ import { RefreshableScrollView } from '@/components/ui';
 const routes = {
   addProduct: '/(edit-forms)/add-product',
   inventory: '/inventory',
-  utang: '/(tabs)/customers/credit',
-  cashSession: '/(edit-forms)/cash-session',
+  utang: '/(tabs)/customers/all',
+  cashEntries: '/settings/cash-entries',
   newSale: '/(tabs)/sales/pos',
-  reports: '/(tabs)/home/today',
-} satisfies Record<HomeDestination, Href>;
+  customers: '/(tabs)/customers/collection',
+  reports: '/settings/reports',
+} satisfies Record<HomeDestination | 'customers' | 'cashEntries', Href>;
 
-export default function OverviewScreen() {
+export default function HomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const {
@@ -38,7 +41,6 @@ export default function OverviewScreen() {
     products,
     recentSales,
     topProduct,
-    currentSession,
     goal,
     suggestions,
     isError,
@@ -78,75 +80,26 @@ export default function OverviewScreen() {
         />
       ) : (
         <>
-          {/* 1. Slim total-sales hero */}
           <View className="px-4 mb-5">
+            <StyledText variant="medium" className="text-ink-600 text-sm">
+              {t('common:homeSalesToday', {
+                defaultValue: 'Sales today',
+              })}
+            </StyledText>
             <StyledText
               variant="extrabold"
-              className="text-ink-500 text-xs tracking-wider uppercase"
+              className="text-ink-900 text-hero mt-1"
             >
-              Total Sales Today
+              {formatCurrency(stats.todaySalesTotal)}
             </StyledText>
-            <View className="flex-row items-baseline gap-3 mt-1.5">
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-hero"
-              >
-                {formatCurrency(stats.todaySalesTotal)}
-              </StyledText>
-            </View>
-            <View className="flex-row items-center gap-2 mt-2">
-              <StyledText variant="regular" className="text-ink-500 text-xs">
-                {stats.transactionCount} transactions today
-              </StyledText>
-              <View className="bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200">
-                <StyledText
-                  variant="extrabold"
-                  className="text-emerald-800 text-[11px]"
-                >
-                  RECORDED
-                </StyledText>
-              </View>
-            </View>
+            <StyledText variant="regular" className="text-ink-600 text-sm mt-1">
+              {t('common:homeTransactionsToday', {
+                count: stats.transactionCount,
+                defaultValue: '{{count}} sales rung up',
+              })}
+            </StyledText>
           </View>
 
-          <DashboardKPIGrid
-            totalSales={stats.todaySalesTotal}
-            transactionCount={stats.transactionCount}
-            profitMargin={stats.profitMargin}
-            cashSessionStatus={
-              currentSession?.status === 'closed' ? 'Closed' : 'Open'
-            }
-            startingFloat={
-              currentSession?.startingFloat != null
-                ? currentSession.startingFloat / 100
-                : 500
-            }
-            lowStockCount={stats.lowStockCount}
-            totalCredits={stats.overdueAmount}
-            creditCustomersCount={stats.overdueCount}
-            onDetailsPress={() => router.push(routes.reports)}
-            onKpiPress={(target) => {
-              if (target === 'inventory') router.push(routes.inventory);
-              else if (target === 'cash') router.push(routes.cashSession);
-              else router.push(routes.reports);
-            }}
-          />
-
-          {/* 3. GoalCard */}
-          <DashboardGoalCard
-            recommendation={goal}
-            onPress={() => handleGoalAction(goal)}
-          />
-
-          {/* 4. StockAlert (conditional) */}
-          {stats.lowStockCount > 0 && (
-            <DashboardStockAlert
-              lowStockCount={stats.lowStockCount}
-              onRestock={() => router.push(routes.inventory)}
-            />
-          )}
-
-          {/* 5. Quick Actions */}
           <DashboardQuickActions
             onNewSale={() => router.push(routes.newSale)}
             onAddProduct={() => router.push(routes.addProduct)}
@@ -156,7 +109,36 @@ export default function OverviewScreen() {
             overdueCount={stats.overdueCount}
           />
 
-          {/* 6. Suggestions (conditional — already filtered by resolveHomeState) */}
+          <DashboardKPIGrid
+            totalSales={stats.todaySalesTotal}
+            transactionCount={stats.transactionCount}
+            profitMargin={stats.profitMargin}
+            expensesToday={stats.expensesToday}
+            drawingsToday={stats.drawingsToday}
+            lowStockCount={stats.lowStockCount}
+            totalCredits={stats.overdueAmount}
+            creditCustomersCount={stats.overdueCount}
+            onDetailsPress={() => router.push(routes.reports)}
+            onKpiPress={(target) => {
+              if (target === 'inventory') router.push(routes.inventory);
+              else if (target === 'cash') router.push(routes.cashEntries);
+              else if (target === 'customers') router.push(routes.customers);
+              else router.push(routes.reports);
+            }}
+          />
+
+          <DashboardGoalCard
+            recommendation={goal}
+            onPress={() => handleGoalAction(goal)}
+          />
+
+          {stats.lowStockCount > 0 && (
+            <DashboardStockAlert
+              lowStockCount={stats.lowStockCount}
+              onRestock={() => router.push(routes.inventory)}
+            />
+          )}
+
           {suggestions.length > 0 && (
             <DashboardSuggestions
               suggestions={suggestions}
@@ -164,7 +146,6 @@ export default function OverviewScreen() {
             />
           )}
 
-          {/* 7. Recent Activity */}
           <DashboardRecentSales
             sales={recentSales}
             onOpenSale={(id) =>
@@ -173,7 +154,6 @@ export default function OverviewScreen() {
             onSeeAll={() => router.push('/(tabs)/sales/receipts' as Href)}
           />
 
-          {/* 8. Top Seller */}
           <MiniInsightsCard
             topProductName={topProduct.name}
             unitsSold={topProduct.unitsSold}

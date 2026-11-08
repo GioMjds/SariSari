@@ -31,6 +31,7 @@ describe('More navigation', () => {
     expect(MORE_ROUTES).toMatchObject({
       cash: '/settings/cash-entries',
       reports: '/settings/reports',
+      corrections: '/reports/corrections',
       backup: '/settings/backup',
       settings: '/settings/settings',
     });

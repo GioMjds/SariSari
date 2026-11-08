@@ -13,8 +13,8 @@ export interface DashboardKPIGridProps {
   totalSales: number;
   transactionCount: number;
   profitMargin: number | null;
-  cashSessionStatus?: 'Open' | 'Closed';
-  startingFloat?: number;
+  expensesToday?: number;
+  drawingsToday?: number;
   lowStockCount: number;
   totalCredits: number;
   creditCustomersCount?: number;
@@ -27,7 +27,6 @@ type KPIItem = {
   value: string;
   subtitle: string;
   icon: string;
-  topBorder: string;
   target: 'reports' | 'cash' | 'inventory' | 'customers';
 };
 
@@ -54,12 +53,12 @@ const KPICard = memo(function KPICard({
       accessibilityRole="button"
       accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
       onPress={handlePress}
-      className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px] ${kpi.topBorder}`}
+      className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px]`}
     >
       <View className="flex-row items-center justify-between mb-2">
         <StyledText
           variant="extrabold"
-          className="text-ink-400 text-[11px] tracking-wider uppercase"
+          className="text-ink-600 text-xs"
         >
           {kpi.title}
         </StyledText>
@@ -68,10 +67,10 @@ const KPICard = memo(function KPICard({
         {kpi.value}
       </StyledText>
       <View className="flex-row items-center justify-between mt-1.5">
-        <StyledText variant="regular" className="text-ink-500 text-[11px]">
+        <StyledText variant="regular" className="text-ink-600 text-xs">
           {kpi.subtitle}
         </StyledText>
-        <FontAwesome5 name={kpi.icon} size={11} color="#A89F90" />
+        <FontAwesome5 name={kpi.icon} size={12} color="#7A7165" />
       </View>
     </AnimatedPressable>
   );
@@ -79,11 +78,11 @@ const KPICard = memo(function KPICard({
 
 export function DashboardKPIGrid({
   profitMargin,
-  cashSessionStatus = 'Open',
-  startingFloat = 500,
+  expensesToday = 0,
+  drawingsToday = 0,
   lowStockCount,
   totalCredits,
-  creditCustomersCount = 3,
+  creditCustomersCount = 0,
   onDetailsPress,
   onKpiPress,
 }: DashboardKPIGridProps) {
@@ -106,35 +105,34 @@ export function DashboardKPIGrid({
 
   const kpis = [
     {
-      title: 'EST. PROFIT',
+      title: 'Profit today',
       value: profitMargin === null ? '-' : formatCurrency(profitMargin),
-      subtitle: 'Net income',
+      subtitle: 'Before expenses',
       icon: 'chart-line',
-      topBorder: 'border-t-[3px] border-cinnamon-500',
       target: 'reports',
     },
     {
-      title: 'CASH SESSION',
-      value: cashSessionStatus,
-      subtitle: `${formatCurrency(startingFloat)}`,
+      title: 'Expenses today',
+      value: formatCurrency(expensesToday),
+      subtitle:
+        drawingsToday > 0
+          ? `Taken out ${formatCurrency(drawingsToday)}`
+          : 'Gastos recorded',
       icon: 'wallet',
-      topBorder: 'border-t-[3px] border-sage-600',
       target: 'cash',
     },
     {
-      title: 'LOW STOCK',
+      title: 'Low stock',
       value: `${lowStockCount} items`,
       subtitle: lowStockCount > 0 ? 'Needs restock' : 'Stock healthy',
       icon: 'box-open',
-      topBorder: 'border-t-[3px] border-amber-500',
       target: 'inventory',
     },
     {
-      title: 'CREDITS DUE',
+      title: 'Overdue utang',
       value: formatCurrency(totalCredits),
-      subtitle: `${creditCustomersCount} customers`,
+      subtitle: `${creditCustomersCount} ${creditCustomersCount === 1 ? 'suki' : 'sukis'}`,
       icon: 'user-clock',
-      topBorder: 'border-t-[3px] border-rose-600',
       target: 'customers',
     },
   ] satisfies KPIItem[];

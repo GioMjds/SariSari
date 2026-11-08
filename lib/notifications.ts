@@ -100,7 +100,7 @@ export async function triggerOverdueDebtNotification(
         title: `Overdue Credit: ${customerName}`,
         body: `Outstanding balance of ${amountFormatted} requires collection.`,
         sound: 'default',
-        data: { targetPath: '/(tabs)/customers/credit', type: 'overdue_debts' },
+        data: { targetPath: '/(tabs)/customers/collection', type: 'overdue_debts' },
       },
       trigger:
         Platform.OS === 'android'

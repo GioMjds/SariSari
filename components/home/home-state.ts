@@ -4,7 +4,6 @@ export type HomeDestination =
   | 'addProduct'
   | 'inventory'
   | 'utang'
-  | 'cashSession'
   | 'newSale'
   | 'reports';
 
@@ -13,9 +12,6 @@ export type HomeGoalKind =
   | 'outOfStock'
   | 'lowStock'
   | 'overdueCredits'
-  | 'cashShortfall'
-  | 'openDrawer'
-  | 'reviewClose'
   | 'firstSale'
   | 'continueSelling'
   | 'reviewReports';
@@ -30,7 +26,6 @@ export interface HomeStateInput {
   productQuantities: number[];
   hasAnySales: boolean;
   overdueCount: number;
-  cashSession: { status: 'open' | 'closed'; variance: number | null } | null;
   hour: number;
 }
 
@@ -65,16 +60,6 @@ export function resolveHomeState(input: HomeStateInput): HomeState {
       destination: 'utang',
       count: input.overdueCount,
     };
-  } else if (
-    input.cashSession?.status === 'closed' &&
-    input.cashSession.variance !== null &&
-    input.cashSession.variance < 0
-  ) {
-    goal = { kind: 'cashShortfall', destination: 'cashSession' };
-  } else if (input.cashSession === null) {
-    goal = { kind: 'openDrawer', destination: 'cashSession' };
-  } else if (input.cashSession?.status === 'closed') {
-    goal = { kind: 'reviewClose', destination: 'cashSession' };
   } else if (!input.hasAnySales) {
     goal = { kind: 'firstSale', destination: 'newSale' };
   } else {

@@ -111,12 +111,12 @@ export function LocalSnapshotsSection() {
   return (
     <View>
       {/* Top row: count + Backup now */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-warm-100">
+      <View className="flex-row items-center justify-between px-4 py-3 border-b border-paper-300">
         <View className="flex-1 mr-3">
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:localSnapshotsSection')}
           </StyledText>
-          <StyledText variant="regular" className="text-xs text-ink-500 mt-0.5">
+          <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
             {snapshots.length === 0
               ? t('common:localSnapshotsEmpty')
               : t('common:localSnapshotsCount', { count: snapshots.length })}
@@ -127,17 +127,18 @@ export function LocalSnapshotsSection() {
           disabled={backupNow.isPending}
           accessibilityRole="button"
           accessibilityLabel={t('common:cloudBackupBackupNow')}
-          className="bg-persimmon-500 rounded-xl px-4 py-2 active:opacity-70"
-          style={{ minWidth: 88, alignItems: 'center' }}
+          className="bg-persimmon-600 rounded-xl px-4 active:opacity-70"
+          style={{
+            minWidth: 96,
+            minHeight: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
           {backupNow.isPending ? (
             <ActivityIndicator color="#FBF7EE" size="small" />
           ) : (
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-xs uppercase"
-              style={{ letterSpacing: 0.8 }}
-            >
+            <StyledText variant="extrabold" className="text-paper-50 text-sm">
               {t('common:cloudBackupBackupNow')}
             </StyledText>
           )}
@@ -153,7 +154,7 @@ export function LocalSnapshotsSection() {
         <View className="px-4 py-6">
           <StyledText
             variant="regular"
-            className="text-xs text-ink-400 text-center"
+            className="text-sm text-ink-600 text-center"
           >
             {t('common:localSnapshotsEmpty')}
           </StyledText>
@@ -167,9 +168,9 @@ export function LocalSnapshotsSection() {
           return (
             <View
               key={snap.path}
-              className="px-4 py-3 border-b border-warm-100 last:border-b-0 flex-row items-center"
+              className="px-4 py-3 border-b border-paper-300 last:border-b-0 flex-row items-center"
             >
-              <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+              <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">
                 <FontAwesome name="database" size={14} color="#623418" />
               </View>
               <View className="flex-1">
@@ -178,7 +179,7 @@ export function LocalSnapshotsSection() {
                 </StyledText>
                 <StyledText
                   variant="regular"
-                  className="text-xs text-ink-400 mt-0.5"
+                  className="text-sm text-ink-600 mt-0.5"
                 >
                   {t('common:localSnapshotsAutoLabel')} ·{' '}
                   {formatBytes(snap.bytes)}
@@ -195,9 +196,9 @@ export function LocalSnapshotsSection() {
           onPress={openPicker}
           accessibilityRole="button"
           accessibilityLabel={t('common:restorePickerTitle')}
-          className="px-4 py-3 flex-row items-center active:opacity-80"
+          className="px-4 py-3 min-h-[48px] flex-row items-center active:opacity-80"
         >
-          <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+          <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">
             <FontAwesome name="history" size={15} color="#623418" />
           </View>
           <View className="flex-1">
@@ -207,7 +208,7 @@ export function LocalSnapshotsSection() {
             {lastSnapshot ? (
               <StyledText
                 variant="regular"
-                className="text-xs text-ink-400 mt-0.5"
+                className="text-sm text-ink-600 mt-0.5"
               >
                 {t('common:localSnapshotsLatestHint', {
                   bytes: formatBytes(lastSnapshot.bytes),
@@ -215,7 +216,7 @@ export function LocalSnapshotsSection() {
               </StyledText>
             ) : null}
           </View>
-          <FontAwesome name="chevron-right" size={14} color="#9C8E7E" />
+          <FontAwesome name="chevron-right" size={14} color="#7A7165" />
         </Pressable>
       ) : null}
 

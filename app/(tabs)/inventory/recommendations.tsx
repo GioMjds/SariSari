@@ -1,5 +1,5 @@
 import { StyledText } from '@/components/elements';
-import { useToastStore, useStockSheetSignal } from '@/stores';
+import { useStockSheetSignal } from '@/stores';
 import { MoneyText } from '@/components/ui';
 import {
   useDeleteReorderPlan,
@@ -7,7 +7,7 @@ import {
   useStockRecommendations,
 } from '@/hooks';
 import { ReorderRecommendation } from '@/types/stock-intelligence.types';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, Href } from 'expo-router';
 import { MotiView } from 'moti';
 import { useMemo, useState } from 'react';
@@ -22,13 +22,40 @@ import {
   View,
 } from 'react-native';
 import { Alert } from '@/utils';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTabBarBottomOffset } from '@/components/layout';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
+
+const FILTERS: { id: TabType; label: string }[] = [
+  { id: 'reorder', label: 'Reorder' },
+  { id: 'slow_movers', label: 'Slow movers' },
+  { id: 'watch_list', label: 'Watch list' },
+  { id: 'saved_plans', label: 'Saved plans' },
+];
+
+const EMPTY_COPY: Record<TabType, { title: string; body: string }> = {
+  reorder: {
+    title: 'Nothing to reorder',
+    body: 'Stock is healthy. Items that run low will show up here.',
+  },
+  slow_movers: {
+    title: 'No slow movers',
+    body: 'Everything in stock has sold in the last 28 days.',
+  },
+  watch_list: {
+    title: 'No new products to watch',
+    body: 'New products show here until they have 7 days of sales.',
+  },
+  saved_plans: {
+    title: 'No saved plans',
+    body: 'Adjusted, deferred or dismissed items are kept here.',
+  },
+};
 
 export default function RecommendationsScreen() {
   const router = useRouter();
   const signal = useStockSheetSignal();
+  const tabBarBottomOffset = useTabBarBottomOffset();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
 
   const {
@@ -224,7 +251,7 @@ export default function RecommendationsScreen() {
         {/* Demand & Recommendation Metrics */}
         <View className="bg-paper-100 rounded-xl p-3 flex-row justify-between items-center mb-3">
           <View>
-            <StyledText variant="regular" className="text-xs text-ink-400">
+            <StyledText variant="regular" className="text-xs text-ink-600">
               28d Sales
             </StyledText>
             <StyledText
@@ -235,7 +262,7 @@ export default function RecommendationsScreen() {
             </StyledText>
           </View>
           <View className="items-center">
-            <StyledText variant="regular" className="text-xs text-ink-400">
+            <StyledText variant="regular" className="text-xs text-ink-600">
               Suggested
             </StyledText>
             <StyledText
@@ -246,7 +273,7 @@ export default function RecommendationsScreen() {
             </StyledText>
           </View>
           <View className="items-end">
-            <StyledText variant="regular" className="text-xs text-ink-400">
+            <StyledText variant="regular" className="text-xs text-ink-600">
               Est. Spend
             </StyledText>
             {showEstimatedSpend ? (
@@ -258,7 +285,7 @@ export default function RecommendationsScreen() {
             ) : (
               <StyledText
                 variant="semibold"
-                className="text-sm text-ink-400 mt-0.5"
+                className="text-sm text-ink-600 mt-0.5"
               >
                 —
               </StyledText>
@@ -372,7 +399,7 @@ export default function RecommendationsScreen() {
           </StyledText>
           {item.costPrice !== null && (
             <View className="flex-row items-center gap-1.5">
-              <StyledText variant="regular" className="text-xs text-ink-400">
+              <StyledText variant="regular" className="text-xs text-ink-600">
                 Stock Value:
               </StyledText>
               <MoneyText value={item.currentStock * item.costPrice} size="sm" />
@@ -491,7 +518,7 @@ export default function RecommendationsScreen() {
         </View>
 
         <View className="flex-row justify-between items-center pt-3 border-t border-ink-100">
-          <StyledText variant="regular" className="text-xs text-ink-400">
+          <StyledText variant="regular" className="text-xs text-ink-600">
             Original suggested: +
             {Math.max(
               0,
@@ -530,217 +557,179 @@ export default function RecommendationsScreen() {
   };
 
   const activeList = getActiveList();
+  const counts: Record<TabType, number> = {
+    reorder: reorderList.length,
+    slow_movers: slowMoversList.length,
+    watch_list: watchList.length,
+    saved_plans: savedPlansList.length,
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-cinnamon-500" edges={['top']}>
-      <View className="flex-1 bg-background">
-        {/* Header Bar */}
-        <View className="bg-cinnamon-500 pt-3 pb-4 px-5 flex-row items-center border-b border-cinnamon-600">
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => router.back()}
-            className="mr-3 p-2 rounded-full bg-cinnamon-700/50"
-            accessibilityLabel="Go back to inventory screen"
-          >
-            <Ionicons name="arrow-back" size={20} color="#FBF7EE" />
-          </TouchableOpacity>
+    <View className="flex-1 bg-paper-200">
+      <View className="pt-1 pb-3">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        >
+          {FILTERS.map((f) => {
+            const isActive = activeTab === f.id;
+            const count = counts[f.id];
+            return (
+              <Pressable
+                key={f.id}
+                onPress={() => setActiveTab(f.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={`${f.label}, ${count}`}
+                style={{ minHeight: 40 }}
+                className={`px-4 rounded-full border flex-row items-center gap-2 ${
+                  isActive
+                    ? 'bg-ink-900 border-ink-900'
+                    : 'bg-paper-50 border-ink-200'
+                }`}
+              >
+                <StyledText
+                  variant={isActive ? 'extrabold' : 'semibold'}
+                  className={`text-sm ${
+                    isActive ? 'text-paper-50' : 'text-ink-700'
+                  }`}
+                >
+                  {f.label}
+                </StyledText>
+                {count > 0 && (
+                  <StyledText
+                    variant="extrabold"
+                    className={`text-sm ${
+                      isActive ? 'text-persimmon-300' : 'text-persimmon-700'
+                    }`}
+                  >
+                    {count}
+                  </StyledText>
+                )}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#E85A1F" />
+        </View>
+      ) : activeList.length === 0 ? (
+        <View className="flex-1 justify-center items-center px-8">
+          <View className="w-16 h-16 rounded-full bg-paper-100 border border-ink-200 items-center justify-center mb-4">
+            <FontAwesome name="check-circle" size={32} color="#4F7A24" />
+          </View>
           <StyledText
             variant="extrabold"
-            className="text-xl text-paper-50 flex-1"
+            className="text-lg text-ink-900 text-center mb-1"
           >
-            Stock Advice
+            {EMPTY_COPY[activeTab].title}
+          </StyledText>
+          <StyledText
+            variant="regular"
+            className="text-sm text-ink-600 text-center"
+          >
+            {EMPTY_COPY[activeTab].body}
           </StyledText>
         </View>
+      ) : (
+        <FlatList
+          data={activeList}
+          renderItem={
+            activeTab === 'reorder'
+              ? renderReorderItem
+              : activeTab === 'slow_movers'
+                ? renderSlowMoverItem
+                : activeTab === 'watch_list'
+                  ? renderWatchItem
+                  : renderSavedPlanItem
+          }
+          keyExtractor={(item) => item.productId.toString()}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 4,
+            paddingBottom: tabBarBottomOffset + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
-        {/* Tabs Row */}
-        <View className="bg-cinnamon-500 px-5 pb-3 pt-2">
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {[
-              { id: 'reorder', label: 'Reorder', count: reorderList.length },
-              {
-                id: 'slow_movers',
-                label: 'Slow Movers',
-                count: slowMoversList.length,
-              },
-              {
-                id: 'watch_list',
-                label: 'Watch List',
-                count: watchList.length,
-              },
-              {
-                id: 'saved_plans',
-                label: 'Saved Plans',
-                count: savedPlansList.length,
-              },
-            ].map((t) => {
-              const isActive = activeTab === t.id;
-              return (
-                <Pressable
-                  key={t.id}
-                  onPress={() => setActiveTab(t.id as TabType)}
-                  className="px-4 py-2 rounded-xl flex-row items-center gap-1.5 active:scale-[0.96] transition-transform"
-                  style={{
-                    backgroundColor: isActive
-                      ? '#E85A1F'
-                      : 'rgba(77, 40, 16, 0.5)',
-                  }}
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-xs"
-                    style={{ color: isActive ? '#FFFFFF' : '#E5D8BC' }}
-                  >
-                    {t.label}
-                  </StyledText>
-                  {t.count > 0 && (
-                    <View
-                      className="px-1.5 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: isActive
-                          ? 'rgba(255,255,255,0.2)'
-                          : 'rgba(229,216,188,0.2)',
-                      }}
-                    >
-                      <StyledText
-                        variant="extrabold"
-                        className="text-[10px]"
-                        style={{ color: isActive ? '#FFFFFF' : '#E5D8BC' }}
-                      >
-                        {t.count}
-                      </StyledText>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* Content Container */}
-        {isLoading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#E85A1F" />
-          </View>
-        ) : activeList.length === 0 ? (
-          <View className="flex-1 justify-center items-center px-8">
-            <View className="w-16 h-16 rounded-full bg-paper-100 border border-ink-150 items-center justify-center mb-4">
-              <FontAwesome name="check-circle" size={32} color="#4F7A24" />
-            </View>
-            <StyledText
-              variant="extrabold"
-              className="text-lg text-ink-900 text-center mb-1"
-            >
-              All Good!
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-sm text-ink-500 text-center"
-            >
-              No items in this category need attention right now.
-            </StyledText>
-          </View>
-        ) : (
-          <FlatList
-            data={activeList}
-            renderItem={
-              activeTab === 'reorder'
-                ? renderReorderItem
-                : activeTab === 'slow_movers'
-                  ? renderSlowMoverItem
-                  : activeTab === 'watch_list'
-                    ? renderWatchItem
-                    : renderSavedPlanItem
-            }
-            keyExtractor={(item) => item.productId.toString()}
-            contentContainerClassName="p-4 pb-20"
-            showsVerticalScrollIndicator={false}
-          />
-        )}
-
-        {/* Adjust Quantity Modal */}
-        <Modal
-          visible={adjustingProduct !== null}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setAdjustingProduct(null)}
+      {/* Adjust Quantity Modal */}
+      <Modal
+        visible={adjustingProduct !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAdjustingProduct(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-center items-center px-6"
+          onPress={() => setAdjustingProduct(null)}
         >
           <Pressable
-            className="flex-1 bg-black/50 justify-center items-center px-6"
-            onPress={() => setAdjustingProduct(null)}
+            className="bg-paper-50 rounded-2xl p-5 w-full max-w-sm border border-ink-150 shadow-modal"
+            onPress={(e) => e.stopPropagation()}
           >
-            <Pressable
-              className="bg-paper-50 rounded-2xl p-5 w-full max-w-sm border border-ink-150 shadow-modal"
-              onPress={(e) => e.stopPropagation()}
+            <StyledText
+              variant="extrabold"
+              className="text-lg text-ink-900 mb-2"
             >
-              <StyledText
-                variant="extrabold"
-                className="text-lg text-ink-900 mb-2"
-              >
-                Adjust Quantity
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-sm text-ink-500 mb-4"
-              >
-                Enter the adjusted restock quantity for{' '}
-                {adjustingProduct?.productName}:
-              </StyledText>
+              Adjust Quantity
+            </StyledText>
+            <StyledText variant="regular" className="text-sm text-ink-500 mb-4">
+              Enter the adjusted restock quantity for{' '}
+              {adjustingProduct?.productName}:
+            </StyledText>
 
-              <TextInput
-                value={adjustedQtyText}
-                onChangeText={(text) => {
-                  setAdjustedQtyText(text);
-                  setAdjustError('');
-                }}
-                keyboardType="number-pad"
-                className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
-                placeholder="Quantity"
-                autoFocus
-              />
+            <TextInput
+              value={adjustedQtyText}
+              onChangeText={(text) => {
+                setAdjustedQtyText(text);
+                setAdjustError('');
+              }}
+              keyboardType="number-pad"
+              className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
+              placeholder="Quantity"
+              autoFocus
+            />
 
-              {adjustError ? (
+            {adjustError ? (
+              <StyledText
+                variant="semibold"
+                className="text-xs text-semantic-danger mb-3"
+              >
+                {adjustError}
+              </StyledText>
+            ) : null}
+
+            <View className="flex-row justify-end gap-3 mt-2">
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setAdjustingProduct(null)}
+                className="px-4 py-2 bg-paper-200 rounded-xl"
+              >
+                <StyledText variant="semibold" className="text-sm text-ink-700">
+                  Cancel
+                </StyledText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleSaveAdjustment}
+                className="px-4 py-2 bg-persimmon-500 rounded-xl shadow-persimmon-glow"
+              >
                 <StyledText
                   variant="semibold"
-                  className="text-xs text-semantic-danger mb-3"
+                  className="text-sm text-paper-50"
                 >
-                  {adjustError}
+                  Save
                 </StyledText>
-              ) : null}
-
-              <View className="flex-row justify-end gap-3 mt-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setAdjustingProduct(null)}
-                  className="px-4 py-2 bg-paper-200 rounded-xl"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-sm text-ink-700"
-                  >
-                    Cancel
-                  </StyledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={handleSaveAdjustment}
-                  className="px-4 py-2 bg-persimmon-500 rounded-xl shadow-persimmon-glow"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-sm text-paper-50"
-                  >
-                    Save
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
+              </TouchableOpacity>
+            </View>
           </Pressable>
-        </Modal>
-      </View>
-    </SafeAreaView>
+        </Pressable>
+      </Modal>
+    </View>
   );
 }

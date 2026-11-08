@@ -38,9 +38,9 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
         <View className="flex-row items-center justify-between mb-3">
           <StyledText
             variant="extrabold"
-            className="text-ink-500 text-xs tracking-wider uppercase"
+            className="text-ink-700 text-sm"
           >
-            QUICK ACTIONS
+            Quick actions
           </StyledText>
         </View>
 

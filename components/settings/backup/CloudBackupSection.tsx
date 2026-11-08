@@ -52,16 +52,16 @@ export function CloudBackupSection() {
 
   if (!clientId) {
     return (
-      <View className="px-4 py-4 border-b border-warm-100">
+      <View className="px-4 py-4 border-b border-paper-300">
         <View className="flex-row items-start">
-          <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+          <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">
             <FontAwesome name="cloud" size={15} color="#623418" />
           </View>
           <View className="flex-1">
             <StyledText variant="semibold" className="text-sm text-ink-700">
               {t('common:cloudBackupSectionTitle')}
             </StyledText>
-            <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
+            <StyledText variant="regular" className="text-sm text-ink-600 mt-1">
               {t('common:cloudBackupNotConfigured')}
             </StyledText>
           </View>
@@ -72,7 +72,7 @@ export function CloudBackupSection() {
 
   if (linkStatus.isLoading) {
     return (
-      <View className="px-4 py-6 items-center border-b border-warm-100">
+      <View className="px-4 py-6 items-center border-b border-paper-300">
         <ActivityIndicator color="#623418" />
       </View>
     );
@@ -109,15 +109,15 @@ function UnlinkedCloudRow() {
 
   return (
     <View>
-      <View className="px-4 py-4 border-b border-warm-100 flex-row items-center">
-        <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+      <View className="px-4 py-4 border-b border-paper-300 flex-row items-center">
+        <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">
           <FontAwesome name="cloud" size={15} color="#623418" />
         </View>
         <View className="flex-1">
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:cloudBackupSectionTitle')}
           </StyledText>
-          <StyledText variant="regular" className="text-xs text-ink-400 mt-0.5">
+          <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
             {t('common:cloudBackupUnlinked')}
           </StyledText>
         </View>
@@ -127,7 +127,7 @@ function UnlinkedCloudRow() {
         disabled={pending || !request}
         accessibilityRole="button"
         accessibilityLabel={t('common:cloudBackupLink')}
-        className="px-4 py-3 flex-row items-center active:opacity-80"
+        className="px-4 py-3 min-h-[48px] flex-row items-center active:opacity-80"
       >
         <View className="flex-1 flex-row items-center">
           {pending ? (
@@ -138,7 +138,7 @@ function UnlinkedCloudRow() {
           <StyledText
             variant="semibold"
             className={`ml-3 text-sm ${
-              pending ? 'text-ink-400' : 'text-persimmon-600'
+              pending ? 'text-ink-400' : 'text-persimmon-700'
             }`}
           >
             {t('common:cloudBackupLink')}
@@ -256,19 +256,19 @@ function LinkedCloudRow() {
   return (
     <View>
       {/* Header */}
-      <View className="px-4 py-4 border-b border-warm-100 flex-row items-center">
-        <View className="w-9 h-9 rounded-full bg-warm-100 items-center justify-center mr-3">
+      <View className="px-4 py-4 border-b border-paper-300 flex-row items-center">
+        <View className="w-10 h-10 rounded-full bg-paper-100 items-center justify-center mr-3">
           <FontAwesome name="cloud" size={15} color="#623418" />
         </View>
         <View className="flex-1">
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:cloudBackupSectionTitle')}
           </StyledText>
-          <StyledText variant="regular" className="text-xs text-ink-500 mt-0.5">
+          <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
             {t('common:cloudBackupLinked')}
           </StyledText>
           {lastSyncAt ? (
-            <StyledText variant="regular" className="text-xs text-ink-400 mt-1">
+            <StyledText variant="regular" className="text-sm text-ink-600 mt-1">
               {t('common:cloudBackupLastSync', {
                 when: formatRelativeTime(lastSyncAt, t),
               })}
@@ -277,7 +277,7 @@ function LinkedCloudRow() {
           {pending ? (
             <StyledText
               variant="semibold"
-              className="text-xs text-persimmon-600 mt-1"
+              className="text-sm text-persimmon-700 mt-1"
             >
               {t('common:cloudBackupPending', { count: 1 })}
             </StyledText>
@@ -291,7 +291,7 @@ function LinkedCloudRow() {
         disabled={busy}
         accessibilityRole="button"
         accessibilityLabel={t('common:cloudBackupBackupNow')}
-        className="px-4 py-3 flex-row items-center active:opacity-80 border-b border-warm-100"
+        className="px-4 py-3 min-h-[48px] flex-row items-center active:opacity-80 border-b border-paper-300"
       >
         <View className="flex-1 flex-row items-center">
           {busy ? (
@@ -301,7 +301,7 @@ function LinkedCloudRow() {
           )}
           <StyledText
             variant="semibold"
-            className={`ml-3 text-sm ${busy ? 'text-ink-400' : 'text-persimmon-600'}`}
+            className={`ml-3 text-sm ${busy ? 'text-ink-400' : 'text-persimmon-700'}`}
           >
             {t('common:cloudBackupBackupNow')}
           </StyledText>
@@ -309,12 +309,12 @@ function LinkedCloudRow() {
       </Pressable>
 
       {/* Cellular toggle */}
-      <View className="px-4 py-3 flex-row items-center border-b border-warm-100">
+      <View className="px-4 py-3 flex-row items-center border-b border-paper-300">
         <View className="flex-1">
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:useCellularForCloud')}
           </StyledText>
-          <StyledText variant="regular" className="text-xs text-ink-400 mt-0.5">
+          <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
             {t('common:cloudSyncPendingHint')}
           </StyledText>
         </View>
@@ -331,7 +331,7 @@ function LinkedCloudRow() {
         disabled={unlink.isPending}
         accessibilityRole="button"
         accessibilityLabel={t('common:cloudBackupUnlink')}
-        className="px-4 py-3 flex-row items-center active:opacity-80"
+        className="px-4 py-3 min-h-[48px] flex-row items-center active:opacity-80"
       >
         <View className="flex-1 flex-row items-center">
           {unlink.isPending ? (

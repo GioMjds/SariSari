@@ -8,6 +8,11 @@
   "owner_auth_required": "Owner authorization required",
   "save_failed": "Failed to save settings.",
   "pin": {
+    "status_label": "Status",
+    "thresholds_title": "Discounts that need your PIN",
+    "threshold_pesos": "Max discount (PHP)",
+    "threshold_percent": "Max discount (%)",
+    "threshold_invalid": "Use whole numbers. Percent must be 0 to 100.",
     "title": "Owner PIN Required",
     "enter_pin": "Enter 4-6 digit Owner PIN",
     "wrong_pin": "Incorrect PIN. Try again.",

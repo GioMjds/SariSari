@@ -12,6 +12,7 @@ import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState, useEffect } from 'react';
 import { TouchableOpacity, View, Keyboard, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { StyledText } from '../elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
@@ -38,6 +39,8 @@ export function useTabBarBottomOffset(): number {
 
 const ACTIVE_COLOR = '#E85A1F';
 const INACTIVE_COLOR = '#C8C0B2';
+const ACTIVE_LABEL_COLOR = '#FF9B6B';
+const INACTIVE_LABEL_COLOR = '#C8C0B2';
 
 const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)';
 
@@ -92,8 +95,16 @@ const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
         {(() => {
           const hrefString = getHrefString(tab.href);
           const Icon = TAB_ICONS[hrefString] ?? More;
-          return <Icon size={36} color={color} />;
+          return <Icon size={28} color={color} />;
         })()}
+        <StyledText
+          variant={isFocused ? 'extrabold' : 'medium'}
+          className="text-xs mt-0.5"
+          style={{ color: isFocused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }}
+          numberOfLines={1}
+        >
+          {tab.name}
+        </StyledText>
       </View>
     </TouchableOpacity>
   );

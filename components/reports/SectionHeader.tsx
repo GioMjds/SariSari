@@ -11,8 +11,7 @@ interface SectionHeaderProps {
 /**
  * SectionHeader — A horizontal section break with a small icon,
  * title, and optional "view all" link. Kept for backwards
- * compatibility with older reports layouts; the new layout
- * uses `EditorialEyebrow` instead.
+ * compatibility with older reports layouts.
  */
 export function SectionHeader({ title, icon, onViewAll }: SectionHeaderProps) {
 	return (

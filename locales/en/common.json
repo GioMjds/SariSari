@@ -171,6 +171,28 @@
   "moreHomeSettingsSub": "Store, language, Owner PIN, and preferences",
   "moreHomeSettingsHint": "Opens store settings and security",
   "moreBackA11y": "Back to More",
+  "cashMovementsSubtitle": "Expenses and cash you take out of the store",
+  "loadingCashDrawer": "Loading cash drawer...",
+  "notFoundTitle": "Page not found",
+  "notFoundBody": "This screen does not exist or has moved.",
+  "notFoundAction": "Go to Home",
+  "exitToast": "Press back again to exit",
+  "statusInProgress": "In progress",
+  "statusPlanned": "Planned",
+  "statusTesting": "Testing",
+  "statusComingSoon": "Coming soon",
+  "homeSalesToday": "Sales today",
+  "homeTransactionsToday": "{{count}} sales rung up",
+  "settingsSalesSection": "Voids and corrections",
+  "settingsSalesSectionSub": "How long after a sale it can still be voided or corrected.",
+  "reportsTitle": "Reports",
+  "reportsSubtitle": "Sales, profit, stock and utang for any date range",
+  "moreHomeReportsLabel": "Reports",
+  "moreHomeReportsSub": "Sales, profit, stock and utang for any date range",
+  "moreHomeReportsHint": "Opens store reports",
+  "moreHomeCorrectionsLabel": "Voids and corrections",
+  "moreHomeCorrectionsSub": "Review voided, refunded and price-corrected sales",
+  "moreHomeCorrectionsHint": "Opens the corrections report",
   "backupTitle": "Backup & restore",
   "backupSubtitle": "Protect your store data on this device and in Google Drive.",
   "backupCloudSection": "Google Drive",
@@ -218,21 +240,6 @@
         "description_one": "{{count}} customer has overdue balances.",
         "description_other": "{{count}} customers have overdue balances.",
         "cta": "Review Utang"
-      },
-      "cashShortfall": {
-        "title": "Cash drawer shortage recorded",
-        "description": "Today's closed session showed a cash discrepancy.",
-        "cta": "Review Cash Session"
-      },
-      "openDrawer": {
-        "title": "Start your store day",
-        "description": "Open your cash drawer to start recording transactions and tracking cash flow.",
-        "cta": "Open Cash Drawer"
-      },
-      "reviewClose": {
-        "title": "Drawer closed for today",
-        "description": "Cash drawer is closed. Review closed drawer details if needed.",
-        "cta": "View Session Details"
       },
       "firstSale": {
         "title": "Ready for your first sale",

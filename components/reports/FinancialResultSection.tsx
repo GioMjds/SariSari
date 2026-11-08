@@ -25,11 +25,11 @@ export const FinancialResultSection: React.FC<Props> = ({
         <Pressable
           onPress={onOpenLedger}
           accessibilityRole="button"
-          accessibilityLabel="Open Gastos and Kaha Ledger"
+          accessibilityLabel="Open cash and expenses"
           className="flex-row items-center px-3 py-1.5 bg-cinnamon-500 rounded-full active:bg-cinnamon-600 shadow-sm"
         >
           <StyledText variant="semibold" className="text-xs text-paper-50 mr-1.5">
-            Gastos & Kaha Ledger
+            Cash & expenses
           </StyledText>
           <FontAwesome5 name="arrow-right" size={10} color="#FBF7EE" />
         </Pressable>

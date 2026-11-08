@@ -8,6 +8,11 @@
   "owner_auth_required": "Kailangan ang pahintulot ng may-ari",
   "save_failed": "Bigo sa pag-save ng mga setting.",
   "pin": {
+    "status_label": "Katayuan",
+    "thresholds_title": "Mga diskwentong kailangan ng PIN mo",
+    "threshold_pesos": "Pinakamataas na diskwento (PHP)",
+    "threshold_percent": "Pinakamataas na diskwento (%)",
+    "threshold_invalid": "Buong numero lang. Dapat 0 hanggang 100 ang porsyento.",
     "title": "Kailangan ng Owner PIN",
     "enter_pin": "Ilagay ang 4-6 digit Owner PIN",
     "wrong_pin": "Maling PIN. Subukang muli.",

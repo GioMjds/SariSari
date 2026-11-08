@@ -3,13 +3,11 @@ import { StyledText } from '@/components/elements';
 import { useScreenHeadingFocus } from './useScreenHeadingFocus';
 
 export type MoreScreenHeaderProps = {
-  eyebrow: string;
   title: string;
   supportingText: string;
 };
 
 export function MoreScreenHeader({
-  eyebrow,
   title,
   supportingText,
 }: MoreScreenHeaderProps) {
@@ -17,13 +15,6 @@ export function MoreScreenHeader({
 
   return (
     <View className="pb-2 pt-2">
-      <StyledText
-        variant="extrabold"
-        className="mb-2 text-xs uppercase text-persimmon-600"
-        style={{ letterSpacing: 1.2 }}
-      >
-        {eyebrow}
-      </StyledText>
       <View ref={headingRef} accessible accessibilityRole="header">
         <StyledText
           variant="extrabold"

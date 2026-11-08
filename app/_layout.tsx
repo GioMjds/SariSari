@@ -152,7 +152,7 @@ export default function RootLayout() {
   const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
 
   const handleBannerRestore = useCallback(() => {
-    safeNavigate.push('/settings');
+    safeNavigate.push('/settings/backup');
   }, []);
 
   const handleBannerDismiss = useCallback(async () => {
