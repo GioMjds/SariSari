@@ -23,6 +23,7 @@ import { invalidateProductDependencies } from './useProducts';
 
 export const salesKeys = {
   all: ['sales'] as const,
+  hasAny: ['sales', 'has-any'] as const,
   byId: (id: number) => [...salesKeys.all, id] as const,
   byDateRange: (startDate: string, endDate: string) =>
     [...salesKeys.all, 'by-date', startDate, endDate] as const,
@@ -158,7 +159,7 @@ export function useRecentSales(limit: number) {
 
 export function useHasSales() {
   return useQuery({
-    queryKey: salesKeys.all,
+    queryKey: salesKeys.hasAny,
     queryFn: () => hasSales(),
   });
 }

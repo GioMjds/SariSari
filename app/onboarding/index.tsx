@@ -21,7 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingPage() {
@@ -143,7 +144,8 @@ export default function OnboardingPage() {
 
       <View className="flex-1">
         <StepTransition stepKey={currentIndex} direction={direction}>
-          <ScrollView
+          <KeyboardAwareScrollView
+            bottomOffset={24}
             className="flex-1"
             contentContainerStyle={{
               paddingHorizontal: 24,
@@ -164,7 +166,7 @@ export default function OnboardingPage() {
                 onOpenStore={handleOpenStore}
               />
             )}
-          </ScrollView>
+          </KeyboardAwareScrollView>
         </StepTransition>
       </View>
 
