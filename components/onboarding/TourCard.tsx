@@ -62,7 +62,7 @@ export function TourCard({ step }: Props) {
       <SariStage
         source={SARI_STATE_ASSETS[pose]}
         poseKey={pose}
-        bubble={t(bubble.key, bubble.params)}
+        bubble={t(bubble.key, bubble.params ?? {})}
       />
 
       <View>
