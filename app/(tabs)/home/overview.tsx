@@ -12,6 +12,7 @@ import {
   DashboardErrorState,
   HomeOverviewSkeleton,
   MiniInsightsCard,
+  GettingStartedCard,
   HomeRecommendation,
   HomeDestination,
 } from '@/components/home';
@@ -67,6 +68,7 @@ export default function OverviewScreen() {
       onRefresh={refetchAll}
       refreshThreshold={80}
     >
+      <GettingStartedCard />
       {isError ? (
         <DashboardErrorState onRetry={refetchAll} />
       ) : products.length === 0 && stats.transactionCount === 0 ? (

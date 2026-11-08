@@ -18,3 +18,4 @@ export * from './CashSessionCard';
 export * from './TodayTransactionLog';
 export * from './HomeOverviewSkeleton';
 export * from './TodaySnapshotSkeleton';
+export * from './GettingStartedCard';
