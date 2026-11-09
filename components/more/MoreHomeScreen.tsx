@@ -96,6 +96,26 @@ export function MoreHomeScreen() {
               accessibilityHint={t('common:moreHomeCorrectionsHint')}
             />
             <MoreDestinationRow
+              icon="shopping-basket"
+              title={t('common:moreHomePalengkeLabel')}
+              supportingText={t('common:moreHomePalengkeSub')}
+              onPress={() => navigate(MORE_ROUTES.palengke)}
+              accessibilityLabel={`${t('common:moreHomePalengkeLabel')}. ${t(
+                'common:moreHomePalengkeSub',
+              )}`}
+              accessibilityHint={t('common:moreHomePalengkeHint')}
+            />
+            <MoreDestinationRow
+              icon="mobile"
+              title={t('common:moreHomeEServicesLabel')}
+              supportingText={t('common:moreHomeEServicesSub')}
+              onPress={() => navigate(MORE_ROUTES.eServices)}
+              accessibilityLabel={`${t('common:moreHomeEServicesLabel')}. ${t(
+                'common:moreHomeEServicesSub',
+              )}`}
+              accessibilityHint={t('common:moreHomeEServicesHint')}
+            />
+            <MoreDestinationRow
               icon="cloud"
               title={t('common:moreHomeBackupLabel')}
               supportingText={backupSupportingText}

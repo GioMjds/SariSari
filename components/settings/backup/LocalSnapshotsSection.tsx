@@ -116,11 +116,11 @@ export function LocalSnapshotsSection() {
           <StyledText variant="semibold" className="text-sm text-ink-700">
             {t('common:localSnapshotsSection')}
           </StyledText>
-          <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
-            {snapshots.length === 0
-              ? t('common:localSnapshotsEmpty')
-              : t('common:localSnapshotsCount', { count: snapshots.length })}
-          </StyledText>
+          {snapshots.length > 0 ? (
+            <StyledText variant="regular" className="text-sm text-ink-600 mt-0.5">
+              {t('common:localSnapshotsCount', { count: snapshots.length })}
+            </StyledText>
+          ) : null}
         </View>
         <Pressable
           onPress={() => backupNow.mutate()}

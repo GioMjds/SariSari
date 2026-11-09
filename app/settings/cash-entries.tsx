@@ -171,12 +171,16 @@ export default function CashEntriesScreen() {
         </Pressable>
       </View>
 
-      <StyledText
-        variant="extrabold"
-        className="text-sm text-ink-800 mt-6 mb-2"
-      >
-        {`Entries (${entries.length})`}
-      </StyledText>
+      <View className="flex-row items-center mt-6 mb-2 px-1">
+        <View className="w-1 h-4 rounded-full bg-persimmon-600 mr-2" />
+        <StyledText
+          variant="extrabold"
+          className="text-xs text-ink-700 uppercase"
+          style={{ letterSpacing: 1.2 }}
+        >
+          {`Entries (${entries.length})`}
+        </StyledText>
+      </View>
     </View>
   );
 
@@ -225,7 +229,6 @@ export default function CashEntriesScreen() {
     <View className="flex-1 bg-paper-200">
       <MoreDetailHeader
         title={t('common:moreHomeCashLabel')}
-        subtitle={t('common:cashMovementsSubtitle')}
         onBack={goBackToMore}
         backAccessibilityLabel={t('common:moreBackA11y')}
       />

@@ -37,6 +37,7 @@ export interface InsertInventoryV2 {
   adjustment_sign?: 'positive' | 'negative' | null;
   unit_cost?: number | null;
   supplier_id?: number | string | null;
+  receipt_id?: number | null;
 }
 
 export interface ProductLike {

@@ -1,4 +1,4 @@
-import { db } from '@/configs';
+import { db } from '@/configs/sqlite';
 import { AppSettingKey, AppSettingRow } from '@/types';
 import { loadOnboardingState } from '@/lib/onboardingStorage';
 

@@ -10,6 +10,7 @@ import onboardingEn from '../locales/en/onboarding.json';
 import stocktakeEn from '../locales/en/stocktake.json';
 import correctionsEn from '../locales/en/corrections.json';
 import settingsEn from '../locales/en/settings.json';
+import receivingEn from '../locales/en/receiving.json';
 
 import commonTl from '../locales/tl/common.json';
 import inventoryTl from '../locales/tl/inventory.json';
@@ -19,6 +20,7 @@ import onboardingTl from '../locales/tl/onboarding.json';
 import stocktakeTl from '../locales/tl/stocktake.json';
 import correctionsTl from '../locales/tl/corrections.json';
 import settingsTl from '../locales/tl/settings.json';
+import receivingTl from '../locales/tl/receiving.json';
 
 const LANGUAGE_KEY = 'sarisari_language_preference';
 
@@ -34,6 +36,7 @@ const resources = {
     stocktake: stocktakeEn,
     corrections: correctionsEn,
     settings: settingsEn,
+    receiving: receivingEn,
   },
   tl: {
     common: commonTl,
@@ -44,6 +47,7 @@ const resources = {
     stocktake: stocktakeTl,
     corrections: correctionsTl,
     settings: settingsTl,
+    receiving: receivingTl,
   },
 } satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
@@ -71,6 +75,7 @@ export const initI18n = async (): Promise<void> => {
       'stocktake',
       'corrections',
       'settings',
+      'receiving',
     ],
     defaultNS: 'common',
     interpolation: {

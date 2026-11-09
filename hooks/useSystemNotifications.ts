@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   requestNotificationPermissions,
   setupNotificationChannels,
@@ -11,11 +12,13 @@ import {
 import { DynamicHomeAlert } from './useHomeDashboardData';
 
 const TAG = '[useSystemNotifications]';
+const NOTIFIED_KEYS_STORAGE_KEY = 'notified_alert_keys';
 
 export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
   const router = useRouter();
   const activeAlertCount = alerts.length;
   const notifiedAlertIdsRef = useRef<Set<string>>(new Set());
+  const loadedRef = useRef(false);
 
   // Initialize channels and request permissions on mount
   useEffect(() => {
@@ -32,10 +35,29 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
   useEffect(() => {
     updateAppIconBadge(activeAlertCount);
 
-    alerts.forEach((alert) => {
-      const alertKey = `${alert.id}-${alert.subtitle}`;
-      if (!notifiedAlertIdsRef.current.has(alertKey)) {
+    let cancelled = false;
+    (async () => {
+      // Persisted so dev reloads / app restarts do not re-notify known alerts.
+      if (!loadedRef.current) {
+        try {
+          const raw = await AsyncStorage.getItem(NOTIFIED_KEYS_STORAGE_KEY);
+          const stored: unknown = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(stored)) {
+            stored.forEach((k) => {
+              if (typeof k === 'string') notifiedAlertIdsRef.current.add(k);
+            });
+          }
+        } catch {}
+        loadedRef.current = true;
+      }
+      if (cancelled) return;
+
+      let changed = false;
+      alerts.forEach((alert) => {
+        const alertKey = `${alert.id}-${alert.subtitle}`;
+        if (notifiedAlertIdsRef.current.has(alertKey)) return;
         notifiedAlertIdsRef.current.add(alertKey);
+        changed = true;
 
         if (alert.type === 'low_stock') {
           const match = alert.subtitle.match(/\d+/);
@@ -48,8 +70,20 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
         } else if (alert.type === 'overdue_debts') {
           triggerOverdueDebtNotification(alert.title, alert.subtitle);
         }
+      });
+
+      if (changed) {
+        try {
+          await AsyncStorage.setItem(
+            NOTIFIED_KEYS_STORAGE_KEY,
+            JSON.stringify([...notifiedAlertIdsRef.current].slice(-200)),
+          );
+        } catch {}
       }
-    });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [alerts, activeAlertCount]);
 
   // Set up deep linking listener on notification interaction

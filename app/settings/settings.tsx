@@ -29,7 +29,6 @@ export default function Settings() {
     <View className="flex-1 bg-paper-200">
       <MoreDetailHeader
         title={t('common:settingsTitle')}
-        subtitle={t('common:settingsSubtitle')}
         onBack={goBackToMore}
         backAccessibilityLabel={t('common:moreBackA11y')}
       />
@@ -38,10 +37,7 @@ export default function Settings() {
         contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <SettingsSection
-          title={t('common:settingsStoreSection')}
-          subtitle={t('common:settingsStoreSectionSub')}
-        >
+        <SettingsSection title={t('common:settingsStoreSection')}>
           <SettingsRow
             label={t('common:settingsStoreName')}
             value={
@@ -65,17 +61,11 @@ export default function Settings() {
           />
         </SettingsSection>
 
-        <SettingsSection
-          title={t('common:settingsSecuritySection')}
-          subtitle={t('common:settingsSecuritySectionSub')}
-        >
+        <SettingsSection title={t('common:settingsSecuritySection')}>
           <OwnerPinSettingsCard />
         </SettingsSection>
 
-        <SettingsSection
-          title={t('common:settingsSalesSection')}
-          subtitle={t('common:settingsSalesSectionSub')}
-        >
+        <SettingsSection title={t('common:settingsSalesSection')}>
           <VoidWindowCard />
         </SettingsSection>
       </ScrollView>

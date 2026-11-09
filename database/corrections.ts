@@ -1,4 +1,4 @@
-import { db } from '@/configs';
+import { db } from '@/configs/sqlite';
 import { Pesos } from '@/lib';
 import {
   SaleCorrection,
@@ -65,7 +65,7 @@ interface RawSaleCorrectionLineRow {
   price_delta: number;
 }
 
-interface RawSaleCorrectionReportRow extends RawSaleCorrectionRow {}
+interface RawSaleCorrectionReporrtRow extends RawSaleCorrectionRow {}
 
 const mapRow = (row: RawSaleCorrectionRow): SaleCorrection => ({
   id: row.id,

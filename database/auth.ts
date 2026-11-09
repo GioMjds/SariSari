@@ -1,4 +1,4 @@
-import { db } from '@/configs';
+import { db } from '@/configs/sqlite';
 import {
   generateSalt,
   hashPin,

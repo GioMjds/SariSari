@@ -23,8 +23,24 @@ export const initInventoryTable = async () => {
   `);
 };
 
-export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
-  const { product_id, type, quantity, note = null, adjustment_sign = null, unit_cost = null, supplier_id = null } = tx;
+/**
+ * Applies one inventory transaction and the matching products update.
+ * Does NOT open a transaction: callers must already be inside
+ * db.withTransactionAsync (or use insertInventoryTransaction below).
+ */
+export const applyInventoryTransaction = async (
+  tx: InsertInventoryV2,
+): Promise<number> => {
+  const {
+    product_id,
+    type,
+    quantity,
+    note = null,
+    adjustment_sign = null,
+    unit_cost = null,
+    supplier_id = null,
+    receipt_id = null,
+  } = tx;
 
   if (quantity <= 0) {
     throw new Error('Quantity must be greater than 0');
@@ -33,58 +49,74 @@ export const insertInventoryTransaction = async (tx: InsertInventoryV2) => {
     throw new Error('Adjustment transactions must specify adjustment_sign');
   }
   if (type !== 'adjustment' && adjustment_sign) {
-    throw new Error('Non-adjustment transactions must not specify adjustment_sign');
+    throw new Error(
+      'Non-adjustment transactions must not specify adjustment_sign',
+    );
   }
 
+  // 1. Check product existence and current quantity
+  const product = await db.getFirstAsync<{ quantity: number }>(
+    'SELECT quantity FROM products WHERE id = ?',
+    [product_id],
+  );
+
+  if (!product) {
+    throw new Error(`Product with ID ${product_id} not found`);
+  }
+
+  // 2. Determine quantity change
+  let quantityChange = 0;
+  if (type === 'restock') {
+    quantityChange = quantity;
+  } else if (type === 'sale' || type === 'damaged') {
+    quantityChange = -quantity;
+  } else if (type === 'adjustment') {
+    quantityChange = adjustment_sign === 'positive' ? quantity : -quantity;
+  }
+
+  const newQuantity = product.quantity + quantityChange;
+  if (newQuantity < 0) {
+    throw new Error("Can't go below zero.");
+  }
+
+  // 3. Insert into inventory_transactions
+  const result = await db.runAsync(
+    'INSERT INTO inventory_transactions (product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id, receipt_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [
+      product_id,
+      type,
+      quantity,
+      note,
+      adjustment_sign,
+      unit_cost,
+      supplier_id,
+      receipt_id,
+    ],
+  );
+
+  // 4. Update products table
+  if (type === 'restock' && unit_cost !== null && unit_cost !== undefined) {
+    await db.runAsync(
+      'UPDATE products SET quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newQuantity, unit_cost, product_id],
+    );
+  } else {
+    await db.runAsync(
+      'UPDATE products SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newQuantity, product_id],
+    );
+  }
+
+  return result.lastInsertRowId;
+};
+
+export const insertInventoryTransaction = async (
+  tx: InsertInventoryV2,
+): Promise<number> => {
   let insertedId = 0;
   await db.withTransactionAsync(async () => {
-    // 1. Check product existence and current quantity
-    const product = await db.getFirstAsync<{ quantity: number }>(
-      'SELECT quantity FROM products WHERE id = ?',
-      [product_id]
-    );
-
-    if (!product) {
-      throw new Error(`Product with ID ${product_id} not found`);
-    }
-
-    // 2. Determine quantity change
-    let quantityChange = 0;
-    if (type === 'restock') {
-      quantityChange = quantity;
-    } else if (type === 'sale' || type === 'damaged') {
-      quantityChange = -quantity;
-    } else if (type === 'adjustment') {
-      quantityChange = adjustment_sign === 'positive' ? quantity : -quantity;
-    }
-
-    const newQuantity = product.quantity + quantityChange;
-    if (newQuantity < 0) {
-      throw new Error("Can't go below zero.");
-    }
-
-    // 3. Insert into inventory_transactions
-    const result = await db.runAsync(
-      'INSERT INTO inventory_transactions (product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id],
-    );
-
-    // 4. Update products table
-    if (type === 'restock' && unit_cost !== null && unit_cost !== undefined) {
-      await db.runAsync(
-        'UPDATE products SET quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newQuantity, unit_cost, product_id],
-      );
-    } else {
-      await db.runAsync(
-        'UPDATE products SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newQuantity, product_id],
-      );
-    }
-
-    insertedId = result.lastInsertRowId;
+    insertedId = await applyInventoryTransaction(tx);
   });
-
   return insertedId;
 };
 
