@@ -161,7 +161,12 @@ describe('commitDeliveryReceipt', () => {
       lines: [retail(a, 4, 4, 6), retail(a, 3, 3, 7)],
     });
     await commitDeliveryReceipt(id);
-    expect((await stockOf(a)).quantity).toBe(9);
+    expect(await stockOf(a)).toEqual({ quantity: 9, cost_price: 7 });
+    const rows = await db.getAllAsync(
+      'SELECT id FROM inventory_transactions WHERE receipt_id = ?',
+      [id],
+    );
+    expect(rows).toHaveLength(2);
   });
 
   it('review focus: over-delivery restocks the full received qty with zero shortage', async () => {
@@ -261,5 +266,63 @@ describe('commitDeliveryReceipt', () => {
       [id],
     );
     expect(txs).toHaveLength(0);
+  });
+
+  it('overlapping commits of one receipt: exactly one succeeds, no double restock', async () => {
+    const sup = await seedSupplier('c-11');
+    const a = await seedProduct({ name: 'A', sku: 'CA11', qty: 0 });
+    const id = await saveDeliveryDraft({
+      supplierId: sup,
+      lines: [retail(a, 3, 3, 10)],
+    });
+    const results = await Promise.allSettled([
+      commitDeliveryReceipt(id),
+      commitDeliveryReceipt(id),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const rejected = results.filter((r) => r.status === 'rejected');
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(
+      ReceiptNotDraftError,
+    );
+    expect((await stockOf(a)).quantity).toBe(3);
+    const rows = await db.getAllAsync(
+      'SELECT id FROM inventory_transactions WHERE receipt_id = ?',
+      [id],
+    );
+    expect(rows).toHaveLength(1);
+  });
+
+  it('releases the in-flight guard after a failed commit so a fixed draft can commit', async () => {
+    const sup = await seedSupplier('c-12');
+    const a = await seedProduct({ name: 'A', sku: 'CA12', qty: 0 });
+    const id = await saveDeliveryDraft({
+      supplierId: sup,
+      lines: [
+        {
+          productId: null,
+          newProduct: { name: 'Late2', price: 100, barcode: '4800000000066' },
+          enteredUnit: 'retail',
+          enteredExpectedQty: 1,
+          enteredReceivedQty: 1,
+          enteredUnitCost: 50,
+        },
+      ],
+    });
+    await seedProduct({
+      name: 'Taken',
+      sku: 'CA12B',
+      barcode: '4800000000066',
+    });
+    await expect(commitDeliveryReceipt(id)).rejects.toBeInstanceOf(
+      QuickAddBarcodeExistsError,
+    );
+    await saveDeliveryDraft({
+      receiptId: id,
+      supplierId: sup,
+      lines: [retail(a, 2, 2, 5)],
+    });
+    await commitDeliveryReceipt(id);
+    expect((await stockOf(a)).quantity).toBe(2);
   });
 });

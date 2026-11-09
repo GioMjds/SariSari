@@ -440,9 +440,24 @@ const createQuickAddProduct = async (
  * transaction. A second call throws ReceiptNotDraftError, so a double tap
  * cannot restock twice.
  */
+// withTransactionAsync is not exclusive, so overlapping commits of one receipt must be rejected here.
+const commitsInFlight = new Set<number>();
+
 export const commitDeliveryReceipt = async (
   receiptId: number,
 ): Promise<void> => {
+  if (commitsInFlight.has(receiptId)) {
+    throw new ReceiptNotDraftError(receiptId, 'being committed');
+  }
+  commitsInFlight.add(receiptId);
+  try {
+    await runCommit(receiptId);
+  } finally {
+    commitsInFlight.delete(receiptId);
+  }
+};
+
+const runCommit = async (receiptId: number): Promise<void> => {
   await db.withTransactionAsync(async () => {
     const receipt = await getReceiptRow(receiptId);
     if (!receipt) throw new Error(`Delivery receipt ${receiptId} not found`);
@@ -488,9 +503,12 @@ export const commitDeliveryReceipt = async (
       }
     }
 
-    await db.runAsync(
-      "UPDATE delivery_receipts SET status = 'committed', committed_at = ? WHERE id = ?",
+    const flipped = await db.runAsync(
+      "UPDATE delivery_receipts SET status = 'committed', committed_at = ? WHERE id = ? AND status = 'draft'",
       [new Date().toISOString(), receiptId],
     );
+    if (flipped.changes !== 1) {
+      throw new ReceiptNotDraftError(receiptId, 'not a draft');
+    }
   });
 };
