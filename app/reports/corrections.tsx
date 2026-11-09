@@ -762,14 +762,7 @@ export default function CorrectionsReportScreen() {
           <View className="flex-1 px-3 items-center">
             <StyledText
               variant="extrabold"
-              className="label-caps text-ink-400"
-              style={{ fontSize: 10 }}
-            >
-              STORE AUDIT TRAIL
-            </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-h2 font-stack-sans-bold mt-0.5"
+              className="text-ink-900 text-h2 font-stack-sans-bold"
             >
               {t('report_title', 'Corrections Report')}
             </StyledText>

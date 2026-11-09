@@ -3,13 +3,24 @@ import {
   listReorderRecommendations,
   saveReorderPlan,
   deleteReorderPlan,
+  getPalengkeRestockPlan,
 } from '@/database/stock-intelligence';
-import { SaveReorderPlanInput } from '@/types/stock-intelligence.types';
+import {
+  sharePalengkeSheetPdf,
+  sharePalengkeSheetText,
+} from '@/lib/pdfGenerator';
+import {
+  PalengkeRestockFilter,
+  PalengkeRestockPlan,
+  SaveReorderPlanInput,
+} from '@/types/stock-intelligence.types';
 
 export const stockIntelligenceKeys = {
   all: ['stock-intelligence'] as const,
   recommendations: () =>
     [...stockIntelligenceKeys.all, 'recommendations'] as const,
+  palengke: (filter: PalengkeRestockFilter) =>
+    [...stockIntelligenceKeys.all, 'palengke', filter] as const,
 };
 
 export function useStockRecommendations() {
@@ -36,5 +47,27 @@ export function useDeleteReorderPlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: stockIntelligenceKeys.all });
     },
+  });
+}
+
+export function usePalengkeRestockPlan(filter: PalengkeRestockFilter = {}) {
+  return useQuery({
+    queryKey: stockIntelligenceKeys.palengke(filter),
+    queryFn: () => getPalengkeRestockPlan(filter),
+  });
+}
+
+export type PalengkeExportFormat = 'pdf' | 'text';
+
+export function useExportPalengkeSheet() {
+  return useMutation({
+    mutationFn: async (input: {
+      plan: PalengkeRestockPlan;
+      storeName: string;
+      format: PalengkeExportFormat;
+    }): Promise<boolean> =>
+      input.format === 'pdf'
+        ? sharePalengkeSheetPdf(input.plan, input.storeName)
+        : sharePalengkeSheetText(input.plan, input.storeName),
   });
 }

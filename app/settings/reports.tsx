@@ -165,7 +165,6 @@ export default function ReportsScreen() {
     <View className="flex-1 bg-paper-200">
       <MoreDetailHeader
         title={t('common:reportsTitle')}
-        subtitle={t('common:reportsSubtitle')}
         onBack={goBackToMore}
         backAccessibilityLabel={t('common:moreBackA11y')}
       />

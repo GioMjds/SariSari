@@ -1,9 +1,12 @@
 import { db } from '../configs/sqlite';
 import {
+  PalengkeRestockFilter,
+  PalengkeRestockPlan,
   ReorderRecommendation,
   SaveReorderPlanInput,
 } from '../types/stock-intelligence.types';
 import { LOW_STOCK_THRESHOLD } from '../constants/stocks';
+import { buildPalengkeRestockPlan } from '../lib/palengkePlan';
 
 export const initStockIntelligenceTable = async (): Promise<void> => {
   await db.execAsync(`
@@ -213,4 +216,11 @@ export const deleteReorderPlan = async (productId: number): Promise<void> => {
   await db.runAsync('DELETE FROM reorder_plans WHERE product_id = ?', [
     productId,
   ]);
+};
+
+export const getPalengkeRestockPlan = async (
+  filter: PalengkeRestockFilter = {},
+): Promise<PalengkeRestockPlan> => {
+  const recommendations = await listReorderRecommendations();
+  return buildPalengkeRestockPlan(recommendations, filter);
 };

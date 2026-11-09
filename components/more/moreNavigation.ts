@@ -5,6 +5,7 @@ export const MORE_ROUTES = {
   cash: '/settings/cash-entries',
   reports: '/settings/reports',
   corrections: '/reports/corrections',
+  palengke: '/settings/palengke-sheet',
   backup: '/settings/backup',
   settings: '/settings/settings',
 } as const satisfies Record<string, Href>;
@@ -13,6 +14,7 @@ export type MoreDestination =
   | typeof MORE_ROUTES.cash
   | typeof MORE_ROUTES.reports
   | typeof MORE_ROUTES.corrections
+  | typeof MORE_ROUTES.palengke
   | typeof MORE_ROUTES.backup
   | typeof MORE_ROUTES.settings;
 

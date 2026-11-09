@@ -96,6 +96,16 @@ export function MoreHomeScreen() {
               accessibilityHint={t('common:moreHomeCorrectionsHint')}
             />
             <MoreDestinationRow
+              icon="shopping-basket"
+              title={t('common:moreHomePalengkeLabel')}
+              supportingText={t('common:moreHomePalengkeSub')}
+              onPress={() => navigate(MORE_ROUTES.palengke)}
+              accessibilityLabel={`${t('common:moreHomePalengkeLabel')}. ${t(
+                'common:moreHomePalengkeSub',
+              )}`}
+              accessibilityHint={t('common:moreHomePalengkeHint')}
+            />
+            <MoreDestinationRow
               icon="cloud"
               title={t('common:moreHomeBackupLabel')}
               supportingText={backupSupportingText}

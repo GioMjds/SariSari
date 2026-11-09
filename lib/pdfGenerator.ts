@@ -5,6 +5,8 @@ import { CreditTransaction } from '@/types/credits.types';
 import { formatPesos } from './money';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { format } from 'date-fns';
+import { Share } from 'react-native';
+import { PalengkeRestockPlan } from '@/types/stock-intelligence.types';
 
 interface GeneratePdfOptions {
   storeName: string;
@@ -374,6 +376,182 @@ export async function shareCreditStatementPdf(
     return true;
   } catch (error) {
     console.error('Failed to generate or share credit statement PDF:', error);
+    return false;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Builds a high-contrast black-and-white checklist, readable on small paper
+ * or thermal output.
+ */
+export function buildPalengkeSheetHtml(
+  plan: PalengkeRestockPlan,
+  storeName: string,
+  now: Date = new Date(),
+): string {
+  const dateStr = format(now, 'MMMM dd, yyyy');
+
+  const groupsHtml = plan.groups
+    .map((group) => {
+      const rows = group.items
+        .map(
+          (item) => `
+          <tr>
+            <td class="box">[ &nbsp; ]</td>
+            <td>
+              <div class="name">${escapeHtml(item.productName)}</div>
+              <div class="sku">${escapeHtml(item.sku)} &middot; stock ${item.currentStock}</div>
+            </td>
+            <td class="num">${item.suggestedQuantity} ${escapeHtml(item.retailUnitName)}</td>
+            <td class="num">${item.costPrice === null ? '--' : formatPesos(item.subtotal)}</td>
+          </tr>`,
+        )
+        .join('');
+      return `
+        <h2>${escapeHtml(group.label)} <span>${formatPesos(group.subtotal)}</span></h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 12%;"></th>
+              <th>Produkto</th>
+              <th class="num" style="width: 22%;">Bibilhin</th>
+              <th class="num" style="width: 20%;">Puhunan</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    })
+    .join('');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Palengke Sheet - ${escapeHtml(storeName)}</title>
+        <style>
+          body { font-family: 'Courier New', monospace; color: #000; background: #fff; margin: 0; padding: 20px; font-size: 13px; }
+          h1 { font-size: 20px; margin: 0 0 4px 0; text-transform: uppercase; }
+          .meta { margin-bottom: 12px; border-bottom: 3px double #000; padding-bottom: 8px; }
+          .total { font-size: 18px; font-weight: bold; margin-top: 6px; }
+          h2 { font-size: 14px; margin: 18px 0 4px 0; border-bottom: 2px solid #000; display: flex; justify-content: space-between; }
+          table { width: 100%; border-collapse: collapse; }
+          th { text-align: left; font-size: 11px; border-bottom: 1px solid #000; padding: 4px 2px; }
+          td { padding: 6px 2px; border-bottom: 1px dotted #000; vertical-align: top; }
+          .num { text-align: right; white-space: nowrap; }
+          .box { font-weight: bold; white-space: nowrap; }
+          .name { font-weight: bold; }
+          .sku { font-size: 11px; }
+          .note { margin-top: 16px; font-size: 11px; }
+        </style>
+      </head>
+      <body>
+        <div class="meta">
+          <h1>Palengke Sheet</h1>
+          <div>${escapeHtml(storeName)} &middot; ${dateStr}</div>
+          <div class="total">Kailangang puhunan: ${formatPesos(plan.totalEstimatedCapital)}</div>
+          <div>Out of stock: ${formatPesos(plan.outOfStockCapital)} (${plan.outOfStockCount}) &middot; Low stock: ${formatPesos(plan.lowStockCapital)}</div>
+          <div>${plan.totalItemsCount} aytem</div>
+        </div>
+        ${groupsHtml || '<p>Walang kailangang bilhin.</p>'}
+        ${plan.missingCostCount > 0 ? `<p class="note">May ${plan.missingCostCount} aytem na walang cost price (--); hindi kasama sa kabuuan.</p>` : ''}
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Builds a plain-text checklist for SMS or Viber.
+ */
+export function buildPalengkeSheetText(
+  plan: PalengkeRestockPlan,
+  storeName: string,
+  now: Date = new Date(),
+): string {
+  const lines: string[] = [
+    `PALENGKE SHEET - ${storeName}`,
+    format(now, 'MMMM dd, yyyy'),
+    `Kailangang puhunan: ${formatPesos(plan.totalEstimatedCapital)}`,
+    '',
+  ];
+  for (const group of plan.groups) {
+    lines.push(`${group.label} (${formatPesos(group.subtotal)})`);
+    for (const item of group.items) {
+      const cost =
+        item.costPrice === null ? '' : ` - ${formatPesos(item.subtotal)}`;
+      lines.push(
+        `[ ] ${item.productName} x${item.suggestedQuantity} ${item.retailUnitName}${cost}`,
+      );
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
+
+/**
+ * Renders the restock plan to a PDF and opens the native share drawer.
+ */
+export async function sharePalengkeSheetPdf(
+  plan: PalengkeRestockPlan,
+  storeName: string,
+): Promise<boolean> {
+  try {
+    const { uri } = await Print.printToFileAsync({
+      html: buildPalengkeSheetHtml(plan, storeName),
+      base64: false,
+    });
+
+    const pdfFile = new File(
+      Paths.cache,
+      `SariSari_Palengke_${format(new Date(), 'yyyyMMdd')}.pdf`,
+    );
+    await new File(uri).copy(pdfFile);
+
+    if (!(await Sharing.isAvailableAsync())) {
+      console.warn('Sharing is not available on this platform');
+      return false;
+    }
+
+    await Sharing.shareAsync(pdfFile.uri, {
+      mimeType: 'application/pdf',
+      dialogTitle: 'Palengke Sheet',
+      UTI: 'com.adobe.pdf',
+    });
+
+    try {
+      if (pdfFile.exists) pdfFile.delete();
+    } catch {
+      // ignore
+    }
+    return true;
+  } catch (error) {
+    console.error('Failed to generate or share palengke sheet PDF:', error);
+    return false;
+  }
+}
+
+/**
+ * Opens the native share sheet with the plain-text checklist.
+ */
+export async function sharePalengkeSheetText(
+  plan: PalengkeRestockPlan,
+  storeName: string,
+): Promise<boolean> {
+  try {
+    const result = await Share.share({
+      message: buildPalengkeSheetText(plan, storeName),
+    });
+    return result.action !== Share.dismissedAction;
+  } catch (error) {
+    console.error('Failed to share palengke sheet text:', error);
     return false;
   }
 }

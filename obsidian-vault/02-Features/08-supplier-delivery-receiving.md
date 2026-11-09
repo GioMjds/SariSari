@@ -55,3 +55,17 @@ Bilang may-ari ng tindahan na tumatanggap ng delivery ng supplier, gusto kong ma
 - Umiiral na ang `suppliers` at `products.supplier_id` (migration v7). Ang receiving flow ay nakakabit doon.
 - Pera: ang `unit_cost` at `cost_price` ay integer-pesos na.
 - Ang patakaran ng `withTransactionAsync` ay kritikal dito.
+
+## Design Decisions (2026-11-09)
+
+Full design: `docs/superpowers/specs/2026-11-09-supplier-delivery-receiving-design.md` (status: draft, pending owner review). These decisions resolve the Open Questions above and refine the Data Implications.
+
+- Cost basis: latest cost, with a visible cost-change chip before commit. No weighted average.
+- The delivery receipt is the source of truth for restock. Commit goes through the existing restock logic in one transaction.
+- Unknown products: inline quick-add (name, retail price, optional barcode), created inside the commit transaction.
+- Expected qty: typed from the invoice, with an optional "Fill from reorder plan" seed from Feature 9 plans.
+- Entry unit: per-line retail or wholesale toggle. Both entered and converted values are stored.
+- Drafts: `draft | committed | voided`, one open draft per supplier. Commit-once is enforced by the status flip inside the commit transaction.
+- Corrections: receipts are immutable. Owner-PIN-gated void reverses stock with offsetting adjustment rows and is refused if stock is too low.
+- Deviation: new DB functions go in `database/deliveries.ts`, not `database/suppliers.ts` and `database/inventory.ts` as listed under Data Implications. The only change in `database/inventory.ts` is extracting `applyInventoryTransaction`.
+- Known discrepancy: `inventory_transactions.unit_cost` is `REAL` in the migration. Receiving writes integer pesos only.

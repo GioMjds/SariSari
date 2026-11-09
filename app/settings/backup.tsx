@@ -16,7 +16,6 @@ export default function BackupScreen() {
     <View className="flex-1 bg-paper-200">
       <MoreDetailHeader
         title={t('common:backupTitle')}
-        subtitle={t('common:backupSubtitle')}
         onBack={goBackToMore}
         backAccessibilityLabel={t('common:moreBackA11y')}
       />
@@ -24,16 +23,10 @@ export default function BackupScreen() {
         contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <SettingsSection
-          title={t('common:backupCloudSection')}
-          subtitle={t('common:backupCloudSectionSub')}
-        >
+        <SettingsSection title={t('common:backupCloudSection')}>
           <CloudBackupSection />
         </SettingsSection>
-        <SettingsSection
-          title={t('common:backupLocalSection')}
-          subtitle={t('common:backupLocalSectionSub')}
-        >
+        <SettingsSection title={t('common:backupLocalSection')}>
           <LocalSnapshotsSection />
         </SettingsSection>
       </ScrollView>

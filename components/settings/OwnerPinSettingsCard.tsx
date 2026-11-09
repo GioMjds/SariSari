@@ -140,7 +140,7 @@ export const OwnerPinSettingsCard: React.FC = () => {
     if (!pesosOk || !percentOk) {
       setPesosLimit(savedPesos);
       setPercentLimit(savedPercent);
-      addToast({ message: t('threshold_invalid'), variant: 'danger' });
+      addToast({ message: t('pin.threshold_invalid'), variant: 'danger' });
       return;
     }
 
@@ -288,16 +288,16 @@ export const OwnerPinSettingsCard: React.FC = () => {
 
       <View className="px-4 pt-4 pb-1 border-t border-paper-300">
         <StyledText variant="semibold" className="text-sm text-ink-700 mb-3">
-          {t('thresholds_title')}
+          {t('pin.thresholds_title')}
         </StyledText>
         <LimitRow
-          label={t('threshold_pesos')}
+          label={t('pin.threshold_pesos')}
           value={pesosLimit}
           onChange={setPesosLimit}
           onCommit={handleSaveThresholds}
         />
         <LimitRow
-          label={t('threshold_percent')}
+          label={t('pin.threshold_percent')}
           value={percentLimit}
           onChange={setPercentLimit}
           onCommit={handleSaveThresholds}

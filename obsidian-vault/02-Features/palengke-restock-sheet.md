@@ -69,6 +69,37 @@ Bilang may-ari ng tindahan na nagpaplano ng palengke run, gusto kong makabuo ng 
 - **Pagtanggap ng Delivery:** [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]] — nagko-commit ng aktwal na dami at puhunan pagbalik mula sa palengke.
 - **Pang-araw-araw na Kaha:** [[03-daily-cash-close-out|03. Daily Cash Close-Out]] — nagtatala ng cash withdrawal para sa pambili sa palengke.
 
+## Katayuan ng Implementasyon (Implementation Status)
+
+Updated 2026-11-09. Ang screen, plan builder, PDF at text share ay naipatupad na. Hindi pa nasusubukan sa totoong device ang PDF at share sheet.
+
+- **Screen**: `app/settings/palengke-sheet.tsx`, may route na `/settings/palengke-sheet` at row na "Palengke sheet" sa More tab (`components/more/moreNavigation.ts`, `components/more/MoreHomeScreen.tsx`).
+  - Loading, error with retry, at empty state.
+  - Capital summary card (kabuuan, out of stock, low stock, bilang ng aytem na walang cost price).
+  - Checklist na nakapangkat; tap ng row para i-tick. Ang tick ay local state lamang at hindi sine-save.
+- **Plan builder**: `lib/palengkePlan.ts` (`buildPalengkeRestockPlan`). Pure function, inihiwalay sa `database/` para ma-test nang walang SQLite.
+  - Kasama lang ang out-of-stock o low-stock na may `suggestedQuantity > 0`.
+  - Hindi kasama ang `dismissed` at ang `deferred` hanggang sa hinaharap na petsa. Ginagamit ang adjusted na dami.
+  - Grouping: supplier, pagkatapos category, pagkatapos "Walang supplier / kategorya" (huli).
+  - Ang aytem na walang `cost_price` ay binibilang sa `missingCostCount` at hindi idinaragdag sa kabuuan.
+- **Database**: `getPalengkeRestockPlan(filter)` sa `database/stock-intelligence.ts`. Tumatawag sa `listReorderRecommendations()`; walang bagong query o schema.
+- **Export**: `lib/pdfGenerator.ts`: `sharePalengkeSheetPdf` (A4, monochrome Courier, `[ ]` checkboxes) at `sharePalengkeSheetText` (native `Share`). Ang mga builder ay `buildPalengkeSheetHtml` at `buildPalengkeSheetText`.
+- **Hooks**: `usePalengkeRestockPlan` at `useExportPalengkeSheet` sa `hooks/useStockIntelligence.ts`.
+- **Types**: `PalengkeRestockItem`, `PalengkeRestockGroup`, `PalengkeRestockPlan`, `PalengkeRestockFilter` sa `types/stock-intelligence.types.ts`.
+- **Tests**: `tests/palengkeRestockPlan.test.ts`.
+
+### Paglihis sa orihinal na spec
+
+- Ang filter ay `{ supplierId?, category? }` (pangalan ng category), hindi `categoryId`, dahil ang recommendation ay may category name lamang.
+- Ang pangalan ng PDF function ay `sharePalengkeSheetPdf` (gumagawa at nagshe-share), hindi `generatePalengkeSheetPdf`.
+
+### Mga natitirang gawain
+
+- Supplier at category filter control sa screen (sinusuportahan na ng `getPalengkeRestockPlan`).
+- I-localize ang mga string ng screen (`locales/en` at `locales/tl`); hard-coded pa ang mga ito. Ang More row lamang ang naka-i18n.
+- Koneksyon sa [[08-supplier-delivery-receiving|08. Supplier Delivery Receiving]]: hindi pa ginagawa; nakadepende sa feature na iyon.
+- Subukan ang PDF at share sheet sa totoong device.
+
 ## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
 - Napakabilis ipatupad dahil ang mathematical engine ay umiiral na sa `database/stock-intelligence.ts`.

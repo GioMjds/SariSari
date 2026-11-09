@@ -17,15 +17,23 @@ export function SettingsSection({
   return (
     <View className="px-5 mt-6">
       {title ? (
-        <StyledText
-          variant="extrabold"
-          className="text-sm text-ink-800 mb-1"
-        >
-          {title}
-        </StyledText>
+        <View className="flex-row items-center mb-2 px-1">
+          <View className="w-1 h-4 rounded-full bg-persimmon-600 mr-2" />
+          <StyledText
+            variant="extrabold"
+            className="text-xs text-ink-700 uppercase"
+            style={{ letterSpacing: 1.2 }}
+            accessibilityRole="header"
+          >
+            {title}
+          </StyledText>
+        </View>
       ) : null}
       {subtitle ? (
-        <StyledText variant="regular" className="text-sm text-ink-600 mb-2">
+        <StyledText
+          variant="regular"
+          className="text-sm text-ink-600 mb-2 px-1"
+        >
           {subtitle}
         </StyledText>
       ) : null}
