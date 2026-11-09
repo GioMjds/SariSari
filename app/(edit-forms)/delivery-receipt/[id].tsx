@@ -144,7 +144,11 @@ export default function DeliveryReceiptEditor() {
   const openDraftQuery = useOpenDraftForSupplier(
     receiptId === null ? supplierId : null,
   );
-  const openDraftId = openDraftQuery.data ?? null;
+  // Only trust an id fetched after this screen mounted: a cached entry can
+  // still name a draft that was since committed or discarded.
+  const openDraftFresh =
+    openDraftQuery.isFetchedAfterMount && !openDraftQuery.isFetching;
+  const openDraftId = openDraftFresh ? (openDraftQuery.data ?? null) : null;
   useEffect(() => {
     if (receiptId !== null || openDraftId === null) return;
     if (openDraftId === createdId.current) return;

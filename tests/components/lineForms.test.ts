@@ -130,4 +130,16 @@ describe('mergeSeededLines', () => {
     const merged = mergeSeededLines([blank, typed], seeded);
     expect(merged.map((l) => l.key)).toEqual(['s1', 'typed', 's3']);
   });
+
+  it('seeds only the first of two blank lines for one product, keeping keys distinct', () => {
+    const first = line({ key: 'b1', productId: 9 });
+    const second = line({ key: 'b2', productId: 9 });
+    const seed = line({ key: 's9', productId: 9, expectedQty: '6' });
+    const merged = mergeSeededLines([first, second], [seed]);
+    expect(merged).toHaveLength(2);
+    expect(merged.map((l) => l.key)).toEqual(['s9', 'b2']);
+    expect(new Set(merged.map((l) => l.key)).size).toBe(2);
+    expect(merged[0]?.expectedQty).toBe('6');
+    expect(merged[1]?.expectedQty).toBe('');
+  });
 });

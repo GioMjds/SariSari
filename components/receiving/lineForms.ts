@@ -99,12 +99,18 @@ export function mergeSeededLines(
     if (s.productId !== null) seededById.set(s.productId, s);
   }
   const used = new Set<number>();
+  // Only the first blank line per product takes the seed. Reusing the seed
+  // for a second blank line would give two lines one key, so they would
+  // edit and remove together and book the received qty twice.
+  const replaced = new Set<number>();
   const merged = current.map((line) => {
     if (line.productId === null) return line;
     const seed = seededById.get(line.productId);
     if (!seed) return line;
     used.add(line.productId);
-    return isBlankLine(line) ? seed : line;
+    if (replaced.has(line.productId) || !isBlankLine(line)) return line;
+    replaced.add(line.productId);
+    return seed;
   });
   for (const s of seeded) {
     if (s.productId === null || !used.has(s.productId)) merged.push(s);

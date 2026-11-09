@@ -44,8 +44,9 @@ export const deliveryKeys = {
       supplierId ?? 'all',
     ] as const,
   detail: (id: number) => [...deliveryKeys.all, 'detail', id] as const,
+  openDrafts: () => [...deliveryKeys.all, 'open-draft'] as const,
   openDraft: (supplierId: string) =>
-    [...deliveryKeys.all, 'open-draft', supplierId] as const,
+    [...deliveryKeys.openDrafts(), supplierId] as const,
   report: (since?: string, until?: string) =>
     [...deliveryKeys.all, 'report', since ?? '', until ?? ''] as const,
   shortLines: (supplierId: string, since?: string, until?: string) =>
@@ -93,11 +94,19 @@ export function useSaveDeliveryDraft() {
   });
 }
 
+// Once a draft is committed or discarded, any cached open-draft id may point
+// at it. Inactive entries (the editor disables the query on a numeric route)
+// are not refetched by invalidation, so drop them outright.
+function forgetOpenDrafts(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.removeQueries({ queryKey: deliveryKeys.openDrafts() });
+}
+
 export function useDiscardDeliveryDraft() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => discardDeliveryDraft(id),
     onSuccess: () => {
+      forgetOpenDrafts(queryClient);
       queryClient.invalidateQueries({ queryKey: deliveryKeys.all });
     },
   });
@@ -106,6 +115,7 @@ export function useDiscardDeliveryDraft() {
 function invalidateAfterStockChange(
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
+  forgetOpenDrafts(queryClient);
   queryClient.invalidateQueries({ queryKey: deliveryKeys.all });
   invalidateProductDependencies(queryClient);
   queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
