@@ -4,6 +4,8 @@ import type {
   QuickAddProductInput,
 } from '@/types/deliveries.types';
 import type { PalengkeRestockItem } from '@/types/stock-intelligence.types';
+import { InvalidDeliveryLineError } from '@/lib/deliveryReceipt';
+import { parsePesosInput } from '@/lib/money';
 
 export interface DraftLineForm {
   key: string;
@@ -23,16 +25,59 @@ export interface DraftLineForm {
 let keyCounter = 0;
 export const newLineKey = (): string => `line-${Date.now()}-${keyCounter++}`;
 
-const parseWhole = (label: string, raw: string): number => {
+/** A typed quantity as a whole number of 0 or more, or null if blank or invalid. */
+export const parseQtyInput = (raw: string): number | null => {
   const trimmed = raw.trim();
-  if (trimmed === '') throw new Error(`${label} is required`);
+  if (!/^\d+$/.test(trimmed)) return null;
   const n = Number(trimmed);
-  if (!Number.isFinite(n)) throw new Error(`${label} is not a number`);
+  return Number.isSafeInteger(n) ? n : null;
+};
+
+/**
+ * A typed unit cost parsed through parsePesosInput, or null if blank,
+ * invalid, negative, or not whole pesos (receiving stores integer pesos).
+ */
+export const parseCostInput = (raw: string): number | null => {
+  if (raw.trim() === '') return null;
+  try {
+    const n = Number(parsePesosInput(raw));
+    return Number.isSafeInteger(n) ? n : null;
+  } catch {
+    return null;
+  }
+};
+
+const parseWhole = (label: string, raw: string): number => {
+  if (raw.trim() === '') {
+    throw new InvalidDeliveryLineError(`${label} is required`);
+  }
+  const n = parseQtyInput(raw);
+  if (n === null) {
+    throw new InvalidDeliveryLineError(
+      `${label} must be a whole number of 0 or more`,
+    );
+  }
   return n;
 };
 
+const parseCost = (label: string, raw: string): number => {
+  if (raw.trim() === '') {
+    throw new InvalidDeliveryLineError(`${label} is required`);
+  }
+  const n = parseCostInput(raw);
+  if (n === null) {
+    throw new InvalidDeliveryLineError(
+      `${label} must be whole pesos of 0 or more`,
+    );
+  }
+  return n;
+};
+
+/** Received and cost are filled, and every filled field parses. */
 export const isLineComplete = (form: DraftLineForm): boolean =>
-  form.receivedQty.trim() !== '' && form.unitCost.trim() !== '';
+  parseQtyInput(form.receivedQty) !== null &&
+  parseCostInput(form.unitCost) !== null &&
+  (form.expectedQty.trim() === '' || parseQtyInput(form.expectedQty) !== null);
 
 export function toLineInput(form: DraftLineForm): DeliveryLineInput {
   const expected =
@@ -45,7 +90,7 @@ export function toLineInput(form: DraftLineForm): DeliveryLineInput {
     enteredUnit: form.enteredUnit,
     enteredExpectedQty: expected,
     enteredReceivedQty: parseWhole('Received', form.receivedQty),
-    enteredUnitCost: parseWhole('Unit cost', form.unitCost),
+    enteredUnitCost: parseCost('Unit cost', form.unitCost),
   };
 }
 
