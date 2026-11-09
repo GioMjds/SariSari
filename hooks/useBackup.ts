@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as AuthSession from 'expo-auth-session';
 import { getAllSales } from '@/database/sales';
@@ -52,11 +52,13 @@ export const useSchedulerInputs = () => {
     };
   }, []);
 
-  return {
-    storeName: profile?.storeName ?? null,
-    ownerName: profile?.ownerName ?? null,
-    salesCount,
-  };
+  const storeName = profile?.storeName ?? null;
+  const ownerName = profile?.ownerName ?? null;
+
+  return useMemo(
+    () => ({ storeName, ownerName, salesCount }),
+    [storeName, ownerName, salesCount],
+  );
 };
 
 export const useLocalSnapshots = () =>

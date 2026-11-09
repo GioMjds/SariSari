@@ -94,6 +94,39 @@ Bilang may-ari ng tindahan, gusto kong magkaroon ng nakalaang digital ledger par
 - **Pagtatala ng Benta:** [[01-pos-fast-lane|01. POS Fast Lane]] — pinapanatiling hiwalay ang digital transactions sa shopping cart ng regular na paninda.
 - **Pagsusuri ng Kita:** [[14-transparent-local-store-insights|14. Transparent Local Store Insights]] — ipinapakita kung magkano ang naiambag ng digital commissions sa kabuuang kita.
 
+## Katayuan ng Implementasyon (Implementation Status)
+
+Updated 2026-11-09. Ang wallets, transactions, screen at cash ledger view ay naipatupad na. Hindi pa nasusubukan sa totoong device. Ang drawer model ay nakabatay sa [[ADR-003-unified-physical-cash-ledger]].
+
+- **Screen**: `app/settings/e-services-ledger.tsx` (route `/settings/e-services-ledger`, row na "E-services" sa More tab). May summary ng service income, listahan ng wallets, mabilisang cash-in, cash-out, e-load, add float, adjust balance, at history. Long press sa row para i-void.
+- **Modals**: `components/services/DigitalTransactionModal.tsx` (may preview ng epekto sa wallet, drawer at kita) at `components/services/WalletModal.tsx`.
+- **Database**: `database/digitalServices.ts`.
+  - Mga talahanayan `digital_wallets` at `digital_transactions` ay ginagawa ng `initDigitalServicesTables` sa startup (`CREATE TABLE IF NOT EXISTS`). Walang `user_version` bump.
+  - `cash_movements` SQL view (`initCashMovementsView`, ginagawa pagkatapos ng migrations). Mga source: cash sales, cash utang payments, expenses, owner draws, e-services.
+  - `createWallet`, `updateWallet`, `listWallets`, `createDigitalTransaction`, `voidDigitalTransaction`, `listDigitalTransactions`, `getDigitalServicesSummary`, `listCashMovements`, `getCashMovementsNet`.
+  - Ang `createDigitalTransaction` ay nasa `db.withTransactionAsync`: ina-update ang wallet balance at nagla-log ng row. Tinatanggihan kapag kulang ang float.
+- **Pure logic**: `lib/digitalServices.ts` (`computeDigitalEffect`, `suggestServiceFee`). Ang default na fee ay ₱10 bawat ₱500 o bahagi nito, para sa cash-in at cash-out lamang.
+- **Hooks**: `hooks/useDigitalServices.ts`.
+- **Tests**: `tests/digitalServices.test.ts` (epekto ng bawat uri, fee, rounding, negatibong float).
+
+### Paglihis sa orihinal na spec
+
+- Ang `digital_transactions` ay may `wallet_delta` (signed) at `voided_at`. Ang void ay hindi nagbubura; binabaligtad nito ang wallet balance at inaalis sa `cash_movements`.
+- Ang `replenish` ay may opsyon kung galing sa drawer (`cash_drawer_delta = -halaga`) o sa bank (`0`).
+- Cash-out: `cash_drawer_delta = -halaga + fee`. Ang fee na ibinawas sa ibinigay na pera at ang hiwalay na ibinayad ay pareho ang resulta.
+- Walang `getWalletsWithBalances`; ang `listWallets` ay may `currentBalance` na.
+- Ang `useReplenishWallet` ay manipis na wrapper sa `useRecordDigitalTransaction`.
+
+### Mga natitirang gawain
+
+- Isama ang service income bilang "Service Income" sa Income Statement at reports (`getDigitalServicesSummary` ay handa na).
+- Isama ang `cash_movements` sa expected-cash at closing count. Kailangan ng `drawer_counts` ([[ADR-003-unified-physical-cash-ledger]], Deferred).
+- Cash refunds at owner additions ay wala pa sa `cash_movements`.
+- Owner PIN gate sa adjustments ([[11-owner-pin-for-sensitive-actions|11. Owner PIN]]).
+- I-localize ang mga string ng screen; hard-coded pa ang mga ito. Ang More row lamang ang naka-i18n.
+- Edit ng wallet name at pag-deactivate sa screen (suportado na ng `updateWallet`).
+- Ang `database/*` tests ay hindi pa naisusulat; hindi tumatakbo ang `better-sqlite3` mock sa Node v26.
+
 ## Mga Tala sa Pagiging Posible (Feasibility Notes)
 
 - Ang modelong ito ay nagliligtas sa tindahan mula sa pinakamalaking sanhi ng cash discrepancy sa kasalukuyang panahon.

@@ -9,6 +9,8 @@ import {
   initSettingsTable,
   initAuthTable,
   initCorrectionsTable,
+  initDigitalServicesTables,
+  initCashMovementsView,
   runMigrations,
 } from '@/database';
 import { seedDatabase, seedProductCatalog } from '@/database/seed';
@@ -53,7 +55,9 @@ export const initializeDatabases = async () => {
       await initSettingsTable();
       await initAuthTable();
       await initCorrectionsTable();
+      await initDigitalServicesTables();
       await runMigrations();
+      await initCashMovementsView();
     });
 
 

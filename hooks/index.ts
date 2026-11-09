@@ -24,3 +24,4 @@ export * from './useTabProgress';
 export * from './useAppSetting';
 export * from './useCorrections';
 export * from './useGettingStarted';
+export * from './useDigitalServices';

@@ -6,6 +6,7 @@ export const MORE_ROUTES = {
   reports: '/settings/reports',
   corrections: '/reports/corrections',
   palengke: '/settings/palengke-sheet',
+  eServices: '/settings/e-services-ledger',
   backup: '/settings/backup',
   settings: '/settings/settings',
 } as const satisfies Record<string, Href>;
@@ -15,6 +16,7 @@ export type MoreDestination =
   | typeof MORE_ROUTES.reports
   | typeof MORE_ROUTES.corrections
   | typeof MORE_ROUTES.palengke
+  | typeof MORE_ROUTES.eServices
   | typeof MORE_ROUTES.backup
   | typeof MORE_ROUTES.settings;
 

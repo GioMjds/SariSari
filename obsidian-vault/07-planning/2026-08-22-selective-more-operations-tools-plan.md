@@ -22,7 +22,7 @@ This plan deliberately treats the current cash model as a prerequisite for cash-
 | Bantay Mode | Owner PIN and biometric approval exist; shift attribution and a restricted operator surface do not. Legacy cash-session data/functions remain. | Partial / blocked by cash-model decision | Owner handover, restricted POS-only mode, active bantay attribution, opening/closing count, and discrepancy review. |
 | Palengke Sheet | Implemented 2026-11-09: grouped checklist, capital split, text share, and PDF export. See [[02-Features/palengke-restock-sheet]] for remaining gaps (filter UI, i18n, delivery-receiving link). | Implemented, device-untested | Originally: create the grouped checklist, total working-capital view, offline text share, and printable PDF; do not rebuild reorder intelligence. |
 | Tingi Calculator | Bundle/pakyaw conversion, cost-per-piece math, markup, and product pricing are live. | Partial | Add packaging cost, expected spillage, price-rounding, and margin recommendation. Do not duplicate the existing product-pricing form. |
-| E-Services Ledger | No wallet/float ledger or service-income reporting exists. | Not started | Add the independent digital-float ledger only after the physical-cash movement model is settled. |
+| E-Services Ledger | Implemented 2026-11-09 on the cash model in [[ADR-003-unified-physical-cash-ledger]]: wallets, transactions, void, `cash_movements` view. Service-income reporting and expected-cash wiring remain. See [[02-Features/e-loading-and-digital-cash-services]]. | Implemented, device-untested | Originally: add the independent digital-float ledger only after the physical-cash movement model is settled. |
 | Spoilage Monitor | Manual damaged write-offs and inventory movement history are live. Expiry capture, reason-coded loss reporting, and a usable near-expiry view are not. | Partial | Add optional expiry monitoring, markdown/write-off prompts, and loss reporting; do not create a second generic damaged-goods workflow. |
 
 Source notes: [[02-Features/owner-inventory-consumption-pang-ulam]], [[02-Features/16-shift-tracking-on-one-device]], [[02-Features/palengke-restock-sheet]], [[02-Features/e-loading-and-digital-cash-services]], [[02-Features/13-expiry-and-damaged-goods-tracking]], and [[01-Roadmap/current-implemented-feature-inventory]].
@@ -54,6 +54,8 @@ More tab
 ## Feature Contracts and Delivery Order
 
 ### 0. Resolve the physical-cash model before drawer features
+
+Decision recorded 2026-11-09: unified movement ledger as a derived SQL view. See [[ADR-003-unified-physical-cash-ledger]]. Cash-session-dependent corrections and refund/owner-addition sources are still open (listed under Deferred in the ADR).
 
 Choose one authoritative model for expected drawer cash: restore and modernize cash sessions, or replace them with a unified physical-cash movement ledger. Record the decision in a technical note before schema work.
 

@@ -4,7 +4,7 @@ description: Index of all Architectural Decision Records (ADRs) mirrored into th
 type: moc
 status: active
 tags: [moc, adr, architecture]
-last_updated: 2026-08-12
+last_updated: 2026-11-09
 ---
 
 # Architectural Decision Records
@@ -16,6 +16,7 @@ This MOC indexes every Architectural Decision Record that has been mirrored into
 | ADR | Title | Status | Date | Codebase Path |
 | --- | --- | --- | --- | --- |
 | [ADR-001](03-Technical/ADR-001-inventory-tab-architecture.md) | Offline-First Inventory Tab Architecture & Transaction Integrity | Accepted | 2026-08-12 | `docs/decisions/ADR-001-inventory-tab-architecture.md` |
+| [ADR-003](03-Technical/ADR-003-unified-physical-cash-ledger.md) | Unified Physical-Cash Movement Ledger | Accepted | 2026-11-09 | Vault only (no `docs/decisions/` copy) |
 
 ## Conventions
 

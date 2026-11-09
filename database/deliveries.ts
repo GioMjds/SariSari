@@ -10,6 +10,7 @@ import type {
   DeliveryReceiptStatus,
   DeliveryReceiptSummary,
   SaveDeliveryDraftInput,
+  SupplierShortageRow,
 } from '../types/deliveries.types';
 import { applyInventoryTransaction } from './inventory';
 
@@ -599,4 +600,113 @@ const runVoid = async (
       throw new ReceiptAlreadyVoidedError(receiptId);
     }
   });
+};
+
+interface DateRange {
+  since?: string;
+  until?: string;
+}
+
+/**
+ * Per-supplier shortage aggregate over committed receipts (drafts and voided
+ * receipts excluded), ranked by shortage value. Value uses the expected unit
+ * cost, falling back to the actual unit cost. Rate is short lines / lines.
+ */
+export const getDeliveryShortageReport = async (
+  range: DateRange = {},
+): Promise<SupplierShortageRow[]> => {
+  const rows = await db.getAllAsync<{
+    supplier_id: string;
+    supplier_name: string;
+    receipts: number;
+    lines: number;
+    short_lines: number;
+    shortage_qty: number;
+    shortage_value: number;
+  }>(
+    `SELECT r.supplier_id AS supplier_id, s.name AS supplier_name,
+            COUNT(DISTINCT r.id) AS receipts,
+            COUNT(l.id) AS lines,
+            SUM(CASE WHEN l.shortage_qty > 0 THEN 1 ELSE 0 END) AS short_lines,
+            COALESCE(SUM(l.shortage_qty), 0) AS shortage_qty,
+            COALESCE(SUM(l.shortage_qty * COALESCE(l.expected_unit_cost, l.actual_unit_cost)), 0) AS shortage_value
+     FROM delivery_receipts r
+     JOIN delivery_receipt_lines l ON l.receipt_id = r.id
+     JOIN suppliers s ON s.id = r.supplier_id
+     WHERE r.status = 'committed'
+       AND (? IS NULL OR r.committed_at >= ?)
+       AND (? IS NULL OR r.committed_at <= ?)
+     GROUP BY r.supplier_id
+     ORDER BY shortage_value DESC, short_lines DESC, supplier_name ASC`,
+    [
+      range.since ?? null,
+      range.since ?? null,
+      range.until ?? null,
+      range.until ?? null,
+    ],
+  );
+  return rows.map((r) => ({
+    supplierId: r.supplier_id,
+    supplierName: r.supplier_name,
+    receipts: r.receipts,
+    lines: r.lines,
+    shortLines: r.short_lines,
+    shortageQty: r.shortage_qty,
+    shortageValue: r.shortage_value,
+    shortageRate: r.lines > 0 ? r.short_lines / r.lines : 0,
+  }));
+};
+
+export interface SupplierShortageLine {
+  receiptId: number;
+  invoiceNo: string | null;
+  committedAt: string;
+  productName: string;
+  expectedQty: number;
+  receivedQty: number;
+  shortageQty: number;
+}
+
+/** Short lines (shortage_qty > 0) of one supplier's committed receipts, newest first. */
+export const getSupplierShortageLines = async (
+  supplierId: string,
+  range: DateRange = {},
+): Promise<SupplierShortageLine[]> => {
+  const rows = await db.getAllAsync<{
+    receipt_id: number;
+    invoice_no: string | null;
+    committed_at: string;
+    product_name: string | null;
+    new_product_name: string | null;
+    expected_qty: number;
+    received_qty: number;
+    shortage_qty: number;
+  }>(
+    `SELECT r.id AS receipt_id, r.invoice_no, r.committed_at,
+            p.name AS product_name, l.new_product_name,
+            l.expected_qty, l.received_qty, l.shortage_qty
+     FROM delivery_receipts r
+     JOIN delivery_receipt_lines l ON l.receipt_id = r.id
+     LEFT JOIN products p ON p.id = l.product_id
+     WHERE r.status = 'committed' AND r.supplier_id = ? AND l.shortage_qty > 0
+       AND (? IS NULL OR r.committed_at >= ?)
+       AND (? IS NULL OR r.committed_at <= ?)
+     ORDER BY r.committed_at DESC, l.id ASC`,
+    [
+      supplierId,
+      range.since ?? null,
+      range.since ?? null,
+      range.until ?? null,
+      range.until ?? null,
+    ],
+  );
+  return rows.map((r) => ({
+    receiptId: r.receipt_id,
+    invoiceNo: r.invoice_no,
+    committedAt: r.committed_at,
+    productName: r.product_name ?? r.new_product_name ?? 'Unknown product',
+    expectedQty: r.expected_qty,
+    receivedQty: r.received_qty,
+    shortageQty: r.shortage_qty,
+  }));
 };
