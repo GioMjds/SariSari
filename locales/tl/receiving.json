@@ -46,6 +46,8 @@
   "errorEmpty": "Walang natanggap sa delivery na ito.",
   "errorVoidTooLow": "Hindi ma-void: may naibenta nang stock. Gumamit ng stock adjustment.",
   "errorNotDraft": "Natanggap na ang delivery na ito.",
+  "errorNotCommitted": "Hindi pa natatanggap ang delivery na ito, kaya hindi ito ma-void.",
+  "errorAlreadyVoided": "Na-void na ang delivery na ito.",
   "reportTitle": "Kulang ayon sa supplier",
   "reportReceipts": "Mga delivery",
   "reportShortLines": "Mga linyang kulang",

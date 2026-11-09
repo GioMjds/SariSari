@@ -46,6 +46,8 @@
   "errorEmpty": "Nothing was received on this delivery.",
   "errorVoidTooLow": "Cannot void: some stock was already sold. Use a stock adjustment instead.",
   "errorNotDraft": "This delivery was already received.",
+  "errorNotCommitted": "This delivery is not received yet, so it cannot be voided.",
+  "errorAlreadyVoided": "This delivery was already voided.",
   "reportTitle": "Shortages by supplier",
   "reportReceipts": "Deliveries",
   "reportShortLines": "Short lines",

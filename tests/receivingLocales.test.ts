@@ -22,4 +22,21 @@ describe('receiving locales', () => {
       }
     }
   });
+  it('has an error key for every named receiving error', () => {
+    const errorKeys = [
+      'errorNotDraft',
+      'errorEmpty',
+      'errorDraftExists',
+      'errorVoidTooLow',
+      'errorBarcodeExists',
+      'errorNotCommitted',
+      'errorAlreadyVoided',
+    ];
+    for (const bundle of [en, tl]) {
+      const record = bundle as Record<string, unknown>;
+      for (const key of errorKeys) {
+        expect(`${key}:${typeof record[key]}`).toBe(`${key}:string`);
+      }
+    }
+  });
 });
