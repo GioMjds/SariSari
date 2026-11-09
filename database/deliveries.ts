@@ -11,6 +11,7 @@ import type {
   DeliveryReceiptSummary,
   SaveDeliveryDraftInput,
 } from '../types/deliveries.types';
+import { applyInventoryTransaction } from './inventory';
 
 export class ReceiptNotDraftError extends Error {
   receiptId: number;
@@ -403,4 +404,93 @@ export const listDeliveryReceipts = async (
     params,
   );
   return rows.map(mapSummary);
+};
+
+const createQuickAddProduct = async (
+  line: LineRow,
+  supplierId: string,
+  receiptId: number,
+): Promise<number> => {
+  const barcode = line.new_product_barcode?.trim() || null;
+  if (barcode) {
+    const clash = await db.getFirstAsync<{ id: number }>(
+      'SELECT id FROM products WHERE barcode = ? OR wholesale_barcode = ?',
+      [barcode, barcode],
+    );
+    if (clash) throw new QuickAddBarcodeExistsError(barcode);
+  }
+  const result = await db.runAsync(
+    `INSERT INTO products (name, sku, price, quantity, cost_price, barcode, supplier_id)
+     VALUES (?, ?, ?, 0, ?, ?, ?)`,
+    [
+      line.new_product_name ?? 'New product',
+      `DLV-${receiptId}-${line.id}`,
+      line.new_product_price ?? 0,
+      line.actual_unit_cost,
+      barcode,
+      supplierId,
+    ],
+  );
+  return result.lastInsertRowId;
+};
+
+/**
+ * Commits a draft: creates quick-add products, restocks every received line
+ * through applyInventoryTransaction, and flips the status, all in one
+ * transaction. A second call throws ReceiptNotDraftError, so a double tap
+ * cannot restock twice.
+ */
+export const commitDeliveryReceipt = async (
+  receiptId: number,
+): Promise<void> => {
+  await db.withTransactionAsync(async () => {
+    const receipt = await getReceiptRow(receiptId);
+    if (!receipt) throw new Error(`Delivery receipt ${receiptId} not found`);
+    if (receipt.status !== 'draft') {
+      throw new ReceiptNotDraftError(receiptId, receipt.status);
+    }
+
+    const lines = await db.getAllAsync<LineRow>(
+      'SELECT l.*, NULL AS product_name FROM delivery_receipt_lines l WHERE l.receipt_id = ? ORDER BY l.id',
+      [receiptId],
+    );
+    if (lines.length === 0 || lines.every((l) => l.received_qty === 0)) {
+      throw new ReceiptEmptyError(receiptId);
+    }
+
+    const note = receipt.invoice_no
+      ? `Delivery receipt #${receiptId} (invoice ${receipt.invoice_no})`
+      : `Delivery receipt #${receiptId}`;
+
+    for (const line of lines) {
+      let productId = line.product_id;
+      if (productId === null) {
+        productId = await createQuickAddProduct(
+          line,
+          receipt.supplier_id,
+          receiptId,
+        );
+        await db.runAsync(
+          'UPDATE delivery_receipt_lines SET product_id = ? WHERE id = ?',
+          [productId, line.id],
+        );
+      }
+      if (line.received_qty > 0) {
+        await applyInventoryTransaction({
+          product_id: productId,
+          type: 'restock',
+          quantity: line.received_qty,
+          unit_cost: line.actual_unit_cost,
+          supplier_id: receipt.supplier_id,
+          receipt_id: receiptId,
+          note,
+        });
+      }
+    }
+
+    await db.runAsync(
+      "UPDATE delivery_receipts SET status = 'committed', committed_at = ? WHERE id = ?",
+      [new Date().toISOString(), receiptId],
+    );
+  });
 };
