@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { Alert } from '@/utils';
 import { useTabBarBottomOffset } from '@/components/layout';
+import { useTranslation } from 'react-i18next';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
 
@@ -54,6 +55,7 @@ const EMPTY_COPY: Record<TabType, { title: string; body: string }> = {
 
 export default function RecommendationsScreen() {
   const router = useRouter();
+  const { t: tReceiving } = useTranslation('receiving');
   const signal = useStockSheetSignal();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
@@ -566,6 +568,20 @@ export default function RecommendationsScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
+      <View className="px-4 pt-2 flex-row justify-end">
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.push('/(edit-forms)/delivery-receipts' as Href)}
+          accessibilityRole="button"
+          accessibilityLabel={tReceiving('newDelivery')}
+          className="px-3 py-2 bg-persimmon-500 rounded-xl flex-row items-center gap-1.5 active:bg-persimmon-600 shadow-persimmon-glow"
+        >
+          <FontAwesome name="truck" size={11} color="#FBF7EE" />
+          <StyledText variant="semibold" className="text-xs text-paper-50">
+            {tReceiving('newDelivery')}
+          </StyledText>
+        </TouchableOpacity>
+      </View>
       <View className="pt-1 pb-3">
         <ScrollView
           horizontal

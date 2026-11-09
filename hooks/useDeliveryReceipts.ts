@@ -18,6 +18,22 @@ import type {
   SaveDeliveryDraftInput,
 } from '@/types/deliveries.types';
 
+// Screens never import database/, so the named receiving errors and the
+// shortage-line row type are re-exported from here.
+export {
+  DraftAlreadyExistsError,
+  QuickAddBarcodeExistsError,
+  ReceiptAlreadyVoidedError,
+  ReceiptEmptyError,
+  ReceiptNotCommittedError,
+  ReceiptNotDraftError,
+  VoidWouldGoNegativeError,
+} from '@/database/deliveries';
+export type {
+  SupplierShortageLine,
+  VoidShortfall,
+} from '@/database/deliveries';
+
 export const deliveryKeys = {
   all: ['delivery-receipts'] as const,
   list: (status?: DeliveryReceiptStatus, supplierId?: string) =>
