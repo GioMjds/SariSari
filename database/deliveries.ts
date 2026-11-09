@@ -512,3 +512,91 @@ const runCommit = async (receiptId: number): Promise<void> => {
     }
   });
 };
+
+// withTransactionAsync is not exclusive, so overlapping voids of one receipt must be rejected here.
+const voidsInFlight = new Set<number>();
+
+/**
+ * Voids a committed receipt: refuses if any product no longer has enough
+ * stock to reverse, otherwise writes offsetting negative adjustments and
+ * marks the receipt voided. cost_price is not rolled back. Owner PIN gating
+ * is done by the caller. An overlapping call for the same receipt throws
+ * ReceiptAlreadyVoidedError.
+ */
+export const voidDeliveryReceipt = async (
+  receiptId: number,
+  reason: string,
+): Promise<void> => {
+  const trimmedReason = reason.trim();
+  if (trimmedReason === '') {
+    throw new Error('A void reason is required');
+  }
+  if (voidsInFlight.has(receiptId)) {
+    throw new ReceiptAlreadyVoidedError(receiptId);
+  }
+  voidsInFlight.add(receiptId);
+  try {
+    await runVoid(receiptId, trimmedReason);
+  } finally {
+    voidsInFlight.delete(receiptId);
+  }
+};
+
+const runVoid = async (
+  receiptId: number,
+  trimmedReason: string,
+): Promise<void> => {
+  await db.withTransactionAsync(async () => {
+    const receipt = await getReceiptRow(receiptId);
+    if (!receipt) throw new Error(`Delivery receipt ${receiptId} not found`);
+    if (receipt.status === 'voided')
+      throw new ReceiptAlreadyVoidedError(receiptId);
+    if (receipt.status !== 'committed') {
+      throw new ReceiptNotCommittedError(receiptId, receipt.status);
+    }
+
+    const totals = await db.getAllAsync<{
+      product_id: number;
+      product_name: string;
+      received: number;
+      on_hand: number;
+    }>(
+      `SELECT l.product_id AS product_id, p.name AS product_name,
+              SUM(l.received_qty) AS received, p.quantity AS on_hand
+       FROM delivery_receipt_lines l
+       JOIN products p ON p.id = l.product_id
+       WHERE l.receipt_id = ? AND l.received_qty > 0
+       GROUP BY l.product_id`,
+      [receiptId],
+    );
+
+    const shortfalls: VoidShortfall[] = totals
+      .filter((t) => t.on_hand < t.received)
+      .map((t) => ({
+        productId: t.product_id,
+        productName: t.product_name,
+        needed: t.received,
+        onHand: t.on_hand,
+      }));
+    if (shortfalls.length > 0) throw new VoidWouldGoNegativeError(shortfalls);
+
+    for (const t of totals) {
+      await applyInventoryTransaction({
+        product_id: t.product_id,
+        type: 'adjustment',
+        adjustment_sign: 'negative',
+        quantity: t.received,
+        receipt_id: receiptId,
+        note: `Void of delivery receipt #${receiptId}: ${trimmedReason}`,
+      });
+    }
+
+    const flipped = await db.runAsync(
+      "UPDATE delivery_receipts SET status = 'voided', voided_at = ?, void_reason = ? WHERE id = ? AND status = 'committed'",
+      [new Date().toISOString(), trimmedReason, receiptId],
+    );
+    if (flipped.changes !== 1) {
+      throw new ReceiptAlreadyVoidedError(receiptId);
+    }
+  });
+};
