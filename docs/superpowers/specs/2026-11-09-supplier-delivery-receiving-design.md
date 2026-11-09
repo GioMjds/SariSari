@@ -1,7 +1,7 @@
 # Supplier Delivery Receiving Design (Feature 8)
 
 Date: 2026-11-09
-Status: approved 2026-11-09; implementation plan at `docs/superpowers/plans/2026-11-09-supplier-delivery-receiving.md`
+Status: implemented (2026-11-09); implementation plan at `docs/superpowers/plans/2026-11-09-supplier-delivery-receiving.md`
 Feature note: `obsidian-vault/02-Features/08-supplier-delivery-receiving.md`
 Roadmap: R3, `obsidian-vault/01-Roadmap/project-roadmap.md`
 
@@ -75,6 +75,10 @@ Known discrepancy: `inventory_transactions.unit_cost` was added as `REAL` in `da
    - Set status `voided`, `voided_at`, `void_reason`.
    - `products.cost_price` is not rolled back. The next restock sets it.
 
+Single-flight guard: `commitDeliveryReceipt` and `voidDeliveryReceipt` each keep a module-level in-flight `Set` of receipt ids, and flip status with a guarded update (`UPDATE ... SET status = ... WHERE id = ? AND status = 'draft'` for commit, `AND status = 'committed'` for void) followed by a `changes === 1` check. Reason: expo-sqlite `withTransactionAsync` is not exclusive, so an overlapping duplicate call can tear a transaction. An overlapping duplicate throws `ReceiptNotDraftError` (commit) or `ReceiptAlreadyVoidedError` (void). The UI also disables the buttons while a mutation is pending. The DB function does not check the PIN; the void gate lives in the UI through `useOwnerPinGuard`.
+
+Known risk: the non-exclusive transaction hazard is project-wide. A POS sale that overlaps a commit would hit the same behavior. This release does not add a global write lock.
+
 New DB functions live in `database/deliveries.ts`, not `database/suppliers.ts` as the feature note says. Reason: keeps `suppliers.ts` small. Update the feature note to match.
 
 DB functions: `saveDeliveryDraft`, `getDeliveryReceipt`, `listDeliveryReceipts({ supplierId, status, since })`, `commitDeliveryReceipt`, `voidDeliveryReceipt`, `discardDeliveryDraft`, `getDeliveryShortageReport({ since, until })`.
@@ -106,15 +110,19 @@ i18n: new `receiving` namespace in `locales/{en,tl}/`, registered in `lib/i18n.t
 
 - receipts count, lines count, shortage qty
 - shortage value in pesos: `shortage_qty * COALESCE(expected_unit_cost, actual_unit_cost)` (`products.cost_price` can be null)
-- shortage rate: short lines divided by total lines
+- shortage rate: short lines divided by total lines, as a 0..1 fraction
 
-Excludes `draft` and `voided`. Ranked by shortage value. Tapping a supplier shows its receipts and short lines as evidence.
+`since` and `until` must be full ISO timestamps, because `committed_at` is an ISO string. A date-only `until` would exclude that whole day. Both bounds are inclusive. Suppliers with committed receipts but no shortage appear with value 0. Excludes `draft` and `voided`. Ranked by shortage value. Tapping a supplier shows its receipts and short lines as evidence.
 
 ## Errors
 
 Named errors: `ReceiptNotDraftError`, `ReceiptEmptyError`, `DraftAlreadyExistsError`, `VoidWouldGoNegativeError`, `ReceiptAlreadyVoidedError`, `ReceiptNotCommittedError` (void of a draft), `QuickAddBarcodeExistsError`. `DraftAlreadyExistsError` is handled in the UI by resuming the existing draft.
 
+All seven named errors have copy in both locales (the `receiving` namespace has 36 keys beyond the original set).
+
 Validation: received qty and costs are integers at or above 0. Quick-add name must be non-empty.
+
+Editor behavior: Save draft is refused while any line is incomplete, because the `entered_*` columns are NOT NULL. A half-counted delivery cannot be parked, and back-navigation discards unsaved lines. This is a known limitation (see the feature note).
 
 ## Testing
 
@@ -133,6 +141,7 @@ Tests ship with the feature. Features 5 and 6 shipped without tests and the vaul
   - shortage report excludes voided and draft
 - Migration test for the new version.
 - Tests live in `tests/` and `tests/database/`. The single-handle test named in `obsidian-vault/CONTEXT.md` does not exist in the repo, so it is not part of this feature.
+- Mock caveat: the sqlite mock's `withTransactionAsync` rolls back with `ROLLBACK TO SAVEPOINT` but never `RELEASE`s, so the connection stays in a transaction after the first rollback in a test file and `PRAGMA foreign_keys` changes are then ignored.
 - Existing inventory tests pass unchanged after the `applyInventoryTransaction` extraction.
 - Component test for the line row: shortage chip, cost-change chip, unit toggle conversion.
 
