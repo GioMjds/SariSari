@@ -1037,4 +1037,67 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v22.');
   }
+  if (currentVersion < 23) {
+    console.log('Running migration to v23 (Supplier delivery receipts)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS delivery_receipts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          supplier_id TEXT NOT NULL REFERENCES suppliers(id),
+          status TEXT NOT NULL DEFAULT 'draft'
+            CHECK(status IN ('draft', 'committed', 'voided')),
+          invoice_no TEXT,
+          invoice_photo_uri TEXT,
+          note TEXT,
+          received_at TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          committed_at TEXT,
+          voided_at TEXT,
+          void_reason TEXT
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_delivery_receipts_one_draft
+          ON delivery_receipts(supplier_id) WHERE status = 'draft';
+        CREATE INDEX IF NOT EXISTS idx_delivery_receipts_status
+          ON delivery_receipts(status, supplier_id);
+
+        CREATE TABLE IF NOT EXISTS delivery_receipt_lines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          receipt_id INTEGER NOT NULL
+            REFERENCES delivery_receipts(id) ON DELETE CASCADE,
+          product_id INTEGER REFERENCES products(id),
+          new_product_name TEXT,
+          new_product_price INTEGER,
+          new_product_barcode TEXT,
+          entered_unit TEXT NOT NULL CHECK(entered_unit IN ('retail', 'wholesale')),
+          entered_expected_qty INTEGER NOT NULL,
+          entered_received_qty INTEGER NOT NULL,
+          entered_unit_cost INTEGER NOT NULL,
+          expected_qty INTEGER NOT NULL,
+          received_qty INTEGER NOT NULL,
+          expected_unit_cost INTEGER,
+          actual_unit_cost INTEGER NOT NULL,
+          shortage_qty INTEGER NOT NULL,
+          conversion_factor_used INTEGER NOT NULL DEFAULT 1,
+          CHECK(product_id IS NOT NULL OR new_product_name IS NOT NULL)
+        );
+        CREATE INDEX IF NOT EXISTS idx_delivery_lines_receipt
+          ON delivery_receipt_lines(receipt_id);
+      `);
+
+      const invCols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(inventory_transactions)',
+      );
+      if (!invCols.some((c) => c.name === 'receipt_id')) {
+        await db.execAsync(
+          'ALTER TABLE inventory_transactions ADD COLUMN receipt_id INTEGER;',
+        );
+      }
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_inventory_tx_receipt_id ON inventory_transactions(receipt_id);',
+      );
+
+      await db.execAsync('PRAGMA user_version = 23;');
+    });
+    console.log('Database migrated to v23.');
+  }
 }
