@@ -16,7 +16,7 @@ import {
   SariShadow,
   SariSparkles,
 } from '../sariParts';
-import { useSariClock } from '../useSariMotion';
+import { useSariClock, useSariHopStyles } from '../useSariMotion';
 
 /**
  * Balance cleared state: Sari cheers with both fists up.
@@ -30,9 +30,6 @@ const REST_POSE = 0.6;
 
 const CLAMP = Extrapolation.CLAMP;
 
-/** Hop keyframes, shared by body and shadow. */
-const HOP_T = [0.04, 0.12, 0.2, 0.28, 0.34, 0.42];
-
 interface SariBalanceClearedProps {
   size: number;
   animate: boolean;
@@ -41,21 +38,7 @@ interface SariBalanceClearedProps {
 export function SariBalanceCleared({ size, animate }: SariBalanceClearedProps) {
   const unit = size / 200;
   const { cycle } = useSariClock(animate, CYCLE_MS, REST_POSE);
-
-  const bodyStyle = useAnimatedStyle(() => ({
-    transformOrigin: '50% 92.5%',
-    transform: [
-      { translateY: interpolate(cycle.value, HOP_T, [0, 2 * unit, -16 * unit, 0, unit, 0], CLAMP) },
-      { scaleX: interpolate(cycle.value, HOP_T, [1, 1.06, 0.96, 1.07, 0.99, 1], CLAMP) },
-      { scaleY: interpolate(cycle.value, HOP_T, [1, 0.9, 1.06, 0.9, 1.03, 1], CLAMP) },
-    ],
-  }));
-
-  const shadowStyle = useAnimatedStyle(() => ({
-    transformOrigin: '50% 92.5%',
-    opacity: interpolate(cycle.value, HOP_T, [1, 1, 0.6, 1, 1, 1], CLAMP),
-    transform: [{ scaleX: interpolate(cycle.value, HOP_T, [1, 1.06, 0.7, 1.08, 1, 1], CLAMP) }],
-  }));
+  const { hopStyle: bodyStyle, hopShadowStyle: shadowStyle } = useSariHopStyles(cycle, unit);
 
   // Arms dip on the crouch, fling up on the hop, then pump in turn.
   const leftArmStyle = useAnimatedStyle(() => ({

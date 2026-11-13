@@ -110,6 +110,7 @@ export default function EditProduct() {
         visible={form.showDeleteModal}
         onClose={form.cancelDelete}
         variant="danger"
+        mascot="delete"
         title="Delete Product?"
         description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
         buttons={[

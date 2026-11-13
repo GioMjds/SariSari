@@ -252,6 +252,7 @@ export default function ProductDetailsPage() {
         visible={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         variant="danger"
+        mascot="delete"
         title="Delete Product?"
         description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
         buttons={[

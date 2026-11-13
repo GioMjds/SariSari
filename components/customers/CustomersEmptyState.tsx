@@ -1,8 +1,7 @@
 import { FC } from 'react';
-import { View, Image, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { StyledText } from '@/components/elements';
-
-const sariJarImage = require('@/assets/images/sari-emotions/sari-utang-state.png');
+import { SariMascot } from '@/components/mascot';
 
 interface CustomersEmptyStateProps {
   onAddCustomer?: () => void;
@@ -17,11 +16,7 @@ export const CustomersEmptyState: FC<CustomersEmptyStateProps> = ({
 }) => {
   return (
     <View className="items-center justify-center p-8 mt-4">
-      <Image
-        source={sariJarImage}
-        style={{ width: 130, height: 130 }}
-        resizeMode="contain"
-      />
+      <SariMascot state="utang" size={130} />
       <StyledText
         variant="extrabold"
         className="text-ink-800 text-lg mt-4 text-center"

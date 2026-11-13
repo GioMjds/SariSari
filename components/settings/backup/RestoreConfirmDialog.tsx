@@ -25,8 +25,8 @@ export function RestoreConfirmDialog({
       onClose={onCancel}
       title={t('common:restorePickerConfirmTitle')}
       description={t('common:restorePickerConfirmMessage')}
-      icon="exclamation-triangle"
       variant="danger"
+      mascot="delete"
       size="sm"
       buttons={[
         {

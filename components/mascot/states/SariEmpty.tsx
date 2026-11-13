@@ -59,7 +59,7 @@ export function SariEmpty({ size, animate }: SariEmptyProps) {
   }));
 
   const magnifierStyle = useAnimatedStyle(() => ({
-    transformOrigin: '64% 71.5%',
+    transformOrigin: [128 * unit, 143 * unit, 0],
     transform: [
       {
         rotate: `${interpolate(
@@ -81,7 +81,7 @@ export function SariEmpty({ size, animate }: SariEmptyProps) {
   }));
 
   const eyesStyle = useAnimatedStyle(() => ({
-    transformOrigin: '50% 48.5%',
+    transformOrigin: [100 * unit, 97 * unit, 0],
     transform: [
       { scaleY: interpolate(cycle.value, [0.8, 0.82, 0.84], [1, 0.1, 1], CLAMP) },
     ],

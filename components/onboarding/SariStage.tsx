@@ -3,28 +3,32 @@ import { Image, ImageSourcePropType, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
+import { SariMascot, type SariState as MascotState } from '@/components/mascot';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { SARI_FALLBACK_ASSET } from '@/constants/onboardingTour.assets';
 
 /**
  * SariStage - Sari on a warm paper gradient with an optional speech
  * bubble. Changing `poseKey` replays a small spring so pose swaps feel
- * alive. A failed image load falls back to the default Sari.
+ * alive. Pass `mascot` for the animated vector Sari, or `source` for a
+ * still image; a failed image load falls back to the default Sari.
  */
 
 type Props = {
-  source: ImageSourcePropType;
+  source?: ImageSourcePropType | undefined;
+  mascot?: MascotState | undefined;
   bubble?: string | undefined;
   poseKey?: string | undefined;
   size?: number;
 };
 
-export function SariStage({ source, bubble, poseKey, size = 140 }: Props) {
+export function SariStage({ source, mascot, bubble, poseKey, size = 140 }: Props) {
   const reducedMotion = useReducedMotion();
   const [failedSource, setFailedSource] = useState<ImageSourcePropType | null>(
     null,
   );
-  const shown = failedSource === source ? SARI_FALLBACK_ASSET : source;
+  const shown =
+    source == null || failedSource === source ? SARI_FALLBACK_ASSET : source;
 
   return (
     <View className="w-full rounded-3xl overflow-hidden">
@@ -49,13 +53,17 @@ export function SariStage({ source, bubble, poseKey, size = 140 }: Props) {
           transition={{ type: 'spring', damping: 12 }}
           style={{ width: size, height: size }}
         >
-          <Image
-            source={shown}
-            resizeMode="contain"
-            accessibilityIgnoresInvertColors
-            onError={() => setFailedSource(source)}
-            className="w-full h-full"
-          />
+          {mascot ? (
+            <SariMascot state={mascot} size={size} />
+          ) : (
+            <Image
+              source={shown}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
+              onError={() => setFailedSource(source ?? null)}
+              className="w-full h-full"
+            />
+          )}
         </MotiView>
 
         {bubble ? (

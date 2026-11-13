@@ -71,7 +71,7 @@ export function SariOutstandingBalance({ size, animate }: SariOutstandingBalance
 
   // The beam dips on each tap, then rocks back to its tipped rest.
   const beamStyle = useAnimatedStyle(() => ({
-    transformOrigin: '53% 68.5%',
+    transformOrigin: [106 * unit, 137 * unit, 0],
     transform: [
       {
         rotate: `${interpolate(

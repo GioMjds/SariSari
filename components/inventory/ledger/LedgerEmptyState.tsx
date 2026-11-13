@@ -1,8 +1,7 @@
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
-
-const sariImage = require('@/assets/images/sari-emotions/sari-inventory-state.png');
+import { SariMascot } from '@/components/mascot';
 
 interface LedgerEmptyStateProps {
   /**
@@ -36,11 +35,7 @@ export function LedgerEmptyState({
 }: LedgerEmptyStateProps) {
   return (
     <View className="flex-1 justify-center items-center px-6 py-10 bg-paper-100">
-      <Image
-        source={sariImage}
-        style={{ width: 160, height: 160, marginBottom: 16 }}
-        resizeMode="contain"
-      />
+      <SariMascot state="inventory" size={160} style={{ marginBottom: 16 }} />
 
       <StyledText
         variant="extrabold"

@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface SalesEmptyStateProps {
   onNewSale: () => void;
@@ -56,13 +57,13 @@ export function SalesEmptyState({
       <View className="h-3" />
 
       <View className="paper-texture items-center px-6 pt-4 pb-8">
-        <View className="w-12 h-12 rounded-2xl bg-persimmon-100 border border-persimmon-200 items-center justify-center mb-3">
-          <FontAwesome
-            name={hasSales ? 'search-minus' : 'file-text-o'}
-            size={22}
-            color="#E85A1F"
-          />
-        </View>
+        {hasSales ? (
+          <View className="w-12 h-12 rounded-2xl bg-persimmon-100 border border-persimmon-200 items-center justify-center mb-3">
+            <FontAwesome name="search-minus" size={22} color="#E85A1F" />
+          </View>
+        ) : (
+          <SariMascot state="sales" size={150} style={{ marginBottom: 4 }} />
+        )}
 
         <StyledText
           variant="extrabold"

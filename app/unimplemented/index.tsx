@@ -1,14 +1,13 @@
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { getFeatureByRoute } from '@/configs/features';
 import { FontAwesome } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const sariUnimplementedImage = require('@/assets/images/sari-emotions/sari-unimplemented.png');
 
 type SearchParams = {
   route?: string;
@@ -88,12 +87,7 @@ export default function UnimplementedScreen() {
             {/* Mascot Container */}
             <View className="items-center justify-center mb-4 relative">
               <View className="w-48 h-48 rounded-full bg-persimmon-500/10 absolute -top-1" />
-              <Image
-                source={sariUnimplementedImage}
-                style={{ width: 190, height: 190 }}
-                resizeMode="contain"
-                accessible={false}
-              />
+              <SariMascot state="unimplemented" size={190} />
             </View>
 
             {/* Status Badge */}

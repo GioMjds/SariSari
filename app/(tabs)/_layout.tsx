@@ -1,5 +1,6 @@
 import { StyledTab, StoreHeader } from '@/components/layout';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { Tabs, usePathname } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
@@ -116,6 +117,7 @@ export default function ScreensLayout() {
             style={styles.toastCard}
             className="bg-ink-900/90 px-4 py-2.5 rounded-full flex-row items-center border border-paper-400/20 shadow-lg"
           >
+            <SariMascot state="exit" size={36} style={styles.toastMascot} />
             <StyledText
               variant="medium"
               style={styles.toastText}
@@ -141,7 +143,14 @@ const styles = StyleSheet.create({
     zIndex: 999,
     elevation: 999,
   },
+  toastMascot: {
+    marginLeft: -6,
+    marginRight: 4,
+    marginVertical: -8,
+  },
   toastCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(30, 27, 24, 0.92)',
     paddingHorizontal: 16,
     paddingVertical: 10,

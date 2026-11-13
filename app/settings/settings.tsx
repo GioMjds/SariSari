@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTabBarBottomOffset } from '@/components/layout';
+import { SariMascot } from '@/components/mascot';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
 import { useProfile } from '@/hooks/useProfile';
 import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog';
@@ -37,6 +38,10 @@ export default function Settings() {
         contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
+        <View className="items-center pt-4">
+          <SariMascot state="settings" size={112} />
+        </View>
+
         <SettingsSection title={t('common:settingsStoreSection')}>
           <SettingsRow
             label={t('common:settingsStoreName')}

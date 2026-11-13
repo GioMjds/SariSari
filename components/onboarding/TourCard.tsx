@@ -11,11 +11,20 @@ import {
   DEMO_BY_TAB,
 } from '@/components/onboarding/demos';
 import { TourStepContent } from '@/constants/onboardingTour';
-import {
-  SARI_STATE_ASSETS,
-  SariState,
-} from '@/constants/onboardingTour.assets';
+import { SariState } from '@/constants/onboardingTour.assets';
+import type { SariState as MascotState } from '@/components/mascot';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+/** Tour poses mapped to the animated Sari states. */
+const TOUR_MASCOT: Record<SariState, MascotState> = {
+  default: 'default',
+  sales: 'sales',
+  inventory: 'inventory',
+  lowStock: 'low-stock',
+  utang: 'utang',
+  balanceCleared: 'balance-cleared',
+  reports: 'reports',
+};
 
 /**
  * TourCard - one tour step: Sari stage with a speech bubble, a
@@ -60,7 +69,7 @@ export function TourCard({ step }: Props) {
   return (
     <View className="gap-4">
       <SariStage
-        source={SARI_STATE_ASSETS[pose]}
+        mascot={TOUR_MASCOT[pose]}
         poseKey={pose}
         bubble={t(bubble.key, bubble.params ?? {})}
       />

@@ -47,6 +47,7 @@ import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
+import { SariMascot } from '@/components/mascot';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_CREDITS_OVERVIEW,
@@ -177,6 +178,10 @@ export default function ReportsScreen() {
         isRefreshing={isRefreshing}
         onRefresh={handleRefresh}
       >
+        <View className="items-center">
+          <SariMascot state="reports" size={104} />
+        </View>
+
         <View className="px-5 mt-2">
           <DateRangeSelector
             activeRange={dateRangeType}

@@ -11,6 +11,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
+import { SariMascot, type SariState } from '@/components/mascot';
 import { useModalStore } from '@/stores';
 import { ModalButton } from '@/types';
 
@@ -26,6 +27,8 @@ interface CustomModalProps extends Omit<
   buttons?: ModalButton[];
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
   icon?: keyof typeof FontAwesome.glyphMap;
+  /** Animated Sari shown in place of the icon circle, e.g. 'delete' for destructive confirms. */
+  mascot?: SariState;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   closeOnOverlay?: boolean;
   closeOnEscape?: boolean;
@@ -48,6 +51,7 @@ export function Modal({
   buttons,
   variant = 'default',
   icon,
+  mascot,
   size = 'sm',
   closeOnOverlay = true,
   closeOnEscape = true,
@@ -237,7 +241,9 @@ export function Modal({
           finalIcon ||
           finalVariant !== 'default') && (
           <View className="items-center mb-4">
-            {(finalIcon || finalVariant !== 'default') && (
+            {mascot ? (
+              <SariMascot state={mascot} size={104} style={{ marginBottom: 4 }} />
+            ) : (finalIcon || finalVariant !== 'default') && (
               <View
                 className={`${variantStyles.iconBg} rounded-full w-14 h-14 items-center justify-center mb-3`}
               >

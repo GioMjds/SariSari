@@ -156,6 +156,10 @@ function CandyLayer({ spec, cycle, unit }: CandyLayerProps) {
   const { cx, cy, color, start } = spec;
   const land = start + FALL;
   const dist = (cy - DROP_FROM_Y) * unit;
+  // Pivot in px. React Native's string parser rejects fractional
+  // percentages ("50.5% 68%"), so the origin is passed as numbers.
+  const originX = cx * unit;
+  const originY = cy * unit;
 
   const style = useAnimatedStyle(() => ({
     opacity: interpolate(
@@ -164,7 +168,7 @@ function CandyLayer({ spec, cycle, unit }: CandyLayerProps) {
       [0, 1, 1, 0],
       CLAMP,
     ),
-    transformOrigin: `${(cx / 200) * 100}% ${(cy / 200) * 100}%`,
+    transformOrigin: [originX, originY, 0],
     transform: [
       {
         // Ease-in fall (quarter distance at half time), then a small bounce.

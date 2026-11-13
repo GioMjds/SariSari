@@ -1,6 +1,7 @@
-import { View, Image, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface MovementEmptyStateProps {
   title?: string;
@@ -11,7 +12,6 @@ interface MovementEmptyStateProps {
 
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#F7F6F2';
-const mascotImage = require('@/assets/images/sari-emotions/sari-inventory-state.png');
 
 export function MovementEmptyState({
   title = 'Wala pang stock movement',
@@ -55,12 +55,7 @@ export function MovementEmptyState({
           Activity Log Empty
         </StyledText>
 
-        {/* Sari Mascot Image */}
-        <Image
-          source={mascotImage}
-          style={{ width: 180, height: 180 }}
-          resizeMode="contain"
-        />
+        <SariMascot state="inventory" size={180} />
 
         <StyledText
           variant="black"

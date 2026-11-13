@@ -96,7 +96,7 @@ export function BulkActionsToolbar({
       <Modal
         visible={confirmDelete}
         variant="danger"
-        icon="trash"
+        mascot="delete"
         title={`Delete ${selectedCount} products?`}
         description="This cannot be undone. Stock movements linked to these products will remain in your ledger."
         buttons={[

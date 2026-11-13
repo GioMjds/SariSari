@@ -1,9 +1,9 @@
-import { Image, Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { OnboardingProfile } from '@/types/onboarding.types';
-import { SARI_WELCOME_ASSET } from '@/constants/onboardingTour.assets';
 import { useTranslation } from 'react-i18next';
 import {
 	changeAppLanguage,
@@ -51,14 +51,7 @@ export function ProfileStep({ profile, onChange }: Props) {
 			className="flex-1"
 		>
 			<View className="items-center">
-				<View style={{ height: 160, width: '100%' }}>
-					<Image
-						source={SARI_WELCOME_ASSET}
-						resizeMode="contain"
-						accessibilityIgnoresInvertColors
-						className="w-full h-full"
-					/>
-				</View>
+				<SariMascot state="onboarding" size={160} />
 				<StyledText
 					variant="extrabold"
 					className="text-ink-900 text-h1 text-center mt-2"

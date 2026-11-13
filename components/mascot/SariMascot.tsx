@@ -9,18 +9,37 @@ import { SariLoading } from './states/SariLoading';
 import { SariLowStock } from './states/SariLowStock';
 import { SariBalanceCleared } from './states/SariBalanceCleared';
 import { SariOutstandingBalance } from './states/SariOutstandingBalance';
+import { SariInventory } from './states/SariInventory';
+import { SariSales } from './states/SariSales';
+import { SariUtang } from './states/SariUtang';
+import { SariOnboarding } from './states/SariOnboarding';
+import { SariDelete } from './states/SariDelete';
+import { SariSettings } from './states/SariSettings';
+import { SariReports } from './states/SariReports';
+import { SariExit } from './states/SariExit';
+import { SariUnimplemented } from './states/SariUnimplemented';
 
-/**
- * States Sari can act out. Add one entry per state as each animation lands.
- */
-export type SariState =
-  | 'default'
-  | 'empty'
-  | 'error'
-  | 'loading'
-  | 'low-stock'
-  | 'balance-cleared'
-  | 'outstanding-balance';
+/** Every state Sari can act out. */
+export const SARI_STATES = [
+  'default',
+  'empty',
+  'error',
+  'loading',
+  'low-stock',
+  'balance-cleared',
+  'outstanding-balance',
+  'inventory',
+  'sales',
+  'utang',
+  'onboarding',
+  'delete',
+  'settings',
+  'reports',
+  'exit',
+  'unimplemented',
+] as const;
+
+export type SariState = (typeof SARI_STATES)[number];
 
 interface SariMascotProps {
   state?: SariState;
@@ -80,5 +99,23 @@ function renderState(state: SariState, size: number, animate: boolean) {
       return <SariBalanceCleared size={size} animate={animate} />;
     case 'outstanding-balance':
       return <SariOutstandingBalance size={size} animate={animate} />;
+    case 'inventory':
+      return <SariInventory size={size} animate={animate} />;
+    case 'sales':
+      return <SariSales size={size} animate={animate} />;
+    case 'utang':
+      return <SariUtang size={size} animate={animate} />;
+    case 'onboarding':
+      return <SariOnboarding size={size} animate={animate} />;
+    case 'delete':
+      return <SariDelete size={size} animate={animate} />;
+    case 'settings':
+      return <SariSettings size={size} animate={animate} />;
+    case 'reports':
+      return <SariReports size={size} animate={animate} />;
+    case 'exit':
+      return <SariExit size={size} animate={animate} />;
+    case 'unimplemented':
+      return <SariUnimplemented size={size} animate={animate} />;
   }
 }
