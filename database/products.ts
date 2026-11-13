@@ -1,6 +1,11 @@
 import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
 import { insertCatalogProductIfMissing } from './catalog';
+import {
+  clearRepriceFlag,
+  evaluateRepriceFlag,
+  recordPriceChange,
+} from './priceHistory';
 
 export interface FastLaneProduct extends Product {
   is_favorite: boolean;
@@ -257,10 +262,11 @@ export const updateProduct = async (
         id,
       );
 
-      const current = await db.getFirstAsync<{ quantity: number }>(
-        'SELECT quantity FROM products WHERE id = ?',
-        [id],
-      );
+      const current = await db.getFirstAsync<{
+        quantity: number;
+        cost_price: number | null;
+        price: number;
+      }>('SELECT quantity, cost_price, price FROM products WHERE id = ?', [id]);
       await db.runAsync(
         `UPDATE products SET
           name = ?, sku = ?, price = ?, quantity = ?, cost_price = ?, category = ?, barcode = ?, supplier_id = ?, image_uri = ?,
@@ -286,6 +292,31 @@ export const updateProduct = async (
           id,
         ],
       );
+      if (current) {
+        const oldCost = current.cost_price ?? null;
+        const newCost = cost_price ?? null;
+        const priceChanged = current.price !== price;
+
+        if (priceChanged) {
+          await recordPriceChange(
+            id,
+            'price',
+            current.price,
+            price,
+            'manual_edit',
+          );
+        }
+        if (newCost !== null && newCost !== oldCost) {
+          await recordPriceChange(id, 'cost', oldCost, newCost, 'manual_edit');
+          // A price change in the same edit means the owner already repriced.
+          if (!priceChanged) {
+            await evaluateRepriceFlag(id, oldCost, newCost, price);
+          }
+        }
+        if (priceChanged || newCost === null) {
+          await clearRepriceFlag(id);
+        }
+      }
       if (current && current.quantity !== quantity) {
         const delta = quantity - current.quantity;
         if (delta > 0) {
