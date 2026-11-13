@@ -103,6 +103,10 @@ export function invalidateProductDependencies(
     queryKey: ['reports'],
     refetchType: 'all',
   });
+  // Reprice flags and price history change whenever cost or price changes.
+  queryClient.invalidateQueries({
+    queryKey: ['price-history'],
+  });
   queryClient.invalidateQueries({
     queryKey: ['sales-stats'],
     refetchType: 'all',
