@@ -1,7 +1,7 @@
 # Price History and Margin Alert Design
 
 - Date: 2026-11-13
-- Status: approved design, not yet implemented
+- Status: implemented
 - Vault note: `obsidian-vault/02-Features/price-history-and-margin-alert.md`
 
 ## Intent
@@ -42,7 +42,7 @@ In scope:
 - Reprice flags with a suggested price.
 - Review sheet after delivery commit.
 - Needs-repricing list with a count badge on the More tab.
-- Recent history section on the product edit form.
+- Recent history card on the product details screen.
 
 Out of scope for this version:
 
@@ -65,7 +65,7 @@ Migration 24 adds two tables. All money values are integer pesos.
 | `field`      | TEXT NOT NULL                     | CHECK in (`cost`, `price`)                      |
 | `old_value`  | INTEGER                           | NULL when the product had no previous value     |
 | `new_value`  | INTEGER NOT NULL                  |                                                 |
-| `source`     | TEXT NOT NULL                     | CHECK in (`delivery`, `manual_edit`, `reprice`) |
+| `source`     | TEXT NOT NULL                     | CHECK in (`delivery`, `restock`, `manual_edit`, `reprice`) |
 | `receipt_id` | INTEGER                           | Delivery receipt that caused the change, if any |
 | `created_at` | TEXT NOT NULL                     | ISO timestamp                                   |
 
@@ -102,7 +102,7 @@ A flag is also deleted when:
 - The owner taps "Keep price".
 - The product is deleted (cascade).
 
-If a single manual edit changes both cost and price, the price change wins and no flag remains.
+If a single manual edit changes both cost and price, the price change wins and no flag remains. If a manual edit clears the cost to empty, no cost history row is written and any flag is removed.
 
 ### Suggested price
 
@@ -138,7 +138,7 @@ All functions use the single SQLite handle from `configs/sqlite.ts`.
 
 ### Changes to existing write paths
 
-- `database/inventory.ts`, `applyInventoryTransaction`: on a `restock` with a `unit_cost`, read the previous `cost_price` and current `price` before the update, then call `recordPriceChange` (`field = 'cost'`, `source = 'delivery'`) and `evaluateRepriceFlag`, passing the receipt id when present.
+- `database/inventory.ts`, `applyInventoryTransaction`: on a `restock` with a `unit_cost`, read the previous `cost_price` and current `price` before the update, then call `recordPriceChange` (`field = 'cost'`, `source = 'delivery'` when the transaction carries a receipt id, `source = 'restock'` otherwise) and `evaluateRepriceFlag`, passing the receipt id when present.
 - `database/products.ts`, `updateProduct`: compare previous and new `cost_price` and `price`. Record each change with `source = 'manual_edit'`. Evaluate the flag on a cost change. Clear the flag on a price change.
 - `database/migrations.ts`: migration 24 creates both tables and the index, then sets `user_version = 24`.
 
@@ -166,11 +166,11 @@ Row actions: "Update price" and "Keep price". A sheet-level "Later" closes the s
 
 ### Needs-repricing list
 
-New screen `app/(edit-forms)/reprice/index.tsx`, reached from `app/(tabs)/more/index.tsx` through an entry with a count badge. It reuses the same row component as the sheet. It shows an empty state when there are no flags.
+New screen `app/settings/reprice.tsx`, reached from `app/(tabs)/more/index.tsx` through an entry with a count badge. It reuses the same row component as the sheet. It shows an empty state when there are no flags.
 
 ### Product history
 
-A section on the product edit form showing the last 10 cost and price changes with date and source.
+A card on the Overview tab of the product details screen (`app/(edit-forms)/product-details/[id].tsx`) showing the last 10 cost and price changes with date and source. It is hidden when the product has no recorded changes.
 
 ### Shared component
 
@@ -178,7 +178,7 @@ A section on the product edit form showing the last 10 cost and price changes wi
 
 ### Localization
 
-New i18n namespace `pricing`, with strings in every existing locale.
+New i18n namespace `pricing`, with strings in every existing locale. The More-tab row strings live in the `common` namespace, matching the other More rows.
 
 ## Error handling
 

@@ -34,7 +34,7 @@ Bilang may-ari ng tindahan, gusto kong makita agad pagkatapos kong i-save ang de
 - Review sheet pagkatapos ng delivery commit: lumang puhunan, bagong puhunan, lumang markup, bagong markup, at mungkahing presyo na puwedeng i-edit.
 - Mga aksyon: "Update price", "Keep price", at "Later".
 - Listahan ng kailangang i-reprice mula sa More tab.
-- Huling 10 pagbabago ng puhunan at presyo sa product edit form.
+- Huling 10 pagbabago ng puhunan at presyo sa Overview tab ng product details screen.
 
 ## Hindi Kasama (Out of Scope)
 
@@ -50,6 +50,8 @@ Bilang may-ari ng tindahan, gusto kong makita agad pagkatapos kong i-save ang de
 - Integer pesos ang lahat ng halaga.
 - Mga write path na madadagdagan: `database/inventory.ts` (`applyInventoryTransaction`) at `database/products.ts` (`updateProduct`).
 - Bagong module: `database/priceHistory.ts`, `lib/repricing.ts`, `hooks/usePriceHistory.ts`.
+- Mga source ng pagbabago: `delivery`, `restock`, `manual_edit`, `reprice`.
+- Screen: `app/settings/reprice.tsx`; mga component sa `components/pricing/`.
 
 ## Mga Kaugnay na Tampok
 
@@ -61,7 +63,7 @@ Bilang may-ari ng tindahan, gusto kong makita agad pagkatapos kong i-save ang de
 
 - [x] Proposed
 - [x] Approved
-- [ ] In Development
-- [ ] Testing
-- [ ] Completed
+- [x] In Development
+- [x] Testing
+- [x] Completed
 - [ ] Released

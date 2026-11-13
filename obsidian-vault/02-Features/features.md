@@ -80,6 +80,8 @@ mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagig
   nakalaang ledger para sa GCash, Maya, at telco load float at service fee (_patong_).
 - [Listahan ng Bibilhin sa Palengke at Badyet](palengke-restock-sheet.md) —
   pinagsama-samang reorder checklist na may total working capital calculation at printable PDF.
+- [Kasaysayan ng Presyo at Babala sa Tubo](price-history-and-margin-alert.md) —
+  talaan ng pagbabago ng puhunan at presyo, at babala na may mungkahing presyo kapag tumaas ang puhunan pero hindi nabago ang presyo ng benta.
 
 ## Mapa ng mga Kaugnayan
 
