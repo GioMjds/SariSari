@@ -82,6 +82,8 @@ mga implikasyon sa data, mga dependency, mga open question, at mga tala sa pagig
   pinagsama-samang reorder checklist na may total working capital calculation at printable PDF.
 - [Kasaysayan ng Presyo at Babala sa Tubo](price-history-and-margin-alert.md) —
   talaan ng pagbabago ng puhunan at presyo, at babala na may mungkahing presyo kapag tumaas ang puhunan pero hindi nabago ang presyo ng benta.
+- [Utang sa Supplier (Supplier Payables)](supplier-payables.md) —
+  itala kung bayad, utang, o bahagyang bayad ang delivery, at subaybayan ang balanse, due date, at bayad bawat supplier na FIFO gaya ng suki ledger.
 
 ## Mapa ng mga Kaugnayan
 
