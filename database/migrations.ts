@@ -1100,4 +1100,43 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v23.');
   }
+
+  if (currentVersion < 24) {
+    console.log(
+      'Running migration to v24 (Price history and reprice flags)...',
+    );
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS product_price_changes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          product_id INTEGER NOT NULL
+            REFERENCES products(id) ON DELETE CASCADE,
+          field TEXT NOT NULL CHECK(field IN ('cost', 'price')),
+          old_value INTEGER,
+          new_value INTEGER NOT NULL,
+          source TEXT NOT NULL
+            CHECK(source IN ('delivery', 'restock', 'manual_edit', 'reprice')),
+          receipt_id INTEGER,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_price_changes_product
+          ON product_price_changes(product_id, created_at DESC, id DESC);
+
+        CREATE TABLE IF NOT EXISTS reprice_flags (
+          product_id INTEGER PRIMARY KEY
+            REFERENCES products(id) ON DELETE CASCADE,
+          baseline_cost INTEGER NOT NULL,
+          new_cost INTEGER NOT NULL,
+          price_at_flag INTEGER NOT NULL,
+          receipt_id INTEGER,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_reprice_flags_receipt
+          ON reprice_flags(receipt_id);
+      `);
+
+      await db.execAsync('PRAGMA user_version = 24;');
+    });
+    console.log('Database migrated to v24.');
+  }
 }

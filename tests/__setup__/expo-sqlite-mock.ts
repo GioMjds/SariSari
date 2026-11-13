@@ -49,6 +49,8 @@ export const mockDb = {
 export const resetMockDb = () => {
   const tables = [
     'sqlite_sequence',
+    'reprice_flags',
+    'product_price_changes',
     'delivery_receipt_lines',
     'delivery_receipts',
     'financial_entries',
