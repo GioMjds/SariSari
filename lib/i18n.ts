@@ -51,6 +51,37 @@ const resources = {
   },
 } satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
+// Initialize at module scope. Screens mount before the saved language
+// preference has been read from AsyncStorage, so the instance must be
+// registered with react-i18next before the first `useTranslation()` call.
+// With inline `resources` and no backend, `init` completes synchronously.
+void i18n.use(initReactI18next).init({
+  resources,
+  lng: 'en',
+  fallbackLng: 'en',
+  ns: [
+    'common',
+    'inventory',
+    'sales',
+    'utang',
+    'onboarding',
+    'stocktake',
+    'corrections',
+    'settings',
+    'receiving',
+  ],
+  defaultNS: 'common',
+  interpolation: {
+    escapeValue: false,
+  },
+  returnNull: false,
+});
+
+/**
+ * Apply the saved language preference. The root layout keeps the splash
+ * screen up until this resolves, so the switch away from the English
+ * default is never visible.
+ */
 export const initI18n = async (): Promise<void> => {
   let savedLanguage: string | null = null;
   try {
@@ -62,27 +93,9 @@ export const initI18n = async (): Promise<void> => {
   const initialLanguage: SupportedLanguage =
     savedLanguage === 'tl' ? 'tl' : 'en';
 
-  await i18n.use(initReactI18next).init({
-    resources,
-    lng: initialLanguage,
-    fallbackLng: 'en',
-    ns: [
-      'common',
-      'inventory',
-      'sales',
-      'utang',
-      'onboarding',
-      'stocktake',
-      'corrections',
-      'settings',
-      'receiving',
-    ],
-    defaultNS: 'common',
-    interpolation: {
-      escapeValue: false,
-    },
-    returnNull: false,
-  });
+  if (i18n.language !== initialLanguage) {
+    await i18n.changeLanguage(initialLanguage);
+  }
 };
 
 export const changeAppLanguage = async (
