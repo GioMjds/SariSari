@@ -1,7 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
+import {  FlatList,
   Pressable,
   RefreshControl,
   View,
@@ -16,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { Href, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { useDeliveryReceipts } from '@/hooks/useDeliveryReceipts';
 import { formatPesos } from '@/lib/money';
 import type {
@@ -216,7 +215,7 @@ export default function DeliveryReceiptsScreen() {
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#E85A1F" />
+          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
         </View>
       ) : (
         <FlatList<DeliveryReceiptSummary>

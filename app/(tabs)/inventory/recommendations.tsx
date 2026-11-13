@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { useStockSheetSignal } from '@/stores';
 import { MoneyText } from '@/components/ui';
 import {
@@ -11,9 +12,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, Href } from 'expo-router';
 import { MotiView } from 'moti';
 import { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
+import {  FlatList,
   Modal,
   Pressable,
   ScrollView,
@@ -631,7 +630,7 @@ export default function RecommendationsScreen() {
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#E85A1F" />
+          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
         </View>
       ) : activeList.length === 0 ? (
         <View className="flex-1 justify-center items-center px-8">

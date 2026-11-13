@@ -14,6 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useGetSupplier, useSuppliers } from '@/hooks/useSuppliers';
 import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { Modal } from '@/components/ui';
 import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
@@ -131,7 +132,7 @@ export default function EditSupplier() {
         className="flex-1 bg-background justify-center items-center"
         edges={['top', 'bottom']}
       >
-        <ActivityIndicator size="large" color="#E85A1F" />
+        <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
       </SafeAreaView>
     );
   }

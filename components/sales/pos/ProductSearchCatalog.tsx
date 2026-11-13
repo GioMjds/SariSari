@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
@@ -160,7 +161,7 @@ export function ProductSearchCatalog({
       {/* Products List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#623418" />
+          <SariMascot state="loading" size={88} accessibilityLabel="Loading" />
         </View>
       ) : (
         <FlatList

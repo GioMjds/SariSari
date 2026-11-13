@@ -1,9 +1,10 @@
 import { memo, useMemo } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { format, isToday, isYesterday, isValid } from 'date-fns';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { StatusPill } from '@/components/ui';
 import {
   InventoryTransaction,
@@ -155,7 +156,7 @@ export const ProductHistoryTab = memo(function ProductHistoryTab({
   if (isLoading) {
     return (
       <View className="items-center justify-center py-12 px-8">
-        <ActivityIndicator size="large" color="#E85A1F" />
+        <SariMascot state="loading" size={88} accessibilityLabel="Loading" />
         <StyledText variant="medium" className="text-ink-500 text-sm mt-3">
           Loading history...
         </StyledText>

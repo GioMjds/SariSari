@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 export interface DashboardStockAlertProps {
   lowStockCount: number;
@@ -37,12 +38,7 @@ export const DashboardStockAlert = memo(function DashboardStockAlert({
         className="flex-row items-center justify-between bg-paper-50 rounded-xl px-4 py-3 border border-ink-100 active:opacity-80"
       >
         <View className="flex-row items-center flex-1 mr-3">
-          <FontAwesome
-            name="exclamation-triangle"
-            size={14}
-            color="#C77B0E"
-            style={{ marginRight: 10 }}
-          />
+          <SariMascot state="low-stock" size={52} style={{ marginRight: 8 }} />
           <View className="flex-1">
             <StyledText variant="semibold" className="text-sm text-ink-900">
               {message}

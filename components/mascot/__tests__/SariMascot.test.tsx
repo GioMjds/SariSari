@@ -30,6 +30,34 @@ describe('SariMascot', () => {
     ).toBeTruthy();
   });
 
+  it('renders the loading state', async () => {
+    const screen = await render(
+      <SariMascot state="loading" accessibilityLabel="Loading" />,
+    );
+    expect(screen.getByLabelText('Loading')).toBeTruthy();
+  });
+
+  it('renders the low stock state', async () => {
+    const screen = await render(<SariMascot state="low-stock" size={56} />);
+    expect(
+      screen.getByTestId('sari-mascot-low-stock', { includeHiddenElements: true }),
+    ).toBeTruthy();
+  });
+
+  it('renders the balance cleared state', async () => {
+    const screen = await render(<SariMascot state="balance-cleared" size={96} />);
+    expect(
+      screen.getByTestId('sari-mascot-balance-cleared', { includeHiddenElements: true }),
+    ).toBeTruthy();
+  });
+
+  it('renders the outstanding balance state', async () => {
+    const screen = await render(<SariMascot state="outstanding-balance" size={64} />);
+    expect(
+      screen.getByTestId('sari-mascot-outstanding-balance', { includeHiddenElements: true }),
+    ).toBeTruthy();
+  });
+
   it('is decorative unless an accessibility label is given', async () => {
     const screen = await render(<SariMascot />);
     expect(screen.queryByRole('image')).toBeNull();

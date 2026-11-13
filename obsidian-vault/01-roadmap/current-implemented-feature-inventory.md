@@ -180,6 +180,16 @@ Primary code: `app/(tabs)/home/today.tsx`, `app/(tabs)/more/reports.tsx`, `hooks
 
 Primary code: `app/(tabs)/more/cash-entries.tsx`, `components/financial/`, `hooks/useFinancial.ts`, `database/financial.ts`.
 
+### Price History and Margin Alert
+
+- Cost and selling-price history per product, written on delivery commit, manual restock, manual edit, and reprice.
+- Reprice flag when a cost rises and the selling price is unchanged.
+- Suggested price that keeps the previous markup percent, rounded up to a whole peso.
+- Review sheet after delivery commit, needs-repricing list from the More tab, and a history card on product details.
+- Retail unit only; wholesale cost and price are not tracked.
+
+Primary code: `app/settings/reprice.tsx`, `components/pricing/`, `hooks/usePriceHistory.ts`, `database/priceHistory.ts`, `lib/repricing.ts`.
+
 ### Owner PIN and Audit Controls
 
 - Salted PIN storage.

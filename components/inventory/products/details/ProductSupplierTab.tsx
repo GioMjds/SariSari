@@ -2,11 +2,10 @@ import { memo } from 'react';
 import {
   View,
   TouchableOpacity,
-  Linking,
-  ActivityIndicator,
-} from 'react-native';
+  Linking,} from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { Supplier } from '@/types/suppliers.types';
 
 interface ProductSupplierTabProps {
@@ -40,7 +39,7 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
   if (isLoading) {
     return (
       <View className="items-center justify-center py-12 px-8">
-        <ActivityIndicator size="large" color="#E85A1F" />
+        <SariMascot state="loading" size={88} accessibilityLabel="Loading" />
         <StyledText variant="medium" className="text-ink-500 text-sm mt-3">
           Loading supplier details...
         </StyledText>

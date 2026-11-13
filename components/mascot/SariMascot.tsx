@@ -1,14 +1,26 @@
 import { memo } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useScreenFocused } from './useScreenFocused';
 import { SariDefault } from './states/SariDefault';
 import { SariEmpty } from './states/SariEmpty';
 import { SariError } from './states/SariError';
+import { SariLoading } from './states/SariLoading';
+import { SariLowStock } from './states/SariLowStock';
+import { SariBalanceCleared } from './states/SariBalanceCleared';
+import { SariOutstandingBalance } from './states/SariOutstandingBalance';
 
 /**
  * States Sari can act out. Add one entry per state as each animation lands.
  */
-export type SariState = 'default' | 'empty' | 'error';
+export type SariState =
+  | 'default'
+  | 'empty'
+  | 'error'
+  | 'loading'
+  | 'low-stock'
+  | 'balance-cleared'
+  | 'outstanding-balance';
 
 interface SariMascotProps {
   state?: SariState;
@@ -33,7 +45,9 @@ export const SariMascot = memo(function SariMascot({
   style,
 }: SariMascotProps) {
   const reducedMotion = useReducedMotion();
-  const animate = animated && !reducedMotion;
+  const focused = useScreenFocused();
+  // Loops stop when the screen is hidden (tabs stay mounted) or under Reduce Motion.
+  const animate = animated && !reducedMotion && focused;
   const a11y = accessibilityLabel
     ? ({ accessible: true, accessibilityRole: 'image', accessibilityLabel } as const)
     : ({ accessible: false, importantForAccessibility: 'no-hide-descendants' } as const);
@@ -58,5 +72,13 @@ function renderState(state: SariState, size: number, animate: boolean) {
       return <SariEmpty size={size} animate={animate} />;
     case 'error':
       return <SariError size={size} animate={animate} />;
+    case 'loading':
+      return <SariLoading size={size} animate={animate} />;
+    case 'low-stock':
+      return <SariLowStock size={size} animate={animate} />;
+    case 'balance-cleared':
+      return <SariBalanceCleared size={size} animate={animate} />;
+    case 'outstanding-balance':
+      return <SariOutstandingBalance size={size} animate={animate} />;
   }
 }

@@ -6,6 +6,7 @@ import { MotiView } from 'moti';
 import { Customer } from '@/types';
 import { MoneyText, ReceiptHero, ReceiptHeroDivider, StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface PriorityCustomerHeroProps {
   customer: Customer | null;
@@ -89,27 +90,30 @@ export const PriorityCustomerHero = memo(function PriorityCustomerHero({
             />
 
             {/* Hero money — featured */}
-            <View className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200">
-              <View className="flex-row items-baseline">
-                <MoneyText
-                  value={customer.outstanding_balance}
-                  size="hero"
-                  variant={hasOverdue ? 'danger' : 'default'}
-                  className="text-ink-900"
-                  style={{ fontSize: 44, letterSpacing: -1.2 }}
-                />
+            <View className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200 flex-row items-center">
+              <View className="flex-1">
+                <View className="flex-row items-baseline">
+                  <MoneyText
+                    value={customer.outstanding_balance}
+                    size="hero"
+                    variant={hasOverdue ? 'danger' : 'default'}
+                    className="text-ink-900"
+                    style={{ fontSize: 44, letterSpacing: -1.2 }}
+                  />
+                </View>
+                <View className="flex-row items-center mt-2">
+                  <FontAwesome name="clock-o" size={11} color="#7A7165" />
+                  <StyledText
+                    variant="medium"
+                    className="text-mono text-ink-500 ml-1.5"
+                  >
+                    {customer.last_transaction_date
+                      ? `Last activity ${formatDistanceToNow(new Date(customer.last_transaction_date), { addSuffix: true })}`
+                      : 'No prior transactions'}
+                  </StyledText>
+                </View>
               </View>
-              <View className="flex-row items-center mt-2">
-                <FontAwesome name="clock-o" size={11} color="#7A7165" />
-                <StyledText
-                  variant="medium"
-                  className="text-mono text-ink-500 ml-1.5"
-                >
-                  {customer.last_transaction_date
-                    ? `Last activity ${formatDistanceToNow(new Date(customer.last_transaction_date), { addSuffix: true })}`
-                    : 'No prior transactions'}
-                </StyledText>
-              </View>
+              <SariMascot state="outstanding-balance" size={76} style={{ marginLeft: 8 }} />
             </View>
 
             {/* Quick actions — sage primary, persimmon secondary */}
@@ -156,11 +160,7 @@ export const PriorityCustomerHero = memo(function PriorityCustomerHero({
         ) : (
           <ReceiptHero tone="sage" headerLabel="ALL CLEARED" headerCode="RESIBO">
             <View className="px-5 py-6 items-center paper-texture">
-              <View
-                className="w-14 h-14 rounded-full bg-sage-50 items-center justify-center mb-3 border border-sage-500"
-              >
-                <FontAwesome name="check" size={22} color="#4F7A24" />
-              </View>
+              <SariMascot state="balance-cleared" size={96} style={{ marginBottom: 4 }} />
               <StyledText
                 variant="black"
                 className="text-ink-900 text-xl text-center"

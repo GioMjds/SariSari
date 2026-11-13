@@ -29,18 +29,15 @@ export function CreditsEmptyState({
   let title = 'No sukis yet';
   let subtitle = 'Add your first customer to start tracking utang.';
   let eyebrow = 'Empty ledger';
-  let iconBg = 'bg-persimmon-50';
 
   if (variant === 'no-search') {
     title = `No matches for "${searchTerm}"`;
     subtitle = 'Check the spelling or try a different name or number.';
     eyebrow = 'Nothing here';
-    iconBg = 'bg-paper-100';
   } else if (variant === 'all-cleared') {
     title = 'All balances cleared';
     subtitle = 'Every customer is settled — nice and clean.';
     eyebrow = 'Cleared';
-    iconBg = 'bg-sage-50';
   }
 
   return (
@@ -80,11 +77,7 @@ export function CreditsEmptyState({
         </StyledText>
 
         {variant === 'all-cleared' ? (
-          <View
-            className={`w-24 h-24 rounded-full ${iconBg} items-center justify-center mb-2 border border-sage-500`}
-          >
-            <FontAwesome name="check" size={42} color="#4F7A24" />
-          </View>
+          <SariMascot state="balance-cleared" size={160} />
         ) : (
           <SariMascot state="empty" size={180} />
         )}
