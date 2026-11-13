@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
-import { useFinancialTotals, useLocalSnapshots } from '@/hooks';
+import {
+  useFinancialTotals,
+  useLocalSnapshots,
+  useRepriceFlags,
+} from '@/hooks';
 import { getTodayDateString } from '@/utils';
 import {
   CashSummaryFeatureCard,
@@ -19,6 +23,12 @@ export function MoreHomeScreen() {
   const today = getTodayDateString();
   const financialTotals = useFinancialTotals(today, today);
   const snapshots = useLocalSnapshots();
+  const repriceFlags = useRepriceFlags();
+  const repriceCount = repriceFlags.data?.length ?? 0;
+  const repriceSupportingText =
+    repriceCount > 0
+      ? t('common:moreHomeRepriceSubCount', { count: repriceCount })
+      : t('common:moreHomeRepriceSub');
   const navigate = useMoreDestinationNavigation();
   const bottomOffset = useTabBarBottomOffset();
   const { width } = useWindowDimensions();
@@ -104,6 +114,17 @@ export function MoreHomeScreen() {
                 'common:moreHomePalengkeSub',
               )}`}
               accessibilityHint={t('common:moreHomePalengkeHint')}
+            />
+            <MoreDestinationRow
+              icon="tag"
+              title={t('common:moreHomeRepriceLabel')}
+              supportingText={repriceSupportingText}
+              badgeCount={repriceCount}
+              onPress={() => navigate(MORE_ROUTES.reprice)}
+              accessibilityLabel={`${t(
+                'common:moreHomeRepriceLabel',
+              )}. ${repriceSupportingText}`}
+              accessibilityHint={t('common:moreHomeRepriceHint')}
             />
             <MoreDestinationRow
               icon="mobile"

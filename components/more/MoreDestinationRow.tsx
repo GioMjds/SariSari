@@ -9,6 +9,8 @@ export type MoreDestinationRowProps = {
   onPress: () => void;
   accessibilityLabel: string;
   accessibilityHint?: string;
+  /** Shows a count pill before the chevron when above zero. */
+  badgeCount?: number;
 };
 
 export function MoreDestinationRow({
@@ -18,6 +20,7 @@ export function MoreDestinationRow({
   onPress,
   accessibilityLabel,
   accessibilityHint,
+  badgeCount,
 }: MoreDestinationRowProps) {
   return (
     <Pressable
@@ -40,6 +43,17 @@ export function MoreDestinationRow({
           {supportingText}
         </StyledText>
       </View>
+
+      {badgeCount !== undefined && badgeCount > 0 ? (
+        <View
+          testID="more-row-badge"
+          className="mr-3 min-w-[24px] items-center justify-center rounded-full bg-persimmon-500 px-2 py-0.5"
+        >
+          <StyledText variant="extrabold" className="text-xs text-paper-50">
+            {badgeCount > 99 ? '99+' : String(badgeCount)}
+          </StyledText>
+        </View>
+      ) : null}
 
       <FontAwesome name="chevron-right" size={16} color="#7A7165" />
     </Pressable>
