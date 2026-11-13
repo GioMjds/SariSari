@@ -1,6 +1,7 @@
 import { db } from '@/configs/sqlite';
 import { resetMockDb } from '../__setup__/expo-sqlite-mock';
 import { seedProduct, setupDeliveryDb } from '../helpers/deliveryFixtures';
+import { expectRejection } from '../helpers/expectRejection';
 
 describe('migration v24: price history and reprice flags', () => {
   beforeAll(async () => {
@@ -53,18 +54,18 @@ describe('migration v24: price history and reprice flags', () => {
 
   it('rejects an unknown field and an unknown source', async () => {
     const p = await seedProduct({ name: 'A', sku: 'M-A', cost: 10 });
-    await expect(
+    await expectRejection(
       db.runAsync(
         "INSERT INTO product_price_changes (product_id, field, old_value, new_value, source, created_at) VALUES (?, 'bogus', 1, 2, 'delivery', 'x')",
         [p],
       ),
-    ).rejects.toThrow();
-    await expect(
+    );
+    await expectRejection(
       db.runAsync(
         "INSERT INTO product_price_changes (product_id, field, old_value, new_value, source, created_at) VALUES (?, 'cost', 1, 2, 'bogus', 'x')",
         [p],
       ),
-    ).rejects.toThrow();
+    );
   });
 
   it('allows only one flag per product', async () => {
@@ -75,6 +76,6 @@ describe('migration v24: price history and reprice flags', () => {
         [p],
       );
     await insert();
-    await expect(insert()).rejects.toThrow();
+    await expectRejection(insert());
   });
 });

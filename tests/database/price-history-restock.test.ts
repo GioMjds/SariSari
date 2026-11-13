@@ -18,6 +18,7 @@ import {
   seedSupplier,
   setupDeliveryDb,
 } from '../helpers/deliveryFixtures';
+import { expectRejection } from '../helpers/expectRejection';
 
 const retail = (
   productId: number,
@@ -148,7 +149,7 @@ describe('cost history on restock', () => {
       BEGIN SELECT RAISE(ABORT, 'forced failure'); END;
     `);
     try {
-      await expect(commitDeliveryReceipt(id)).rejects.toThrow('forced failure');
+      await expectRejection(commitDeliveryReceipt(id), 'forced failure');
     } finally {
       await db.execAsync('DROP TRIGGER fail_commit;');
     }

@@ -1,6 +1,7 @@
 import { db } from '@/configs/sqlite';
 import { resetMockDb } from '../__setup__/expo-sqlite-mock';
 import { seedSupplier, setupDeliveryDb } from '../helpers/deliveryFixtures';
+import { expectRejection } from '../helpers/expectRejection';
 
 describe('migration v23: delivery receipts', () => {
   beforeAll(async () => {
@@ -29,11 +30,11 @@ describe('migration v23: delivery receipts', () => {
     await db.runAsync(
       "INSERT INTO delivery_receipts (supplier_id, status) VALUES ('sup-a', 'draft')",
     );
-    await expect(
+    await expectRejection(
       db.runAsync(
         "INSERT INTO delivery_receipts (supplier_id, status) VALUES ('sup-a', 'draft')",
       ),
-    ).rejects.toThrow();
+    );
     await db.runAsync(
       "INSERT INTO delivery_receipts (supplier_id, status) VALUES ('sup-a', 'committed')",
     );
@@ -41,10 +42,10 @@ describe('migration v23: delivery receipts', () => {
 
   it('rejects an unknown status', async () => {
     await seedSupplier('sup-b');
-    await expect(
+    await expectRejection(
       db.runAsync(
         "INSERT INTO delivery_receipts (supplier_id, status) VALUES ('sup-b', 'bogus')",
       ),
-    ).rejects.toThrow();
+    );
   });
 });
