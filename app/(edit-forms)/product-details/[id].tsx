@@ -10,6 +10,7 @@ import { useGetProduct, useGetSupplier, useProducts } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
 import { Modal } from '@/components/ui';
 import { LogTransactionForm } from '@/components/inventory/ledger';
+import { PriceHistoryCard } from '@/components/pricing';
 import type { InventoryEventType } from '@/types/inventory.types';
 import {
   ProductDetailsHero,
@@ -204,14 +205,17 @@ export default function ProductDetailsPage() {
         {/* ── Tab content ────────────────────────────────────── */}
         <View className="mt-4">
           {activeTab === 'overview' && (
-            <ProductOverviewTab
-              product={product}
-              onEdit={handleEdit}
-              onRestock={handleRestock}
-              onAdjust={handleAdjust}
-              onDamaged={handleDamaged}
-              onDelete={handleDelete}
-            />
+            <>
+              <ProductOverviewTab
+                product={product}
+                onEdit={handleEdit}
+                onRestock={handleRestock}
+                onAdjust={handleAdjust}
+                onDamaged={handleDamaged}
+                onDelete={handleDelete}
+              />
+              <PriceHistoryCard productId={product.id} />
+            </>
           )}
 
           {activeTab === 'history' && (
