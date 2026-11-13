@@ -16,10 +16,12 @@ import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { Sheet } from '@/components/inventory/modals/_shared';
 import { DeliveryLineRow } from '@/components/receiving/DeliveryLineRow';
 import { ProductPickerSheet } from '@/components/receiving/ProductPickerSheet';
 import { deliveryErrorMessage } from '@/components/receiving/deliveryErrors';
+import { RepriceReviewSheet } from '@/components/pricing';
 import {
   lineFormFromReceiptLine,
   mergeSeededLines,
@@ -35,6 +37,7 @@ import {
   useVoidDeliveryReceipt,
 } from '@/hooks/useDeliveryReceipts';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
+import { useFetchRepriceFlagsForReceipt } from '@/hooks/usePriceHistory';
 import { useProducts } from '@/hooks/useProducts';
 import { usePalengkeRestockPlan } from '@/hooks/useStockIntelligence';
 import { useSuppliers } from '@/hooks/useSuppliers';
@@ -91,6 +94,7 @@ export default function DeliveryReceiptEditor() {
   const commitMutation = useCommitDeliveryReceipt();
   const voidMutation = useVoidDeliveryReceipt();
   const discardMutation = useDiscardDeliveryDraft();
+  const fetchRepriceFlags = useFetchRepriceFlagsForReceipt();
 
   const [supplierId, setSupplierId] = useState<string | null>(null);
   const [invoiceNo, setInvoiceNo] = useState('');
@@ -102,6 +106,8 @@ export default function DeliveryReceiptEditor() {
   const [voidSheetOpen, setVoidSheetOpen] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [discardOpen, setDiscardOpen] = useState(false);
+  // The committed receipt whose cost increases are being reviewed, if any.
+  const [repriceReceiptId, setRepriceReceiptId] = useState<number | null>(null);
 
   // Which receipt the local form was loaded from, so a refetch never
   // overwrites what the owner is typing.
@@ -300,6 +306,20 @@ export default function DeliveryReceiptEditor() {
       if (savedId === null) return;
       await commitMutation.mutateAsync(savedId);
       addToast({ message: t('committedToast'), variant: 'success' });
+      // The delivery is already saved. A failed lookup must not look like a
+      // failed commit, so fall through to the list; the flags stay available
+      // on the needs-repricing screen.
+      let flagged = 0;
+      try {
+        flagged = (await fetchRepriceFlags(savedId)).length;
+      } catch {
+        flagged = 0;
+      }
+      if (flagged > 0) {
+        setReviewOpen(false);
+        setRepriceReceiptId(savedId);
+        return;
+      }
       router.replace(LIST_ROUTE);
     } catch (err) {
       toastError(err);
@@ -401,7 +421,7 @@ export default function DeliveryReceiptEditor() {
 
       {isLoadingDetail ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#E85A1F" />
+          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
         </View>
       ) : !isDraft && detail ? (
         <ReadOnlyReceipt
@@ -779,6 +799,14 @@ export default function DeliveryReceiptEditor() {
           </TouchableOpacity>
         </View>
       </Sheet>
+
+      <RepriceReviewSheet
+        receiptId={repriceReceiptId}
+        onClose={() => {
+          setRepriceReceiptId(null);
+          router.replace(LIST_ROUTE);
+        }}
+      />
 
       <Modal
         visible={discardOpen}
