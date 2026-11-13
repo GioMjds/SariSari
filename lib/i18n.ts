@@ -11,6 +11,7 @@ import stocktakeEn from '../locales/en/stocktake.json';
 import correctionsEn from '../locales/en/corrections.json';
 import settingsEn from '../locales/en/settings.json';
 import receivingEn from '../locales/en/receiving.json';
+import pricingEn from '../locales/en/pricing.json';
 
 import commonTl from '../locales/tl/common.json';
 import inventoryTl from '../locales/tl/inventory.json';
@@ -21,6 +22,7 @@ import stocktakeTl from '../locales/tl/stocktake.json';
 import correctionsTl from '../locales/tl/corrections.json';
 import settingsTl from '../locales/tl/settings.json';
 import receivingTl from '../locales/tl/receiving.json';
+import pricingTl from '../locales/tl/pricing.json';
 
 const LANGUAGE_KEY = 'sarisari_language_preference';
 
@@ -37,6 +39,7 @@ const resources = {
     corrections: correctionsEn,
     settings: settingsEn,
     receiving: receivingEn,
+    pricing: pricingEn,
   },
   tl: {
     common: commonTl,
@@ -48,6 +51,7 @@ const resources = {
     corrections: correctionsTl,
     settings: settingsTl,
     receiving: receivingTl,
+    pricing: pricingTl,
   },
 } satisfies Record<SupportedLanguage, Record<string, unknown>>;
 
@@ -69,6 +73,7 @@ void i18n.use(initReactI18next).init({
     'corrections',
     'settings',
     'receiving',
+    'pricing',
   ],
   defaultNS: 'common',
   interpolation: {
