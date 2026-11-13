@@ -1,18 +1,18 @@
-import { FC, useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  TextInput,
-  View,
-} from 'react-native';
 import { StyledText } from '@/components/elements';
 import { tryParsePesosInput } from '@/lib/money';
 import type {
-  DigitalWalletType,
-  NewDigitalWallet,
+    DigitalWalletType,
+    NewDigitalWallet,
 } from '@/types/digitalServices.types';
+import { FC, useEffect, useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    TextInput,
+    View,
+} from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -71,7 +71,7 @@ export const WalletModal: FC<Props> = ({ visible, onClose, onSubmit }) => {
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -138,7 +138,10 @@ export const WalletModal: FC<Props> = ({ visible, onClose, onSubmit }) => {
           />
 
           {error ? (
-            <StyledText variant="semibold" className="text-sm text-red-700 mt-3">
+            <StyledText
+              variant="semibold"
+              className="text-sm text-red-700 mt-3"
+            >
               {error}
             </StyledText>
           ) : null}

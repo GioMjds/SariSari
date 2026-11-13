@@ -151,7 +151,7 @@
   "moreHomeTitle": "More",
   "moreHomeSubtitle": "Manage the day, understand the store, and keep your data safe.",
   "moreHomeEyebrow": "Store tools",
-  "moreHomeCashLabel": "Cash & expenses",
+  "moreHomeCashLabel": "Cash & Expenses",
   "moreHomeCashLoading": "Checking today's movements",
   "moreHomeCashEmpty": "No expenses or owner drawings recorded today",
   "moreHomeCashSummary": "Expenses {{expenses}} · Owner drawings {{drawings}}",

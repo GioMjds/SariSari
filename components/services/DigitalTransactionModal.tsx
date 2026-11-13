@@ -1,21 +1,21 @@
-import { FC, useEffect, useMemo, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  TextInput,
-  View,
-} from 'react-native';
 import { StyledText } from '@/components/elements';
 import { computeDigitalEffect, suggestServiceFee } from '@/lib/digitalServices';
 import { formatPesos, tryParsePesosInput } from '@/lib/money';
 import type {
-  DigitalTransactionType,
-  DigitalWallet,
-  NewDigitalTransaction,
+    DigitalTransactionType,
+    DigitalWallet,
+    NewDigitalTransaction,
 } from '@/types/digitalServices.types';
+import { FC, useEffect, useMemo, useState } from 'react';
+import {
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    TextInput,
+    View,
+} from 'react-native';
 
 interface Props {
   visible: boolean;
@@ -145,7 +145,17 @@ export const DigitalTransactionModal: FC<Props> = ({
         tryParsePesosInput(feeStr),
       ) as NewDigitalTransaction['principalAmount'],
     };
-  }, [walletId, amount, type, reference, phone, note, removeFloat, fromDrawer, feeStr]);
+  }, [
+    walletId,
+    amount,
+    type,
+    reference,
+    phone,
+    note,
+    removeFloat,
+    fromDrawer,
+    feeStr,
+  ]);
 
   const preview = useMemo(() => {
     if (!draft) return null;
@@ -187,7 +197,7 @@ export const DigitalTransactionModal: FC<Props> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -214,7 +224,10 @@ export const DigitalTransactionModal: FC<Props> = ({
               ))}
             </View>
 
-            <StyledText variant="semibold" className="text-sm text-ink-700 mt-3">
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mt-3"
+            >
               Wallet
             </StyledText>
             <View className="flex-row flex-wrap mt-2">
@@ -228,7 +241,10 @@ export const DigitalTransactionModal: FC<Props> = ({
               ))}
             </View>
 
-            <StyledText variant="semibold" className="text-sm text-ink-700 mt-3">
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mt-3"
+            >
               {AMOUNT_LABEL[type]}
             </StyledText>
             <TextInput
@@ -325,7 +341,10 @@ export const DigitalTransactionModal: FC<Props> = ({
               </>
             ) : null}
 
-            <StyledText variant="semibold" className="text-sm text-ink-700 mt-3">
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-700 mt-3"
+            >
               Note (optional)
             </StyledText>
             <TextInput
@@ -356,7 +375,10 @@ export const DigitalTransactionModal: FC<Props> = ({
             ) : null}
 
             {error ? (
-              <StyledText variant="semibold" className="text-sm text-red-700 mt-3">
+              <StyledText
+                variant="semibold"
+                className="text-sm text-red-700 mt-3"
+              >
                 {error}
               </StyledText>
             ) : null}

@@ -29,7 +29,7 @@ export const FinancialResultSection: React.FC<Props> = ({
           className="flex-row items-center px-3 py-1.5 bg-cinnamon-500 rounded-full active:bg-cinnamon-600 shadow-sm"
         >
           <StyledText variant="semibold" className="text-xs text-paper-50 mr-1.5">
-            Cash & expenses
+            Cash & Expenses
           </StyledText>
           <FontAwesome5 name="arrow-right" size={10} color="#FBF7EE" />
         </Pressable>
