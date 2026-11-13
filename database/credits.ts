@@ -161,7 +161,7 @@ export const getCustomer = async (id: number): Promise<Customer | null> => {
 			COALESCE(ct.total_credits, 0) as total_credits,
 			COALESCE(p.total_payments, 0) as total_payments,
 			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
-			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
+			NULLIF(MAX(COALESCE(ct.last_credit_date, ''), COALESCE(p.last_payment_date, '')), '') as last_transaction_date
 		FROM customers c
 		LEFT JOIN (
 			SELECT 
@@ -250,7 +250,7 @@ export const getAllCustomers = async (
 			COALESCE(ct.total_credits, 0) as total_credits,
 			COALESCE(p.total_payments, 0) as total_payments,
 			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
-			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
+			NULLIF(MAX(COALESCE(ct.last_credit_date, ''), COALESCE(p.last_payment_date, '')), '') as last_transaction_date
 		FROM customers c
 		LEFT JOIN (
 			SELECT 
@@ -761,7 +761,7 @@ export const searchCustomers = async (query: string): Promise<Customer[]> => {
 			COALESCE(ct.total_credits, 0) as total_credits,
 			COALESCE(p.total_payments, 0) as total_payments,
 			COALESCE(ct.outstanding_balance, 0) as outstanding_balance,
-			MAX(ct.last_credit_date, p.last_payment_date) as last_transaction_date
+			NULLIF(MAX(COALESCE(ct.last_credit_date, ''), COALESCE(p.last_payment_date, '')), '') as last_transaction_date
 		FROM customers c
 		LEFT JOIN (
 			SELECT 

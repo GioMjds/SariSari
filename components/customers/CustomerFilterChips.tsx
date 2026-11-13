@@ -1,58 +1,68 @@
 import React from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { ExtendedCreditFilter } from '@/types/credits.types';
 
-interface FilterChipOption {
-  key: ExtendedCreditFilter;
-  label: string;
-}
+export type CustomerListFilter = 'all' | 'with_balance' | 'paid';
 
 interface CustomerFilterChipsProps {
-  activeFilter: ExtendedCreditFilter;
-  onSelectFilter: (filter: ExtendedCreditFilter) => void;
+  activeFilter: CustomerListFilter;
+  onSelectFilter: (filter: CustomerListFilter) => void;
+  counts: Record<CustomerListFilter, number>;
 }
 
 const FILTER_OPTIONS = [
-  { key: 'all', label: 'All' },
-  { key: 'with_balance', label: 'With Credit' },
-  { key: 'loyal', label: 'Loyal' },
-  { key: 'recent', label: 'Recent' },
-  { key: 'paid', label: 'Fully Paid' },
-  { key: 'new', label: 'New' },
-] satisfies FilterChipOption[];
+  { key: 'all', labelKey: 'filterAll' },
+  { key: 'with_balance', labelKey: 'filterWithUtang' },
+  { key: 'paid', labelKey: 'filterPaidUp' },
+] as const satisfies readonly { key: CustomerListFilter; labelKey: string }[];
 
 export const CustomerFilterChips: React.FC<CustomerFilterChipsProps> = ({
   activeFilter,
   onSelectFilter,
+  counts,
 }) => {
+  const { t } = useTranslation('utang');
+
   return (
-    <View className="mb-3">
+    <View className="mb-2">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
       >
         {FILTER_OPTIONS.map((item) => {
           const isActive = activeFilter === item.key;
+          const label = t(item.labelKey);
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.key}
-              activeOpacity={0.8}
               onPress={() => onSelectFilter(item.key)}
-              className={`mr-2.5 px-4 py-2 rounded-full border ${
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${label}, ${counts[item.key]}`}
+              className={`min-h-11 px-4 rounded-full border flex-row items-center active:opacity-80 ${
                 isActive
-                  ? 'bg-ink-900 border-ink-900 shadow-sm'
-                  : 'bg-paper-100 border-paper-200'
+                  ? 'bg-cinnamon-500 border-cinnamon-500'
+                  : 'bg-paper-50 border-ink-300'
               }`}
             >
               <StyledText
                 variant={isActive ? 'extrabold' : 'semibold'}
-                className={`text-xs ${isActive ? 'text-white' : 'text-ink-700'}`}
+                className={`text-sm ${isActive ? 'text-white' : 'text-ink-700'}`}
               >
-                {item.label}
+                {label}
               </StyledText>
-            </TouchableOpacity>
+              <StyledText
+                variant="semibold"
+                className={`text-sm ml-1.5 ${
+                  isActive ? 'text-cinnamon-50' : 'text-ink-400'
+                }`}
+              >
+                {counts[item.key]}
+              </StyledText>
+            </Pressable>
           );
         })}
       </ScrollView>

@@ -12,10 +12,9 @@ export function CustomersSkeleton() {
 
       {/* Filter Chips Placeholder */}
       <View className="px-4 py-1 flex-row gap-2 mb-2">
-        <Skeleton width={60} height={28} borderRadius={14} />
-        <Skeleton width={90} height={28} borderRadius={14} />
-        <Skeleton width={70} height={28} borderRadius={14} />
-        <Skeleton width={80} height={28} borderRadius={14} />
+        <Skeleton width={72} height={44} borderRadius={22} />
+        <Skeleton width={120} height={44} borderRadius={22} />
+        <Skeleton width={100} height={44} borderRadius={22} />
       </View>
 
       {/* Directory Section Header Placeholder */}

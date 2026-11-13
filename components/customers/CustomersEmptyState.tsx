@@ -1,5 +1,7 @@
 import { FC } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, Pressable } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 
@@ -11,35 +13,44 @@ interface CustomersEmptyStateProps {
 
 export const CustomersEmptyState: FC<CustomersEmptyStateProps> = ({
   onAddCustomer,
-  title = 'No Customers Yet',
-  description = 'Track loyal buyers, manage store credit, and understand your best customers.',
+  title,
+  description,
 }) => {
+  const { t } = useTranslation('utang');
+
   return (
     <View className="items-center justify-center p-8 mt-4">
       <SariMascot state="utang" size={130} />
       <StyledText
         variant="extrabold"
+        accessibilityRole="header"
         className="text-ink-800 text-lg mt-4 text-center"
       >
-        {title}
+        {title ?? t('emptyTitle')}
       </StyledText>
       <StyledText
         variant="regular"
-        className="text-ink-500 text-xs mt-1.5 text-center leading-5 px-4"
+        className="text-ink-500 text-sm mt-1.5 text-center leading-5 px-4"
       >
-        {description}
+        {description ?? t('emptyDescription')}
       </StyledText>
 
       {onAddCustomer && (
-        <TouchableOpacity
-          activeOpacity={0.8}
+        <Pressable
           onPress={onAddCustomer}
-          className="mt-5 px-5 py-2.5 bg-cinnamon-500 rounded-full active:scale-[0.98]"
+          accessibilityRole="button"
+          className="mt-5 min-h-12 px-6 bg-persimmon-600 rounded-full flex-row items-center justify-center active:bg-persimmon-700"
         >
+          <FontAwesome
+            name="user-plus"
+            size={14}
+            color="#FFFFFF"
+            style={{ marginRight: 8 }}
+          />
           <StyledText variant="extrabold" className="text-white text-sm">
-            Add Customer
+            {t('emptyAddButton')}
           </StyledText>
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );

@@ -3,99 +3,79 @@ import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { FontAwesome } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
-import {
-  useSetCollectionFollowUp,
-  useMarkCollectionContacted,
-} from '@/hooks/useCredits';
 import { StyledText } from '@/components/elements';
 import { CustomerAvatar } from '@/components/customers/CustomerAvatar';
 import { formatPesos } from '@/lib';
 import type { CollectionQueueRow } from '@/types/credits.types';
-import { Alert } from '@/utils';
 
 interface CollectionRowProps {
   row: CollectionQueueRow;
+  /** True while a "mark contacted" write for this row is in flight. */
+  isMarking: boolean;
+  onOpenFollowUp: (row: CollectionQueueRow) => void;
+  onMarkContacted: (row: CollectionQueueRow) => void;
 }
 
-const COLLECTION_ROW_BASE =
-  'mx-4 my-1.5 bg-paper-50 rounded-2xl p-4 flex-row items-center';
-const COLLECTION_ROW_BASE_OVERDUE =
-  'mx-4 my-1.5 rounded-2xl p-4 flex-row items-center bg-persimmon-50 border border-persimmon-100';
+type FollowUpState = 'set' | 'overdue' | 'contacted' | 'none';
 
-// Balance badge: normal = neutral money chip, overdue = ink-strong with brand tint
-const BADGE_CONTAINER_OVERDUE = 'px-2 py-0.5 rounded-full bg-persimmon-700';
-const BADGE_CONTAINER_NORMAL = 'px-2 py-0.5 rounded-full bg-paper-100';
-const BADGE_TEXT_OVERDUE = 'text-xs text-paper-50';
-const BADGE_TEXT_NORMAL = 'text-xs text-cinnamon-700';
+const CARD_BASE = 'mx-4 my-1.5 rounded-2xl border bg-paper-50';
+const CARD_NORMAL = `${CARD_BASE} border-paper-300`;
+const CARD_OVERDUE = `${CARD_BASE} border-semantic-danger-100`;
 
-// Follow-up chip — three states, each owns a distinct hue
-const CHIP_CONTAINER_OVERDUE =
-  'px-2 py-1 rounded-full border bg-semantic-danger border-semantic-danger';
-const CHIP_CONTAINER_CONTACTED =
-  'px-2 py-1 rounded-full border bg-sage-500 border-sage-500';
-const CHIP_CONTAINER_DEFAULT =
-  'px-2 py-1 rounded-full border bg-paper-100 border-paper-300';
+// Follow-up line: each state owns a distinct hue, icon, and label.
+const FOLLOW_UP_STYLE = {
+  overdue: {
+    container: 'bg-semantic-danger-50 border-semantic-danger-100',
+    text: 'text-semantic-danger',
+    icon: 'calendar-times-o',
+    color: '#C13030',
+  },
+  contacted: {
+    container: 'bg-sage-50 border-sage-200',
+    text: 'text-sage-700',
+    icon: 'check',
+    color: '#2C4413',
+  },
+  set: {
+    container: 'bg-paper-100 border-paper-300',
+    text: 'text-ink-700',
+    icon: 'calendar-check-o',
+    color: '#28231D',
+  },
+  none: {
+    container: 'bg-paper-100 border-paper-300',
+    text: 'text-ink-700',
+    icon: 'calendar-plus-o',
+    color: '#28231D',
+  },
+} as const satisfies Record<
+  FollowUpState,
+  { container: string; text: string; icon: string; color: string }
+>;
 
-const CHIP_TEXT_OVERDUE = 'text-xs text-paper-50';
-const CHIP_TEXT_CONTACTED = 'text-xs text-paper-50';
-const CHIP_TEXT_DEFAULT = 'text-xs text-cinnamon-700';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-const MARK_CONTACTED_BTN =
-  'px-2 py-1 rounded-full border border-sage-200 bg-sage-50 active:bg-sage-100 flex-row items-center';
-// Saturated brand persimmon — the only place on this row that earns it.
-const RECORD_PAYMENT_BTN =
-  'ml-2 shrink-0 bg-persimmon-500 active:bg-persimmon-600 px-3 py-2 rounded-xl min-h-12 min-w-[88px] items-center justify-center shadow-paper';
+function localIsoOf(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
-function CollectionRowComponent({ row }: CollectionRowProps) {
+// Parse a stored YYYY-MM-DD string as local midnight to avoid UTC-offset shifts.
+function localMidnight(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
+  return new Date(y, m - 1, d);
+}
+
+function CollectionRowComponent({
+  row,
+  isMarking,
+  onOpenFollowUp,
+  onMarkContacted,
+}: CollectionRowProps) {
   const router = useRouter();
   const { t, i18n } = useTranslation('utang');
-
-  const setFollowUp = useSetCollectionFollowUp();
-  const markContacted = useMarkCollectionContacted();
-
-  const localIsoOf = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const openFollowUpSheet = () => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    const in3 = new Date(today);
-    in3.setDate(today.getDate() + 3);
-    const inWeek = new Date(today);
-    inWeek.setDate(today.getDate() + 7);
-
-    const options = [
-      { label: t('collectionFollowUpToday'), value: localIsoOf(today) },
-      { label: t('collectionFollowUpTomorrow'), value: localIsoOf(tomorrow) },
-      { label: t('collectionFollowUpIn3Days'), value: localIsoOf(in3) },
-      { label: t('collectionFollowUpInAWeek'), value: localIsoOf(inWeek) },
-    ] as const;
-
-    Alert.alert(t('collectionFollowUpSheetTitle'), undefined, [
-      ...options.map((o) => ({
-        text: o.label,
-        onPress: () =>
-          setFollowUp.mutate({
-            customerId: row.customerId,
-            followUpBy: o.value,
-          }),
-      })),
-      {
-        text: t('collectionFollowUpClear'),
-        onPress: () =>
-          setFollowUp.mutate({
-            customerId: row.customerId,
-            followUpBy: null,
-          }),
-      },
-      { text: t('collectionFollowUpCancel'), style: 'cancel' as const },
-    ]);
-  };
 
   const handleOpenDetails = () => {
     router.push(`/(edit-forms)/credit-details/${row.customerId}` as Href);
@@ -104,41 +84,37 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
     router.push(`/(edit-forms)/add-payment/${row.customerId}` as Href);
   };
 
-  // Parse a stored YYYY-MM-DD string as local midnight to avoid UTC-offset shifts.
-  const localMidnight = (iso: string) => {
-    const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
-    return new Date(y, m - 1, d);
-  };
   const fmtDate = (iso: string | null) =>
     iso ? localMidnight(iso).toLocaleDateString(i18n.language) : '';
 
-  const followUpChipState: 'set' | 'overdue' | 'contacted' | 'none' =
-    !row.followUp
-      ? 'none'
-      : row.followUp.contactsToday > 0 &&
-          row.followUp.lastContactAt &&
-          new Date(
-            row.followUp.lastContactAt.replace(' ', 'T') + 'Z',
-          ).toDateString() === new Date().toDateString()
-        ? 'contacted'
-        : row.followUp.followUpBy &&
-            localMidnight(row.followUp.followUpBy) <
-              localMidnight(localIsoOf(new Date()))
-          ? 'overdue'
-          : 'set';
+  const followUpState: FollowUpState = !row.followUp
+    ? 'none'
+    : row.followUp.contactsToday > 0 &&
+        row.followUp.lastContactAt &&
+        new Date(
+          row.followUp.lastContactAt.replace(' ', 'T') + 'Z',
+        ).toDateString() === new Date().toDateString()
+      ? 'contacted'
+      : row.followUp.followUpBy &&
+          localMidnight(row.followUp.followUpBy) <
+            localMidnight(localIsoOf(new Date()))
+        ? 'overdue'
+        : row.followUp.followUpBy
+          ? 'set'
+          : 'none';
 
-  const chipLabel = (() => {
-    if (followUpChipState === 'contacted') {
+  const followUpLabel = (() => {
+    if (followUpState === 'contacted') {
       return t('collectionFollowUpContactedToday', {
         count: row.followUp!.contactsToday,
       });
     }
-    if (followUpChipState === 'overdue' && row.followUp?.followUpBy) {
+    if (followUpState === 'overdue' && row.followUp?.followUpBy) {
       const days = Math.max(
         1,
         Math.round(
           (Date.now() - localMidnight(row.followUp.followUpBy).getTime()) /
-            (24 * 60 * 60 * 1000),
+            DAY_MS,
         ),
       );
       return t('collectionFollowUpOverdue', {
@@ -146,7 +122,7 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
         days,
       });
     }
-    if (followUpChipState === 'set' && row.followUp?.followUpBy) {
+    if (followUpState === 'set' && row.followUp?.followUpBy) {
       return t('collectionFollowUpSet', {
         date: fmtDate(row.followUp.followUpBy),
       });
@@ -154,168 +130,181 @@ function CollectionRowComponent({ row }: CollectionRowProps) {
     return t('collectionFollowUpNone');
   })();
 
+  const isOverdue = row.overdueDays > 0;
+  const balance = formatPesos(row.balance);
+  const followUpStyle = FOLLOW_UP_STYLE[followUpState];
+
+  const summaryA11yLabel = (() => {
+    const parts = [row.name, balance];
+    if (isOverdue)
+      parts.push(t('collectionOverdueChip', { days: row.overdueDays }));
+    if (row.isNearLimit) parts.push(t('collectionNearLimitChip'));
+    if (followUpState === 'overdue') parts.push(followUpLabel);
+    return parts.join(', ');
+  })();
+
   return (
-    <Pressable
-      onPress={handleOpenDetails}
-      accessibilityRole="button"
-      accessibilityLabel={(() => {
-        const parts = [row.name, formatPesos(row.balance)];
-        if (row.overdueDays > 0)
-          parts.push(t('collectionOverdueChip', { days: row.overdueDays }));
-        if (row.isNearLimit) parts.push(t('collectionNearLimitChip'));
-        if (followUpChipState === 'overdue' && row.followUp?.followUpBy)
-          parts.push(
-            t('collectionFollowUpOverdue', {
-              date: fmtDate(row.followUp.followUpBy),
-              days: Math.max(
-                1,
-                Math.round(
-                  (Date.now() -
-                    localMidnight(row.followUp.followUpBy).getTime()) /
-                    (24 * 60 * 60 * 1000),
-                ),
-              ),
-            }),
-          );
-        return parts.join(', ');
-      })()}
-      accessibilityHint={t('collectionRowOpenDetailsHint')}
-      className={row.overdueDays > 0 ? COLLECTION_ROW_BASE_OVERDUE : COLLECTION_ROW_BASE}
-    >
-      <CustomerAvatar name={row.name} photoUri={row.photoUri ?? null} />
-      <View className="flex-1 min-w-0 ml-3">
-        <StyledText
-          variant="semibold"
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          className="text-base text-cinnamon-800"
-        >
-          {row.name}
-        </StyledText>
-        {row.phone ? (
+    <View className={isOverdue ? CARD_OVERDUE : CARD_NORMAL}>
+      {/* Who owes and how much. Tap opens the suki's ledger. */}
+      <Pressable
+        onPress={handleOpenDetails}
+        accessibilityRole="button"
+        accessibilityLabel={summaryA11yLabel}
+        accessibilityHint={t('collectionRowOpenDetailsHint')}
+        className="flex-row items-center px-4 pt-4 pb-3 rounded-t-2xl active:bg-paper-100"
+      >
+        <CustomerAvatar
+          name={row.name}
+          photoUri={row.photoUri ?? null}
+          size={48}
+        />
+        <View className="flex-1 min-w-0 ml-3">
           <StyledText
-            variant="regular"
-            numberOfLines={1}
-            className="text-xs text-cinnamon-500"
+            variant="extrabold"
+            numberOfLines={2}
+            className="text-base text-ink-900"
           >
-            {row.phone}
+            {row.name}
           </StyledText>
-        ) : null}
-        <View className="flex-row items-center mt-1 flex-wrap">
-          <View
-            className={
-              row.overdueDays > 0
-                ? BADGE_CONTAINER_OVERDUE
-                : BADGE_CONTAINER_NORMAL
-            }
-          >
+          {isOverdue || row.isNearLimit ? (
+            <View className="flex-row flex-wrap gap-1.5 mt-1.5">
+              {isOverdue ? (
+                <View className="flex-row items-center px-2 py-1 rounded-full bg-semantic-danger-50">
+                  <FontAwesome
+                    name="exclamation-circle"
+                    size={12}
+                    color="#C13030"
+                    style={{ marginRight: 4 }}
+                  />
+                  <StyledText
+                    variant="semibold"
+                    className="text-xs text-semantic-danger"
+                  >
+                    {t('collectionOverdueChip', { days: row.overdueDays })}
+                  </StyledText>
+                </View>
+              ) : null}
+              {row.isNearLimit ? (
+                <View className="flex-row items-center px-2 py-1 rounded-full bg-semantic-warning-50">
+                  <FontAwesome
+                    name="warning"
+                    size={11}
+                    color="#C77B0E"
+                    style={{ marginRight: 4 }}
+                  />
+                  <StyledText variant="semibold" className="text-xs text-ink-700">
+                    {t('collectionNearLimitChip')}
+                  </StyledText>
+                </View>
+              ) : null}
+            </View>
+          ) : row.phone ? (
             <StyledText
-              variant="medium"
-              className={
-                row.overdueDays > 0 ? BADGE_TEXT_OVERDUE : BADGE_TEXT_NORMAL
-              }
+              variant="regular"
+              numberOfLines={1}
+              className="text-sm text-ink-500 mt-0.5"
             >
-              {formatPesos(row.balance)}
+              {row.phone}
             </StyledText>
-          </View>
-          {row.overdueDays > 0 ? (
-            <View className="ml-2 px-2 py-0.5 rounded-full bg-paper-50 border border-semantic-danger">
-              <StyledText
-                variant="medium"
-                className="text-xs text-semantic-danger"
-              >
-                {t('collectionOverdueChip', { days: row.overdueDays })}
-              </StyledText>
-            </View>
-          ) : null}
-          {row.isNearLimit ? (
-            <View className="ml-2 px-2 py-0.5 rounded-full bg-paper-50 border border-semantic-warning">
-              <StyledText
-                variant="medium"
-                className="text-xs text-semantic-warning"
-              >
-                {t('collectionNearLimitChip')}
-              </StyledText>
-            </View>
           ) : null}
         </View>
-        <View className="mt-2 flex-row flex-wrap gap-1.5">
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              openFollowUpSheet();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={chipLabel}
-            className={
-              followUpChipState === 'overdue'
-                ? CHIP_CONTAINER_OVERDUE
-                : followUpChipState === 'contacted'
-                  ? CHIP_CONTAINER_CONTACTED
-                  : CHIP_CONTAINER_DEFAULT
-            }
+        <View className="items-end ml-3">
+          <StyledText
+            variant="extrabold"
+            className={`text-lg ${
+              isOverdue ? 'text-semantic-danger' : 'text-ink-900'
+            }`}
           >
-            <StyledText
-              variant="medium"
-              className={
-                followUpChipState === 'overdue'
-                  ? CHIP_TEXT_OVERDUE
-                  : followUpChipState === 'contacted'
-                    ? CHIP_TEXT_CONTACTED
-                    : CHIP_TEXT_DEFAULT
-              }
-            >
-              {chipLabel}
-            </StyledText>
-          </Pressable>
+            {balance}
+          </StyledText>
+          <StyledText variant="medium" className="text-xs text-ink-500">
+            {t('cardUtangLabel')}
+          </StyledText>
+        </View>
+      </Pressable>
+
+      <View className="px-4 pb-4">
+        {/* Follow-up reminder */}
+        <Pressable
+          onPress={() => onOpenFollowUp(row)}
+          accessibilityRole="button"
+          accessibilityLabel={followUpLabel}
+          className={`min-h-11 px-3 py-2 rounded-xl border flex-row items-center active:opacity-70 ${followUpStyle.container}`}
+        >
+          <FontAwesome
+            name={followUpStyle.icon}
+            size={14}
+            color={followUpStyle.color}
+            style={{ marginRight: 8 }}
+          />
+          <StyledText
+            variant="semibold"
+            maxFontSizeMultiplier={1.4}
+            className={`flex-1 text-sm ${followUpStyle.text}`}
+          >
+            {followUpLabel}
+          </StyledText>
+          <FontAwesome
+            name="chevron-right"
+            size={11}
+            color={followUpStyle.color}
+            style={{ marginLeft: 8, opacity: 0.6 }}
+          />
+        </Pressable>
+
+        {/* Actions: secondary left, primary right. Labels wrap, never clip. */}
+        <View className="flex-row gap-2 mt-2">
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              markContacted.mutate(row.customerId);
-            }}
+            onPress={() => onMarkContacted(row)}
+            disabled={isMarking}
             accessibilityRole="button"
             accessibilityLabel={t('collectionMarkContactedA11y', {
               name: row.name,
             })}
             accessibilityHint={t('collectionRowMarkContactedHint')}
-            hitSlop={8}
-            className={MARK_CONTACTED_BTN}
+            accessibilityState={{ disabled: isMarking }}
+            className={`flex-1 min-h-12 px-2 py-2 rounded-xl border border-sage-300 bg-sage-50 active:bg-sage-100 flex-row items-center justify-center ${
+              isMarking ? 'opacity-50' : ''
+            }`}
           >
             <FontAwesome
               name="check-circle"
-              size={11}
-              color="#3D5E1B"
-              style={{ marginRight: 4 }}
+              size={14}
+              color="#2C4413"
+              style={{ marginRight: 6 }}
             />
-            <StyledText variant="medium" className="text-xs text-sage-700">
+            <StyledText
+              variant="extrabold"
+              maxFontSizeMultiplier={1.4}
+              className="shrink text-center text-sm text-sage-700"
+            >
               {t('collectionRowMarkContacted')}
+            </StyledText>
+          </Pressable>
+          <Pressable
+            onPress={handleRecordPayment}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('collectionRowRecordPayment')}, ${row.name}`}
+            accessibilityHint={t('collectionRowRecordPaymentHint')}
+            className="flex-1 min-h-12 px-2 py-2 rounded-xl bg-persimmon-600 active:bg-persimmon-700 flex-row items-center justify-center"
+          >
+            <FontAwesome
+              name="money"
+              size={14}
+              color="#FFFFFF"
+              style={{ marginRight: 6 }}
+            />
+            <StyledText
+              variant="extrabold"
+              maxFontSizeMultiplier={1.4}
+              className="shrink text-center text-sm text-white"
+            >
+              {t('collectionRowRecordPayment')}
             </StyledText>
           </Pressable>
         </View>
       </View>
-      <Pressable
-        onPress={(e) => {
-          e.stopPropagation();
-          handleRecordPayment();
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={t('collectionRowRecordPayment', {
-          name: row.name,
-        })}
-        accessibilityHint={t('collectionRowRecordPaymentHint')}
-        hitSlop={8}
-        className={RECORD_PAYMENT_BTN}
-      >
-        <FontAwesome name="money" size={14} color="#FFFFFF" />
-        <StyledText
-          variant="medium"
-          numberOfLines={1}
-          className="text-xs text-white mt-0.5"
-        >
-          {t('collectionRowRecordPayment')}
-        </StyledText>
-      </Pressable>
-    </Pressable>
+    </View>
   );
 }
 

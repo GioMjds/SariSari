@@ -17,6 +17,9 @@ type SearchBarProps = {
   debounceMs?: number;
   onFilterPress?: (() => void) | undefined;
   activeFilterCount?: number | undefined;
+  /** Shorter 44px field for screens where vertical space is tight. */
+  compact?: boolean;
+  clearAccessibilityLabel?: string;
 } & Omit<TextInputProps, 'onChange' | 'onChangeText'>;
 
 export function SearchBar({
@@ -27,6 +30,8 @@ export function SearchBar({
   debounceMs = 0,
   onFilterPress,
   activeFilterCount,
+  compact = false,
+  clearAccessibilityLabel = 'Clear search',
   ...props
 }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
@@ -76,7 +81,7 @@ export function SearchBar({
         returnKeyType="search"
         className={`w-full bg-surface-subtle border ${
           focused ? 'border-persimmon-300' : 'border-warm-100'
-        } rounded-xl px-4 py-5 pl-12 ${rightPaddingClass} text-warm-900 placeholder-warm-500`}
+        } rounded-xl px-4 ${compact ? 'py-3' : 'py-5'} pl-12 ${rightPaddingClass} text-warm-900 placeholder-warm-500`}
         {...props}
       />
       <View className="absolute right-2 flex-row items-center gap-1 z-10">
@@ -93,7 +98,7 @@ export function SearchBar({
                   setLocal('');
                   onChange('');
                 }}
-                accessibilityLabel="Clear search"
+                accessibilityLabel={clearAccessibilityLabel}
                 accessibilityRole="button"
                 hitSlop={10}
                 className="press-scale active:opacity-70 w-8 h-8 items-center justify-center rounded-full bg-paper-200"

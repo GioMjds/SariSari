@@ -12,3 +12,4 @@ export * from './CustomerInsightsSkeleton';
 export * from './CollectionTab';
 export * from './CollectionRow';
 export * from './CollectionErrorState';
+export * from './FollowUpSheet';

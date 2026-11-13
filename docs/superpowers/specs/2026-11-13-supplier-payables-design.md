@@ -23,13 +23,13 @@ This is feature 7 of the money-flow set (feature 10, price history, is done).
 
 ## Decisions
 
-| Question                   | Decision                                                                                          |
-| -------------------------- | ------------------------------------------------------------------------------------------------- |
-| Where do payables come from| Both: a delivery commit can create one, and the owner can add utang by hand.                      |
-| How are payments applied   | Oldest first (FIFO by `created_at`), same as the suki ledger.                                     |
-| Cash and expense log       | Separate ledger. Payables and payments never write to `financial_entries`.                        |
-| Due dates                  | Optional per-supplier terms in days pre-fill the due date. The owner can change or clear it.      |
-| Data model                 | Three tables mirroring the suki ledger: payables, payments, allocations.                          |
+| Question                    | Decision                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| Where do payables come from | Both: a delivery commit can create one, and the owner can add utang by hand.                 |
+| How are payments applied    | Oldest first (FIFO by `created_at`), same as the suki ledger.                                |
+| Cash and expense log        | Separate ledger. Payables and payments never write to `financial_entries`.                   |
+| Due dates                   | Optional per-supplier terms in days pre-fill the due date. The owner can change or clear it. |
+| Data model                  | Three tables mirroring the suki ledger: payables, payments, allocations.                     |
 
 ## Scope
 
@@ -67,17 +67,17 @@ Added with `ALTER TABLE ... ADD COLUMN`, guarded by a `PRAGMA table_info` check 
 
 ### `supplier_payables`
 
-| Column        | Type                              | Notes                                                              |
-| ------------- | --------------------------------- | ------------------------------------------------------------------ |
-| `id`          | INTEGER PRIMARY KEY AUTOINCREMENT |                                                                    |
-| `supplier_id` | TEXT NOT NULL                     | References `suppliers(id)`                                         |
-| `receipt_id`  | INTEGER                           | References `delivery_receipts(id)`. NULL for manual payables       |
-| `amount`      | INTEGER NOT NULL                  | CHECK > 0                                                          |
-| `amount_paid` | INTEGER NOT NULL DEFAULT 0        | CHECK >= 0 and <= `amount`                                         |
-| `due_date`    | TEXT                              | `YYYY-MM-DD`, NULL when there is no due date                       |
-| `note`        | TEXT                              |                                                                    |
-| `voided_at`   | TEXT                              | ISO timestamp. NULL while active                                   |
-| `created_at`  | TEXT NOT NULL                     | ISO timestamp                                                      |
+| Column        | Type                              | Notes                                                        |
+| ------------- | --------------------------------- | ------------------------------------------------------------ |
+| `id`          | INTEGER PRIMARY KEY AUTOINCREMENT |                                                              |
+| `supplier_id` | TEXT NOT NULL                     | References `suppliers(id)`                                   |
+| `receipt_id`  | INTEGER                           | References `delivery_receipts(id)`. NULL for manual payables |
+| `amount`      | INTEGER NOT NULL                  | CHECK > 0                                                    |
+| `amount_paid` | INTEGER NOT NULL DEFAULT 0        | CHECK >= 0 and <= `amount`                                   |
+| `due_date`    | TEXT                              | `YYYY-MM-DD`, NULL when there is no due date                 |
+| `note`        | TEXT                              |                                                              |
+| `voided_at`   | TEXT                              | ISO timestamp. NULL while active                             |
+| `created_at`  | TEXT NOT NULL                     | ISO timestamp                                                |
 
 Indexes: UNIQUE on `receipt_id` WHERE `receipt_id IS NOT NULL` (one payable per receipt); `(supplier_id, created_at)`.
 
@@ -96,12 +96,12 @@ Index: `(supplier_id, created_at)`.
 
 ### `supplier_payment_allocations`
 
-| Column       | Type                              | Notes                                                    |
-| ------------ | --------------------------------- | -------------------------------------------------------- |
-| `id`         | INTEGER PRIMARY KEY AUTOINCREMENT |                                                          |
-| `payment_id` | INTEGER NOT NULL                  | References `supplier_payments(id)` ON DELETE CASCADE     |
-| `payable_id` | INTEGER NOT NULL                  | References `supplier_payables(id)`                       |
-| `amount`     | INTEGER NOT NULL                  | CHECK > 0                                                |
+| Column       | Type                              | Notes                                                |
+| ------------ | --------------------------------- | ---------------------------------------------------- |
+| `id`         | INTEGER PRIMARY KEY AUTOINCREMENT |                                                      |
+| `payment_id` | INTEGER NOT NULL                  | References `supplier_payments(id)` ON DELETE CASCADE |
+| `payable_id` | INTEGER NOT NULL                  | References `supplier_payables(id)`                   |
+| `amount`     | INTEGER NOT NULL                  | CHECK > 0                                            |
 
 Index: `payment_id`; `payable_id`.
 
@@ -122,7 +122,7 @@ Computed in SQL or `lib/payables.ts`, never stored:
 
 `commitDeliveryReceipt(receiptId, payment?)` gains an optional second argument:
 
-```
+```ts
 type CommitPayment =
   | { mode: 'paid' }
   | { mode: 'utang'; dueDate: string | null }
