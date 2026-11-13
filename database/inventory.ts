@@ -1,5 +1,6 @@
 import { InsertInventoryV2, InventoryTransaction } from '@/types/inventory.types';
 import { db } from '../configs/sqlite';
+import { evaluateRepriceFlag, recordPriceChange } from './priceHistory';
 
 export const initInventoryTable = async () => {
   await db.execAsync(`
@@ -54,11 +55,14 @@ export const applyInventoryTransaction = async (
     );
   }
 
-  // 1. Check product existence and current quantity
-  const product = await db.getFirstAsync<{ quantity: number }>(
-    'SELECT quantity FROM products WHERE id = ?',
-    [product_id],
-  );
+  // 1. Check product existence, current quantity, and current pricing
+  const product = await db.getFirstAsync<{
+    quantity: number;
+    cost_price: number | null;
+    price: number;
+  }>('SELECT quantity, cost_price, price FROM products WHERE id = ?', [
+    product_id,
+  ]);
 
   if (!product) {
     throw new Error(`Product with ID ${product_id} not found`);
@@ -100,6 +104,26 @@ export const applyInventoryTransaction = async (
       'UPDATE products SET quantity = ?, cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [newQuantity, unit_cost, product_id],
     );
+    // Runs in the caller's transaction, so cost history and the reprice flag
+    // commit or roll back together with the stock change.
+    const oldCost = product.cost_price ?? null;
+    if (oldCost !== unit_cost) {
+      await recordPriceChange(
+        product_id,
+        'cost',
+        oldCost,
+        unit_cost,
+        receipt_id !== null ? 'delivery' : 'restock',
+        receipt_id,
+      );
+      await evaluateRepriceFlag(
+        product_id,
+        oldCost,
+        unit_cost,
+        product.price,
+        receipt_id,
+      );
+    }
   } else {
     await db.runAsync(
       'UPDATE products SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',

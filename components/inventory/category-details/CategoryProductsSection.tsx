@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, Pressable } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { MotiView } from 'moti';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -7,7 +7,7 @@ import { MoneyText, StatusPill, ReceiptHeroDivider } from '@/components/ui';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
 import { formatPesos } from '@/lib/money';
 
-const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
+import { SariMascot } from '@/components/mascot';
 
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#F7F6F2';
@@ -83,11 +83,7 @@ export function CategoryProductsSection({
                 >
                   Empty folder
                 </StyledText>
-                <Image
-                  source={sariImage}
-                  style={{ width: 160, height: 160 }}
-                  resizeMode="contain"
-                />
+                <SariMascot state="empty" size={160} />
                 <StyledText
                   variant="black"
                   className="text-ink-900 text-xl mt-4 text-center px-4"

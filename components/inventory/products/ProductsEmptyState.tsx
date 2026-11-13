@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface ProductsEmptyStateProps {
   variant: 'no-products' | 'no-search' | 'no-filter';
@@ -11,7 +12,6 @@ interface ProductsEmptyStateProps {
 }
 
 const PERFORATION_COUNT = 22;
-const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 export function ProductsEmptyState({
   variant,
@@ -69,12 +69,8 @@ export function ProductsEmptyState({
           {eyebrow}
         </StyledText>
 
-        {/* Sari Mascot Image */}
-        <Image
-          source={sariImage}
-          style={{ width: 180, height: 180 }}
-          resizeMode="contain"
-        />
+        {/* Sari Mascot */}
+        <SariMascot state="empty" size={180} />
 
         <StyledText
           variant="black"

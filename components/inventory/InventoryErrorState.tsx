@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface Props {
   title?: string;
@@ -15,7 +15,7 @@ export function InventoryErrorState({
 }: Props) {
   return (
     <View className="mx-4 mt-6 p-5 rounded-3xl bg-rose-50 border border-rose-200 items-center gap-y-3">
-      <FontAwesome name="exclamation-circle" size={28} color="#9F1239" />
+      <SariMascot state="error" size={112} />
       <StyledText variant="extrabold" className="text-base text-rose-900">
         {title}
       </StyledText>

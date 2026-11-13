@@ -1,10 +1,9 @@
 import { memo } from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { useTranslation } from 'react-i18next';
-
-const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 interface DashboardEmptyStateProps {
   onAddProduct: () => void;
@@ -18,12 +17,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
   const { t } = useTranslation();
   return (
     <View className="bg-paper-50 mx-4 mb-4 rounded-2xl border border-ink-100 p-5 items-center">
-      <Image
-        source={sariImage}
-        style={{ width: 120, height: 120, marginBottom: 12 }}
-        resizeMode="contain"
-        accessible={false}
-      />
+      <SariMascot state="empty" size={120} style={{ marginBottom: 12 }} />
       <StyledText
         variant="extrabold"
         className="label-caps text-ink-400 mb-1 text-center"

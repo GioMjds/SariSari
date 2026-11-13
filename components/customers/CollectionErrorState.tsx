@@ -1,6 +1,7 @@
 import { TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface CollectionErrorStateProps {
   onRetry: () => void;
@@ -10,6 +11,7 @@ export function CollectionErrorState({ onRetry }: CollectionErrorStateProps) {
   const { t } = useTranslation('utang');
   return (
     <View className="flex-1 items-center justify-center px-6 py-12">
+      <SariMascot state="error" size={120} style={{ marginBottom: 12 }} />
       <StyledText
         variant="extrabold"
         accessibilityRole="header"

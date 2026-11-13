@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { useTranslation } from 'react-i18next';
 
 export interface DashboardErrorStateProps {
@@ -26,9 +27,7 @@ export const DashboardErrorState = memo(function DashboardErrorState({
   return (
     <View className="px-4 py-8">
       <View className="bg-paper-50 rounded-2xl p-6 border border-ink-100 items-center text-center shadow-xs">
-        <View className="w-12 h-12 rounded-full bg-persimmon-100 items-center justify-center mb-3">
-          <FontAwesome name="exclamation-triangle" size={20} color="#E85A1F" />
-        </View>
+        <SariMascot state="error" size={112} style={{ marginBottom: 8 }} />
 
         <StyledText
           variant="extrabold"

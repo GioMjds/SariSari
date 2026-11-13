@@ -469,6 +469,9 @@ jest.mock('react-native-reanimated', () => {
     withSpring: (toValue: any) => toValue,
     withTiming: (toValue: any) => toValue,
     withRepeat: (animation: any) => animation,
+    cancelAnimation: () => {},
+    interpolate: (_val: any, _input: any, output: any) => output?.[0] ?? 0,
+    Extrapolation: { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' },
     Easing: {
       inOut: (fn: any) => fn,
       ease: (x: any) => x,

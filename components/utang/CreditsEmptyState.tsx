@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 
 interface CreditsEmptyStateProps {
   variant: 'no-customers' | 'no-search' | 'all-cleared';
@@ -11,7 +12,6 @@ interface CreditsEmptyStateProps {
 
 const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#F7F6F2';
-const sariImage = require('@/assets/images/sari-emotions/sari-empty-state.png');
 
 /**
  * CreditsEmptyState — paper receipt variant for the three "nothing
@@ -86,11 +86,7 @@ export function CreditsEmptyState({
             <FontAwesome name="check" size={42} color="#4F7A24" />
           </View>
         ) : (
-          <Image
-            source={sariImage}
-            style={{ width: 180, height: 180 }}
-            resizeMode="contain"
-          />
+          <SariMascot state="empty" size={180} />
         )}
 
         <StyledText
