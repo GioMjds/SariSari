@@ -110,6 +110,10 @@
   "settingsBackupDaysAgo_one": "{{count}} araw nakakaraan",
   "settingsBackupDaysAgo_other": "{{count}} araw nakakaraan",
 
+  "sariSays": "Sabi ni Sari",
+  "sariSettingsTitle": "Nasa isang lugar lang lahat",
+  "sariSettingsBody": "Dito mo aayusin ang tindahan, seguridad, at patakaran sa benta — dahan-dahan lang, ako na bahala sa counter.",
+
   "restorePickerTitle": "Mag-restore mula sa backup",
   "restorePickerTabLocal_one": "Lokal (1)",
   "restorePickerTabLocal_other": "Lokal ({{count}})",

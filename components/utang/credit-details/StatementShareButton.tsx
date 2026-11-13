@@ -30,14 +30,7 @@ export function StatementShareButton({
         title: `Statement for ${customer.name}`,
       });
     } catch {
-      // User cancelled or share unavailable — fall back to clipboard so
-      // the cashier can still paste into Messenger/Viber manually.
-      try {
-        await Clipboard.setStringAsync(text);
-      } catch {
-        // Clipboard unavailable on this platform — nothing more we
-        // can do here. The share sheet already showed the text.
-      }
+      await Clipboard.setStringAsync(text);
     }
   };
 

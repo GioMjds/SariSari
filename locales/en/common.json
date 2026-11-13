@@ -110,6 +110,10 @@
   "settingsBackupDaysAgo_one": "{{count}} days ago",
   "settingsBackupDaysAgo_other": "{{count}} days ago",
 
+  "sariSays": "Sari says",
+  "sariSettingsTitle": "Everything in one place",
+  "sariSettingsBody": "Update your store details, security, and sales rules — take your time, I'll keep the counter warm.",
+
   "restorePickerTitle": "Restore from backup",
   "restorePickerTabLocal_one": "Local (1)",
   "restorePickerTabLocal_other": "Local ({{count}})",

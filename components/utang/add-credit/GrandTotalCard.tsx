@@ -34,7 +34,7 @@ export function GrandTotalCard({
             : `${qty} × ${formatPesos(unitPrice)}`}
         </StyledText>
       </View>
-      <MoneyText value={total} size="hero" variant="default" className="mt-1" />
+      <MoneyText value={total} size="hero" className="text-cinnamon-50 mt-1" />
     </View>
   );
 }
