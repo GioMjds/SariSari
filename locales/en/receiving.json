@@ -89,5 +89,10 @@
   "range30": "30 days",
   "range90": "90 days",
   "rangeAll": "All time",
-  "reportShort": "Short"
+  "reportShort": "Short",
+  "sariLoading": "Sari is tallying deliveries...",
+  "sariShort_one": "Sari flags 1 supplier that delivered short.",
+  "sariShort_other": "Sari flags {{count}} suppliers that delivered short.",
+  "sariAllFull": "All suppliers delivered in full. Sari approves.",
+  "sariEmpty": "Nothing to check yet. Sari is waiting for deliveries."
 }

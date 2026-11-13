@@ -47,7 +47,7 @@ import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
-import { SariMascot } from '@/components/mascot';
+import { SariMascot, type SariState } from '@/components/mascot';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_CREDITS_OVERVIEW,
@@ -162,6 +162,36 @@ export default function ReportsScreen() {
 
   const tabBarBottomOffset = useTabBarBottomOffset();
 
+  // Sari's pose and line follow the most urgent thing in the data.
+  const sari: { state: SariState; text: string } = (() => {
+    if (isKPIsLoading || isStockLoading) {
+      return { state: 'loading', text: 'Counting your numbers...' };
+    }
+    if (kpis.totalSales === 0 && salesBreakdown.totalTransactions === 0) {
+      return {
+        state: 'reports',
+        text: 'No sales in this period yet. Make a sale and I will tally it.',
+      };
+    }
+    if (lowStockItems.length > 0) {
+      const n = lowStockItems.length;
+      return {
+        state: 'low-stock',
+        text: `${n} ${n === 1 ? 'item is' : 'items are'} running low. Check Stock and movement.`,
+      };
+    }
+    if (creditsOverview.outstanding > 0) {
+      return {
+        state: 'outstanding-balance',
+        text: `${formatCompactCurrency(creditsOverview.outstanding)} utang still unpaid from ${creditsOverview.activeAccounts} ${creditsOverview.activeAccounts === 1 ? 'suki' : 'sukis'}.`,
+      };
+    }
+    return {
+      state: 'sales',
+      text: `${formatCompactCurrency(kpis.totalSales)} in sales. Stock and utang look fine.`,
+    };
+  })();
+
   return (
     <View className="flex-1 bg-paper-200">
       <MoreDetailHeader
@@ -178,11 +208,40 @@ export default function ReportsScreen() {
         isRefreshing={isRefreshing}
         onRefresh={handleRefresh}
       >
-        <View className="items-center">
-          <SariMascot state="reports" size={104} />
+        <View className="px-5 flex-row items-center">
+          <View className="flex-1 bg-paper-50 border border-ink-100 rounded-2xl px-4 py-3 shadow-paper">
+            <StyledText
+              variant="extrabold"
+              className="text-[10px] text-persimmon-600 uppercase tracking-wider mb-1"
+            >
+              Sari says
+            </StyledText>
+            <StyledText
+              variant="semibold"
+              className="text-sm text-ink-800 leading-snug"
+              accessibilityLiveRegion="polite"
+            >
+              {sari.text}
+            </StyledText>
+          </View>
+          {/* Bubble tail pointing at Sari */}
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              marginLeft: -6,
+              marginRight: -2,
+              backgroundColor: '#FAFAF7',
+              borderTopWidth: 1,
+              borderRightWidth: 1,
+              borderColor: '#EAE6DF',
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+          <SariMascot state={sari.state} size={96} />
         </View>
 
-        <View className="px-5 mt-2">
+        <View className="px-5 mt-3">
           <DateRangeSelector
             activeRange={dateRangeType}
             onRangeChange={handleDateRangeChange}

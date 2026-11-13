@@ -34,5 +34,11 @@
   "voided_banner": "Na-void ang benta na ito.",
   "refunded_banner": "Na-refund ang benta na ito.",
   "void_window_locked": "Sarado na ang oras ng pagtatama ({{hours}}h).",
-  "session_closed": "Sarado ang session — makipag-ugnayan sa bookkeeper."
+  "session_closed": "Sarado ang session — makipag-ugnayan sa bookkeeper.",
+  "sari_loading": "Hinahanap ni Sari ang talaan...",
+  "sari_clean": "Malinis ang talaan. Walang void, refund, o pagbabago ng presyo.",
+  "sari_flagged_one": "Binabantayan ni Sari ang 1 pagtatama.",
+  "sari_flagged_other": "Binabantayan ni Sari ang {{count}} pagtatama.",
+  "sari_no_match": "Walang nakita si Sari sa hinahanap mo.",
+  "sari_idle": "Nagbabantay si Sari."
 }

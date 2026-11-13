@@ -69,6 +69,7 @@ export default function SupplierShortagesScreen() {
   const { data, isLoading, isFetching, refetch } =
     useDeliveryShortageReport(range);
   const rows = data ?? [];
+  const shortSuppliers = rows.filter((r) => r.shortLines > 0).length;
   const evidence = useSupplierShortageLines(expandedId, range);
 
   const toggleExpanded = useCallback((supplierId: string) => {
@@ -256,8 +257,14 @@ export default function SupplierShortagesScreen() {
       </View>
 
       {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
+        <View className="flex-1 justify-center items-center px-6">
+          <SariMascot state="loading" size={120} accessibilityLabel="Loading" />
+          <StyledText
+            variant="semibold"
+            className="text-ink-500 text-xs text-center mt-2"
+          >
+            {t('sariLoading')}
+          </StyledText>
         </View>
       ) : (
         <FlatList<SupplierShortageRow>
@@ -271,6 +278,32 @@ export default function SupplierShortagesScreen() {
             paddingBottom: insets.bottom + 32,
           }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            rows.length > 0 ? (
+              <View className="bg-cinnamon-50 border border-cinnamon-100 rounded-2xl p-4 mb-3 flex-row items-center gap-2 shadow-paper">
+                <View className="flex-1">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-[10px] text-cinnamon-600 uppercase tracking-wider mb-1"
+                  >
+                    {t('reportTitle')}
+                  </StyledText>
+                  <StyledText
+                    variant="semibold"
+                    className="text-sm text-ink-800 leading-snug"
+                  >
+                    {shortSuppliers > 0
+                      ? t('sariShort', { count: shortSuppliers })
+                      : t('sariAllFull')}
+                  </StyledText>
+                </View>
+                <SariMascot
+                  state={shortSuppliers > 0 ? 'low-stock' : 'default'}
+                  size={88}
+                />
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
               refreshing={isFetching && !isLoading}
@@ -283,9 +316,13 @@ export default function SupplierShortagesScreen() {
           }
           ListEmptyComponent={
             <View className="bg-paper-50 p-8 rounded-2xl border border-ink-100 items-center justify-center my-6 shadow-paper">
-              <View className="w-14 h-14 rounded-full bg-paper-100 items-center justify-center mb-3 border border-ink-100">
-                <FontAwesome name="truck" size={20} color="#7A7165" />
-              </View>
+              <SariMascot state="empty" size={150} />
+              <StyledText
+                variant="semibold"
+                className="text-persimmon-600 text-xs text-center mt-2 mb-2"
+              >
+                {t('sariEmpty')}
+              </StyledText>
               <StyledText
                 variant="regular"
                 className="text-ink-500 text-sm text-center px-4 leading-relaxed"

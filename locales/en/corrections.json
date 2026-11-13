@@ -34,5 +34,11 @@
   "voided_banner": "This sale was voided.",
   "refunded_banner": "This sale was refunded.",
   "void_window_locked": "Correction window has closed (settings: {{hours}}h).",
-  "session_closed": "Cash session is closed — contact your bookkeeper."
+  "session_closed": "Cash session is closed — contact your bookkeeper.",
+  "sari_loading": "Sari is pulling up the audit log...",
+  "sari_clean": "Clean log. No voids, refunds, or price edits.",
+  "sari_flagged_one": "Sari is watching 1 correction on record.",
+  "sari_flagged_other": "Sari is watching {{count}} corrections on record.",
+  "sari_no_match": "Sari found nothing for that search.",
+  "sari_idle": "Sari is on watch."
 }

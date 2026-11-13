@@ -89,5 +89,10 @@
   "range30": "30 araw",
   "range90": "90 araw",
   "rangeAll": "Lahat",
-  "reportShort": "Kulang"
+  "reportShort": "Kulang",
+  "sariLoading": "Binibilang ni Sari ang mga delivery...",
+  "sariShort_one": "Minarkahan ni Sari ang 1 supplier na kulang ang dala.",
+  "sariShort_other": "Minarkahan ni Sari ang {{count}} supplier na kulang ang dala.",
+  "sariAllFull": "Kumpleto ang lahat ng supplier. Aprub kay Sari.",
+  "sariEmpty": "Wala pang susuriin. Naghihintay si Sari ng delivery."
 }

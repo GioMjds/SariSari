@@ -18,6 +18,7 @@ import { Href, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useCorrectionsReport } from '@/hooks/useCorrections';
 import { formatPesos } from '@/lib';
@@ -415,9 +416,13 @@ export default function CorrectionsReportScreen() {
     if (rawItems.length === 0) {
       return (
         <View className="bg-paper-50 p-8 rounded-2xl border border-ink-100 items-center justify-center my-6 shadow-paper">
-          <View className="w-16 h-16 rounded-full bg-persimmon-50 items-center justify-center mb-4 border border-persimmon-200 shadow-sm">
-            <FontAwesome name="check-circle-o" size={30} color="#C8460F" />
-          </View>
+          <SariMascot state="empty" size={150} />
+          <StyledText
+            variant="semibold"
+            className="text-persimmon-600 text-xs text-center mt-2 mb-3"
+          >
+            {t('sari_clean', 'Clean log. No voids, refunds, or price edits.')}
+          </StyledText>
           <StyledText
             variant="extrabold"
             className="text-ink-900 text-lg text-center mb-1.5"
@@ -439,9 +444,13 @@ export default function CorrectionsReportScreen() {
 
     return (
       <View className="bg-paper-50 p-8 rounded-2xl border border-ink-100 items-center justify-center my-6 shadow-paper">
-        <View className="w-14 h-14 rounded-full bg-paper-100 items-center justify-center mb-3 border border-ink-100">
-          <FontAwesome name="search" size={20} color="#7A7165" />
-        </View>
+        <SariMascot state="empty" size={120} />
+        <StyledText
+          variant="semibold"
+          className="text-persimmon-600 text-xs text-center mt-2 mb-3"
+        >
+          {t('sari_no_match', 'Sari found nothing for that search.')}
+        </StyledText>
         <StyledText
           variant="extrabold"
           className="text-ink-900 text-base text-center mb-1"
@@ -488,10 +497,7 @@ export default function CorrectionsReportScreen() {
       <View className="mb-3">
         {/* Context Banner */}
         <View className="rounded-2xl overflow-hidden shadow-paper bg-cinnamon-50 p-4 mb-3 border border-cinnamon-100">
-          <View className="flex-row items-center gap-3">
-            <View className="bg-cinnamon-100 w-10 h-10 rounded-full items-center justify-center">
-              <FontAwesome name="shield" size={16} color="#623418" />
-            </View>
+          <View className="flex-row items-center gap-2">
             <View className="flex-1">
               <View className="flex-row items-center gap-1.5 mb-0.5">
                 <View className="w-1.5 h-1.5 rounded-full bg-sage-500" />
@@ -508,7 +514,22 @@ export default function CorrectionsReportScreen() {
               >
                 Tamper-evident record of all voided sales, customer refunds, and price corrections.
               </StyledText>
+              <StyledText
+                variant="semibold"
+                className="text-xs text-persimmon-600 leading-snug mt-1.5"
+              >
+                {rawItems.length === 0
+                  ? t('sari_idle', 'Sari is on watch.')
+                  : t('sari_flagged', {
+                      count: rawItems.length,
+                      defaultValue:
+                        rawItems.length === 1
+                          ? 'Sari is watching 1 correction on record.'
+                          : `Sari is watching ${rawItems.length} corrections on record.`,
+                    })}
+              </StyledText>
             </View>
+            <SariMascot state="reports" size={88} />
           </View>
         </View>
 
@@ -792,7 +813,19 @@ export default function CorrectionsReportScreen() {
       {/* Main Content Area */}
       {isLoading ? (
         <View className="flex-1 p-4">
-          <CorrectionCardSkeleton />
+          <View className="items-center mb-4">
+            <SariMascot
+              state="loading"
+              size={96}
+              accessibilityLabel={t('sari_loading', 'Sari is pulling up the audit log...')}
+            />
+            <StyledText
+              variant="semibold"
+              className="text-ink-500 text-xs mt-1"
+            >
+              {t('sari_loading', 'Sari is pulling up the audit log...')}
+            </StyledText>
+          </View>
           <CorrectionCardSkeleton />
           <CorrectionCardSkeleton />
         </View>
@@ -823,15 +856,18 @@ export default function CorrectionsReportScreen() {
                 <ActivityIndicator size="small" color="#623418" />
               </View>
             ) : !hasNextPage && filteredItems.length > 0 ? (
-              <View className="py-6 items-center flex-row justify-center gap-2 opacity-60">
-                <View className="h-px bg-ink-100 w-12" />
-                <StyledText
-                  variant="medium"
-                  className="text-ink-400 text-[11px] uppercase tracking-wider"
-                >
-                  {t('end_of_log', 'End of audit trail')}
-                </StyledText>
-                <View className="h-px bg-ink-100 w-12" />
+              <View className="pt-4 pb-2 items-center">
+                <SariMascot state="default" size={72} />
+                <View className="flex-row items-center justify-center gap-2 opacity-60 mt-1">
+                  <View className="h-px bg-ink-100 w-12" />
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-400 text-[11px] uppercase tracking-wider"
+                  >
+                    {t('end_of_log', 'End of audit trail')}
+                  </StyledText>
+                  <View className="h-px bg-ink-100 w-12" />
+                </View>
               </View>
             ) : null
           }
