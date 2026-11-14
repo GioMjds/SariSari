@@ -240,7 +240,7 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
               </View>
 
               <View className="min-h-[44px] justify-center mt-1 w-full items-center">
-                {lockedOut || errorMsg ? (
+                {lockedOut || errorMsg && (
                   <StyledText
                     variant="semibold"
                     accessibilityLiveRegion="polite"
@@ -250,23 +250,7 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
                       ? t('pin.locked_out', { seconds: secondsLeft })
                       : errorMsg}
                   </StyledText>
-                ) : pin.length >= 4 &&
-                  pin.length < PIN_LENGTH &&
-                  !padBlocked ? (
-                  <Pressable
-                    testID="app-lock-submit"
-                    accessibilityRole="button"
-                    onPress={() => void submitPin(pin)}
-                    className="min-h-[44px] px-7 rounded-full bg-persimmon-500 items-center justify-center active:opacity-70 active:scale-95"
-                  >
-                    <StyledText
-                      variant="semibold"
-                      className="text-paper-50 text-[15px]"
-                    >
-                      {t('pin.btn_unlock')}
-                    </StyledText>
-                  </Pressable>
-                ) : null}
+                )}
               </View>
             </ScrollView>
 

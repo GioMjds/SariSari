@@ -33,58 +33,67 @@ export const PinPad: FC<Props> = ({
   };
 
   return (
-    <View className={`items-center w-full ${disabled ? 'opacity-40' : ''}`}>
-      {ROWS.map((row) => (
-        <View
-          key={row.join('')}
-          className="flex-row w-full justify-center mb-3"
-        >
-          {row.map((digit) => (
-            <Pressable
-              key={digit}
-              testID={`pin-key-${digit}`}
-              accessibilityRole="button"
-              accessibilityLabel={digit}
-              disabled={disabled}
-              onPress={() => press(digit)}
-              className="w-20 h-16 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95 mx-2"
-            >
-              <StyledText variant="semibold" className="text-2xl text-ink-900">
-                {digit}
-              </StyledText>
-            </Pressable>
-          ))}
+    <View
+      className={`w-full items-center pb-2 ${disabled ? 'opacity-40' : ''}`}
+    >
+      <View className="w-full max-w-md px-2">
+        {ROWS.map((row) => (
+          <View key={row.join('')} className="flex-row w-full mb-3">
+            {row.map((digit) => (
+              <Pressable
+                key={digit}
+                testID={`pin-key-${digit}`}
+                accessibilityRole="button"
+                accessibilityLabel={digit}
+                disabled={disabled}
+                onPress={() => press(digit)}
+                className="flex-1 mx-1.5 h-20 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95"
+              >
+                <StyledText
+                  variant="semibold"
+                  className="text-2xl text-ink-900"
+                >
+                  {digit}
+                </StyledText>
+              </Pressable>
+            ))}
+          </View>
+        ))}
+        <View className="flex-row w-full">
+          {/* Left Slot (Biometrics or Empty) */}
+          <View className="flex-1 mx-1.5 h-20 items-center justify-center">
+            {leftSlot}
+          </View>
+
+          {/* Zero Key */}
+          <Pressable
+            testID="pin-key-0"
+            accessibilityRole="button"
+            accessibilityLabel="0"
+            disabled={disabled}
+            onPress={() => press('0')}
+            className="flex-1 mx-1.5 h-20 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95"
+          >
+            <StyledText variant="semibold" className="text-2xl text-ink-900">
+              0
+            </StyledText>
+          </Pressable>
+
+          {/* Backspace Key */}
+          <Pressable
+            testID="pin-key-backspace"
+            accessibilityRole="button"
+            accessibilityLabel={t('pin.key_backspace')}
+            disabled={disabled}
+            onPress={() => {
+              if (disabled) return;
+              onBackspace();
+            }}
+            className="flex-1 mx-1.5 h-20 rounded-2xl items-center justify-center active:bg-paper-100 active:scale-95"
+          >
+            <FontAwesome name="angle-left" size={36} color="#564E45" />
+          </Pressable>
         </View>
-      ))}
-      <View className="flex-row w-full justify-center">
-        <View className="w-20 h-16 items-center justify-center mx-2">
-          {leftSlot}
-        </View>
-        <Pressable
-          testID="pin-key-0"
-          accessibilityRole="button"
-          accessibilityLabel="0"
-          disabled={disabled}
-          onPress={() => press('0')}
-          className="w-20 h-16 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95 mx-2"
-        >
-          <StyledText variant="semibold" className="text-2xl text-ink-900">
-            0
-          </StyledText>
-        </Pressable>
-        <Pressable
-          testID="pin-key-backspace"
-          accessibilityRole="button"
-          accessibilityLabel={t('pin.key_backspace')}
-          disabled={disabled}
-          onPress={() => {
-            if (disabled) return;
-            onBackspace();
-          }}
-          className="w-20 h-16 rounded-2xl items-center justify-center active:bg-paper-100 active:scale-95 mx-2"
-        >
-          <FontAwesome name="long-arrow-left" size={22} color="#564E45" />
-        </Pressable>
       </View>
     </View>
   );

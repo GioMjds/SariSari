@@ -36,7 +36,7 @@ export const AuthScreenShell: FC<Props> = ({
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-paper-200 paper-texture">
+    <View className="flex-1 paper-texture">
       <View
         className="flex-row items-center justify-between px-5 pb-2"
         style={{ paddingTop: insets.top + 8 }}
@@ -65,12 +65,12 @@ export const AuthScreenShell: FC<Props> = ({
             {Array.from({ length: totalSteps }, (_, idx) => (
               <View
                 key={idx}
-                className={`h-2 rounded-full ${
+                className={`h-6 rounded-full ${
                   idx + 1 === step
                     ? 'w-6 bg-persimmon-500'
                     : idx + 1 < step
-                      ? 'w-2 bg-persimmon-500'
-                      : 'w-2 bg-paper-400'
+                      ? 'w-6 bg-persimmon-500'
+                      : 'w-6 bg-paper-400'
                 }`}
               />
             ))}
@@ -81,7 +81,7 @@ export const AuthScreenShell: FC<Props> = ({
       </View>
 
       <KeyboardAwareScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         contentContainerStyle={{
           flexGrow: 1,
           alignItems: 'center',
@@ -108,7 +108,7 @@ export const AuthScreenShell: FC<Props> = ({
         {subtitle ? (
           <StyledText
             variant="regular"
-            className="text-body text-ink-500 text-center mt-2 max-w-[320px]"
+            className="text-body text-ink-500 text-center mt-2 max-w-xs"
           >
             {subtitle}
           </StyledText>
@@ -118,7 +118,7 @@ export const AuthScreenShell: FC<Props> = ({
 
       {footer ? (
         <View
-          className="px-6 pt-3 bg-paper-200"
+          className="px-6 pt-3"
           style={{ paddingBottom: insets.bottom + 16 }}
         >
           {footer}
@@ -128,7 +128,6 @@ export const AuthScreenShell: FC<Props> = ({
   );
 };
 
-// AuthButton remains the same as previous response
 export const AuthButton: FC<any> = ({
   label,
   onPress,
@@ -143,7 +142,7 @@ export const AuthButton: FC<any> = ({
       testID={testID}
       onPress={blocked ? undefined : onPress}
       disabled={blocked}
-      className={`min-h-[52px] rounded-2xl items-center justify-center px-5 ${
+      className={`min-h-14 rounded-2xl items-center justify-center px-5 ${
         blocked ? 'opacity-45' : 'active:scale-95'
       } ${
         variant === 'primary'
@@ -155,7 +154,7 @@ export const AuthButton: FC<any> = ({
     >
       <StyledText
         variant="semibold"
-        className={`text-[16px] ${variant === 'secondary' ? 'text-ink-700' : 'text-paper-50'}`}
+        className={`text-base ${variant === 'secondary' ? 'text-ink-700' : 'text-paper-50'}`}
       >
         {label}
       </StyledText>

@@ -1,12 +1,15 @@
-import { FC, useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
-import { useTranslation } from 'react-i18next';
+import { StyledText } from '@/components/elements/StyledText';
 import { setupOwnerPin } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { StyledText } from '@/components/elements/StyledText';
+import { Alert } from '@/utils';
+import { FontAwesome } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import { File, Paths } from 'expo-file-system';
+import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
+import { FC, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, View } from 'react-native';
 import { AuthButton, AuthScreenShell } from './AuthScreenShell';
 import { PinBoxes, type PinBoxStatus } from './PinBoxes';
 import { PinPad } from './PinPad';
@@ -35,7 +38,8 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [acknowledged, setAcknowledged] = useState(false);
+
+  // Removed 'acknowledged' state entirely.
 
   useEffect(() => {
     if (step !== 'create' || pin.length !== OWNER_PIN_LENGTH) return;
@@ -126,6 +130,56 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
     setCopied(true);
   };
 
+  const handleDownload = async () => {
+    try {
+      const content = `SariSari POS - Owner PIN Recovery Code\n\nYour Code: ${recoveryCode}\n\nKeep this code safe. You will need it to reset your Owner PIN if you forget it.`;
+
+      const file = new File(Paths.document, 'sarisari-recovery-code.txt');
+
+      if (file.exists) {
+        file.delete();
+      }
+      file.create();
+      file.write(content);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'text/plain',
+          dialogTitle: 'Save Recovery Code',
+          UTI: 'public.plain-text',
+        });
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      } else {
+        await Clipboard.setStringAsync(recoveryCode);
+        Alert.alert(
+          'Copied!',
+          'Sharing is not available on this device. The recovery code has been copied to your clipboard.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                void Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                );
+                setCopied(true);
+              },
+            },
+          ],
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to save the recovery code file.', [
+        {
+          text: 'OK',
+          onPress: () => {},
+        },
+      ]);
+    }
+  };
+
   if (step === 'code') {
     return (
       <AuthScreenShell
@@ -140,70 +194,83 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
             testID="pin-setup-done"
             variant="success"
             label={t('pin.btn_done')}
-            disabled={!acknowledged}
+            // No longer disabled by a checkbox! Always allow them to proceed.
             onPress={onDone}
           />
         }
       >
         <View
-          className="w-full bg-paper-50 rounded-2xl border border-paper-300 py-5 px-4 items-center"
+          className="w-full bg-paper-50 rounded-2xl border border-paper-300 py-6 px-4 items-center"
           testID="pin-setup-code-card"
         >
-          <StyledText
-            variant="semibold"
-            className="text-[13px] text-ink-500 mb-2"
-          >
+          <StyledText variant="semibold" className="text-sm text-ink-500 mb-2">
             {t('pin.recovery_code_label')}
           </StyledText>
+
           <StyledText
             variant="extrabold"
             selectable
             accessibilityLabel={recoveryCode.split('').join(' ')}
-            className="text-[34px] tracking-[4px] text-ink-900"
+            className="text-3xl tracking-widest text-ink-900 my-2"
           >
             {recoveryCode}
           </StyledText>
-          <Pressable
-            testID="pin-setup-copy"
-            onPress={() => void handleCopy()}
-            accessibilityRole="button"
-            className="flex-row items-center gap-x-2 min-h-[44px] px-4 mt-3 active:opacity-70"
-          >
-            <FontAwesome
-              name={copied ? 'check' : 'clone'}
-              size={14}
-              color="#E85A1F"
-            />
-            <StyledText
-              variant="semibold"
-              className="text-persimmon-500 text-[15px]"
+
+          <View className="flex-row items-center justify-center gap-x-4 mt-4 w-full">
+            {/* Copy Button */}
+            <Pressable
+              testID="pin-setup-copy"
+              onPress={() => void handleCopy()}
+              accessibilityRole="button"
+              className="flex-1 flex-row items-center justify-center bg-paper-100 rounded-xl py-3 active:opacity-70"
             >
-              {copied ? t('pin.code_copied') : t('pin.copy_code')}
-            </StyledText>
-          </Pressable>
+              <FontAwesome
+                name={copied ? 'check' : 'clone'}
+                size={16}
+                color="#E85A1F"
+              />
+              <StyledText
+                variant="semibold"
+                className="text-persimmon-500 text-sm ml-2"
+              >
+                {copied ? t('pin.code_copied') : t('pin.copy_code')}
+              </StyledText>
+            </Pressable>
+
+            {/* Download Button */}
+            <Pressable
+              testID="pin-setup-download"
+              onPress={() => void handleDownload()}
+              accessibilityRole="button"
+              className="flex-1 flex-row items-center justify-center bg-paper-100 rounded-xl py-3 active:opacity-70"
+            >
+              <FontAwesome name="download" size={16} color="#E85A1F" />
+              <StyledText
+                variant="semibold"
+                className="text-persimmon-500 text-sm ml-2"
+              >
+                Save File
+              </StyledText>
+            </Pressable>
+          </View>
         </View>
 
-        <Pressable
-          testID="pin-setup-ack"
-          onPress={() => setAcknowledged((v) => !v)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: acknowledged }}
-          className="flex-row items-center gap-x-3 min-h-[48px] mt-5 w-full active:opacity-70"
-        >
-          <View
-            className={`w-[26px] h-[26px] rounded-lg border-2 items-center justify-center ${acknowledged ? 'bg-sage-500 border-sage-500' : 'bg-paper-50 border-paper-400'}`}
-          >
-            {acknowledged ? (
-              <FontAwesome name="check" size={13} color="#FFFFFF" />
-            ) : null}
-          </View>
+        {/* Checkbox removed completely. Added a helpful hint text instead. */}
+        <View className="mt-6 items-center px-4">
+          <FontAwesome
+            name="info-circle"
+            size={14}
+            color="#A89F90"
+            className="mb-2"
+          />
           <StyledText
-            variant="medium"
-            className="flex-1 text-[15px] text-ink-700"
+            variant="regular"
+            className="text-xs text-ink-400 text-center leading-relaxed"
           >
-            {t('pin.recovery_saved_ack')}
+            Please ensure you save this code. You will need it if you forget
+            your Owner PIN.
           </StyledText>
-        </Pressable>
+        </View>
       </AuthScreenShell>
     );
   }
@@ -242,7 +309,7 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
         status={status}
         shakeKey={shakeKey}
       />
-      <View className="min-h-[40px] justify-center mt-3">
+      <View className="min-h-10 justify-center mt-3">
         {errorMsg ? (
           <StyledText
             variant="semibold"

@@ -1,5 +1,5 @@
 import { FC, useRef } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements/StyledText';
 
 interface Props {
@@ -47,14 +47,14 @@ export const CodeBoxes: FC<Props> = ({
           return (
             <View key={idx} className="flex-row items-center">
               {idx > 0 && idx % groupSize === 0 ? (
-                <View className="w-2.5 h-0.5 rounded-full bg-paper-400 mx-1.5" />
+                <View className="w-2.5 h-0.5 rounded-full bg-paper-400 mx-1" />
               ) : null}
               <View
-                className={`w-[32px] h-[48px] mx-0.5 rounded-xl border-[1.5px] items-center justify-center ${
+                className={`w-12 h-16 mx-0.5 rounded-lg border-2 items-center justify-center ${
                   hasError
                     ? 'border-semantic-danger bg-semantic-danger-50'
                     : isCurrent
-                      ? 'border-persimmon-500 border-2 bg-paper-50'
+                      ? 'border-persimmon-500 bg-paper-50'
                       : char !== undefined
                         ? 'border-persimmon-500 bg-persimmon-50'
                         : 'border-paper-300 bg-paper-50'
@@ -82,7 +82,7 @@ export const CodeBoxes: FC<Props> = ({
         autoComplete="off"
         spellCheck={false}
         accessibilityLabel={accessibilityLabel}
-        className="absolute inset-0 opacity-0"
+        style={{ ...StyleSheet.absoluteFillObject, opacity: 0.01 }}
         caretHidden
       />
     </Pressable>
