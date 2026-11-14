@@ -8,6 +8,7 @@ import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { PinBoxes, type PinBoxStatus } from '@/components/auth/PinBoxes';
 import { PinPad } from '@/components/auth/PinPad';
 import { StyledText } from '@/components/elements/StyledText';
+import { SariWordmark } from '@/components/brand/SariWordmark';
 import { SariMascot } from '@/components/mascot';
 import { isOwnerPinConfigured, verifyOwnerPin } from '@/database/auth';
 import { getAppSetting } from '@/database/settings';
@@ -27,7 +28,56 @@ type Resolution = 'pending' | 'armed' | 'inert';
 const PIN_LENGTH = 6;
 const WRONG_PIN_CLEAR_MS = 600;
 
-export const AppLockGate: FC<Props> = ({ isReady, children }) => {
+const BRAND = 'SariSari';
+
+/** Swaps the brand name inside the translated title for the wordmark art. */
+const LockTitle: FC<{ title?: string }> = ({ title }) => {
+  const at = title?.indexOf(BRAND);
+  if (at === -1) {
+    return (
+      <StyledText
+        variant="extrabold"
+        accessibilityRole="header"
+        className="text-[26px] text-ink-900 mt-2 text-center"
+      >
+        {title}
+      </StyledText>
+    );
+  }
+
+  const before = title?.slice(0, at).trim();
+  const after = title?.slice(BRAND.length).trim();
+  return (
+    <View
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={title}
+      className="mt-2 flex-row flex-wrap items-center justify-center gap-x-2"
+    >
+      {before ? (
+        <StyledText
+          variant="extrabold"
+          importantForAccessibility="no"
+          className="text-[26px] text-ink-900 text-center"
+        >
+          {before}
+        </StyledText>
+      ) : null}
+      <SariWordmark height={30} decorative />
+      {after ? (
+        <StyledText
+          variant="extrabold"
+          importantForAccessibility="no"
+          className="text-[26px] text-ink-900 text-center"
+        >
+          {after}
+        </StyledText>
+      ) : null}
+    </View>
+  );
+};
+
+export const AppLockGate: FC<Props> =({ isReady, children }) => {
   const { t } = useTranslation('settings');
   const insets = useSafeAreaInsets();
   const isAppUnlocked = useAuthStore((state) => state.isAppUnlocked);
@@ -210,19 +260,13 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
             >
               <SariMascot
                 state={showError ? 'error' : 'default'}
-                size={112}
+                size={160}
                 accessibilityLabel={t('biometrics.lock_sari_label')}
               />
-              <StyledText
-                variant="extrabold"
-                accessibilityRole="header"
-                className="text-[26px] text-ink-900 mt-2 text-center"
-              >
-                {t('biometrics.lock_title')}
-              </StyledText>
+              <LockTitle />
               <StyledText
                 variant="regular"
-                className="text-[15px] text-ink-500 mt-1.5 text-center"
+                className="text-[15px] text-ink-500 mt-3 text-center"
               >
                 {t('biometrics.lock_subtitle')}
               </StyledText>
