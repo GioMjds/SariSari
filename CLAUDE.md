@@ -1,91 +1,92 @@
-# Vault-First Agent Architecture
+# AGENTS.md
 
-The `obsidian-vault/` directory is the project's source of truth for vision, roadmap, feature specs, technical decisions, bug diagnoses, research, planning, and meeting context. Every agent working on this repo must consult the vault before answering project-specific questions or making architectural decisions.
+> Read this file first, every session, before writing code.
 
-## Vault-First Rule
+## General Principles
 
-1. On every session, `Read` `obsidian-vault/CONTEXT.md` first. It is the dense ~80-line entry point with principles, conventions, and the domain routing table.
-2. Before answering any project-specific question, classify the domain and Grep the relevant folder per the routing table below. Never Grep the whole vault.
-3. After a Grep returns matches, `Read` at most the top 1-3 matching notes. Never `Read` a whole folder.
-4. Cite the vault note path in your response (e.g., `per obsidian-vault/02-Features/06-collection-queue.md`).
-5. If no vault note is found, say so in one short line and proceed using code and `AGENTS.md` only. Do not fabricate a citation.
+- Generate concise, short solutions for new modules or code.
+- Watch for over-engineering, oversized files needing refactor.
+- Watch for weird syntax/style mismatching rest of codebase.
+- Watch for obvious bugs.
+- Prioritize concise, precise code and docs changes.
+- No emojis or special characters in comments.
+- Write `activity-log.md` in `/docs` to refer back if confused.
+- Make to-do list, run major changes by user first.
+- Review existing files before refactor or change.
+- Markdown files use kebab naming (e.g., `my-file.md`).
+- Don't auto-commit activity logs and docs.
+- Comments: one-liner, one sentence.
 
-## Domain Routing
+## Code Quality
 
-Map the question to a vault folder before Grepping. If a question spans multiple folders, Grep each in order.
+- Right data structures and algorithms for problem.
+- Don't expose data needlessly (least priviledge).
+- No external libraries unless absolutely necessary and installed in the project.
+- Use project dependency file for correct versions.
+- Avoid redundancy unless improves usability.
+- Prioritize semantic markup/tags and accessibility attributes over `.tsx` component or page files.
 
-| Question about...               | Look in...                                | Grep hint                      |
-| ------------------------------- | ----------------------------------------- | ------------------------------ |
-| Architecture, stack, ADRs       | `obsidian-vault/03-Technical/`            | full-text on keyword           |
-| Feature spec, rationale, scopes | `obsidian-vault/02-Features/<id>-name.md` | exact filename or feature name |
-| Roadmap, status, milestones     | `obsidian-vault/01-Roadmap/`              | "roadmap" or "status"          |
-| Bug, known crash, root cause    | `obsidian-vault/05-Bugs-Issues/`          | symptom or library name        |
-| Vision, principles, values      | `obsidian-vault/00-Vision/`               | "principle" or "vision"        |
-| Meeting context, decisions      | `obsidian-vault/04-Meetings/`             | date (YYYY-MM-DD) or topic     |
-| Sprint planning, daily tasks    | `obsidian-vault/07-Planning/`             | topic name                     |
-| Market research, competitors    | `obsidian-vault/06-Research/`             | topic name                     |
-| Marketing, channels, captions   | `obsidian-vault/09-Marketing/`            | only when explicitly asked     |
-| Templates, reference materials  | `obsidian-vault/08-Resources/`            | only when creating a note      |
+## When Unsure
 
-## Token Discipline
+- Ambiguous requirement -> state your assumption, proceed.
+- About to touch auth, payments, or run a schema migration -> pause and confirm with the human first.
 
-- Read `obsidian-vault/CONTEXT.md` first, then Grep, then Read top 1-3 hits only.
-- Never Read whole folders. Never Read every match in a Grep result. Never recursively read the whole vault.
-- Skip `09-Marketing/` for technical questions.
-- Skip `08-Resources/` templates unless the task is to create a note.
-- Skip `obsidian-vault/CLAUDE-CODE-INTEGRATION.md` mid-session. Its actionable content is summarized in `CONTEXT.md`.
-- If a Grep returns more than 5 hits, narrow the pattern (add a 2nd keyword, restrict glob) before reading any file.
-- Search first, retrieve second, reason third. Do NOT "read everything, then reason."
+## Version Control
 
-## Avoid Redundant Investigation
+- Commit after significant changes, clear messages.
+- Keep commits focused, atomic.
+- No auto-push any branch.
 
-If the vault contains an explicit accepted decision (e.g., feature spec, ADR-style note, or `status: accepted` in frontmatter) for a question, do NOT re-evaluate the decision from first principles. Cite the decision and proceed. Only re-investigate if the user explicitly asks to reconsider, the implementation materially changed, new requirements conflict, or the decision is marked obsolete.
+## AI Restrictions
 
-## Token budget pressure
+- No customer personal data - names, contacts, account numbers, etc.
+- No credentials - passwords, API keys, tokens, connection strings, etc.
 
-The always-loaded core is small (~700 tokens). If context pressure mounts, the agent may drop already-cited vault notes from the response but must keep the lookup step. Do not skip the Grep. For the next question, restart from `obsidian-vault/CONTEXT.md` rather than relying on residual context. The routing table is the cheap, durable entry point.
+## Design Context
 
-## If sources conflict
+- Product Register: `product` (essential utility, workflows, and task completion).
+- Primary Docs: Reference [PRODUCT.md](./PRODUCT.md) for strategy and users; reference [DESIGN.md](./DESIGN.md) for visual tokens and components.
 
-Surface it. Do not pick. Cite both. Ask if implementation matters.
+## After Task
 
-- Two vault notes disagree: cite both verbatim, ask the user which is authoritative.
-- Vault note contradicts code: code is the source of current behavior. Cite the vault note, flag the discrepancy, suggest the vault note may need updating.
-- Stale vault note (`status: draft` in frontmatter, or `created:` older than 90 days): still cite, but flag the staleness.
+- Must give an user workflow after each task. Like how each component is used, what the user sees, and how they interact with it.
+- Give an brief explanation of how the code works, what it does, and how it fits into the overall system.
+- Document any assumptions or decisions made during the task.
+- Explain how it helps the user achieve their goals and how it improves their experience.
+- If it is role-based, explain how it works for that/each role and what they can do with it.
+- If it is UI related, provide an screenshot to place in `docs/screenshots` and reference it in the workflow explanation.
+- For user workflows if possible, record an video of the user interacting with the feature and place it in `docs/videos` and reference it in the workflow explanation.
 
-## Non-project questions
+## Communication Style (Caveman)
 
-If the question is unrelated to SariSari (e.g., "what is React Native?", "help me write a poem"), skip the vault entirely. No Grep, no citation, direct answer.
-
-## Subagent forwarding
-
-Subagents do not inherit this protocol by default. When dispatching a subagent for a project-specific task, either pass the relevant vault notes inline in the prompt or explicitly tell the subagent to read the vault before answering.
-
-## Update policy
-
-Significant decisions made during a task may warrant a vault note update. Do not auto-write. Follow write etiquette in `obsidian-vault/AGENTS.md` (read existing note first, use template, place in correct folder, never touch `.obsidian/`, no credentials, no auto-push).
+- Chat replies only. Code, comments, commits, PRs, and docs are written in normal prose.
+- The "After Task" sections above still apply; write them terse, not skipped.
 
 <!-- caveman-begin -->
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
-Rules:
+### Rules
 
-- Answer first: Answer, then reason, then next step.
-- Kill ceremony: No greeting, hedging, pleasantries, recap, or closer.
-- Short word: "fix" not "implement a solution for".
-- Articles optional, meaning never: Drop a/an/the when the sentence still reads in one pass.
-- One idea per sentence: ASD-STE100 is the floor: 20 words max, active voice, imperative for instructions, one term per thing, pronoun only with an obvious referent.
-- Payload verbatim: Code blocks unchanged.
-- Tool runs: bounded status: No text between routine calls.
-- User's language: Compress the style, not the language.
-- Never perform caveman: No "caveman mode on", no "me think", no "Caveman:" prefix, no normal answer plus caveman copy.
+- **Answer first:** answer, then reason, then next step.
+- **Kill ceremony:** no greeting, hedging, pleasantries, recap, or closer.
+- **Short word:** "fix" not "implement a solution for".
+- **Articles optional, meaning never:** drop a/an/the when the sentence still reads in one pass.
+- **One idea per sentence:** ASD-STE100 is the floor. 20 words max, active voice, imperative for instructions, one term per thing, pronoun only with an obvious referent.
+- **Payload verbatim:** code blocks unchanged.
+- **Tool runs:** bounded status, no text between routine calls.
+- **User's language:** compress the style, not the language.
+- **Never perform caveman:** no "caveman mode on", no "me think", no "Caveman:" prefix, no normal answer plus caveman copy.
 
-Switch: /caveman (default), /ultracave (fragments, each fact once), /megacave (Classical Chinese 文言文)
-Stop: "stop caveman" or "normal mode"
+### Modes
 
-Auto-Clarity: plain prose for security warnings, irreversible actions, step order a fragment could scramble, user confused, questions you ask the user. Resume after.
+- Switch: `/caveman` (default), `/ultracave` (fragments, each fact once), `/megacave` (Classical Chinese).
+- Stop: "stop caveman" or "normal mode".
 
-Boundaries: code, comments, commits, PRs, docs written normal; existing comments kept unless asked.
-Floor: code, commands, paths, numbers and error strings verbatim; never drop not/never/no/only.
+### Boundaries
+
+- **Auto-clarity:** plain prose for security warnings, irreversible actions, step order a fragment could scramble, user confusion, and questions asked of the user. Resume after.
+- **Written artifacts:** code, comments, commits, PRs, docs in normal prose; existing comments kept unless asked.
+- **Floor:** code, commands, paths, numbers, and error strings verbatim. Never drop not/never/no/only.
+
 <!-- caveman-end -->
