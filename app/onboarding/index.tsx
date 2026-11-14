@@ -14,6 +14,7 @@ import { markOnboardingComplete } from '@/lib';
 import {
   createDaySeed,
   dayReducer,
+  firstUnfinishedBeat,
   outcomeParams,
   scriptFor,
 } from '@/lib/onboardingDay';
@@ -131,9 +132,20 @@ export default function OnboardingPage() {
     );
   };
 
+  // Back from Ready returns to the beat the owner still has to finish.
+  // After a skip, the close beat may depend on sales that never happened,
+  // so stepping straight back to it would show a beat that cannot be done.
+  const previousStep = useCallback((): Step => {
+    if (step.kind === 'ready') {
+      const pending = firstUnfinishedBeat(day);
+      if (pending !== null) return { kind: 'beat', beat: pending };
+    }
+    return back(step);
+  }, [step, day]);
+
   const handleBack = () => {
     if (saving) return;
-    setStep(back(step));
+    setStep(previousStep());
   };
 
   // Android hardware back walks the flow instead of leaving it, so typed
@@ -149,12 +161,12 @@ export default function OnboardingPage() {
           setStep(skipToReady());
           return true;
         }
-        setStep(back(step));
+        setStep(previousStep());
         return true;
       },
     );
     return () => subscription.remove();
-  }, [step, saving, editingFromReady]);
+  }, [step, saving, editingFromReady, previousStep]);
 
   const handleOpenStore = async () => {
     if (saving) return;

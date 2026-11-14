@@ -103,6 +103,30 @@ describe('OnboardingPage', () => {
         variant: 'success',
       }),
     );
+    expect(mockAddToast).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns from Ready to the first unfinished beat after a skip', async () => {
+    const screen = await render(<OnboardingPage />);
+    await fillProfile(screen);
+    await fireEvent.press(screen.getByLabelText('showMeA11y'));
+    await fireEvent.press(screen.getByLabelText('next'));
+    await fireEvent.press(screen.getByLabelText('skipA11y'));
+    await fireEvent.press(screen.getByLabelText('backA11y'));
+    expect(screen.getByText('beatUtangScene')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('showMeA11y'));
+    expect(isDisabled(screen, 'next')).toBe(false);
+  });
+
+  it('returns from Ready to the close beat once the whole day is done', async () => {
+    const screen = await render(<OnboardingPage />);
+    await fillProfile(screen);
+    for (const label of ['next', 'next', 'next', 'finishDay']) {
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await fireEvent.press(screen.getByLabelText(label));
+    }
+    await fireEvent.press(screen.getByLabelText('backA11y'));
+    expect(screen.getByText('beatCloseOutcome')).toBeTruthy();
   });
 
   it('plays the whole day with Show me and saves the trimmed profile', async () => {
@@ -131,6 +155,9 @@ describe('OnboardingPage', () => {
     expect(screen.getByText('beatCashOutcome')).toBeTruthy();
     expect(isDisabled(screen, 'next')).toBe(false);
     expect(screen.queryByLabelText('showMeA11y')).toBeNull();
+    // One toast per finished beat; revisiting a done beat adds none.
+    await fireEvent.press(screen.getByLabelText('next'));
+    expect(mockAddToast).toHaveBeenCalledTimes(2);
   });
 
   it('plays Show me step by step without Reduce Motion', async () => {
@@ -145,6 +172,32 @@ describe('OnboardingPage', () => {
         jest.advanceTimersByTime(400 * 6);
       });
       expect(isDisabled(screen, 'next')).toBe(false);
+      expect(mockAddToast).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('still finishes the beat when the owner taps a wrong item during Show me', async () => {
+    jest.useFakeTimers();
+    mockReducedMotion = false;
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      // Playback has cleared the cart and added the first Kopiko.
+      await act(async () => {
+        jest.advanceTimersByTime(400 * 2);
+      });
+      // Tiles render in PRODUCT_ORDER; the last one is Coke Mismo, which
+      // Mang Tonyo did not ask for.
+      const tiles = screen.getAllByLabelText('posAddA11y');
+      await fireEvent.press(tiles[tiles.length - 1]!);
+      await act(async () => {
+        jest.advanceTimersByTime(400 * 6);
+      });
+      expect(isDisabled(screen, 'next')).toBe(false);
+      expect(mockAddToast).toHaveBeenCalledTimes(1);
     } finally {
       jest.useRealTimers();
     }

@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 import { BeatScene } from '@/components/onboarding/BeatScene';
 import { createDaySeed, dayReducer } from '@/lib/onboardingDay';
+import { formatPesos } from '@/lib/money';
 
 jest.mock('moti', () => {
   const { View } = require('react-native');
@@ -65,5 +66,21 @@ describe('BeatScene', () => {
     expect(doneScreen.queryByLabelText('showMeA11y')).toBeNull();
     expect(doneScreen.getByText('beatDone')).toBeTruthy();
     expect(doneScreen.getByText(/^beatCashOutcome:/)).toBeTruthy();
+  });
+
+  it('states the cash outcome with its own numbers after the utang sale', async () => {
+    const afterBoth = (['cash', 'utang'] as const).reduce(
+      (s, beat) => dayReducer(s, { type: 'autoplay', beat }),
+      createDaySeed(),
+    );
+    const screen = await renderScene(afterBoth);
+    expect(
+      screen.getByText(
+        `beatCashOutcome:${JSON.stringify({
+          total: formatPesos(38),
+          change: formatPesos(12),
+        })}`,
+      ),
+    ).toBeTruthy();
   });
 });

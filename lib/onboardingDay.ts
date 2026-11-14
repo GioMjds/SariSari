@@ -1,4 +1,5 @@
 import {
+  BEAT_ORDER,
   CASH_TENDERED,
   LOW_STOCK_AT,
   PRODUCT_ORDER,
@@ -106,6 +107,16 @@ export function cartHasExtras(
 
 export function isLowStock(stock: number): boolean {
   return stock <= LOW_STOCK_AT;
+}
+
+/**
+ * First beat not yet finished, in day order; null once the day is done.
+ * Each beat depends on the ones before it (restock needs the cash sale,
+ * the payment needs the utang sale), so this is the only unfinished
+ * beat the owner can actually complete.
+ */
+export function firstUnfinishedBeat(state: DayState): BeatId | null {
+  return BEAT_ORDER.find((beat) => !state.beatDone[beat]) ?? null;
 }
 
 /** Deduct the cart from stock, add it to the day totals, empty the cart. */

@@ -4,6 +4,7 @@ import {
   cartTotal,
   createDaySeed,
   dayReducer,
+  firstUnfinishedBeat,
   outcomeParams,
   scriptFor,
   type DayAction,
@@ -189,6 +190,17 @@ describe('onboarding day reducer', () => {
     expect(fixed.beatDone.cash).toBe(true);
     expect(fixed.products.cokeMismo.stock).toBe(10);
     expect(dayReducer(fixed, { type: 'autoplay', beat: 'cash' })).toBe(fixed);
+  });
+
+  it('names the first unfinished beat, or null once the day is done', () => {
+    expect(firstUnfinishedBeat(createDaySeed())).toBe('cash');
+    expect(firstUnfinishedBeat(cashDone())).toBe('utang');
+    expect(firstUnfinishedBeat(utangDone())).toBe('restock');
+    const all = (['restock', 'close'] as BeatId[]).reduce(
+      (s, beat) => dayReducer(s, { type: 'autoplay', beat }),
+      utangDone(),
+    );
+    expect(firstUnfinishedBeat(all)).toBeNull();
   });
 
   it('keeps every money value an integer', () => {

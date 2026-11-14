@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { PosReplica } from '@/components/onboarding/replicas/PosReplica';
 import { createDaySeed, dayReducer, type DayAction } from '@/lib/onboardingDay';
+import { formatPesos } from '@/lib/money';
 
 jest.mock('moti', () => {
   const { View } = require('react-native');
@@ -116,5 +117,23 @@ describe('PosReplica', () => {
     );
     expect(screen.getByText(/^posPaidCash:/)).toBeTruthy();
     expect(screen.queryByLabelText('posCheckout')).toBeNull();
+  });
+
+  it('keeps the cash receipt at its own numbers after the utang sale', async () => {
+    const afterBoth = (['cash', 'utang'] as const).reduce(
+      (s, beat) => dayReducer(s, { type: 'autoplay', beat }),
+      createDaySeed(),
+    );
+    const screen = await render(
+      <PosReplica mode="cash" state={afterBoth} dispatch={jest.fn()} />,
+    );
+    expect(
+      screen.getByText(
+        `posPaidCash:${JSON.stringify({
+          total: formatPesos(38),
+          change: formatPesos(12),
+        })}`,
+      ),
+    ).toBeTruthy();
   });
 });
