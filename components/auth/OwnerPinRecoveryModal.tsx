@@ -1,17 +1,6 @@
-import { FC, useState } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { verifyAndResetOwnerPinWithRecoveryCode } from '@/database/auth';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { StyledText } from '@/components/elements/StyledText';
+import { FC } from 'react';
+import { Modal } from 'react-native';
+import { OwnerPinRecoveryFlow } from './OwnerPinRecoveryFlow';
 
 interface Props {
   visible: boolean;
@@ -19,150 +8,23 @@ interface Props {
   onCancel: () => void;
 }
 
+/**
+ * Full-screen host for the recovery flow. Settings navigates to the
+ * `/settings/owner-pin-recovery` route instead; this host serves the PIN
+ * challenge and the launch lock, which sit above the router.
+ */
 export const OwnerPinRecoveryModal: FC<Props> = ({
   visible,
   onSuccess,
   onCancel,
-}) => {
-  const { t } = useTranslation('settings');
-  const [code, setCode] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const resetFailedAttempts = useAuthStore((s) => s.resetFailedAttempts);
-
-  const handleReset = async () => {
-    if (!code.trim() || newPin.length < 4) return;
-    const success = await verifyAndResetOwnerPinWithRecoveryCode(code, newPin);
-    if (success) {
-      resetFailedAttempts();
-      onSuccess();
-    } else {
-      setErrorMsg(t('pin.invalid_code'));
-    }
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-      statusBarTranslucent
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.backdrop}
-      >
-        <View style={styles.card}>
-          <StyledText variant="semibold" style={styles.title}>
-            {t('pin.reset_title')}
-          </StyledText>
-
-          <StyledText variant="regular" style={styles.label}>
-            {t('pin.enter_recovery_code')}
-          </StyledText>
-          <TextInput
-            style={styles.input}
-            autoCapitalize="characters"
-            maxLength={10}
-            value={code}
-            onChangeText={(val) => {
-              setErrorMsg('');
-              setCode(val);
-            }}
-          />
-
-          <StyledText variant="regular" style={[styles.label, { marginTop: 12 }]}>
-            {t('pin.enter_pin')}
-          </StyledText>
-          <TextInput
-            style={styles.input}
-            keyboardType="number-pad"
-            secureTextEntry
-            maxLength={6}
-            value={newPin}
-            onChangeText={(val) => {
-              setErrorMsg('');
-              setNewPin(val);
-            }}
-          />
-
-          {Boolean(errorMsg) && (
-            <StyledText variant="semibold" style={styles.errorText}>
-              {errorMsg}
-            </StyledText>
-          )}
-
-          <View style={styles.btnRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-              <StyledText variant="semibold" style={styles.cancelText}>
-                Cancel
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.submitBtn} onPress={handleReset}>
-              <StyledText variant="semibold" style={styles.submitText}>
-                Reset
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-};
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(23, 20, 15, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: '#FAF9F5',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 18,
-    color: '#28231D',
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 13,
-    color: '#564E45',
-    alignSelf: 'flex-start',
-    marginBottom: 4,
-  },
-  input: {
-    width: '100%',
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  errorText: { color: '#C22D2D', fontSize: 13, marginTop: 8 },
-  btnRow: { flexDirection: 'row', gap: 12, marginTop: 16, width: '100%' },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#E5DFD7',
-    alignItems: 'center',
-  },
-  cancelText: { color: '#3E3831' },
-  submitBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#E85A1F',
-    alignItems: 'center',
-  },
-  submitText: { color: '#fff' },
-});
+}) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    presentationStyle="fullScreen"
+    onRequestClose={onCancel}
+    statusBarTranslucent
+  >
+    <OwnerPinRecoveryFlow onDone={onSuccess} onCancel={onCancel} />
+  </Modal>
+);

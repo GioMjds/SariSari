@@ -55,27 +55,27 @@ Suki: Aling Nena, starting balance 0. Display names are i18n'd (en/tl).
 
 ### Beats
 
-| #   | Time     | Replica of                                | Owner does                                                                                                         | State after                                                       |
-| --- | -------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| 0   | -        | -                                         | Welcome hero + owner name + store name on one screen                                                               | profile filled                                                    |
-| 1   | 6:30 AM  | `sales/pos` fast-lane tiles, cart, checkout | Mang Tonyo wants 2 Kopiko + 1 Pandesal. Tap items, Checkout, Cash, tender P50, see change P12                      | Kopiko 5 -> 3; sales total 38; items 3                            |
-| 2   | 10:00 AM | POS checkout + customer picker            | Aling Nena wants 2 Lucky Me + 1 Coke Mismo "tabi muna". Add items, Checkout, Utang, pick Aling Nena                | Nena balance 0 -> 64; sales total 102; items 6; utang out 64      |
-| 3   | 2:00 PM  | `inventory/products` + Sari stock alert   | Sari flags Kopiko (3 left). Tap Restock, confirm +24                                                               | Kopiko 3 -> 27                                                    |
-| 4   | 9:00 PM  | `home` KPI tiles + suki row               | Read today's totals (derived from beats 1-2). Aling Nena pays P40                                                  | Nena balance 64 -> 24; utang out 24                               |
-| 5   | -        | trimmed `ReadyStep`                       | "Open my store" saves the profile and routes to `/(tabs)`                                                          | profile persisted                                                 |
+| #   | Time     | Replica of                                  | Owner does                                                                                          | State after                                                  |
+| --- | -------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 0   | -        | -                                           | Welcome hero + owner name + store name on one screen                                                | profile filled                                               |
+| 1   | 6:30 AM  | `sales/pos` fast-lane tiles, cart, checkout | Mang Tonyo wants 2 Kopiko + 1 Pandesal. Tap items, Checkout, Cash, tender P50, see change P12       | Kopiko 5 -> 3; sales total 38; items 3                       |
+| 2   | 10:00 AM | POS checkout + customer picker              | Aling Nena wants 2 Lucky Me + 1 Coke Mismo "tabi muna". Add items, Checkout, Utang, pick Aling Nena | Nena balance 0 -> 64; sales total 102; items 6; utang out 64 |
+| 3   | 2:00 PM  | `inventory/products` + Sari stock alert     | Sari flags Kopiko (3 left). Tap Restock, confirm +24                                                | Kopiko 3 -> 27                                               |
+| 4   | 9:00 PM  | `home` KPI tiles + suki row                 | Read today's totals (derived from beats 1-2). Aling Nena pays P40                                   | Nena balance 64 -> 24; utang out 24                          |
+| 5   | -        | trimmed `ReadyStep`                         | "Open my store" saves the profile and routes to `/(tabs)`                                           | profile persisted                                            |
 
 Credit sales count toward the day's sales total, matching the real app: `getTodayStats` in `database/sales.ts` sums `total` across all payment types.
 
 ### Sari poses (vector `SariMascot` states)
 
-| Step    | Pose                                   |
-| ------- | -------------------------------------- |
-| Profile | `onboarding`                           |
-| Cash    | `sales`                                |
-| Utang   | `utang`                                |
-| Restock | `low-stock`, then `inventory` when done |
+| Step    | Pose                                            |
+| ------- | ----------------------------------------------- |
+| Profile | `onboarding`                                    |
+| Cash    | `sales`                                         |
+| Utang   | `utang`                                         |
+| Restock | `low-stock`, then `inventory` when done         |
 | Close   | `reports`, then `balance-cleared` after payment |
-| Ready   | existing celebrate asset               |
+| Ready   | existing celebrate asset                        |
 
 ### Removed
 
@@ -119,27 +119,28 @@ type DayAction =
 ### Step machine: `lib/onboardingStepMachine.ts` (rewrite)
 
 ```ts
-type Step = { kind: 'profile' } | { kind: 'beat'; beat: BeatId } | { kind: 'ready' };
+type Step =
+  { kind: 'profile' } | { kind: 'beat'; beat: BeatId } | { kind: 'ready' };
 ```
 
 `TOTAL_STEPS = 6`. Keeps `indexOf`, `stepAt`, `next`, `back`, `skipToReady`, `jumpTo`, `canJumpBack`. `TabKey` and `TOUR_ORDER` are removed.
 
 ### Components (`components/onboarding/`)
 
-| File                               | Status   | Role                                                                     |
-| ---------------------------------- | -------- | ------------------------------------------------------------------------ |
-| `DayClock.tsx`                     | new      | Replaces `OnboardingProgress`. A11y label "10:00 AM, step 3 of 6".      |
-| `BeatScene.tsx`                    | new      | Replaces `TourCard`. Sari pose + scene line + replica slot + outcome toast + Show me. |
-| `replicas/PosReplica.tsx`          | new      | Beats 1 and 2 (`mode: 'cash' \| 'utang'`).                               |
-| `replicas/InventoryReplica.tsx`    | new      | Beat 3.                                                                  |
-| `replicas/HomeCloseReplica.tsx`    | new      | Beat 4.                                                                  |
-| `HintRing.tsx`                     | reused   | Coach ring.                                                              |
-| `ProfileStep.tsx`                  | trimmed  | Copy refresh; still one screen.                                          |
-| `ReadyStep.tsx`                    | trimmed  | Drop First steps list.                                                   |
-| `SariStage.tsx`, `StepTransition.tsx`, `SuccessCheck.tsx` | reused if they fit `BeatScene` | -               |
-| `TourCard.tsx`, `demos/*`, `OnboardingProgress.tsx` | deleted | -                                                               |
-| `constants/onboardingTour.ts`      | deleted  | Also remove its re-export from `constants/index.ts`.                     |
-| `constants/onboardingTour.assets.ts` | kept   | Still used by `app/index.tsx` and `GettingStartedCard`.                  |
+| File                                                      | Status                         | Role                                                                                  |
+| --------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------- |
+| `DayClock.tsx`                                            | new                            | Replaces `OnboardingProgress`. A11y label "10:00 AM, step 3 of 6".                    |
+| `BeatScene.tsx`                                           | new                            | Replaces `TourCard`. Sari pose + scene line + replica slot + outcome toast + Show me. |
+| `replicas/PosReplica.tsx`                                 | new                            | Beats 1 and 2 (`mode: 'cash' \| 'utang'`).                                            |
+| `replicas/InventoryReplica.tsx`                           | new                            | Beat 3.                                                                               |
+| `replicas/HomeCloseReplica.tsx`                           | new                            | Beat 4.                                                                               |
+| `HintRing.tsx`                                            | reused                         | Coach ring.                                                                           |
+| `ProfileStep.tsx`                                         | trimmed                        | Copy refresh; still one screen.                                                       |
+| `ReadyStep.tsx`                                           | trimmed                        | Drop First steps list.                                                                |
+| `SariStage.tsx`, `StepTransition.tsx`, `SuccessCheck.tsx` | reused if they fit `BeatScene` | -                                                                                     |
+| `TourCard.tsx`, `demos/*`, `OnboardingProgress.tsx`       | deleted                        | -                                                                                     |
+| `constants/onboardingTour.ts`                             | deleted                        | Also remove its re-export from `constants/index.ts`.                                  |
+| `constants/onboardingTour.assets.ts`                      | kept                           | Still used by `app/index.tsx` and `GettingStartedCard`.                               |
 
 Replicas are prop-driven only: they receive `state` and `dispatch` and never call hooks that touch SQLite or Zustand stores. Real presentational leaves from `components/sales/pos`, `components/home`, and `components/customers` are reused where they are pure props-in components; otherwise the replica copies their classes. Planning must check each leaf.
 
@@ -168,11 +169,11 @@ Rewrite `locales/en/onboarding.json` and `locales/tl/onboarding.json`. Remove `t
 
 ## Testing
 
-| Test                                                  | Covers                                                                                                                     |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `tests/lib/onboardingDay.test.ts` (new)               | cash change, stock decrement, utang balance, restock, partial payment, checkout rejection on wrong cart / short tender, `beatDone` gating, autoplay equals manual path, money stays integer |
-| step machine tests (update)                           | 6 steps; next/back/skip/jumpTo bounds                                                                                      |
-| `tests/onboardingScreen.test.tsx` (rewrite)           | Continue locked until beat done; Show me unlocks; skip to Ready; profile required; `markOnboardingComplete` called once with trimmed names |
-| replica component tests (replace `demos.test.tsx`)    | each replica renders from props and dispatches the right action on tap                                                     |
-| `components/onboarding/__tests__/OnboardingProgress.test.tsx` | replaced by a `DayClock` test                                                                                     |
-| `tests/onboardingLocales.test.ts` (update)            | en/tl key parity; no orphan `tour*`/`demo*` keys; no longer imports `ONBOARDING_TOUR_STEPS`                                |
+| Test                                                          | Covers                                                                                                                                                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/lib/onboardingDay.test.ts` (new)                       | cash change, stock decrement, utang balance, restock, partial payment, checkout rejection on wrong cart / short tender, `beatDone` gating, autoplay equals manual path, money stays integer |
+| step machine tests (update)                                   | 6 steps; next/back/skip/jumpTo bounds                                                                                                                                                       |
+| `tests/onboardingScreen.test.tsx` (rewrite)                   | Continue locked until beat done; Show me unlocks; skip to Ready; profile required; `markOnboardingComplete` called once with trimmed names                                                  |
+| replica component tests (replace `demos.test.tsx`)            | each replica renders from props and dispatches the right action on tap                                                                                                                      |
+| `components/onboarding/__tests__/OnboardingProgress.test.tsx` | replaced by a `DayClock` test                                                                                                                                                               |
+| `tests/onboardingLocales.test.ts` (update)                    | en/tl key parity; no orphan `tour*`/`demo*` keys; no longer imports `ONBOARDING_TOUR_STEPS`                                                                                                 |

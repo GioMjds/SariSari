@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, TextInput, Pressable, Switch, Alert } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { getAppSetting, setAppSetting } from '@/database/settings';
@@ -11,8 +12,6 @@ import {
   getBiometricCapability,
   type BiometricCapability,
 } from '@/lib/auth/biometrics';
-import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
-import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { StyledText } from '@/components/elements/StyledText';
 
 const DEFAULT_PESOS_LIMIT = '50';
@@ -92,8 +91,6 @@ export const OwnerPinSettingsCard: React.FC = () => {
   const { t } = useTranslation('settings');
   const addToast = useToastStore((s) => s.addToast);
   const { isPinConfigured, setIsPinConfigured } = useAuthStore();
-  const [showSetup, setShowSetup] = useState(false);
-  const [showRecovery, setShowRecovery] = useState(false);
   const { value: biometricRaw } = useAppSetting('biometric_unlock_enabled');
   const biometricEnabled = biometricRaw === '1';
   const { mutateAsync: setBiometricEnabled } = useSetAppSetting(
@@ -226,7 +223,7 @@ export const OwnerPinSettingsCard: React.FC = () => {
       <View className="px-4 pb-4 flex-row gap-3">
         {!isPinConfigured ? (
           <Pressable
-            onPress={() => setShowSetup(true)}
+            onPress={() => router.push('/settings/owner-pin-setup')}
             accessibilityRole="button"
             style={{ minHeight: 48 }}
             className="flex-1 bg-persimmon-600 rounded-2xl items-center justify-center active:opacity-80"
@@ -238,7 +235,7 @@ export const OwnerPinSettingsCard: React.FC = () => {
         ) : (
           <>
             <Pressable
-              onPress={() => setShowSetup(true)}
+              onPress={() => router.push('/settings/owner-pin-setup')}
               accessibilityRole="button"
               style={{ minHeight: 48 }}
               className="flex-1 bg-paper-100 border border-paper-300 rounded-2xl items-center justify-center active:opacity-70"
@@ -248,7 +245,7 @@ export const OwnerPinSettingsCard: React.FC = () => {
               </StyledText>
             </Pressable>
             <Pressable
-              onPress={() => setShowRecovery(true)}
+              onPress={() => router.push('/settings/owner-pin-recovery')}
               accessibilityRole="button"
               style={{ minHeight: 48 }}
               className="flex-1 bg-paper-100 border border-paper-300 rounded-2xl items-center justify-center active:opacity-70"
@@ -303,20 +300,6 @@ export const OwnerPinSettingsCard: React.FC = () => {
           onCommit={handleSaveThresholds}
         />
       </View>
-
-      <OwnerPinSetupModal
-        visible={showSetup}
-        onSuccess={() => {
-          setShowSetup(false);
-          setIsPinConfigured(true);
-        }}
-        onCancel={() => setShowSetup(false)}
-      />
-      <OwnerPinRecoveryModal
-        visible={showRecovery}
-        onSuccess={() => setShowRecovery(false)}
-        onCancel={() => setShowRecovery(false)}
-      />
     </View>
   );
 };

@@ -42,8 +42,8 @@ export default function Settings() {
         contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="px-5 pt-2 pb-3">
-          <View className="bg-paper-50 border border-ink-100 rounded-2xl px-4 py-4 flex-row items-center shadow-paper">
+        <View className="px-5 py-2">
+          <View className="bg-paper-50 border border-ink-100 rounded-2xl px-4 py-2 flex-row items-center shadow-paper">
             {/* Left: message */}
             <View className="flex-1 pr-3">
               <View className="flex-row items-center mb-2">
