@@ -63,6 +63,14 @@ export function SubTabControl<T extends string>({
   const widths = useSharedValue<number[]>(new Array(tabCount).fill(0));
   const layoutVersion = useSharedValue(0);
   const measuredIndices = useRef<Set<number>>(new Set());
+  // Source of truth for measurements lives on the JS thread. Reading
+  // `xs.value` inside onLayout returns stale data when several tabs lay out
+  // in the same tick (shared-value writes from JS land on the UI thread
+  // asynchronously), so each handler would clobber the others' entries.
+  const layoutRef = useRef<{ xs: number[]; widths: number[] }>({
+    xs: new Array(tabCount).fill(0),
+    widths: new Array(tabCount).fill(0),
+  });
   const [ready, setReady] = useState(false);
 
   const reduceMotion = useReducedMotion();
@@ -88,6 +96,10 @@ export function SubTabControl<T extends string>({
     if (prevTabKeysRef.current !== tabKeys) {
       prevTabKeysRef.current = tabKeys;
       measuredIndices.current.clear();
+      layoutRef.current = {
+        xs: new Array(tabCount).fill(0),
+        widths: new Array(tabCount).fill(0),
+      };
       setReady(false);
       xs.value = new Array(tabCount).fill(0);
       widths.value = new Array(tabCount).fill(0);
@@ -122,13 +134,11 @@ export function SubTabControl<T extends string>({
 
     const { x, width } = e.nativeEvent.layout;
 
-    const nextXs = [...xs.value];
-    nextXs[index] = x;
-    xs.value = nextXs;
-
-    const nextWidths = [...widths.value];
-    nextWidths[index] = width;
-    widths.value = nextWidths;
+    const layout = layoutRef.current;
+    layout.xs[index] = x;
+    layout.widths[index] = width;
+    xs.value = [...layout.xs];
+    widths.value = [...layout.widths];
 
     measuredIndices.current.add(index);
     layoutVersion.value += 1;

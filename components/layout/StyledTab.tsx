@@ -28,10 +28,23 @@ import { useCreditKPIs } from '@/hooks/useCredits';
 export const TAB_BAR_TOTAL_OFFSET = 68;
 export const TAB_BAR_RAIL_HEIGHT = 68;
 export const TAB_BAR_ACTION_OVERHANG = 0;
-export const TAB_BAR_MARGIN = 8;
+/** Gap between the floating bar and the system navigation area. */
+export const TAB_BAR_MARGIN = 12;
+/** Floor for the bar's distance from the screen edge when the inset is 0. */
+const TAB_BAR_MIN_BOTTOM = 16;
+const TAB_BAR_SIDE_GUTTER = 12;
+
+/**
+ * Distance from the screen bottom to the floating bar. Sits above the
+ * system nav (3-button bar or gesture handle) so thumbs never collide
+ * with OS chrome.
+ */
+export function getTabBarFloatBottom(bottomInset: number): number {
+  return Math.max(bottomInset + TAB_BAR_MARGIN, TAB_BAR_MIN_BOTTOM);
+}
 
 export function getTabBarBottomOffset(bottomInset: number): number {
-  return TAB_BAR_RAIL_HEIGHT + Math.max(bottomInset, TAB_BAR_MARGIN);
+  return TAB_BAR_RAIL_HEIGHT + getTabBarFloatBottom(bottomInset);
 }
 
 export function useTabBarBottomOffset(): number {
@@ -267,16 +280,16 @@ export const StyledTab = memo(() => {
     [isRouteFocused, router, pathname],
   );
 
-  const bottomInset = Math.max(insets.bottom, TAB_BAR_MARGIN);
+  const floatBottom = getTabBarFloatBottom(insets.bottom);
 
   return (
     <Animated.View
       style={[
         {
           position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          bottom: floatBottom,
+          left: TAB_BAR_SIDE_GUTTER,
+          right: TAB_BAR_SIDE_GUTTER,
           zIndex: 1000,
         },
         wrapperAnimatedStyle,
@@ -285,11 +298,17 @@ export const StyledTab = memo(() => {
     >
       <View
         accessibilityRole="tablist"
-        className="bg-cinnamon-900 border-t border-cinnamon-800 flex-row items-center"
+        className="bg-cinnamon-900 border border-cinnamon-800 rounded-[16px] flex-row items-center"
         style={{
-          paddingBottom: bottomInset,
           paddingHorizontal: 4,
-          elevation: 8,
+          // Clip Android ripples to the rounded corners. iOS keeps overflow
+          // visible so the shadow is not cut off.
+          overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
+          shadowColor: '#150903',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.18,
+          shadowRadius: 10,
+          elevation: 6,
         }}
       >
         {visibleRoutes.map((tab: Tab) => {

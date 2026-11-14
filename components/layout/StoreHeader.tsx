@@ -71,13 +71,13 @@ export const StoreHeader = memo(function StoreHeader() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-2">
           <View className="mr-2">
-            <SariMascot state={SARI_TAB_STATE[tab]} size={52} />
+            <SariMascot state={SARI_TAB_STATE[tab]} size={56} />
           </View>
           <View className="flex-1 items-start">
             <SariWordmark height={26} accessibilityLabel="SariSari" />
             <StyledText
               variant="medium"
-              className="text-ink-500 text-xs mt-1"
+              className="text-ink-500 text-sm mt-1.5"
               numberOfLines={1}
               accessibilityLiveRegion="polite"
             >

@@ -1,4 +1,8 @@
-import { StyledTab, StoreHeader } from '@/components/layout';
+import {
+  StyledTab,
+  StoreHeader,
+  useTabBarBottomOffset,
+} from '@/components/layout';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { Tabs, usePathname } from 'expo-router';
@@ -12,6 +16,7 @@ import { isPrimaryTabPath } from '@/constants';
 export default function ScreensLayout() {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const tabBarOffset = useTabBarBottomOffset();
   const [toastVisible, setToastVisible] = useState(false);
   const lastBackPressedRef = useRef<number>(0);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,7 +115,10 @@ export default function ScreensLayout() {
       {toastVisible && (
         <Animated.View
           pointerEvents="none"
-          style={[styles.toastContainer, { opacity: fadeAnim }]}
+          style={[
+            styles.toastContainer,
+            { opacity: fadeAnim, bottom: tabBarOffset + 12 },
+          ]}
           className="absolute bottom-20 left-4 right-4 items-center justify-center z-50"
         >
           <View
