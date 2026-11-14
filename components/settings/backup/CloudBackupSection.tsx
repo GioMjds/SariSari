@@ -199,6 +199,7 @@ function LinkedCloudRow() {
 
   const handleUnlink = () => {
     void runWithPinGuard({
+      actionId: 'drive_unlink',
       title: t('settings:biometrics.lock_title'),
       actionDescription: t('settings:biometrics.reason_unlink'),
       onApproved: async () => {

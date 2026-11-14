@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, FC } from 'react';
+import { createContext, useState, useEffect, useRef, FC } from 'react';
 import { getAppSetting } from '@/database/settings';
 import {
   authenticateOwner,
@@ -11,11 +11,14 @@ import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
 import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { Alert } from '@/utils';
 import { t } from 'i18next';
+import { isPinRequired, type PinActionId } from '@/lib/auth/pin-actions';
 
 export interface GuardOptions {
+  actionId: PinActionId;
   title?: string;
   actionDescription?: string;
   onApproved: () => Promise<void> | void;
+  onCancel?: () => void;
 }
 
 export interface OwnerPinGuardContextType {
@@ -82,12 +85,19 @@ export const OwnerPinGuardProvider: FC<{
     }
     if (result === 'cancelled') {
       setActiveOptions(null);
+      options.onCancel?.();
       return 'aborted';
     }
     return 'fall-through';
   };
 
-  const runWithPinGuard = async (options: GuardOptions) => {
+  const inFlight = useRef(false);
+
+  const runGuard = async (options: GuardOptions) => {
+    if (!(await isPinRequired(options.actionId, getAppSetting))) {
+      await options.onApproved();
+      return;
+    }
     setActiveOptions(options);
     let configured = false;
     try {
@@ -98,6 +108,7 @@ export const OwnerPinGuardProvider: FC<{
         'Owner PIN Unavailable',
         'Owner PIN verification is currently unavailable. Please try again.',
       );
+      options.onCancel?.();
       return;
     }
     setIsPinConfigured(configured);
@@ -107,6 +118,17 @@ export const OwnerPinGuardProvider: FC<{
     }
     if ((await tryBiometricApproval(options)) === 'fall-through') {
       setShowChallenge(true);
+    }
+  };
+
+  // Drops re-entrant calls so a double tap cannot run onApproved twice.
+  const runWithPinGuard = async (options: GuardOptions) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      await runGuard(options);
+    } finally {
+      inFlight.current = false;
     }
   };
 
@@ -135,10 +157,12 @@ export const OwnerPinGuardProvider: FC<{
   };
 
   const handleCancel = () => {
+    const opts = activeOptions;
     setShowChallenge(false);
     setShowSetup(false);
     setShowRecovery(false);
     setActiveOptions(null);
+    opts?.onCancel?.();
   };
 
   return (

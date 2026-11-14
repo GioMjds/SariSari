@@ -355,6 +355,7 @@ export default function DeliveryReceiptEditor() {
     voiding.current = true;
     try {
       await runWithPinGuard({
+        actionId: 'delivery_receipt_void',
         title: t('voidPinTitle'),
         actionDescription: `Void delivery receipt #${receiptId}`,
         onApproved: async () => {

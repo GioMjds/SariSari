@@ -79,5 +79,31 @@
     "lock_retry": "Subukang muli",
     "lock_use_pin": "Gamitin ang Owner PIN",
     "lock_sari_label": "Si Sari na nagbabantay ng tindahan"
+  },
+  "pin_policy": {
+    "section": "Mga kailangan ng PIN",
+    "intro": "Piliin kung aling mga aksyon ng may-ari ang hihingi ng PIN. Laging hihingi ang mga naka-lock.",
+    "requires_pin": "Mag-set up muna ng Owner PIN para mabago ito.",
+    "new_badge": "Bago",
+    "keep_default_a11y": "Panatilihin ang default para sa aksyong ito",
+    "locked": "Laging kailangan ng PIN",
+    "group_high": "Sensitibo",
+    "group_low": "Araw-araw",
+    "group_locked": "Laging protektado",
+    "guard_title": "Baguhin ang mga kailangan ng PIN",
+    "guard_desc": "Baguhin kung aling mga aksyon ang kailangan ng PIN",
+    "actions": {
+      "sale_void": "I-void ang benta",
+      "sale_refund": "I-refund ang benta",
+      "sale_price_correction": "Itama ang presyo ng benta",
+      "stock_adjustment": "Ayusin ang stock",
+      "delivery_receipt_void": "I-void ang delivery receipt",
+      "credit_limit_override": "Lampasan ang credit limit",
+      "backup_restore": "I-restore ang backup",
+      "drive_unlink": "I-unlink ang Google Drive",
+      "pin_change": "Palitan ang Owner PIN",
+      "pin_policy_change": "Baguhin ang mga kailangan ng PIN",
+      "biometric_enable": "I-on ang biometric na pag-apruba"
+    }
   }
 }

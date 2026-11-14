@@ -93,6 +93,7 @@ export function LocalSnapshotsSection() {
 
   const handleConfirmRestore = async () => {
     void runWithPinGuard({
+      actionId: 'backup_restore',
       title: t('settings:biometrics.lock_title'),
       actionDescription: t('settings:biometrics.reason_restore'),
       onApproved: async () => {

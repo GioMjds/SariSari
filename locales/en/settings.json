@@ -79,5 +79,31 @@
     "lock_retry": "Try again",
     "lock_use_pin": "Use Owner PIN",
     "lock_sari_label": "Sari guarding the store"
+  },
+  "pin_policy": {
+    "section": "PIN approvals",
+    "intro": "Choose which owner actions ask for your PIN. Locked actions always ask.",
+    "requires_pin": "Set up an Owner PIN to change these.",
+    "new_badge": "New",
+    "keep_default_a11y": "Keep the default for this action",
+    "locked": "Always requires PIN",
+    "group_high": "Sensitive",
+    "group_low": "Everyday",
+    "group_locked": "Always protected",
+    "guard_title": "Change PIN approvals",
+    "guard_desc": "Change which actions need your PIN",
+    "actions": {
+      "sale_void": "Void a sale",
+      "sale_refund": "Refund a sale",
+      "sale_price_correction": "Correct sale prices",
+      "stock_adjustment": "Adjust stock",
+      "delivery_receipt_void": "Void a delivery receipt",
+      "credit_limit_override": "Override a credit limit",
+      "backup_restore": "Restore a backup",
+      "drive_unlink": "Unlink Google Drive",
+      "pin_change": "Change Owner PIN",
+      "pin_policy_change": "Change PIN approvals",
+      "biometric_enable": "Turn on biometric approval"
+    }
   }
 }

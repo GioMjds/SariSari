@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { getAppSetting, setAppSetting } from '@/database/settings';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { useToastStore } from '@/stores';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
 import {
@@ -90,6 +91,7 @@ function LimitRow({ label, value, onChange, onCommit }: LimitRowProps) {
 export const OwnerPinSettingsCard: React.FC = () => {
   const { t } = useTranslation('settings');
   const addToast = useToastStore((s) => s.addToast);
+  const { runWithPinGuard } = useOwnerPinGuard();
   const { isPinConfigured, setIsPinConfigured } = useAuthStore();
   const { value: biometricRaw } = useAppSetting('biometric_unlock_enabled');
   const biometricEnabled = biometricRaw === '1';
@@ -159,20 +161,28 @@ export const OwnerPinSettingsCard: React.FC = () => {
       await setBiometricEnabled('0');
       return;
     }
-    Alert.alert(t('biometrics.risk_title'), t('biometrics.risk_body'), [
-      { text: t('biometrics.risk_cancel'), style: 'cancel' },
-      {
-        text: t('biometrics.risk_confirm'),
-        onPress: async () => {
-          const result = await authenticateOwner(
-            t('biometrics.reason_default'),
-          );
-          if (result === 'success') {
-            await setBiometricEnabled('1');
-          }
-        },
+    // Enabling biometrics lets a fingerprint approve owner actions, so the PIN comes first.
+    void runWithPinGuard({
+      actionId: 'biometric_enable',
+      title: t('pin.title'),
+      actionDescription: t('pin_policy.actions.biometric_enable'),
+      onApproved: () => {
+        Alert.alert(t('biometrics.risk_title'), t('biometrics.risk_body'), [
+          { text: t('biometrics.risk_cancel'), style: 'cancel' },
+          {
+            text: t('biometrics.risk_confirm'),
+            onPress: async () => {
+              const result = await authenticateOwner(
+                t('biometrics.reason_default'),
+              );
+              if (result === 'success') {
+                await setBiometricEnabled('1');
+              }
+            },
+          },
+        ]);
       },
-    ]);
+    });
   };
 
   const handleLaunchLockToggle = async (next: boolean) => {
