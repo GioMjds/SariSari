@@ -26,58 +26,22 @@ interface Props {
 
 type Resolution = 'pending' | 'armed' | 'inert';
 const PIN_LENGTH = 6;
-const WRONG_PIN_CLEAR_MS = 600;
-
-const BRAND = 'SariSari';
+const WRONG_PIN_CLEAR_MS = 400;
 
 /** Swaps the brand name inside the translated title for the wordmark art. */
-const LockTitle: FC<{ title?: string }> = ({ title }) => {
-  const at = title?.indexOf(BRAND);
-  if (at === -1) {
-    return (
-      <StyledText
-        variant="extrabold"
-        accessibilityRole="header"
-        className="text-[26px] text-ink-900 mt-2 text-center"
-      >
-        {title}
-      </StyledText>
-    );
-  }
-
-  const before = title?.slice(0, at).trim();
-  const after = title?.slice(BRAND.length).trim();
+const LockTitle = () => {
   return (
     <View
       accessible
       accessibilityRole="header"
-      accessibilityLabel={title}
       className="mt-2 flex-row flex-wrap items-center justify-center gap-x-2"
     >
-      {before ? (
-        <StyledText
-          variant="extrabold"
-          importantForAccessibility="no"
-          className="text-[26px] text-ink-900 text-center"
-        >
-          {before}
-        </StyledText>
-      ) : null}
-      <SariWordmark height={30} decorative />
-      {after ? (
-        <StyledText
-          variant="extrabold"
-          importantForAccessibility="no"
-          className="text-[26px] text-ink-900 text-center"
-        >
-          {after}
-        </StyledText>
-      ) : null}
+      <SariWordmark height={46} decorative={true} />
     </View>
   );
 };
 
-export const AppLockGate: FC<Props> =({ isReady, children }) => {
+export const AppLockGate: FC<Props> = ({ isReady, children }) => {
   const { t } = useTranslation('settings');
   const insets = useSafeAreaInsets();
   const isAppUnlocked = useAuthStore((state) => state.isAppUnlocked);
@@ -284,17 +248,18 @@ export const AppLockGate: FC<Props> =({ isReady, children }) => {
               </View>
 
               <View className="min-h-[44px] justify-center mt-1 w-full items-center">
-                {lockedOut || errorMsg && (
-                  <StyledText
-                    variant="semibold"
-                    accessibilityLiveRegion="polite"
-                    className="text-semantic-danger text-sm text-center"
-                  >
-                    {lockedOut
-                      ? t('pin.locked_out', { seconds: secondsLeft })
-                      : errorMsg}
-                  </StyledText>
-                )}
+                {lockedOut ||
+                  (errorMsg && (
+                    <StyledText
+                      variant="semibold"
+                      accessibilityLiveRegion="polite"
+                      className="text-semantic-danger text-sm text-center"
+                    >
+                      {lockedOut
+                        ? t('pin.locked_out', { seconds: secondsLeft })
+                        : errorMsg}
+                    </StyledText>
+                  ))}
               </View>
             </ScrollView>
 

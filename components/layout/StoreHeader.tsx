@@ -1,32 +1,53 @@
-import React, { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { Href, useRouter } from 'expo-router';
+import { Href, useRouter, useSegments } from 'expo-router';
 import { StyledText } from '@/components/elements';
+import { SariWordmark } from '@/components/brand/SariWordmark';
+import { SariMascot, type SariState } from '@/components/mascot';
 import { NotificationSheet } from './NotificationSheet';
-import { useProfile } from '@/hooks/useProfile';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useSystemNotifications } from '@/hooks';
 
+type SariTab = 'home' | 'sales' | 'inventory' | 'customers' | 'more';
+
+/** Which Sari state acts out each tab. */
+const SARI_TAB_STATE = {
+  home: 'default',
+  sales: 'sales',
+  inventory: 'inventory',
+  customers: 'customers',
+  more: 'settings',
+} satisfies Record<SariTab, SariState>;
+
+// TODO: Must be with a En/Fil locale and a dynamic message depending on store's needs
+const SARI_LINES = {
+  home: 'Hello there! Here\'s your store today.',
+  sales: 'Ring up a sale. Sari helps!',
+  inventory: 'Count the shelves, keep stock in check.',
+  customers: 'Your suki, your utang list.',
+  more: 'Need anything? Sari is here.',
+} satisfies Record<SariTab, string>;
+
+const TABS = ['home', 'sales', 'inventory', 'customers', 'more'] satisfies SariTab[];
+
+function useActiveTab(): SariTab {
+  const segments = useSegments() as string[];
+  return useMemo(
+    () => segments.find((s): s is SariTab => TABS.includes(s as SariTab)) ?? 'home',
+    [segments],
+  );
+}
+
 export const StoreHeader = memo(function StoreHeader() {
   const router = useRouter();
-  const { profile } = useProfile();
   const { alertCount, alerts } = useHomeDashboardData();
+  const tab = useActiveTab();
 
   useSystemNotifications(alerts);
 
   const [isSheetVisible, setSheetVisible] = useState(false);
-
-  const storeName = profile?.storeName;
-  const ownerName = profile?.ownerName;
-  const ownerInitials =
-    ownerName
-      ?.split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
 
   const handleNotificationSelect = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -49,18 +70,18 @@ export const StoreHeader = memo(function StoreHeader() {
     <View className="bg-paper-200 px-4 pt-3 pb-2">
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="w-10 h-10 rounded-full bg-cinnamon-500 items-center justify-center mr-3 shadow-sm">
-            <StyledText variant="extrabold" className="text-paper-50 text-base">
-              {ownerInitials}
-            </StyledText>
+          <View className="mr-2">
+            <SariMascot state={SARI_TAB_STATE[tab]} size={52} />
           </View>
-          <View className="flex-1">
+          <View className="flex-1 items-start">
+            <SariWordmark height={26} accessibilityLabel="SariSari" />
             <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-xl leading-tight"
+              variant="medium"
+              className="text-ink-500 text-xs mt-1"
               numberOfLines={1}
+              accessibilityLiveRegion="polite"
             >
-              {storeName}
+              {SARI_LINES[tab]}
             </StyledText>
           </View>
         </View>

@@ -18,6 +18,7 @@ import { SariSettings } from './states/SariSettings';
 import { SariReports } from './states/SariReports';
 import { SariExit } from './states/SariExit';
 import { SariUnimplemented } from './states/SariUnimplemented';
+import { SariCustomers } from './states/SariCustomers';
 
 /** Every state Sari can act out. */
 export const SARI_STATES = [
@@ -37,6 +38,7 @@ export const SARI_STATES = [
   'reports',
   'exit',
   'unimplemented',
+  'customers',
 ] as const;
 
 export type SariState = (typeof SARI_STATES)[number];
@@ -115,6 +117,8 @@ function renderState(state: SariState, size: number, animate: boolean) {
       return <SariReports size={size} animate={animate} />;
     case 'exit':
       return <SariExit size={size} animate={animate} />;
+    case 'customers':
+      return <SariCustomers size={size} animate={animate} />;
     case 'unimplemented':
       return <SariUnimplemented size={size} animate={animate} />;
   }

@@ -10,7 +10,7 @@ import {
 import type { ComponentType } from 'react';
 import { Href, usePathname, useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState, useEffect } from 'react';
-import { TouchableOpacity, View, Keyboard, Platform } from 'react-native';
+import { Pressable, View, Keyboard, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '../elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,11 +22,13 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useProducts } from '@/hooks/useProducts';
+import { useCreditKPIs } from '@/hooks/useCredits';
 
-export const TAB_BAR_TOTAL_OFFSET = 72;
-export const TAB_BAR_RAIL_HEIGHT = 72;
+export const TAB_BAR_TOTAL_OFFSET = 68;
+export const TAB_BAR_RAIL_HEIGHT = 68;
 export const TAB_BAR_ACTION_OVERHANG = 0;
-export const TAB_BAR_MARGIN = 50;
+export const TAB_BAR_MARGIN = 8;
 
 export function getTabBarBottomOffset(bottomInset: number): number {
   return TAB_BAR_RAIL_HEIGHT + Math.max(bottomInset, TAB_BAR_MARGIN);
@@ -37,12 +39,20 @@ export function useTabBarBottomOffset(): number {
   return getTabBarBottomOffset(insets.bottom);
 }
 
-const ACTIVE_COLOR = '#E85A1F';
+const ACTIVE_COLOR = '#FFFFFF';
 const INACTIVE_COLOR = '#C8C0B2';
-const ACTIVE_LABEL_COLOR = '#FF9B6B';
+const ACTIVE_LABEL_COLOR = '#FFFFFF';
 const INACTIVE_LABEL_COLOR = '#C8C0B2';
+const ACTIVE_PILL_COLOR = '#E85A1F';
+const BADGE_COLOR = '#C62828';
+const BAR_COLOR = '#150903';
+const LOW_STOCK_THRESHOLD = 5;
 
-const SHADOW_COLOR = 'rgba(86, 78, 69, 0.15)';
+const TAB_ROOTS: Record<string, Href> = {
+  '/sales': '/(tabs)/sales/pos' as Href,
+  '/inventory': '/(tabs)/inventory/products' as Href,
+  '/customers': '/(tabs)/customers/all' as Href,
+};
 
 const getHrefString = (href: Href): string =>
   typeof href === 'object' ? href.pathname : href;
@@ -50,6 +60,7 @@ const getHrefString = (href: Href): string =>
 interface TabButtonProps {
   tab: Tab;
   isFocused: boolean;
+  badge?: number;
   onPress: () => void;
 }
 
@@ -61,7 +72,7 @@ const TAB_ICONS: Record<string, ComponentType<TabIconProps>> = {
   '/more': More,
 };
 
-const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
+const TabButton = memo(({ tab, isFocused, badge = 0, onPress }: TabButtonProps) => {
   const scale = useSharedValue(1);
   const shouldReduceMotion = useReducedMotion();
 
@@ -77,36 +88,82 @@ const TabButton = memo(({ tab, isFocused, onPress }: TabButtonProps) => {
     }
   }, [scale, shouldReduceMotion]);
 
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
 
+  const hrefString = getHrefString(tab.href);
+  const Icon = TAB_ICONS[hrefString] ?? More;
+
+  const badgeLabel = badge > 99 ? '99+' : String(badge);
+
   return (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="tab"
-      accessibilityLabel={tab.name}
+      accessibilityLabel={badge > 0 ? `${tab.name}, ${badgeLabel}` : tab.name}
       accessibilityState={{ selected: isFocused }}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.9}
-      className="items-center justify-center flex-1 py-1"
-      style={{ minWidth: 48, minHeight: 48 }}
+      android_ripple={{ color: 'rgba(255,255,255,0.12)', borderless: false }}
+      className="flex-1 items-center justify-center"
+      style={{ height: TAB_BAR_RAIL_HEIGHT, minWidth: 48 }}
     >
-      <View className="items-center justify-center px-1">
-        {(() => {
-          const hrefString = getHrefString(tab.href);
-          const Icon = TAB_ICONS[hrefString] ?? More;
-          return <Icon size={28} color={color} />;
-        })()}
+      <View style={{ alignItems: 'center' }}>
+        <Animated.View
+          className="items-center justify-center rounded-full"
+          style={[
+            {
+              width: 64,
+              height: 36,
+              backgroundColor: isFocused ? ACTIVE_PILL_COLOR : 'transparent',
+            },
+            pressStyle,
+          ]}
+        >
+          <Icon size={28} color={color} />
+          {badge > 0 && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: 4,
+                minWidth: 18,
+                height: 18,
+                paddingHorizontal: 4,
+                borderRadius: 9,
+                backgroundColor: BADGE_COLOR,
+                borderWidth: 2,
+                borderColor: BAR_COLOR,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <StyledText
+                variant="extrabold"
+                style={{ fontSize: 10, lineHeight: 12, color: '#FFFFFF' }}
+              >
+                {badgeLabel}
+              </StyledText>
+            </View>
+          )}
+        </Animated.View>
         <StyledText
           variant={isFocused ? 'extrabold' : 'medium'}
-          className="text-xs mt-0.5"
-          style={{ color: isFocused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR }}
+          style={{
+            fontSize: 13,
+            lineHeight: 16,
+            marginTop: 2,
+            color: isFocused ? ACTIVE_LABEL_COLOR : INACTIVE_LABEL_COLOR,
+          }}
           numberOfLines={1}
         >
           {tab.name}
         </StyledText>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 
@@ -165,7 +222,7 @@ export const StyledTab = memo(() => {
 
   useEffect(() => {
     const duration = shouldReduceMotion ? 0 : 200;
-    translateY.value = withTiming(keyboardVisible ? 160 : 0, { duration });
+    translateY.value = withTiming(keyboardVisible ? 200 : 0, { duration });
     opacity.value = withTiming(keyboardVisible ? 0 : 1, { duration });
   }, [keyboardVisible, translateY, opacity, shouldReduceMotion]);
 
@@ -181,15 +238,33 @@ export const StyledTab = memo(() => {
     [pathname],
   );
 
+  const { getAllProductsQuery } = useProducts();
+  const { data: creditKpis } = useCreditKPIs();
+
+  const badges = useMemo<Record<string, number>>(() => {
+    const lowStock = (getAllProductsQuery.data ?? []).filter(
+      (p) => p.quantity <= LOW_STOCK_THRESHOLD,
+    ).length;
+    return {
+      '/inventory': lowStock,
+      '/customers': creditKpis?.overdueCount ?? 0,
+    };
+  }, [getAllProductsQuery.data, creditKpis?.overdueCount]);
+
   const handlePress = useCallback(
     (href: Href) => {
       const hrefString = getHrefString(href);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       if (!isRouteFocused(hrefString)) {
         router.navigate(href);
+        return;
+      }
+      const root = TAB_ROOTS[hrefString];
+      if (root && !isPathFocused(getHrefString(root), pathname)) {
+        router.navigate(root);
       }
     },
-    [isRouteFocused, router],
+    [isRouteFocused, router, pathname],
   );
 
   const bottomInset = Math.max(insets.bottom, TAB_BAR_MARGIN);
@@ -199,9 +274,9 @@ export const StyledTab = memo(() => {
       style={[
         {
           position: 'absolute',
-          bottom: bottomInset,
-          left: 16,
-          right: 16,
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 1000,
         },
         wrapperAnimatedStyle,
@@ -210,15 +285,11 @@ export const StyledTab = memo(() => {
     >
       <View
         accessibilityRole="tablist"
-        className="bg-cinnamon-900 border border-cinnamon-800/80 rounded-[16px] flex-row justify-evenly items-center"
+        className="bg-cinnamon-900 border-t border-cinnamon-800 flex-row items-center"
         style={{
-          height: 64,
-          paddingHorizontal: 8,
-          shadowColor: SHADOW_COLOR,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.12,
-          shadowRadius: 6,
-          elevation: 3,
+          paddingBottom: bottomInset,
+          paddingHorizontal: 4,
+          elevation: 8,
         }}
       >
         {visibleRoutes.map((tab: Tab) => {
@@ -230,6 +301,7 @@ export const StyledTab = memo(() => {
               key={hrefString}
               tab={tab}
               isFocused={isFocused}
+              badge={badges[hrefString] ?? 0}
               onPress={() => handlePress(tab.href)}
             />
           );

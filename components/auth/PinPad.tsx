@@ -51,7 +51,7 @@ export const PinPad: FC<Props> = ({
               >
                 <StyledText
                   variant="semibold"
-                  className="text-2xl text-ink-900"
+                  className="text-4xl text-ink-900"
                 >
                   {digit}
                 </StyledText>
@@ -74,7 +74,7 @@ export const PinPad: FC<Props> = ({
             onPress={() => press('0')}
             className="flex-1 mx-1.5 h-20 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95"
           >
-            <StyledText variant="semibold" className="text-2xl text-ink-900">
+            <StyledText variant="semibold" className="text-4xl text-ink-900">
               0
             </StyledText>
           </Pressable>
