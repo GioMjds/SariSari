@@ -20,7 +20,7 @@ export const PinPolicyCard: React.FC = () => {
   const addToast = useToastStore((s) => s.addToast);
   const isPinConfigured = useAuthStore((s) => s.isPinConfigured);
   const { runWithPinGuard } = useOwnerPinGuard();
-  const { overrides, setOverride } = usePinPolicy();
+  const { overrides, isReady, setOverride } = usePinPolicy();
 
   const save = async (id: PinActionId, enabled: boolean) => {
     try {
@@ -38,6 +38,9 @@ export const PinPolicyCard: React.FC = () => {
       onApproved: () => save(action.id as PinActionId, next),
     });
   };
+
+  // Wait for stored overrides so unloaded defaults are never shown or saved.
+  if (!isReady) return null;
 
   return (
     <View>

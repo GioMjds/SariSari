@@ -20,7 +20,7 @@ export const usePinPolicy = () => {
   });
   return {
     overrides: query.data ?? {},
-    isLoading: query.isLoading,
+    isReady: query.isSuccess,
     setOverride: mutation.mutateAsync,
   };
 };

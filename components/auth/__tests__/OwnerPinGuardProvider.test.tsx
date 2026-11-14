@@ -111,6 +111,23 @@ describe('OwnerPinGuardProvider policy', () => {
     expect(screen.getByText('PIN_CHALLENGE')).toBeTruthy();
   });
 
+  it('drops a re-entrant call while the first is in flight, then allows the next', async () => {
+    mockGetSetting.mockResolvedValue('0');
+    await mount();
+    const onApproved = jest.fn();
+    await act(async () => {
+      await Promise.all([
+        guard.runWithPinGuard({ actionId: 'stock_adjustment', onApproved }),
+        guard.runWithPinGuard({ actionId: 'stock_adjustment', onApproved }),
+      ]);
+    });
+    expect(onApproved).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await guard.runWithPinGuard({ actionId: 'stock_adjustment', onApproved });
+    });
+    expect(onApproved).toHaveBeenCalledTimes(2);
+  });
+
   it('skips PIN setup when the action is off and no PIN exists', async () => {
     mockGetSetting.mockResolvedValue('0');
     mockConfigured.mockResolvedValue(false);

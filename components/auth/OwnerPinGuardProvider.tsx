@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, FC } from 'react';
+import { createContext, useState, useEffect, useRef, FC } from 'react';
 import { getAppSetting } from '@/database/settings';
 import {
   authenticateOwner,
@@ -89,7 +89,9 @@ export const OwnerPinGuardProvider: FC<{
     return 'fall-through';
   };
 
-  const runWithPinGuard = async (options: GuardOptions) => {
+  const inFlight = useRef(false);
+
+  const runGuard = async (options: GuardOptions) => {
     if (!(await isPinRequired(options.actionId, getAppSetting))) {
       await options.onApproved();
       return;
@@ -113,6 +115,17 @@ export const OwnerPinGuardProvider: FC<{
     }
     if ((await tryBiometricApproval(options)) === 'fall-through') {
       setShowChallenge(true);
+    }
+  };
+
+  // Drops re-entrant calls so a double tap cannot run onApproved twice.
+  const runWithPinGuard = async (options: GuardOptions) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      await runGuard(options);
+    } finally {
+      inFlight.current = false;
     }
   };
 

@@ -7,6 +7,7 @@ const mockRunWithPinGuard = jest.fn();
 const mockAddToast = jest.fn();
 let mockOverrides: Record<string, boolean> = {};
 let mockPinConfigured = true;
+let mockReady = true;
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -14,7 +15,7 @@ jest.mock('react-i18next', () => ({
 jest.mock('@/hooks/usePinPolicy', () => ({
   usePinPolicy: () => ({
     overrides: mockOverrides,
-    isLoading: false,
+    isReady: mockReady,
     setOverride: mockSetOverride,
   }),
 }));
@@ -35,6 +36,7 @@ describe('PinPolicyCard', () => {
     jest.clearAllMocks();
     mockOverrides = {};
     mockPinConfigured = true;
+    mockReady = true;
   });
 
   it('shows a switch for non-locked actions only', async () => {
@@ -97,6 +99,13 @@ describe('PinPolicyCard', () => {
       id: 'sale_void',
       enabled: true,
     });
+  });
+
+  it('renders no switches or badges until overrides have loaded', async () => {
+    mockReady = false;
+    const screen = await render(<PinPolicyCard />);
+    expect(screen.queryByTestId('pin-policy-switch-sale_void')).toBeNull();
+    expect(screen.queryByTestId('pin-policy-new-sale_void')).toBeNull();
   });
 
   it('hides New for actions that already have an override', async () => {
