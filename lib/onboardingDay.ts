@@ -23,6 +23,9 @@ import { formatPesos, type Pesos } from '@/lib/money';
 
 export type CartLine = { id: DayProductId; qty: number };
 
+/** Which panel of the POS replica a sale beat is showing. */
+export type PosStage = 'cart' | 'pay' | 'tender' | 'suki';
+
 export type DayState = {
   products: Record<DayProductId, { stock: number; price: Pesos }>;
   sukiBalances: Record<DaySukiId, Pesos>;
@@ -33,6 +36,13 @@ export type DayState = {
     cash: { total: Pesos; change: Pesos } | null;
     utang: { total: Pesos } | null;
   };
+  /**
+   * Open POS panel per sale beat. Kept here, not in the replica, so
+   * "Show me" can walk through checkout and payment tap by tap.
+   */
+  posStage: Record<SaleBeat, PosStage>;
+  /** Product whose delivery panel is open on the restock beat. */
+  restockPanel: DayProductId | null;
   beatDone: Record<BeatId, boolean>;
 };
 
@@ -40,8 +50,10 @@ export type DayAction =
   | { type: 'addToCart'; id: DayProductId }
   | { type: 'removeFromCart'; id: DayProductId }
   | { type: 'clearCart' }
+  | { type: 'setPosStage'; beat: SaleBeat; stage: PosStage }
   | { type: 'checkoutCash'; tendered: Pesos }
   | { type: 'checkoutUtang'; suki: DaySukiId }
+  | { type: 'openRestock'; id: DayProductId }
   | { type: 'restock'; id: DayProductId; qty: number }
   | { type: 'receivePayment'; suki: DaySukiId; amount: Pesos }
   | { type: 'autoplay'; beat: BeatId };
@@ -70,6 +82,8 @@ export function createDaySeed(): DayState {
     sales: { total: pesos(0), items: 0, utangOut: pesos(0) },
     cart: [],
     receipts: { cash: null, utang: null },
+    posStage: { cash: 'cart', utang: 'cart' },
+    restockPanel: null,
     beatDone: { cash: false, utang: false, restock: false, close: false },
   };
 }
@@ -160,16 +174,21 @@ export function scriptFor(beat: BeatId): DayAction[] {
       return [
         { type: 'clearCart' },
         ...orderActions('cash'),
+        { type: 'setPosStage', beat: 'cash', stage: 'pay' },
+        { type: 'setPosStage', beat: 'cash', stage: 'tender' },
         { type: 'checkoutCash', tendered: CASH_TENDERED },
       ];
     case 'utang':
       return [
         { type: 'clearCart' },
         ...orderActions('utang'),
+        { type: 'setPosStage', beat: 'utang', stage: 'pay' },
+        { type: 'setPosStage', beat: 'utang', stage: 'suki' },
         { type: 'checkoutUtang', suki: 'nena' },
       ];
     case 'restock':
       return [
+        { type: 'openRestock', id: SCRIPTED_RESTOCK.id },
         { type: 'restock', id: SCRIPTED_RESTOCK.id, qty: SCRIPTED_RESTOCK.qty },
       ];
     case 'close':
@@ -204,8 +223,26 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
       });
       return { ...state, cart };
     }
-    case 'clearCart':
-      return state.cart.length === 0 ? state : { ...state, cart: [] };
+    case 'clearCart': {
+      // An empty cart cannot be mid-payment, so both sales go back to
+      // the cart panel. Finished sales are already there.
+      const atCart =
+        state.posStage.cash === 'cart' && state.posStage.utang === 'cart';
+      if (state.cart.length === 0 && atCart) return state;
+      return { ...state, cart: [], posStage: { cash: 'cart', utang: 'cart' } };
+    }
+    case 'setPosStage': {
+      const { beat, stage } = action;
+      if (state.beatDone[beat] || state.posStage[beat] === stage) return state;
+      if (stage !== 'cart') {
+        // Payment panels open only on the customer's exact order, and
+        // each sale has one payment method.
+        if (!cartMatches(state.cart, beat)) return state;
+        if (stage === 'tender' && beat !== 'cash') return state;
+        if (stage === 'suki' && beat !== 'utang') return state;
+      }
+      return { ...state, posStage: withKey(state.posStage, beat, stage) };
+    }
     case 'checkoutCash': {
       if (state.beatDone.cash || !cartMatches(state.cart, 'cash')) return state;
       const total = cartTotal(state);
@@ -218,6 +255,7 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
           ...sold.receipts,
           cash: { total, change: pesos(action.tendered - total) },
         },
+        posStage: { ...sold.posStage, cash: 'cart' },
         beatDone: { ...sold.beatDone, cash: true },
       };
     }
@@ -235,8 +273,19 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
         ),
         sales: { ...sold.sales, utangOut: pesos(sold.sales.utangOut + total) },
         receipts: { ...sold.receipts, utang: { total } },
+        posStage: { ...sold.posStage, utang: 'cart' },
         beatDone: { ...sold.beatDone, utang: true },
       };
+    }
+    case 'openRestock': {
+      if (
+        state.beatDone.restock ||
+        state.restockPanel === action.id ||
+        !isLowStock(state.products[action.id].stock)
+      ) {
+        return state;
+      }
+      return { ...state, restockPanel: action.id };
     }
     case 'restock': {
       const product = state.products[action.id];
@@ -254,6 +303,7 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
           ...product,
           stock: product.stock + action.qty,
         }),
+        restockPanel: null,
         beatDone: { ...state.beatDone, restock: true },
       };
     }

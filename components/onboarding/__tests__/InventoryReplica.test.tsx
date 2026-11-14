@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useReducer } from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { InventoryReplica } from '@/components/onboarding/replicas/InventoryReplica';
-import { createDaySeed, dayReducer } from '@/lib/onboardingDay';
+import {
+  createDaySeed,
+  dayReducer,
+  type DayAction,
+  type DayState,
+} from '@/lib/onboardingDay';
 
 jest.mock('moti', () => {
   const { View } = require('react-native');
@@ -21,11 +26,31 @@ jest.mock('react-i18next', () => ({
 const afterCash = () =>
   dayReducer(createDaySeed(), { type: 'autoplay', beat: 'cash' });
 
+/** Runs the replica against the real reducer and records every action. */
+function Harness({
+  initial,
+  onAction,
+}: {
+  initial: DayState;
+  onAction: (action: DayAction) => void;
+}) {
+  const [state, dispatch] = useReducer(dayReducer, initial);
+  return (
+    <InventoryReplica
+      state={state}
+      dispatch={(action) => {
+        onAction(action);
+        dispatch(action);
+      }}
+    />
+  );
+}
+
 describe('InventoryReplica', () => {
   it('offers Restock only on the low item, then saves the delivery', async () => {
-    const dispatch = jest.fn();
+    const onAction = jest.fn();
     const screen = await render(
-      <InventoryReplica state={afterCash()} dispatch={dispatch} />,
+      <Harness initial={afterCash()} onAction={onAction} />,
     );
     expect(
       screen.queryByLabelText('invRestockA11y:{"name":"dayProductPandesal"}'),
@@ -34,11 +59,23 @@ describe('InventoryReplica', () => {
       screen.getByLabelText('invRestockA11y:{"name":"dayProductKopiko"}'),
     );
     await fireEvent.press(screen.getByLabelText('invConfirm'));
-    expect(dispatch).toHaveBeenCalledWith({
+    expect(onAction).toHaveBeenLastCalledWith({
       type: 'restock',
       id: 'kopiko',
       qty: 24,
     });
+    expect(screen.getByText('invStockCount:{"count":27}')).toBeTruthy();
+  });
+
+  it('shows the delivery panel the day state names, so Show me can open it', async () => {
+    const open = dayReducer(afterCash(), { type: 'openRestock', id: 'kopiko' });
+    const screen = await render(
+      <InventoryReplica state={open} dispatch={jest.fn()} />,
+    );
+    expect(
+      screen.getByText('invDeliveryTitle:{"name":"dayProductKopiko"}'),
+    ).toBeTruthy();
+    expect(screen.queryByLabelText(/^invRestockA11y/)).toBeNull();
   });
 
   it('shows no Restock button once the beat is done', async () => {

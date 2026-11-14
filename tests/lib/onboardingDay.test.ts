@@ -19,6 +19,9 @@ const run = (state: DayState, actions: DayAction[]) =>
 const add = (id: 'kopiko' | 'pandesal' | 'luckyMe' | 'cokeMismo', n: number) =>
   Array.from({ length: n }, (): DayAction => ({ type: 'addToCart', id }));
 
+const cashCart = () =>
+  run(createDaySeed(), [...add('kopiko', 2), ...add('pandesal', 1)]);
+
 const cashDone = () =>
   run(createDaySeed(), [
     ...add('kopiko', 2),
@@ -47,6 +50,107 @@ describe('onboarding day reducer', () => {
       close: false,
     });
     expect(s.receipts).toEqual({ cash: null, utang: null });
+    expect(s.posStage).toEqual({ cash: 'cart', utang: 'cart' });
+    expect(s.restockPanel).toBeNull();
+  });
+
+  it('opens the payment panels only when the cart matches the order', () => {
+    const partial = run(createDaySeed(), add('kopiko', 1));
+    expect(
+      dayReducer(partial, { type: 'setPosStage', beat: 'cash', stage: 'pay' }),
+    ).toBe(partial);
+
+    const pay = dayReducer(cashCart(), {
+      type: 'setPosStage',
+      beat: 'cash',
+      stage: 'pay',
+    });
+    expect(pay.posStage.cash).toBe('pay');
+    // A cash sale has no suki picker.
+    expect(
+      dayReducer(pay, { type: 'setPosStage', beat: 'cash', stage: 'suki' }),
+    ).toBe(pay);
+    const tender = dayReducer(pay, {
+      type: 'setPosStage',
+      beat: 'cash',
+      stage: 'tender',
+    });
+    expect(tender.posStage.cash).toBe('tender');
+    const edited = dayReducer(tender, {
+      type: 'setPosStage',
+      beat: 'cash',
+      stage: 'cart',
+    });
+    expect(edited.posStage.cash).toBe('cart');
+  });
+
+  it('returns a sale to the cart panel after checkout and locks its panels', () => {
+    const s = run(cashCart(), [
+      { type: 'setPosStage', beat: 'cash', stage: 'pay' },
+      { type: 'setPosStage', beat: 'cash', stage: 'tender' },
+      { type: 'checkoutCash', tendered: 50 as Pesos },
+    ]);
+    expect(s.beatDone.cash).toBe(true);
+    expect(s.posStage.cash).toBe('cart');
+    expect(
+      dayReducer(s, { type: 'setPosStage', beat: 'cash', stage: 'pay' }),
+    ).toBe(s);
+  });
+
+  it('clearing the cart returns an unfinished sale to the cart panel', () => {
+    const pay = dayReducer(cashCart(), {
+      type: 'setPosStage',
+      beat: 'cash',
+      stage: 'pay',
+    });
+    const cleared = dayReducer(pay, { type: 'clearCart' });
+    expect(cleared.cart).toEqual([]);
+    expect(cleared.posStage.cash).toBe('cart');
+  });
+
+  it('opens the delivery panel only for a low item and closes it on restock', () => {
+    const seed = createDaySeed();
+    expect(dayReducer(seed, { type: 'openRestock', id: 'kopiko' })).toBe(seed);
+
+    const open = dayReducer(cashDone(), { type: 'openRestock', id: 'kopiko' });
+    expect(open.restockPanel).toBe('kopiko');
+    const stocked = dayReducer(open, {
+      type: 'restock',
+      id: 'kopiko',
+      qty: 24,
+    });
+    expect(stocked.restockPanel).toBeNull();
+    expect(dayReducer(stocked, { type: 'openRestock', id: 'kopiko' })).toBe(
+      stocked,
+    );
+  });
+
+  it('Show me scripts walk through every panel the owner would tap', () => {
+    const trace = (start: DayState, beat: BeatId): DayState[] => {
+      const seen: DayState[] = [];
+      scriptFor(beat).reduce((s, action) => {
+        const after = dayReducer(s, action);
+        seen.push(after);
+        return after;
+      }, start);
+      return seen;
+    };
+    expect(trace(createDaySeed(), 'cash').map((s) => s.posStage.cash)).toEqual(
+      ['cart', 'cart', 'cart', 'cart', 'pay', 'tender', 'cart'],
+    );
+    expect(trace(cashDone(), 'utang').map((s) => s.posStage.utang)).toEqual([
+      'cart',
+      'cart',
+      'cart',
+      'cart',
+      'pay',
+      'suki',
+      'cart',
+    ]);
+    expect(trace(utangDone(), 'restock').map((s) => s.restockPanel)).toEqual([
+      'kopiko',
+      null,
+    ]);
   });
 
   it('adds and removes cart lines one at a time', () => {

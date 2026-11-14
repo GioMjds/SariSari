@@ -93,6 +93,14 @@ export default function OnboardingPage() {
   // Leaving a step, or unmounting, drops any queued Show me taps.
   useEffect(() => cancelAutoplay, [currentIndex, cancelAutoplay]);
 
+  // So does finishing the beat: once it is done, by playback or by the
+  // owner's own tap, leftover taps must not refill the cart.
+  useEffect(() => {
+    if (autoplayingBeat !== null && day.beatDone[autoplayingBeat]) {
+      cancelAutoplay();
+    }
+  }, [day.beatDone, autoplayingBeat, cancelAutoplay]);
+
   // Fire the outcome toast once, when a beat flips to done.
   const doneBefore = useRef(day.beatDone);
   useEffect(() => {

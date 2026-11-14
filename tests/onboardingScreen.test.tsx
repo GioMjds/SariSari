@@ -169,10 +169,90 @@ describe('OnboardingPage', () => {
       await fireEvent.press(screen.getByLabelText('showMeA11y'));
       expect(isDisabled(screen, 'next')).toBe(true);
       await act(async () => {
-        jest.advanceTimersByTime(400 * 6);
+        jest.advanceTimersByTime(400 * 9);
       });
       expect(isDisabled(screen, 'next')).toBe(false);
       expect(mockAddToast).toHaveBeenCalledTimes(1);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('walks Show me through the payment panels of a cash sale', async () => {
+    jest.useFakeTimers();
+    mockReducedMotion = false;
+    const tick = () =>
+      act(async () => {
+        jest.advanceTimersByTime(400);
+      });
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      // Clear the cart, then 2 Kopiko and 1 pandesal: still on the cart.
+      for (let i = 0; i < 4; i++) await tick();
+      expect(screen.getByLabelText('posCheckout')).toBeTruthy();
+      await tick();
+      expect(screen.getByText('posPayWith')).toBeTruthy();
+      await tick();
+      expect(screen.getByText('posTendered')).toBeTruthy();
+      expect(isDisabled(screen, 'next')).toBe(true);
+      await tick();
+      expect(screen.getByText('posPaidCash')).toBeTruthy();
+      expect(isDisabled(screen, 'next')).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('opens the delivery panel when Show me plays the restock beat', async () => {
+    jest.useFakeTimers();
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      // Finish the two sales at once, then play the restock tap by tap.
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await fireEvent.press(screen.getByLabelText('next'));
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      mockReducedMotion = false;
+      await fireEvent.press(screen.getByLabelText('next'));
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await act(async () => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(screen.getByText('invDeliveryTitle')).toBeTruthy();
+      expect(isDisabled(screen, 'next')).toBe(true);
+      await act(async () => {
+        jest.advanceTimersByTime(400);
+      });
+      expect(isDisabled(screen, 'next')).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('drops the rest of Show me when the owner finishes the beat first', async () => {
+    jest.useFakeTimers();
+    mockReducedMotion = false;
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      const tile = (i: number) => screen.getAllByLabelText('posAddA11y')[i]!;
+      await fireEvent.press(tile(0));
+      await fireEvent.press(tile(0));
+      await fireEvent.press(tile(1));
+      await fireEvent.press(screen.getByLabelText('posCheckout'));
+      await fireEvent.press(screen.getByLabelText('posCash'));
+      // Ask for Show me, then pay by hand before playback starts.
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await fireEvent.press(screen.getAllByLabelText('posTenderA11y')[0]!);
+      await act(async () => {
+        jest.advanceTimersByTime(400 * 10);
+      });
+      expect(mockAddToast).toHaveBeenCalledTimes(1);
+      // Nothing from the cancelled playback leaks into the next sale.
+      await fireEvent.press(screen.getByLabelText('next'));
+      expect(screen.getByText('posCartEmpty')).toBeTruthy();
     } finally {
       jest.useRealTimers();
     }
@@ -194,7 +274,7 @@ describe('OnboardingPage', () => {
       const tiles = screen.getAllByLabelText('posAddA11y');
       await fireEvent.press(tiles[tiles.length - 1]!);
       await act(async () => {
-        jest.advanceTimersByTime(400 * 6);
+        jest.advanceTimersByTime(400 * 8);
       });
       expect(isDisabled(screen, 'next')).toBe(false);
       expect(mockAddToast).toHaveBeenCalledTimes(1);

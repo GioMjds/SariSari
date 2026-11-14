@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
@@ -15,14 +14,15 @@ import { isLowStock, type DayAction, type DayState } from '@/lib/onboardingDay';
 /**
  * InventoryReplica - prop-driven copy of the Inventory products list
  * for onboarding beat 3. Low rows get a Restock button that opens a
- * delivery confirm panel with the scripted quantity.
+ * delivery confirm panel with the scripted quantity. Which panel is
+ * open lives in the day reducer so "Show me" can open it too.
  */
 
 type Props = { state: DayState; dispatch: (action: DayAction) => void };
 
 export function InventoryReplica({ state, dispatch }: Props) {
   const { t } = useTranslation('onboarding');
-  const [confirming, setConfirming] = useState<DayProductId | null>(null);
+  const confirming = state.restockPanel;
   const done = state.beatDone.restock;
   const name = (id: DayProductId) => t(SEED_PRODUCTS[id].nameKey);
   const hint = t('coachHint');
@@ -58,7 +58,7 @@ export function InventoryReplica({ state, dispatch }: Props) {
             {canRestock ? (
               <HintRing active>
                 <Pressable
-                  onPress={() => setConfirming(id)}
+                  onPress={() => dispatch({ type: 'openRestock', id })}
                   accessibilityRole="button"
                   accessibilityLabel={t('invRestockA11y', { name: name(id) })}
                   accessibilityHint={hint}
@@ -87,14 +87,13 @@ export function InventoryReplica({ state, dispatch }: Props) {
           </StyledText>
           <HintRing active>
             <Pressable
-              onPress={() => {
+              onPress={() =>
                 dispatch({
                   type: 'restock',
                   id: confirming,
                   qty: SCRIPTED_RESTOCK.qty,
-                });
-                setConfirming(null);
-              }}
+                })
+              }
               accessibilityRole="button"
               accessibilityLabel={t('invConfirm')}
               accessibilityHint={hint}

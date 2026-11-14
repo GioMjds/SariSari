@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
@@ -20,6 +19,7 @@ import {
   cartTotal,
   type DayAction,
   type DayState,
+  type PosStage,
 } from '@/lib/onboardingDay';
 import { formatPesos } from '@/lib/money';
 
@@ -27,11 +27,9 @@ import { formatPesos } from '@/lib/money';
  * PosReplica - prop-driven copy of the Sales POS for onboarding beats
  * 1 (cash) and 2 (utang). Tiles copy FastLaneCard's classes; the real
  * card is not reused because it calls a SQLite favorite mutation.
- * Local `stage` only tracks which panel is open; all data lives in
- * the day reducer.
+ * Everything, including which panel is open, lives in the day reducer,
+ * so "Show me" can open the payment panels the same way a tap does.
  */
-
-type Stage = 'cart' | 'pay' | 'tender' | 'suki';
 
 const TILE_CLASS =
   'min-h-[88px] justify-between rounded-2xl border border-paper-300 bg-paper-100 p-3 shadow-paper active:bg-paper-200/60';
@@ -48,7 +46,9 @@ type Props = {
 
 export function PosReplica({ mode, state, dispatch }: Props) {
   const { t } = useTranslation('onboarding');
-  const [stage, setStage] = useState<Stage>('cart');
+  const stage = state.posStage[mode];
+  const setStage = (next: PosStage) =>
+    dispatch({ type: 'setPosStage', beat: mode, stage: next });
   const order = SCRIPTED_ORDERS[mode];
   const name = (id: DayProductId) => t(SEED_PRODUCTS[id].nameKey);
   const nena = t(SUKI_NAME_KEY.nena);
