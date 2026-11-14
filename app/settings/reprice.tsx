@@ -1,9 +1,5 @@
-import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  View,
-} from 'react-native';
+import { ActivityIndicator, RefreshControl, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { useTabBarBottomOffset } from '@/components/layout';
@@ -55,7 +51,8 @@ export default function RepriceScreen() {
         onBack={goBackToMore}
         backAccessibilityLabel={t('back')}
       />
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={64}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
@@ -103,7 +100,7 @@ export default function RepriceScreen() {
             />
           ))
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

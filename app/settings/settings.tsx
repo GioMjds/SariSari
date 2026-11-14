@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { SariMascot } from '@/components/mascot';
@@ -35,7 +36,9 @@ export default function Settings() {
         backAccessibilityLabel={t('common:moreBackA11y')}
       />
 
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={64}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: bottomOffset + 24 }}
         showsVerticalScrollIndicator={false}
       >
@@ -104,7 +107,7 @@ export default function Settings() {
         <SettingsSection title={t('common:settingsSalesSection')}>
           <VoidWindowCard />
         </SettingsSection>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <LanguagePickerDialog
         visible={languagePickerOpen}

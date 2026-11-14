@@ -4,10 +4,8 @@ import { Href, useRouter, useSegments } from 'expo-router';
 import { SubTabScreenShell } from '@/components/layout/SubTabScreenShell';
 import { TopTabs } from '@/components/navigation';
 import { InventorySpeedDialFab } from '@/components/inventory';
-import { LogTransactionForm } from '@/components/inventory/ledger';
 import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
 import { useTabProgress } from '@/hooks';
-import type { InventoryEventType } from '@/types/inventory.types';
 import { InventoryModalsHost } from '@/components/inventory/InventoryModalsHost';
 
 const SUB_TAB_SEGMENTS = [

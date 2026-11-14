@@ -22,11 +22,13 @@ export function SalesDemo({ setPose, say, complete }: DemoProps) {
   const hasItems = cartQuantity(cart) > 0;
   const canPay = hasItems && !paid;
 
-  const handlePay = () => {
+  const handlePay = (method: 'cash' | 'utang') => {
     if (!canPay) return;
     setPaid(true);
-    setPose('sales');
-    say('demoSalesDoneBubble', { total: formatPesos(total) });
+    setPose(method === 'cash' ? 'sales' : 'utang');
+    say(method === 'cash' ? 'demoSalesDoneBubble' : 'demoSalesUtangBubble', {
+      total: formatPesos(total),
+    });
     complete();
   };
 
@@ -41,7 +43,7 @@ export function SalesDemo({ setPose, say, complete }: DemoProps) {
               accessibilityRole="button"
               accessibilityLabel={t('demoSalesItemA11y', { name: item.name })}
               onPress={() => setCart((c) => addToCart(c, item.id))}
-              className="min-h-[44px] flex-row items-center justify-between rounded-2xl border border-paper-300 bg-paper-100 px-3 py-2"
+              className="min-h-[44px] flex-row items-center justify-between rounded-md border border-paper-400 bg-paper-100 px-3 py-2 active:bg-paper-300"
             >
               <StyledText variant="medium" className="text-ink-800 text-sm">
                 {item.name}
@@ -72,8 +74,8 @@ export function SalesDemo({ setPose, say, complete }: DemoProps) {
               accessibilityRole="button"
               accessibilityLabel={t('demoSalesCash')}
               accessibilityState={{ disabled: !canPay }}
-              onPress={handlePay}
-              className={`min-h-[44px] items-center justify-center rounded-2xl bg-persimmon-500 ${
+              onPress={() => handlePay('cash')}
+              className={`min-h-[44px] items-center justify-center rounded-md bg-persimmon-600 active:bg-persimmon-700 ${
                 canPay ? '' : 'opacity-50'
               }`}
             >
@@ -88,12 +90,12 @@ export function SalesDemo({ setPose, say, complete }: DemoProps) {
           accessibilityRole="button"
           accessibilityLabel={t('demoSalesUtang')}
           accessibilityState={{ disabled: !canPay }}
-          onPress={handlePay}
-          className={`min-h-[44px] flex-1 items-center justify-center rounded-2xl border border-persimmon-500 ${
+          onPress={() => handlePay('utang')}
+          className={`min-h-[44px] flex-1 items-center justify-center rounded-md border border-persimmon-600 active:bg-persimmon-50 ${
             canPay ? '' : 'opacity-50'
           }`}
         >
-          <StyledText variant="semibold" className="text-persimmon-600">
+          <StyledText variant="semibold" className="text-persimmon-700">
             {t('demoSalesUtang')}
           </StyledText>
         </Pressable>

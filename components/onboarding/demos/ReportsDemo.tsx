@@ -42,7 +42,7 @@ export function ReportsDemo({ say, complete }: DemoProps) {
                   say('demoMoreSelectedBubble', { day: label, total });
                   complete();
                 }}
-                className="min-h-[44px] items-center justify-end gap-1.5 rounded-2xl p-1"
+                className="min-h-[44px] items-center justify-end gap-1.5 rounded-md p-1 active:bg-paper-100"
                 style={{ height: BAR_MAX_HEIGHT + 56 }}
               >
                 <StyledText
@@ -52,8 +52,8 @@ export function ReportsDemo({ say, complete }: DemoProps) {
                   {isSelected ? total : ' '}
                 </StyledText>
                 <View
-                  className={`w-full rounded-xl ${
-                    isSelected ? 'bg-persimmon-500' : 'bg-persimmon-200'
+                  className={`w-full rounded-md ${
+                    isSelected ? 'bg-persimmon-600' : 'bg-persimmon-200'
                   }`}
                   style={{ height: barHeight }}
                 />

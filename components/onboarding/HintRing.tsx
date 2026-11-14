@@ -23,7 +23,7 @@ export function HintRing({ active, children }: Props) {
             scale: reducedMotion ? 1 : 1.1,
           }}
           transition={{ type: 'timing', duration: 1100, loop: !reducedMotion }}
-          className="absolute inset-0 rounded-2xl border-2 border-persimmon-400"
+          className="absolute inset-0 rounded-md border-2 border-persimmon-400"
         />
       ) : null}
       {children}

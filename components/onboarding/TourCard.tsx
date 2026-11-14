@@ -10,7 +10,7 @@ import {
   BubbleParams,
   DEMO_BY_TAB,
 } from '@/components/onboarding/demos';
-import { TourStepContent } from '@/constants/onboardingTour';
+import { TabKey, TourStepContent } from '@/constants/onboardingTour';
 import { SariState } from '@/constants/onboardingTour.assets';
 import type { SariState as MascotState } from '@/components/mascot';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -27,8 +27,20 @@ const TOUR_MASCOT: Record<SariState, MascotState> = {
 };
 
 /**
- * TourCard - one tour step: Sari stage with a speech bubble, a
- * try-it demo widget, then the explanation text. The widget talks to
+ * Real bottom-tab titles, so the pill on each step reads exactly like
+ * the tab the owner will look for afterwards, in either language.
+ */
+const TAB_TITLE_KEY: Record<TabKey, string> = {
+  home: 'common:homeTitle',
+  sales: 'common:salesTitle',
+  inventory: 'common:inventoryTitle',
+  customers: 'common:customersTitle',
+  more: 'common:moreTitle',
+};
+
+/**
+ * TourCard - one tour step: headline, Sari stage with a speech bubble,
+ * a try-it demo widget, then the explanation text. The widget talks to
  * Sari through setPose / say and reports completion through complete.
  * Completing is never required to continue. The parent remounts this
  * component per step, which resets all local state.
@@ -68,6 +80,10 @@ export function TourCard({ step }: Props) {
 
   return (
     <View className="gap-4">
+      <StyledText variant="extrabold" className="text-ink-900 text-h1">
+        {t(step.headlineKey)}
+      </StyledText>
+
       <SariStage
         mascot={TOUR_MASCOT[pose]}
         poseKey={pose}
@@ -77,39 +93,31 @@ export function TourCard({ step }: Props) {
       <View>
         <View className="flex-row items-center justify-between mb-2 min-h-[24px]">
           <StatusPill variant="neutral" size="md">
-            {t(step.labelKey)}
+            {t(TAB_TITLE_KEY[step.tab])}
           </StatusPill>
           {done ? (
             <SuccessCheck label={t('demoDone')} />
           ) : (
-            <StyledText variant="extrabold" className="label-caps text-ink-400">
+            <StyledText variant="medium" className="text-ink-600 text-caption">
               {t('demoTryIt')}
             </StyledText>
           )}
         </View>
-        <View className="bg-paper-50 border border-paper-300 rounded-3xl p-3">
+        <View className="bg-paper-50 border border-paper-400 rounded-card p-3">
           <Demo setPose={setPose} say={say} complete={complete} />
         </View>
       </View>
 
       <View>
-        <StyledText variant="extrabold" className="text-ink-900 text-h1">
-          {t(step.headlineKey)}
-        </StyledText>
-        <StyledText
-          variant="regular"
-          className="text-ink-600 text-body mt-2 leading-5"
-        >
+        <StyledText variant="regular" className="text-ink-900 text-body">
           {t(step.whatItDoesKey)}
         </StyledText>
-        <View className="mt-3 self-start flex-row flex-wrap items-center gap-2 rounded-2xl bg-paper-100 border border-paper-300 px-3 py-2">
-          <StyledText variant="extrabold" className="label-caps text-persimmon-600">
-            {t('tourUseItWhen')}
+        <StyledText variant="regular" className="text-ink-600 text-body mt-2">
+          <StyledText variant="semibold" className="text-ink-900">
+            {t('tourUseItWhen')}:{' '}
           </StyledText>
-          <StyledText variant="medium" className="text-ink-600 text-caption flex-shrink">
-            {t(step.whenToUseItKey)}
-          </StyledText>
-        </View>
+          {t(step.whenToUseItKey)}
+        </StyledText>
       </View>
     </View>
   );

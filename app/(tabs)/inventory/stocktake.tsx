@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Alert } from '@/utils';
 import { StyledText } from '@/components/elements';
@@ -145,7 +146,9 @@ export default function StocktakeScreen() {
     const lastSession =
       recentSessions.find((s) => s.status === 'completed') ?? null;
     return (
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={64}
+        keyboardShouldPersistTaps="handled"
         className="flex-1 bg-paper-200 p-4"
         contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
       >
@@ -155,14 +158,16 @@ export default function StocktakeScreen() {
           isStarting={startMut.isPending}
         />
         <StocktakeHistoryList sessions={recentSessions} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     );
   }
 
   // State branch 2: Variance Review
   if (viewState === 'variance') {
     return (
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={64}
+        keyboardShouldPersistTaps="handled"
         className="flex-1 bg-paper-200 p-4"
         contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
       >
@@ -232,7 +237,7 @@ export default function StocktakeScreen() {
             </StyledText>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     );
   }
 
@@ -247,7 +252,9 @@ export default function StocktakeScreen() {
         </StyledText>
       </View>
 
-      <ScrollView
+      <KeyboardAwareScrollView
+        bottomOffset={64}
+        keyboardShouldPersistTaps="handled"
         className="flex-1 p-4"
         contentContainerStyle={{ paddingBottom: 80 }}
       >
@@ -260,7 +267,7 @@ export default function StocktakeScreen() {
             onCountChange={handleCountChange}
           />
         ))}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       {/* Footer controls */}
       <View className="bg-paper-50 p-4 border-t border-paper-300 flex-row gap-x-3">

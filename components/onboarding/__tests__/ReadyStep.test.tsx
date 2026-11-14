@@ -27,6 +27,7 @@ describe('ReadyStep first steps', () => {
         profile={{ ownerName: 'Nena', storeName: 'Nena Sari-Sari' }}
         saving={false}
         onOpenStore={onOpenStore}
+        onEditProfile={jest.fn()}
       />,
     );
 
@@ -41,11 +42,11 @@ describe('ReadyStep first steps', () => {
         profile={{ ownerName: '   ', storeName: '' }}
         saving={false}
         onOpenStore={onOpenStore}
+        onEditProfile={jest.fn()}
       />,
     );
 
     await fireEvent.press(screen.getByLabelText(PRODUCT_CARD));
-    await fireEvent.press(screen.getByLabelText('readyCtaA11y'));
     expect(onOpenStore).not.toHaveBeenCalled();
   });
 
@@ -56,6 +57,7 @@ describe('ReadyStep first steps', () => {
         profile={{ ownerName: 'Nena', storeName: 'Nena Sari-Sari' }}
         saving
         onOpenStore={onOpenStore}
+        onEditProfile={jest.fn()}
       />,
     );
 
@@ -63,17 +65,20 @@ describe('ReadyStep first steps', () => {
     expect(onOpenStore).not.toHaveBeenCalled();
   });
 
-  it('calls onOpenStore with no argument for the primary CTA', async () => {
+  it('sends the owner back to the profile step from the edit link', async () => {
     const onOpenStore = jest.fn();
+    const onEditProfile = jest.fn();
     const screen = await render(
       <ReadyStep
         profile={{ ownerName: 'Nena', storeName: 'Nena Sari-Sari' }}
         saving={false}
         onOpenStore={onOpenStore}
+        onEditProfile={onEditProfile}
       />,
     );
 
-    await fireEvent.press(screen.getByLabelText('readyCtaA11y'));
-    expect(onOpenStore).toHaveBeenCalledWith();
+    await fireEvent.press(screen.getByText('readyEditProfile'));
+    expect(onEditProfile).toHaveBeenCalledTimes(1);
+    expect(onOpenStore).not.toHaveBeenCalled();
   });
 });

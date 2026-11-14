@@ -47,15 +47,15 @@ export function HomeDemo({ say, complete }: DemoProps) {
                   say(tile.bubbleKey);
                   complete();
                 }}
-                className={`min-h-[88px] justify-between rounded-2xl border p-3 ${
+                className={`min-h-[88px] justify-between rounded-md border p-3 ${
                   isSelected
-                    ? 'bg-persimmon-50 border-persimmon-400'
-                    : 'bg-paper-100 border-paper-300'
+                    ? 'bg-persimmon-50 border-persimmon-600'
+                    : 'bg-paper-100 border-paper-400 active:bg-paper-300'
                 }`}
               >
                 <StyledText
                   variant="medium"
-                  className="text-ink-500 text-caption"
+                  className="text-ink-600 text-caption"
                 >
                   {t(tile.labelKey)}
                 </StyledText>

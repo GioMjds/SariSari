@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
+import { ONBOARDING_COLORS } from '@/components/onboarding/palette';
 import { ProfileStep } from '@/components/onboarding/ProfileStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
 import { StepTransition } from '@/components/onboarding/StepTransition';
@@ -21,7 +22,12 @@ import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  BackHandler,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -32,6 +38,12 @@ export default function OnboardingPage() {
     storeName: '',
   });
   const [saving, setSaving] = useState<boolean>(false);
+  // Counts failed "continue" presses on the profile step. Above zero,
+  // ProfileStep shows inline errors; each bump refocuses the empty field.
+  const [submitAttempt, setSubmitAttempt] = useState(0);
+  // True while the owner is fixing their names from the Ready screen,
+  // so continuing returns there instead of replaying the tour.
+  const [editingFromReady, setEditingFromReady] = useState(false);
 
   const router = useRouter();
   const addToast = useToastStore((state) => state.addToast);
@@ -44,16 +56,48 @@ export default function OnboardingPage() {
     previousIndex.current = currentIndex;
   }, [currentIndex]);
 
-  const handleBack = () => setStep(back(step));
+  const isProfile = step.kind === 'profile';
+  const isReady = step.kind === 'ready';
+  const isLastTour =
+    step.kind === 'tour' && step.tab === TOUR_ORDER[TOUR_ORDER.length - 1];
+
+  const isProfileComplete =
+    profile.ownerName.trim().length > 0 && profile.storeName.trim().length > 0;
+
+  const handleBack = () => {
+    if (saving) return;
+    setStep(back(step));
+  };
+
+  // Android hardware back walks the flow instead of leaving it, so typed
+  // names are never dropped by a stray back press.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        if (saving) return true;
+        if (step.kind === 'profile') {
+          if (!editingFromReady) return false;
+          setEditingFromReady(false);
+          setStep(skipToReady());
+          return true;
+        }
+        setStep(back(step));
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [step, saving, editingFromReady]);
 
   const handleOpenStore = async (href?: string) => {
+    if (saving) return;
     const ownerName = profile.ownerName.trim();
     const storeName = profile.storeName.trim();
     if (!ownerName || !storeName) {
       addToast({
         message: t('toastMissingFields'),
         variant: 'danger',
-        duration: 1800,
+        duration: 3500,
       });
       return;
     }
@@ -72,29 +116,33 @@ export default function OnboardingPage() {
       addToast({
         message: t('toastSaveFailed'),
         variant: 'danger',
-        duration: 2000,
+        duration: 4000,
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const isProfile = step.kind === 'profile';
-  const isReady = step.kind === 'ready';
-  const isFirstTour = step.kind === 'tour' && step.tab === TOUR_ORDER[0];
-  const isLastTour =
-    step.kind === 'tour' && step.tab === TOUR_ORDER[TOUR_ORDER.length - 1];
-
-  const isProfileComplete =
-    profile.ownerName.trim().length > 0 && profile.storeName.trim().length > 0;
-
   const handleNext = () => {
-    if (isProfile && !isProfileComplete) return;
+    if (isProfile && !isProfileComplete) {
+      setSubmitAttempt((n) => n + 1);
+      return;
+    }
+    if (isProfile && editingFromReady) {
+      setEditingFromReady(false);
+      setStep(skipToReady());
+      return;
+    }
     setStep(next(step));
   };
   const handleSkip = () => {
     if (!isProfileComplete) return;
     setStep(skipToReady());
+  };
+  const handleEditProfile = () => {
+    if (saving) return;
+    setEditingFromReady(true);
+    setStep({ kind: 'profile' });
   };
 
   const tourStep =
@@ -104,17 +152,19 @@ export default function OnboardingPage() {
 
   const showSkip = !isProfile && !isReady && !isLastTour && isProfileComplete;
 
-  const continueLabel = isProfile
-    ? t('letsGo')
-    : isLastTour
-      ? t('finishTour')
-      : t('next');
+  const primaryLabel = isReady
+    ? t('readyCta')
+    : isProfile
+      ? t('letsGo')
+      : isLastTour
+        ? t('finishTour')
+        : t('next');
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <StatusBar style="dark" backgroundColor="#F7F6F2" />
+      <StatusBar style="dark" backgroundColor={ONBOARDING_COLORS.page} />
 
-      <View className="px-6 pt-4 flex-row items-center gap-4">
+      <View className="px-6 pt-4">
         <OnboardingProgress
           currentIndex={currentIndex}
           totalSteps={TOTAL_STEPS}
@@ -127,19 +177,6 @@ export default function OnboardingPage() {
             total: TOTAL_STEPS,
           })}
         />
-        {showSkip ? (
-          <TouchableOpacity
-            onPress={handleSkip}
-            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel={t('skipA11y')}
-            className="active:opacity-70"
-          >
-            <StyledText variant="medium" className="text-persimmon-600 text-sm">
-              {t('skipTour')}
-            </StyledText>
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <View className="flex-1">
@@ -156,7 +193,12 @@ export default function OnboardingPage() {
             showsVerticalScrollIndicator={false}
           >
             {isProfile && (
-              <ProfileStep profile={profile} onChange={setProfile} />
+              <ProfileStep
+                profile={profile}
+                onChange={setProfile}
+                submitAttempt={submitAttempt}
+                onSubmit={handleNext}
+              />
             )}
             {!!tourStep && <TourCard step={tourStep} />}
             {isReady && (
@@ -164,43 +206,72 @@ export default function OnboardingPage() {
                 profile={profile}
                 saving={saving}
                 onOpenStore={handleOpenStore}
+                onEditProfile={handleEditProfile}
               />
             )}
           </KeyboardAwareScrollView>
         </StepTransition>
       </View>
 
-      {!isReady && (
-        <View className="px-6 pb-6 pt-2 flex-row gap-3 items-center">
-          {isProfile || isFirstTour ? null : (
+      <View className="px-6 pb-4 pt-2">
+        <View className="flex-row gap-3 items-center">
+          {isProfile ? null : (
             <TouchableOpacity
               onPress={handleBack}
+              disabled={saving}
               accessibilityRole="button"
               accessibilityLabel={t('backA11y')}
-              className="h-12 w-12 items-center justify-center rounded-2xl border border-paper-300 bg-paper-50 press-scale active:opacity-70"
+              accessibilityState={{ disabled: saving }}
+              className={`h-[52px] w-[52px] items-center justify-center rounded-md border border-paper-400 bg-paper-50 press-scale active:bg-paper-100 ${
+                saving ? 'opacity-50' : ''
+              }`}
             >
-              <Ionicons name="chevron-back" size={22} color="#C8460F" />
+              <Ionicons
+                name="chevron-back"
+                size={22}
+                color={ONBOARDING_COLORS.action}
+              />
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
-            onPress={handleNext}
-            disabled={isProfile && !isProfileComplete}
+            onPress={isReady ? () => handleOpenStore() : handleNext}
+            disabled={saving}
             accessibilityRole="button"
-            accessibilityLabel={t('continueA11y')}
-            accessibilityState={{
-              disabled: isProfile && !isProfileComplete,
-            }}
-            className={`flex-1 bg-persimmon-500 rounded-2xl py-3.5 items-center shadow-persimmon-glow press-scale active:opacity-80 ${
-              isProfile && !isProfileComplete ? 'opacity-50' : ''
-            }`}
+            accessibilityLabel={primaryLabel}
+            accessibilityState={{ disabled: saving, busy: saving }}
+            className="flex-1 min-h-[52px] flex-row items-center justify-center gap-2 rounded-md bg-persimmon-600 px-4 press-scale active:bg-persimmon-700"
           >
-            <StyledText variant="semibold" className="text-white">
-              {continueLabel}
-            </StyledText>
+            {saving ? (
+              <ActivityIndicator color={ONBOARDING_COLORS.onAction} />
+            ) : (
+              <>
+                <StyledText variant="extrabold" className="text-white text-base">
+                  {primaryLabel}
+                </StyledText>
+                <Ionicons
+                  name="arrow-forward"
+                  size={18}
+                  color={ONBOARDING_COLORS.onAction}
+                />
+              </>
+            )}
           </TouchableOpacity>
         </View>
-      )}
+
+        {showSkip ? (
+          <TouchableOpacity
+            onPress={handleSkip}
+            accessibilityRole="button"
+            accessibilityLabel={t('skipA11y')}
+            className="mt-1 min-h-[44px] items-center justify-center active:opacity-70"
+          >
+            <StyledText variant="semibold" className="text-persimmon-700 text-sm">
+              {t('skipTour')}
+            </StyledText>
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </SafeAreaView>
   );
 }

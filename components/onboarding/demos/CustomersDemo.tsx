@@ -36,7 +36,7 @@ export function CustomersDemo({ setPose, say, complete }: DemoProps) {
       </View>
 
       <View className="flex-row items-end justify-between">
-        <StyledText variant="medium" className="text-ink-500 text-caption">
+        <StyledText variant="medium" className="text-ink-600 text-caption">
           {t('demoCustBalance')}
         </StyledText>
         <StyledText variant="extrabold" className="text-ink-900 text-h1">
@@ -51,7 +51,7 @@ export function CustomersDemo({ setPose, say, complete }: DemoProps) {
           accessibilityLabel={t('demoCustMarkPaid')}
           accessibilityState={{ disabled: cleared }}
           onPress={handleMarkPaid}
-          className={`min-h-[44px] items-center justify-center rounded-2xl bg-persimmon-500 ${
+          className={`min-h-[44px] items-center justify-center rounded-md bg-persimmon-600 active:bg-persimmon-700 ${
             cleared ? 'opacity-50' : ''
           }`}
         >

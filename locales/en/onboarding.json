@@ -3,9 +3,9 @@
 
   "back": "Back",
   "skipTour": "Skip tour",
-  "letsGo": "Let's go →",
-  "finishTour": "Finish tour →",
-  "next": "Next →",
+  "letsGo": "Let's go",
+  "finishTour": "Finish tour",
+  "next": "Next",
 
   "backA11y": "Go back",
   "skipA11y": "Skip the rest of the tour",
@@ -13,7 +13,7 @@
 
   "toastMissingFields": "Please add your name and store name",
   "toastWelcome": "Welcome! Your store is ready.",
-  "toastSaveFailed": "Could not save onboarding data",
+  "toastSaveFailed": "Couldn't save your store details. Tap Open my store to try again.",
 
   "langPickerPrompt": "Pick your language",
 
@@ -22,14 +22,17 @@
   "profileNamePlaceholder": "e.g. Aling Nena",
   "profileStoreLabel": "And what's your store called?",
   "profileStorePlaceholder": "e.g. Nena Sari-Sari",
+  "profileNameError": "Add your name to continue.",
+  "profileStoreError": "Add your store name to continue.",
 
   "readyStamp": "READY",
   "readyGreetingNamed": "Nice to meet you, {{name}}.",
   "readyGreetingDefault": "Nice to meet you.",
   "readySublineNamed": "{{storeName}} is ready to go.",
   "readySublineDefault": "Your store is ready to go.",
-  "readyCta": "Open my store →",
+  "readyCta": "Open my store",
   "readyCtaA11y": "Open my store",
+  "readyEditProfile": "Change name or store",
 
   "progressA11y": "Step {{current}} of {{total}}",
   "progressCount": "{{current}} of {{total}}",
@@ -64,7 +67,7 @@
   "tourMoreWhen": "At the end of the day, or when you want to plan tomorrow's stock.",
   "tourMoreBubble": "Tap a bar to see that day's total.",
 
-  "demoTryIt": "TRY IT",
+  "demoTryIt": "Try it",
   "demoDone": "Nice, you got it",
   "demoDoneA11y": "Practice step complete",
   "demoHomeTileSales": "Today's sales",
@@ -79,6 +82,7 @@
   "demoSalesCash": "Cash",
   "demoSalesUtang": "Utang",
   "demoSalesDoneBubble": "Sold! The total was {{total}}.",
+  "demoSalesUtangBubble": "Listed as utang. {{total}} goes on your suki's tab.",
   "demoInvLow": "Low",
   "demoInvOk": "OK",
   "demoInvRestock": "Restock",

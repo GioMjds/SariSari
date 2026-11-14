@@ -22,7 +22,7 @@ export function StepTransition({ stepKey, direction, children }: Props) {
       key={stepKey}
       from={{ opacity: 0, translateX: reducedMotion ? 0 : 24 * direction }}
       animate={{ opacity: 1, translateX: 0 }}
-      transition={{ type: 'timing', duration: 320 }}
+      transition={{ type: 'timing', duration: 200 }}
       className="flex-1"
     >
       {children}

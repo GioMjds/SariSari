@@ -3,9 +3,9 @@
 
   "back": "Bumalik",
   "skipTour": "Laktawan ang gabay",
-  "letsGo": "Tara na →",
-  "finishTour": "Tapusin ang gabay →",
-  "next": "Susunod →",
+  "letsGo": "Tara na",
+  "finishTour": "Tapusin ang gabay",
+  "next": "Susunod",
 
   "backA11y": "Bumalik",
   "skipA11y": "Laktawan ang natitirang gabay",
@@ -13,7 +13,7 @@
 
   "toastMissingFields": "Pakidagdag ang iyong pangalan at pangalan ng tindahan",
   "toastWelcome": "Maligayang pagdating! Handa na ang tindahan mo.",
-  "toastSaveFailed": "Hindi na-save ang impormasyon sa onboarding",
+  "toastSaveFailed": "Hindi na-save ang detalye ng tindahan mo. Pindutin ulit ang Buksan ang tindahan ko.",
 
   "langPickerPrompt": "Piliin ang wika mo",
 
@@ -22,19 +22,22 @@
   "profileNamePlaceholder": "hal. Aling Nena",
   "profileStoreLabel": "At ano ang pangalan ng tindahan mo?",
   "profileStorePlaceholder": "hal. Nena Sari-Sari",
+  "profileNameError": "Ilagay ang pangalan mo para makapagpatuloy.",
+  "profileStoreError": "Ilagay ang pangalan ng tindahan mo para makapagpatuloy.",
 
   "readyStamp": "HANDA",
   "readyGreetingNamed": "Ikinagagalak kitang makilala, {{name}}.",
   "readyGreetingDefault": "Ikinagagalak kang makilala.",
   "readySublineNamed": "Handa na si {{storeName}}.",
   "readySublineDefault": "Handa na ang tindahan mo.",
-  "readyCta": "Buksan ang tindahan ko →",
+  "readyCta": "Buksan ang tindahan ko",
   "readyCtaA11y": "Buksan ang tindahan ko",
+  "readyEditProfile": "Palitan ang pangalan o tindahan",
 
   "progressA11y": "Hakbang {{current}} sa {{total}}",
   "progressCount": "{{current}} sa {{total}}",
 
-  "profileHeroTitle": "Maayos na ang tindahan mo.",
+  "profileHeroTitle": "Tindahan mo, mas maayos.",
   "profileHeroSub": "Benta, stock, at utang ng suki sa iisang lugar. Gumagana kahit walang internet.",
 
   "tourUseItWhen": "Gamitin kapag",
@@ -57,14 +60,14 @@
   "tourCustomersHeadline": "Bantayan ang utang ng suki",
   "tourCustomersWhatItDoes": "I-log ang utang at bayad. Kinukwenta ang balanse mula sa bawat transaksyon ng suki kaya laging tama.",
   "tourCustomersWhen": "Kapag may nagsabing \"tabi muna\" o kapag may magbabayad.",
-  "tourCustomersBubble": "Nagbayad si Aling Nena. Pindutin ang Mark paid.",
+  "tourCustomersBubble": "Nagbayad si Aling Nena. Pindutin ang Markahang bayad.",
   "tourMoreLabel": "IBA PA",
   "tourMoreHeadline": "Tingnan ang takbo ng tindahan",
   "tourMoreWhatItDoes": "Kabuuan kada araw, linggo, at buwan. Pinakamabenta, mabagal ang benta, at tagal ng utang.",
   "tourMoreWhen": "Sa pagsara ng araw, o kapag magpaplano ng stock bukas.",
   "tourMoreBubble": "Pindutin ang bar para makita ang kabuuan ng araw na iyon.",
 
-  "demoTryIt": "SUBUKAN",
+  "demoTryIt": "Subukan",
   "demoDone": "Ayos, nagawa mo",
   "demoDoneA11y": "Tapos na ang pagsasanay",
   "demoHomeTileSales": "Benta ngayon",
@@ -79,6 +82,7 @@
   "demoSalesCash": "Cash",
   "demoSalesUtang": "Utang",
   "demoSalesDoneBubble": "Naibenta! Ang kabuuan ay {{total}}.",
+  "demoSalesUtangBubble": "Nailista bilang utang. {{total}} ang nadagdag sa utang ng suki.",
   "demoInvLow": "Paubos",
   "demoInvOk": "OK",
   "demoInvRestock": "Restock",
@@ -87,7 +91,7 @@
   "demoCustBalance": "Balanse",
   "demoCustOwes": "May utang",
   "demoCustPaid": "Bayad na",
-  "demoCustMarkPaid": "Mark paid",
+  "demoCustMarkPaid": "Markahang bayad",
   "demoCustDoneBubble": "Bayad na. Wala nang utang.",
   "demoMoreDayMon": "Lun",
   "demoMoreDayTue": "Mar",

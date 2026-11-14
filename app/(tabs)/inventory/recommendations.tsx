@@ -12,7 +12,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, Href } from 'expo-router';
 import { MotiView } from 'moti';
 import { useMemo, useState } from 'react';
-import {  FlatList,
+import {
+  FlatList,
   Modal,
   Pressable,
   ScrollView,
@@ -21,19 +22,20 @@ import {  FlatList,
   View,
 } from 'react-native';
 import { Alert } from '@/utils';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { useTranslation } from 'react-i18next';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
 
-const FILTERS: { id: TabType; label: string }[] = [
+const FILTERS = [
   { id: 'reorder', label: 'Reorder' },
   { id: 'slow_movers', label: 'Slow movers' },
   { id: 'watch_list', label: 'Watch list' },
   { id: 'saved_plans', label: 'Saved plans' },
-];
+] satisfies { id: TabType; label: string }[];
 
-const EMPTY_COPY: Record<TabType, { title: string; body: string }> = {
+const EMPTY_COPY = {
   reorder: {
     title: 'Nothing to reorder',
     body: 'Stock is healthy. Items that run low will show up here.',
@@ -50,7 +52,7 @@ const EMPTY_COPY: Record<TabType, { title: string; body: string }> = {
     title: 'No saved plans',
     body: 'Adjusted, deferred or dismissed items are kept here.',
   },
-};
+} satisfies Record<TabType, { title: string; body: string }>;
 
 export default function RecommendationsScreen() {
   const router = useRouter();
@@ -679,71 +681,79 @@ export default function RecommendationsScreen() {
         animationType="fade"
         onRequestClose={() => setAdjustingProduct(null)}
       >
-        <Pressable
-          className="flex-1 bg-black/50 justify-center items-center px-6"
-          onPress={() => setAdjustingProduct(null)}
-        >
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <Pressable
-            className="bg-paper-50 rounded-2xl p-5 w-full max-w-sm border border-ink-150 shadow-modal"
-            onPress={(e) => e.stopPropagation()}
+            className="flex-1 bg-black/50 justify-center items-center px-6"
+            onPress={() => setAdjustingProduct(null)}
           >
-            <StyledText
-              variant="extrabold"
-              className="text-lg text-ink-900 mb-2"
+            <Pressable
+              className="bg-paper-50 rounded-2xl p-5 w-full max-w-sm border border-ink-150 shadow-modal"
+              onPress={(e) => e.stopPropagation()}
             >
-              Adjust Quantity
-            </StyledText>
-            <StyledText variant="regular" className="text-sm text-ink-500 mb-4">
-              Enter the adjusted restock quantity for{' '}
-              {adjustingProduct?.productName}:
-            </StyledText>
-
-            <TextInput
-              value={adjustedQtyText}
-              onChangeText={(text) => {
-                setAdjustedQtyText(text);
-                setAdjustError('');
-              }}
-              keyboardType="number-pad"
-              className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
-              placeholder="Quantity"
-              autoFocus
-            />
-
-            {adjustError ? (
               <StyledText
-                variant="semibold"
-                className="text-xs text-semantic-danger mb-3"
+                variant="extrabold"
+                className="text-lg text-ink-900 mb-2"
               >
-                {adjustError}
+                Adjust Quantity
               </StyledText>
-            ) : null}
+              <StyledText
+                variant="regular"
+                className="text-sm text-ink-500 mb-4"
+              >
+                Enter the adjusted restock quantity for{' '}
+                {adjustingProduct?.productName}:
+              </StyledText>
 
-            <View className="flex-row justify-end gap-3 mt-2">
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setAdjustingProduct(null)}
-                className="px-4 py-2 bg-paper-200 rounded-xl"
-              >
-                <StyledText variant="semibold" className="text-sm text-ink-700">
-                  Cancel
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={handleSaveAdjustment}
-                className="px-4 py-2 bg-persimmon-500 rounded-xl shadow-persimmon-glow"
-              >
+              <TextInput
+                value={adjustedQtyText}
+                onChangeText={(text) => {
+                  setAdjustedQtyText(text);
+                  setAdjustError('');
+                }}
+                keyboardType="number-pad"
+                className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
+                placeholder="Quantity"
+                autoFocus
+              />
+
+              {adjustError ? (
                 <StyledText
                   variant="semibold"
-                  className="text-sm text-paper-50"
+                  className="text-xs text-semantic-danger mb-3"
                 >
-                  Save
+                  {adjustError}
                 </StyledText>
-              </TouchableOpacity>
-            </View>
+              ) : null}
+
+              <View className="flex-row justify-end gap-3 mt-2">
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setAdjustingProduct(null)}
+                  className="px-4 py-2 bg-paper-200 rounded-xl"
+                >
+                  <StyledText
+                    variant="semibold"
+                    className="text-sm text-ink-700"
+                  >
+                    Cancel
+                  </StyledText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleSaveAdjustment}
+                  className="px-4 py-2 bg-persimmon-500 rounded-xl shadow-persimmon-glow"
+                >
+                  <StyledText
+                    variant="semibold"
+                    className="text-sm text-paper-50"
+                  >
+                    Save
+                  </StyledText>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

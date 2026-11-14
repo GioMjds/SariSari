@@ -45,7 +45,8 @@ export function InventoryDemo({ setPose, say, complete }: DemoProps) {
             </View>
             <View className="h-2 rounded-full bg-ink-100 overflow-hidden">
               <View
-                className={`h-2 rounded-full ${low ? 'bg-persimmon-500' : 'bg-sage-500'}`}
+                // Low Stock amber from the DESIGN.md alert-kind palette.
+                className={`h-2 rounded-full ${low ? 'bg-[#B45309]' : 'bg-sage-500'}`}
                 style={{ width: `${Math.round(stockRatio(qty) * 100)}%` }}
               />
             </View>
@@ -57,7 +58,7 @@ export function InventoryDemo({ setPose, say, complete }: DemoProps) {
                     name: product.name,
                   })}
                   onPress={() => handleRestock(product.id)}
-                  className="min-h-[44px] items-center justify-center rounded-2xl bg-persimmon-500"
+                  className="min-h-[44px] items-center justify-center rounded-md bg-persimmon-600 active:bg-persimmon-700"
                 >
                   <StyledText variant="semibold" className="text-white">
                     {t('demoInvRestock')}
