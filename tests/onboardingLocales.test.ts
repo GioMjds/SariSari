@@ -1,4 +1,9 @@
 import { FIRST_STEPS } from '@/constants/gettingStarted';
+import {
+  BEAT_COPY,
+  SEED_PRODUCTS,
+  SUKI_NAME_KEY,
+} from '@/constants/onboardingDay';
 import { ONBOARDING_TOUR_STEPS } from '@/constants/onboardingTour';
 
 const en = require('@/locales/en/onboarding.json') as Record<string, string>;
@@ -38,6 +43,67 @@ describe('onboarding locales', () => {
         expect(`${key}:${key in en}`).toBe(`${key}:true`);
         expect(`${key}:${key in tl}`).toBe(`${key}:true`);
       }
+    }
+  });
+
+  const DAY_UI_KEYS = [
+    'clockBeforeOpen',
+    'clockClosed',
+    'clockA11y',
+    'showMe',
+    'showMeA11y',
+    'beatDone',
+    'coachHint',
+    'continueLockedHint',
+    'finishDay',
+    'posAddA11y',
+    'posRemoveA11y',
+    'posStock',
+    'posCartEmpty',
+    'posTotal',
+    'posCheckout',
+    'posEditCart',
+    'posPayWith',
+    'posCash',
+    'posUtang',
+    'posTendered',
+    'posTenderA11y',
+    'posPickSuki',
+    'posPickSukiA11y',
+    'posPaidCash',
+    'posPaidUtang',
+    'invTitle',
+    'invStockCount',
+    'invLow',
+    'invOk',
+    'invRestock',
+    'invRestockA11y',
+    'invDeliveryTitle',
+    'invDeliveryQty',
+    'invConfirm',
+    'homeTitle',
+    'homeTodaySales',
+    'homeItemsSold',
+    'homeUtangOut',
+    'homeSukiTitle',
+    'homeBalance',
+    'homeRecordPayment',
+    'homePaid',
+  ];
+
+  it('defines every key the day walkthrough references', () => {
+    const copyKeys = Object.values(BEAT_COPY).flatMap((c) =>
+      [c.clockKey, c.sceneKey, c.outcomeKey, c.nudgeKey].filter(
+        (k): k is string => k !== null,
+      ),
+    );
+    const nameKeys = [
+      ...Object.values(SEED_PRODUCTS).map((p) => p.nameKey),
+      ...Object.values(SUKI_NAME_KEY),
+    ];
+    for (const key of [...copyKeys, ...nameKeys, ...DAY_UI_KEYS]) {
+      expect(`${key}:${key in en}`).toBe(`${key}:true`);
+      expect(`${key}:${key in tl}`).toBe(`${key}:true`);
     }
   });
 });
