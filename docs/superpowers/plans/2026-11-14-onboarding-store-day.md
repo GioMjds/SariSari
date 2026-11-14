@@ -1302,7 +1302,7 @@ import { formatPesos } from '@/lib/money';
 type Stage = 'cart' | 'pay' | 'tender' | 'suki';
 
 const TILE_CLASS =
-  'w-[48%] min-h-[88px] justify-between rounded-2xl border border-paper-300 bg-paper-100 p-3 shadow-paper active:bg-paper-200/60';
+  'min-h-[88px] justify-between rounded-2xl border border-paper-300 bg-paper-100 p-3 shadow-paper active:bg-paper-200/60';
 const PRIMARY_CLASS =
   'min-h-[52px] items-center justify-center rounded-md bg-persimmon-600 px-4 active:bg-persimmon-700';
 const SECONDARY_CLASS =
@@ -1366,7 +1366,7 @@ export function PosReplica({ mode, state, dispatch }: Props) {
                     accessibilityRole="button"
                     accessibilityLabel={t('posAddA11y', { name: name(id) })}
                     accessibilityHint={target ? hint : undefined}
-                    className={TILE_CLASS.replace('w-[48%] ', '')}
+                    className={TILE_CLASS}
                   >
                     <StyledText variant="extrabold" className="text-ink-900 text-sm">
                       {name(id)}
@@ -1773,6 +1773,7 @@ export function InventoryReplica({ state, dispatch }: Props) {
 Create `components/onboarding/replicas/HomeCloseReplica.tsx`:
 
 ```tsx
+import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
@@ -1792,7 +1793,7 @@ import { formatPesos } from '@/lib/money';
 
 type Props = { state: DayState; dispatch: (action: DayAction) => void };
 
-function Tile({ label, children }: { label: string; children: React.ReactNode }) {
+function Tile({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View className="flex-1 min-h-[72px] justify-between rounded-2xl border border-paper-300 bg-paper-100 p-3">
       <StyledText variant="medium" className="text-ink-600 text-caption">
