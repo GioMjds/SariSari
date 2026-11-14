@@ -1,11 +1,12 @@
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import OnboardingPage from '@/app/onboarding/index';
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
 const mockAddToast = jest.fn();
 const mockMarkOnboardingComplete = jest.fn();
+let mockReducedMotion = true;
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: mockPush }),
@@ -29,7 +30,7 @@ jest.mock('moti', () => {
   return { MotiView: View };
 });
 jest.mock('@/hooks/useReducedMotion', () => ({
-  useReducedMotion: () => false,
+  useReducedMotion: () => mockReducedMotion,
 }));
 jest.mock('@/components/mascot', () => ({ SariMascot: () => null }));
 jest.mock('react-i18next', () => ({
@@ -49,8 +50,12 @@ jest.mock('@/stores', () => ({
   ) => selector({ addToast: mockAddToast }),
 }));
 
-/** Fill both names, leave the profile step, and skip the tour to Ready. */
-async function reachReady(screen: Awaited<ReturnType<typeof render>>) {
+type Screen = Awaited<ReturnType<typeof render>>;
+
+const isDisabled = (screen: Screen, label: string) =>
+  screen.getByLabelText(label).props['accessibilityState']?.disabled === true;
+
+async function fillProfile(screen: Screen) {
   await fireEvent.changeText(
     screen.getByLabelText('onboarding:profileNameLabel'),
     '  Nena ',
@@ -60,47 +65,121 @@ async function reachReady(screen: Awaited<ReturnType<typeof render>>) {
     ' Nena Sari-Sari  ',
   );
   await fireEvent.press(screen.getByLabelText('letsGo'));
+}
+
+async function reachReady(screen: Screen) {
+  await fillProfile(screen);
   await fireEvent.press(screen.getByLabelText('skipA11y'));
 }
 
-describe('OnboardingPage footer', () => {
+describe('OnboardingPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReducedMotion = true;
     mockMarkOnboardingComplete.mockResolvedValue(undefined);
   });
 
   it('shows inline errors and stays on the profile step when names are blank', async () => {
     const screen = await render(<OnboardingPage />);
-
     await fireEvent.press(screen.getByLabelText('letsGo'));
-
     expect(screen.getByText('onboarding:profileNameError')).toBeTruthy();
     expect(screen.getByText('onboarding:profileStoreError')).toBeTruthy();
     expect(screen.queryByLabelText('readyCta')).toBeNull();
     expect(mockMarkOnboardingComplete).not.toHaveBeenCalled();
   });
 
-  it('saves the trimmed profile and opens the tabs from the Ready CTA', async () => {
+  it('locks Continue on a beat until the beat is done', async () => {
     const screen = await render(<OnboardingPage />);
-    await reachReady(screen);
+    await fillProfile(screen);
+    expect(screen.getByText('beatCashScene')).toBeTruthy();
+    expect(isDisabled(screen, 'next')).toBe(true);
 
+    await fireEvent.press(screen.getByLabelText('showMeA11y'));
+
+    expect(isDisabled(screen, 'next')).toBe(false);
+    expect(mockAddToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'beatCashOutcome',
+        variant: 'success',
+      }),
+    );
+  });
+
+  it('plays the whole day with Show me and saves the trimmed profile', async () => {
+    const screen = await render(<OnboardingPage />);
+    await fillProfile(screen);
+    for (const label of ['next', 'next', 'next', 'finishDay']) {
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await fireEvent.press(screen.getByLabelText(label));
+    }
     await fireEvent.press(screen.getByLabelText('readyCta'));
-
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
+    expect(mockMarkOnboardingComplete).toHaveBeenCalledTimes(1);
     expect(mockMarkOnboardingComplete).toHaveBeenCalledWith({
       ownerName: 'Nena',
       storeName: 'Nena Sari-Sari',
     });
-    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows the cash receipt, not the day total, when going back', async () => {
+    const screen = await render(<OnboardingPage />);
+    await fillProfile(screen);
+    await fireEvent.press(screen.getByLabelText('showMeA11y'));
+    await fireEvent.press(screen.getByLabelText('next'));
+    await fireEvent.press(screen.getByLabelText('showMeA11y'));
+    await fireEvent.press(screen.getByLabelText('backA11y'));
+    expect(screen.getByText('beatCashOutcome')).toBeTruthy();
+    expect(isDisabled(screen, 'next')).toBe(false);
+    expect(screen.queryByLabelText('showMeA11y')).toBeNull();
+  });
+
+  it('plays Show me step by step without Reduce Motion', async () => {
+    jest.useFakeTimers();
+    mockReducedMotion = false;
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      expect(isDisabled(screen, 'next')).toBe(true);
+      await act(async () => {
+        jest.advanceTimersByTime(400 * 6);
+      });
+      expect(isDisabled(screen, 'next')).toBe(false);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('cancels pending Show me actions when the owner leaves the beat', async () => {
+    jest.useFakeTimers();
+    mockReducedMotion = false;
+    try {
+      const screen = await render(<OnboardingPage />);
+      await fillProfile(screen);
+      await fireEvent.press(screen.getByLabelText('showMeA11y'));
+      await fireEvent.press(screen.getByLabelText('backA11y'));
+      await act(async () => {
+        jest.advanceTimersByTime(400 * 10);
+      });
+      await fireEvent.press(screen.getByLabelText('letsGo'));
+      expect(isDisabled(screen, 'next')).toBe(true);
+      expect(mockAddToast).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('skips to Ready from a beat', async () => {
+    const screen = await render(<OnboardingPage />);
+    await reachReady(screen);
+    expect(screen.getByLabelText('readyCta')).toBeTruthy();
   });
 
   it('stays on Ready and reports the failure when the save throws', async () => {
     mockMarkOnboardingComplete.mockRejectedValue(new Error('disk full'));
     const screen = await render(<OnboardingPage />);
     await reachReady(screen);
-
     await fireEvent.press(screen.getByLabelText('readyCta'));
-
     await waitFor(() =>
       expect(mockAddToast).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -116,12 +195,10 @@ describe('OnboardingPage footer', () => {
   it('returns from the Ready edit link to the profile, then straight back to Ready', async () => {
     const screen = await render(<OnboardingPage />);
     await reachReady(screen);
-
     await fireEvent.press(screen.getByText('readyEditProfile'));
     expect(
       screen.getByLabelText('onboarding:profileNameLabel').props['value'],
     ).toBe('  Nena ');
-
     await fireEvent.press(screen.getByLabelText('letsGo'));
     expect(screen.getByLabelText('readyCta')).toBeTruthy();
   });

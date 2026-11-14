@@ -1,12 +1,22 @@
 import { StyledText } from '@/components/elements';
-import { OnboardingProgress } from '@/components/onboarding/OnboardingProgress';
+import { BeatScene } from '@/components/onboarding/BeatScene';
+import { DayClock } from '@/components/onboarding/DayClock';
 import { ONBOARDING_COLORS } from '@/components/onboarding/palette';
 import { ProfileStep } from '@/components/onboarding/ProfileStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
+import { HomeCloseReplica } from '@/components/onboarding/replicas/HomeCloseReplica';
+import { InventoryReplica } from '@/components/onboarding/replicas/InventoryReplica';
+import { PosReplica } from '@/components/onboarding/replicas/PosReplica';
 import { StepTransition } from '@/components/onboarding/StepTransition';
-import { TourCard } from '@/components/onboarding/TourCard';
-import { ONBOARDING_TOUR_STEPS, TOUR_ORDER } from '@/constants/onboardingTour';
+import { BEAT_COPY, BEAT_ORDER, type BeatId } from '@/constants/onboardingDay';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { markOnboardingComplete } from '@/lib';
+import {
+  createDaySeed,
+  dayReducer,
+  outcomeParams,
+  scriptFor,
+} from '@/lib/onboardingDay';
 import {
   Step,
   TOTAL_STEPS,
@@ -21,8 +31,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   BackHandler,
   TouchableOpacity,
@@ -31,22 +42,29 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+/** Delay between Show me taps when motion is allowed. */
+const AUTOPLAY_STEP_MS = 400;
+
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>({ kind: 'profile' });
   const [profile, setProfile] = useState<OnboardingProfile>({
     ownerName: '',
     storeName: '',
   });
+  const [day, dispatch] = useReducer(dayReducer, undefined, createDaySeed);
   const [saving, setSaving] = useState<boolean>(false);
   // Counts failed "continue" presses on the profile step. Above zero,
   // ProfileStep shows inline errors; each bump refocuses the empty field.
   const [submitAttempt, setSubmitAttempt] = useState(0);
   // True while the owner is fixing their names from the Ready screen,
-  // so continuing returns there instead of replaying the tour.
+  // so continuing returns there instead of replaying the day.
   const [editingFromReady, setEditingFromReady] = useState(false);
+  const [autoplayingBeat, setAutoplayingBeat] = useState<BeatId | null>(null);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const router = useRouter();
   const addToast = useToastStore((state) => state.addToast);
+  const reducedMotion = useReducedMotion();
   const { t } = useTranslation('onboarding');
 
   const currentIndex = indexOf(step);
@@ -56,13 +74,62 @@ export default function OnboardingPage() {
     previousIndex.current = currentIndex;
   }, [currentIndex]);
 
+  const beat = step.kind === 'beat' ? step.beat : null;
   const isProfile = step.kind === 'profile';
   const isReady = step.kind === 'ready';
-  const isLastTour =
-    step.kind === 'tour' && step.tab === TOUR_ORDER[TOUR_ORDER.length - 1];
+  const isLastBeat = beat === BEAT_ORDER[BEAT_ORDER.length - 1];
+  const beatLocked = beat !== null && !day.beatDone[beat];
 
   const isProfileComplete =
     profile.ownerName.trim().length > 0 && profile.storeName.trim().length > 0;
+
+  const cancelAutoplay = useCallback(() => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    setAutoplayingBeat(null);
+  }, []);
+
+  // Leaving a step, or unmounting, drops any queued Show me taps.
+  useEffect(() => cancelAutoplay, [currentIndex, cancelAutoplay]);
+
+  // Fire the outcome toast once, when a beat flips to done.
+  const doneBefore = useRef(day.beatDone);
+  useEffect(() => {
+    for (const id of BEAT_ORDER) {
+      if (day.beatDone[id] && !doneBefore.current[id]) {
+        const message = t(BEAT_COPY[id].outcomeKey, outcomeParams(id, day));
+        addToast({ message, variant: 'success', duration: 2200 });
+        AccessibilityInfo.announceForAccessibility(message);
+      }
+    }
+    doneBefore.current = day.beatDone;
+  }, [day, addToast, t]);
+
+  const handleShowMe = (target: BeatId) => {
+    if (day.beatDone[target] || autoplayingBeat !== null) return;
+    if (reducedMotion) {
+      dispatch({ type: 'autoplay', beat: target });
+      return;
+    }
+    setAutoplayingBeat(target);
+    const script = scriptFor(target);
+    script.forEach((action, i) => {
+      timers.current.push(
+        setTimeout(() => dispatch(action), AUTOPLAY_STEP_MS * (i + 1)),
+      );
+    });
+    // Safety net: a stray tap mid-playback cannot leave the beat stuck.
+    timers.current.push(
+      setTimeout(
+        () => {
+          dispatch({ type: 'autoplay', beat: target });
+          timers.current = [];
+          setAutoplayingBeat(null);
+        },
+        AUTOPLAY_STEP_MS * (script.length + 1),
+      ),
+    );
+  };
 
   const handleBack = () => {
     if (saving) return;
@@ -89,7 +156,7 @@ export default function OnboardingPage() {
     return () => subscription.remove();
   }, [step, saving, editingFromReady]);
 
-  const handleOpenStore = async (href?: string) => {
+  const handleOpenStore = async () => {
     if (saving) return;
     const ownerName = profile.ownerName.trim();
     const storeName = profile.storeName.trim();
@@ -111,7 +178,6 @@ export default function OnboardingPage() {
         duration: 1800,
       });
       router.replace('/(tabs)' as Href);
-      if (href) router.push(href as Href);
     } catch {
       addToast({
         message: t('toastSaveFailed'),
@@ -133,6 +199,7 @@ export default function OnboardingPage() {
       setStep(skipToReady());
       return;
     }
+    if (beatLocked) return;
     setStep(next(step));
   };
   const handleSkip = () => {
@@ -145,34 +212,39 @@ export default function OnboardingPage() {
     setStep({ kind: 'profile' });
   };
 
-  const tourStep =
-    step.kind === 'tour'
-      ? ONBOARDING_TOUR_STEPS.find((s) => s.tab === step.tab)
-      : undefined;
-
-  const showSkip = !isProfile && !isReady && !isLastTour && isProfileComplete;
+  const showSkip = beat !== null && isProfileComplete;
 
   const primaryLabel = isReady
     ? t('readyCta')
     : isProfile
       ? t('letsGo')
-      : isLastTour
-        ? t('finishTour')
+      : isLastBeat
+        ? t('finishDay')
         : t('next');
+  const primaryDisabled = saving || beatLocked;
+
+  const timeLabel =
+    beat !== null
+      ? t(BEAT_COPY[beat].clockKey)
+      : isReady
+        ? t('clockClosed')
+        : t('clockBeforeOpen');
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="dark" backgroundColor={ONBOARDING_COLORS.page} />
 
       <View className="px-6 pt-4">
-        <OnboardingProgress
+        <DayClock
           currentIndex={currentIndex}
           totalSteps={TOTAL_STEPS}
-          label={t('progressA11y', {
+          timeLabel={timeLabel}
+          counterText={t('progressCount', {
             current: currentIndex + 1,
             total: TOTAL_STEPS,
           })}
-          counterText={t('progressCount', {
+          label={t('clockA11y', {
+            time: timeLabel,
             current: currentIndex + 1,
             total: TOTAL_STEPS,
           })}
@@ -200,12 +272,27 @@ export default function OnboardingPage() {
                 onSubmit={handleNext}
               />
             )}
-            {!!tourStep && <TourCard step={tourStep} />}
+            {beat !== null && (
+              <BeatScene
+                beat={beat}
+                state={day}
+                storeName={profile.storeName.trim()}
+                autoplaying={autoplayingBeat === beat}
+                onShowMe={() => handleShowMe(beat)}
+              >
+                {beat === 'cash' || beat === 'utang' ? (
+                  <PosReplica mode={beat} state={day} dispatch={dispatch} />
+                ) : beat === 'restock' ? (
+                  <InventoryReplica state={day} dispatch={dispatch} />
+                ) : (
+                  <HomeCloseReplica state={day} dispatch={dispatch} />
+                )}
+              </BeatScene>
+            )}
             {isReady && (
               <ReadyStep
                 profile={profile}
                 saving={saving}
-                onOpenStore={handleOpenStore}
                 onEditProfile={handleEditProfile}
               />
             )}
@@ -236,17 +323,23 @@ export default function OnboardingPage() {
 
           <TouchableOpacity
             onPress={isReady ? () => handleOpenStore() : handleNext}
-            disabled={saving}
+            disabled={primaryDisabled}
             accessibilityRole="button"
             accessibilityLabel={primaryLabel}
-            accessibilityState={{ disabled: saving, busy: saving }}
-            className="flex-1 min-h-[52px] flex-row items-center justify-center gap-2 rounded-md bg-persimmon-600 px-4 press-scale active:bg-persimmon-700"
+            accessibilityHint={beatLocked ? t('continueLockedHint') : undefined}
+            accessibilityState={{ disabled: primaryDisabled, busy: saving }}
+            className={`flex-1 min-h-[52px] flex-row items-center justify-center gap-2 rounded-md bg-persimmon-600 px-4 press-scale active:bg-persimmon-700 ${
+              beatLocked ? 'opacity-50' : ''
+            }`}
           >
             {saving ? (
               <ActivityIndicator color={ONBOARDING_COLORS.onAction} />
             ) : (
               <>
-                <StyledText variant="extrabold" className="text-white text-base">
+                <StyledText
+                  variant="extrabold"
+                  className="text-white text-base"
+                >
                   {primaryLabel}
                 </StyledText>
                 <Ionicons
@@ -266,7 +359,10 @@ export default function OnboardingPage() {
             accessibilityLabel={t('skipA11y')}
             className="mt-1 min-h-[44px] items-center justify-center active:opacity-70"
           >
-            <StyledText variant="semibold" className="text-persimmon-700 text-sm">
+            <StyledText
+              variant="semibold"
+              className="text-persimmon-700 text-sm"
+            >
               {t('skipTour')}
             </StyledText>
           </TouchableOpacity>
