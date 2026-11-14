@@ -10,6 +10,7 @@ import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog
 import { SupportedLanguage } from '@/lib/i18n';
 import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
 import { VoidWindowCard } from '@/components/settings/VoidWindowCard';
+import { PinPolicyCard } from '@/components/settings/PinPolicyCard';
 import {
   SettingsRow,
   SettingsSection,
@@ -102,6 +103,13 @@ export default function Settings() {
 
         <SettingsSection title={t('common:settingsSecuritySection')}>
           <OwnerPinSettingsCard />
+        </SettingsSection>
+
+        <SettingsSection
+          title={t('settings:pin_policy.section')}
+          subtitle={t('settings:pin_policy.intro')}
+        >
+          <PinPolicyCard />
         </SettingsSection>
 
         <SettingsSection title={t('common:settingsSalesSection')}>

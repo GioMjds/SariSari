@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { getAppSetting, setAppSetting } from '@/database/settings';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { useToastStore } from '@/stores';
 import { useAppSetting, useSetAppSetting } from '@/hooks/useAppSetting';
 import {
@@ -90,6 +91,7 @@ function LimitRow({ label, value, onChange, onCommit }: LimitRowProps) {
 export const OwnerPinSettingsCard: React.FC = () => {
   const { t } = useTranslation('settings');
   const addToast = useToastStore((s) => s.addToast);
+  const { runWithPinGuard } = useOwnerPinGuard();
   const { isPinConfigured, setIsPinConfigured } = useAuthStore();
   const { value: biometricRaw } = useAppSetting('biometric_unlock_enabled');
   const biometricEnabled = biometricRaw === '1';
@@ -235,7 +237,14 @@ export const OwnerPinSettingsCard: React.FC = () => {
         ) : (
           <>
             <Pressable
-              onPress={() => router.push('/settings/owner-pin-setup')}
+              onPress={() =>
+                void runWithPinGuard({
+                  actionId: 'pin_change',
+                  title: t('pin.title'),
+                  actionDescription: t('pin_policy.actions.pin_change'),
+                  onApproved: () => router.push('/settings/owner-pin-setup'),
+                })
+              }
               accessibilityRole="button"
               style={{ minHeight: 48 }}
               className="flex-1 bg-paper-100 border border-paper-300 rounded-2xl items-center justify-center active:opacity-70"
