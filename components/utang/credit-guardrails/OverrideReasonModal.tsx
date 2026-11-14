@@ -67,6 +67,7 @@ export function OverrideReasonModal({
   const handleSelect = (code: OverrideReasonCode) => {
     if (code !== 'other') {
       runWithPinGuard({
+        actionId: 'credit_limit_override',
         title: 'Authorize Credit Override',
         actionDescription: `Credit limit override (${OVERRIDE_REASON_LABELS[code].label})`,
         onApproved: () => {
@@ -84,6 +85,7 @@ export function OverrideReasonModal({
     const trimmed = note.trim();
     if (!trimmed) return;
     runWithPinGuard({
+      actionId: 'credit_limit_override',
       title: 'Authorize Credit Override',
       actionDescription: 'Credit limit override (Other reason)',
       onApproved: () => {

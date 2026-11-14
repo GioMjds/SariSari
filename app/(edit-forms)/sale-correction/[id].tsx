@@ -86,6 +86,7 @@ export default function SaleCorrectionScreen() {
 
   const onSubmit = async (data: SaleCorrectionFormData) => {
     await runWithPinGuard({
+      actionId: isVoid ? 'sale_void' : 'sale_refund',
       title: isVoid ? 'Authorize Void Sale' : 'Authorize Refund',
       actionDescription: `${isVoid ? 'Void' : 'Refund'} for Sale #${id}`,
       onApproved: async () => {

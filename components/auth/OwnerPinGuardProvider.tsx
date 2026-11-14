@@ -11,8 +11,10 @@ import { OwnerPinSetupModal } from '@/components/auth/OwnerPinSetupModal';
 import { OwnerPinRecoveryModal } from '@/components/auth/OwnerPinRecoveryModal';
 import { Alert } from '@/utils';
 import { t } from 'i18next';
+import { isPinRequired, type PinActionId } from '@/lib/auth/pin-actions';
 
 export interface GuardOptions {
+  actionId: PinActionId;
   title?: string;
   actionDescription?: string;
   onApproved: () => Promise<void> | void;
@@ -88,6 +90,10 @@ export const OwnerPinGuardProvider: FC<{
   };
 
   const runWithPinGuard = async (options: GuardOptions) => {
+    if (!(await isPinRequired(options.actionId, getAppSetting))) {
+      await options.onApproved();
+      return;
+    }
     setActiveOptions(options);
     let configured = false;
     try {

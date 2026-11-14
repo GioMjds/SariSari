@@ -211,6 +211,7 @@ export function usePriceCorrectionForm(saleId: number) {
     const noteTrimmed = data.note.trim();
 
     await runWithPinGuard({
+      actionId: 'sale_price_correction',
       title: 'Authorize Price Correction',
       actionDescription: `Correct prices for Sale #${saleId}`,
       onApproved: async () => {

@@ -83,6 +83,7 @@ function LogTransactionFormInner({
   const handleFormSubmit = () => {
     if (form.type === 'adjustment') {
       runWithPinGuard({
+        actionId: 'stock_adjustment',
         title: 'Authorize Stock Adjustment',
         actionDescription: `Adjust stock for ${product.name}`,
         onApproved: () => {
