@@ -56,7 +56,7 @@ export function SaleSuccessState({
           <StyledText variant="medium" className="text-ink-500 text-[14px] mt-1">
             {isCash
               ? 'Cash received.'
-              : `Added to ${customerName ?? 'the suki'}'s utang.`}
+              : `Added to ${customerName ?? 'the suki'}'s utang. Counts as a sale once paid.`}
           </StyledText>
         </View>
 

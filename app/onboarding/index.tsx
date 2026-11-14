@@ -30,7 +30,7 @@ import { useToastStore } from '@/stores';
 import { OnboardingProfile } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Href, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import {
@@ -197,7 +197,7 @@ export default function OnboardingPage() {
         variant: 'success',
         duration: 1800,
       });
-      router.replace('/(tabs)' as Href);
+      router.replace('/home');
     } catch {
       addToast({
         message: t('toastSaveFailed'),

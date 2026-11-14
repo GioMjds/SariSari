@@ -26,6 +26,14 @@ export interface CheckoutModalProps {
   onParkCart?: () => void;
 }
 
+interface RecordedCheckout {
+  total: number;
+  paymentType: 'cash' | 'credit';
+  customerName: string | undefined;
+  itemCountLabel: string;
+  piecesLabel: string;
+}
+
 export function CheckoutModal({
   visible,
   onClose,
@@ -46,7 +54,8 @@ export function CheckoutModal({
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [recordedTotal, setRecordedTotal] = useState(0);
+  // Snapshot of the cart at submit, since a successful submit clears the cart store.
+  const [recorded, setRecorded] = useState<RecordedCheckout | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -172,7 +181,13 @@ export function CheckoutModal({
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setIsSubmitting(true);
     setSubmitError(null);
-    setRecordedTotal(cart.total);
+    setRecorded({
+      total: cart.total,
+      paymentType,
+      customerName,
+      itemCountLabel,
+      piecesLabel,
+    });
     try {
       const success = await cart.submit();
       if (success) {
@@ -194,7 +209,15 @@ export function CheckoutModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [cart, isSubmitDisabled, triggerHaptic]);
+  }, [
+    cart,
+    isSubmitDisabled,
+    triggerHaptic,
+    paymentType,
+    customerName,
+    itemCountLabel,
+    piecesLabel,
+  ]);
 
   const handleViewReceipts = useCallback(() => {
     triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
@@ -267,7 +290,7 @@ export function CheckoutModal({
               accessibilityRole="summary"
               accessibilityLabel={
                 isSuccess
-                  ? isCredit
+                  ? recorded?.paymentType === 'credit'
                     ? 'Utang receipt'
                     : 'Sale receipt'
                   : 'Checkout summary'
@@ -319,13 +342,13 @@ export function CheckoutModal({
                 </Pressable>
               </View>
 
-              {isSuccess ? (
+              {isSuccess && recorded ? (
                 <SaleSuccessState
-                  recordedTotal={recordedTotal}
-                  itemCountLabel={itemCountLabel}
-                  piecesLabel={piecesLabel}
-                  paymentType={paymentType}
-                  customerName={customerName}
+                  recordedTotal={recorded.total}
+                  itemCountLabel={recorded.itemCountLabel}
+                  piecesLabel={recorded.piecesLabel}
+                  paymentType={recorded.paymentType}
+                  customerName={recorded.customerName}
                   insets={insets}
                   onNewSale={handleDismissSuccess}
                   onViewReceipts={handleViewReceipts}
