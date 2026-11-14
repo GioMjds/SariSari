@@ -4,7 +4,6 @@ import {
   SEED_PRODUCTS,
   SUKI_NAME_KEY,
 } from '@/constants/onboardingDay';
-import { ONBOARDING_TOUR_STEPS } from '@/constants/onboardingTour';
 
 const en = require('@/locales/en/onboarding.json') as Record<string, string>;
 const tl = require('@/locales/tl/onboarding.json') as Record<string, string>;
@@ -23,18 +22,14 @@ describe('onboarding locales', () => {
     }
   });
 
-  it('defines every key the tour constants reference', () => {
-    const keys = ONBOARDING_TOUR_STEPS.flatMap((step) => [
-      step.labelKey,
-      step.headlineKey,
-      step.whatItDoesKey,
-      step.whenToUseItKey,
-      step.bubbleKey,
-    ]);
-    for (const key of keys) {
-      expect(`${key}:${key in en}`).toBe(`${key}:true`);
-      expect(`${key}:${key in tl}`).toBe(`${key}:true`);
-    }
+  it('has no leftover tour or demo keys', () => {
+    const stale = Object.keys(en).filter(
+      (key) =>
+        /^(tour|demo)[A-Z]/.test(key) ||
+        key === 'finishTour' ||
+        key === 'progressA11y',
+    );
+    expect(stale).toEqual([]);
   });
 
   it('defines every key the first-step cards reference', () => {
