@@ -18,6 +18,7 @@ export interface GuardOptions {
   title?: string;
   actionDescription?: string;
   onApproved: () => Promise<void> | void;
+  onCancel?: () => void;
 }
 
 export interface OwnerPinGuardContextType {
@@ -84,6 +85,7 @@ export const OwnerPinGuardProvider: FC<{
     }
     if (result === 'cancelled') {
       setActiveOptions(null);
+      options.onCancel?.();
       return 'aborted';
     }
     return 'fall-through';
@@ -106,6 +108,7 @@ export const OwnerPinGuardProvider: FC<{
         'Owner PIN Unavailable',
         'Owner PIN verification is currently unavailable. Please try again.',
       );
+      options.onCancel?.();
       return;
     }
     setIsPinConfigured(configured);
@@ -154,10 +157,12 @@ export const OwnerPinGuardProvider: FC<{
   };
 
   const handleCancel = () => {
+    const opts = activeOptions;
     setShowChallenge(false);
     setShowSetup(false);
     setShowRecovery(false);
     setActiveOptions(null);
+    opts?.onCancel?.();
   };
 
   return (

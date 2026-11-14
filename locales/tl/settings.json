@@ -102,7 +102,8 @@
       "backup_restore": "I-restore ang backup",
       "drive_unlink": "I-unlink ang Google Drive",
       "pin_change": "Palitan ang Owner PIN",
-      "pin_policy_change": "Baguhin ang mga kailangan ng PIN"
+      "pin_policy_change": "Baguhin ang mga kailangan ng PIN",
+      "biometric_enable": "I-on ang biometric na pag-apruba"
     }
   }
 }

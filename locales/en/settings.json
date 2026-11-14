@@ -102,7 +102,8 @@
       "backup_restore": "Restore a backup",
       "drive_unlink": "Unlink Google Drive",
       "pin_change": "Change Owner PIN",
-      "pin_policy_change": "Change PIN approvals"
+      "pin_policy_change": "Change PIN approvals",
+      "biometric_enable": "Turn on biometric approval"
     }
   }
 }

@@ -11,6 +11,7 @@ const LOCKED_IDS = [
   'drive_unlink',
   'pin_change',
   'pin_policy_change',
+  'biometric_enable',
 ];
 
 describe('pin action registry', () => {

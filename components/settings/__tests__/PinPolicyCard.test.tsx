@@ -43,7 +43,7 @@ describe('PinPolicyCard', () => {
     const screen = await render(<PinPolicyCard />);
     expect(screen.getByTestId('pin-policy-switch-sale_void')).toBeTruthy();
     expect(screen.queryByTestId('pin-policy-switch-backup_restore')).toBeNull();
-    expect(screen.getAllByText('pin_policy.locked').length).toBe(4);
+    expect(screen.getAllByText('pin_policy.locked').length).toBe(5);
   });
 
   it('disables switches until a PIN is configured', async () => {

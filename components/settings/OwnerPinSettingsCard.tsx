@@ -161,20 +161,28 @@ export const OwnerPinSettingsCard: React.FC = () => {
       await setBiometricEnabled('0');
       return;
     }
-    Alert.alert(t('biometrics.risk_title'), t('biometrics.risk_body'), [
-      { text: t('biometrics.risk_cancel'), style: 'cancel' },
-      {
-        text: t('biometrics.risk_confirm'),
-        onPress: async () => {
-          const result = await authenticateOwner(
-            t('biometrics.reason_default'),
-          );
-          if (result === 'success') {
-            await setBiometricEnabled('1');
-          }
-        },
+    // Enabling biometrics lets a fingerprint approve owner actions, so the PIN comes first.
+    void runWithPinGuard({
+      actionId: 'biometric_enable',
+      title: t('pin.title'),
+      actionDescription: t('pin_policy.actions.biometric_enable'),
+      onApproved: () => {
+        Alert.alert(t('biometrics.risk_title'), t('biometrics.risk_body'), [
+          { text: t('biometrics.risk_cancel'), style: 'cancel' },
+          {
+            text: t('biometrics.risk_confirm'),
+            onPress: async () => {
+              const result = await authenticateOwner(
+                t('biometrics.reason_default'),
+              );
+              if (result === 'success') {
+                await setBiometricEnabled('1');
+              }
+            },
+          },
+        ]);
       },
-    ]);
+    });
   };
 
   const handleLaunchLockToggle = async (next: boolean) => {
@@ -237,14 +245,7 @@ export const OwnerPinSettingsCard: React.FC = () => {
         ) : (
           <>
             <Pressable
-              onPress={() =>
-                void runWithPinGuard({
-                  actionId: 'pin_change',
-                  title: t('pin.title'),
-                  actionDescription: t('pin_policy.actions.pin_change'),
-                  onApproved: () => router.push('/settings/owner-pin-setup'),
-                })
-              }
+              onPress={() => router.push('/settings/owner-pin-setup')}
               accessibilityRole="button"
               style={{ minHeight: 48 }}
               className="flex-1 bg-paper-100 border border-paper-300 rounded-2xl items-center justify-center active:opacity-70"

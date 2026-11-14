@@ -7,7 +7,10 @@ import {
 } from '@/components/auth/OwnerPinGuardProvider';
 import { getAppSetting } from '@/database/settings';
 import { isOwnerPinConfigured } from '@/database/auth';
-import { getBiometricCapability } from '@/lib/auth/biometrics';
+import {
+  authenticateOwner,
+  getBiometricCapability,
+} from '@/lib/auth/biometrics';
 
 jest.mock('@/database/settings', () => ({ getAppSetting: jest.fn() }));
 jest.mock('@/database/auth', () => ({ isOwnerPinConfigured: jest.fn() }));
@@ -26,9 +29,12 @@ jest.mock('@/stores/useAuthStore', () => {
   useAuthStore.getState = () => state;
   return { useAuthStore };
 });
+let mockChallengeProps: { onCancel: () => void } | null = null;
 jest.mock('@/components/auth/OwnerPinModal', () => ({
-  OwnerPinModal: () =>
-    require('react').createElement('Text', null, 'PIN_CHALLENGE'),
+  OwnerPinModal: (props: { onCancel: () => void }) => {
+    mockChallengeProps = props;
+    return require('react').createElement('Text', null, 'PIN_CHALLENGE');
+  },
 }));
 jest.mock('@/components/auth/OwnerPinSetupModal', () => ({
   OwnerPinSetupModal: () =>
@@ -126,6 +132,60 @@ describe('OwnerPinGuardProvider policy', () => {
       await guard.runWithPinGuard({ actionId: 'stock_adjustment', onApproved });
     });
     expect(onApproved).toHaveBeenCalledTimes(2);
+  });
+
+  it('calls onCancel when the PIN challenge is cancelled', async () => {
+    mockGetSetting.mockResolvedValue('0');
+    await mount();
+    const onCancel = jest.fn();
+    await act(async () => {
+      await guard.runWithPinGuard({
+        actionId: 'backup_restore',
+        onApproved: jest.fn(),
+        onCancel,
+      });
+    });
+    await act(async () => {
+      mockChallengeProps!.onCancel();
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onCancel when the biometric prompt is cancelled', async () => {
+    mockGetSetting.mockResolvedValue('1');
+    (getBiometricCapability as jest.Mock).mockResolvedValue({
+      available: true,
+      enrolled: true,
+      label: 'fingerprint',
+    });
+    (authenticateOwner as jest.Mock).mockResolvedValue('cancelled');
+    await mount();
+    const onCancel = jest.fn();
+    const onApproved = jest.fn();
+    await act(async () => {
+      await guard.runWithPinGuard({
+        actionId: 'backup_restore',
+        onApproved,
+        onCancel,
+      });
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onApproved).not.toHaveBeenCalled();
+  });
+
+  it('calls onCancel when PIN status cannot be read', async () => {
+    mockGetSetting.mockResolvedValue('0');
+    mockConfigured.mockRejectedValue(new Error('db'));
+    await mount();
+    const onCancel = jest.fn();
+    await act(async () => {
+      await guard.runWithPinGuard({
+        actionId: 'backup_restore',
+        onApproved: jest.fn(),
+        onCancel,
+      });
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it('skips PIN setup when the action is off and no PIN exists', async () => {

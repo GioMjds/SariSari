@@ -32,6 +32,7 @@ export const PIN_ACTIONS = [
   action('drive_unlink', 'locked'),
   action('pin_change', 'locked'),
   action('pin_policy_change', 'locked'),
+  action('biometric_enable', 'locked'),
 ] as const satisfies readonly PinAction[];
 
 export type PinActionId = (typeof PIN_ACTIONS)[number]['id'];
