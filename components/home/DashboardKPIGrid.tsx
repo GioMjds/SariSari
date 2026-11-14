@@ -107,7 +107,7 @@ export function DashboardKPIGrid({
     {
       title: 'Profit today',
       value: profitMargin === null ? '-' : formatCurrency(profitMargin),
-      subtitle: 'Before expenses',
+      subtitle: 'Includes utang',
       icon: 'chart-line',
       target: 'reports',
     },

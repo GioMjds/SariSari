@@ -457,27 +457,35 @@ export const getSaleItems = async (
 export const getTodayStats = async (): Promise<SaleStats> => {
   const todayString = getTodayDateString();
 
+  // total is cash only: utang is not paid yet. Cancelled checkouts are excluded.
   const stats = await db.getFirstAsync<{
     total: number;
+    credit_total: number;
     items_sold: number;
     credit_sales: number;
+    cash_count: number;
     transaction_count: number;
   }>(
     `SELECT
-      COALESCE(SUM(total), 0) as total,
+      COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN total ELSE 0 END), 0) as total,
+      COALESCE(SUM(CASE WHEN payment_type = 'credit' THEN total ELSE 0 END), 0) as credit_total,
       COALESCE(SUM((SELECT SUM(quantity) FROM sale_items WHERE sale_id = sales.id)), 0) as items_sold,
       COALESCE(SUM(CASE WHEN payment_type = 'credit' THEN 1 ELSE 0 END), 0) as credit_sales,
+      COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN 1 ELSE 0 END), 0) as cash_count,
       COUNT(*) as transaction_count
       FROM sales
-      WHERE date(timestamp) = ?`,
+      WHERE date(timestamp) = ?
+        AND cancelled_at IS NULL`,
     [todayString],
   );
 
   return (
     stats || {
       total: 0,
+      credit_total: 0,
       items_sold: 0,
       credit_sales: 0,
+      cash_count: 0,
       transaction_count: 0,
     }
   );

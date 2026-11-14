@@ -50,9 +50,22 @@ export const FinancialResultSection: React.FC<Props> = ({
         {/* Total Sales */}
         <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
           <StyledText variant="medium" className="text-xs text-ink-600">
-            Total Sales
+            Cash Sales
           </StyledText>
           <MoneyText value={kpis.totalSales} size="sm" variant="default" className="text-ink-900" />
+        </View>
+
+        {/* Utang counted in profit although not yet paid */}
+        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
+          <View>
+            <StyledText variant="medium" className="text-xs text-ink-600">
+              Utang Sales
+            </StyledText>
+            <StyledText variant="regular" className="text-[10px] text-ink-400">
+              Not paid yet, but counted in profit
+            </StyledText>
+          </View>
+          <MoneyText value={kpis.utangSales} size="sm" variant="default" className="text-ink-900" />
         </View>
 
         {/* Cost of Goods Sold */}

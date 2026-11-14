@@ -175,7 +175,7 @@ export function useHomeDashboardData() {
   return {
     stats: {
       todaySalesTotal: stats?.total ?? 0,
-      transactionCount: stats?.transaction_count ?? 0,
+      transactionCount: stats?.cash_count ?? 0,
       profitMargin,
       lowStockCount: lowStockProducts.length,
       overdueCount: creditKpis?.overdueCount ?? 0,

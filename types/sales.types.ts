@@ -31,9 +31,14 @@ export interface SaleWithDetails extends Sale {
 }
 
 export interface SaleStats {
+  /** Cash sales only. Utang is tracked in credit_total. */
   total: number;
+  credit_total: number;
   items_sold: number;
   credit_sales: number;
+  /** Cash checkouts, matching the cash-only total. */
+  cash_count: number;
+  /** All non-cancelled checkouts, cash and utang. */
   transaction_count: number;
 }
 

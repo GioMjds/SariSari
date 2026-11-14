@@ -9,7 +9,10 @@ export interface DateRange {
 export type DateRangeType = 'today' | 'yesterday' | 'last7days' | 'thisMonth' | 'custom';
 
 export interface ReportKPIs {
+	/** Cash checkouts only. Utang is not a sale until it is paid. */
 	totalSales: number;
+	/** Utang checkouts in range. Counted in profit, not in totalSales. */
+	utangSales: number;
 	totalProfit: number | null;
 	grossProfit: number | null;
 	operatingProfit: number | null;

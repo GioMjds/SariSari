@@ -313,13 +313,13 @@ export default function ReportsScreen() {
               <BentoGrid>
                 <BentoHero
                   animationKey={`${dateRangeType}-${kpis.totalSales}`}
-                  kicker="Total sales"
+                  kicker="Cash sales"
                   headline={formatCompactCurrency(kpis.totalSales)}
                   subline={`${salesBreakdown.totalTransactions} ${
                     salesBreakdown.totalTransactions === 1
                       ? 'transaction'
                       : 'transactions'
-                  } · cash & credit combined`}
+                  } · utang not counted until paid`}
                   icon={
                     <FontAwesome
                       name="shopping-cart"
@@ -341,7 +341,7 @@ export default function ReportsScreen() {
                     subline={
                       kpis.totalProfit === null
                         ? 'Add cost prices to compute tubo'
-                        : profitSubline(kpis.marginPercent)
+                        : `${profitSubline(kpis.marginPercent)} · includes utang`
                     }
                     icon={
                       <FontAwesome

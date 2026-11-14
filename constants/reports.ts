@@ -2,6 +2,7 @@ import { ReportKPIs } from "@/types";
 
 export const DEFAULT_KPIS = {
   totalSales: 0,
+  utangSales: 0,
   totalProfit: null,
   grossProfit: null,
   operatingProfit: null,

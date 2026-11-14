@@ -50,10 +50,13 @@ export const getReportKPIs = async (
     creditsCollectedResult,
     financialTotalsResult,
   ] = await Promise.all([
-    db.getFirstAsync<{ total: number }>(
-      `SELECT COALESCE(SUM(total), 0) as total
+    db.getFirstAsync<{ total: number; cash_total: number }>(
+      `SELECT
+         COALESCE(SUM(total), 0) as total,
+         COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN total ELSE 0 END), 0) as cash_total
        FROM sales
-       WHERE timestamp BETWEEN ? AND ?`,
+       WHERE timestamp BETWEEN ? AND ?
+         AND cancelled_at IS NULL`,
       [startDate, endDate],
     ),
     db.getFirstAsync<{
@@ -69,7 +72,8 @@ export const getReportKPIs = async (
          COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity)), 0) as total_units
        FROM sale_items si
        JOIN sales s ON si.sale_id = s.id
-       WHERE s.timestamp BETWEEN ? AND ?`,
+       WHERE s.timestamp BETWEEN ? AND ?
+         AND s.cancelled_at IS NULL`,
       [startDate, endDate],
     ),
     db.getFirstAsync<{ total: number }>(
@@ -101,7 +105,9 @@ export const getReportKPIs = async (
 
   const paidExpenses = financialTotalsResult?.paid_expenses ?? 0;
   const ownerDrawings = financialTotalsResult?.owner_drawings ?? 0;
+  // Profit counts utang (goods left the shelf); "sales" counts cash only.
   const revenue = salesResult?.total ?? 0;
+  const cashSales = salesResult?.cash_total ?? 0;
   const cogs = salesMetricsResult?.cogs ?? 0;
 
   let grossProfit: number | null = null;
@@ -121,7 +127,8 @@ export const getReportKPIs = async (
       : (operatingProfit / revenue) * 100;
 
   return {
-    totalSales: revenue,
+    totalSales: cashSales,
+    utangSales: revenue - cashSales,
     totalProfit: operatingProfit,
     grossProfit,
     operatingProfit,
@@ -153,9 +160,10 @@ export const getSalesOverTime = async (
     profit: number;
   }>(
     `WITH filtered_sales AS (
-       SELECT id, total, timestamp
+       SELECT id, total, payment_type, timestamp
        FROM sales
        WHERE timestamp BETWEEN ? AND ?
+         AND cancelled_at IS NULL
      ),
      sale_profits AS (
        SELECT
@@ -169,7 +177,7 @@ export const getSalesOverTime = async (
      )
      SELECT
        date(fs.timestamp) as date,
-       COALESCE(SUM(fs.total), 0) as amount,
+       COALESCE(SUM(CASE WHEN fs.payment_type = 'cash' THEN fs.total ELSE 0 END), 0) as amount,
        COALESCE(SUM(sp.profit), 0) as profit
      FROM filtered_sales fs
      LEFT JOIN sale_profits sp ON fs.id = sp.sale_id
@@ -192,7 +200,7 @@ export const getTopSellingProducts = async (
   // It returns units sold, revenue, profit, as well as stock details (quantity, price, cost).
   const results = await db.getAllAsync<TopSellingProduct>(
     `WITH sales_in_range AS (
-       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ? AND cancelled_at IS NULL
      ),
      product_sales AS (
        SELECT
@@ -243,7 +251,8 @@ export const getSalesBreakdown = async (
        COUNT(*) as totalTransactions,
        COALESCE(SUM(total), 0) as totalAmount
      FROM sales
-     WHERE timestamp BETWEEN ? AND ?`,
+     WHERE timestamp BETWEEN ? AND ?
+       AND cancelled_at IS NULL`,
     [startDate, endDate],
   );
 
@@ -274,7 +283,8 @@ export const getInventoryMovement = async (
         `SELECT COALESCE(SUM(COALESCE(si.sold_unit_qty, si.quantity)), 0) as total
          FROM sale_items si
          JOIN sales s ON si.sale_id = s.id
-         WHERE s.timestamp BETWEEN ? AND ?`,
+         WHERE s.timestamp BETWEEN ? AND ?
+           AND s.cancelled_at IS NULL`,
         [startDate, endDate],
       ),
       // Factual low/out counts, these are unconditional and don't need cost data.
@@ -367,7 +377,7 @@ export const getSlowMovingProducts = async (
 
   const results = await db.getAllAsync<StockItem>(
     `WITH sales_in_range AS (
-       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ? AND cancelled_at IS NULL
      ),
      product_sales AS (
        SELECT product_id, SUM(COALESCE(sold_unit_qty, quantity)) as quantity_sold
@@ -502,7 +512,7 @@ export const getProductProfitability = async (
   // would mislead the owner.
   const results = await db.getAllAsync<ProductProfitability>(
     `WITH sales_in_range AS (
-       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ?
+       SELECT id FROM sales WHERE timestamp BETWEEN ? AND ? AND cancelled_at IS NULL
      ),
      product_sales AS (
        SELECT
@@ -562,6 +572,7 @@ export const getReportInsights = async (
          JOIN sale_items si ON p.id = si.product_id
          JOIN sales s ON si.sale_id = s.id
          WHERE s.timestamp BETWEEN ? AND ?
+           AND s.cancelled_at IS NULL
          GROUP BY p.id
          ORDER BY quantity DESC
          LIMIT 1`,
@@ -592,6 +603,7 @@ export const getReportInsights = async (
         `SELECT date(timestamp) as date, SUM(total) as amount
          FROM sales
          WHERE timestamp BETWEEN ? AND ?
+           AND cancelled_at IS NULL
          GROUP BY date(timestamp)
          ORDER BY amount ASC
          LIMIT 1`,
