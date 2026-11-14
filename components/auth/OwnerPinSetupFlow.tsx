@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
@@ -19,7 +19,6 @@ const COPIED_RESET_MS = 2000;
 type Step = 'create' | 'confirm' | 'code';
 
 interface Props {
-  /** Called once the owner confirms they saved the recovery code. */
   onDone: () => void;
   onCancel: () => void;
 }
@@ -38,14 +37,12 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
   const [copied, setCopied] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
 
-  // Create -> confirm, after a beat so the sixth box is seen filling.
   useEffect(() => {
     if (step !== 'create' || pin.length !== OWNER_PIN_LENGTH) return;
     const id = setTimeout(() => setStep('confirm'), ADVANCE_DELAY_MS);
     return () => clearTimeout(id);
   }, [step, pin]);
 
-  // Confirm: mismatch shakes and clears, match saves the PIN.
   useEffect(() => {
     if (step !== 'confirm' || confirmPin.length !== OWNER_PIN_LENGTH) return;
 
@@ -66,7 +63,9 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
     setupOwnerPin(pin)
       .then((res) => {
         if (cancelled) return;
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
         setIsPinConfigured(true);
         setRecoveryCode(res.recoveryCode);
         setStep('code');
@@ -92,7 +91,10 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
 
   const activeValue = step === 'create' ? pin : confirmPin;
   const setActive = step === 'create' ? setPin : setConfirmPin;
-  const padLocked = isSubmitting || status === 'error' || activeValue.length >= OWNER_PIN_LENGTH;
+  const padLocked =
+    isSubmitting ||
+    status === 'error' ||
+    activeValue.length >= OWNER_PIN_LENGTH;
 
   const handleDigit = (digit: string) => {
     if (padLocked) return;
@@ -143,15 +145,21 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
           />
         }
       >
-        <View style={styles.codeCard} testID="pin-setup-code-card">
-          <StyledText variant="semibold" style={styles.codeCaption}>
+        <View
+          className="w-full bg-paper-50 rounded-2xl border border-paper-300 py-5 px-4 items-center"
+          testID="pin-setup-code-card"
+        >
+          <StyledText
+            variant="semibold"
+            className="text-[13px] text-ink-500 mb-2"
+          >
             {t('pin.recovery_code_label')}
           </StyledText>
           <StyledText
             variant="extrabold"
             selectable
             accessibilityLabel={recoveryCode.split('').join(' ')}
-            style={styles.codeText}
+            className="text-[34px] tracking-[4px] text-ink-900"
           >
             {recoveryCode}
           </StyledText>
@@ -159,14 +167,17 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
             testID="pin-setup-copy"
             onPress={() => void handleCopy()}
             accessibilityRole="button"
-            style={({ pressed }) => [styles.copyBtn, pressed && styles.pressed]}
+            className="flex-row items-center gap-x-2 min-h-[44px] px-4 mt-3 active:opacity-70"
           >
             <FontAwesome
               name={copied ? 'check' : 'clone'}
               size={14}
               color="#E85A1F"
             />
-            <StyledText variant="semibold" style={styles.copyText}>
+            <StyledText
+              variant="semibold"
+              className="text-persimmon-500 text-[15px]"
+            >
               {copied ? t('pin.code_copied') : t('pin.copy_code')}
             </StyledText>
           </Pressable>
@@ -177,14 +188,19 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
           onPress={() => setAcknowledged((v) => !v)}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: acknowledged }}
-          style={styles.ackRow}
+          className="flex-row items-center gap-x-3 min-h-[48px] mt-5 w-full active:opacity-70"
         >
-          <View style={[styles.check, acknowledged && styles.checkOn]}>
+          <View
+            className={`w-[26px] h-[26px] rounded-lg border-2 items-center justify-center ${acknowledged ? 'bg-sage-500 border-sage-500' : 'bg-paper-50 border-paper-400'}`}
+          >
             {acknowledged ? (
               <FontAwesome name="check" size={13} color="#FFFFFF" />
             ) : null}
           </View>
-          <StyledText variant="medium" style={styles.ackText}>
+          <StyledText
+            variant="medium"
+            className="flex-1 text-[15px] text-ink-700"
+          >
             {t('pin.recovery_saved_ack')}
           </StyledText>
         </Pressable>
@@ -197,85 +213,46 @@ export const OwnerPinSetupFlow: FC<Props> = ({ onDone, onCancel }) => {
   return (
     <AuthScreenShell
       sari="settings"
-      title={isConfirm ? t('pin.setup_confirm_title') : t('pin.setup_create_title')}
-      subtitle={isConfirm ? t('pin.setup_confirm_sub') : t('pin.setup_create_sub')}
+      title={
+        isConfirm ? t('pin.setup_confirm_title') : t('pin.setup_create_title')
+      }
+      subtitle={
+        isConfirm ? t('pin.setup_confirm_sub') : t('pin.setup_create_sub')
+      }
       step={isConfirm ? 2 : 1}
       totalSteps={3}
       stepLabel={t('pin.step_label', { current: isConfirm ? 2 : 1, total: 3 })}
       onBack={handleBack}
       backLabel={t('pin.back_a11y')}
+      footer={
+        <PinPad
+          onDigit={handleDigit}
+          onBackspace={handleBackspace}
+          disabled={isSubmitting}
+        />
+      }
     >
       <PinBoxes
         testID="pin-setup-boxes"
-        accessibilityLabel={isConfirm ? t('pin.confirm_label') : t('pin.create_label')}
+        accessibilityLabel={
+          isConfirm ? t('pin.confirm_label') : t('pin.create_label')
+        }
         value={activeValue}
         length={OWNER_PIN_LENGTH}
         status={status}
         shakeKey={shakeKey}
       />
-      <View style={styles.errorSlot}>
+      <View className="min-h-[40px] justify-center mt-3">
         {errorMsg ? (
           <StyledText
             variant="semibold"
             accessibilityLiveRegion="polite"
-            style={styles.errorText}
+            className="text-semantic-danger text-sm text-center"
           >
             {errorMsg}
           </StyledText>
         ) : null}
       </View>
-      <PinPad
-        onDigit={handleDigit}
-        onBackspace={handleBackspace}
-        disabled={isSubmitting}
-      />
     </AuthScreenShell>
   );
 };
-
-const styles = StyleSheet.create({
-  errorSlot: { minHeight: 40, justifyContent: 'center', marginBottom: 12 },
-  errorText: { color: '#C22D2D', fontSize: 14, textAlign: 'center' },
-  codeCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5DFD7',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  codeCaption: { fontSize: 13, color: '#6B7280', marginBottom: 8 },
-  codeText: { fontSize: 34, letterSpacing: 4, color: '#28231D' },
-  copyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 44,
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  copyText: { color: '#E85A1F', fontSize: 15 },
-  ackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 48,
-    marginTop: 20,
-    width: '100%',
-  },
-  check: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#C3BAB1',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkOn: { backgroundColor: '#16A34A', borderColor: '#16A34A' },
-  ackText: { flex: 1, fontSize: 15, color: '#3E3831' },
-  pressed: { opacity: 0.7 },
-});

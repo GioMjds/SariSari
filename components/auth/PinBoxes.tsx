@@ -1,5 +1,5 @@
 import { FC, useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
 import { StyledText } from '@/components/elements/StyledText';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -8,12 +8,9 @@ export type PinBoxStatus = 'idle' | 'error' | 'success';
 interface Props {
   value: string;
   length?: number;
-  /** Show a dot instead of the digit. */
   secure?: boolean;
   status?: PinBoxStatus;
-  /** Bump this number to play the error shake. */
   shakeKey?: number;
-  /** Highlight the next empty box. Turn off when the pad is disabled. */
   active?: boolean;
   testID?: string;
   accessibilityLabel?: string;
@@ -21,10 +18,6 @@ interface Props {
 
 const SHAKE_STEP_MS = 55;
 
-/**
- * Display-only row of PIN boxes. Input comes from PinPad (or any parent),
- * so no system keyboard opens and no layout jumps.
- */
 export const PinBoxes: FC<Props> = ({
   value,
   length = 6,
@@ -63,8 +56,6 @@ export const PinBoxes: FC<Props> = ({
         useNativeDriver: true,
       }),
     ]).start();
-    // Only a new shakeKey should replay; Reduce Motion toggling must not.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shakeKey, shift]);
 
   return (
@@ -74,35 +65,50 @@ export const PinBoxes: FC<Props> = ({
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ text: `${value.length} of ${length}` }}
-      style={[styles.row, { transform: [{ translateX: shift }] }]}
+      className="flex-row justify-center"
+      style={{ transform: [{ translateX: shift }] }}
     >
       {Array.from({ length }, (_, idx) => {
         const char = value[idx];
         const filled = char !== undefined;
         const isCurrent = active && idx === value.length && status === 'idle';
+
+        let boxClass =
+          'w-16 h-20 rounded-2xl border-2 items-center justify-center mx-1.5 ';
+        if (status === 'error') {
+          boxClass += 'border-semantic-danger bg-semantic-danger-50';
+        } else if (status === 'success') {
+          boxClass += 'border-sage-500 bg-sage-50';
+        } else if (isCurrent) {
+          boxClass += 'border-persimmon-500 bg-paper-50';
+        } else if (filled) {
+          boxClass += 'border-persimmon-300 bg-persimmon-50';
+        } else {
+          boxClass += 'border-paper-300 bg-paper-100';
+        }
+
         return (
           <View
             key={idx}
             testID={testID ? `${testID}-box-${idx}` : undefined}
-            style={[
-              styles.box,
-              filled && styles.boxFilled,
-              isCurrent && styles.boxCurrent,
-              status === 'error' && styles.boxError,
-              status === 'success' && styles.boxSuccess,
-            ]}
+            className={boxClass}
           >
             {filled ? (
               secure ? (
                 <View
-                  style={[
-                    styles.dot,
-                    status === 'error' && styles.dotError,
-                    status === 'success' && styles.dotSuccess,
-                  ]}
+                  className={`w-3 h-3 rounded-full ${
+                    status === 'error'
+                      ? 'bg-semantic-danger'
+                      : status === 'success'
+                        ? 'bg-sage-500'
+                        : 'bg-persimmon-500'
+                  }`}
                 />
               ) : (
-                <StyledText variant="extrabold" style={styles.digit}>
+                <StyledText
+                  variant="extrabold"
+                  className="text-2xl text-ink-900"
+                >
                   {char}
                 </StyledText>
               )
@@ -113,30 +119,3 @@ export const PinBoxes: FC<Props> = ({
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  box: {
-    width: 46,
-    height: 56,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#D6CCBF',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boxFilled: { borderColor: '#E85A1F', backgroundColor: '#FFF4EC' },
-  boxCurrent: { borderColor: '#E85A1F', borderWidth: 2 },
-  boxError: { borderColor: '#C22D2D', backgroundColor: '#FDEEEE' },
-  boxSuccess: { borderColor: '#16A34A', backgroundColor: '#ECFAF1' },
-  dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#E85A1F',
-  },
-  dotError: { backgroundColor: '#C22D2D' },
-  dotSuccess: { backgroundColor: '#16A34A' },
-  digit: { fontSize: 24, color: '#28231D' },
-});

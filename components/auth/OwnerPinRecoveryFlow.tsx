@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { verifyAndResetOwnerPinWithRecoveryCode } from '@/database/auth';
@@ -68,7 +68,6 @@ export const OwnerPinRecoveryFlow: FC<Props> = ({ onDone, onCancel }) => {
           setStep('done');
           return;
         }
-        // Wrong code surfaces on the code step, where it can be fixed.
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setPin('');
         setConfirmPin('');
@@ -178,12 +177,12 @@ export const OwnerPinRecoveryFlow: FC<Props> = ({ onDone, onCancel }) => {
           autoFocus
           accessibilityLabel={t('pin.enter_recovery_code')}
         />
-        <View style={styles.errorSlot}>
+        <View className="min-h-[40px] justify-center mt-3">
           {errorMsg ? (
             <StyledText
               variant="semibold"
               accessibilityLiveRegion="polite"
-              style={styles.errorText}
+              className="text-semantic-danger text-sm text-center"
             >
               {errorMsg}
             </StyledText>
@@ -197,43 +196,44 @@ export const OwnerPinRecoveryFlow: FC<Props> = ({ onDone, onCancel }) => {
   return (
     <AuthScreenShell
       sari="settings"
-      title={isConfirm ? t('pin.setup_confirm_title') : t('pin.reset_new_title')}
+      title={
+        isConfirm ? t('pin.setup_confirm_title') : t('pin.reset_new_title')
+      }
       subtitle={isConfirm ? t('pin.setup_confirm_sub') : t('pin.reset_new_sub')}
       step={isConfirm ? 3 : 2}
       totalSteps={3}
       stepLabel={t('pin.step_label', { current: isConfirm ? 3 : 2, total: 3 })}
       onBack={handleBack}
       backLabel={t('pin.back_a11y')}
+      footer={
+        <PinPad
+          onDigit={handleDigit}
+          onBackspace={handleBackspace}
+          disabled={isSubmitting}
+        />
+      }
     >
       <PinBoxes
         testID="pin-recovery-boxes"
-        accessibilityLabel={isConfirm ? t('pin.confirm_label') : t('pin.create_label')}
+        accessibilityLabel={
+          isConfirm ? t('pin.confirm_label') : t('pin.create_label')
+        }
         value={activeValue}
         length={OWNER_PIN_LENGTH}
         status={status}
         shakeKey={shakeKey}
       />
-      <View style={styles.errorSlot}>
+      <View className="min-h-[40px] justify-center mt-3">
         {errorMsg ? (
           <StyledText
             variant="semibold"
             accessibilityLiveRegion="polite"
-            style={styles.errorText}
+            className="text-semantic-danger text-sm text-center"
           >
             {errorMsg}
           </StyledText>
         ) : null}
       </View>
-      <PinPad
-        onDigit={handleDigit}
-        onBackspace={handleBackspace}
-        disabled={isSubmitting}
-      />
     </AuthScreenShell>
   );
 };
-
-const styles = StyleSheet.create({
-  errorSlot: { minHeight: 40, justifyContent: 'center', marginTop: 12 },
-  errorText: { color: '#C22D2D', fontSize: 14, textAlign: 'center' },
-});

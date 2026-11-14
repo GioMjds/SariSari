@@ -1,5 +1,5 @@
 import { FC, useRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, TextInput, View } from 'react-native';
 import { StyledText } from '@/components/elements/StyledText';
 
 interface Props {
@@ -13,17 +13,12 @@ interface Props {
   testID?: string;
 }
 
-/** Keep letters and digits only, upper-case, cap at length. */
 export const sanitizeCode = (raw: string, length: number): string =>
   raw
     .replace(/[^A-Za-z0-9]/g, '')
     .toUpperCase()
     .slice(0, length);
 
-/**
- * Recovery-code boxes (e.g. ABCD - EFGH). One hidden TextInput owns the
- * keyboard, so paste and autofill work. The boxes only render its value.
- */
 export const CodeBoxes: FC<Props> = ({
   value,
   onChange,
@@ -40,26 +35,35 @@ export const CodeBoxes: FC<Props> = ({
     <Pressable
       onPress={() => inputRef.current?.focus()}
       accessible={false}
-      style={styles.wrap}
+      className="items-center w-full"
     >
-      <View style={styles.row} pointerEvents="none">
+      <View
+        className="flex-row justify-center items-center"
+        pointerEvents="none"
+      >
         {Array.from({ length }, (_, idx) => {
           const char = value[idx];
           const isCurrent = idx === value.length;
           return (
-            <View key={idx} style={styles.cell}>
+            <View key={idx} className="flex-row items-center">
               {idx > 0 && idx % groupSize === 0 ? (
-                <View style={styles.divider} />
+                <View className="w-2.5 h-0.5 rounded-full bg-paper-400 mx-1.5" />
               ) : null}
               <View
-                style={[
-                  styles.box,
-                  char !== undefined && styles.boxFilled,
-                  isCurrent && !hasError && styles.boxCurrent,
-                  hasError && styles.boxError,
-                ]}
+                className={`w-[32px] h-[48px] mx-0.5 rounded-xl border-[1.5px] items-center justify-center ${
+                  hasError
+                    ? 'border-semantic-danger bg-semantic-danger-50'
+                    : isCurrent
+                      ? 'border-persimmon-500 border-2 bg-paper-50'
+                      : char !== undefined
+                        ? 'border-persimmon-500 bg-persimmon-50'
+                        : 'border-paper-300 bg-paper-50'
+                }`}
               >
-                <StyledText variant="extrabold" style={styles.char}>
+                <StyledText
+                  variant="extrabold"
+                  className="text-xl text-ink-900"
+                >
                   {char ?? ''}
                 </StyledText>
               </View>
@@ -78,42 +82,9 @@ export const CodeBoxes: FC<Props> = ({
         autoComplete="off"
         spellCheck={false}
         accessibilityLabel={accessibilityLabel}
-        style={styles.hiddenInput}
+        className="absolute inset-0 opacity-0"
         caretHidden
       />
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  row: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  cell: { flexDirection: 'row', alignItems: 'center' },
-  divider: {
-    width: 10,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: '#C3BAB1',
-    marginHorizontal: 6,
-  },
-  box: {
-    width: 32,
-    height: 48,
-    marginHorizontal: 2,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#D6CCBF',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boxFilled: { borderColor: '#E85A1F', backgroundColor: '#FFF4EC' },
-  boxCurrent: { borderColor: '#E85A1F', borderWidth: 2 },
-  boxError: { borderColor: '#C22D2D', backgroundColor: '#FDEEEE' },
-  char: { fontSize: 20, color: '#28231D' },
-  hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.02,
-    color: 'transparent',
-  },
-});

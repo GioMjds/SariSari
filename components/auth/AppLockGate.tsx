@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, FC, ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,13 +23,7 @@ interface Props {
   children: ReactNode;
 }
 
-/**
- * `pending` - the launch-lock flag has not been read yet.
- * `armed`   - the lock is on; the tree stays covered until markUnlocked() runs.
- * `inert`   - the lock is off for this session and never engages again.
- */
 type Resolution = 'pending' | 'armed' | 'inert';
-
 const PIN_LENGTH = 6;
 const WRONG_PIN_CLEAR_MS = 600;
 
@@ -53,8 +47,6 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
   const [now, setNow] = useState(() => Date.now());
   const autoPromptedRef = useRef(false);
 
-  // Resolve the lock once per app session. A launch lock with no owner PIN
-  // would have no fallback, so "no PIN" resolves the same way as "flag off".
   useEffect(() => {
     if (!isReady || resolution !== 'pending') return;
     let isMounted = true;
@@ -73,9 +65,6 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
       })
       .catch(() => {
         if (!isMounted) return;
-        // Fail open. A lock the owner cannot get past is worse than no lock,
-        // and a database broken enough to throw here has already routed to
-        // DatabaseErrorScreen before isReady ever turned true.
         setResolution('inert');
         markUnlocked();
       });
@@ -94,28 +83,19 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
         : 'locked';
 
   const attempt = useCallback(async () => {
-    // Read the biometric toggle on every attempt, not once at resolution:
-    // "lock on, biometrics off" must leave only the PIN pad.
     const [flag, capability] = await Promise.all([
       getAppSetting('biometric_unlock_enabled').catch(() => null),
       getBiometricCapability(),
     ]);
-
     if (flag !== '1' || !capability.available || !capability.enrolled) {
       setBiometric(null);
       return;
     }
     setBiometric(capability.label);
-
     const result = await authenticateOwner(t('biometrics.reason_unlock'));
-    if (result === 'success') {
-      markUnlocked();
-    }
-    // Every other result leaves the inline PIN pad up. The sensor key on the
-    // pad is the retry.
+    if (result === 'success') markUnlocked();
   }, [markUnlocked, t]);
 
-  // Prompt once per lock, then hand control to the pad.
   useEffect(() => {
     if (phase !== 'locked') {
       autoPromptedRef.current = false;
@@ -129,7 +109,6 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
     void attempt();
   }, [phase, attempt]);
 
-  // Lockout countdown. Ticks only while a lockout is active.
   const lockedOut = lockoutUntil !== null && lockoutUntil > now;
   useEffect(() => {
     if (lockoutUntil === null) return;
@@ -140,6 +119,7 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
     }, 1000);
     return () => clearInterval(id);
   }, [lockoutUntil, clearExpiredLockout]);
+
   const secondsLeft = lockedOut
     ? Math.max(0, Math.ceil(((lockoutUntil ?? 0) - now) / 1000))
     : 0;
@@ -195,7 +175,9 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
   };
 
   if (phase === 'resolving') {
-    return <View testID="app-lock-flash" style={styles.flash} />;
+    return (
+      <View testID="app-lock-flash" className="absolute inset-0 bg-paper-200" />
+    );
   }
 
   const showError = lockedOut || pinStatus === 'error' || Boolean(errorMsg);
@@ -204,117 +186,130 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
     <>
       {children}
       {phase === 'locked' ? (
-        <View testID="app-lock-overlay" style={styles.overlay}>
-          <ScrollView
-            bounces={false}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={[
-              styles.content,
-              {
-                paddingTop: insets.top + 24,
-                paddingBottom: insets.bottom + 24,
-              },
-            ]}
+        <View
+          testID="app-lock-overlay"
+          className="absolute inset-0 bg-paper-200 paper-texture"
+        >
+          <View
+            className="flex-1"
+            style={{
+              paddingTop: insets.top + 24,
+              paddingBottom: insets.bottom + 16,
+            }}
           >
-            <SariMascot
-              state={showError ? 'error' : 'default'}
-              size={112}
-              accessibilityLabel={t('biometrics.lock_sari_label')}
-            />
-            <StyledText
-              variant="extrabold"
-              accessibilityRole="header"
-              style={styles.title}
+            <ScrollView
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                flexGrow: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              className="flex-1 px-6"
             >
-              {t('biometrics.lock_title')}
-            </StyledText>
-            <StyledText variant="regular" style={styles.subtitle}>
-              {t('biometrics.lock_subtitle')}
-            </StyledText>
-
-            <View style={styles.boxes}>
-              <PinBoxes
-                testID="app-lock-pin-boxes"
-                accessibilityLabel={t('pin.title')}
-                value={pin}
-                length={PIN_LENGTH}
-                status={lockedOut ? 'error' : pinStatus}
-                shakeKey={shakeKey}
-                active={!lockedOut}
+              <SariMascot
+                state={showError ? 'error' : 'default'}
+                size={112}
+                accessibilityLabel={t('biometrics.lock_sari_label')}
               />
-            </View>
-            <View style={styles.messageSlot}>
-              {lockedOut || errorMsg ? (
+              <StyledText
+                variant="extrabold"
+                accessibilityRole="header"
+                className="text-[26px] text-ink-900 mt-2 text-center"
+              >
+                {t('biometrics.lock_title')}
+              </StyledText>
+              <StyledText
+                variant="regular"
+                className="text-[15px] text-ink-500 mt-1.5 text-center"
+              >
+                {t('biometrics.lock_subtitle')}
+              </StyledText>
+
+              <View className="mt-7">
+                <PinBoxes
+                  testID="app-lock-pin-boxes"
+                  accessibilityLabel={t('pin.title')}
+                  value={pin}
+                  length={PIN_LENGTH}
+                  status={lockedOut ? 'error' : pinStatus}
+                  shakeKey={shakeKey}
+                  active={!lockedOut}
+                />
+              </View>
+
+              <View className="min-h-[44px] justify-center mt-1 w-full items-center">
+                {lockedOut || errorMsg ? (
+                  <StyledText
+                    variant="semibold"
+                    accessibilityLiveRegion="polite"
+                    className="text-semantic-danger text-sm text-center"
+                  >
+                    {lockedOut
+                      ? t('pin.locked_out', { seconds: secondsLeft })
+                      : errorMsg}
+                  </StyledText>
+                ) : pin.length >= 4 &&
+                  pin.length < PIN_LENGTH &&
+                  !padBlocked ? (
+                  <Pressable
+                    testID="app-lock-submit"
+                    accessibilityRole="button"
+                    onPress={() => void submitPin(pin)}
+                    className="min-h-[44px] px-7 rounded-full bg-persimmon-500 items-center justify-center active:opacity-70 active:scale-95"
+                  >
+                    <StyledText
+                      variant="semibold"
+                      className="text-paper-50 text-[15px]"
+                    >
+                      {t('pin.btn_unlock')}
+                    </StyledText>
+                  </Pressable>
+                ) : null}
+              </View>
+            </ScrollView>
+
+            <View className="px-6">
+              <PinPad
+                disabled={lockedOut || isVerifying}
+                onDigit={handleDigit}
+                onBackspace={handleBackspace}
+                leftSlot={
+                  biometric ? (
+                    <Pressable
+                      testID="app-lock-retry"
+                      accessibilityRole="button"
+                      accessibilityLabel={t('biometrics.lock_retry')}
+                      disabled={lockedOut || isVerifying}
+                      onPress={() => void attempt()}
+                      className="w-full h-full rounded-2xl bg-persimmon-50 border border-persimmon-200 items-center justify-center active:scale-95 active:bg-persimmon-100"
+                    >
+                      <FontAwesome5
+                        name={biometric === 'face' ? 'smile' : 'fingerprint'}
+                        size={26}
+                        color="#E85A1F"
+                      />
+                    </Pressable>
+                  ) : null
+                }
+              />
+
+              <Pressable
+                testID="app-lock-use-pin"
+                accessibilityRole="button"
+                onPress={() => setShowRecovery(true)}
+                className="min-h-[48px] items-center justify-center mt-2 active:opacity-70"
+              >
                 <StyledText
                   variant="semibold"
-                  accessibilityLiveRegion="polite"
-                  style={styles.errorText}
+                  className="text-persimmon-500 text-[15px]"
                 >
-                  {lockedOut
-                    ? t('pin.locked_out', { seconds: secondsLeft })
-                    : errorMsg}
+                  {t('pin.forgot_pin')}
                 </StyledText>
-              ) : pin.length >= 4 && pin.length < PIN_LENGTH && !padBlocked ? (
-                // PINs made before the 6-digit rule are 4-5 digits long and
-                // never reach the auto-submit length.
-                <Pressable
-                  testID="app-lock-submit"
-                  accessibilityRole="button"
-                  onPress={() => void submitPin(pin)}
-                  style={({ pressed }) => [
-                    styles.submitPill,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <StyledText variant="semibold" style={styles.submitText}>
-                    {t('pin.btn_unlock')}
-                  </StyledText>
-                </Pressable>
-              ) : null}
+              </Pressable>
             </View>
-
-            <PinPad
-              disabled={lockedOut || isVerifying}
-              onDigit={handleDigit}
-              onBackspace={handleBackspace}
-              leftSlot={
-                biometric ? (
-                  <Pressable
-                    testID="app-lock-retry"
-                    accessibilityRole="button"
-                    accessibilityLabel={t('biometrics.lock_retry')}
-                    disabled={lockedOut || isVerifying}
-                    onPress={() => void attempt()}
-                    style={({ pressed }) => [
-                      styles.bioKey,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <FontAwesome5
-                      name={biometric === 'face' ? 'smile' : 'fingerprint'}
-                      size={26}
-                      color="#E85A1F"
-                    />
-                  </Pressable>
-                ) : null
-              }
-            />
-
-            <Pressable
-              testID="app-lock-use-pin"
-              accessibilityRole="button"
-              onPress={() => setShowRecovery(true)}
-              style={({ pressed }) => [
-                styles.forgot,
-                pressed && styles.pressed,
-              ]}
-            >
-              <StyledText variant="semibold" style={styles.forgotText}>
-                {t('pin.forgot_pin')}
-              </StyledText>
-            </Pressable>
-          </ScrollView>
+          </View>
 
           <OwnerPinRecoveryModal
             visible={showRecovery}
@@ -329,61 +324,3 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
     </>
   );
 };
-
-const styles = StyleSheet.create({
-  flash: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F7F6F2',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F7F6F2',
-  },
-  content: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 26,
-    color: '#28231D',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#564E45',
-    marginTop: 6,
-    textAlign: 'center',
-  },
-  boxes: { marginTop: 28 },
-  messageSlot: { minHeight: 44, justifyContent: 'center' },
-  errorText: { color: '#C22D2D', fontSize: 14, textAlign: 'center' },
-  submitPill: {
-    alignSelf: 'center',
-    minHeight: 44,
-    paddingHorizontal: 28,
-    borderRadius: 22,
-    backgroundColor: '#E85A1F',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitText: { color: '#FFFFFF', fontSize: 15 },
-  bioKey: {
-    width: 76,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: '#FFF4EC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  forgot: {
-    minHeight: 48,
-    paddingHorizontal: 16,
-    marginTop: 12,
-    justifyContent: 'center',
-  },
-  forgotText: { color: '#E85A1F', fontSize: 15 },
-  pressed: { opacity: 0.7 },
-});

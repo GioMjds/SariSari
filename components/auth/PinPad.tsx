@@ -1,5 +1,5 @@
 import { FC, ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,6 @@ interface Props {
   onDigit: (digit: string) => void;
   onBackspace: () => void;
   disabled?: boolean;
-  /** Bottom-left slot. Used for the biometric button on the lock screen. */
   leftSlot?: ReactNode;
 }
 
@@ -34,9 +33,12 @@ export const PinPad: FC<Props> = ({
   };
 
   return (
-    <View style={[styles.pad, disabled && styles.padDisabled]}>
+    <View className={`items-center w-full ${disabled ? 'opacity-40' : ''}`}>
       {ROWS.map((row) => (
-        <View key={row.join('')} style={styles.row}>
+        <View
+          key={row.join('')}
+          className="flex-row w-full justify-center mb-3"
+        >
           {row.map((digit) => (
             <Pressable
               key={digit}
@@ -45,26 +47,28 @@ export const PinPad: FC<Props> = ({
               accessibilityLabel={digit}
               disabled={disabled}
               onPress={() => press(digit)}
-              style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
+              className="w-20 h-16 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95 mx-2"
             >
-              <StyledText variant="semibold" style={styles.keyText}>
+              <StyledText variant="semibold" className="text-2xl text-ink-900">
                 {digit}
               </StyledText>
             </Pressable>
           ))}
         </View>
       ))}
-      <View style={styles.row}>
-        <View style={styles.slot}>{leftSlot}</View>
+      <View className="flex-row w-full justify-center">
+        <View className="w-20 h-16 items-center justify-center mx-2">
+          {leftSlot}
+        </View>
         <Pressable
           testID="pin-key-0"
           accessibilityRole="button"
           accessibilityLabel="0"
           disabled={disabled}
           onPress={() => press('0')}
-          style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
+          className="w-20 h-16 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95 mx-2"
         >
-          <StyledText variant="semibold" style={styles.keyText}>
+          <StyledText variant="semibold" className="text-2xl text-ink-900">
             0
           </StyledText>
         </Pressable>
@@ -77,7 +81,7 @@ export const PinPad: FC<Props> = ({
             if (disabled) return;
             onBackspace();
           }}
-          style={({ pressed }) => [styles.slot, pressed && styles.keyPressed]}
+          className="w-20 h-16 rounded-2xl items-center justify-center active:bg-paper-100 active:scale-95 mx-2"
         >
           <FontAwesome name="long-arrow-left" size={22} color="#564E45" />
         </Pressable>
@@ -85,28 +89,3 @@ export const PinPad: FC<Props> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  pad: { alignItems: 'center', gap: 12 },
-  padDisabled: { opacity: 0.4 },
-  row: { flexDirection: 'row', gap: 16 },
-  key: {
-    width: 76,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5DFD7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  keyPressed: { backgroundColor: '#FFE7D8', borderColor: '#E85A1F' },
-  keyText: { fontSize: 24, color: '#28231D' },
-  slot: {
-    width: 76,
-    height: 60,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

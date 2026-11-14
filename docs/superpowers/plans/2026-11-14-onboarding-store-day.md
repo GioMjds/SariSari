@@ -24,7 +24,8 @@
 - Show me plays one scripted action every 400ms; under Reduce Motion it applies the whole beat at once.
 - The user edits and commits on `main` concurrently. Always commit with explicit pathspecs (`git commit -m "..." -- <paths>`); never `git add -A` or `git commit -a`.
 - Commit message trailer on every commit:
-  ```
+
+  ```text
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os
   ```
@@ -41,27 +42,27 @@
 
 ## File Map
 
-| Path | Action | Responsibility |
-| --- | --- | --- |
-| `constants/onboardingDay.ts` | create | Seed data, scripted orders, beat copy keys and poses |
-| `lib/onboardingDay.ts` | create | Pure day reducer, selectors, scripts, outcome params |
-| `tests/lib/onboardingDay.test.ts` | create | Reducer tests |
-| `locales/en/onboarding.json`, `locales/tl/onboarding.json` | modify | New day keys; later remove `tour*`/`demo*` |
-| `tests/onboardingLocales.test.ts` | modify | Day key coverage; later drop tour checks |
-| `components/onboarding/DayClock.tsx` | create | Header timeline |
-| `components/onboarding/replicas/PosReplica.tsx` | create | Beats 1-2 |
-| `components/onboarding/replicas/InventoryReplica.tsx` | create | Beat 3 |
-| `components/onboarding/replicas/HomeCloseReplica.tsx` | create | Beat 4 |
-| `components/onboarding/BeatScene.tsx` | create | Sari + scene line + replica slot + Show me |
-| `components/onboarding/__tests__/*.test.tsx` | create/replace | Component tests |
-| `lib/onboardingStepMachine.ts` | rewrite | 6-step machine |
-| `tests/lib/onboardingStepMachine.test.ts` | create | Step machine tests |
-| `app/onboarding/index.tsx` | rewrite | Screen shell |
-| `components/onboarding/ReadyStep.tsx` | trim | Drop First steps list |
-| `tests/onboardingScreen.test.tsx` | rewrite | Screen flow tests |
-| `components/onboarding/TourCard.tsx`, `components/onboarding/demos/`, `components/onboarding/OnboardingProgress.tsx`, `constants/onboardingTour.ts`, `lib/onboardingDemo.ts`, `tests/onboardingDemo.test.ts`, `components/onboarding/__tests__/demos.test.tsx`, `components/onboarding/__tests__/OnboardingProgress.test.tsx` | delete | Old tour |
-| `constants/index.ts` | modify | Drop `./onboardingTour` re-export |
-| `constants/onboardingTour.assets.ts` | keep | Used by `app/index.tsx`, `GettingStartedCard`, `ReadyStep`, `SariStage` |
+| Path                                                                                                                                                                                                                                                                                                                          | Action         | Responsibility                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------- |
+| `constants/onboardingDay.ts`                                                                                                                                                                                                                                                                                                  | create         | Seed data, scripted orders, beat copy keys and poses                    |
+| `lib/onboardingDay.ts`                                                                                                                                                                                                                                                                                                        | create         | Pure day reducer, selectors, scripts, outcome params                    |
+| `tests/lib/onboardingDay.test.ts`                                                                                                                                                                                                                                                                                             | create         | Reducer tests                                                           |
+| `locales/en/onboarding.json`, `locales/tl/onboarding.json`                                                                                                                                                                                                                                                                    | modify         | New day keys; later remove `tour*`/`demo*`                              |
+| `tests/onboardingLocales.test.ts`                                                                                                                                                                                                                                                                                             | modify         | Day key coverage; later drop tour checks                                |
+| `components/onboarding/DayClock.tsx`                                                                                                                                                                                                                                                                                          | create         | Header timeline                                                         |
+| `components/onboarding/replicas/PosReplica.tsx`                                                                                                                                                                                                                                                                               | create         | Beats 1-2                                                               |
+| `components/onboarding/replicas/InventoryReplica.tsx`                                                                                                                                                                                                                                                                         | create         | Beat 3                                                                  |
+| `components/onboarding/replicas/HomeCloseReplica.tsx`                                                                                                                                                                                                                                                                         | create         | Beat 4                                                                  |
+| `components/onboarding/BeatScene.tsx`                                                                                                                                                                                                                                                                                         | create         | Sari + scene line + replica slot + Show me                              |
+| `components/onboarding/__tests__/*.test.tsx`                                                                                                                                                                                                                                                                                  | create/replace | Component tests                                                         |
+| `lib/onboardingStepMachine.ts`                                                                                                                                                                                                                                                                                                | rewrite        | 6-step machine                                                          |
+| `tests/lib/onboardingStepMachine.test.ts`                                                                                                                                                                                                                                                                                     | create         | Step machine tests                                                      |
+| `app/onboarding/index.tsx`                                                                                                                                                                                                                                                                                                    | rewrite        | Screen shell                                                            |
+| `components/onboarding/ReadyStep.tsx`                                                                                                                                                                                                                                                                                         | trim           | Drop First steps list                                                   |
+| `tests/onboardingScreen.test.tsx`                                                                                                                                                                                                                                                                                             | rewrite        | Screen flow tests                                                       |
+| `components/onboarding/TourCard.tsx`, `components/onboarding/demos/`, `components/onboarding/OnboardingProgress.tsx`, `constants/onboardingTour.ts`, `lib/onboardingDemo.ts`, `tests/onboardingDemo.test.ts`, `components/onboarding/__tests__/demos.test.tsx`, `components/onboarding/__tests__/OnboardingProgress.test.tsx` | delete         | Old tour                                                                |
+| `constants/index.ts`                                                                                                                                                                                                                                                                                                          | modify         | Drop `./onboardingTour` re-export                                       |
+| `constants/onboardingTour.assets.ts`                                                                                                                                                                                                                                                                                          | keep           | Used by `app/index.tsx`, `GettingStartedCard`, `ReadyStep`, `SariStage` |
 
 Shared test mocks used by every component test in this plan (copy into each file; they match the existing `components/onboarding/__tests__/ReadyStep.test.tsx` style):
 
@@ -87,11 +88,13 @@ jest.mock('react-i18next', () => ({
 ### Task 1: Day model (seed constants + reducer)
 
 **Files:**
+
 - Create: `constants/onboardingDay.ts`
 - Create: `lib/onboardingDay.ts`
 - Test: `tests/lib/onboardingDay.test.ts`
 
 **Interfaces:**
+
 - Consumes: `Pesos`, `formatPesos` from `@/lib/money`; type `SariState` from `@/components/mascot`.
 - Produces (later tasks rely on these exact names):
   - `constants/onboardingDay.ts`: `DayProductId`, `DaySukiId`, `BeatId`, `SaleBeat`, `isSaleBeat(beat)`, `BEAT_ORDER`, `PRODUCT_ORDER`, `SEED_PRODUCTS`, `SUKI_NAME_KEY`, `SCRIPTED_ORDERS`, `CASH_TENDERED`, `TENDER_OPTIONS`, `SCRIPTED_RESTOCK`, `SCRIPTED_PAYMENT`, `LOW_STOCK_AT`, `BEAT_COPY` (`BeatCopy = { clockKey; sceneKey; nudgeKey: string | null; outcomeKey; pose: SariState; donePose: SariState }`).
@@ -290,7 +293,10 @@ describe('onboarding day reducer', () => {
   });
 
   it('matches the cart only against the exact scripted order', () => {
-    const exact = run(createDaySeed(), [...add('kopiko', 2), ...add('pandesal', 1)]);
+    const exact = run(createDaySeed(), [
+      ...add('kopiko', 2),
+      ...add('pandesal', 1),
+    ]);
     expect(cartMatches(exact.cart, 'cash')).toBe(true);
     expect(cartHasExtras(exact.cart, 'cash')).toBe(false);
 
@@ -336,7 +342,11 @@ describe('onboarding day reducer', () => {
   });
 
   it('restocks a low item once and ignores repeats', () => {
-    const s = dayReducer(utangDone(), { type: 'restock', id: 'kopiko', qty: 24 });
+    const s = dayReducer(utangDone(), {
+      type: 'restock',
+      id: 'kopiko',
+      qty: 24,
+    });
     expect(s.products.kopiko.stock).toBe(27);
     expect(s.beatDone.restock).toBe(true);
     const again = dayReducer(s, { type: 'restock', id: 'kopiko', qty: 24 });
@@ -345,10 +355,16 @@ describe('onboarding day reducer', () => {
 
   it('rejects restocking an item that is not low, or a bad quantity', () => {
     const seed = createDaySeed();
-    expect(dayReducer(seed, { type: 'restock', id: 'kopiko', qty: 24 })).toBe(seed);
+    expect(dayReducer(seed, { type: 'restock', id: 'kopiko', qty: 24 })).toBe(
+      seed,
+    );
     const low = cashDone();
-    expect(dayReducer(low, { type: 'restock', id: 'kopiko', qty: 0 })).toBe(low);
-    expect(dayReducer(low, { type: 'restock', id: 'kopiko', qty: 1.5 })).toBe(low);
+    expect(dayReducer(low, { type: 'restock', id: 'kopiko', qty: 0 })).toBe(
+      low,
+    );
+    expect(dayReducer(low, { type: 'restock', id: 'kopiko', qty: 1.5 })).toBe(
+      low,
+    );
   });
 
   it('records a partial payment once and rejects overpayment', () => {
@@ -383,7 +399,10 @@ describe('onboarding day reducer', () => {
       (s, beat) => dayReducer(s, { type: 'autoplay', beat }),
       createDaySeed(),
     );
-    const manual = beats.reduce((s, beat) => run(s, scriptFor(beat)), createDaySeed());
+    const manual = beats.reduce(
+      (s, beat) => run(s, scriptFor(beat)),
+      createDaySeed(),
+    );
     expect(auto).toEqual(manual);
     expect(auto.beatDone).toEqual({
       cash: true,
@@ -423,7 +442,9 @@ describe('onboarding day reducer', () => {
     const restocked = dayReducer(s, { type: 'autoplay', beat: 'restock' });
     expect(outcomeParams('restock', restocked)).toEqual({ stock: '27' });
     const closed = dayReducer(restocked, { type: 'autoplay', beat: 'close' });
-    expect(outcomeParams('close', closed)).toEqual({ balance: formatPesos(24) });
+    expect(outcomeParams('close', closed)).toEqual({
+      balance: formatPesos(24),
+    });
   });
 });
 ```
@@ -498,7 +519,10 @@ function withKey<K extends string, V>(
 export function createDaySeed(): DayState {
   const products = {} as DayState['products'];
   for (const id of PRODUCT_ORDER) {
-    products[id] = { stock: SEED_PRODUCTS[id].stock, price: SEED_PRODUCTS[id].price };
+    products[id] = {
+      stock: SEED_PRODUCTS[id].stock,
+      price: SEED_PRODUCTS[id].price,
+    };
   }
   return {
     products,
@@ -523,14 +547,20 @@ export function cartTotal(state: DayState): Pesos {
   );
 }
 
-export function cartMatches(cart: readonly CartLine[], beat: SaleBeat): boolean {
+export function cartMatches(
+  cart: readonly CartLine[],
+  beat: SaleBeat,
+): boolean {
   const order = SCRIPTED_ORDERS[beat];
   const ids = PRODUCT_ORDER.filter((id) => (order[id] ?? 0) > 0);
   if (cart.length !== ids.length) return false;
   return ids.every((id) => cartQty(cart, id) === order[id]);
 }
 
-export function cartHasExtras(cart: readonly CartLine[], beat: SaleBeat): boolean {
+export function cartHasExtras(
+  cart: readonly CartLine[],
+  beat: SaleBeat,
+): boolean {
   const order = SCRIPTED_ORDERS[beat];
   return cart.some((line) => line.qty > (order[line.id] ?? 0));
 }
@@ -566,7 +596,10 @@ function applySale(state: DayState): DayState {
 function orderActions(beat: SaleBeat): DayAction[] {
   const order = SCRIPTED_ORDERS[beat];
   return PRODUCT_ORDER.flatMap((id) =>
-    Array.from({ length: order[id] ?? 0 }, (): DayAction => ({ type: 'addToCart', id })),
+    Array.from({ length: order[id] ?? 0 }, (): DayAction => ({
+      type: 'addToCart',
+      id,
+    })),
   );
 }
 
@@ -586,7 +619,9 @@ export function scriptFor(beat: BeatId): DayAction[] {
         { type: 'checkoutUtang', suki: 'nena' },
       ];
     case 'restock':
-      return [{ type: 'restock', id: SCRIPTED_RESTOCK.id, qty: SCRIPTED_RESTOCK.qty }];
+      return [
+        { type: 'restock', id: SCRIPTED_RESTOCK.id, qty: SCRIPTED_RESTOCK.qty },
+      ];
     case 'close':
       return [
         {
@@ -624,7 +659,8 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
     case 'checkoutCash': {
       if (state.beatDone.cash || !cartMatches(state.cart, 'cash')) return state;
       const total = cartTotal(state);
-      if (!Number.isInteger(action.tendered) || action.tendered < total) return state;
+      if (!Number.isInteger(action.tendered) || action.tendered < total)
+        return state;
       const sold = applySale(state);
       return {
         ...sold,
@@ -636,7 +672,8 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
       };
     }
     case 'checkoutUtang': {
-      if (state.beatDone.utang || !cartMatches(state.cart, 'utang')) return state;
+      if (state.beatDone.utang || !cartMatches(state.cart, 'utang'))
+        return state;
       const total = cartTotal(state);
       const sold = applySale(state);
       return {
@@ -702,7 +739,10 @@ export function dayReducer(state: DayState, action: DayAction): DayState {
 }
 
 /** i18n params for a finished beat's outcome line. */
-export function outcomeParams(beat: BeatId, state: DayState): Record<string, string> {
+export function outcomeParams(
+  beat: BeatId,
+  state: DayState,
+): Record<string, string> {
   switch (beat) {
     case 'cash':
       return state.receipts.cash
@@ -718,7 +758,9 @@ export function outcomeParams(beat: BeatId, state: DayState): Record<string, str
     case 'restock':
       return { stock: String(state.products[SCRIPTED_RESTOCK.id].stock) };
     case 'close':
-      return { balance: formatPesos(state.sukiBalances[SCRIPTED_PAYMENT.suki]) };
+      return {
+        balance: formatPesos(state.sukiBalances[SCRIPTED_PAYMENT.suki]),
+      };
   }
 }
 ```
@@ -746,11 +788,13 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- cons
 ### Task 2: Day locale keys
 
 **Files:**
+
 - Modify: `locales/en/onboarding.json`
 - Modify: `locales/tl/onboarding.json`
 - Test: `tests/onboardingLocales.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BEAT_COPY`, `SEED_PRODUCTS`, `SUKI_NAME_KEY` from Task 1.
 - Produces: every i18n key used by Tasks 3-7 (listed below). Old `tour*`/`demo*` keys stay until Task 8.
 
@@ -769,66 +813,66 @@ import {
 Add these cases inside the `describe` block:
 
 ```ts
-  const DAY_UI_KEYS = [
-    'clockBeforeOpen',
-    'clockClosed',
-    'clockA11y',
-    'showMe',
-    'showMeA11y',
-    'beatDone',
-    'coachHint',
-    'continueLockedHint',
-    'finishDay',
-    'posAddA11y',
-    'posRemoveA11y',
-    'posStock',
-    'posCartEmpty',
-    'posTotal',
-    'posCheckout',
-    'posEditCart',
-    'posPayWith',
-    'posCash',
-    'posUtang',
-    'posTendered',
-    'posTenderA11y',
-    'posPickSuki',
-    'posPickSukiA11y',
-    'posPaidCash',
-    'posPaidUtang',
-    'invTitle',
-    'invStockCount',
-    'invLow',
-    'invOk',
-    'invRestock',
-    'invRestockA11y',
-    'invDeliveryTitle',
-    'invDeliveryQty',
-    'invConfirm',
-    'homeTitle',
-    'homeTodaySales',
-    'homeItemsSold',
-    'homeUtangOut',
-    'homeSukiTitle',
-    'homeBalance',
-    'homeRecordPayment',
-    'homePaid',
-  ];
+const DAY_UI_KEYS = [
+  'clockBeforeOpen',
+  'clockClosed',
+  'clockA11y',
+  'showMe',
+  'showMeA11y',
+  'beatDone',
+  'coachHint',
+  'continueLockedHint',
+  'finishDay',
+  'posAddA11y',
+  'posRemoveA11y',
+  'posStock',
+  'posCartEmpty',
+  'posTotal',
+  'posCheckout',
+  'posEditCart',
+  'posPayWith',
+  'posCash',
+  'posUtang',
+  'posTendered',
+  'posTenderA11y',
+  'posPickSuki',
+  'posPickSukiA11y',
+  'posPaidCash',
+  'posPaidUtang',
+  'invTitle',
+  'invStockCount',
+  'invLow',
+  'invOk',
+  'invRestock',
+  'invRestockA11y',
+  'invDeliveryTitle',
+  'invDeliveryQty',
+  'invConfirm',
+  'homeTitle',
+  'homeTodaySales',
+  'homeItemsSold',
+  'homeUtangOut',
+  'homeSukiTitle',
+  'homeBalance',
+  'homeRecordPayment',
+  'homePaid',
+];
 
-  it('defines every key the day walkthrough references', () => {
-    const copyKeys = Object.values(BEAT_COPY).flatMap((c) =>
-      [c.clockKey, c.sceneKey, c.outcomeKey, c.nudgeKey].filter(
-        (k): k is string => k !== null,
-      ),
-    );
-    const nameKeys = [
-      ...Object.values(SEED_PRODUCTS).map((p) => p.nameKey),
-      ...Object.values(SUKI_NAME_KEY),
-    ];
-    for (const key of [...copyKeys, ...nameKeys, ...DAY_UI_KEYS]) {
-      expect(`${key}:${key in en}`).toBe(`${key}:true`);
-      expect(`${key}:${key in tl}`).toBe(`${key}:true`);
-    }
-  });
+it('defines every key the day walkthrough references', () => {
+  const copyKeys = Object.values(BEAT_COPY).flatMap((c) =>
+    [c.clockKey, c.sceneKey, c.outcomeKey, c.nudgeKey].filter(
+      (k): k is string => k !== null,
+    ),
+  );
+  const nameKeys = [
+    ...Object.values(SEED_PRODUCTS).map((p) => p.nameKey),
+    ...Object.values(SUKI_NAME_KEY),
+  ];
+  for (const key of [...copyKeys, ...nameKeys, ...DAY_UI_KEYS]) {
+    expect(`${key}:${key in en}`).toBe(`${key}:true`);
+    expect(`${key}:${key in tl}`).toBe(`${key}:true`);
+  }
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1002,10 +1046,12 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- loca
 ### Task 3: DayClock header
 
 **Files:**
+
 - Create: `components/onboarding/DayClock.tsx`
 - Test: `components/onboarding/__tests__/DayClock.test.tsx`
 
 **Interfaces:**
+
 - Produces: `DayClock({ currentIndex: number; totalSteps: number; timeLabel: string; counterText: string; label: string })`. Presentational; the parent passes translated strings.
 
 - [ ] **Step 1: Write the failing test**
@@ -1151,10 +1197,12 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- comp
 ### Task 4: PosReplica (beats 1 and 2)
 
 **Files:**
+
 - Create: `components/onboarding/replicas/PosReplica.tsx`
 - Test: `components/onboarding/__tests__/PosReplica.test.tsx`
 
 **Interfaces:**
+
 - Consumes: from Task 1 `DayState`, `DayAction`, `cartQty`, `cartTotal`, `cartMatches`, `SCRIPTED_ORDERS`, `SEED_PRODUCTS`, `PRODUCT_ORDER`, `SUKI_NAME_KEY`, `TENDER_OPTIONS`, `SaleBeat`, `DayProductId`. `HintRing({ active, children })` from `components/onboarding/HintRing.tsx`. `MoneyText` from `@/components/ui/MoneyText`. `CustomerAvatar` from `@/components/customers/CustomerAvatar`.
 - Produces: `PosReplica({ mode: SaleBeat; state: DayState; dispatch: (action: DayAction) => void })`.
 
@@ -1186,13 +1234,16 @@ describe('PosReplica', () => {
 
   it('keeps Checkout disabled until the cart matches the order', async () => {
     const dispatch = jest.fn();
-    const partial = dayReducer(createDaySeed(), { type: 'addToCart', id: 'kopiko' });
+    const partial = dayReducer(createDaySeed(), {
+      type: 'addToCart',
+      id: 'kopiko',
+    });
     const screen = await render(
       <PosReplica mode="cash" state={partial} dispatch={dispatch} />,
     );
-    expect(screen.getByLabelText('posCheckout').props.accessibilityState).toEqual(
-      expect.objectContaining({ disabled: true }),
-    );
+    expect(
+      screen.getByLabelText('posCheckout').props.accessibilityState,
+    ).toEqual(expect.objectContaining({ disabled: true }));
   });
 
   it('walks Checkout -> Cash -> P50 to a cash checkout', async () => {
@@ -1210,7 +1261,10 @@ describe('PosReplica', () => {
     await fireEvent.press(screen.getByLabelText('posCheckout'));
     await fireEvent.press(screen.getByLabelText('posCash'));
     await fireEvent.press(screen.getByLabelText(/^posTenderA11y:.*50/));
-    expect(dispatch).toHaveBeenCalledWith({ type: 'checkoutCash', tendered: 50 });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'checkoutCash',
+      tendered: 50,
+    });
   });
 
   it('walks Checkout -> Utang -> Aling Nena to an utang checkout', async () => {
@@ -1230,23 +1284,35 @@ describe('PosReplica', () => {
     await fireEvent.press(
       screen.getByLabelText('posPickSukiA11y:{"name":"daySukiNena"}'),
     );
-    expect(dispatch).toHaveBeenCalledWith({ type: 'checkoutUtang', suki: 'nena' });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'checkoutUtang',
+      suki: 'nena',
+    });
   });
 
   it('shows a minus control that removes an extra item', async () => {
     const dispatch = jest.fn();
-    const extra = dayReducer(createDaySeed(), { type: 'addToCart', id: 'luckyMe' });
+    const extra = dayReducer(createDaySeed(), {
+      type: 'addToCart',
+      id: 'luckyMe',
+    });
     const screen = await render(
       <PosReplica mode="cash" state={extra} dispatch={dispatch} />,
     );
     await fireEvent.press(
       screen.getByLabelText('posRemoveA11y:{"name":"dayProductLuckyMe"}'),
     );
-    expect(dispatch).toHaveBeenCalledWith({ type: 'removeFromCart', id: 'luckyMe' });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'removeFromCart',
+      id: 'luckyMe',
+    });
   });
 
   it('shows its own receipt when the beat is done', async () => {
-    const done = dayReducer(createDaySeed(), { type: 'autoplay', beat: 'cash' });
+    const done = dayReducer(createDaySeed(), {
+      type: 'autoplay',
+      beat: 'cash',
+    });
     const screen = await render(
       <PosReplica mode="cash" state={done} dispatch={jest.fn()} />,
     );
@@ -1337,7 +1403,10 @@ export function PosReplica({ mode, state, dispatch }: Props) {
           : '';
     return (
       <View className="min-h-[120px] items-center justify-center rounded-2xl bg-sage-50 px-4 py-6">
-        <StyledText variant="extrabold" className="text-sage-700 text-base text-center">
+        <StyledText
+          variant="extrabold"
+          className="text-sage-700 text-base text-center"
+        >
           {text}
         </StyledText>
       </View>
@@ -1345,10 +1414,13 @@ export function PosReplica({ mode, state, dispatch }: Props) {
   }
 
   const ready = cartMatches(state.cart, mode);
-  const extraId = state.cart.find((l) => l.qty > (order[l.id] ?? 0))?.id ?? null;
+  const extraId =
+    state.cart.find((l) => l.qty > (order[l.id] ?? 0))?.id ?? null;
   const missingId =
     extraId === null
-      ? (PRODUCT_ORDER.find((id) => cartQty(state.cart, id) < (order[id] ?? 0)) ?? null)
+      ? (PRODUCT_ORDER.find(
+          (id) => cartQty(state.cart, id) < (order[id] ?? 0),
+        ) ?? null)
       : null;
 
   if (stage === 'cart') {
@@ -1368,12 +1440,18 @@ export function PosReplica({ mode, state, dispatch }: Props) {
                     accessibilityHint={target ? hint : undefined}
                     className={TILE_CLASS}
                   >
-                    <StyledText variant="extrabold" className="text-ink-900 text-sm">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-ink-900 text-sm"
+                    >
                       {name(id)}
                     </StyledText>
                     <View className="flex-row items-end justify-between">
                       <MoneyText value={state.products[id].price} size="sm" />
-                      <StyledText variant="medium" className="text-ink-600 text-caption">
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-600 text-caption"
+                      >
                         {t('posStock', { count: stock })}
                       </StyledText>
                     </View>
@@ -1386,7 +1464,10 @@ export function PosReplica({ mode, state, dispatch }: Props) {
 
         <View className="rounded-2xl border border-paper-300 bg-paper-50 p-3 gap-2">
           {state.cart.length === 0 ? (
-            <StyledText variant="medium" className="text-ink-600 text-sm text-center py-2">
+            <StyledText
+              variant="medium"
+              className="text-ink-600 text-sm text-center py-2"
+            >
               {t('posCartEmpty')}
             </StyledText>
           ) : (
@@ -1394,21 +1475,34 @@ export function PosReplica({ mode, state, dispatch }: Props) {
               <View key={line.id} className="flex-row items-center gap-2">
                 <HintRing active={extraId === line.id}>
                   <Pressable
-                    onPress={() => dispatch({ type: 'removeFromCart', id: line.id })}
+                    onPress={() =>
+                      dispatch({ type: 'removeFromCart', id: line.id })
+                    }
                     accessibilityRole="button"
-                    accessibilityLabel={t('posRemoveA11y', { name: name(line.id) })}
+                    accessibilityLabel={t('posRemoveA11y', {
+                      name: name(line.id),
+                    })}
                     accessibilityHint={extraId === line.id ? hint : undefined}
                     className="h-12 w-12 items-center justify-center rounded-md border border-paper-400 bg-paper-100 active:bg-paper-200"
                   >
-                    <StyledText variant="extrabold" className="text-ink-900 text-lg">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-ink-900 text-lg"
+                    >
                       -
                     </StyledText>
                   </Pressable>
                 </HintRing>
-                <StyledText variant="semibold" className="flex-1 text-ink-900 text-sm">
+                <StyledText
+                  variant="semibold"
+                  className="flex-1 text-ink-900 text-sm"
+                >
                   {`${line.qty} x ${name(line.id)}`}
                 </StyledText>
-                <MoneyText value={state.products[line.id].price * line.qty} size="sm" />
+                <MoneyText
+                  value={state.products[line.id].price * line.qty}
+                  size="sm"
+                />
               </View>
             ))
           )}
@@ -1461,7 +1555,9 @@ export function PosReplica({ mode, state, dispatch }: Props) {
                 <View key={method} className="flex-1">
                   <HintRing active={enabled}>
                     <Pressable
-                      onPress={() => setStage(method === 'cash' ? 'tender' : 'suki')}
+                      onPress={() =>
+                        setStage(method === 'cash' ? 'tender' : 'suki')
+                      }
                       disabled={!enabled}
                       accessibilityRole="button"
                       accessibilityLabel={label}
@@ -1469,7 +1565,10 @@ export function PosReplica({ mode, state, dispatch }: Props) {
                       accessibilityState={{ disabled: !enabled }}
                       className={`${SECONDARY_CLASS} ${enabled ? '' : 'opacity-40'}`}
                     >
-                      <StyledText variant="extrabold" className="text-paper-50 text-base">
+                      <StyledText
+                        variant="extrabold"
+                        className="text-paper-50 text-base"
+                      >
                         {label}
                       </StyledText>
                     </Pressable>
@@ -1491,13 +1590,20 @@ export function PosReplica({ mode, state, dispatch }: Props) {
               <View key={amount} className="flex-1">
                 <HintRing active={i === 0}>
                   <Pressable
-                    onPress={() => dispatch({ type: 'checkoutCash', tendered: amount })}
+                    onPress={() =>
+                      dispatch({ type: 'checkoutCash', tendered: amount })
+                    }
                     accessibilityRole="button"
-                    accessibilityLabel={t('posTenderA11y', { amount: formatPesos(amount) })}
+                    accessibilityLabel={t('posTenderA11y', {
+                      amount: formatPesos(amount),
+                    })}
                     accessibilityHint={i === 0 ? hint : undefined}
                     className={SECONDARY_CLASS}
                   >
-                    <StyledText variant="extrabold" className="text-paper-50 text-base">
+                    <StyledText
+                      variant="extrabold"
+                      className="text-paper-50 text-base"
+                    >
                       {formatPesos(amount)}
                     </StyledText>
                   </Pressable>
@@ -1522,7 +1628,10 @@ export function PosReplica({ mode, state, dispatch }: Props) {
               className="min-h-[56px] flex-row items-center gap-3 rounded-lg border border-paper-400 bg-paper-50 px-3 active:bg-paper-100"
             >
               <CustomerAvatar name={nena} size={40} />
-              <StyledText variant="semibold" className="flex-1 text-ink-900 text-sm">
+              <StyledText
+                variant="semibold"
+                className="flex-1 text-ink-900 text-sm"
+              >
                 {nena}
               </StyledText>
               <MoneyText value={state.sukiBalances.nena} size="sm" />
@@ -1537,7 +1646,10 @@ export function PosReplica({ mode, state, dispatch }: Props) {
         accessibilityLabel={t('posEditCart')}
         className="min-h-[44px] items-center justify-center active:opacity-70"
       >
-        <StyledText variant="semibold" className="text-persimmon-700 text-sm underline">
+        <StyledText
+          variant="semibold"
+          className="text-persimmon-700 text-sm underline"
+        >
           {t('posEditCart')}
         </StyledText>
       </Pressable>
@@ -1564,12 +1676,14 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- comp
 ### Task 5: InventoryReplica and HomeCloseReplica (beats 3 and 4)
 
 **Files:**
+
 - Create: `components/onboarding/replicas/InventoryReplica.tsx`
 - Create: `components/onboarding/replicas/HomeCloseReplica.tsx`
 - Test: `components/onboarding/__tests__/InventoryReplica.test.tsx`
 - Test: `components/onboarding/__tests__/HomeCloseReplica.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1 `DayState`, `DayAction`, `isLowStock`, `PRODUCT_ORDER`, `SEED_PRODUCTS`, `SCRIPTED_RESTOCK`, `SCRIPTED_PAYMENT`, `SUKI_NAME_KEY`. `HintRing`, `MoneyText`, `CustomerAvatar`, `StatusPill` (`@/components/ui/StatusPill`, props `{ variant: 'success' | 'danger' | 'warning' | 'info' | 'neutral'; size?: 'sm' | 'md'; children }`).
 - Produces: `InventoryReplica({ state: DayState; dispatch: (action: DayAction) => void })`, `HomeCloseReplica({ state: DayState; dispatch: (action: DayAction) => void })`.
 
@@ -1585,7 +1699,8 @@ import { createDaySeed, dayReducer } from '@/lib/onboardingDay';
 
 // ...shared mocks here...
 
-const afterCash = () => dayReducer(createDaySeed(), { type: 'autoplay', beat: 'cash' });
+const afterCash = () =>
+  dayReducer(createDaySeed(), { type: 'autoplay', beat: 'cash' });
 
 describe('InventoryReplica', () => {
   it('offers Restock only on the low item, then saves the delivery', async () => {
@@ -1600,12 +1715,18 @@ describe('InventoryReplica', () => {
       screen.getByLabelText('invRestockA11y:{"name":"dayProductKopiko"}'),
     );
     await fireEvent.press(screen.getByLabelText('invConfirm'));
-    expect(dispatch).toHaveBeenCalledWith({ type: 'restock', id: 'kopiko', qty: 24 });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'restock',
+      id: 'kopiko',
+      qty: 24,
+    });
   });
 
   it('shows no Restock button once the beat is done', async () => {
     const done = dayReducer(afterCash(), { type: 'autoplay', beat: 'restock' });
-    const screen = await render(<InventoryReplica state={done} dispatch={jest.fn()} />);
+    const screen = await render(
+      <InventoryReplica state={done} dispatch={jest.fn()} />,
+    );
     expect(screen.queryByLabelText(/^invRestockA11y/)).toBeNull();
     expect(screen.getByText('invStockCount:{"count":27}')).toBeTruthy();
   });
@@ -1624,13 +1745,19 @@ import type { BeatId } from '@/constants/onboardingDay';
 // ...shared mocks here...
 
 const through = (beats: BeatId[]): DayState =>
-  beats.reduce((s, beat) => dayReducer(s, { type: 'autoplay', beat }), createDaySeed());
+  beats.reduce(
+    (s, beat) => dayReducer(s, { type: 'autoplay', beat }),
+    createDaySeed(),
+  );
 
 describe('HomeCloseReplica', () => {
   it('shows the day totals and records the scripted payment', async () => {
     const dispatch = jest.fn();
     const screen = await render(
-      <HomeCloseReplica state={through(['cash', 'utang', 'restock'])} dispatch={dispatch} />,
+      <HomeCloseReplica
+        state={through(['cash', 'utang', 'restock'])}
+        dispatch={dispatch}
+      />,
     );
     expect(screen.getByText('6')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText(/^homeRecordPayment:/));
@@ -1711,7 +1838,10 @@ export function InventoryReplica({ state, dispatch }: Props) {
               <StyledText variant="semibold" className="text-ink-900 text-sm">
                 {name(id)}
               </StyledText>
-              <StyledText variant="regular" className="text-ink-600 text-caption">
+              <StyledText
+                variant="regular"
+                className="text-ink-600 text-caption"
+              >
                 {t('invStockCount', { count: stock })}
               </StyledText>
             </View>
@@ -1727,7 +1857,10 @@ export function InventoryReplica({ state, dispatch }: Props) {
                   accessibilityHint={hint}
                   className="min-h-[48px] items-center justify-center rounded-md bg-cinnamon-500 px-3 active:bg-cinnamon-600"
                 >
-                  <StyledText variant="extrabold" className="text-paper-50 text-sm">
+                  <StyledText
+                    variant="extrabold"
+                    className="text-paper-50 text-sm"
+                  >
                     {t('invRestock')}
                   </StyledText>
                 </Pressable>
@@ -1748,7 +1881,11 @@ export function InventoryReplica({ state, dispatch }: Props) {
           <HintRing active>
             <Pressable
               onPress={() => {
-                dispatch({ type: 'restock', id: confirming, qty: SCRIPTED_RESTOCK.qty });
+                dispatch({
+                  type: 'restock',
+                  id: confirming,
+                  qty: SCRIPTED_RESTOCK.qty,
+                });
                 setConfirming(null);
               }}
               accessibilityRole="button"
@@ -1853,7 +1990,11 @@ export function HomeCloseReplica({ state, dispatch }: Props) {
           <HintRing active>
             <Pressable
               onPress={() =>
-                dispatch({ type: 'receivePayment', suki, amount: SCRIPTED_PAYMENT.amount })
+                dispatch({
+                  type: 'receivePayment',
+                  suki,
+                  amount: SCRIPTED_PAYMENT.amount,
+                })
               }
               accessibilityRole="button"
               accessibilityLabel={t('homeRecordPayment', {
@@ -1863,7 +2004,9 @@ export function HomeCloseReplica({ state, dispatch }: Props) {
               className="min-h-[48px] items-center justify-center rounded-md bg-cinnamon-500 px-3 active:bg-cinnamon-600"
             >
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                {t('homeRecordPayment', { amount: formatPesos(SCRIPTED_PAYMENT.amount) })}
+                {t('homeRecordPayment', {
+                  amount: formatPesos(SCRIPTED_PAYMENT.amount),
+                })}
               </StyledText>
             </Pressable>
           </HintRing>
@@ -1892,10 +2035,12 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- comp
 ### Task 6: BeatScene
 
 **Files:**
+
 - Create: `components/onboarding/BeatScene.tsx`
 - Test: `components/onboarding/__tests__/BeatScene.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1 `BEAT_COPY`, `isSaleBeat`, `BeatId`, `DayState`, `cartHasExtras`, `outcomeParams`. Existing `SariStage({ mascot, bubble, poseKey, size })`, `SuccessCheck({ label })`.
 - Produces: `BeatScene({ beat: BeatId; state: DayState; storeName: string; autoplaying: boolean; onShowMe: () => void; children: ReactNode })`.
 
@@ -1915,7 +2060,13 @@ jest.mock('@/components/mascot', () => ({ SariMascot: () => null }));
 
 const renderScene = (state = createDaySeed(), onShowMe = jest.fn()) =>
   render(
-    <BeatScene beat="cash" state={state} storeName="Nena Store" autoplaying={false} onShowMe={onShowMe}>
+    <BeatScene
+      beat="cash"
+      state={state}
+      storeName="Nena Store"
+      autoplaying={false}
+      onShowMe={onShowMe}
+    >
       <Text>replica</Text>
     </BeatScene>,
   );
@@ -1923,12 +2074,17 @@ const renderScene = (state = createDaySeed(), onShowMe = jest.fn()) =>
 describe('BeatScene', () => {
   it('shows the scene line with the store name and the replica', async () => {
     const screen = await renderScene();
-    expect(screen.getByText('beatCashScene:{"store":"Nena Store"}')).toBeTruthy();
+    expect(
+      screen.getByText('beatCashScene:{"store":"Nena Store"}'),
+    ).toBeTruthy();
     expect(screen.getByText('replica')).toBeTruthy();
   });
 
   it('swaps to the nudge when the cart has extras', async () => {
-    const extra = dayReducer(createDaySeed(), { type: 'addToCart', id: 'luckyMe' });
+    const extra = dayReducer(createDaySeed(), {
+      type: 'addToCart',
+      id: 'luckyMe',
+    });
     const screen = await renderScene(extra);
     expect(screen.getByText('beatCashNudge')).toBeTruthy();
   });
@@ -1939,7 +2095,10 @@ describe('BeatScene', () => {
     await fireEvent.press(screen.getByLabelText('showMeA11y'));
     expect(onShowMe).toHaveBeenCalledTimes(1);
 
-    const done = dayReducer(createDaySeed(), { type: 'autoplay', beat: 'cash' });
+    const done = dayReducer(createDaySeed(), {
+      type: 'autoplay',
+      beat: 'cash',
+    });
     const doneScreen = await renderScene(done);
     expect(doneScreen.queryByLabelText('showMeA11y')).toBeNull();
     expect(doneScreen.getByText('beatDone')).toBeTruthy();
@@ -1965,7 +2124,11 @@ import { StyledText } from '@/components/elements';
 import { SariStage } from '@/components/onboarding/SariStage';
 import { SuccessCheck } from '@/components/onboarding/SuccessCheck';
 import { BEAT_COPY, isSaleBeat, type BeatId } from '@/constants/onboardingDay';
-import { cartHasExtras, outcomeParams, type DayState } from '@/lib/onboardingDay';
+import {
+  cartHasExtras,
+  outcomeParams,
+  type DayState,
+} from '@/lib/onboardingDay';
 
 /**
  * BeatScene - one moment of the onboarding day. Sari sets the scene in
@@ -2036,7 +2199,10 @@ export function BeatScene({
               autoplaying ? 'opacity-50' : ''
             }`}
           >
-            <StyledText variant="semibold" className="text-persimmon-700 text-sm underline">
+            <StyledText
+              variant="semibold"
+              className="text-persimmon-700 text-sm underline"
+            >
               {t('showMe')}
             </StyledText>
           </TouchableOpacity>
@@ -2065,6 +2231,7 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- comp
 ### Task 7: Step machine, screen rewrite, ReadyStep trim
 
 **Files:**
+
 - Rewrite: `lib/onboardingStepMachine.ts`
 - Create: `tests/lib/onboardingStepMachine.test.ts`
 - Rewrite: `app/onboarding/index.tsx`
@@ -2073,6 +2240,7 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- comp
 - Rewrite: `tests/onboardingScreen.test.tsx`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1-6. `markOnboardingComplete` from `@/lib`. `useToastStore` from `@/stores` (`addToast({ message, variant, duration })`). `useReducedMotion` from `@/hooks/useReducedMotion`.
 - Produces: `Step = { kind: 'profile' } | { kind: 'beat'; beat: BeatId } | { kind: 'ready' }`, `TOTAL_STEPS = 6`, `PROFILE_INDEX = 0`, `BEAT_START_INDEX = 1`, `READY_INDEX = 5`, `indexOf`, `stepAt`, `next`, `back`, `skipToReady`, `jumpTo`, `canJumpBack`. `ReadyStep({ profile, saving, onEditProfile })` (no `onOpenStore`).
 
@@ -2156,9 +2324,7 @@ import { BEAT_ORDER, type BeatId } from '@/constants/onboardingDay';
  */
 
 export type Step =
-  | { kind: 'profile' }
-  | { kind: 'beat'; beat: BeatId }
-  | { kind: 'ready' };
+  { kind: 'profile' } | { kind: 'beat'; beat: BeatId } | { kind: 'ready' };
 
 export const TOTAL_STEPS = 6;
 export const PROFILE_INDEX = 0;
@@ -2220,6 +2386,7 @@ Expected: PASS, 5 tests. (`app/onboarding/index.tsx` no longer typechecks until 
 - [ ] **Step 5: Trim ReadyStep**
 
 In `components/onboarding/ReadyStep.tsx`:
+
 1. Delete the imports of `Ionicons`, `ONBOARDING_COLORS`, and `FIRST_STEPS`.
 2. Replace the doc comment, `Props`, and the function signature with:
 
@@ -2273,7 +2440,9 @@ describe('ReadyStep', () => {
       />,
     );
     expect(screen.getByText('readyGreetingNamed:{"name":"Nena"}')).toBeTruthy();
-    expect(screen.getByText('readySublineNamed:{"storeName":"Nena Store"}')).toBeTruthy();
+    expect(
+      screen.getByText('readySublineNamed:{"storeName":"Nena Store"}'),
+    ).toBeTruthy();
     expect(screen.queryByText('readyFirstStepsTitle')).toBeNull();
   });
 
@@ -2397,7 +2566,10 @@ describe('OnboardingPage', () => {
 
     expect(isDisabled(screen, 'next')).toBe(false);
     expect(mockAddToast).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'beatCashOutcome', variant: 'success' }),
+      expect.objectContaining({
+        message: 'beatCashOutcome',
+        variant: 'success',
+      }),
     );
   });
 
@@ -2478,7 +2650,10 @@ describe('OnboardingPage', () => {
     await fireEvent.press(screen.getByLabelText('readyCta'));
     await waitFor(() =>
       expect(mockAddToast).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'toastSaveFailed', variant: 'danger' }),
+        expect.objectContaining({
+          message: 'toastSaveFailed',
+          variant: 'danger',
+        }),
       ),
     );
     expect(mockReplace).not.toHaveBeenCalled();
@@ -2630,11 +2805,14 @@ export default function OnboardingPage() {
     });
     // Safety net: a stray tap mid-playback cannot leave the beat stuck.
     timers.current.push(
-      setTimeout(() => {
-        dispatch({ type: 'autoplay', beat: target });
-        timers.current = [];
-        setAutoplayingBeat(null);
-      }, AUTOPLAY_STEP_MS * (script.length + 1)),
+      setTimeout(
+        () => {
+          dispatch({ type: 'autoplay', beat: target });
+          timers.current = [];
+          setAutoplayingBeat(null);
+        },
+        AUTOPLAY_STEP_MS * (script.length + 1),
+      ),
     );
   };
 
@@ -2843,7 +3021,10 @@ export default function OnboardingPage() {
               <ActivityIndicator color={ONBOARDING_COLORS.onAction} />
             ) : (
               <>
-                <StyledText variant="extrabold" className="text-white text-base">
+                <StyledText
+                  variant="extrabold"
+                  className="text-white text-base"
+                >
                   {primaryLabel}
                 </StyledText>
                 <Ionicons
@@ -2863,7 +3044,10 @@ export default function OnboardingPage() {
             accessibilityLabel={t('skipA11y')}
             className="mt-1 min-h-[44px] items-center justify-center active:opacity-70"
           >
-            <StyledText variant="semibold" className="text-persimmon-700 text-sm">
+            <StyledText
+              variant="semibold"
+              className="text-persimmon-700 text-sm"
+            >
               {t('skipTour')}
             </StyledText>
           </TouchableOpacity>
@@ -2875,6 +3059,7 @@ export default function OnboardingPage() {
 ```
 
 Notes for the implementer:
+
 - The screen test mocks `t` as `(key) => key`, so the scene text is the bare key `beatCashScene`.
 - `doneBefore` is compared by beat so a revisit never re-fires a toast.
 - If `exactOptionalPropertyTypes` rejects `accessibilityHint={... : undefined}`, spread it instead: `{...(beatLocked ? { accessibilityHint: t('continueLockedHint') } : {})}`. Apply the same fix in `PosReplica` if it errors there.
@@ -2902,12 +3087,14 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- lib/
 ### Task 8: Remove the old tour and verify
 
 **Files:**
+
 - Delete: `components/onboarding/TourCard.tsx`, `components/onboarding/demos/` (whole folder), `components/onboarding/OnboardingProgress.tsx`, `constants/onboardingTour.ts`, `lib/onboardingDemo.ts`, `tests/onboardingDemo.test.ts`, `components/onboarding/__tests__/demos.test.tsx`, `components/onboarding/__tests__/OnboardingProgress.test.tsx`
 - Modify: `constants/index.ts` (drop `export * from './onboardingTour';`)
 - Modify: `locales/en/onboarding.json`, `locales/tl/onboarding.json`
 - Modify: `tests/onboardingLocales.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: no references to `onboardingTour` (except `onboardingTour.assets`), `TourCard`, `OnboardingProgress`, `onboardingDemo`, or `demos/` anywhere in `app/`, `components/`, `lib/`, `constants/`, `tests/`.
 
@@ -2919,20 +3106,21 @@ Expected: hits only in the files listed for deletion above and in `constants/ind
 - [ ] **Step 2: Update the locale test first (it should fail)**
 
 In `tests/onboardingLocales.test.ts`:
+
 1. Delete `import { ONBOARDING_TOUR_STEPS } from '@/constants/onboardingTour';`.
 2. Delete the whole `it('defines every key the tour constants reference', ...)` case.
 3. Add:
 
 ```ts
-  it('has no leftover tour or demo keys', () => {
-    const stale = Object.keys(en).filter(
-      (key) =>
-        /^(tour|demo)[A-Z]/.test(key) ||
-        key === 'finishTour' ||
-        key === 'progressA11y',
-    );
-    expect(stale).toEqual([]);
-  });
+it('has no leftover tour or demo keys', () => {
+  const stale = Object.keys(en).filter(
+    (key) =>
+      /^(tour|demo)[A-Z]/.test(key) ||
+      key === 'finishTour' ||
+      key === 'progressA11y',
+  );
+  expect(stale).toEqual([]);
+});
 ```
 
 Run: `npx jest tests/onboardingLocales.test.ts`
@@ -2975,6 +3163,7 @@ Claude-Session: https://claude.ai/code/session_014rjHKgC8USryhdaz3FC6os" -- cons
 - [ ] **Step 7: Device check (human)**
 
 Ask the user to run `npm run start:onboarding` and walk the day on a device in both English and Tagalog, once with system Reduce Motion on. Checklist to hand them:
+
 - Cash beat: tap 2 Kopiko + 1 Pandesal, Checkout, Cash, P50; change shows P12.
 - Utang beat: Aling Nena's balance rises to P64.
 - Restock beat: Kopiko shows Low at 3, then 27 after Save delivery.
