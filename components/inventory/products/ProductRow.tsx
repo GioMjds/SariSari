@@ -1,10 +1,8 @@
-import React, { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui/MoneyText';
-import { ProductStatusChip } from '@/components/inventory/ProductStatusChip';
-import { getStatus } from '@/types/inventory.types';
 import { getProductImageUri } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
 import type { Product } from '@/types/products.types';
@@ -22,18 +20,27 @@ function ProductRowImpl({
   onLongPress,
   onActionPress,
 }: Props) {
-  const status = getStatus(product);
-  const placeholderText = product.name
-    ? product.name.trim().charAt(0).toUpperCase()
-    : '?';
-  const displayImageUri = getProductImageUri(product.image_uri);
+  const { id, name, category, retail_unit_name, price, image_uri } = product;
+
+  const handlePress = useCallback(() => onPress(id), [onPress, id]);
+  const handleLongPress = useCallback(
+    () => onLongPress?.(id),
+    [onLongPress, id],
+  );
+  const handleActionPress = useCallback(
+    () => onActionPress?.(product),
+    [onActionPress, product],
+  );
+
+  const placeholderText = name ? name.trim().charAt(0).toUpperCase() : '?';
+  const displayImageUri = getProductImageUri(image_uri);
 
   return (
     <Pressable
-      onPress={() => onPress(product.id)}
-      onLongPress={() => onLongPress?.(product.id)}
+      onPress={handlePress}
+      onLongPress={handleLongPress}
       accessibilityRole="button"
-      accessibilityLabel={`${product.name}, ${product.price} pesos`}
+      accessibilityLabel={`${name}, ${price} pesos`}
       className="bg-paper-50 mx-4 mb-2 p-3 rounded-2xl border border-ink-100 flex-row items-center gap-3"
       style={{ minHeight: 64 }}
     >
@@ -58,7 +65,7 @@ function ProductRowImpl({
           ellipsizeMode="tail"
           className="text-sm text-ink-900"
         >
-          {product.name}
+          {name}
         </StyledText>
         <StyledText
           variant="medium"
@@ -66,23 +73,17 @@ function ProductRowImpl({
           ellipsizeMode="tail"
           className="text-ink-600 text-xs mt-0.5"
         >
-          {product.category ?? 'Uncategorized'} ·{' '}
-          {product.retail_unit_name ?? 'Pc'}
+          {category ?? 'Uncategorized'} · {retail_unit_name ?? 'Pc'}
         </StyledText>
       </View>
       <View className="flex-row items-center gap-2">
         <View className="items-end gap-1 shrink-0">
-          <MoneyText
-            value={product.price ?? 0}
-            size="sm"
-            className="text-ink-900"
-          />
-          <ProductStatusChip status={status} />
+          <MoneyText value={price ?? 0} size="lg" className="text-ink-900" />
         </View>
         {onActionPress ? (
           <Pressable
-            onPress={() => onActionPress(product)}
-            accessibilityLabel={`Actions for ${product.name}`}
+            onPress={handleActionPress}
+            accessibilityLabel={`Actions for ${name}`}
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="w-8 h-8 rounded-full items-center justify-center active:bg-paper-200"

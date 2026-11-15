@@ -1,6 +1,11 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+  type Href,
+} from 'expo-router';
 import { View } from 'react-native';
 import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import {
@@ -14,7 +19,7 @@ import {
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection, useToastStore } from '@/stores';
-import { BulkActionsToolbar, type AlertKind } from '@/components/inventory';
+import { type AlertKind } from '@/components/inventory';
 import { SearchBar } from '@/components/ui';
 import type { Product } from '@/types/products.types';
 import { type InventoryEventType } from '@/types/inventory.types';
@@ -45,14 +50,18 @@ function getEmptyVariant(
 
 function ProductsScreen() {
   const router = useRouter();
-  const selection = useInventorySelection();
-  const { bulkDeleteProductsMutation } = useProducts();
   const addToast = useToastStore((s) => s.addToast);
+  const { bulkDeleteProductsMutation } = useProducts();
+
+  const selection = useInventorySelection();
+  const clearSelection = selection.clear;
+  const selectMode = selection.selectMode;
+  const selectedIdsSet = selection.selectedIds;
+
   const [filter, setFilter] = useState<ProductsFilter>('all');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [moveModalOpen, setMoveModalOpen] = useState(false);
   const [menuProduct, setMenuProduct] = useState<Product | null>(null);
-
   const [formProduct, setFormProduct] = useState<Product | null>(null);
   const [formType, setFormType] = useState<InventoryEventType | null>(null);
 
@@ -89,10 +98,19 @@ function ProductsScreen() {
 
   const productsQuery = usePaginatedProducts(searchTerm, filter, filterOptions);
 
+  const {
+    refetch: refetchProducts,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = productsQuery;
+
   useFocusEffect(
     useCallback(() => {
-      productsQuery.refetch();
-    }, [productsQuery]),
+      refetchProducts();
+    }, [refetchProducts]),
   );
 
   const products = useMemo(
@@ -101,8 +119,8 @@ function ProductsScreen() {
   );
 
   const selectedIds = useMemo(
-    () => Array.from(selection.selectedIds),
-    [selection.selectedIds],
+    () => Array.from(selectedIdsSet),
+    [selectedIdsSet],
   );
 
   const emptyVariant = getEmptyVariant(
@@ -113,8 +131,6 @@ function ProductsScreen() {
     alert,
   );
 
-  // Search and filter live on this screen, not the inventory layout —
-  // they only apply to products.
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filter !== 'all') count++;
@@ -131,6 +147,10 @@ function ProductsScreen() {
     [router],
   );
 
+  const handleClearSearch = useCallback(() => {
+    router.setParams({ q: undefined });
+  }, [router]);
+
   const handleFilterPress = useCallback(() => {
     setFilterModalOpen(true);
   }, []);
@@ -139,38 +159,23 @@ function ProductsScreen() {
     (id: number) => router.push(`/(edit-forms)/product-details/${id}` as Href),
     [router],
   );
+
   const handleLongPress = useCallback(
-    (id: number) => selection.enterSelectMode(id),
-    [selection],
+    (id: number) => {
+      const product = products.find((p) => p.id === id);
+      if (product) setMenuProduct(product);
+    },
+    [products],
   );
+
   const handleAdd = useCallback(
     () => router.push('/(edit-forms)/add-product' as Href),
     [router],
   );
 
-  const handleClearSearch = useCallback(() => {
-    router.setParams({ q: undefined });
-  }, [router]);
-
-  const handleBulkDelete = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    try {
-      await Promise.all(
-        selectedIds.map((id) => bulkDeleteProductsMutation.mutateAsync(id)),
-      );
-      addToast({
-        message: `Deleted ${selectedIds.length} ${
-          selectedIds.length === 1 ? 'product' : 'products'
-        }`,
-        variant: 'success',
-        duration: 4000,
-      });
-    } catch {
-      // Mutations handle individual error toasts
-    } finally {
-      selection.clear();
-    }
-  }, [selectedIds, bulkDeleteProductsMutation, selection, addToast]);
+  const handleEndReached = useCallback(() => {
+    fetchNextPage();
+  }, [fetchNextPage]);
 
   const handleActionPress = useCallback((product: Product) => {
     setMenuProduct(product);
@@ -190,22 +195,22 @@ function ProductsScreen() {
 
   const handleMenuAdjustStock = useCallback(
     (id: number) => {
-      const p = products.find((x) => x.id === id) ?? null;
-      setMenuProduct(null);
-      setFormProduct(p);
+      if (!menuProduct || menuProduct.id !== id) return;
+      setFormProduct(menuProduct);
       setFormType('adjustment');
+      setMenuProduct(null);
     },
-    [products],
+    [menuProduct],
   );
 
   const handleMenuMarkDamaged = useCallback(
     (id: number) => {
-      const p = products.find((x) => x.id === id) ?? null;
-      setMenuProduct(null);
-      setFormProduct(p);
+      if (!menuProduct || menuProduct.id !== id) return;
+      setFormProduct(menuProduct);
       setFormType('damaged');
+      setMenuProduct(null);
     },
-    [products],
+    [menuProduct],
   );
 
   const handleMenuViewLedger = useCallback(
@@ -218,25 +223,62 @@ function ProductsScreen() {
 
   const handleMenuDelete = useCallback(
     async (id: number) => {
-      try {
-        await bulkDeleteProductsMutation.mutateAsync(id);
-        addToast({
-          message: 'Product deleted',
-          variant: 'success',
-          duration: 3000,
-        });
-      } catch {
-        // Mutation onError already posts a toast; keep the row closed.
-      }
+      await bulkDeleteProductsMutation.mutateAsync(id);
+      addToast({
+        message: 'Product deleted',
+        variant: 'success',
+        duration: 3000,
+      });
+
       setMenuProduct(null);
     },
     [bulkDeleteProductsMutation, addToast],
   );
 
-  if (productsQuery.isLoading) return <ProductsSkeleton />;
-  if (productsQuery.error) {
-    return <InventoryErrorState onRetry={() => productsQuery.refetch?.()} />;
-  }
+  const handleMoveModalClose = useCallback(() => {
+    setMoveModalOpen(false);
+    clearSelection();
+  }, [clearSelection]);
+
+  const handleLogFormDone = useCallback(() => {
+    setFormProduct(null);
+    setFormType(null);
+    if (selectMode) clearSelection();
+  }, [selectMode, clearSelection]);
+
+  const handleFilterModalClose = useCallback(() => {
+    setFilterModalOpen(false);
+    router.setParams({ openFilterModal: undefined });
+  }, [router]);
+
+  const handleApplyFilters = useCallback(
+    (newFilters: {
+      status: ProductsFilter;
+      category?: string;
+      alert?: string;
+    }) => {
+      setFilter(newFilters.status);
+      router.setParams({
+        category: newFilters.category ?? '',
+        alert: newFilters.alert ?? '',
+        openFilterModal: undefined,
+      });
+    },
+    [router],
+  );
+
+  const handleOpenAddCategory = useCallback(
+    () => router.push('/(edit-forms)/add-category' as Href),
+    [router],
+  );
+
+  const handleClearFilters = useCallback(() => {
+    setFilter('all');
+    router.setParams({ category: '', supplier: '', alert: '' });
+  }, [router]);
+
+  if (isLoading) return <ProductsSkeleton />;
+  if (error) return <InventoryErrorState onRetry={refetchProducts} />;
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -249,16 +291,14 @@ function ProductsScreen() {
           activeFilterCount={activeFilterCount}
         />
       </View>
+
       {products.length === 0 ? (
         <ProductsEmptyState
           variant={emptyVariant}
           searchTerm={searchTerm}
           onAddPress={handleAdd}
           onClearSearch={handleClearSearch}
-          onClearFilters={() => {
-            setFilter('all');
-            router.setParams({ category: '', supplier: '', alert: '' });
-          }}
+          onClearFilters={handleClearFilters}
         />
       ) : (
         <ProductsList
@@ -266,38 +306,16 @@ function ProductsScreen() {
           onPress={handlePress}
           onLongPress={handleLongPress}
           onActionPress={handleActionPress}
-          isFetchingNextPage={productsQuery.isFetchingNextPage}
-          hasNextPage={productsQuery.hasNextPage}
-          onEndReached={() => {
-            if (
-              !productsQuery.isFetchingNextPage &&
-              productsQuery.hasNextPage
-            ) {
-              productsQuery.fetchNextPage();
-            }
-          }}
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          onEndReached={handleEndReached}
         />
       )}
-      {selection.selectMode ? (
-        <BulkActionsToolbar
-          selectedCount={selectedIds.length}
-          onClearSelection={selection.clear}
-          onBulkDelete={handleBulkDelete}
-          onBulkAdjustStock={() => {
-            setFormProduct(null);
-            setFormType('adjustment');
-          }}
-          onBulkMoveCategory={() => setMoveModalOpen(true)}
-        />
-      ) : null}
 
       <BulkMoveCategoryModal
         visible={moveModalOpen}
         productIds={selectedIds}
-        onClose={() => {
-          setMoveModalOpen(false);
-          selection.clear();
-        }}
+        onClose={handleMoveModalClose}
       />
 
       <ProductActionMenuModal
@@ -315,40 +333,20 @@ function ProductsScreen() {
         product={formProduct}
         initialType={formType ?? 'restock'}
         visible={formType !== null}
-        onClose={() => {
-          setFormProduct(null);
-          setFormType(null);
-          if (selection.selectMode) selection.clear();
-        }}
-        onSuccess={() => {
-          setFormProduct(null);
-          setFormType(null);
-          if (selection.selectMode) selection.clear();
-        }}
+        onClose={handleLogFormDone}
+        onSuccess={handleLogFormDone}
       />
 
       <ProductFilterModal
         visible={filterModalOpen}
-        onClose={() => {
-          setFilterModalOpen(false);
-          router.setParams({ openFilterModal: undefined });
-        }}
+        onClose={handleFilterModalClose}
         currentFilters={{
           status: filter,
           alert,
           category,
         }}
-        onApplyFilters={(newFilters) => {
-          setFilter(newFilters.status);
-          router.setParams({
-            category: newFilters.category ?? '',
-            alert: newFilters.alert ?? '',
-            openFilterModal: undefined,
-          });
-        }}
-        onOpenAddCategory={() =>
-          router.push('/(edit-forms)/add-category' as Href)
-        }
+        onApplyFilters={handleApplyFilters}
+        onOpenAddCategory={handleOpenAddCategory}
       />
     </View>
   );
