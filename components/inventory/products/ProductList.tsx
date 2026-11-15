@@ -7,8 +7,8 @@ import type { Product } from '@/types/products.types';
 export interface ProductsListProps {
   products: Product[];
   onPress: (id: number) => void;
-  onLongPress?: (id: number) => void;
-  onActionPress?: (product: Product) => void;
+  onLongPress: (id: number) => void;
+  onActionPress: (product: Product) => void;
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
   onEndReached?: () => void;
