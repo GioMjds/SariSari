@@ -1,7 +1,4 @@
-/**
- * Sari mascot palette. Sampled from the static art in
- * `assets/images/sari-emotions/` so the vector rig matches the PNGs.
- */
+
 export const SARI_COLORS = {
   outline: '#3B1D17',
   glass: '#EEF4F7',

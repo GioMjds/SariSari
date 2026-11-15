@@ -3,6 +3,19 @@ import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Dimensions, FlatList, Modal, Pressable, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 interface AlertCardItemProps {
   alert: DynamicHomeAlert;
@@ -67,19 +80,6 @@ const AlertCardItem = memo(function AlertCardItem({
     </View>
   );
 });
-import { Dimensions, FlatList, Modal, Pressable, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { scheduleOnRN } from 'react-native-worklets';
 
 const TAG = '[NotificationSheet]';
 

@@ -61,10 +61,6 @@ interface SariMascotProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/**
- * Animated vector Sari. Usage:
- *   <SariMascot state="default" size={120} />
- */
 export const SariMascot = memo(function SariMascot({
   state = 'default',
   size = 120,
@@ -75,27 +71,34 @@ export const SariMascot = memo(function SariMascot({
 }: SariMascotProps) {
   const reducedMotion = useReducedMotion();
   const [ready, setReady] = useState(!defer);
-  // A transition render is split into slices, so building Sari does not block touches.
+
   useEffect(() => {
     if (!ready) startTransition(() => setReady(true));
   }, [ready]);
+
   const focused = useScreenFocused();
-  // Loops stop when the screen is hidden (tabs stay mounted) or under Reduce Motion.
   const animate = animated && !reducedMotion && focused;
   const a11y = accessibilityLabel
-    ? ({ accessible: true, accessibilityRole: 'image', accessibilityLabel } as const)
-    : ({ accessible: false, importantForAccessibility: 'no-hide-descendants' } as const);
+    ? ({
+        accessible: true,
+        accessibilityRole: 'image',
+        accessibilityLabel,
+      } as const)
+    : ({
+        accessible: false,
+        importantForAccessibility: 'no-hide-descendants',
+      } as const);
 
   return (
     <Prof id={`Sari:${state}:${size}`} min={4}>
-    <View
-      testID={`sari-mascot-${state}`}
-      pointerEvents="none"
-      style={[{ width: size, height: size }, style]}
-      {...a11y}
-    >
-      {ready ? renderState(state, size, animate) : null}
-    </View>
+      <View
+        testID={`sari-mascot-${state}`}
+        pointerEvents="none"
+        style={[{ width: size, height: size }, style]}
+        {...a11y}
+      >
+        {ready ? renderState(state, size, animate) : null}
+      </View>
     </Prof>
   );
 });

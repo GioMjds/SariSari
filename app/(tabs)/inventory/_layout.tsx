@@ -8,6 +8,13 @@ import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
 import { useTabProgress } from '@/hooks';
 import { InventoryModalsHost } from '@/components/inventory/InventoryModalsHost';
 
+const TOP_TABS_SCREEN_OPTIONS = {
+  tabBarStyle: { display: 'none' as const },
+  swipeEnabled: true,
+  lazy: true,
+  lazyPreloadDistance: 0,
+} as const;
+
 const SUB_TAB_SEGMENTS = [
   'products',
   'movements',
@@ -22,6 +29,8 @@ const INVENTORY_TAB_DEFS = [
   { key: 'recommendations', label: 'Restock' },
 ] satisfies { key: InventorySubTab; label: string }[];
 
+const DEFAULT_TAB = INVENTORY_SUB_TABS[0];
+
 function isInventorySubTab(segment: string): segment is InventorySubTab {
   return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
 }
@@ -31,71 +40,69 @@ export default function InventoryLayout() {
   const router = useRouter();
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  const activeTab = useMemo<InventorySubTab>(() => {
-    const last = segments[segments.length - 1] ?? '';
-    return isInventorySubTab(last) ? last : 'products';
+  const { activeTab, isDetail } = useMemo(() => {
+    const idx = segments.findIndex((s) => isInventorySubTab(s));
+    return {
+      activeTab: idx === -1 ? DEFAULT_TAB : (segments[idx] as InventorySubTab),
+      isDetail: idx !== -1 && idx < segments.length - 1,
+    };
   }, [segments]);
 
   const progress = useTabProgress(activeTab, INVENTORY_SUB_TABS);
 
-  const lastSegment = segments[segments.length - 1] ?? '';
-  const isDetail =
-    segments.length > 0 &&
-    lastSegment !== '(tabs)' &&
-    lastSegment !== 'inventory' &&
-    !isInventorySubTab(lastSegment);
-
-  const handleTabChange = useCallback(
-    (t: InventorySubTab) => {
-      router.push(`/(tabs)/inventory/${t}` as Href);
+  const handleTabPress = useCallback(
+    (tab: InventorySubTab) => {
+      if (tab === activeTab) return;
+      router.navigate(`/(tabs)/inventory/${tab}` as Href);
     },
-    [router],
+    [router, activeTab],
   );
 
-  const openAddProduct = useCallback(() => {
-    router.replace('/(edit-forms)/add-product' as Href);
-  }, [router]);
+  const openAddProduct = useCallback(
+    () => router.push('/(edit-forms)/add-product' as Href),
+    [router],
+  );
+  const openAddCategory = useCallback(
+    () => router.push('/(edit-forms)/add-category' as Href),
+    [router],
+  );
+  const openAddSupplier = useCallback(
+    () => router.push('/(edit-forms)/add-supplier' as Href),
+    [router],
+  );
+  const openScanner = useCallback(() => setScannerOpen(true), []);
+  const closeScanner = useCallback(() => setScannerOpen(false), []);
 
   return (
     <SubTabScreenShell<InventorySubTab>
       tabs={INVENTORY_TAB_DEFS}
       activeTab={activeTab}
-      onTabPress={handleTabChange}
+      onTabPress={handleTabPress}
       progress={progress}
     >
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
-          initialRouteName="products"
-          screenOptions={{
-            swipeEnabled: true,
-            lazy: true,
-            lazyPreloadDistance: 0,
-            tabBarStyle: { display: 'none' },
-          }}
+          initialRouteName={DEFAULT_TAB}
+          screenOptions={TOP_TABS_SCREEN_OPTIONS}
         >
-          <TopTabs.Screen name="products" />
-          <TopTabs.Screen name="movements" />
-          <TopTabs.Screen name="stocktake" />
-          <TopTabs.Screen name="recommendations" />
+          {INVENTORY_SUB_TABS.map((name) => 
+            <TopTabs.Screen key={name} name={name} />
+          )}
         </TopTabs>
 
         {!isDetail ? (
           <InventorySpeedDialFab
             onAddProduct={openAddProduct}
-            onAddCategory={() =>
-              router.replace('/(edit-forms)/add-category' as Href)
-            }
-            onAddSupplier={() =>
-              router.replace('/(edit-forms)/add-supplier' as Href)
-            }
-            onScanBarcode={() => setScannerOpen(true)}
+            onAddCategory={openAddCategory}
+            onAddSupplier={openAddSupplier}
+            onScanBarcode={openScanner}
           />
         ) : null}
       </View>
 
       <InventoryModalsHost
         scannerOpen={scannerOpen}
-        onCloseScanner={() => setScannerOpen(false)}
+        onCloseScanner={closeScanner}
       />
     </SubTabScreenShell>
   );

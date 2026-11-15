@@ -1,5 +1,6 @@
 import { type Href, router } from 'expo-router';
 
+// May add more destinations in the future for feature expansions
 export const MORE_ROUTES = {
   home: '/(tabs)/more',
   cash: '/settings/cash-entries',

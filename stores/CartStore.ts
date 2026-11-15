@@ -4,21 +4,6 @@ import { calculateCartProductPieces, calculateTotalPieces } from '@/lib';
 import { Alert } from '@/utils';
 import { logger } from '@/lib/logger';
 
-/**
- * CartStore — shared point-of-sale cart state.
- *
- * The POS flow is split across separate tab screens (pos → cart →
- * checkout), so the cart cannot live in a single screen's local state.
- * This store holds the cart line items, payment type, and selected buyer
- * plus the pure cart actions, mirroring the state that used to live in
- * `useAddSalesForm`. Derived values (total, item count), barcode
- * handling, and submission stay in the `useCart` hook, which reads this
- * store and wires the data queries.
- *
- * `selectedCustomer` accepts either a registered Customer object (picked
- * from the suki list) or a plain string for one-off custom names typed
- * during cash checkout. `null` means no buyer was captured.
- */
 interface CartState {
   cartItems: NewSaleItem[];
   paymentType: 'cash' | 'credit';
@@ -219,10 +204,6 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   setPaymentType: (type) => {
-    // Credit sales require a registered suki — clear any plain string
-    // (one-off name) so the user can't submit a typed buyer as a Suki
-    // for an utang record. Switching back to cash preserves whatever
-    // was captured, so the user can toggle modes without re-entering.
     const current = get().selectedCustomer;
     if (type === 'credit' && typeof current === 'string') {
       set({ paymentType: type, selectedCustomer: null });

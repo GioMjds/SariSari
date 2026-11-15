@@ -1163,11 +1163,6 @@ export function SariPeekSparkles() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Customers                                                           */
-/* ------------------------------------------------------------------ */
-
-/** Small outlined heart centered on (cx, cy). Float it from its own center. */
 export function SariHeart({ cx, cy, r = 7 }: { cx: number; cy: number; r?: number }) {
   const d = `M${cx} ${cy + r}
     C${cx - r * 1.6} ${cy - r * 0.1} ${cx - r * 0.9} ${cy - r * 1.5} ${cx} ${cy - r * 0.55}

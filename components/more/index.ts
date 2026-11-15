@@ -1,5 +1,4 @@
 export * from './MoreHomeScreen';
-export * from './CashSummaryFeatureCard';
 export * from './MoreDestinationRow';
 export * from './MoreScreenHeader';
 export * from './MoreSection';

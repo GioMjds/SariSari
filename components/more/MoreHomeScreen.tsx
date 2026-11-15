@@ -7,14 +7,18 @@ import {
   useRepriceFlags,
 } from '@/hooks';
 import { getTodayDateString } from '@/utils';
-import { type CashSummaryState } from './CashSummaryFeatureCard';
 import { formatLocalBackupTimestamp } from './formatLocalBackupTimestamp';
 import { MORE_ROUTES } from './moreNavigation';
 import { MoreDestinationRow } from './MoreDestinationRow';
 import { MoreScreenHeader } from './MoreScreenHeader';
 import { MoreSection } from './MoreSection';
 import { useMoreDestinationNavigation } from './useMoreDestinationNavigation';
-import { formatPesos } from '@/lib';
+import { formatPesos, Pesos } from '@/lib';
+
+type CashSummaryState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; paidExpenses: Pesos; ownerDrawings: Pesos };
 
 export function MoreHomeScreen() {
   const { t, i18n } = useTranslation();
