@@ -96,7 +96,7 @@ export function MoreHomeScreen() {
             supportingText={t('common:moreHomeSubtitle')}
           />
 
-          <MoreSection label={t('common:moreHomeStoreDataSection')}>
+          <MoreSection label={t('common:moreHomeEyebrow')}>
             <MoreDestinationRow
               icon="bar-chart"
               title={t('common:moreHomeReportsLabel')}
@@ -156,6 +156,9 @@ export function MoreHomeScreen() {
               )}`}
               accessibilityHint={t('common:moreHomeEServicesHint')}
             />
+          </MoreSection>
+
+          <MoreSection label={t('common:moreHomeStoreDataSection')}>
             <MoreDestinationRow
               icon="cloud"
               title={t('common:moreHomeBackupLabel')}

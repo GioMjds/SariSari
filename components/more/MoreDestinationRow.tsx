@@ -47,9 +47,9 @@ export function MoreDestinationRow({
       {badgeCount !== undefined && badgeCount > 0 ? (
         <View
           testID="more-row-badge"
-          className="mr-3 min-w-[24px] items-center justify-center rounded-full bg-persimmon-500 px-2 py-0.5"
+          className="mr-3 min-w-[24px] items-center justify-center rounded-full bg-persimmon-500 px-2 py-1"
         >
-          <StyledText variant="extrabold" className="text-xs text-paper-50">
+          <StyledText variant="extrabold" className="text-md text-paper-50">
             {badgeCount > 99 ? '99+' : String(badgeCount)}
           </StyledText>
         </View>

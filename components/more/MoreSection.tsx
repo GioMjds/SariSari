@@ -13,7 +13,7 @@ export function MoreSection({ label, children }: MoreSectionProps) {
       {label ? (
         <StyledText
           variant="extrabold"
-          className="mb-2 text-sm text-ink-700"
+          className="mb-2 text-md text-ink-700"
         >
           {label}
         </StyledText>
