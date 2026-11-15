@@ -433,3 +433,13 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Hypothesis: the pull-to-refresh `Gesture.Pan().activeOffsetY(20)` activates on any 20px downward drag, wherever the scroll position is, and cancels the native scroll gesture mid-drag. The gesture was also rebuilt on every render.
 - Change: the pan now uses `manualActivation(true)`. It activates only when at the top and pulled down more than 20px, and fails otherwise. It is memoized with `useMemo`.
 - Pending: device re-test. If confirmed, apply the same change to `RefreshableFlatList`. The TS2375 error on the scroll view props spread existed before this change.
+
+## 2026-11-15 - Facebook showcase banners
+
+- Added three 1200x630 landscape banner options in `assets/banners/facebook-showcase/` (exported at 2x, 2400x1260): `resibo-paper`, `cinnamon-passbook`, `feature-shelf`.
+- Sources are plain HTML and CSS in `assets/banners/facebook-showcase/src/`. They read tokens from `DESIGN.md`, the StackSansText fonts, the wordmark SVGs, the Sari mascot, and the screenshots in `assets/images/app-screenshots/`.
+- Export command: headless Chrome with `--allow-file-access-from-files --force-device-scale-factor=2 --window-size=1200,630 --screenshot=<png> file:///<html>`.
+- Assumptions: Facebook feed image size (1200x630), Taglish copy, no download call to action because no store link exists yet.
+- Skipped from the banner skill: Pinterest research and AI image generation. The helper scripts are not installed, and the screenshots plus mascot already carry the visuals.
+- Follow-up: added `all-screens` banner. It shows all nine screenshots in one row, grouped under the three main points: Benta (5 screens), Stock (1), Utang (3). Each screen has a short caption.
+- Follow-up: added nine single-screen banners in `assets/banners/facebook-showcase/screens/`, one per screenshot. One template (`src/screen.html`) holds the copy for all nine in a `SCREENS` array and picks an entry with `?i=0..8`. Each banner has a label chip, a headline, three main points, a matching Sari state, and the screenshot in a phone frame.
