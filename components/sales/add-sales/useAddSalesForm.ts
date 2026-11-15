@@ -12,7 +12,7 @@ import {
   useBarcodeResolver,
   useCustomers,
   useProducts,
-  useSales,
+  useInsertSale,
   useCustomerCreditSummary,
 } from '@/hooks';
 import type { OverrideReasonResult } from '@/components/utang/credit-guardrails';
@@ -32,7 +32,7 @@ export interface CartItem {
 
 export function useAddSalesForm() {
   const { getAllProductsQuery } = useProducts();
-  const { insertSaleMutation } = useSales();
+  const insertSaleMutation = useInsertSale();
   const addToast = useToastStore((state) => state.addToast);
 
   const [cartItems, setCartItems] = useState<NewSaleItem[]>([]);

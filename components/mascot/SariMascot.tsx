@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, startTransition, useEffect, useState } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useScreenFocused } from './useScreenFocused';
+import { Prof } from '@/utils/perf';
 import { SariDefault } from './states/SariDefault';
 import { SariEmpty } from './states/SariEmpty';
 import { SariError } from './states/SariError';
@@ -53,6 +54,8 @@ interface SariMascotProps {
   size?: number;
   /** Set false to render the still pose. Reduced Motion always forces still. */
   animated?: boolean;
+  /** Build Sari after first paint in a low-priority render, leaving an empty slot until then. */
+  defer?: boolean;
   /** When set, Sari is announced as an image. Otherwise Sari is decorative. */
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -66,10 +69,16 @@ export const SariMascot = memo(function SariMascot({
   state = 'default',
   size = 120,
   animated = true,
+  defer = false,
   accessibilityLabel,
   style,
 }: SariMascotProps) {
   const reducedMotion = useReducedMotion();
+  const [ready, setReady] = useState(!defer);
+  // A transition render is split into slices, so building Sari does not block touches.
+  useEffect(() => {
+    if (!ready) startTransition(() => setReady(true));
+  }, [ready]);
   const focused = useScreenFocused();
   // Loops stop when the screen is hidden (tabs stay mounted) or under Reduce Motion.
   const animate = animated && !reducedMotion && focused;
@@ -78,14 +87,16 @@ export const SariMascot = memo(function SariMascot({
     : ({ accessible: false, importantForAccessibility: 'no-hide-descendants' } as const);
 
   return (
+    <Prof id={`Sari:${state}:${size}`} min={4}>
     <View
       testID={`sari-mascot-${state}`}
       pointerEvents="none"
       style={[{ width: size, height: size }, style]}
       {...a11y}
     >
-      {renderState(state, size, animate)}
+      {ready ? renderState(state, size, animate) : null}
     </View>
+    </Prof>
   );
 });
 

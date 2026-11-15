@@ -1,4 +1,4 @@
-import { withProf } from '@/utils/perf';
+import { Prof, withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import {
   CreditAgingChart,
@@ -164,9 +164,10 @@ function ReportsScreen() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
   // Sari's pose and line follow the most urgent thing in the data.
-  const sari: { state: SariState; text: string } = (() => {
+  // No pose while loading, so Sari is built once with the pose the data calls for.
+  const sari: { state: SariState | null; text: string } = (() => {
     if (isKPIsLoading || isStockLoading) {
-      return { state: 'loading', text: 'Counting your numbers...' };
+      return { state: null, text: 'Counting your numbers...' };
     }
     if (kpis.totalSales === 0 && salesBreakdown.totalTransactions === 0) {
       return {
@@ -195,11 +196,11 @@ function ReportsScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <MoreDetailHeader
+      <Prof id="Reports:Header"><MoreDetailHeader
         title={t('common:reportsTitle')}
         onBack={goBackToMore}
         backAccessibilityLabel={t('common:moreBackA11y')}
-      />
+      /></Prof>
       <RefreshableScrollView
         className="flex-1 bg-paper-200"
         contentContainerStyle={{
@@ -239,14 +240,18 @@ function ReportsScreen() {
               transform: [{ rotate: '45deg' }],
             }}
           />
-          <SariMascot state={sari.state} size={96} />
+          {sari.state ? (
+            <SariMascot state={sari.state} size={96} defer />
+          ) : (
+            <View style={{ width: 96, height: 96 }} />
+          )}
         </View>
 
         <View className="px-5 mt-3">
-          <DateRangeSelector
+          <Prof id="Reports:DateRange"><DateRangeSelector
             activeRange={dateRangeType}
             onRangeChange={handleDateRangeChange}
-          />
+          /></Prof>
         </View>
 
         {/* ─── Smart Alerts / Insights ────────────────────────── */}
@@ -271,7 +276,7 @@ function ReportsScreen() {
         {/* ─── Bento KPI grid ─────────────────────────────────── */}
         <View className="px-5 mt-6">
           {isKPIsLoading ? (
-            <View className="mt-3 gap-y-3">
+            <Prof id="Reports:KpiSkeleton"><View className="mt-3 gap-y-3">
               <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100/60 shadow-sm gap-y-3">
                 <Skeleton width={140} height={12} borderRadius={4} />
                 <Skeleton width={180} height={32} borderRadius={6} />
@@ -308,10 +313,10 @@ function ReportsScreen() {
                 <Skeleton width={140} height={14} borderRadius={4} />
                 <Skeleton width="100%" height={40} borderRadius={8} />
               </View>
-            </View>
+            </View></Prof>
           ) : (
             <View className="mt-3">
-              <BentoGrid>
+              <Prof id="Reports:BentoGrid"><BentoGrid>
                 <BentoHero
                   animationKey={`${dateRangeType}-${kpis.totalSales}`}
                   kicker="Cash sales"
@@ -407,13 +412,13 @@ function ReportsScreen() {
                     accent="sage"
                   />
                 </View>
-              </BentoGrid>
+              </BentoGrid></Prof>
 
               <View className="mt-4">
-                <FinancialResultSection
+                <Prof id="Reports:FinancialResult"><FinancialResultSection
                   kpis={kpis}
                   onOpenLedger={() => router.push('/settings/cash-entries')}
-                />
+                /></Prof>
               </View>
             </View>
           )}
@@ -422,7 +427,7 @@ function ReportsScreen() {
         {/* ─── Sales Trend & Payments ─────────────────────────── */}
         <View className="px-5 mt-6">
           <View>
-            <CollapsibleSection
+            <Prof id="Reports:Section1"><CollapsibleSection
               id="trend"
               title="Sales and payments"
               subtitle="Daily sales and how customers paid"
@@ -474,13 +479,13 @@ function ReportsScreen() {
                   />
                 </View>
               )}
-            </CollapsibleSection>
+            </CollapsibleSection></Prof>
           </View>
         </View>
 
         {/* ─── Top Products ──────────────────────────────────── */}
         <View className="px-5 mt-6">
-          <CollapsibleSection
+          <Prof id="Reports:Section2"><CollapsibleSection
             id="top"
             title="Top products and profit"
             subtitle="Best sellers and what earns the most"
@@ -552,12 +557,12 @@ function ReportsScreen() {
                 <ProfitabilityRanking products={productProfitability} />
               </View>
             )}
-          </CollapsibleSection>
+          </CollapsibleSection></Prof>
         </View>
 
         {/* ─── Stock Movement ────────────────────────────────── */}
         <View className="px-5 mt-6">
-          <CollapsibleSection
+          <Prof id="Reports:Section3"><CollapsibleSection
             id="stock"
             title="Stock and movement"
             subtitle="What sold, what is running low"
@@ -695,12 +700,12 @@ function ReportsScreen() {
                 )}
               </View>
             )}
-          </CollapsibleSection>
+          </CollapsibleSection></Prof>
         </View>
 
         {/* ─── Suki Credit Aging ─────────────────────────────── */}
         <View className="px-5 mt-6">
-          <CollapsibleSection
+          <Prof id="Reports:Section4"><CollapsibleSection
             id="aging"
             title="Utang aging"
             subtitle="How long each suki has owed you"
@@ -763,12 +768,12 @@ function ReportsScreen() {
                 </View>
               </View>
             )}
-          </CollapsibleSection>
+          </CollapsibleSection></Prof>
         </View>
 
         {/* ─── Cashbook History ──────────────────────────────── */}
         <View className="px-5 mt-6">
-          <CollapsibleSection
+          <Prof id="Reports:Section5"><CollapsibleSection
             id="cashbook"
             title="Cash drawer history"
             subtitle="Daily drawer counts and any shortage or overage"
@@ -807,7 +812,7 @@ function ReportsScreen() {
                 ))}
               </View>
             )}
-          </CollapsibleSection>
+          </CollapsibleSection></Prof>
         </View>
       </RefreshableScrollView>
     </View>

@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { memo, useCallback, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Href, useRouter, useSegments } from 'expo-router';
@@ -9,6 +9,7 @@ import { SariMascot, type SariState } from '@/components/mascot';
 import { NotificationSheet } from './NotificationSheet';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useSystemNotifications } from '@/hooks';
+import { Prof, useChangeLog } from '@/utils/perf';
 
 type SariTab = 'home' | 'sales' | 'inventory' | 'customers' | 'more';
 
@@ -32,12 +33,15 @@ const SARI_LINES = {
 
 const TABS = ['home', 'sales', 'inventory', 'customers', 'more'] satisfies SariTab[];
 
+const SARI_SIZE = 56;
+
+/** Active tab, held at the last tab while a pushed screen covers the header. */
 function useActiveTab(): SariTab {
   const segments = useSegments() as string[];
-  return useMemo(
-    () => segments.find((s): s is SariTab => TABS.includes(s as SariTab)) ?? 'home',
-    [segments],
-  );
+  const current = segments.find((s): s is SariTab => TABS.includes(s as SariTab));
+  const [lastTab, setLastTab] = useState<SariTab>(current ?? 'home');
+  if (current && current !== lastTab) setLastTab(current);
+  return current ?? lastTab;
 }
 
 export const StoreHeader = memo(function StoreHeader() {
@@ -47,7 +51,12 @@ export const StoreHeader = memo(function StoreHeader() {
 
   useSystemNotifications(alerts);
 
+  // Poses stay mounted once built, so a tab change shows one instead of rebuilding it.
+  const [builtTabs, setBuiltTabs] = useState<SariTab[]>([tab]);
+  if (!builtTabs.includes(tab)) setBuiltTabs([...builtTabs, tab]);
+
   const [isSheetVisible, setSheetVisible] = useState(false);
+  useChangeLog('StoreHeader', { tab, alertCount, alerts, isSheetVisible });
 
   const handleNotificationSelect = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -70,8 +79,16 @@ export const StoreHeader = memo(function StoreHeader() {
     <View className="bg-paper-200 px-4 pt-3 pb-2">
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-2">
-          <View className="mr-2">
-            <SariMascot state={SARI_TAB_STATE[tab]} size={56} />
+          <View className="mr-2" style={styles.sariSlot}>
+            {builtTabs.map((key) => (
+              <View key={key} style={key === tab ? styles.pose : styles.hiddenPose}>
+                <SariMascot
+                  state={SARI_TAB_STATE[key]}
+                  size={SARI_SIZE}
+                  animated={key === tab}
+                />
+              </View>
+            ))}
           </View>
           <View className="flex-1 items-start">
             <SariWordmark height={26} accessibilityLabel="SariSari" />
@@ -102,14 +119,20 @@ export const StoreHeader = memo(function StoreHeader() {
         </View>
       </View>
 
-      <NotificationSheet
+      <Prof id="Header:NotificationSheet"><NotificationSheet
         visible={isSheetVisible}
         alerts={alerts}
         onClose={handleSheetClose}
         onAlertAction={handleAlertAction}
-      />
+      /></Prof>
     </View>
   );
 });
 
 StoreHeader.displayName = 'StoreHeader';
+
+const styles = StyleSheet.create({
+  sariSlot: { width: SARI_SIZE, height: SARI_SIZE },
+  pose: { ...StyleSheet.absoluteFillObject },
+  hiddenPose: { ...StyleSheet.absoluteFillObject, display: 'none' },
+});

@@ -3,13 +3,13 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
 export interface MiniInsightsCardProps {
-  topProductName?: string;
-  unitsSold?: number;
+  topProductName: string;
+  unitsSold: number;
 }
 
 export function MiniInsightsCard({
-  topProductName = 'Palmolive 12ml',
-  unitsSold = 18,
+  topProductName,
+  unitsSold,
 }: MiniInsightsCardProps) {
   return (
     <View className="px-4 mb-4">

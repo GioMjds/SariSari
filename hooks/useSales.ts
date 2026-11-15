@@ -188,20 +188,11 @@ export function useTodayStats() {
   });
 }
 
-export function useSales() {
+/** Record a sale without subscribing to any sales query. */
+export function useInsertSale() {
   const queryClient = useQueryClient();
 
-  const getTodayStatsQuery = useQuery({
-    queryKey: salesKeys.salesStats,
-    queryFn: () => getTodayStats(),
-  });
-
-  const getAllSalesQuery = useQuery({
-    queryKey: salesKeys.all,
-    queryFn: () => getAllSales(),
-  });
-
-  const insertSaleMutation = useMutation({
+  return useMutation({
     mutationFn: ({
       items,
       payment_type,
@@ -222,6 +213,21 @@ export function useSales() {
       invalidateSaleDependencies(queryClient);
     },
   });
+}
+
+export function useSales() {
+
+  const getTodayStatsQuery = useQuery({
+    queryKey: salesKeys.salesStats,
+    queryFn: () => getTodayStats(),
+  });
+
+  const getAllSalesQuery = useQuery({
+    queryKey: salesKeys.all,
+    queryFn: () => getAllSales(),
+  });
+
+  const insertSaleMutation = useInsertSale();
 
   const deleteSaleMutation = useDeleteSale();
   const voidSaleMutation = useVoidSale();

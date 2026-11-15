@@ -79,13 +79,13 @@ export const getReportKPIs = async (
     db.getFirstAsync<{ total: number }>(
       `SELECT COALESCE(SUM(amount), 0) as total
        FROM credit_transactions
-       WHERE date BETWEEN ? AND ?`,
+       WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)`,
       [startDate, endDate],
     ),
     db.getFirstAsync<{ total: number }>(
       `SELECT COALESCE(SUM(amount), 0) as total
        FROM payments
-       WHERE date BETWEEN ? AND ?`,
+       WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)`,
       [startDate, endDate],
     ),
     db.getFirstAsync<{ paid_expenses: number; owner_drawings: number }>(
@@ -417,13 +417,13 @@ export const getCreditsOverview = async (
     db.getFirstAsync<{ total: number }>(
       `SELECT COALESCE(SUM(amount), 0) as total
        FROM credit_transactions
-       WHERE date BETWEEN ? AND ?`,
+       WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)`,
       [startDate, endDate],
     ),
     db.getFirstAsync<{ total: number }>(
       `SELECT COALESCE(SUM(amount), 0) as total
        FROM payments
-       WHERE date BETWEEN ? AND ?`,
+       WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)`,
       [startDate, endDate],
     ),
     // Outstanding is across all unpaid credit_transactions, regardless of

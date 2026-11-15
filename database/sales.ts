@@ -394,6 +394,14 @@ export const hasSales = async (): Promise<boolean> => {
   return !!row?.exists_val;
 };
 
+/** Number of recorded sales, without loading the rows. */
+export const getSalesCount = async (): Promise<number> => {
+  const row = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM sales',
+  );
+  return row?.count ?? 0;
+};
+
 export const getSalesByDateRange = async (
   startDate: string,
   endDate: string,

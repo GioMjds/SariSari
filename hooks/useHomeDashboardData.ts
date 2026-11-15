@@ -4,9 +4,9 @@ import { format } from 'date-fns';
 import { useFinancialTotals } from './useFinancial';
 import { useCreditKPIs, useCustomers } from './useCredits';
 import { useProducts } from './useProducts';
-import { useRecentSales, useSales } from './useSales';
+import { useRecentSales, useTodayStats } from './useSales';
 import { useProfile } from './useProfile';
-import { useReportKPIs } from './useReports';
+import { useReportKPIs, useTopSellingProducts } from './useReports';
 import {
   groupSalesByHour,
   HourlySalesGroup,
@@ -41,7 +41,8 @@ export function useHomeDashboardData() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { getAllProductsQuery } = useProducts();
-  const { getTodayStatsQuery } = useSales();
+  // Only today's stats are read here, so the all-sales query is not subscribed.
+  const getTodayStatsQuery = useTodayStats();
   const { data: recentSalesData, isLoading: recentLoading } =
     useRecentSales(10);
   const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
@@ -60,6 +61,7 @@ export function useHomeDashboardData() {
   const { data: todayCashOut } = useFinancialTotals(todayDate, todayDate);
   const { data: todayKpisData, error: todayKpisError } =
     useReportKPIs(todayRange);
+  const { data: topSellingToday } = useTopSellingProducts(todayRange, 1);
 
   const profitMargin = useMemo(() => {
     return todayKpisData?.totalProfit ?? null;
@@ -120,9 +122,9 @@ export function useHomeDashboardData() {
 
   const isError = useMemo(
     () =>
-      !!getTodayStatsQuery.error ||
-      !!getAllProductsQuery.error ||
-      !!todayKpisError,
+      getTodayStatsQuery.error ||
+      getAllProductsQuery.error ||
+      todayKpisError,
     [getTodayStatsQuery.error, getAllProductsQuery.error, todayKpisError],
   );
 
@@ -139,19 +141,13 @@ export function useHomeDashboardData() {
     return groupSalesByHour(mapped);
   }, [recentSalesData]);
 
+  // Top seller today by real units sold; null when nothing sold yet.
   const topProduct = useMemo(() => {
-    if (products && products.length > 0) {
-      const sorted = [...products].sort((a, b) => b.quantity - a.quantity);
-      const top = sorted[0];
-      if (top) {
-        return {
-          name: top.name,
-          unitsSold: Math.max(top.quantity, 12),
-        };
-      }
-    }
-    return { name: 'Palmolive 12ml', unitsSold: 18 };
-  }, [products]);
+    const top = topSellingToday?.[0];
+    return top && top.unitsSold > 0
+      ? { name: top.name, unitsSold: top.unitsSold }
+      : null;
+  }, [topSellingToday]);
 
   const refetchAll = useCallback(async () => {
     setRefreshing(true);

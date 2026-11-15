@@ -2,7 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Href, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useToastStore } from '@/stores';
-import { useSales, useBarcodeResolver, useCustomers } from '@/hooks';
+import {
+  useInsertSale,
+  useTodayStats,
+  useBarcodeResolver,
+  useCustomers,
+} from '@/hooks';
 import { InsufficientStockError } from '@/database/sales';
 import { Alert } from '@/utils';
 import { logger } from '@/lib/logger';
@@ -12,7 +17,9 @@ import { useCartLines } from './useCartLines';
 export function useCart() {
   const cartLines = useCartLines();
   const { data: customers = [] } = useCustomers();
-  const { insertSaleMutation, getTodayStatsQuery } = useSales();
+  // The all-sales query is not read here, so it is not subscribed.
+  const insertSaleMutation = useInsertSale();
+  const getTodayStatsQuery = useTodayStats();
   const addToast = useToastStore((state) => state.addToast);
 
   const prevCustomersRef = useRef<typeof customers>(customers);

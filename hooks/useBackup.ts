@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as AuthSession from 'expo-auth-session';
-import { getAllSales } from '@/database/sales';
+import { getSalesCount } from '@/database/sales';
 import {
   createLocalSnapshot,
   exchangeCodeForTokens,
@@ -43,8 +43,8 @@ export const useSchedulerInputs = () => {
     let cancelled = false;
     (async () => {
       try {
-        const rows = await getAllSales();
-        if (!cancelled) setSalesCount(rows.length);
+        const count = await getSalesCount();
+        if (!cancelled) setSalesCount(count);
       } catch {}
     })();
     return () => {

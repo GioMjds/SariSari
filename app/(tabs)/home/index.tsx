@@ -1,4 +1,4 @@
-import { withProf } from '@/utils/perf';
+import { Prof, useChangeLog, withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
@@ -49,6 +49,18 @@ function HomeScreen() {
     refreshing,
     refetchAll,
   } = useHomeDashboardData();
+  useChangeLog('home/index', {
+    ...stats,
+    products,
+    recentSales,
+    topProduct,
+    goal,
+    suggestions,
+    isError,
+    isLoading,
+    refreshing,
+    refetchAll,
+  });
 
   if (isLoading) return <HomeOverviewSkeleton />;
 
@@ -71,7 +83,7 @@ function HomeScreen() {
       onRefresh={refetchAll}
       refreshThreshold={80}
     >
-      <GettingStartedCard />
+      <Prof id="Home:GettingStartedCard"><GettingStartedCard /></Prof>
       {isError ? (
         <DashboardErrorState onRetry={refetchAll} />
       ) : products.length === 0 && stats.transactionCount === 0 ? (
@@ -101,16 +113,16 @@ function HomeScreen() {
             </StyledText>
           </View>
 
-          <DashboardQuickActions
+          <Prof id="Home:DashboardQuickActions"><DashboardQuickActions
             onNewSale={() => router.push(routes.newSale)}
             onAddProduct={() => router.push(routes.addProduct)}
             onAddStock={() => router.push(routes.inventory)}
             onOpenCredits={() => router.push(routes.utang)}
             onOpenReports={() => router.push(routes.reports)}
             overdueCount={stats.overdueCount}
-          />
+          /></Prof>
 
-          <DashboardKPIGrid
+          <Prof id="Home:DashboardKPIGrid"><DashboardKPIGrid
             totalSales={stats.todaySalesTotal}
             transactionCount={stats.transactionCount}
             profitMargin={stats.profitMargin}
@@ -126,39 +138,41 @@ function HomeScreen() {
               else if (target === 'customers') router.push(routes.customers);
               else router.push(routes.reports);
             }}
-          />
+          /></Prof>
 
-          <DashboardGoalCard
+          <Prof id="Home:DashboardGoalCard"><DashboardGoalCard
             recommendation={goal}
             onPress={() => handleGoalAction(goal)}
-          />
+          /></Prof>
 
           {stats.lowStockCount > 0 && (
-            <DashboardStockAlert
+            <Prof id="Home:DashboardStockAlert"><DashboardStockAlert
               lowStockCount={stats.lowStockCount}
               onRestock={() => router.push(routes.inventory)}
-            />
+            /></Prof>
           )}
 
           {suggestions.length > 0 && (
-            <DashboardSuggestions
+            <Prof id="Home:DashboardSuggestions"><DashboardSuggestions
               suggestions={suggestions}
               onPress={handleSuggestionPress}
-            />
+            /></Prof>
           )}
 
-          <DashboardRecentSales
+          <Prof id="Home:DashboardRecentSales"><DashboardRecentSales
             sales={recentSales}
             onOpenSale={(id) =>
               router.push(`/(edit-forms)/sale-details/${id}` as Href)
             }
             onSeeAll={() => router.push('/(tabs)/sales/receipts' as Href)}
-          />
+          /></Prof>
 
-          <MiniInsightsCard
-            topProductName={topProduct.name}
-            unitsSold={topProduct.unitsSold}
-          />
+          {topProduct && (
+            <Prof id="Home:MiniInsightsCard"><MiniInsightsCard
+              topProductName={topProduct.name}
+              unitsSold={topProduct.unitsSold}
+            /></Prof>
+          )}
         </>
       )}
     </RefreshableScrollView>
