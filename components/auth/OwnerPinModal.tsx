@@ -1,10 +1,13 @@
-import { useState, useEffect, FC } from 'react';
-import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { useCallback, useEffect, useState, FC } from 'react';
+import { Modal, Pressable, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { verifyOwnerPin } from '@/database/auth';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { StyledText } from '@/components/elements/StyledText';
+import { AuthScreenShell } from './AuthScreenShell';
+import { PinBoxes, type PinBoxStatus } from './PinBoxes';
+import { PinPad } from './PinPad';
 
 interface Props {
   visible: boolean;
@@ -15,6 +18,10 @@ interface Props {
   onForgotPin?: () => void;
 }
 
+const PIN_LENGTH = 6;
+const WRONG_PIN_CLEAR_MS = 400;
+
+/** Full-screen owner PIN challenge styled like the app lock screen. */
 export const OwnerPinModal: FC<Props> = ({
   visible,
   title,
@@ -24,259 +31,155 @@ export const OwnerPinModal: FC<Props> = ({
   onForgotPin,
 }) => {
   const { t } = useTranslation('settings');
+  const registerFailedAttempt = useAuthStore((s) => s.registerFailedAttempt);
+  const resetFailedAttempts = useAuthStore((s) => s.resetFailedAttempts);
+  const clearExpiredLockout = useAuthStore((s) => s.clearExpiredLockout);
+  const lockoutUntil = useAuthStore((s) => s.lockoutUntil);
   const [pin, setPin] = useState('');
+  const [status, setStatus] = useState<PinBoxStatus>('idle');
+  const [shakeKey, setShakeKey] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const {
-    registerFailedAttempt,
-    resetFailedAttempts,
-    clearExpiredLockout,
-    isLockedOut,
-    getLockoutSecondsRemaining,
-  } = useAuthStore();
-  const [secondsLeft, setSecondsLeft] = useState(getLockoutSecondsRemaining());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    if (!visible) {
-      setPin('');
-      setErrorMsg('');
-      return;
-    }
-
-    const interval = setInterval(() => {
-      clearExpiredLockout();
-      if (isLockedOut()) {
-        setSecondsLeft(getLockoutSecondsRemaining());
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [visible, clearExpiredLockout, isLockedOut, getLockoutSecondsRemaining]);
-
-  const locked = isLockedOut();
-
-  const handleKeyPress = (num: string) => {
-    if (locked || pin.length >= 6) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (visible) return;
+    setPin('');
+    setStatus('idle');
     setErrorMsg('');
-    const newPin = pin + num;
-    setPin(newPin);
+  }, [visible]);
+
+  const lockedOut = lockoutUntil !== null && lockoutUntil > now;
+  useEffect(() => {
+    if (!visible || lockoutUntil === null) return;
+    setNow(Date.now());
+    const id = setInterval(() => {
+      setNow(Date.now());
+      clearExpiredLockout();
+    }, 1000);
+    return () => clearInterval(id);
+  }, [visible, lockoutUntil, clearExpiredLockout]);
+
+  const secondsLeft = lockedOut
+    ? Math.max(0, Math.ceil(((lockoutUntil ?? 0) - now) / 1000))
+    : 0;
+
+  const submitPin = useCallback(
+    async (value: string) => {
+      setIsVerifying(true);
+      try {
+        if (await verifyOwnerPin(value)) {
+          void Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          );
+          resetFailedAttempts();
+          setStatus('success');
+          setPin('');
+          onSuccess();
+          return;
+        }
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        registerFailedAttempt();
+        setNow(Date.now());
+        setStatus('error');
+        setShakeKey((k) => k + 1);
+        setErrorMsg(t('pin.wrong_pin'));
+        setTimeout(() => {
+          setPin('');
+          setStatus('idle');
+        }, WRONG_PIN_CLEAR_MS);
+      } catch {
+        setPin('');
+        setErrorMsg(t('pin.verify_failed'));
+      } finally {
+        setIsVerifying(false);
+      }
+    },
+    [onSuccess, registerFailedAttempt, resetFailedAttempts, t],
+  );
+
+  const padBlocked = lockedOut || isVerifying || status !== 'idle';
+
+  const handleDigit = (digit: string) => {
+    if (padBlocked || pin.length >= PIN_LENGTH) return;
+    setErrorMsg('');
+    const next = pin + digit;
+    setPin(next);
+    if (next.length === PIN_LENGTH) void submitPin(next);
   };
 
   const handleBackspace = () => {
-    if (locked || pin.length === 0) return;
-    setPin(pin.slice(0, -1));
+    if (padBlocked) return;
+    setErrorMsg('');
+    setPin((v) => v.slice(0, -1));
   };
 
-  const handleSubmit = async () => {
-    if (locked || isVerifying || pin.length < 4) return;
-    setIsVerifying(true);
-    try {
-      const isValid = await verifyOwnerPin(pin);
-      if (isValid) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        resetFailedAttempts();
-        setPin('');
-        onSuccess();
-        return;
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      registerFailedAttempt();
-      setPin('');
-      setErrorMsg(t('pin.wrong_pin'));
-    } catch {
-      setPin('');
-      setErrorMsg(t('pin.verify_failed'));
-    } finally {
-      setIsVerifying(false);
-    }
-  };
+  const showError = lockedOut || status === 'error' || Boolean(errorMsg);
 
   return (
     <Modal
       visible={visible}
-      transparent
-      animationType="fade"
+      animationType="slide"
+      presentationStyle="fullScreen"
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <View style={styles.backdrop}>
-      <View style={styles.card}>
-        <StyledText variant="semibold" style={styles.title}>
-          {title || t('pin.title')}
-        </StyledText>
-        {Boolean(actionDescription) && (
-          <StyledText variant="regular" style={styles.subtext}>
-            {actionDescription}
-          </StyledText>
-        )}
-
-        {locked ? (
-          <StyledText variant="semibold" style={styles.errorText}>
-            {t('pin.locked_out', { seconds: secondsLeft })}
-          </StyledText>
-        ) : (
-          <>
-            <View style={styles.dotsContainer}>
-              {[0, 1, 2, 3, 4, 5].map((idx) => (
-                <View
-                  key={idx}
-                  style={[styles.dot, pin.length > idx && styles.dotFilled]}
-                />
-              ))}
-            </View>
-
-            {Boolean(errorMsg) && (
-              <StyledText variant="semibold" style={styles.errorText}>
-                {errorMsg}
-              </StyledText>
-            )}
-
-            <View style={styles.keypad}>
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                <TouchableOpacity
-                  key={digit}
-                  style={styles.keyBtn}
-                  onPress={() => handleKeyPress(digit)}
+      <View className="flex-1 bg-paper-200">
+        <AuthScreenShell
+          sari={showError ? 'error' : 'default'}
+          title={title || t('pin.title')}
+          subtitle={actionDescription || t('pin.enter_pin')}
+          onBack={onCancel}
+          backLabel={t('pin.back_a11y')}
+          footer={
+            <>
+              <PinPad
+                disabled={lockedOut || isVerifying}
+                onDigit={handleDigit}
+                onBackspace={handleBackspace}
+              />
+              {onForgotPin ? (
+                <Pressable
+                  testID="owner-pin-forgot"
+                  accessibilityRole="button"
+                  onPress={onForgotPin}
+                  className="min-h-[48px] items-center justify-center mt-2 active:opacity-70"
                 >
-                  <StyledText variant="semibold" style={styles.keyText}>
-                    {digit}
+                  <StyledText
+                    variant="semibold"
+                    className="text-persimmon-500 text-[15px]"
+                  >
+                    {t('pin.forgot_pin')}
                   </StyledText>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.keyBtn}
-                onPress={() => setPin('')}
+                </Pressable>
+              ) : null}
+            </>
+          }
+        >
+          <PinBoxes
+            testID="owner-pin-boxes"
+            accessibilityLabel={t('pin.enter_pin')}
+            value={pin}
+            length={PIN_LENGTH}
+            status={lockedOut ? 'error' : status}
+            shakeKey={shakeKey}
+            active={!lockedOut}
+          />
+          <View className="min-h-[44px] justify-center mt-1 w-full items-center">
+            {showError && (lockedOut || errorMsg) ? (
+              <StyledText
+                variant="semibold"
+                accessibilityLiveRegion="polite"
+                className="text-semantic-danger text-sm text-center"
               >
-                <StyledText variant="semibold" style={styles.keyActionText}>
-                  C
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.keyBtn}
-                onPress={() => handleKeyPress('0')}
-              >
-                <StyledText variant="semibold" style={styles.keyText}>
-                  0
-                </StyledText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.keyBtn}
-                onPress={handleBackspace}
-              >
-                <StyledText variant="semibold" style={styles.keyActionText}>
-                  ⌫
-                </StyledText>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        <View style={styles.btnRow}>
-          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
-            <StyledText variant="semibold" style={styles.cancelText}>
-              Cancel
-            </StyledText>
-          </TouchableOpacity>
-          {!locked && (
-            <TouchableOpacity
-              style={[styles.submitBtn, pin.length < 4 && styles.btnDisabled]}
-              disabled={pin.length < 4}
-              onPress={handleSubmit}
-            >
-              <StyledText variant="semibold" style={styles.submitText}>
-                Submit
+                {lockedOut
+                  ? t('pin.locked_out', { seconds: secondsLeft })
+                  : errorMsg}
               </StyledText>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {Boolean(onForgotPin) && (
-          <TouchableOpacity style={styles.forgotBtn} onPress={onForgotPin}>
-            <StyledText variant="medium" style={styles.forgotText}>
-              {t('pin.forgot_pin')}
-            </StyledText>
-          </TouchableOpacity>
-        )}
+            ) : null}
+          </View>
+        </AuthScreenShell>
       </View>
-    </View>
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(23, 20, 15, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: '#FAF9F5',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: { fontSize: 18, color: '#28231D', marginBottom: 6 },
-  subtext: {
-    fontSize: 14,
-    color: '#564E45',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  dotsContainer: { flexDirection: 'row', marginVertical: 16, gap: 12 },
-  dot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1.5,
-    borderColor: '#C3BAB1',
-  },
-  dotFilled: { backgroundColor: '#E85A1F', borderColor: '#E85A1F' },
-  errorText: {
-    color: '#C22D2D',
-    fontSize: 13,
-    marginVertical: 8,
-    textAlign: 'center',
-  },
-  keypad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: 240,
-    justifyContent: 'center',
-    gap: 12,
-    marginVertical: 12,
-  },
-  keyBtn: {
-    width: 64,
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: '#F0EBE6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  keyText: { fontSize: 22, color: '#28231D' },
-  keyActionText: { fontSize: 18, color: '#564E45' },
-  btnRow: { flexDirection: 'row', gap: 12, marginTop: 12, width: '100%' },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#E5DFD7',
-    alignItems: 'center',
-  },
-  cancelText: { color: '#3E3831' },
-  submitBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: '#E85A1F',
-    alignItems: 'center',
-  },
-  submitText: { color: '#fff' },
-  btnDisabled: { opacity: 0.5 },
-  forgotBtn: { marginTop: 14 },
-  forgotText: { color: '#E85A1F', fontSize: 13 },
-});

@@ -248,18 +248,17 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
               </View>
 
               <View className="min-h-[44px] justify-center mt-1 w-full items-center">
-                {lockedOut ||
-                  (errorMsg && (
-                    <StyledText
-                      variant="semibold"
-                      accessibilityLiveRegion="polite"
-                      className="text-semantic-danger text-sm text-center"
-                    >
-                      {lockedOut
-                        ? t('pin.locked_out', { seconds: secondsLeft })
-                        : errorMsg}
-                    </StyledText>
-                  ))}
+                {lockedOut || errorMsg ? (
+                  <StyledText
+                    variant="semibold"
+                    accessibilityLiveRegion="polite"
+                    className="text-semantic-danger text-sm text-center"
+                  >
+                    {lockedOut
+                      ? t('pin.locked_out', { seconds: secondsLeft })
+                      : errorMsg}
+                  </StyledText>
+                ) : null}
               </View>
             </ScrollView>
 
