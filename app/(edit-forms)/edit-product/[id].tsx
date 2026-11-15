@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -14,7 +15,7 @@ import {
   useEditProductForm,
 } from '@/components/inventory/edit-product';
 
-export default function EditProduct() {
+function EditProduct() {
   const form = useEditProductForm();
 
   if (form.isLoading) return <EditProductSkeleton />;
@@ -126,3 +127,5 @@ export default function EditProduct() {
     </SafeAreaView>
   );
 }
+
+export default withProf(EditProduct, 'edit-product/[id]');

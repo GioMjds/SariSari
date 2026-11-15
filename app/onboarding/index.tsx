@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import { BeatScene } from '@/components/onboarding/BeatScene';
 import { DayClock } from '@/components/onboarding/DayClock';
@@ -46,7 +47,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 /** Delay between Show me taps when motion is allowed. */
 const AUTOPLAY_STEP_MS = 400;
 
-export default function OnboardingPage() {
+function OnboardingPage() {
   const [step, setStep] = useState<Step>({ kind: 'profile' });
   const [profile, setProfile] = useState<OnboardingProfile>({
     ownerName: '',
@@ -391,3 +392,5 @@ export default function OnboardingPage() {
     </SafeAreaView>
   );
 }
+
+export default withProf(OnboardingPage, 'onboarding/index');

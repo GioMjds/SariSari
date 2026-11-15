@@ -1,5 +1,8 @@
+import { withProf } from '@/utils/perf';
 import { MoreHomeScreen } from '@/components/more';
 
-export default function MoreTab() {
+function MoreTab() {
   return <MoreHomeScreen />;
 }
+
+export default withProf(MoreTab, 'more/index');

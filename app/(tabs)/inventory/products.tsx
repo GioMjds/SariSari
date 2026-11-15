@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
@@ -42,7 +43,7 @@ function getEmptyVariant(
   return 'no-products';
 }
 
-export default function ProductsScreen() {
+function ProductsScreen() {
   const router = useRouter();
   const selection = useInventorySelection();
   const { bulkDeleteProductsMutation } = useProducts();
@@ -352,3 +353,5 @@ export default function ProductsScreen() {
     </View>
   );
 }
+
+export default withProf(ProductsScreen, 'inventory/products');

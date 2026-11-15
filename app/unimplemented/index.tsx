@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { getFeatureByRoute } from '@/configs/features';
@@ -15,7 +16,7 @@ type SearchParams = {
   description?: string;
 };
 
-export default function UnimplementedScreen() {
+function UnimplementedScreen() {
   const { t } = useTranslation();
   const { route, title, description } = useLocalSearchParams<SearchParams>();
 
@@ -176,3 +177,5 @@ export default function UnimplementedScreen() {
     </>
   );
 }
+
+export default withProf(UnimplementedScreen, 'unimplemented/index');

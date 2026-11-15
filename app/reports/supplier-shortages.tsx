@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -53,7 +54,7 @@ const formatDate = (iso: string): string => {
   return isValid(d) ? format(d, 'MMM dd, yyyy') : '—';
 };
 
-export default function SupplierShortagesScreen() {
+function SupplierShortagesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('receiving');
@@ -361,3 +362,5 @@ function Stat({
     </View>
   );
 }
+
+export default withProf(SupplierShortagesScreen, 'reports/supplier-shortages');

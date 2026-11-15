@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import {
   CreditAgingChart,
@@ -59,7 +60,7 @@ import {
 
 const EMPTY_ARRAY: never[] = [];
 
-export default function ReportsScreen() {
+function ReportsScreen() {
   const { t } = useTranslation();
   const { section } = useLocalSearchParams<{ section?: string }>();
   const requestedSection = typeof section === 'string' ? section : undefined;
@@ -945,3 +946,5 @@ function CashSessionRow({ session }: { session: any }) {
     </View>
   );
 }
+
+export default withProf(ReportsScreen, 'settings/reports');

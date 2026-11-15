@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import {
   FilterChips,
   SaleRow,
@@ -25,7 +26,7 @@ import {
 } from 'date-fns';
 import { formatPesos } from '@/lib';
 
-export default function Receipts() {
+function Receipts() {
   const router = useRouter();
   const flatListRef = useRef<FlatList<SaleWithItems>>(null);
 
@@ -294,3 +295,5 @@ export default function Receipts() {
     </View>
   );
 }
+
+export default withProf(Receipts, 'sales/receipts');

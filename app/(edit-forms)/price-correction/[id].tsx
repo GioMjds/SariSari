@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -14,7 +15,7 @@ import {
   PriceCorrectionActionBar,
 } from '@/components/sales/price-correction';
 
-export default function PriceCorrectionScreen() {
+function PriceCorrectionScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const numericId = Number(id);
@@ -114,3 +115,5 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 });
+
+export default withProf(PriceCorrectionScreen, 'price-correction/[id]');

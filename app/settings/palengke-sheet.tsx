@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -13,7 +14,7 @@ import {
 import { useProfile } from '@/hooks/useProfile';
 import { formatPesos } from '@/lib/money';
 
-export default function PalengkeSheet() {
+function PalengkeSheet() {
   const bottomOffset = useTabBarBottomOffset();
   const { profile } = useProfile();
   const { data: plan, isLoading, isError, refetch } = usePalengkeRestockPlan();
@@ -199,3 +200,5 @@ export default function PalengkeSheet() {
     </View>
   );
 }
+
+export default withProf(PalengkeSheet, 'settings/palengke-sheet');

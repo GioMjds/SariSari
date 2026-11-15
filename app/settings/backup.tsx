@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
 import {
@@ -8,7 +9,7 @@ import { SettingsSection } from '@/components/settings/SettingsPrimitives';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View } from 'react-native';
 
-export default function BackupScreen() {
+function BackupScreen() {
   const { t } = useTranslation();
   const bottomOffset = useTabBarBottomOffset();
 
@@ -33,3 +34,5 @@ export default function BackupScreen() {
     </View>
   );
 }
+
+export default withProf(BackupScreen, 'settings/backup');

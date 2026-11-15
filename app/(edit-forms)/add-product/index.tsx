@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { router, Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +14,7 @@ import {
   useAddProductForm,
 } from '@/components/inventory/products/add-product';
 
-export default function AddProduct() {
+function AddProduct() {
   const form = useAddProductForm();
 
   return (
@@ -127,3 +128,5 @@ export default function AddProduct() {
     </SafeAreaView>
   );
 }
+
+export default withProf(AddProduct, 'add-product/index');

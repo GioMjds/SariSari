@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, BackHandler, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { isPrimaryTabPath } from '@/constants';
+import { Prof } from '@/utils/perf';
 
 export default function ScreensLayout() {
   const { t } = useTranslation();
@@ -101,16 +102,22 @@ export default function ScreensLayout() {
   return (
     <SafeAreaView className="flex-1 bg-paper-200" edges={['top']}>
       <StatusBar style="dark" backgroundColor="#F7F6F2" />
-      <StoreHeader />
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { display: 'none' },
-          lazy: true,
-        }}
-        initialRouteName="home"
-      />
-      <StyledTab />
+      <Prof id="StoreHeader">
+        <StoreHeader />
+      </Prof>
+      <Prof id="TabScreens">
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
+            lazy: true,
+          }}
+          initialRouteName="home"
+        />
+      </Prof>
+      <Prof id="StyledTab">
+        <StyledTab />
+      </Prof>
 
       {toastVisible && (
         <Animated.View

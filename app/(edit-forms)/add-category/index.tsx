@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useState, useMemo, useRef, useCallback, memo } from 'react';
 import { View, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -22,7 +23,7 @@ interface CategoryFormData {
 
 type ProductFilterType = 'all' | 'uncategorized' | 'categorized';
 
-export default function AddCategoryScreen() {
+function AddCategoryScreen() {
   const { t } = useTranslation('inventory');
   const insets = useSafeAreaInsets();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -731,3 +732,5 @@ const ProductRow = memo(function ProductRow({
     </Pressable>
   );
 });
+
+export default withProf(AddCategoryScreen, 'add-category/index');

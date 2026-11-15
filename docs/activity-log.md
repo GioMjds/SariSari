@@ -398,3 +398,24 @@ Pass 1–3 made individual re-renders cheap (memoized rows, stable callbacks, sc
 
 - `npx tsc --noEmit` overall — **zero diff** vs baseline (350 errors, all pre-existing on main, none in the POS hot path). The pre-existing `FastLaneProduct` vs `Product` error in this file is resolved by an `as unknown as Product` cast on the Fast Lane press handler argument.
 - Manual on-device repro still pending — needs the user to tap PK on a row with both retail and wholesale pricing and confirm (a) the VirtualizedList slow-update warning no longer fires and (b) the css-interop stringify-failed warning no longer fires.
+
+## 2026-11-14 - Configurable owner PIN approvals
+
+Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-pin-policy-design.md`. Plan: `docs/superpowers/plans/2026-11-14-owner-pin-policy.md`.
+
+- Added `lib/auth/pin-actions.ts`: registry of guardable actions (id, risk, default) plus `isPinRequired`, which fails closed on locked, unknown, or unreadable policy.
+- `runWithPinGuard` now takes a required `actionId` and skips the modal when the owner turned that action off. All 7 call sites pass an id.
+- Overrides are stored in `app_settings` as `owner_pin_action.<id>` (`1` or `0`). No schema migration. A missing row means default plus a "New" badge.
+- New Settings section "PIN approvals" (`components/settings/PinPolicyCard.tsx`). Toggling requires the PIN via the locked `pin_policy_change` action. Tapping the "New" badge saves the default without a PIN, because it changes nothing.
+- Locked actions (always PIN): `backup_restore`, `drive_unlink`, `pin_change`, `pin_policy_change`.
+- Closed a gap: "Change Owner PIN" previously needed no PIN. It now asks for the current PIN (`pin_change`).
+- Env notes: `pnpm` scripts fail on this machine (install check errors), so tests run via `node_modules/.bin/jest`. `tsc` has one pre-existing error in `database/corrections.ts` (typo `RawSaleCorrectionReportRow`). `tests/__setup__/expo-sqlite-mock` is missing from the repo.
+- Manual device check still pending: toggle an action off and confirm no prompt, restore backup still prompts, change PIN prompts first.
+
+### Follow-up: review fixes (same day)
+
+- Added in-flight guard in `OwnerPinGuardProvider` so a double tap cannot run an approved action twice.
+- `PinPolicyCard` renders only after overrides load.
+- `app/settings/owner-pin-setup.tsx` now asks for the current PIN (`pin_change`) when a PIN exists, so deep links cannot overwrite it. First-time setup stays open. Guard gained an optional `onCancel`.
+- New locked action `biometric_enable`: turning biometrics on now needs the PIN.
+- Decision: once enabled with the PIN, biometrics may still approve locked actions.

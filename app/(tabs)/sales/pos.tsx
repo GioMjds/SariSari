@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
 import {
@@ -22,7 +23,7 @@ import {
 import { Customer, NewSaleItem, Product } from '@/types';
 import { getAllProducts, getCustomer, ParkedCart } from '@/database';
 
-export default function POSScreen() {
+function POSScreen() {
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [showParkModal, setShowParkModal] = useState(false);
@@ -452,3 +453,5 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
     />
   );
 }
+
+export default withProf(POSScreen, 'sales/pos');

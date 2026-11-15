@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -159,7 +160,7 @@ function CorrectionCardSkeleton() {
   );
 }
 
-export default function CorrectionsReportScreen() {
+function CorrectionsReportScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('corrections');
@@ -876,3 +877,5 @@ export default function CorrectionsReportScreen() {
     </SafeAreaView>
   );
 }
+
+export default withProf(CorrectionsReportScreen, 'reports/corrections');

@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import {
   SaleDetailsFooter,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SCROLL_CONTENT_STYLE = { paddingTop: 16, paddingBottom: 140 } as const;
 
-export default function SaleDetails() {
+function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const numericId = Number(id);
@@ -164,3 +165,5 @@ export default function SaleDetails() {
     </View>
   );
 }
+
+export default withProf(SaleDetails, 'sale-details/[id]');

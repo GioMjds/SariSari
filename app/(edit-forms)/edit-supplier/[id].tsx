@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -25,7 +26,7 @@ interface SupplierFormData {
   notes: string;
 }
 
-export default function EditSupplier() {
+function EditSupplier() {
   const { t } = useTranslation('inventory');
   const { id } = useLocalSearchParams<{ id: string }>();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -609,3 +610,5 @@ function NotesCard({
     </View>
   );
 }
+
+export default withProf(EditSupplier, 'edit-supplier/[id]');

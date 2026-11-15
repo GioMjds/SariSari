@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { Modal, Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -13,7 +14,7 @@ import {
 } from '@/components/utang/credit-guardrails';
 import { StyledText } from '@/components/elements';
 
-export default function AddCreditTransaction() {
+function AddCreditTransaction() {
   const form = useAddCreditForm();
   const q = form.productQuery.trim().toLowerCase();
   const productSuggestions = !q
@@ -142,3 +143,5 @@ export default function AddCreditTransaction() {
     </SafeAreaView>
   );
 }
+
+export default withProf(AddCreditTransaction, 'add-credit/[id]');

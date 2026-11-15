@@ -1,8 +1,9 @@
+import { withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { CollectionTab } from '@/components/customers';
 import { useTabBarBottomOffset } from '@/components/layout';
 
-export default function CollectionScreen() {
+function CollectionScreen() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
   return (
@@ -14,3 +15,5 @@ export default function CollectionScreen() {
     </View>
   );
 }
+
+export default withProf(CollectionScreen, 'customers/collection');

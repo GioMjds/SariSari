@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Href, useRouter } from 'expo-router';
@@ -32,7 +33,7 @@ const routes = {
   reports: '/settings/reports',
 } satisfies Record<HomeDestination | 'customers' | 'cashEntries', Href>;
 
-export default function HomeScreen() {
+function HomeScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
@@ -163,3 +164,5 @@ export default function HomeScreen() {
     </RefreshableScrollView>
   );
 }
+
+export default withProf(HomeScreen, 'home/index');

@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -68,7 +69,7 @@ interface CostChangeRow {
   change: number;
 }
 
-export default function DeliveryReceiptEditor() {
+function DeliveryReceiptEditor() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation('receiving');
@@ -1165,3 +1166,5 @@ function ReadOnlyStat({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
+
+export default withProf(DeliveryReceiptEditor, 'delivery-receipt/[id]');

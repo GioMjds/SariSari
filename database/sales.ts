@@ -1,5 +1,5 @@
 import { db } from '../configs/sqlite';
-import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
+import { getCurrentLocalTimestamp } from '@/utils/timezone';
 import { useBackupCounter } from '../stores/backupCounter';
 import * as Crypto from 'expo-crypto';
 import {
@@ -278,9 +278,12 @@ export const insertSale = async (
 
     return saleId;
   } catch (err) {
+    if (__DEV__) console.log('[perf] insertSale FAILED:', err);
     try {
       await db.execAsync('ROLLBACK;');
-    } catch {}
+    } catch (rollbackErr) {
+      if (__DEV__) console.log('[perf] insertSale ROLLBACK failed:', rollbackErr);
+    }
     throw err;
   }
 };
@@ -455,7 +458,11 @@ export const getSaleItems = async (
 };
 
 export const getTodayStats = async (): Promise<SaleStats> => {
-  const todayString = getTodayDateString();
+  // Timestamps are stored in UTC, so today is matched as the local day's UTC range.
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setHours(23, 59, 59, 999);
 
   // total is cash only: utang is not paid yet. Cancelled checkouts are excluded.
   const stats = await db.getFirstAsync<{
@@ -474,9 +481,9 @@ export const getTodayStats = async (): Promise<SaleStats> => {
       COALESCE(SUM(CASE WHEN payment_type = 'cash' THEN 1 ELSE 0 END), 0) as cash_count,
       COUNT(*) as transaction_count
       FROM sales
-      WHERE date(timestamp) = ?
+      WHERE timestamp BETWEEN ? AND ?
         AND cancelled_at IS NULL`,
-    [todayString],
+    [dayStart.toISOString(), dayEnd.toISOString()],
   );
 
   return (

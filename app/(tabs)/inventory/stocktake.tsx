@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useState, useMemo } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -27,7 +28,7 @@ import type { StocktakeReason } from '@/configs/stocktakeReasons';
 import type { StocktakeCount } from '@/types/stocktake.types';
 import { Product } from '@/types';
 
-export default function StocktakeScreen() {
+function StocktakeScreen() {
   const { t } = useTranslation('stocktake');
   const [viewState, setViewState] = useState<'counting' | 'variance'>(
     'counting',
@@ -292,3 +293,5 @@ export default function StocktakeScreen() {
     </View>
   );
 }
+
+export default withProf(StocktakeScreen, 'inventory/stocktake');

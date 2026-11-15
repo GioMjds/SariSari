@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useState } from 'react';
 import {  FlatList,
   Pressable,
@@ -46,7 +47,7 @@ const rowDate = (r: DeliveryReceiptSummary): string | null =>
       ? r.voidedAt
       : r.createdAt;
 
-export default function DeliveryReceiptsScreen() {
+function DeliveryReceiptsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('receiving');
@@ -277,3 +278,5 @@ export default function DeliveryReceiptsScreen() {
     </SafeAreaView>
   );
 }
+
+export default withProf(DeliveryReceiptsScreen, 'delivery-receipts/index');

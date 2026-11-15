@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +22,7 @@ import {
   LogTransactionForm,
 } from '@/components/inventory/ledger';
 
-export default function InventoryLedger() {
+function InventoryLedger() {
   const { productId } = useLocalSearchParams<{ productId: string }>();
   const parsedProductId = parseInt(productId ?? '', 10);
 
@@ -165,3 +166,5 @@ export default function InventoryLedger() {
     </View>
   );
 }
+
+export default withProf(InventoryLedger, 'inventory-ledger/[productId]');

@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { ActivityIndicator, RefreshControl, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +13,7 @@ import {
 } from '@/hooks/usePriceHistory';
 import { useToastStore } from '@/stores';
 
-export default function RepriceScreen() {
+function RepriceScreen() {
   const { t } = useTranslation('pricing');
   const bottomOffset = useTabBarBottomOffset();
   const addToast = useToastStore((s) => s.addToast);
@@ -104,3 +105,5 @@ export default function RepriceScreen() {
     </View>
   );
 }
+
+export default withProf(RepriceScreen, 'settings/reprice');

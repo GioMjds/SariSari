@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useForm, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,7 +49,7 @@ interface SaleCorrectionFormData {
   note: string;
 }
 
-export default function SaleCorrectionScreen() {
+function SaleCorrectionScreen() {
   const { id, mode } = useLocalSearchParams<{ id: string; mode?: string }>();
   const router = useRouter();
 
@@ -603,3 +604,5 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 });
+
+export default withProf(SaleCorrectionScreen, 'sale-correction/[id]');

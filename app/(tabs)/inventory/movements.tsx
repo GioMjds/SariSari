@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,7 +13,7 @@ import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
 import type { InventoryEventType } from '@/types';
 
-export default function MovementsScreen() {
+function MovementsScreen() {
   const router = useRouter();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const signal = useStockSheetSignal();
@@ -112,3 +113,5 @@ export default function MovementsScreen() {
     </View>
   );
 }
+
+export default withProf(MovementsScreen, 'inventory/movements');

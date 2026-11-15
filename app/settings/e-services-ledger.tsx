@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, View } from 'react-native';
 import { format, parseISO } from 'date-fns';
@@ -44,7 +45,7 @@ const formatTime = (timestamp: string): string => {
 const signedPesos = (value: number): string =>
   `${value >= 0 ? '+' : '-'}${formatPesos(Math.abs(value))}`;
 
-export default function EServicesLedger() {
+function EServicesLedger() {
   const bottomOffset = useTabBarBottomOffset();
   const addToast = useToastStore((state) => state.addToast);
 
@@ -338,3 +339,5 @@ export default function EServicesLedger() {
     </View>
   );
 }
+
+export default withProf(EServicesLedger, 'settings/e-services-ledger');

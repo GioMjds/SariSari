@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -12,7 +13,7 @@ import {
   useAddPaymentForm,
 } from '@/components/utang/add-payment';
 
-export default function AddPaymentTransaction() {
+function AddPaymentTransaction() {
   const form = useAddPaymentForm();
 
   if (!form.customer) return null;
@@ -79,3 +80,5 @@ export default function AddPaymentTransaction() {
     </SafeAreaView>
   );
 }
+
+export default withProf(AddPaymentTransaction, 'add-payment/[id]');

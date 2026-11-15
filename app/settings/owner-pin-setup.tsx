@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +7,7 @@ import { goBackToMore } from '@/components/more';
 import { isOwnerPinConfigured } from '@/database/auth';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 
-export default function OwnerPinSetupScreen() {
+function OwnerPinSetupScreen() {
   const { t } = useTranslation('settings');
   const { runWithPinGuard } = useOwnerPinGuard();
   const [open, setOpen] = useState(false);
@@ -50,3 +51,5 @@ export default function OwnerPinSetupScreen() {
     />
   );
 }
+
+export default withProf(OwnerPinSetupScreen, 'settings/owner-pin-setup');

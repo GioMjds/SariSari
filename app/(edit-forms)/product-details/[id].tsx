@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,7 +24,7 @@ import {
 
 const SCROLL_CONTENT_STYLE = { paddingBottom: 32 } as const;
 
-export default function ProductDetailsPage() {
+function ProductDetailsPage() {
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
   const parsedProductId = parseInt(
     Array.isArray(rawId) ? (rawId[0] ?? '') : (rawId ?? ''),
@@ -272,3 +273,5 @@ export default function ProductDetailsPage() {
     </SafeAreaView>
   );
 }
+
+export default withProf(ProductDetailsPage, 'product-details/[id]');

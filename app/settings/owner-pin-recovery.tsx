@@ -1,8 +1,9 @@
+import { withProf } from '@/utils/perf';
 import { router } from 'expo-router';
 import { OwnerPinRecoveryFlow } from '@/components/auth/OwnerPinRecoveryFlow';
 import { goBackToMore } from '@/components/more';
 
-export default function OwnerPinRecoveryScreen() {
+function OwnerPinRecoveryScreen() {
   return (
     <OwnerPinRecoveryFlow
       onDone={() => {
@@ -13,3 +14,5 @@ export default function OwnerPinRecoveryScreen() {
     />
   );
 }
+
+export default withProf(OwnerPinRecoveryScreen, 'settings/owner-pin-recovery');

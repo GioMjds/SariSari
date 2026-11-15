@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -7,7 +8,7 @@ import {
   useAddCustomerForm,
 } from '@/components/utang/add-customer';
 
-export default function AddCustomer() {
+function AddCustomer() {
   const form = useAddCustomerForm();
 
   return (
@@ -38,3 +39,5 @@ export default function AddCustomer() {
     </SafeAreaView>
   );
 }
+
+export default withProf(AddCustomer, 'add-customer/index');

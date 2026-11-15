@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -43,7 +44,7 @@ const formatEntryDate = (businessDate: string): string => {
   }
 };
 
-export default function CashEntriesScreen() {
+function CashEntriesScreen() {
   const { t } = useTranslation();
   const bottomOffset = useTabBarBottomOffset();
   const addToast = useToastStore((state) => state.addToast);
@@ -316,3 +317,5 @@ export default function CashEntriesScreen() {
     </View>
   );
 }
+
+export default withProf(CashEntriesScreen, 'settings/cash-entries');

@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useState, useMemo } from 'react';
 import { View, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -18,7 +19,7 @@ interface SupplierFormData {
   notes: string;
 }
 
-export default function AddSupplier() {
+function AddSupplier() {
   const { t } = useTranslation('inventory');
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [focusedField, setFocusedField] = useState<
@@ -626,3 +627,5 @@ function NotesCard({
     </View>
   );
 }
+
+export default withProf(AddSupplier, 'add-supplier/index');

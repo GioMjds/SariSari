@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
@@ -9,7 +10,7 @@ import {
   CategoryStickyBar,
 } from '@/components/inventory/category-details';
 
-export default function CategoryScreen() {
+function CategoryScreen() {
   const {
     category,
     loading,
@@ -138,3 +139,5 @@ export default function CategoryScreen() {
     </SafeAreaView>
   );
 }
+
+export default withProf(CategoryScreen, 'category/[id]');

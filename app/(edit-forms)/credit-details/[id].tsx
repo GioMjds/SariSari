@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { Platform, RefreshControl, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -30,7 +31,7 @@ import {
 
 const SCROLL_CONTENT_STYLE = { paddingBottom: 140 } as const;
 
-export default function CustomerDetails() {
+function CustomerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { openModal } = useModalStore();
@@ -249,3 +250,5 @@ export default function CustomerDetails() {
     </View>
   );
 }
+
+export default withProf(CustomerDetails, 'credit-details/[id]');

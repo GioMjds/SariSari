@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { useStockSheetSignal } from '@/stores';
@@ -54,7 +55,7 @@ const EMPTY_COPY = {
   },
 } satisfies Record<TabType, { title: string; body: string }>;
 
-export default function RecommendationsScreen() {
+function RecommendationsScreen() {
   const router = useRouter();
   const { t: tReceiving } = useTranslation('receiving');
   const signal = useStockSheetSignal();
@@ -758,3 +759,5 @@ export default function RecommendationsScreen() {
     </View>
   );
 }
+
+export default withProf(RecommendationsScreen, 'inventory/recommendations');

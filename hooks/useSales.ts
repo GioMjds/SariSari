@@ -13,6 +13,7 @@ import {
   correctSalePrice,
 } from '@/database/sales';
 import { getCorrectionsForSale } from '@/database/corrections';
+import { perfMark } from '@/configs/sqlite';
 import {
   GetSalesByDateRangeParams,
   InsertSaleParams,
@@ -47,6 +48,7 @@ const invalidateSaleDependencies = (
   queryClient: ReturnType<typeof useQueryClient>,
   saleId?: number,
 ) => {
+  perfMark('invalidateSaleDependencies');
   invalidateProductDependencies(queryClient);
   queryClient.invalidateQueries({ queryKey: salesKeys.all });
   queryClient.invalidateQueries({ queryKey: salesKeys.salesStats });

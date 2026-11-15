@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { SplashWordmark } from '@/components/splash/SplashWordmark';
 import { loadOnboardingState } from '@/lib';
 import { useRouter } from 'expo-router';
@@ -6,7 +7,7 @@ import { View } from 'react-native';
 
 type Target = '/onboarding' | '/home';
 
-export default function EntryGate() {
+function EntryGate() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const targetRef = useRef<Target>('/onboarding');
@@ -47,3 +48,5 @@ export default function EntryGate() {
     </View>
   );
 }
+
+export default withProf(EntryGate, 'index');

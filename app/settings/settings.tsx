@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -17,7 +18,7 @@ import {
 } from '@/components/settings/SettingsPrimitives';
 import { StyledText } from '@/components/elements';
 
-export default function Settings() {
+function Settings() {
   const { t, i18n } = useTranslation();
   const { profile, loading: profileLoading } = useProfile();
   const [languagePickerOpen, setLanguagePickerOpen] = useState<boolean>(false);
@@ -124,3 +125,5 @@ export default function Settings() {
     </View>
   );
 }
+
+export default withProf(Settings, 'settings/settings');

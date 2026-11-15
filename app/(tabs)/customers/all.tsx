@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { useMemo } from 'react';
 import { View } from 'react-native';
 import { Href, useRouter } from 'expo-router';
@@ -6,7 +7,7 @@ import { useCollectionQueue, useCustomers } from '@/hooks/useCredits';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Customer } from '@/types/credits.types';
 
-export default function AllCustomersScreen() {
+function AllCustomersScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const { data: customers = [], isLoading } = useCustomers();
@@ -57,3 +58,5 @@ export default function AllCustomersScreen() {
     </View>
   );
 }
+
+export default withProf(AllCustomersScreen, 'customers/all');

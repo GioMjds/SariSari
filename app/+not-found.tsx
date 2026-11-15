@@ -1,3 +1,4 @@
+import { withProf } from '@/utils/perf';
 import { Href, Stack, router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +7,7 @@ import { StyledText } from '@/components/elements';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 
-export default function NotFoundScreen() {
+function NotFoundScreen() {
   const { t } = useTranslation();
 
   const handleGoHome = () => {
@@ -55,3 +56,5 @@ export default function NotFoundScreen() {
     </>
   );
 }
+
+export default withProf(NotFoundScreen, '+not-found');

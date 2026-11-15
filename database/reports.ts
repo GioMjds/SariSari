@@ -176,12 +176,12 @@ export const getSalesOverTime = async (
        GROUP BY si.sale_id
      )
      SELECT
-       date(fs.timestamp) as date,
+       date(fs.timestamp, 'localtime') as date,
        COALESCE(SUM(CASE WHEN fs.payment_type = 'cash' THEN fs.total ELSE 0 END), 0) as amount,
        COALESCE(SUM(sp.profit), 0) as profit
      FROM filtered_sales fs
      LEFT JOIN sale_profits sp ON fs.id = sp.sale_id
-     GROUP BY date(fs.timestamp)
+     GROUP BY date(fs.timestamp, 'localtime')
      ORDER BY date ASC`,
     [startDate, endDate],
   );
@@ -600,11 +600,11 @@ export const getReportInsights = async (
         date: string;
         amount: number;
       }>(
-        `SELECT date(timestamp) as date, SUM(total) as amount
+        `SELECT date(timestamp, 'localtime') as date, SUM(total) as amount
          FROM sales
          WHERE timestamp BETWEEN ? AND ?
            AND cancelled_at IS NULL
-         GROUP BY date(timestamp)
+         GROUP BY date(timestamp, 'localtime')
          ORDER BY amount ASC
          LIMIT 1`,
         [startDate, endDate],

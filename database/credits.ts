@@ -581,13 +581,13 @@ export const getCreditKPIs = async (): Promise<CreditKPIs> => {
 
   const collectedToday = await db.getFirstAsync<{ total: number }>(
     `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM payments WHERE date(date) = ?`,
+     FROM payments WHERE date(date, 'localtime') = ?`,
     [todayString],
   );
 
   const creditsToday = await db.getFirstAsync<{ total: number }>(
     `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM credit_transactions WHERE date(date) = ?`,
+     FROM credit_transactions WHERE date(date, 'localtime') = ?`,
     [todayString],
   );
 
