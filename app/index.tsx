@@ -16,17 +16,14 @@ function EntryGate() {
     let isMounted = true;
 
     const run = async () => {
-      try {
-        const state = await loadOnboardingState();
-        if (
-          process.env.EXPO_PUBLIC_FORCE_ONBOARDING !== 'true' &&
-          state?.completed
-        ) {
-          targetRef.current = '/home';
-        }
-      } catch {
-        // Unreadable onboarding state: fall back to onboarding.
+      const state = await loadOnboardingState();
+      if (
+        process.env.EXPO_PUBLIC_FORCE_ONBOARDING !== 'true' &&
+        state?.completed
+      ) {
+        targetRef.current = '/home';
       }
+
       if (isMounted) setReady(true);
     };
 

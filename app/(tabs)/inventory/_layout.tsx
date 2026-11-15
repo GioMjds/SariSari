@@ -53,7 +53,7 @@ export default function InventoryLayout() {
   );
 
   const openAddProduct = useCallback(() => {
-    router.push('/(edit-forms)/add-product' as Href);
+    router.replace('/(edit-forms)/add-product' as Href);
   }, [router]);
 
   return (
@@ -83,10 +83,10 @@ export default function InventoryLayout() {
           <InventorySpeedDialFab
             onAddProduct={openAddProduct}
             onAddCategory={() =>
-              router.push('/(edit-forms)/add-category' as Href)
+              router.replace('/(edit-forms)/add-category' as Href)
             }
             onAddSupplier={() =>
-              router.push('/(edit-forms)/add-supplier' as Href)
+              router.replace('/(edit-forms)/add-supplier' as Href)
             }
             onScanBarcode={() => setScannerOpen(true)}
           />

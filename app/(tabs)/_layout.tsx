@@ -4,7 +4,6 @@ import {
   useTabBarBottomOffset,
 } from '@/components/layout';
 import { StyledText } from '@/components/elements';
-import { SariMascot } from '@/components/mascot';
 import { Tabs, usePathname } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
@@ -137,7 +136,6 @@ export default function ScreensLayout() {
             style={styles.toastCard}
             className="bg-ink-900/90 px-4 py-2.5 rounded-full flex-row items-center border border-paper-400/20 shadow-lg"
           >
-            <SariMascot state="exit" size={36} style={styles.toastMascot} />
             <StyledText
               variant="medium"
               style={styles.toastText}

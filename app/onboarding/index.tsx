@@ -55,11 +55,7 @@ function OnboardingPage() {
   });
   const [day, dispatch] = useReducer(dayReducer, undefined, createDaySeed);
   const [saving, setSaving] = useState<boolean>(false);
-  // Counts failed "continue" presses on the profile step. Above zero,
-  // ProfileStep shows inline errors; each bump refocuses the empty field.
   const [submitAttempt, setSubmitAttempt] = useState(0);
-  // True while the owner is fixing their names from the Ready screen,
-  // so continuing returns there instead of replaying the day.
   const [editingFromReady, setEditingFromReady] = useState(false);
   const [autoplayingBeat, setAutoplayingBeat] = useState<BeatId | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -72,6 +68,7 @@ function OnboardingPage() {
   const currentIndex = indexOf(step);
   const previousIndex = useRef(currentIndex);
   const direction: 1 | -1 = currentIndex >= previousIndex.current ? 1 : -1;
+
   useEffect(() => {
     previousIndex.current = currentIndex;
   }, [currentIndex]);
@@ -91,18 +88,14 @@ function OnboardingPage() {
     setAutoplayingBeat(null);
   }, []);
 
-  // Leaving a step, or unmounting, drops any queued Show me taps.
   useEffect(() => cancelAutoplay, [currentIndex, cancelAutoplay]);
 
-  // So does finishing the beat: once it is done, by playback or by the
-  // owner's own tap, leftover taps must not refill the cart.
   useEffect(() => {
     if (autoplayingBeat !== null && day.beatDone[autoplayingBeat]) {
       cancelAutoplay();
     }
   }, [day.beatDone, autoplayingBeat, cancelAutoplay]);
 
-  // Fire the outcome toast once, when a beat flips to done.
   const doneBefore = useRef(day.beatDone);
   useEffect(() => {
     for (const id of BEAT_ORDER) {

@@ -61,11 +61,11 @@ const BADGE_COLOR = '#C62828';
 const BAR_COLOR = '#150903';
 const LOW_STOCK_THRESHOLD = 5;
 
-const TAB_ROOTS: Record<string, Href> = {
+const TAB_ROOTS = {
   '/sales': '/(tabs)/sales/pos' as Href,
   '/inventory': '/(tabs)/inventory/products' as Href,
   '/customers': '/(tabs)/customers/all' as Href,
-};
+} satisfies Record<string, Href>;
 
 const getHrefString = (href: Href): string =>
   typeof href === 'object' ? href.pathname : href;
@@ -77,13 +77,13 @@ interface TabButtonProps {
   onPress: () => void;
 }
 
-const TAB_ICONS: Record<string, ComponentType<TabIconProps>> = {
+const TAB_ICONS = {
   '/home': Home,
   '/sales': Sales,
   '/inventory': Inventory,
   '/customers': Customers,
   '/more': More,
-};
+} satisfies Record<string, ComponentType<TabIconProps>>;
 
 const TabButton = memo(({ tab, isFocused, badge = 0, onPress }: TabButtonProps) => {
   const scale = useSharedValue(1);
@@ -108,7 +108,7 @@ const TabButton = memo(({ tab, isFocused, badge = 0, onPress }: TabButtonProps) 
   const color = isFocused ? ACTIVE_COLOR : INACTIVE_COLOR;
 
   const hrefString = getHrefString(tab.href);
-  const Icon = TAB_ICONS[hrefString] ?? More;
+  const Icon = TAB_ICONS[hrefString as keyof typeof TAB_ICONS] ?? More;
 
   const badgeLabel = badge > 99 ? '99+' : String(badge);
 
@@ -272,7 +272,7 @@ export const StyledTab = memo(() => {
         router.navigate(href);
         return;
       }
-      const root = TAB_ROOTS[hrefString];
+      const root = TAB_ROOTS[hrefString as keyof typeof TAB_ROOTS];
       if (root && !isPathFocused(getHrefString(root), pathname)) {
         router.navigate(root);
       }

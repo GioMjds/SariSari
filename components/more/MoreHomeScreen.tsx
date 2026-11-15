@@ -7,16 +7,14 @@ import {
   useRepriceFlags,
 } from '@/hooks';
 import { getTodayDateString } from '@/utils';
-import {
-  CashSummaryFeatureCard,
-  type CashSummaryState,
-} from './CashSummaryFeatureCard';
+import { type CashSummaryState } from './CashSummaryFeatureCard';
 import { formatLocalBackupTimestamp } from './formatLocalBackupTimestamp';
 import { MORE_ROUTES } from './moreNavigation';
 import { MoreDestinationRow } from './MoreDestinationRow';
 import { MoreScreenHeader } from './MoreScreenHeader';
 import { MoreSection } from './MoreSection';
 import { useMoreDestinationNavigation } from './useMoreDestinationNavigation';
+import { formatPesos } from '@/lib';
 
 export function MoreHomeScreen() {
   const { t, i18n } = useTranslation();
@@ -44,6 +42,11 @@ export function MoreHomeScreen() {
           ownerDrawings: financialTotals.data.ownerDrawings,
         };
 
+  const isEmpty =
+    cashState.status === 'ready' &&
+    cashState.paidExpenses === 0 &&
+    cashState.ownerDrawings === 0;
+
   const latestSnapshot = snapshots.data?.[0];
   const backupSupportingText = snapshots.isLoading
     ? t('common:moreHomeBackupLoading')
@@ -57,6 +60,18 @@ export function MoreHomeScreen() {
             ),
           })
         : t('common:moreHomeBackupEmpty');
+
+  const supportingText =
+    cashState.status === 'loading'
+      ? t('common:moreHomeCashLoading')
+      : cashState.status === 'error'
+        ? t('common:moreHomeCashError')
+        : isEmpty
+          ? t('common:moreHomeCashEmpty')
+          : t('common:moreHomeCashSummary', {
+              expenses: formatPesos(cashState.paidExpenses),
+              drawings: formatPesos(cashState.ownerDrawings),
+            });
 
   return (
     <View className="flex-1 bg-paper-200">
@@ -77,13 +92,6 @@ export function MoreHomeScreen() {
             supportingText={t('common:moreHomeSubtitle')}
           />
 
-          <MoreSection>
-            <CashSummaryFeatureCard
-              state={cashState}
-              onPress={() => navigate(MORE_ROUTES.cash)}
-            />
-          </MoreSection>
-
           <MoreSection label={t('common:moreHomeStoreDataSection')}>
             <MoreDestinationRow
               icon="bar-chart"
@@ -94,6 +102,14 @@ export function MoreHomeScreen() {
                 'common:moreHomeReportsSub',
               )}`}
               accessibilityHint={t('common:moreHomeReportsHint')}
+            />
+            <MoreDestinationRow
+              icon="money"
+              title={t('common:moreHomeCashLabel')}
+              supportingText={supportingText}
+              onPress={() => navigate(MORE_ROUTES.cash)}
+              accessibilityLabel={`${t('common:moreHomeCashLabel')}. ${supportingText}`}
+              accessibilityHint={t('common:moreHomeCashHint')}
             />
             <MoreDestinationRow
               icon="undo"

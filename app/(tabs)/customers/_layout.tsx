@@ -40,7 +40,7 @@ export default function CustomersLayout() {
   const progress = useTabProgress(activeTab, CUSTOMERS_SUB_TABS);
 
   const handleTabPress = (tab: CustomersSubTab) => {
-    router.push(`/(tabs)/customers/${tab}` as Href);
+    router.replace(`/(tabs)/customers/${tab}` as Href);
   };
 
   return (
