@@ -161,7 +161,7 @@ export function ProductSearchCatalog({
       {/* Products List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <SariMascot state="loading" size={88} accessibilityLabel="Loading" />
+          <SariMascot state="loading" size={88} accessibilityLabel="Loading" defer />
         </View>
       ) : (
         <FlatList

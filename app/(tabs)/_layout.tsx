@@ -13,6 +13,7 @@ import { Animated, BackHandler, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { isPrimaryTabPath } from '@/constants';
 import { Prof } from '@/utils/perf';
+import { perfMark } from '@/configs/sqlite';
 
 export default function ScreensLayout() {
   const { t } = useTranslation();
@@ -59,6 +60,10 @@ export default function ScreensLayout() {
   useEffect(() => {
     hideExitToast();
   }, [pathname, hideExitToast]);
+
+  useEffect(() => {
+    perfMark(`route ${pathname}`);
+  }, [pathname]);
 
   useEffect(() => {
     const backAction = () => {

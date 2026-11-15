@@ -633,7 +633,7 @@ function RecommendationsScreen() {
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
+          <SariMascot state="loading" size={96} accessibilityLabel="Loading" defer />
         </View>
       ) : activeList.length === 0 ? (
         <View className="flex-1 justify-center items-center px-8">

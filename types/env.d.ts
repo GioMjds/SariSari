@@ -4,6 +4,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       EXPO_PUBLIC_FORCE_ONBOARDING?: string;
+      EXPO_PUBLIC_PERF?: string;
     }
   }
 }

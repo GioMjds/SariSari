@@ -711,8 +711,8 @@ export const markAllCreditsAsPaid = async (
 
     if (totalSettled > 0) {
       const result = await db.runAsync(
-        `INSERT INTO payments (customer_id, amount, payment_method, notes) VALUES (?, ?, 'cash', 'Full settlement of all outstanding credits')`,
-        [customerId, totalSettled],
+        `INSERT INTO payments (customer_id, amount, payment_method, date, notes) VALUES (?, ?, 'cash', ?, 'Full settlement of all outstanding credits')`,
+        [customerId, totalSettled, getCurrentLocalTimestamp()],
       );
       const paymentId = result.lastInsertRowId;
       for (const credit of unpaidCredits) {

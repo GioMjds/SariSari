@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { type ViewStyle } from 'react-native';
+import { Animated, Easing as PulseEasing, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Reanimated, {
   Easing,
@@ -53,6 +53,36 @@ function resolveBorderRadius(
   return explicit ?? 4;
 }
 
+// One native-driven pulse feeds every bar, so a bar creates no animation of its own.
+const pulse = new Animated.Value(0.55);
+let pulseLoop: Animated.CompositeAnimation | null = null;
+let mountedBars = 0;
+
+const pulseStep = (toValue: number) =>
+  Animated.timing(pulse, {
+    toValue,
+    duration: 700,
+    easing: PulseEasing.inOut(PulseEasing.ease),
+    useNativeDriver: true,
+  });
+
+/** Start the shared pulse with the first bar and stop it with the last. */
+function retainPulse() {
+  mountedBars += 1;
+  if (mountedBars === 1) {
+    pulseLoop = Animated.loop(Animated.sequence([pulseStep(1), pulseStep(0.55)]));
+    pulseLoop.start();
+  }
+  return () => {
+    mountedBars -= 1;
+    if (mountedBars === 0) {
+      pulseLoop?.stop();
+      pulseLoop = null;
+      pulse.setValue(0.55);
+    }
+  };
+}
+
 export function Skeleton({
   width = '100%',
   height = 12,
@@ -62,28 +92,11 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const radius = resolveBorderRadius(width, height, borderRadius, circle);
-  // Pulse is driven by a Reanimated shared value so the opacity
-  // arriving on the UI thread is a plain `double`. Mixing the legacy
-  // `Animated.Value` into a `Reanimated.View`'s style crashed the
-  // new arch with "ReadableNativeMap cannot be cast to Double" on
-  // Android — the legacy value serialized as a map, not a number.
-  const opacity = useSharedValue(0.55);
-
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-    return () => {
-      opacity.value = 0.55;
-    };
-  }, [opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  // The pulse is a core Animated value on a core Animated.View, never mixed into a Reanimated view.
+  useEffect(retainPulse, []);
 
   return (
-    <Reanimated.View
+    <Animated.View
       accessibilityRole="progressbar"
       accessibilityLabel="Loading"
       style={[
@@ -97,12 +110,12 @@ export function Skeleton({
           // state rather than a flat grey bar.
           overflow: 'hidden',
         },
-        animatedStyle,
+        { opacity: pulse },
         style,
       ]}
     >
       {shimmer && <ShimmerOverlay height={height} />}
-    </Reanimated.View>
+    </Animated.View>
   );
 }
 

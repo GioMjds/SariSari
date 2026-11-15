@@ -12,9 +12,12 @@ try {
   console.warn('Failed to configure SQLite pragmas:', error);
 }
 
-/** Dev-only marker so a burst of queries can be tied to the action that caused it. */
+/** True in dev, and in a production-mode bundle started with EXPO_PUBLIC_PERF=1. */
+const PERF_PROBES = __DEV__ || process.env.EXPO_PUBLIC_PERF === '1';
+
+/** Marker so a burst of queries or a blocked stretch can be tied to the action that caused it. */
 export const perfMark = (label: string) => {
-  if (__DEV__) console.log(`[perf] ---- ${label} @${Date.now() % 100000}`);
+  if (PERF_PROBES) console.log(`[perf] ---- ${label} @${Date.now() % 100000}`);
 };
 
 // Dev-only: log wall time (queue wait included) and row count for every async query.
@@ -60,8 +63,10 @@ if (__DEV__) {
   wrap('getFirstAsync');
   wrap('runAsync');
   wrap('execAsync');
+}
 
-  // Event-loop drift probe: a late 100ms tick means the JS thread was busy.
+// Event-loop drift probe: a late 100ms tick means the JS thread was busy.
+if (PERF_PROBES) {
   let expected = Date.now() + 100;
   setInterval(() => {
     const drift = Date.now() - expected;
