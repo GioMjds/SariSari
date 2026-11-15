@@ -1,6 +1,10 @@
 import { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  ScrollView as RNGHScrollView,
+} from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedScrollHandler,
   useDerivedValue,
@@ -10,7 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PullToRefreshHeader } from './LoadingBar';
 import { scheduleOnRN } from 'react-native-worklets';
-import { RefObject } from '@testing-library/react-native/dist/types';
+
+const AnimatedRNGHScrollView = Animated.createAnimatedComponent(RNGHScrollView);
 
 interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'onScroll'> {
   isRefreshing: boolean;
@@ -30,9 +35,7 @@ export function RefreshableScrollView({
   contentContainerStyle,
   ...scrollViewProps
 }: RefreshableScrollViewProps) {
-  const scrollRef = useRef<Animated.ScrollView>(
-    null,
-  ) as RefObject<Animated.ScrollView>;
+  const scrollRef = useRef<RNGHScrollView>(null);
   const isAtTop = useSharedValue(true);
   const pullY = useSharedValue(0);
 
@@ -48,15 +51,13 @@ export function RefreshableScrollView({
 
   const panGesture = Gesture.Pan()
     .activeOffsetY(20)
-    .failOffsetY(-10)
     .failOffsetX([-15, 15])
     .onUpdate((event) => {
-      if (isAtTop.value && event.translationY > 0) {
-        pullY.value = Math.min(
-          event.translationY * 0.5,
-          refreshThreshold * 1.6,
-        );
-      }
+      if (!isAtTop.value) return;
+      pullY.value = Math.max(
+        0,
+        Math.min(event.translationY * 0.5, refreshThreshold * 1.6),
+      );
     })
     .onEnd(() => {
       if (pullY.value >= refreshThreshold) {
@@ -68,8 +69,7 @@ export function RefreshableScrollView({
       } else {
         pullY.value = withTiming(0, { duration: 200 });
       }
-    })
-    .simultaneousWithExternalGesture(scrollRef);
+    });
 
   useEffect(() => {
     if (isRefreshing) {
@@ -90,7 +90,7 @@ export function RefreshableScrollView({
           scrollY={virtualScrollY}
           refreshThreshold={refreshThreshold}
         />
-        <Animated.ScrollView
+        <AnimatedRNGHScrollView
           {...scrollViewProps}
           ref={scrollRef}
           onScroll={scrollHandler}
@@ -100,7 +100,7 @@ export function RefreshableScrollView({
           overScrollMode={Platform.OS === 'android' ? 'never' : 'auto'}
         >
           {children}
-        </Animated.ScrollView>
+        </AnimatedRNGHScrollView>
       </Animated.View>
     </GestureDetector>
   );

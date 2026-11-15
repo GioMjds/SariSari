@@ -53,8 +53,6 @@ function HomeScreen() {
     refetchAll,
   } = useHomeDashboardData();
 
-  // Every field in the payload is now stable, so this only recomputes when
-  // a value actually changes — the change-logger works as intended.
   const changeLogPayload = useMemo(
     () => ({
       stats,
