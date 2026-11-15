@@ -5,7 +5,9 @@ export type HomeDestination =
   | 'inventory'
   | 'utang'
   | 'newSale'
-  | 'reports';
+  | 'reports'
+  | 'customers'
+  | 'cashEntries';
 
 export type HomeGoalKind =
   | 'setupCatalog'

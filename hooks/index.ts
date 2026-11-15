@@ -26,3 +26,4 @@ export * from './useCorrections';
 export * from './useGettingStarted';
 export * from './useDigitalServices';
 export * from './usePriceHistory';
+export * from './useHomeAlerts';

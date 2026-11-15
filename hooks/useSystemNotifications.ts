@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { Href } from 'expo-router';
 import {
   requestNotificationPermissions,
   setupNotificationChannels,
@@ -9,18 +10,27 @@ import {
   triggerOverdueDebtNotification,
   updateAppIconBadge,
 } from '@/lib/notifications';
-import { DynamicHomeAlert } from './useHomeDashboardData';
+
+export interface DynamicHomeAlert {
+  id: string | number;
+  type: 'low_stock' | 'expiring' | 'overdue_debts';
+  title: string;
+  subtitle: string;
+  actionLabel: string;
+  targetPath: string;
+}
 
 const TAG = '[useSystemNotifications]';
 const NOTIFIED_KEYS_STORAGE_KEY = 'notified_alert_keys';
+const MAX_STORED_KEYS = 200;
 
 export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
   const router = useRouter();
-  const activeAlertCount = alerts.length;
   const notifiedAlertIdsRef = useRef<Set<string>>(new Set());
   const loadedRef = useRef(false);
 
-  // Initialize channels and request permissions on mount
+  const activeAlertCount = alerts.length;
+
   useEffect(() => {
     async function initNotifications() {
       await requestNotificationPermissions();
@@ -31,13 +41,13 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
     });
   }, []);
 
-  // Sync active alert count to device app icon badge & trigger status bar alerts for new items
   useEffect(() => {
     updateAppIconBadge(activeAlertCount);
 
+    if (alerts.length === 0 && loadedRef.current) return;
+
     let cancelled = false;
     (async () => {
-      // Persisted so dev reloads / app restarts do not re-notify known alerts.
       if (!loadedRef.current) {
         try {
           const raw = await AsyncStorage.getItem(NOTIFIED_KEYS_STORAGE_KEY);
@@ -63,7 +73,7 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
           const match = alert.subtitle.match(/\d+/);
           const qty = alert.subtitle.includes('Out of stock')
             ? 0
-            : match && match[0]
+            : match?.[0]
               ? parseInt(match[0], 10)
               : 0;
           triggerLowStockNotification(alert.title, qty);
@@ -73,35 +83,33 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
       });
 
       if (changed) {
+        if (notifiedAlertIdsRef.current.size > MAX_STORED_KEYS) {
+          const keep = [...notifiedAlertIdsRef.current].slice(-MAX_STORED_KEYS);
+          notifiedAlertIdsRef.current = new Set(keep);
+        }
         try {
           await AsyncStorage.setItem(
             NOTIFIED_KEYS_STORAGE_KEY,
-            JSON.stringify([...notifiedAlertIdsRef.current].slice(-200)),
+            JSON.stringify([...notifiedAlertIdsRef.current]),
           );
         } catch {}
       }
     })();
+
     return () => {
       cancelled = true;
     };
   }, [alerts, activeAlertCount]);
 
-  // Set up deep linking listener on notification interaction
   useEffect(() => {
-    const subscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
         const data = response.notification.request.content.data;
         if (data && typeof data['targetPath'] === 'string') {
-          const targetPath = data['targetPath'];
-          console.log(
-            `${TAG} Notification tapped -> navigating to: ${targetPath}`,
-          );
-          router.push(targetPath as any);
+          router.push(data['targetPath'] as Href);
         }
-      });
-
-    return () => {
-      subscription.remove();
-    };
+      },
+    );
+    return () => subscription.remove();
   }, [router]);
 }

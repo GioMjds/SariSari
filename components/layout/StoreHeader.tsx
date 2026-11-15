@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -7,13 +7,11 @@ import { StyledText } from '@/components/elements';
 import { SariWordmark } from '@/components/brand/SariWordmark';
 import { SariMascot, type SariState } from '@/components/mascot';
 import { NotificationSheet } from './NotificationSheet';
-import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
-import { useSystemNotifications } from '@/hooks';
+import { useHomeAlerts, useSystemNotifications } from '@/hooks';
 import { Prof, useChangeLog } from '@/utils/perf';
 
 type SariTab = 'home' | 'sales' | 'inventory' | 'customers' | 'more';
 
-/** Which Sari state acts out each tab. */
 const SARI_TAB_STATE = {
   home: 'default',
   sales: 'sales',
@@ -22,23 +20,28 @@ const SARI_TAB_STATE = {
   more: 'settings',
 } satisfies Record<SariTab, SariState>;
 
-// TODO: Must be with a En/Fil locale and a dynamic message depending on store's needs
 const SARI_LINES = {
-  home: 'Hello there! Here\'s your store today.',
+  home: "Hello there! Here's your store today.",
   sales: 'Ring up a sale. Sari helps!',
   inventory: 'Count the shelves, keep stock in check.',
   customers: 'Your suki, your utang list.',
   more: 'Need anything? Sari is here.',
 } satisfies Record<SariTab, string>;
 
-const TABS = ['home', 'sales', 'inventory', 'customers', 'more'] satisfies SariTab[];
-
+const TABS = [
+  'home',
+  'sales',
+  'inventory',
+  'customers',
+  'more',
+] satisfies SariTab[];
 const SARI_SIZE = 56;
 
-/** Active tab, held at the last tab while a pushed screen covers the header. */
 function useActiveTab(): SariTab {
   const segments = useSegments() as string[];
-  const current = segments.find((s): s is SariTab => TABS.includes(s as SariTab));
+  const current = segments.find((s): s is SariTab =>
+    TABS.includes(s as SariTab),
+  );
   const [lastTab, setLastTab] = useState<SariTab>(current ?? 'home');
   if (current && current !== lastTab) setLastTab(current);
   return current ?? lastTab;
@@ -46,26 +49,30 @@ function useActiveTab(): SariTab {
 
 export const StoreHeader = memo(function StoreHeader() {
   const router = useRouter();
-  const { alertCount, alerts } = useHomeDashboardData();
+  // Narrow subscription: does NOT trigger every sales/cash/report query.
+  const { alerts, alertCount } = useHomeAlerts();
   const tab = useActiveTab();
 
   useSystemNotifications(alerts);
 
-  // Poses stay mounted once built, so a tab change shows one instead of rebuilding it.
   const [builtTabs, setBuiltTabs] = useState<SariTab[]>([tab]);
   if (!builtTabs.includes(tab)) setBuiltTabs([...builtTabs, tab]);
 
   const [isSheetVisible, setSheetVisible] = useState(false);
-  useChangeLog('StoreHeader', { tab, alertCount, alerts, isSheetVisible });
+
+  // Stable payload — alerts is memoized in useHomeAlerts, tab is primitive.
+  const changeLogPayload = useMemo(
+    () => ({ tab, alertCount, alerts, isSheetVisible }),
+    [tab, alertCount, alerts, isSheetVisible],
+  );
+  useChangeLog('StoreHeader', changeLogPayload);
 
   const handleNotificationSelect = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setSheetVisible(true);
   }, []);
 
-  const handleSheetClose = useCallback(() => {
-    setSheetVisible(false);
-  }, []);
+  const handleSheetClose = useCallback(() => setSheetVisible(false), []);
 
   const handleAlertAction = useCallback(
     (alert: { targetPath: string }) => {
@@ -81,7 +88,10 @@ export const StoreHeader = memo(function StoreHeader() {
         <View className="flex-row items-center flex-1 mr-2">
           <View className="mr-2" style={styles.sariSlot}>
             {builtTabs.map((key) => (
-              <View key={key} style={key === tab ? styles.pose : styles.hiddenPose}>
+              <View
+                key={key}
+                style={key === tab ? styles.pose : styles.hiddenPose}
+              >
                 <SariMascot
                   state={SARI_TAB_STATE[key]}
                   size={SARI_SIZE}
@@ -119,12 +129,14 @@ export const StoreHeader = memo(function StoreHeader() {
         </View>
       </View>
 
-      <Prof id="Header:NotificationSheet"><NotificationSheet
-        visible={isSheetVisible}
-        alerts={alerts}
-        onClose={handleSheetClose}
-        onAlertAction={handleAlertAction}
-      /></Prof>
+      <Prof id="Header:NotificationSheet">
+        <NotificationSheet
+          visible={isSheetVisible}
+          alerts={alerts}
+          onClose={handleSheetClose}
+          onAlertAction={handleAlertAction}
+        />
+      </Prof>
     </View>
   );
 });

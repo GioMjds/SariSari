@@ -2,13 +2,6 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { getCorrectionsReport } from '@/database/corrections';
 import type { SaleCorrectionReportRow } from '@/types/corrections.types';
 
-export {
-  useVoidSale,
-  useRefundSale,
-  useCorrectSalePrice,
-  useSaleCorrections,
-} from './useSales';
-
 export const useCorrectionsReport = (
   opts: {
     limit?: number;

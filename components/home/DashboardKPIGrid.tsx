@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -10,8 +10,8 @@ import { StyledText } from '@/components/elements';
 import { formatCurrency } from '@/utils';
 
 export interface DashboardKPIGridProps {
-  totalSales: number;
-  transactionCount: number;
+  // NOTE: `totalSales` and `transactionCount` were declared but never rendered.
+  // Removed so the grid doesn't re-render on every sale.
   profitMargin: number | null;
   expensesToday?: number;
   drawingsToday?: number;
@@ -53,13 +53,10 @@ const KPICard = memo(function KPICard({
       accessibilityRole="button"
       accessibilityLabel={`${kpi.title}, ${kpi.value}, ${kpi.subtitle}`}
       onPress={handlePress}
-      className={`w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px]`}
+      className="w-[48%] bg-paper-50 p-3 rounded-2xl border border-ink-100 shadow-sm min-h-[92px]"
     >
       <View className="flex-row items-center justify-between mb-2">
-        <StyledText
-          variant="extrabold"
-          className="text-ink-600 text-xs"
-        >
+        <StyledText variant="extrabold" className="text-ink-600 text-xs">
           {kpi.title}
         </StyledText>
       </View>
@@ -76,7 +73,7 @@ const KPICard = memo(function KPICard({
   );
 });
 
-export function DashboardKPIGrid({
+export const DashboardKPIGrid = memo(function DashboardKPIGrid({
   profitMargin,
   expensesToday = 0,
   drawingsToday = 0,
@@ -94,24 +91,26 @@ export function DashboardKPIGrid({
   const handleKpiPress = useCallback(
     (target: KPIItem['target']) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-      if (onKpiPress) {
-        onKpiPress(target);
-      } else {
-        onDetailsPress?.();
-      }
+      if (onKpiPress) onKpiPress(target);
+      else onDetailsPress?.();
     },
     [onKpiPress, onDetailsPress],
   );
 
-  const kpis = [
-    {
+  // Memoize each KPI independently so a change to one only re-renders its card.
+  const profitKpi = useMemo<KPIItem>(
+    () => ({
       title: 'Profit today',
       value: profitMargin === null ? '-' : formatCurrency(profitMargin),
       subtitle: 'Includes utang',
       icon: 'chart-line',
       target: 'reports',
-    },
-    {
+    }),
+    [profitMargin],
+  );
+
+  const expensesKpi = useMemo<KPIItem>(
+    () => ({
       title: 'Expenses today',
       value: formatCurrency(expensesToday),
       subtitle:
@@ -120,30 +119,45 @@ export function DashboardKPIGrid({
           : 'Gastos recorded',
       icon: 'wallet',
       target: 'cash',
-    },
-    {
+    }),
+    [expensesToday, drawingsToday],
+  );
+
+  const lowStockKpi = useMemo<KPIItem>(
+    () => ({
       title: 'Low stock',
       value: `${lowStockCount} items`,
       subtitle: lowStockCount > 0 ? 'Needs restock' : 'Stock healthy',
       icon: 'box-open',
       target: 'inventory',
-    },
-    {
+    }),
+    [lowStockCount],
+  );
+
+  const overdueKpi = useMemo<KPIItem>(
+    () => ({
       title: 'Overdue utang',
       value: formatCurrency(totalCredits),
-      subtitle: `${creditCustomersCount} ${creditCustomersCount === 1 ? 'suki' : 'sukis'}`,
+      subtitle: `${creditCustomersCount} ${
+        creditCustomersCount === 1 ? 'suki' : 'sukis'
+      }`,
       icon: 'user-clock',
       target: 'customers',
-    },
-  ] satisfies KPIItem[];
+    }),
+    [totalCredits, creditCustomersCount],
+  );
+
+  const kpis = useMemo(
+    () => [profitKpi, expensesKpi, lowStockKpi, overdueKpi],
+    [profitKpi, expensesKpi, lowStockKpi, overdueKpi],
+  );
 
   return (
     <View className="mb-6">
-      {/* 2x2 KPI Cards Grid */}
       <View className="flex-row flex-wrap gap-3 px-4">
-        {kpis.map((kpi, index) => (
+        {kpis.map((kpi) => (
           <KPICard
-            key={index}
+            key={kpi.target}
             kpi={kpi}
             animatedStyle={animatedStyle}
             onPress={handleKpiPress}
@@ -152,4 +166,4 @@ export function DashboardKPIGrid({
       </View>
     </View>
   );
-}
+});

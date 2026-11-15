@@ -2,18 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useFinancialTotals } from './useFinancial';
-import { useCreditKPIs, useCustomers } from './useCredits';
+import { useCreditKPIs } from './useCredits';
 import { useProducts } from './useProducts';
 import { useRecentSales, useTodayStats } from './useSales';
-import { useProfile } from './useProfile';
 import { useReportKPIs, useTopSellingProducts } from './useReports';
-import {
-  groupSalesByHour,
-  HourlySalesGroup,
-  getDateRangeFromType,
-} from '@/utils';
+import { getDateRangeFromType } from '@/utils';
 import { SaleWithItems } from '@/types/sales.types';
-import { formatPesos } from '@/lib/money';
 import { resolveHomeState } from '@/components/home/home-state';
 
 export interface DashboardStatsSummary {
@@ -27,31 +21,19 @@ export interface DashboardStatsSummary {
   drawingsToday: number;
 }
 
-export interface DynamicHomeAlert {
-  id: string | number;
-  type: 'low_stock' | 'expiring' | 'overdue_debts';
-  title: string;
-  subtitle: string;
-  actionLabel: string;
-  targetPath: string;
-}
-
 export function useHomeDashboardData() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
   const { getAllProductsQuery } = useProducts();
-  // Only today's stats are read here, so the all-sales query is not subscribed.
-  const getTodayStatsQuery = useTodayStats();
-  const { data: recentSalesData, isLoading: recentLoading } =
-    useRecentSales(10);
+  const todayStatsQuery = useTodayStats();
+  // Only 3 recent sales are rendered — fetch only what we need.
+  const { data: recentSalesData, isLoading: recentLoading } = useRecentSales(3);
   const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
-  const { data: overdueCustomers, isLoading: customersLoading } =
-    useCustomers('overdue');
-  const { profile, loading: profileLoading } = useProfile();
 
-  const { data: stats, isLoading: statsLoading } = getTodayStatsQuery;
-  const { data: products, isLoading: productsLoading } = getAllProductsQuery;
+  const { data: todayStats } = todayStatsQuery;
+  const { data: productsData, isLoading: productsLoading } =
+    getAllProductsQuery;
 
   const todayRange = useMemo(() => getDateRangeFromType('today'), []);
   const todayDate = useMemo(
@@ -63,18 +45,31 @@ export function useHomeDashboardData() {
     useReportKPIs(todayRange);
   const { data: topSellingToday } = useTopSellingProducts(todayRange, 1);
 
-  const profitMargin = useMemo(() => {
-    return todayKpisData?.totalProfit ?? null;
-  }, [todayKpisData]);
+  const profitMargin = useMemo(
+    () => todayKpisData?.totalProfit ?? null,
+    [todayKpisData],
+  );
+
+  // Stable identity regardless of undefined → [] flip.
+  const products = useMemo(() => productsData ?? [], [productsData]);
+  const recentSales = useMemo<SaleWithItems[]>(
+    () => recentSalesData ?? [],
+    [recentSalesData],
+  );
+
+  const lowStockProducts = useMemo(() => {
+    if (products.length === 0) return [];
+    return products.filter((p) => (p.quantity ?? 0) <= 5);
+  }, [products]);
 
   const homeStateInput = useMemo(
     () => ({
-      productQuantities: (products ?? []).map((p) => p.quantity ?? 0),
-      hasAnySales: (stats?.transaction_count ?? 0) > 0,
+      productQuantities: products.map((p) => p.quantity ?? 0),
+      hasAnySales: (todayStats?.transaction_count ?? 0) > 0,
       overdueCount: creditKpis?.overdueCount ?? 0,
       hour: new Date().getHours(),
     }),
-    [products, stats, creditKpis],
+    [products, todayStats, creditKpis],
   );
 
   const { goal, suggestions } = useMemo(
@@ -82,72 +77,17 @@ export function useHomeDashboardData() {
     [homeStateInput],
   );
 
-  const lowStockProducts = useMemo(() => {
-    if (!products) return [];
-    return products.filter((p) => p.quantity <= 5);
-  }, [products]);
-
-  const alerts = useMemo<DynamicHomeAlert[]>(() => {
-    const list: DynamicHomeAlert[] = [];
-
-    lowStockProducts.forEach((p) => {
-      list.push({
-        id: `stock-${p.id}`,
-        type: 'low_stock',
-        title: p.name,
-        subtitle:
-          p.quantity === 0
-            ? 'Out of stock'
-            : `${p.quantity} remaining (Threshold: 5)`,
-        actionLabel: 'Restock',
-        targetPath: '/inventory',
-      });
-    });
-
-    if (overdueCustomers && overdueCustomers.length > 0) {
-      overdueCustomers.forEach((c) => {
-        list.push({
-          id: `credit-${c.id}`,
-          type: 'overdue_debts',
-          title: c.name,
-          subtitle: `${formatPesos(c.outstanding_balance ?? 0)} overdue`,
-          actionLabel: 'Collect',
-          targetPath: '/(tabs)/customers/collection',
-        });
-      });
-    }
-
-    return list;
-  }, [lowStockProducts, overdueCustomers]);
-
-  const isError = useMemo(
-    () =>
-      getTodayStatsQuery.error ||
-      getAllProductsQuery.error ||
-      todayKpisError,
-    [getTodayStatsQuery.error, getAllProductsQuery.error, todayKpisError],
-  );
-
-  // Hourly sales timeline
-  const hourlySales = useMemo<HourlySalesGroup[]>(() => {
-    if (!recentSalesData || recentSalesData.length === 0) {
-      return groupSalesByHour([]);
-    }
-    const mapped = recentSalesData.map((s) => ({
-      id: s.id,
-      created_at: s.timestamp || new Date().toISOString(),
-      total_amount: s.total,
-    }));
-    return groupSalesByHour(mapped);
-  }, [recentSalesData]);
-
-  // Top seller today by real units sold; null when nothing sold yet.
   const topProduct = useMemo(() => {
     const top = topSellingToday?.[0];
     return top && top.unitsSold > 0
       ? { name: top.name, unitsSold: top.unitsSold }
       : null;
   }, [topSellingToday]);
+
+  const isError = useMemo(
+    () => todayStatsQuery.error || getAllProductsQuery.error || todayKpisError,
+    [todayStatsQuery.error, getAllProductsQuery.error, todayKpisError],
+  );
 
   const refetchAll = useCallback(async () => {
     setRefreshing(true);
@@ -157,7 +97,6 @@ export function useHomeDashboardData() {
         queryClient.invalidateQueries({ queryKey: ['sales'] }),
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['credit-kpis'] }),
-        queryClient.invalidateQueries({ queryKey: ['customers'] }),
         queryClient.invalidateQueries({ queryKey: ['cash'] }),
         queryClient.invalidateQueries({ queryKey: ['report-kpis'] }),
       ]);
@@ -166,36 +105,40 @@ export function useHomeDashboardData() {
     }
   }, [queryClient]);
 
-  const recentSales: SaleWithItems[] = recentSalesData ?? [];
-
-  return {
-    stats: {
-      todaySalesTotal: stats?.total ?? 0,
-      transactionCount: stats?.cash_count ?? 0,
+  // Stable identity — critical for React.memo downstream.
+  const stats = useMemo<DashboardStatsSummary>(
+    () => ({
+      todaySalesTotal: todayStats?.total ?? 0,
+      transactionCount: todayStats?.cash_count ?? 0,
       profitMargin,
       lowStockCount: lowStockProducts.length,
       overdueCount: creditKpis?.overdueCount ?? 0,
       overdueAmount: creditKpis?.totalOverdueAmount ?? 0,
       expensesToday: todayCashOut?.paidExpenses ?? 0,
       drawingsToday: todayCashOut?.ownerDrawings ?? 0,
-    },
-    products: products ?? [],
+    }),
+    [
+      todayStats,
+      profitMargin,
+      lowStockProducts.length,
+      creditKpis,
+      todayCashOut,
+    ],
+  );
+
+  return {
+    stats,
+    products,
     recentSales,
-    hourlySales,
     topProduct,
-    alerts,
-    alertCount: alerts.length,
     goal,
     suggestions,
     isError,
-    profile,
     isLoading:
-      statsLoading ||
+      todayStatsQuery.isLoading ||
       productsLoading ||
-      profileLoading ||
       recentLoading ||
-      creditKpisLoading ||
-      customersLoading,
+      creditKpisLoading,
     refreshing,
     refetchAll,
   };

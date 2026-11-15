@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   useReducedMotion,
   useSharedValue,
   withTiming,
-  SharedValue,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 const DEFAULT_DURATION_MS = 200;
@@ -14,32 +14,19 @@ export function useTabProgress<T extends string>(
   duration: number = DEFAULT_DURATION_MS,
 ): SharedValue<number> {
   const reduceMotion = useReducedMotion();
-  const progress = useSharedValue<number>(0);
-  const seededRef = useRef(false);
+  
+  const targetIndex = useMemo(() => {
+    const idx = tabs.indexOf(activeTab);
+    return idx < 0 ? 0 : idx;
+  }, [activeTab, tabs]);
 
-  // Resolve the index for a tab key. Falls back to 0 when the active tab
-  // is not present in the list (defensive — the layouts guard against
-  // this, but the hook should not throw).
-  const indexOf = (key: T): number => {
-    const i = tabs.indexOf(key);
-    return i < 0 ? 0 : i;
-  };
-
-  // Seed on first render so the underline starts in the right place
-  // before any layout pass. Mirrors SubTabControl's cold-mount seeding.
-  if (!seededRef.current) {
-    seededRef.current = true;
-    progress.value = indexOf(activeTab);
-  }
+  const progress = useSharedValue<number>(targetIndex);
 
   useEffect(() => {
-    const target = indexOf(activeTab);
-    const ms = reduceMotion ? 0 : duration;
-    // Always go through withTiming so the underline tween matches the
-    // page transition in TopTabs. Duration 0 collapses to an instant jump,
-    // which is the right behavior for reduced motion.
-    progress.value = withTiming(target, { duration: ms });
-  }, [activeTab, duration, progress, reduceMotion, tabs]);
+    progress.value = withTiming(targetIndex, {
+      duration: reduceMotion ? 0 : duration,
+    });
+  }, [targetIndex, duration, reduceMotion, progress]);
 
   return progress;
 }

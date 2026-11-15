@@ -1,5 +1,5 @@
 import { StyledText } from '@/components/elements';
-import { DynamicHomeAlert } from '@/hooks/useHomeDashboardData';
+import { DynamicHomeAlert } from '@/hooks/useSystemNotifications';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -7,7 +8,7 @@ export interface MiniInsightsCardProps {
   unitsSold: number;
 }
 
-export function MiniInsightsCard({
+export const MiniInsightsCard = memo(function MiniInsightsCard({
   topProductName,
   unitsSold,
 }: MiniInsightsCardProps) {
@@ -34,4 +35,4 @@ export function MiniInsightsCard({
       </View>
     </View>
   );
-}
+});
