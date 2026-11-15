@@ -179,7 +179,7 @@ function ReportsScreen() {
       const n = lowStockItems.length;
       return {
         state: 'low-stock',
-        text: `${n} ${n === 1 ? 'item is' : 'items are'} running low. Check Stock and movement.`,
+        text: `${n} ${n === 1 ? 'item is' : 'items are'} running low. Check your inventory.`,
       };
     }
     if (creditsOverview.outstanding > 0) {

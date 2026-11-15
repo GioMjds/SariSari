@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Platform, ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
 import {
   Gesture,
@@ -49,27 +49,45 @@ export function RefreshableScrollView({
     onRefresh();
   }, [onRefresh]);
 
-  const panGesture = Gesture.Pan()
-    .activeOffsetY(20)
-    .failOffsetX([-15, 15])
-    .onUpdate((event) => {
-      if (!isAtTop.value) return;
-      pullY.value = Math.max(
-        0,
-        Math.min(event.translationY * 0.5, refreshThreshold * 1.6),
-      );
-    })
-    .onEnd(() => {
-      if (pullY.value >= refreshThreshold) {
-        pullY.value = withSpring(refreshThreshold, {
-          damping: 16,
-          stiffness: 140,
-        });
-        scheduleOnRN(triggerRefresh);
-      } else {
-        pullY.value = withTiming(0, { duration: 200 });
-      }
-    });
+  const touchStartY = useSharedValue(0);
+
+  // Activate only for a downward pull at the top, otherwise fail so the native scroll is never cancelled.
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .manualActivation(true)
+        .onTouchesDown((event) => {
+          touchStartY.value = event.allTouches[0]?.absoluteY ?? 0;
+        })
+        .onTouchesMove((event, state) => {
+          if (!isAtTop.value) {
+            state.fail();
+            return;
+          }
+          const dy = (event.allTouches[0]?.absoluteY ?? 0) - touchStartY.value;
+          if (dy > 20) state.activate();
+          else if (dy < -10) state.fail();
+        })
+        .onUpdate((event) => {
+          if (!isAtTop.value) return;
+          pullY.value = Math.max(
+            0,
+            Math.min(event.translationY * 0.5, refreshThreshold * 1.6),
+          );
+        })
+        .onEnd(() => {
+          if (pullY.value >= refreshThreshold) {
+            pullY.value = withSpring(refreshThreshold, {
+              damping: 16,
+              stiffness: 140,
+            });
+            scheduleOnRN(triggerRefresh);
+          } else {
+            pullY.value = withTiming(0, { duration: 200 });
+          }
+        }),
+    [isAtTop, pullY, refreshThreshold, touchStartY, triggerRefresh],
+  );
 
   useEffect(() => {
     if (isRefreshing) {

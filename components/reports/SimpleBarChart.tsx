@@ -162,9 +162,4 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
   );
 });
 
-/**
- * Small re-export so existing callers don't break — the original
- * `SimpleBarChart` is now an almanac-styled chart but the name is
- * preserved for backwards compatibility.
- */
 export { AlmanacBarChart as SimpleBarChart };

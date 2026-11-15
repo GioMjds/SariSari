@@ -419,3 +419,17 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `app/settings/owner-pin-setup.tsx` now asks for the current PIN (`pin_change`) when a PIN exists, so deep links cannot overwrite it. First-time setup stays open. Guard gained an optional `onCancel`.
 - New locked action `biometric_enable`: turning biometrics on now needs the PIN.
 - Decision: once enabled with the PIN, biometrics may still approve locked actions.
+
+## 2026-11-15 - Reports screen lag investigation
+
+- Device perf logs showed every report query finishing at about 198ms, including a 0-row `cash_sessions` read. That uniform time is queue wait behind a blocked JS thread, not SQL cost.
+- Render logs: `Reports:Section1` took 78ms with 1 chart bar and 229ms with 7 bars, roughly 25ms per bar. `thisMonth` can render 31 bars.
+- Hypothesis: per-bar cost in `components/reports/SimpleBarChart.tsx` (one `MotiView` per bar plus two `new Date` parses and a Hermes `toLocaleString` call per bar).
+- Change: only the peak or selected label uses `MotiView`; other bars use a hidden plain `View`. Day labels use date-fns `parseISO` and `format(day, 'EEE')`. `parseISO` reads `yyyy-MM-dd` as local time, not UTC.
+- Trade-off: a deselected label now disappears instantly instead of fading out.
+- Pending: re-run on device and compare the `Reports:Section1` render time. No crash trace has been captured yet.
+- Chart fix verified on device: `Reports:Section1` 228.8ms to 96.4ms at 7 bars. Committed as `aaf0311`.
+- Scroll stutter: UI and JS FPS both drop, in dev and release. Disabling Sari's animation changed nothing. Home stutters the same way, and Reports still stutters with every section collapsed, so the shared `RefreshableScrollView` is the suspect.
+- Hypothesis: the pull-to-refresh `Gesture.Pan().activeOffsetY(20)` activates on any 20px downward drag, wherever the scroll position is, and cancels the native scroll gesture mid-drag. The gesture was also rebuilt on every render.
+- Change: the pan now uses `manualActivation(true)`. It activates only when at the top and pulled down more than 20px, and fails otherwise. It is memoized with `useMemo`.
+- Pending: device re-test. If confirmed, apply the same change to `RefreshableFlatList`. The TS2375 error on the scroll view props spread existed before this change.
