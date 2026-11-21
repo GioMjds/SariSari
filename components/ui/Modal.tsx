@@ -4,14 +4,16 @@ import {
   Pressable,
   Modal as RNModal,
   ActivityIndicator,
-  AccessibilityInfo,
+  BackHandler,
   StyleSheet,
   type ModalProps as RNModalProps,
 } from 'react-native';
+import { Easing } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { SariMascot, type SariState } from '@/components/mascot';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useModalStore } from '@/stores';
 import { ModalButton } from '@/types';
 
@@ -39,8 +41,44 @@ interface CustomModalProps extends Omit<
   buttonLoading?: boolean[];
 }
 
-let globalReducedMotion = false;
-let hasInitializedReducedMotion = false;
+const SIZE_WIDTH = { sm: 384, md: 448, lg: 512, xl: 576 } as const;
+
+// Icon tile tint and glyph color per variant; glyph colors hold 3:1 on their tile.
+const VARIANTS = {
+  default: { tile: 'bg-paper-100', color: '#28231D', icon: 'info-circle' },
+  success: { tile: 'bg-sage-50', color: '#3D5E1B', icon: 'check-circle' },
+  warning: {
+    tile: 'bg-semantic-warning-50',
+    color: '#A35F00',
+    icon: 'exclamation-circle',
+  },
+  danger: {
+    tile: 'bg-semantic-danger-50',
+    color: '#C13030',
+    icon: 'exclamation-triangle',
+  },
+  info: { tile: 'bg-semantic-info-50', color: '#2E6FA8', icon: 'info-circle' },
+} as const;
+
+const BUTTON_TONES = {
+  default: {
+    box: 'bg-persimmon-500 active:bg-persimmon-700',
+    text: 'text-paper-50',
+    spinner: '#FAFAF7',
+  },
+  destructive: {
+    box: 'bg-semantic-danger active:opacity-80',
+    text: 'text-paper-50',
+    spinner: '#FAFAF7',
+  },
+  cancel: {
+    box: 'bg-paper-100 border border-paper-300 active:bg-paper-300',
+    text: 'text-ink-800',
+    spinner: '#28231D',
+  },
+} as const;
+
+const ENTER_EASING = Easing.out(Easing.cubic);
 
 export function Modal({
   id,
@@ -67,30 +105,7 @@ export function Modal({
   ...rest
 }: CustomModalProps) {
   const { modals, closeModal } = useModalStore();
-  const [reducedMotion, setReducedMotion] = useState(globalReducedMotion);
-
-  useEffect(() => {
-    let active = true;
-    if (!hasInitializedReducedMotion) {
-      AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-        globalReducedMotion = enabled;
-        hasInitializedReducedMotion = true;
-        if (active) setReducedMotion(enabled);
-      });
-    }
-    const sub = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      (enabled) => {
-        globalReducedMotion = enabled;
-        hasInitializedReducedMotion = true;
-        if (active) setReducedMotion(enabled);
-      },
-    );
-    return () => {
-      active = false;
-      sub.remove();
-    };
-  }, []);
+  const reducedMotion = useReducedMotion();
 
   const storeModal = id ? modals.find((m) => m.id === id) : null;
   const [cachedModal, setCachedModal] = useState<any>(null);
@@ -108,15 +123,17 @@ export function Modal({
 
   const finalTitle = activeModal?.title ?? title;
   const finalDescription = activeModal?.description ?? description;
-  const finalButtons = activeModal?.buttons ?? buttons;
-  const finalVariant = activeModal?.variant ?? variant;
+  const finalButtons: ModalButton[] | undefined =
+    activeModal?.buttons ?? buttons;
+  const finalVariant: keyof typeof VARIANTS =
+    activeModal?.variant ?? variant;
   const finalIcon = activeModal?.icon
     ? (activeModal.icon as keyof typeof FontAwesome.glyphMap)
     : icon;
   const finalChildren = activeModal?.children ?? children;
   const finalCloseOnOverlay = activeModal?.closeOnOverlay ?? closeOnOverlay;
+  const finalCloseOnEscape = activeModal?.closeOnEscape ?? closeOnEscape;
   const finalShowCloseButton = activeModal?.showCloseButton ?? showCloseButton;
-
   const finalUseNativeModal = useNativeModal ?? false;
 
   const handleClose = () => {
@@ -124,140 +141,84 @@ export function Modal({
     onClose?.();
   };
 
-  const handleOverlayPress = () => {
-    if (finalCloseOnOverlay) handleClose();
-  };
+  // Android Back closes the in-tree dialog; the native path gets it via onRequestClose.
+  useEffect(() => {
+    if (finalUseNativeModal || !isVisible || !finalCloseOnEscape) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleClose();
+      return true;
+    });
+    return () => sub.remove();
+  });
 
-  const getSizeWidth = () => {
-    switch (size) {
-      case 'sm':
-        return 384;
-      case 'md':
-        return 448;
-      case 'lg':
-        return 512;
-      case 'xl':
-        return 576;
-      default:
-        return 448;
-    }
-  };
-
-  const getVariantStyles = () => {
-    switch (finalVariant) {
-      case 'danger':
-        return {
-          iconBg: 'bg-semantic-danger-50',
-          iconColor: '#C13030',
-          defaultIcon: 'exclamation-triangle',
-        };
-      case 'success':
-        return {
-          iconBg: 'bg-sage-50',
-          iconColor: '#4F7A24',
-          defaultIcon: 'check-circle',
-        };
-      case 'warning':
-        return {
-          iconBg: 'bg-semantic-warning-50',
-          iconColor: '#C77B0E',
-          defaultIcon: 'exclamation-circle',
-        };
-      case 'info':
-        return {
-          iconBg: 'bg-semantic-info-50',
-          iconColor: '#2E6FA8',
-          defaultIcon: 'info-circle',
-        };
-      default:
-        return {
-          iconBg: 'bg-surface-warm',
-          iconColor: '#2E6FA8',
-          defaultIcon: 'info-circle',
-        };
-    }
-  };
-
-  const variantStyles = getVariantStyles();
-  const displayIcon = finalIcon || variantStyles.defaultIcon;
-
-  const Wrapper = finalUseNativeModal ? View : MotiView;
+  const variantStyle = VARIANTS[finalVariant] ?? VARIANTS.default;
+  const showIcon = !!finalIcon || finalVariant !== 'default';
+  const hasButtons = !!finalButtons && finalButtons.length > 0;
+  const buttonsInRow = finalButtons?.length === 2;
 
   const ModalContent = (
-    <Wrapper
-      style={[
-        StyleSheet.absoluteFill,
-        {
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: 24,
-          zIndex: 9999,
-          elevation: 9999,
-        },
-      ]}
+    <MotiView
+      style={[StyleSheet.absoluteFill, styles.center]}
       pointerEvents={isVisible ? 'auto' : 'none'}
       exit={{ opacity: 0 }}
+      exitTransition={{ type: 'timing', duration: 150 }}
     >
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ type: 'timing', duration: 200 }}
-        className="absolute inset-0 bg-ink-900/40"
+        transition={{ type: 'timing', duration: reducedMotion ? 0 : 180 }}
+        className="absolute inset-0 bg-ink-900/50"
       >
         <Pressable
           accessibilityLabel="Dismiss"
           accessibilityRole="button"
-          onPress={handleOverlayPress}
+          onPress={() => finalCloseOnOverlay && handleClose()}
           style={StyleSheet.absoluteFill}
         />
       </MotiView>
 
-      {/* Modal Dialog Card */}
       <MotiView
         from={{
           opacity: 0,
-          scale: reducedMotion ? 1 : 0.95,
+          scale: reducedMotion ? 1 : 0.96,
+          translateY: reducedMotion ? 0 : 8,
         }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{
-          opacity: 0,
-          scale: reducedMotion ? 1 : 0.95,
+        animate={{ opacity: 1, scale: 1, translateY: 0 }}
+        transition={{
+          type: 'timing',
+          duration: reducedMotion ? 0 : 220,
+          easing: ENTER_EASING,
         }}
-        transition={{ type: 'timing', duration: 200 }}
-        className="bg-paper-50"
-        style={{
-          borderRadius: 16,
-          padding: 24,
-          width: '100%',
-          maxWidth: getSizeWidth(),
-          zIndex: 1,
-        }}
+        accessibilityViewIsModal
+        onAccessibilityEscape={finalCloseOnEscape ? handleClose : undefined}
         accessibilityLabel={finalTitle || 'Dialog'}
+        className="bg-paper-50 border border-paper-300 shadow-modal"
+        style={[styles.card, { maxWidth: SIZE_WIDTH[size] ?? 448 }]}
       >
-        {/* Header / Icon */}
-        {(finalTitle ||
-          finalDescription ||
-          finalIcon ||
-          finalVariant !== 'default') && (
-          <View className="items-center mb-4">
+        {(finalTitle || finalDescription || showIcon || mascot) && (
+          <View className="items-center">
             {mascot ? (
-              <SariMascot state={mascot} size={104} style={{ marginBottom: 4 }} />
-            ) : (finalIcon || finalVariant !== 'default') && (
-              <View
-                className={`${variantStyles.iconBg} rounded-full w-14 h-14 items-center justify-center mb-3`}
-              >
-                <FontAwesome
-                  name={displayIcon as any}
-                  size={36}
-                  color={variantStyles.iconColor}
-                />
-              </View>
+              <SariMascot state={mascot} size={96} style={{ marginBottom: 8 }} />
+            ) : (
+              showIcon && (
+                <View
+                  className={`${variantStyle.tile} w-12 h-12 rounded-xl items-center justify-center mb-3`}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                >
+                  <FontAwesome
+                    name={(finalIcon || variantStyle.icon) as any}
+                    size={22}
+                    color={variantStyle.color}
+                  />
+                </View>
+              )
             )}
             {finalTitle && (
               <StyledText
                 variant="extrabold"
-                className="text-h2 text-warm-900 mb-4 text-center"
+                accessibilityRole="header"
+                className="text-h2 text-ink-900 text-center"
               >
                 {finalTitle}
               </StyledText>
@@ -265,7 +226,7 @@ export function Modal({
             {finalDescription && (
               <StyledText
                 variant="regular"
-                className="text-body text-warm-700 mb-4 text-center"
+                className="text-[15px] leading-[22px] text-ink-600 text-center mt-1.5"
               >
                 {finalDescription}
               </StyledText>
@@ -273,32 +234,19 @@ export function Modal({
           </View>
         )}
 
-        {/* Custom Content */}
-        {finalChildren && <View className="mb-4">{finalChildren}</View>}
+        {finalChildren && <View className="mt-4">{finalChildren}</View>}
 
-        {/* Buttons */}
-        {finalButtons && finalButtons.length > 0 && (
-          <View className="gap-4">
-            {finalButtons.map((button: ModalButton, index: number) => {
-              const isDestructive = button.style === 'destructive';
-              const isCancel = button.style === 'cancel';
+        {hasButtons && (
+          <View
+            className={`mt-5 pt-4 border-t border-dashed border-paper-400 ${
+              buttonsInRow ? 'flex-row gap-3' : 'gap-2.5'
+            }`}
+          >
+            {finalButtons!.map((button, index) => {
+              const tone = BUTTON_TONES[button.style ?? 'default'];
               const isLoading =
-                buttonLoading?.[index] ?? (loading && index === 0);
-
-              let bgClass = 'bg-primary-500';
-              let textClass = 'text-white';
-              let borderClass = '';
-
-              if (isDestructive) {
-                bgClass = 'bg-semantic-danger';
-              } else if (isCancel) {
-                bgClass = 'bg-warm-200';
-                textClass = 'text-warm-900';
-              }
-
-              if (isLoading) {
-                borderClass = 'border border-persimmon-300';
-              }
+                buttonLoading?.[index] ??
+                (loading && button.style !== 'cancel');
 
               return (
                 <Pressable
@@ -310,14 +258,20 @@ export function Modal({
                   disabled={isLoading}
                   accessibilityRole="button"
                   accessibilityLabel={button.text}
-                  className={`${bgClass} ${borderClass} rounded-xl py-2.5 press-scale active:opacity-70`}
+                  accessibilityState={{ disabled: isLoading, busy: isLoading }}
+                  className={`${tone.box} ${
+                    buttonsInRow ? 'flex-1' : ''
+                  } min-h-[48px] rounded-lg px-4 items-center justify-center press-scale`}
                 >
                   {isLoading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={tone.spinner} />
                   ) : (
                     <StyledText
-                      variant={isCancel ? 'semibold' : 'extrabold'}
-                      className={`${textClass} text-center text-body`}
+                      variant={
+                        button.style === 'cancel' ? 'semibold' : 'extrabold'
+                      }
+                      className={`${tone.text} text-center text-[15px]`}
+                      numberOfLines={2}
                     >
                       {button.text}
                     </StyledText>
@@ -328,24 +282,19 @@ export function Modal({
           </View>
         )}
 
-        {/* Close Button (if no buttons and showCloseButton is true) */}
-        {finalShowCloseButton &&
-          (!finalButtons || finalButtons.length === 0) && (
-            <Pressable
-              onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              className="absolute top-3 right-3 z-10 w-7 h-7 justify-center items-center rounded-full bg-gray-100 press-scale active:opacity-70"
-            >
-              <FontAwesome
-                name="times"
-                size={18}
-                color="#A89F90"
-              />
-            </Pressable>
-          )}
+        {finalShowCloseButton && !hasButtons && (
+          <Pressable
+            onPress={handleClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            hitSlop={4}
+            className="absolute top-2 right-2 z-10 w-10 h-10 rounded-pill items-center justify-center active:bg-paper-100"
+          >
+            <FontAwesome name="times" size={16} color="#564E45" />
+          </Pressable>
+        )}
       </MotiView>
-    </Wrapper>
+    </MotiView>
   );
 
   if (finalUseNativeModal) {
@@ -356,7 +305,7 @@ export function Modal({
         transparent={transparent}
         animationType={animationType}
         presentationStyle={presentationStyle}
-        onRequestClose={handleClose}
+        onRequestClose={finalCloseOnEscape ? handleClose : () => {}}
         statusBarTranslucent={statusBarTranslucent}
         accessibilityViewIsModal
       >
@@ -367,3 +316,21 @@ export function Modal({
 
   return isVisible ? ModalContent : null;
 }
+
+const styles = StyleSheet.create({
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 9999,
+    elevation: 9999,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
+    zIndex: 1,
+  },
+});

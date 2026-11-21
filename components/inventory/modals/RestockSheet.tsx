@@ -15,7 +15,7 @@ import { useStocktakeGuard } from '@/hooks/useStocktake';
 import { parsePesosInput } from '@/lib/money';
 import { Product } from '@/types/products.types';
 import { Supplier } from '@/types/suppliers.types';
-import { Sheet } from './_shared/sheetChrome';
+import { Sheet } from '@/components/ui';
 import { SheetProductCard } from './_shared/SheetProductCard';
 import { QuantityStepper } from './_shared/QuantityStepper';
 import { ProductPicker } from './ProductPicker';

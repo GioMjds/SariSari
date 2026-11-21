@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
-import { Sheet } from '@/components/inventory/modals/_shared';
+import { Sheet } from '@/components/ui';
 import { DeliveryLineRow } from '@/components/receiving/DeliveryLineRow';
 import { ProductPickerSheet } from '@/components/receiving/ProductPickerSheet';
 import { deliveryErrorMessage } from '@/components/receiving/deliveryErrors';

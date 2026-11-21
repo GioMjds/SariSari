@@ -44,7 +44,15 @@ app-example
 
 # brainstorming artifacts (mockup HTML, server state)
 /.superpowers/
-/.impeccable/
+# Impeccable: keep design.json, design-full.md, config.json; ignore runtime state
+/.impeccable/questions/
+/.impeccable/mocks/
+/.impeccable/review/
+/.impeccable/live/
+/.impeccable/critique/*
+!/.impeccable/critique/ignore.md
+/.impeccable/config.local.json
+/.impeccable/hook.cache.json
 
 # docs/
 design-system/

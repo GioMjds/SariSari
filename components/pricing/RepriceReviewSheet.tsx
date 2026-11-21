@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { Sheet } from '@/components/inventory/modals/_shared';
+import { Sheet } from '@/components/ui';
 import {
   useApplyReprice,
   useDismissRepriceFlag,

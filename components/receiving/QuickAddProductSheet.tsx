@@ -3,7 +3,7 @@ import { Pressable, TextInput, TouchableOpacity, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { Sheet } from '@/components/inventory/modals/_shared';
+import { Sheet } from '@/components/ui';
 import { parsePesosInput } from '@/lib/money';
 import type { QuickAddProductInput } from '@/types/deliveries.types';
 

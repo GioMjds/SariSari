@@ -8,6 +8,7 @@ export * from './ReceiptHero';
 export * from './RefreshableFlatList';
 export * from './RefreshableScrollView';
 export * from './SearchBar';
+export * from './Sheet';
 export * from './Skeleton';
 export * from './StatusPill';
 export * from './StatusStamp';
