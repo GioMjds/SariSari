@@ -1,4 +1,4 @@
-import { View, TextInput } from 'react-native';
+import { View, TextInput, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
@@ -40,7 +40,7 @@ export function StocktakeVarianceRow({
             {product.name}
           </StyledText>
           <StyledText variant="medium" className="text-ink-500 text-xs">
-            Expected: {count.expectedQty} | Counted: {count.countedQty}
+            {t('expected')}: {count.expectedQty} | {t('counted')}: {count.countedQty}
           </StyledText>
         </View>
         <View className="items-end">
@@ -48,7 +48,7 @@ export function StocktakeVarianceRow({
             variant="extrabold"
             className={`text-xs ${delta < 0 ? 'text-semantic-danger' : delta > 0 ? 'text-sage-700' : 'text-ink-500'}`}
           >
-            Delta: {delta > 0 ? `+${delta}` : delta}
+            {t('delta')}: {delta > 0 ? `+${delta}` : delta}
           </StyledText>
           <MoneyText
             value={pesoImpact}
@@ -62,16 +62,18 @@ export function StocktakeVarianceRow({
       {!isZero ? (
         <View className="gap-y-2 border-t border-paper-200 pt-2">
           <StyledText variant="semibold" className="text-ink-700 text-xs">
-            Select Reason (Required):
+            {t('selectReason')}
           </StyledText>
           <View className="flex-row flex-wrap gap-1">
             {STOCKTAKE_REASONS.map((r) => {
               const isSelected = reasonCode === r;
               return (
-                <View
+                <Pressable
                   key={r}
-                  onTouchEnd={() => onReasonChange(r)}
-                  className={`px-2.5 py-1.5 rounded-lg border ${
+                  onPress={() => onReasonChange(r)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  className={`px-3 py-2 rounded-lg border min-h-[40px] justify-center ${
                     isSelected
                       ? 'bg-persimmon-500 border-persimmon-600'
                       : 'bg-paper-100 border-paper-300'
@@ -85,13 +87,13 @@ export function StocktakeVarianceRow({
                   >
                     {t(`reason.${r}`)}
                   </StyledText>
-                </View>
+                </Pressable>
               );
             })}
           </View>
 
           <TextInput
-            placeholder="Optional line note..."
+            placeholder={t('lineNote')}
             value={note}
             onChangeText={onNoteChange}
             placeholderTextColor="#A1978A"

@@ -1,12 +1,13 @@
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import type { Product } from '@/types/products.types';
 
 interface StocktakeCountRowProps {
   product: Product;
   expectedQty: number;
-  countedQty: number;
+  countedQty: number | null;
   onCountChange: (qty: number) => void;
 }
 
@@ -16,8 +17,10 @@ export function StocktakeCountRow({
   countedQty,
   onCountChange,
 }: StocktakeCountRowProps) {
+  const { t } = useTranslation('stocktake');
+  const base = countedQty ?? 0;
   const addChip = (amount: number) => {
-    onCountChange(countedQty + amount);
+    onCountChange(base + amount);
   };
 
   return (
@@ -32,10 +35,14 @@ export function StocktakeCountRow({
             {product.name}
           </StyledText>
           <StyledText variant="medium" className="text-ink-500 text-xs">
-            Expected: {expectedQty} {product.retail_unit_name || 'Pc'}
+            {t('expected')}: {expectedQty} {product.retail_unit_name || 'Pc'}
           </StyledText>
         </View>
-        {countedQty !== expectedQty ? (
+        {countedQty === null ? (
+          <StyledText variant="semibold" className="text-ink-400 text-xs">
+            {t('notCounted')}
+          </StyledText>
+        ) : countedQty !== expectedQty ? (
           <View
             className={`px-2 py-0.5 rounded-full ${
               countedQty - expectedQty < 0 ? 'bg-rose-100' : 'bg-sage-100'
@@ -58,7 +65,7 @@ export function StocktakeCountRow({
       <View className="flex-row items-center gap-x-2">
         {/* Decrement */}
         <TouchableOpacity
-          onPress={() => onCountChange(Math.max(0, countedQty - 1))}
+          onPress={() => onCountChange(Math.max(0, base - 1))}
           className="w-10 h-10 rounded-lg bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
           accessibilityLabel="Decrease count"
         >
@@ -67,7 +74,10 @@ export function StocktakeCountRow({
 
         {/* Input */}
         <TextInput
-          value={String(countedQty)}
+          value={countedQty === null ? '' : String(countedQty)}
+          placeholder="?"
+          placeholderTextColor="#A1978A"
+          accessibilityLabel={`${product.name}, ${t('counted')}`}
           onChangeText={(txt) => {
             const val = parseInt(txt.replace(/[^0-9]/g, ''), 10);
             onCountChange(Number.isNaN(val) ? 0 : val);

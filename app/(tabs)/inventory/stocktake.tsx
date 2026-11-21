@@ -55,6 +55,11 @@ function StocktakeScreen() {
     Record<number, { reasonCode: StocktakeReason; note: string }>
   >({});
 
+  const productsById = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products],
+  );
+
   // Map counts by product_id
   const countsMap = useMemo(() => {
     const map: Record<number, StocktakeCount> = {};
@@ -86,13 +91,13 @@ function StocktakeScreen() {
   const netVariancePesos = useMemo(() => {
     let sum = 0;
     for (const c of counts) {
-      const p = products.find((x) => x.id === c.productId);
+      const p = productsById.get(c.productId);
       const cost = p?.cost_price ?? 0;
       const delta = c.countedQty - c.expectedQty;
       sum += delta * cost;
     }
     return Math.round(sum * 100) / 100;
-  }, [counts, products]);
+  }, [counts, productsById]);
 
   const allVariancesHaveReasons = useMemo(() => {
     return varianceRows.every((v) =>
@@ -102,8 +107,12 @@ function StocktakeScreen() {
 
   // Action handlers
   const handleStart = async () => {
-    await startMut.mutateAsync(undefined);
-    setViewState('counting');
+    try {
+      await startMut.mutateAsync(undefined);
+      setViewState('counting');
+    } catch {
+      Alert.alert(t('commitError'));
+    }
   };
 
   const handleCountChange = (
@@ -123,7 +132,7 @@ function StocktakeScreen() {
   const handleAbandon = () => {
     if (!activeSession) return;
     Alert.alert(t('abandonTitle'), '', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: t('cancel'), style: 'cancel' },
       {
         text: t('abandonConfirm'),
         style: 'destructive',
@@ -132,12 +141,41 @@ function StocktakeScreen() {
     ]);
   };
 
-  const handleCommit = async () => {
+  // Warn when items were skipped; they keep their current stock on commit.
+  const handleFinish = () => {
+    const uncounted = totalProducts - countedCount;
+    if (uncounted <= 0) {
+      setViewState('variance');
+      return;
+    }
+    Alert.alert(t('uncountedTitle'), t('uncountedBody', { count: uncounted }), [
+      { text: t('keepCounting'), style: 'cancel' },
+      { text: t('finishReviewCta'), onPress: () => setViewState('variance') },
+    ]);
+  };
+
+  const handleCommit = () => {
     if (!activeSession || !allVariancesHaveReasons) return;
-    await commitMut.mutateAsync({
-      sessionId: activeSession.id,
-      reasonPerLine: reasonsMap,
-    });
+    Alert.alert(
+      t('commitConfirmTitle'),
+      t('commitConfirmBody', { count: varianceRows.length }),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('commitCta'),
+          onPress: async () => {
+            try {
+              await commitMut.mutateAsync({
+                sessionId: activeSession.id,
+                reasonPerLine: reasonsMap,
+              });
+            } catch {
+              Alert.alert(t('commitError'));
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (loadingSession) return <StocktakeSkeleton />;
@@ -178,8 +216,8 @@ function StocktakeScreen() {
           netVariancePesos={netVariancePesos}
         />
 
-        {counts.map((c) => {
-          const product = products.find((x) => x.id === c.productId);
+        {varianceRows.map((c) => {
+          const product = productsById.get(c.productId);
           if (!product) return null;
 
           return (
@@ -217,7 +255,7 @@ function StocktakeScreen() {
             className="flex-1 bg-paper-100 border border-paper-300 py-3.5 rounded-xl items-center"
           >
             <StyledText variant="extrabold" className="text-ink-700">
-              Back to Count
+              {t('backToCount')}
             </StyledText>
           </TouchableOpacity>
 
@@ -251,6 +289,9 @@ function StocktakeScreen() {
         <StyledText variant="semibold" className="text-ink-800 text-xs">
           {t('progressLabel', { counted: countedCount, total: totalProducts })}
         </StyledText>
+        <StyledText variant="regular" className="text-ink-500 text-xs flex-1 text-right ml-3">
+          {t('countHint')}
+        </StyledText>
       </View>
 
       <KeyboardAwareScrollView
@@ -277,12 +318,12 @@ function StocktakeScreen() {
           className="bg-rose-50 border border-rose-200 px-4 py-3 rounded-xl items-center"
         >
           <StyledText variant="extrabold" className="text-rose-700 text-xs">
-            {t('saveQuitCta')}
+            {t('discardCta')}
           </StyledText>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setViewState('variance')}
+          onPress={handleFinish}
           className="flex-1 bg-persimmon-500 py-3 rounded-xl items-center"
         >
           <StyledText variant="extrabold" className="text-paper-50 text-sm">

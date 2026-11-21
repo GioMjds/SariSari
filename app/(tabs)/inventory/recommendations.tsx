@@ -1,7 +1,8 @@
 import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
-import { useStockSheetSignal } from '@/stores';
+import { TabGuide } from '@/components/inventory';
+import { useStockSheetSignal, useToastStore } from '@/stores';
 import { MoneyText } from '@/components/ui';
 import {
   useDeleteReorderPlan,
@@ -29,35 +30,18 @@ import { useTranslation } from 'react-i18next';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
 
-const FILTERS = [
-  { id: 'reorder', label: 'Reorder' },
-  { id: 'slow_movers', label: 'Slow movers' },
-  { id: 'watch_list', label: 'Watch list' },
-  { id: 'saved_plans', label: 'Saved plans' },
-] satisfies { id: TabType; label: string }[];
-
-const EMPTY_COPY = {
-  reorder: {
-    title: 'Nothing to reorder',
-    body: 'Stock is healthy. Items that run low will show up here.',
-  },
-  slow_movers: {
-    title: 'No slow movers',
-    body: 'Everything in stock has sold in the last 28 days.',
-  },
-  watch_list: {
-    title: 'No new products to watch',
-    body: 'New products show here until they have 7 days of sales.',
-  },
-  saved_plans: {
-    title: 'No saved plans',
-    body: 'Adjusted, deferred or dismissed items are kept here.',
-  },
-} satisfies Record<TabType, { title: string; body: string }>;
+const FILTER_IDS: TabType[] = [
+  'reorder',
+  'slow_movers',
+  'watch_list',
+  'saved_plans',
+];
 
 function RecommendationsScreen() {
   const router = useRouter();
   const { t: tReceiving } = useTranslation('receiving');
+  const { t } = useTranslation('inventory');
+  const addToast = useToastStore((s) => s.addToast);
   const signal = useStockSheetSignal();
   const tabBarBottomOffset = useTabBarBottomOffset();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
@@ -161,7 +145,10 @@ function RecommendationsScreen() {
         lastSupplierId: product.preferredSupplierId,
       },
       {
-        onSuccess: () => refetch(),
+        onSuccess: () => {
+          refetch();
+          showUndo(product, t('restockDeferredToast'));
+        },
         onError: () => {
           Alert.alert('Error', 'Failed to defer item. Please try again.');
         },
@@ -180,7 +167,10 @@ function RecommendationsScreen() {
         lastSupplierId: product.preferredSupplierId,
       },
       {
-        onSuccess: () => refetch(),
+        onSuccess: () => {
+          refetch();
+          showUndo(product, t('restockDismissedToast'));
+        },
         onError: () => {
           Alert.alert('Error', 'Failed to dismiss item. Please try again.');
         },
@@ -191,6 +181,15 @@ function RecommendationsScreen() {
   const handleRestore = (product: ReorderRecommendation) => {
     deletePlanMutation.mutate(product.productId, {
       onSuccess: () => refetch(),
+    });
+  };
+
+  const showUndo = (product: ReorderRecommendation, message: string) => {
+    addToast({
+      message,
+      variant: 'info',
+      duration: 6000,
+      action: { label: t('undo'), onPress: () => handleRestore(product) },
     });
   };
 
@@ -256,7 +255,7 @@ function RecommendationsScreen() {
         <View className="bg-paper-100 rounded-xl p-3 flex-row justify-between items-center mb-3">
           <View>
             <StyledText variant="regular" className="text-xs text-ink-600">
-              28d Sales
+              {t('restockSales28')}
             </StyledText>
             <StyledText
               variant="semibold"
@@ -267,7 +266,7 @@ function RecommendationsScreen() {
           </View>
           <View className="items-center">
             <StyledText variant="regular" className="text-xs text-ink-600">
-              Suggested
+              {t('restockSuggested')}
             </StyledText>
             <StyledText
               variant="extrabold"
@@ -278,7 +277,7 @@ function RecommendationsScreen() {
           </View>
           <View className="items-end">
             <StyledText variant="regular" className="text-xs text-ink-600">
-              Est. Spend
+              {t('restockEstCost')}
             </StyledText>
             {showEstimatedSpend ? (
               <MoneyText
@@ -315,7 +314,7 @@ function RecommendationsScreen() {
               className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
             >
               <StyledText variant="semibold" className="text-xs text-ink-700">
-                Adjust
+                {t('restockAdjust')}
               </StyledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -324,7 +323,7 @@ function RecommendationsScreen() {
               className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
             >
               <StyledText variant="semibold" className="text-xs text-ink-700">
-                Defer 7d
+                {t('restockDefer')}
               </StyledText>
             </TouchableOpacity>
             <TouchableOpacity
@@ -333,7 +332,7 @@ function RecommendationsScreen() {
               className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
             >
               <StyledText variant="semibold" className="text-xs text-ink-700">
-                Dismiss
+                {t('restockDismiss')}
               </StyledText>
             </TouchableOpacity>
           </View>
@@ -482,16 +481,16 @@ function RecommendationsScreen() {
     let statusText = '';
     let statusColorClass = 'text-ink-600 bg-paper-200';
     if (status === 'adjusted') {
-      statusText = `Adjusted: +${adjustedQuantity} ${item.retailUnitName}`;
+      statusText = t('restockStatusAdjusted', { qty: adjustedQuantity, unit: item.retailUnitName });
       statusColorClass = 'text-persimmon-700 bg-persimmon-50';
     } else if (status === 'deferred') {
       const dateStr = deferredUntil
         ? new Date(deferredUntil).toLocaleDateString()
         : '';
-      statusText = `Deferred until ${dateStr}`;
+      statusText = t('restockStatusDeferred', { date: dateStr });
       statusColorClass = 'text-semantic-warning bg-semantic-warning-50';
     } else if (status === 'dismissed') {
-      statusText = 'Dismissed';
+      statusText = t('restockStatusDismissed');
       statusColorClass = 'text-semantic-danger bg-semantic-danger-50';
     }
 
@@ -537,7 +536,7 @@ function RecommendationsScreen() {
           >
             <FontAwesome name="undo" size={10} color="#564E45" />
             <StyledText variant="semibold" className="text-xs text-ink-700">
-              Restore
+              {t('restockRestore')}
             </StyledText>
           </TouchableOpacity>
         </View>
@@ -584,22 +583,31 @@ function RecommendationsScreen() {
           </StyledText>
         </TouchableOpacity>
       </View>
+      <StyledText variant="regular" className="text-xs text-ink-600 px-4 pb-2">
+        {t('restockSubtitle')}
+      </StyledText>
+      <View className="px-4">
+        <TabGuide
+          guideId="restock"
+          steps={[t('restockGuide1'), t('restockGuide2'), t('restockGuide3')]}
+        />
+      </View>
       <View className="pt-1 pb-3">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
         >
-          {FILTERS.map((f) => {
-            const isActive = activeTab === f.id;
-            const count = counts[f.id];
+          {FILTER_IDS.map((id) => {
+            const isActive = activeTab === id;
+            const count = counts[id];
             return (
               <Pressable
-                key={f.id}
-                onPress={() => setActiveTab(f.id)}
+                key={id}
+                onPress={() => setActiveTab(id)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`${f.label}, ${count}`}
+                accessibilityLabel={`${t(`restockFilter_${id}`)}, ${count}`}
                 style={{ minHeight: 40 }}
                 className={`px-4 rounded-full border flex-row items-center gap-2 ${
                   isActive
@@ -613,7 +621,7 @@ function RecommendationsScreen() {
                     isActive ? 'text-paper-50' : 'text-ink-700'
                   }`}
                 >
-                  {f.label}
+                  {t(`restockFilter_${id}`)}
                 </StyledText>
                 {count > 0 && (
                   <StyledText
@@ -637,20 +645,18 @@ function RecommendationsScreen() {
         </View>
       ) : activeList.length === 0 ? (
         <View className="flex-1 justify-center items-center px-8">
-          <View className="w-16 h-16 rounded-full bg-paper-100 border border-ink-200 items-center justify-center mb-4">
-            <FontAwesome name="check-circle" size={32} color="#4F7A24" />
-          </View>
+          <SariMascot state="inventory" size={120} defer />
           <StyledText
             variant="extrabold"
             className="text-lg text-ink-900 text-center mb-1"
           >
-            {EMPTY_COPY[activeTab].title}
+            {t(`restockEmpty_${activeTab}_title`)}
           </StyledText>
           <StyledText
             variant="regular"
             className="text-sm text-ink-600 text-center"
           >
-            {EMPTY_COPY[activeTab].body}
+            {t(`restockEmpty_${activeTab}_body`)}
           </StyledText>
         </View>
       ) : (

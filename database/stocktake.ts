@@ -64,6 +64,7 @@ export async function startSession(note?: string): Promise<string> {
   const nowIso = new Date().toISOString();
   const nowMs = Date.now();
 
+  // Counts are created only when the owner counts an item, so untouched items stay "not counted".
   await db.withTransactionAsync(async () => {
     // 1. Insert session
     await db.runAsync(
@@ -72,21 +73,6 @@ export async function startSession(note?: string): Promise<string> {
       ) VALUES (?, ?, 'in_progress', ?, 0, 0, ?, ?)`,
       [sessionId, nowIso, note ?? null, nowMs, nowMs],
     );
-
-    // 2. Read products with quantity > 0 to pre-populate counts baseline
-    const products = await db.getAllAsync<{ id: number; quantity: number }>(
-      'SELECT id, quantity FROM products WHERE quantity > 0',
-    );
-
-    for (const p of products) {
-      const countId = Crypto.randomUUID();
-      await db.runAsync(
-        `INSERT INTO stocktake_counts (
-          id, session_id, product_id, expected_qty, counted_qty
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [countId, sessionId, p.id, p.quantity, p.quantity],
-      );
-    }
   });
 
   return sessionId;
@@ -125,25 +111,14 @@ export async function upsertCount({
   expectedQty,
   countedQty,
 }: UpsertCountInput): Promise<void> {
-  const existing = await db.getFirstAsync<{ id: string }>(
-    `SELECT id FROM stocktake_counts WHERE session_id = ? AND product_id = ?`,
-    [sessionId, productId],
+  // Single atomic upsert so rapid taps on a new item cannot race into a UNIQUE violation.
+  await db.runAsync(
+    `INSERT INTO stocktake_counts (
+      id, session_id, product_id, expected_qty, counted_qty
+    ) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(session_id, product_id) DO UPDATE SET counted_qty = excluded.counted_qty`,
+    [Crypto.randomUUID(), sessionId, productId, expectedQty, countedQty],
   );
-
-  if (existing) {
-    await db.runAsync(
-      `UPDATE stocktake_counts SET counted_qty = ? WHERE id = ?`,
-      [countedQty, existing.id],
-    );
-  } else {
-    const id = Crypto.randomUUID();
-    await db.runAsync(
-      `INSERT INTO stocktake_counts (
-        id, session_id, product_id, expected_qty, counted_qty
-      ) VALUES (?, ?, ?, ?, ?)`,
-      [id, sessionId, productId, expectedQty, countedQty],
-    );
-  }
 }
 
 export async function listCounts(sessionId: string): Promise<StocktakeCount[]> {

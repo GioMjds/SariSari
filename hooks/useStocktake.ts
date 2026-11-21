@@ -61,10 +61,9 @@ export function useStartStocktake() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (note?: string) => startSession(note),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: stocktakeKeys.all });
-      queryClient.invalidateQueries({ queryKey: stocktakeKeys.history() });
-    },
+    // Return the promise so the mutation stays pending until the active session is refetched.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: stocktakeKeys.all }),
   });
 }
 
@@ -85,6 +84,19 @@ export function useUpsertStocktakeCount() {
             ...updated[idx],
             countedQty: input.countedQty,
           };
+        } else {
+          // First count for this item; temporary row until the refetch returns the real one.
+          updated.push({
+            id: `temp-${input.productId}`,
+            sessionId: input.sessionId,
+            productId: input.productId,
+            expectedQty: input.expectedQty,
+            countedQty: input.countedQty,
+            costPriceAtCount: null,
+            reasonCode: null,
+            note: null,
+            committedAt: null,
+          });
         }
         queryClient.setQueryData(key, updated);
       }
@@ -130,8 +142,11 @@ export function useAbandonStocktake() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (sessionId: string) => abandonSession(sessionId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: stocktakeKeys.all });
+    // Clear the session locally so the screen leaves counting mode without waiting for refetch.
+    onSuccess: (_data, sessionId) => {
+      queryClient.setQueryData(stocktakeKeys.active(), null);
+      queryClient.removeQueries({ queryKey: stocktakeKeys.counts(sessionId) });
+      queryClient.invalidateQueries({ queryKey: stocktakeKeys.history() });
     },
   });
 }

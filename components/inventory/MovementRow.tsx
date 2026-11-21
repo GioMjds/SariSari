@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { InventoryTransaction } from '@/types/inventory.types';
 
@@ -7,6 +8,7 @@ export interface MovementRowProps {
 }
 
 export function MovementRow({ transaction }: MovementRowProps) {
+  const { t } = useTranslation('inventory');
   const isPositive =
     transaction.type === 'restock' ||
     (transaction.type === 'adjustment' &&
@@ -22,7 +24,7 @@ export function MovementRow({ transaction }: MovementRowProps) {
           {transaction.productName || `Product #${transaction.product_id}`}
         </StyledText>
         <StyledText variant="medium" className="text-xs text-ink-600 mt-0.5">
-          {transaction.type} •{' '}
+          {t(`movementType_${transaction.type}`)} •{' '}
           {new Date(transaction.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',

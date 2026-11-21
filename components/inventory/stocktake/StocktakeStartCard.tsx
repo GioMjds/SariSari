@@ -34,23 +34,27 @@ export function StocktakeStartCard({
               className="text-ink-500 text-xs mt-0.5"
             >
               {new Date(lastSession.createdAt).toLocaleDateString()} ·{' '}
-              {lastSession.totalProductsCounted} counted
+              {lastSession.totalProductsCounted} {t('countedSuffix')}
             </StyledText>
           ) : (
             <StyledText
               variant="medium"
               className="text-ink-500 text-xs mt-0.5"
             >
-              No recent counts
+              {t('noRecent')}
             </StyledText>
           )}
         </View>
       </View>
 
+      <StyledText variant="regular" className="text-ink-600 text-xs">
+        {t('subtitle')} {t('steps')}
+      </StyledText>
+
       {lastSession ? (
         <View className="bg-paper-100 rounded-xl p-3 flex-row items-center justify-between border border-paper-200">
           <StyledText variant="semibold" className="text-ink-600 text-xs">
-            Net Variance:
+            {t('netVariance')}
           </StyledText>
           <MoneyText
             value={lastSession.totalVariancePesos}
@@ -66,9 +70,10 @@ export function StocktakeStartCard({
       <TouchableOpacity
         onPress={onStart}
         disabled={isStarting}
+        accessibilityState={{ busy: isStarting, disabled: isStarting }}
         accessibilityRole="button"
         accessibilityLabel={t('startCta')}
-        className="w-full bg-persimmon-500 rounded-xl py-3.5 items-center justify-center flex-row gap-x-2 active:bg-persimmon-600"
+        className={`w-full bg-persimmon-500 rounded-xl py-3.5 items-center justify-center flex-row gap-x-2 active:bg-persimmon-600 ${isStarting ? 'opacity-60' : ''}`}
       >
         <FontAwesome name="play" size={14} color="#FFFFFF" />
         <StyledText variant="extrabold" className="text-paper-50 text-sm">

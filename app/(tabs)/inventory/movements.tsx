@@ -1,6 +1,7 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { usePaginatedInventoryTransactions } from '@/hooks/useInventory';
 import {
@@ -9,11 +10,13 @@ import {
   type LedgerTypeFilter,
 } from '@/components/inventory/ledger';
 import { MovementEmptyState } from '@/components/inventory/movements';
+import { StyledText } from '@/components/elements';
 import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
 import type { InventoryEventType } from '@/types';
 
 function MovementsScreen() {
+  const { t } = useTranslation('inventory');
   const router = useRouter();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const signal = useStockSheetSignal();
@@ -74,6 +77,22 @@ function MovementsScreen() {
           setSelectedType={setSelectedType}
           counts={counts}
         />
+      </View>
+    );
+  }
+  if (transactions.length === 0 && (searchQuery || selectedType !== 'all')) {
+    return (
+      <View className="flex-1 bg-paper-200">
+        <LedgerToolbar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedType={selectedType}
+          setSelectedType={setSelectedType}
+          counts={counts}
+        />
+        <StyledText variant="medium" className="text-ink-500 text-center mt-10 px-6">
+          {t('movementsNoMatch')}
+        </StyledText>
       </View>
     );
   }

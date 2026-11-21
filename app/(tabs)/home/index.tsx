@@ -11,6 +11,7 @@ import {
   DashboardRecentSales,
   DashboardStockAlert,
   DashboardSuggestions,
+  StocktakeNudge,
   DashboardEmptyState,
   DashboardErrorState,
   HomeOverviewSkeleton,
@@ -33,6 +34,8 @@ const routes = {
   reports: '/settings/reports',
 } satisfies Record<HomeDestination, Href>;
 
+const RESTOCK = '/(tabs)/inventory/recommendations' as Href;
+const STOCKTAKE = '/(tabs)/inventory/stocktake' as Href;
 const SALE_DETAILS = '/(edit-forms)/sale-details/';
 const RECEIPTS = '/(tabs)/sales/receipts' as Href;
 
@@ -101,6 +104,8 @@ function HomeScreen() {
     () => router.push(routes.inventory),
     [router],
   );
+  const goRestock = useCallback(() => router.push(RESTOCK), [router]);
+  const goStocktake = useCallback(() => router.push(STOCKTAKE), [router]);
   const goUtang = useCallback(() => router.push(routes.utang), [router]);
   const goReports = useCallback(() => router.push(routes.reports), [router]);
 
@@ -207,10 +212,14 @@ function HomeScreen() {
             <Prof id="Home:DashboardStockAlert">
               <DashboardStockAlert
                 lowStockCount={stats.lowStockCount}
-                onRestock={goInventory}
+                onRestock={goRestock}
               />
             </Prof>
           )}
+
+          <Prof id="Home:StocktakeNudge">
+            <StocktakeNudge onPress={goStocktake} />
+          </Prof>
 
           {suggestions.length > 0 && (
             <Prof id="Home:DashboardSuggestions">

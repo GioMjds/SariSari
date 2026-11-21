@@ -306,6 +306,15 @@
       "itemCount_one": "{{count}} paninda",
       "itemCount_other": "{{count}} paninda"
     },
+    "stocktakeNudge": {
+      "inProgress": "May bilang ng stock na hindi pa tapos",
+      "never": "Hindi mo pa nabibilang ang estante",
+      "stale_one": "{{count}} araw na mula sa huling bilang",
+      "stale_other": "{{count}} araw na mula sa huling bilang",
+      "sub": "Sa pagbilang, makikita agad ang nawawala o sirang stock",
+      "cta": "Bilangin",
+      "continue": "Ituloy"
+    },
     "stockAlert": {
       "message_one": "{{count}} paninda na paubos na",
       "message_other": "{{count}} paninda na paubos na",

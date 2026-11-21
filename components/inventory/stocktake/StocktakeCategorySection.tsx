@@ -23,7 +23,8 @@ export function StocktakeCategorySection({
   countsMap,
   onCountChange,
 }: StocktakeCategorySectionProps) {
-  const [expanded, setExpanded] = useState(true);
+  // Collapsed by default: mounting every row of a large catalog stalls start and discard.
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <View className="mb-3">
@@ -46,7 +47,7 @@ export function StocktakeCategorySection({
           {products.map((p) => {
             const count = countsMap[p.id];
             const expected = count ? count.expectedQty : p.quantity;
-            const counted = count ? count.countedQty : 0;
+            const counted = count ? count.countedQty : null;
 
             return (
               <StocktakeCountRow

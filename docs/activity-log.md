@@ -443,3 +443,14 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Skipped from the banner skill: Pinterest research and AI image generation. The helper scripts are not installed, and the screenshots plus mascot already carry the visuals.
 - Follow-up: added `all-screens` banner. It shows all nine screenshots in one row, grouped under the three main points: Benta (5 screens), Stock (1), Utang (3). Each screen has a short caption.
 - Follow-up: added nine single-screen banners in `assets/banners/facebook-showcase/screens/`, one per screenshot. One template (`src/screen.html`) holds the copy for all nine in a `SCREENS` array and picks an entry with `?i=0..8`. Each banner has a label chip, a headline, three main points, a matching Sari state, and the screenshot in a phone frame.
+
+## 2026-11-21 - Inventory sub-tab usability (Movements, Stocktake, Restock)
+
+- Stocktake fixes: "Save & quit" discarded the session, so it is now labelled "Discard count". Commit now shows a confirm dialog warning that stock will change and cannot be undone. Start and commit failures show an error alert. Reason chips are accessible `Pressable` buttons.
+- Stocktake speed: `startSession` pre-fills counts with one `INSERT ... SELECT`. Category sections start collapsed so a large catalog does not mount every row. Discard clears the active session locally. Products are looked up through a `Map`. The review screen lists only items with a difference.
+- Plain-language copy in `locales/{en,tl}/inventory.json` and `stocktake.json`: subtitles per tab, a Movements legend for green and red quantities, friendly movement type labels, and renamed Restock chips and actions (Buy now, Not selling, New items, Set aside, Change qty, Later, Skip, Bring back).
+- New `components/inventory/TabGuide.tsx`: a 3-step help card, expanded on first visit and then collapsed to a "How to use" link. The seen flag is stored in AsyncStorage. It is used on Movements and Restock. Stocktake shows its steps on the start card instead.
+- Restock: Later and Skip show a toast with Undo, which restores the item. Empty states use the Sari mascot.
+- Not done: a Sale filter on Movements (needs a query change), translation of the "Record Restock" label and the Adjust Quantity modal, and a FlatList for very large stocktake categories.
+- Stocktake correctness: starting a count no longer copies every product's stock into `counted_qty`. A count row is created only when the owner counts an item. Untouched items show "Not counted yet", and commit leaves their stock unchanged. The progress line now reflects real counts. "Finish & review" warns when items were skipped. `upsertCount` is now a single `INSERT ... ON CONFLICT` upsert.
+- Home (Phase 4): the low-stock alert now opens the Restock tab. New `components/home/StocktakeNudge.tsx` shows "count in progress, continue", "never counted", or "last count N days ago" when the last completed count is 30 or more days old.

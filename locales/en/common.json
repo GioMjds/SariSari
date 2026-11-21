@@ -306,6 +306,15 @@
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items"
     },
+    "stocktakeNudge": {
+      "inProgress": "Stock count in progress",
+      "never": "You have not counted your shelf yet",
+      "stale_one": "Last shelf count was {{count}} day ago",
+      "stale_other": "Last shelf count was {{count}} days ago",
+      "sub": "Counting finds missing or damaged stock early",
+      "cta": "Count",
+      "continue": "Continue"
+    },
     "stockAlert": {
       "message_one": "{{count}} item running low",
       "message_other": "{{count}} items running low",
