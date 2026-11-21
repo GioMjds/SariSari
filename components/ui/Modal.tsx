@@ -5,10 +5,15 @@ import {
   Modal as RNModal,
   ActivityIndicator,
   BackHandler,
+  Platform,
   StyleSheet,
   type ModalProps as RNModalProps,
 } from 'react-native';
 import { Easing } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
+import { BlurView } from 'expo-blur';
+import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
@@ -29,7 +34,7 @@ interface CustomModalProps extends Omit<
   buttons?: ModalButton[];
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
   icon?: keyof typeof FontAwesome.glyphMap;
-  /** Animated Sari shown in place of the icon circle, e.g. 'delete' for destructive confirms. */
+  /** Animated Sari shown in place of the icon stamp, e.g. 'delete' for destructive confirms. */
   mascot?: SariState;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   closeOnOverlay?: boolean;
@@ -42,43 +47,90 @@ interface CustomModalProps extends Omit<
 }
 
 const SIZE_WIDTH = { sm: 384, md: 448, lg: 512, xl: 576 } as const;
+const PAPER = '#FAFAF7';
+const STUB = '#F2F0E8';
 
-// Icon tile tint and glyph color per variant; glyph colors hold 3:1 on their tile.
+// Rubber-stamp ring, tint fill and glyph per variant; glyphs hold 3:1 on their fill.
 const VARIANTS = {
-  default: { tile: 'bg-paper-100', color: '#28231D', icon: 'info-circle' },
-  success: { tile: 'bg-sage-50', color: '#3D5E1B', icon: 'check-circle' },
+  default: {
+    ring: '#564E45',
+    fill: 'bg-paper-100',
+    color: '#28231D',
+    icon: 'info-circle',
+  },
+  success: {
+    ring: '#4F7A24',
+    fill: 'bg-sage-50',
+    color: '#3D5E1B',
+    icon: 'check',
+  },
   warning: {
-    tile: 'bg-semantic-warning-50',
+    ring: '#C77B0E',
+    fill: 'bg-semantic-warning-50',
     color: '#A35F00',
-    icon: 'exclamation-circle',
+    icon: 'exclamation',
   },
   danger: {
-    tile: 'bg-semantic-danger-50',
+    ring: '#C13030',
+    fill: 'bg-semantic-danger-50',
     color: '#C13030',
     icon: 'exclamation-triangle',
   },
-  info: { tile: 'bg-semantic-info-50', color: '#2E6FA8', icon: 'info-circle' },
+  info: {
+    ring: '#2E6FA8',
+    fill: 'bg-semantic-info-50',
+    color: '#2E6FA8',
+    icon: 'info',
+  },
 } as const;
 
 const BUTTON_TONES = {
   default: {
     box: 'bg-persimmon-500 active:bg-persimmon-700',
     text: 'text-paper-50',
-    spinner: '#FAFAF7',
+    spinner: PAPER,
   },
   destructive: {
     box: 'bg-semantic-danger active:opacity-80',
     text: 'text-paper-50',
-    spinner: '#FAFAF7',
+    spinner: PAPER,
   },
   cancel: {
-    box: 'bg-paper-100 border border-paper-300 active:bg-paper-300',
+    box: 'bg-paper-50 border border-paper-400 active:bg-paper-300',
     text: 'text-ink-800',
     spinner: '#28231D',
   },
 } as const;
 
 const ENTER_EASING = Easing.out(Easing.cubic);
+
+// Torn thermal-receipt edge; flip draws the bottom edge.
+function SerratedEdge({
+  width,
+  color,
+  flip = false,
+}: {
+  width: number;
+  color: string;
+  flip?: boolean;
+}) {
+  if (width <= 0) return null;
+  const tooth = 12;
+  const height = 6;
+  let d = `M0 ${height}`;
+  for (let x = 0; x < width; x += tooth) {
+    d += ` L${x + tooth / 2} 0 L${Math.min(x + tooth, width)} ${height}`;
+  }
+  return (
+    <Svg
+      width={width}
+      height={height}
+      style={flip ? { transform: [{ scaleY: -1 }] } : undefined}
+    >
+      <Path d={`${d} Z`} fill={color} />
+    </Svg>
+  );
+}
 
 export function Modal({
   id,
@@ -106,6 +158,7 @@ export function Modal({
 }: CustomModalProps) {
   const { modals, closeModal } = useModalStore();
   const reducedMotion = useReducedMotion();
+  const [cardWidth, setCardWidth] = useState(0);
 
   const storeModal = id ? modals.find((m) => m.id === id) : null;
   const [cachedModal, setCachedModal] = useState<any>(null);
@@ -134,7 +187,8 @@ export function Modal({
   const finalCloseOnOverlay = activeModal?.closeOnOverlay ?? closeOnOverlay;
   const finalCloseOnEscape = activeModal?.closeOnEscape ?? closeOnEscape;
   const finalShowCloseButton = activeModal?.showCloseButton ?? showCloseButton;
-  const finalUseNativeModal = useNativeModal ?? false;
+  // Inline dialogs go native so the blur also covers the status and nav bars.
+  const finalUseNativeModal = useNativeModal ?? !id;
 
   const handleClose = () => {
     if (id) closeModal(id);
@@ -151,8 +205,18 @@ export function Modal({
     return () => sub.remove();
   });
 
+  // A warning buzz makes risky confirms felt at a noisy counter.
+  useEffect(() => {
+    if (!isVisible) return;
+    if (finalVariant === 'danger' || finalVariant === 'warning') {
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Warning,
+      ).catch(() => {});
+    }
+  }, [isVisible, finalVariant]);
+
   const variantStyle = VARIANTS[finalVariant] ?? VARIANTS.default;
-  const showIcon = !!finalIcon || finalVariant !== 'default';
+  const showStamp = !!finalIcon || finalVariant !== 'default';
   const hasButtons = !!finalButtons && finalButtons.length > 0;
   const buttonsInRow = finalButtons?.length === 2;
 
@@ -163,12 +227,23 @@ export function Modal({
       exit={{ opacity: 0 }}
       exitTransition={{ type: 'timing', duration: 150 }}
     >
+      <StatusBar style="light" animated />
+
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ type: 'timing', duration: reducedMotion ? 0 : 180 }}
-        className="absolute inset-0 bg-ink-900/50"
+        transition={{ type: 'timing', duration: reducedMotion ? 0 : 200 }}
+        style={StyleSheet.absoluteFill}
       >
+        <BlurView
+          intensity={32}
+          tint="dark"
+          experimentalBlurMethod={
+            Platform.OS === 'android' ? 'dimezisBlurView' : 'none'
+          }
+          style={StyleSheet.absoluteFill}
+        />
+        <View className="absolute inset-0 bg-ink-900/40" />
         <Pressable
           accessibilityLabel="Dismiss"
           accessibilityRole="button"
@@ -178,109 +253,138 @@ export function Modal({
       </MotiView>
 
       <MotiView
-        from={{
-          opacity: 0,
-          scale: reducedMotion ? 1 : 0.96,
-          translateY: reducedMotion ? 0 : 8,
-        }}
-        animate={{ opacity: 1, scale: 1, translateY: 0 }}
+        from={{ opacity: 0, translateY: reducedMotion ? 0 : 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
         transition={{
           type: 'timing',
-          duration: reducedMotion ? 0 : 220,
+          duration: reducedMotion ? 0 : 240,
           easing: ENTER_EASING,
         }}
         accessibilityViewIsModal
         onAccessibilityEscape={finalCloseOnEscape ? handleClose : undefined}
         accessibilityLabel={finalTitle || 'Dialog'}
-        className="bg-paper-50 border border-paper-300 shadow-modal"
+        onLayout={(e) => setCardWidth(Math.round(e.nativeEvent.layout.width))}
         style={[styles.card, { maxWidth: SIZE_WIDTH[size] ?? 448 }]}
       >
-        {(finalTitle || finalDescription || showIcon || mascot) && (
-          <View className="items-center">
-            {mascot ? (
-              <SariMascot state={mascot} size={96} style={{ marginBottom: 8 }} />
-            ) : (
-              showIcon && (
-                <View
-                  className={`${variantStyle.tile} w-12 h-12 rounded-xl items-center justify-center mb-3`}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  <FontAwesome
-                    name={(finalIcon || variantStyle.icon) as any}
-                    size={22}
-                    color={variantStyle.color}
-                  />
-                </View>
-              )
-            )}
-            {finalTitle && (
-              <StyledText
-                variant="extrabold"
-                accessibilityRole="header"
-                className="text-h2 text-ink-900 text-center"
-              >
-                {finalTitle}
-              </StyledText>
-            )}
-            {finalDescription && (
-              <StyledText
-                variant="regular"
-                className="text-[15px] leading-[22px] text-ink-600 text-center mt-1.5"
-              >
-                {finalDescription}
-              </StyledText>
-            )}
-          </View>
-        )}
+        <SerratedEdge width={cardWidth} color={PAPER} />
 
-        {finalChildren && <View className="mt-4">{finalChildren}</View>}
+        <View className="bg-paper-50 px-5 pt-5 pb-5">
+          {(finalTitle || finalDescription || showStamp || mascot) && (
+            <View className="items-center">
+              {mascot ? (
+                <SariMascot
+                  state={mascot}
+                  size={92}
+                  style={{ marginBottom: 6 }}
+                />
+              ) : (
+                showStamp && (
+                  <MotiView
+                    from={{
+                      opacity: 0,
+                      scale: reducedMotion ? 1 : 1.3,
+                      rotate: '0deg',
+                    }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      rotate: reducedMotion ? '0deg' : '-8deg',
+                    }}
+                    transition={
+                      reducedMotion
+                        ? { type: 'timing', duration: 0 }
+                        : { type: 'spring', damping: 11, stiffness: 220, delay: 120 }
+                    }
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    className="w-16 h-16 rounded-pill border-2 border-dashed items-center justify-center mb-3"
+                    style={{ borderColor: variantStyle.ring }}
+                  >
+                    <View
+                      className={`${variantStyle.fill} w-[50px] h-[50px] rounded-pill items-center justify-center border`}
+                      style={{ borderColor: variantStyle.ring }}
+                    >
+                      <FontAwesome
+                        name={(finalIcon || variantStyle.icon) as any}
+                        size={22}
+                        color={variantStyle.color}
+                      />
+                    </View>
+                  </MotiView>
+                )
+              )}
+              {finalTitle && (
+                <StyledText
+                  variant="extrabold"
+                  accessibilityRole="header"
+                  className="text-h2 text-ink-900 text-center"
+                >
+                  {finalTitle}
+                </StyledText>
+              )}
+              {finalDescription && (
+                <StyledText
+                  variant="regular"
+                  className="text-[15px] leading-[22px] text-ink-600 text-center mt-1.5"
+                >
+                  {finalDescription}
+                </StyledText>
+              )}
+            </View>
+          )}
+
+          {finalChildren && <View className="mt-4">{finalChildren}</View>}
+        </View>
 
         {hasButtons && (
-          <View
-            className={`mt-5 pt-4 border-t border-dashed border-paper-400 ${
-              buttonsInRow ? 'flex-row gap-3' : 'gap-2.5'
-            }`}
-          >
-            {finalButtons!.map((button, index) => {
-              const tone = BUTTON_TONES[button.style ?? 'default'];
-              const isLoading =
-                buttonLoading?.[index] ??
-                (loading && button.style !== 'cancel');
+          <View className="bg-paper-100 px-5 pt-4 pb-5 border-t-2 border-dashed border-paper-400">
+            <View className={buttonsInRow ? 'flex-row gap-3' : 'gap-2.5'}>
+              {finalButtons!.map((button, index) => {
+                const tone = BUTTON_TONES[button.style ?? 'default'];
+                const isLoading =
+                  buttonLoading?.[index] ??
+                  (loading && button.style !== 'cancel');
 
-              return (
-                <Pressable
-                  key={index}
-                  onPress={() => {
-                    button.onPress?.();
-                    if (id) closeModal(id);
-                  }}
-                  disabled={isLoading}
-                  accessibilityRole="button"
-                  accessibilityLabel={button.text}
-                  accessibilityState={{ disabled: isLoading, busy: isLoading }}
-                  className={`${tone.box} ${
-                    buttonsInRow ? 'flex-1' : ''
-                  } min-h-[48px] rounded-lg px-4 items-center justify-center press-scale`}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color={tone.spinner} />
-                  ) : (
-                    <StyledText
-                      variant={
-                        button.style === 'cancel' ? 'semibold' : 'extrabold'
-                      }
-                      className={`${tone.text} text-center text-[15px]`}
-                      numberOfLines={2}
-                    >
-                      {button.text}
-                    </StyledText>
-                  )}
-                </Pressable>
-              );
-            })}
+                return (
+                  <Pressable
+                    key={index}
+                    onPress={() => {
+                      button.onPress?.();
+                      if (id) closeModal(id);
+                    }}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel={button.text}
+                    accessibilityState={{ disabled: isLoading, busy: isLoading }}
+                    className={`${tone.box} ${
+                      buttonsInRow ? 'flex-1' : ''
+                    } min-h-[48px] rounded-lg px-4 items-center justify-center press-scale`}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color={tone.spinner} />
+                    ) : (
+                      <StyledText
+                        variant={
+                          button.style === 'cancel' ? 'semibold' : 'extrabold'
+                        }
+                        className={`${tone.text} text-center text-[15px]`}
+                        numberOfLines={2}
+                      >
+                        {button.text}
+                      </StyledText>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         )}
+
+        <SerratedEdge
+          width={cardWidth}
+          color={hasButtons ? STUB : PAPER}
+          flip
+        />
 
         {finalShowCloseButton && !hasButtons && (
           <Pressable
@@ -288,7 +392,7 @@ export function Modal({
             accessibilityRole="button"
             accessibilityLabel="Close"
             hitSlop={4}
-            className="absolute top-2 right-2 z-10 w-10 h-10 rounded-pill items-center justify-center active:bg-paper-100"
+            className="absolute top-3 right-2 z-10 w-10 h-10 rounded-pill items-center justify-center active:bg-paper-100"
           >
             <FontAwesome name="times" size={16} color="#564E45" />
           </Pressable>
@@ -307,6 +411,7 @@ export function Modal({
         presentationStyle={presentationStyle}
         onRequestClose={finalCloseOnEscape ? handleClose : () => {}}
         statusBarTranslucent={statusBarTranslucent}
+        navigationBarTranslucent={statusBarTranslucent}
         accessibilityViewIsModal
       >
         {ModalContent}
@@ -327,10 +432,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 20,
     zIndex: 1,
   },
 });
