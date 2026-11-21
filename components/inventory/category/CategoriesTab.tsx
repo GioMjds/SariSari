@@ -4,16 +4,16 @@ import { CategoriesSkeleton } from './CategoriesSkeleton';
 import { useCategories } from '@/hooks';
 import { CategoryWithCount } from '@/types';
 import { Alert } from '@/utils';
-import { FontAwesome } from '@expo/vector-icons';
+import { RefreshableFlatList } from '@/components/ui';
+import { useTabBarBottomOffset } from '@/components/layout';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
 import { useState, memo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
-  FlatList,
   Modal,
   Pressable,
-  RefreshControl,
   TextInput,
   View,
   Platform,
@@ -55,6 +55,10 @@ function CategoriesTabComponent() {
     isLoading,
     refetch,
   } = getCategoriesWithCountQuery;
+
+  const tabBarBottomOffset = useTabBarBottomOffset();
+  const maxCount = Math.max(0, ...categories.map((c) => c.product_count));
+  const totalProducts = categories.reduce((sum, c) => sum + c.product_count, 0);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -167,8 +171,10 @@ function CategoriesTabComponent() {
 
   return (
     <View className="flex-1">
-      {/* Categories List with stagger animation */}
-      <FlatList
+      {/* Categories list with the app's custom pull-to-refresh */}
+      <RefreshableFlatList<CategoryWithCount>
+        isRefreshing={refreshing}
+        onRefresh={onRefresh}
         data={categories}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }) => (
@@ -177,25 +183,49 @@ function CategoriesTabComponent() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{
               type: 'timing',
-              duration: 320,
-              delay: 100 + (index % 5) * 50,
+              duration: 240,
+              delay: Math.min(index, 8) * 30,
             }}
           >
             <CategoryCard
               category={item}
+              maxCount={maxCount}
               onPress={handleCategoryPress}
               onMore={handleOpenActionSheet}
             />
           </MotiView>
         )}
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#E85A1F"
-            colors={['#E85A1F']}
-          />
+        contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 88 }}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          categories.length > 0 ? (
+            <View className="flex-row items-center justify-between px-4 pt-2 pb-3">
+              <View>
+                <StyledText variant="extrabold" className="text-ink-900 text-lg">
+                  {categories.length}{' '}
+                  {categories.length === 1 ? 'category' : 'categories'}
+                </StyledText>
+                <StyledText
+                  variant="regular"
+                  className="text-ink-500 text-caption"
+                  style={{ fontVariant: ['tabular-nums'] }}
+                >
+                  {totalProducts} {totalProducts === 1 ? 'product' : 'products'} sorted
+                </StyledText>
+              </View>
+              <Pressable
+                onPress={handleAddCategory}
+                accessibilityRole="button"
+                accessibilityLabel="Add category"
+                className="h-11 px-4 rounded-full bg-persimmon-500 flex-row items-center gap-x-1.5 active:bg-persimmon-600"
+              >
+                <Ionicons name="add" size={18} color="#FFFFFF" />
+                <StyledText variant="extrabold" className="text-white text-sm">
+                  New
+                </StyledText>
+              </Pressable>
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <MotiView
