@@ -5,13 +5,11 @@ import {
   Modal as RNModal,
   ActivityIndicator,
   BackHandler,
-  Platform,
   StyleSheet,
   type ModalProps as RNModalProps,
 } from 'react-native';
 import { Easing } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { BlurView } from 'expo-blur';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
 import { FontAwesome } from '@expo/vector-icons';
@@ -235,15 +233,7 @@ export function Modal({
         transition={{ type: 'timing', duration: reducedMotion ? 0 : 200 }}
         style={StyleSheet.absoluteFill}
       >
-        <BlurView
-          intensity={32}
-          tint="dark"
-          experimentalBlurMethod={
-            Platform.OS === 'android' ? 'dimezisBlurView' : 'none'
-          }
-          style={StyleSheet.absoluteFill}
-        />
-        <View className="absolute inset-0 bg-ink-900/40" />
+        <View className="absolute inset-0 bg-ink-900/55" />
         <Pressable
           accessibilityLabel="Dismiss"
           accessibilityRole="button"

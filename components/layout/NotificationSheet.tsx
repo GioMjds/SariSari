@@ -1,6 +1,5 @@
 import { StyledText } from '@/components/elements';
 import { DynamicHomeAlert } from '@/hooks/useSystemNotifications';
-import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Dimensions, FlatList, Modal, Pressable, View } from 'react-native';
@@ -271,9 +270,8 @@ export function NotificationSheet({
           style={backdropStyle}
           pointerEvents="none"
         >
-          <BlurView intensity={38} tint="dark" className="absolute inset-0" />
           <View
-            className="absolute inset-0 bg-ink-900/30"
+            className="absolute inset-0 bg-ink-900/55"
             pointerEvents="none"
           />
         </AnimatedView>
