@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback, memo } from 'react';
 import { View, SectionList, RefreshControl } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
@@ -44,6 +45,7 @@ export const LedgerList = memo(function LedgerList({
   hasNextPage,
   onEndReached,
 }: LedgerListProps) {
+  const { t } = useTranslation('inventory');
   const filtered = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return transactions.filter((tx: InventoryTransaction) => {
@@ -75,7 +77,15 @@ export const LedgerList = memo(function LedgerList({
     });
   }, [filtered, currentStock]);
 
-  const groups = useMemo(() => groupByDay(rowsWithBalance), [rowsWithBalance]);
+  const groups = useMemo(
+    () =>
+      groupByDay(rowsWithBalance, {
+        today: t('dayToday'),
+        yesterday: t('dayYesterday'),
+        earlier: t('dayEarlier'),
+      }),
+    [rowsWithBalance, t],
+  );
 
   const sections = useMemo(() => {
     return groups.map((g) => ({
@@ -136,13 +146,13 @@ export const LedgerList = memo(function LedgerList({
         isFetchingNextPage ? (
           <View className="py-4 items-center justify-center flex-row gap-x-2">
             <StyledText variant="medium" className="text-cinnamon-500 text-xs">
-              Loading more movements...
+              {t('movementsLoadingMore')}
             </StyledText>
           </View>
         ) : !hasNextPage && transactions.length > 0 ? (
           <View className="py-4 items-center justify-center">
             <StyledText variant="medium" className="text-ink-400 text-xs">
-              End of movements
+              {t('movementsEnd')}
             </StyledText>
           </View>
         ) : null
@@ -269,6 +279,7 @@ const DaySeparator = memo(function DaySeparator({
 });
 
 const LedgerNoMatches = memo(function LedgerNoMatches() {
+  const { t } = useTranslation('inventory');
   return (
     <View className="items-center justify-center py-10 px-6 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
       <View className="w-12 h-12 rounded-full bg-paper-100 border border-ink-200 items-center justify-center mb-3">
@@ -278,13 +289,13 @@ const LedgerNoMatches = memo(function LedgerNoMatches() {
         variant="extrabold"
         className="text-ink-700 text-base text-center"
       >
-        No entries match your filter
+        {t('movementsNoMatchTitle')}
       </StyledText>
       <StyledText
         variant="regular"
         className="text-ink-500 text-sm mt-1 text-center"
       >
-        Try a different keyword or clear the filter to see everything.
+        {t('movementsNoMatch')}
       </StyledText>
     </View>
   );
@@ -297,35 +308,36 @@ function EventPill({
   type: InventoryEventType;
   sign?: 'positive' | 'negative' | null | undefined;
 }) {
+  const { t } = useTranslation('inventory');
   switch (type) {
     case 'restock':
       return (
         <StatusPill variant="success" size="sm" dot>
-          Restock
+          {t('movementType_restock')}
         </StatusPill>
       );
     case 'sale':
       return (
         <StatusPill variant="info" size="sm" dot>
-          Sale
+          {t('movementType_sale')}
         </StatusPill>
       );
     case 'damaged':
       return (
         <StatusPill variant="danger" size="sm" dot>
-          Damaged
+          {t('movementType_damaged')}
         </StatusPill>
       );
     case 'adjustment':
       return (
         <StatusPill variant="warning" size="sm" dot>
-          {sign === 'positive' ? 'Adjust (+)' : 'Adjust (−)'}
+          {t('movementType_adjustment')} {sign === 'positive' ? '(+)' : '(−)'}
         </StatusPill>
       );
     default:
       return (
         <StatusPill variant="neutral" size="sm">
-          Event
+          {t('movementType_other')}
         </StatusPill>
       );
   }
@@ -397,6 +409,7 @@ type DayGroup = {
 
 function groupByDay(
   rows: (InventoryTransaction & { runningBalance: number })[],
+  labels: { today: string; yesterday: string; earlier: string },
 ): DayGroup[] {
   const groups: Record<string, DayGroup> = {};
   const order: string[] = [];
@@ -407,17 +420,17 @@ function groupByDay(
     if (date && isValid(date)) {
       if (isToday(date)) {
         key = 'today';
-        label = 'Today';
+        label = labels.today;
       } else if (isYesterday(date)) {
         key = 'yesterday';
-        label = 'Yesterday';
+        label = labels.yesterday;
       } else {
         key = format(date, 'yyyy-MM-dd');
         label = format(date, 'MMM dd');
       }
     } else {
       key = 'unknown';
-      label = 'Earlier';
+      label = labels.earlier;
     }
     if (!groups[key]) {
       groups[key] = { key, label, entries: [] };

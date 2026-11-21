@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,18 +23,18 @@ import { ProductPicker } from '@/components/inventory/modals';
 import { useStocktakeGuard } from '@/hooks';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 
-const titleMap = {
-  restock: 'Restock Product',
-  sale: 'Record Sale',
-  damaged: 'Mark Damaged',
-  adjustment: 'Adjust Stock',
+const titleKey = {
+  restock: 'logTitle_restock',
+  sale: 'logTitle_sale',
+  damaged: 'logTitle_damaged',
+  adjustment: 'logTitle_adjustment',
 } satisfies Record<InventoryEventType, string>;
 
-const confirmLabels = {
-  restock: 'Restock',
-  sale: 'Record sale',
-  damaged: 'Mark damaged',
-  adjustment: 'Adjust stock',
+const confirmKey = {
+  restock: 'logConfirm_restock',
+  sale: 'logConfirm_sale',
+  damaged: 'logConfirm_damaged',
+  adjustment: 'logConfirm_adjustment',
 } satisfies Record<InventoryEventType, string>;
 
 function typeIconFor(t: InventoryEventType): keyof typeof FontAwesome.glyphMap {
@@ -41,13 +42,6 @@ function typeIconFor(t: InventoryEventType): keyof typeof FontAwesome.glyphMap {
   if (t === 'damaged') return 'exclamation-triangle';
   if (t === 'adjustment') return 'sliders';
   return 'book';
-}
-
-function typeLabelFor(t: InventoryEventType): string {
-  if (t === 'restock') return 'Restock';
-  if (t === 'damaged') return 'Damaged';
-  if (t === 'adjustment') return 'Adjust';
-  return 'Sale';
 }
 
 interface LogTransactionFormInnerProps {
@@ -65,6 +59,7 @@ function LogTransactionFormInner({
   onClose,
   onSuccess,
 }: LogTransactionFormInnerProps) {
+  const { t: tr } = useTranslation('inventory');
   const stocktakeGuard = useStocktakeGuard();
 
   const handleSuccess = useCallback(() => {
@@ -84,8 +79,8 @@ function LogTransactionFormInner({
     if (form.type === 'adjustment') {
       runWithPinGuard({
         actionId: 'stock_adjustment',
-        title: 'Authorize Stock Adjustment',
-        actionDescription: `Adjust stock for ${product.name}`,
+        title: tr('logPinTitle'),
+        actionDescription: tr('logPinBody', { name: product.name }),
         onApproved: () => {
           form.submit();
         },
@@ -95,8 +90,8 @@ function LogTransactionFormInner({
     }
   };
 
-  const activeTitle = titleMap[form.type];
-  const activeConfirmLabel = confirmLabels[form.type];
+  const activeTitle = tr(titleKey[form.type]);
+  const activeConfirmLabel = tr(confirmKey[form.type]);
 
   const isBlocked =
     stocktakeGuard.isActive &&
@@ -113,18 +108,17 @@ function LogTransactionFormInner({
         <View className="flex-1 justify-end bg-black/50">
           <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100 gap-y-4">
             <StyledText variant="extrabold" className="text-xl text-ink-900">
-              Stocktake in Progress
+              {tr('logBlockedTitle')}
             </StyledText>
             <StyledText variant="medium" className="text-ink-600 text-sm">
-              Manual adjustments and marking damaged goods are paused during a
-              physical count to prevent inventory drift.
+              {tr('logBlockedBody')}
             </StyledText>
             <TouchableOpacity
               onPress={onClose}
               className="bg-persimmon-500 py-3 rounded-xl items-center"
             >
               <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                Got it
+                {tr('guideGotIt')}
               </StyledText>
             </TouchableOpacity>
           </View>
@@ -165,7 +159,7 @@ function LogTransactionFormInner({
               <TouchableOpacity
                 onPress={onClose}
                 disabled={form.isPending}
-                accessibilityLabel="Close transaction form"
+                accessibilityLabel={tr('close')}
                 accessibilityRole="button"
                 className="p-1"
               >
@@ -200,7 +194,7 @@ function LogTransactionFormInner({
                       variant="regular"
                       className="text-ink-500 text-xs"
                     >
-                      Current Stock
+                      {tr('currentStock')}
                     </StyledText>
                     <StyledText
                       variant="semibold"
@@ -219,7 +213,7 @@ function LogTransactionFormInner({
                       variant="regular"
                       className="text-ink-500 text-xs"
                     >
-                      Price
+                      {tr('price')}
                     </StyledText>
                     <MoneyText
                       value={product.price}
@@ -238,14 +232,14 @@ function LogTransactionFormInner({
                       className="text-ink-900 text-xs uppercase"
                       style={{ letterSpacing: 0.5 }}
                     >
-                      Adjustment Direction
+                      {tr('logDirection')}
                     </StyledText>
                   </View>
                   <View className="flex-row gap-3">
                     <TouchableOpacity
                       onPress={() => form.setAdjustmentSign('positive')}
                       accessibilityRole="button"
-                      accessibilityLabel="Increase adjustment sign"
+                      accessibilityLabel={tr('logIncrease')}
                       className={`flex-1 py-3 rounded-xl border items-center justify-center flex-row gap-2 ${
                         form.adjustmentSign === 'positive'
                           ? 'bg-sage-50 border-sage-500'
@@ -269,13 +263,13 @@ function LogTransactionFormInner({
                             : 'text-ink-600'
                         }
                       >
-                        Increase (+)
+                        {tr('logIncrease')} (+)
                       </StyledText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => form.setAdjustmentSign('negative')}
                       accessibilityRole="button"
-                      accessibilityLabel="Decrease adjustment sign"
+                      accessibilityLabel={tr('logDecrease')}
                       className={`flex-1 py-3 rounded-xl border items-center justify-center flex-row gap-2 ${
                         form.adjustmentSign === 'negative'
                           ? 'bg-semantic-danger-50 border-semantic-danger'
@@ -299,7 +293,7 @@ function LogTransactionFormInner({
                             : 'text-ink-600'
                         }
                       >
-                        Decrease (−)
+                        {tr('logDecrease')} (−)
                       </StyledText>
                     </TouchableOpacity>
                   </View>
@@ -311,7 +305,7 @@ function LogTransactionFormInner({
                     className="text-ink-900 mb-2 text-xs uppercase"
                     style={{ letterSpacing: 0.5 }}
                   >
-                    Type
+                    {tr('logType')}
                   </StyledText>
                   <View className="bg-paper-100 border border-ink-100 rounded-xl px-4 py-3 flex-row items-center gap-2">
                     <FontAwesome
@@ -323,7 +317,7 @@ function LogTransactionFormInner({
                       variant="semibold"
                       className="text-ink-700 text-sm"
                     >
-                      {typeLabelFor(initialType)}
+                      {tr(`movementType_${initialType}`)}
                     </StyledText>
                   </View>
                 </View>
@@ -334,25 +328,25 @@ function LogTransactionFormInner({
                     className="text-ink-900 mb-2 text-xs uppercase"
                     style={{ letterSpacing: 0.5 }}
                   >
-                    Type
+                    {tr('logType')}
                   </StyledText>
                   <View className="flex-row gap-2">
                     {[
                       {
                         type: 'restock' as const,
-                        label: 'Restock',
+                        label: tr('movementFilterRestock'),
                         icon: 'plus',
                         activeBg: 'bg-sage-500',
                       },
                       {
                         type: 'damaged' as const,
-                        label: 'Damaged',
+                        label: tr('movementFilterDamaged'),
                         icon: 'exclamation-triangle',
                         activeBg: 'bg-semantic-danger',
                       },
                       {
                         type: 'adjustment' as const,
-                        label: 'Adjust',
+                        label: tr('movementFilterAdjust'),
                         icon: 'sliders',
                         activeBg: 'bg-semantic-warning',
                       },
@@ -367,7 +361,7 @@ function LogTransactionFormInner({
                               form.setAdjustmentSign('positive');
                           }}
                           accessibilityRole="button"
-                          accessibilityLabel={`Select type ${label}`}
+                          accessibilityLabel={label}
                           accessibilityState={{ selected: isActive }}
                           className={`flex-1 flex-row items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl border ${
                             isActive
@@ -405,7 +399,7 @@ function LogTransactionFormInner({
                       className="text-ink-900 mb-2 text-xs uppercase"
                       style={{ letterSpacing: 0.5 }}
                     >
-                      Unit
+                      {tr('logUnit')}
                     </StyledText>
                     <View className="flex-row gap-2">
                       <TouchableOpacity
@@ -458,7 +452,7 @@ function LogTransactionFormInner({
                   className="text-ink-900 mb-2 text-xs uppercase"
                   style={{ letterSpacing: 0.5 }}
                 >
-                  Quantity
+                  {tr('quantity')}
                 </StyledText>
                 <View className="flex-row items-center justify-center gap-4 my-2">
                   <TouchableOpacity
@@ -466,7 +460,7 @@ function LogTransactionFormInner({
                       form.setQuantity(Math.max(1, form.quantity - 1))
                     }
                     accessibilityRole="button"
-                    accessibilityLabel="Decrease quantity"
+                    accessibilityLabel={tr('logDecrease')}
                     className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 items-center justify-center"
                   >
                     <FontAwesome name="minus" size={16} color="#4A2610" />
@@ -479,7 +473,7 @@ function LogTransactionFormInner({
                       form.setQuantity(Number.isNaN(val) ? 0 : val);
                     }}
                     keyboardType="number-pad"
-                    accessibilityLabel="Quantity"
+                    accessibilityLabel={tr('quantity')}
                     className="w-24 text-center text-2xl font-extrabold text-ink-900 border-b border-ink-300 py-1"
                     style={{ fontFamily: 'StackSansText-Bold' }}
                   />
@@ -487,7 +481,7 @@ function LogTransactionFormInner({
                   <TouchableOpacity
                     onPress={() => form.setQuantity(form.quantity + 1)}
                     accessibilityRole="button"
-                    accessibilityLabel="Increase quantity"
+                    accessibilityLabel={tr('logIncrease')}
                     className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 items-center justify-center"
                   >
                     <FontAwesome name="plus" size={16} color="#4A2610" />
@@ -499,11 +493,11 @@ function LogTransactionFormInner({
                   accessibilityLiveRegion="polite"
                 >
                   <StyledText variant="medium" className="text-ink-500 text-xs">
-                    CURRENT:{' '}
+                    {tr('logNow')}:{' '}
                     <StyledText variant="extrabold" className="text-ink-700">
                       {form.currentQuantity}
                     </StyledText>{' '}
-                    → NEW:{' '}
+                    → {tr('logAfter')}:{' '}
                     <StyledText
                       variant="extrabold"
                       className={
@@ -520,7 +514,7 @@ function LogTransactionFormInner({
                       variant="semibold"
                       className="text-semantic-danger text-xs mt-1"
                     >
-                      Can&apos;t go below zero.
+                      {tr('logBelowZero')}
                     </StyledText>
                   )}
                 </View>
@@ -533,14 +527,14 @@ function LogTransactionFormInner({
                   className="text-ink-900 mb-2 text-xs uppercase"
                   style={{ letterSpacing: 0.5 }}
                 >
-                  Note (optional)
+                  {tr('logNote')}
                 </StyledText>
                 <TextInput
-                  placeholder='e.g. "10 from supplier A"'
+                  placeholder={tr('logNotePlaceholder')}
                   value={form.note}
                   onChangeText={form.setNote}
                   placeholderTextColor="#A1978A"
-                  accessibilityLabel="Transaction note"
+                  accessibilityLabel={tr('logNote')}
                   className="bg-paper-50 border border-ink-200 rounded-xl px-4 py-3 text-ink-900 text-sm shadow-sm"
                 />
               </View>
@@ -551,12 +545,12 @@ function LogTransactionFormInner({
                   onPress={onClose}
                   disabled={form.isPending}
                   accessibilityRole="button"
-                  accessibilityLabel="Cancel"
+                  accessibilityLabel={tr('cancel')}
                   activeOpacity={0.85}
                   className="flex-1 border border-ink-200 bg-paper-50 rounded-xl py-3 items-center justify-center"
                 >
                   <StyledText variant="medium" className="text-ink-600">
-                    Cancel
+                    {tr('cancel')}
                   </StyledText>
                 </TouchableOpacity>
                 <MotiView
@@ -622,6 +616,7 @@ export function LogTransactionForm({
   onClose,
   onSuccess,
 }: LogTransactionFormProps) {
+  const { t: tr } = useTranslation('inventory');
   const { getAllProductsQuery } = useProducts();
   const products = getAllProductsQuery.data ?? [];
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
@@ -666,7 +661,7 @@ export function LogTransactionForm({
                   variant="extrabold"
                   className="text-xl text-ink-900 mb-4"
                 >
-                  {titleMap[initialType]}
+                  {tr(titleKey[initialType])}
                 </StyledText>
                 <ProductPicker
                   products={products}
@@ -680,10 +675,10 @@ export function LogTransactionForm({
                   onPress={handleClose}
                   className="flex-1 border border-ink-200 bg-paper-50 rounded-xl py-3 items-center justify-center mt-6"
                   accessibilityRole="button"
-                  accessibilityLabel="Cancel"
+                  accessibilityLabel={tr('cancel')}
                 >
                   <StyledText variant="medium" className="text-ink-600">
-                    Cancel
+                    {tr('cancel')}
                   </StyledText>
                 </TouchableOpacity>
               </View>

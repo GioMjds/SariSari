@@ -1,5 +1,4 @@
-export * from './StocktakeBanner';
-export * from './StocktakeCategorySection';
+export * from './StocktakeCategoryHeader';
 export * from './StocktakeCountRow';
 export * from './StocktakeHistoryList';
 export * from './StocktakeStartCard';

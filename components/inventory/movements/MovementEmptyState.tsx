@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { View, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -14,11 +15,12 @@ const PERFORATION_COUNT = 22;
 const PERFORATION_BG = '#F7F6F2';
 
 export function MovementEmptyState({
-  title = 'Wala pang stock movement',
-  subtitle = 'Ang mga restock, benta, at stock adjustments ay lalabas dito nang sunod-sunod ayon sa petsa.',
+  title,
+  subtitle,
   onReceiveStock,
   onAdjustStock,
 }: MovementEmptyStateProps) {
+  const { t } = useTranslation('inventory');
   return (
     <View
       className="mx-4 mt-6 rounded-3xl overflow-hidden bg-paper-50 border border-ink-100"
@@ -52,7 +54,7 @@ export function MovementEmptyState({
           variant="extrabold"
           className="label-caps text-cinnamon-600 mb-2"
         >
-          Activity Log Empty
+          {t('movementsEmptyEyebrow')}
         </StyledText>
 
         <SariMascot state="inventory" size={180} />
@@ -61,14 +63,14 @@ export function MovementEmptyState({
           variant="black"
           className="text-ink-900 text-h2 mt-3 text-center px-4"
         >
-          {title}
+          {title ?? t('movementsEmptyTitle')}
         </StyledText>
 
         <StyledText
           variant="regular"
           className="text-ink-500 text-body mt-2 text-center max-w-[280px]"
         >
-          {subtitle}
+          {subtitle ?? t('movementsEmptyBody')}
         </StyledText>
 
         {/* Action CTAs */}
@@ -85,7 +87,7 @@ export function MovementEmptyState({
                   variant="extrabold"
                   className="text-paper-50 text-sm ml-2"
                 >
-                  Receive Stock
+                  {t('receiveStock')}
                 </StyledText>
               </TouchableOpacity>
             )}
@@ -101,7 +103,7 @@ export function MovementEmptyState({
                   variant="extrabold"
                   className="text-ink-800 text-sm ml-2"
                 >
-                  Adjust Stock
+                  {t('adjustStock')}
                 </StyledText>
               </TouchableOpacity>
             )}

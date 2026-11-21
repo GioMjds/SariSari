@@ -42,5 +42,10 @@
   "notCounted": "Not counted yet",
   "uncountedTitle": "Some items are not counted",
   "uncountedBody": "{{count}} item(s) were not counted. They will keep their current stock.",
-  "keepCounting": "Keep counting"
+  "keepCounting": "Keep counting",
+
+  "uncategorized": "Uncategorized",
+  "decreaseCount": "Decrease count",
+  "recentCounts": "Recent counts",
+  "status": {"completed": "Done", "abandoned": "Discarded", "in_progress": "In progress"}
 }

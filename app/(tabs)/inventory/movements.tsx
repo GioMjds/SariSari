@@ -61,8 +61,8 @@ function MovementsScreen() {
   if (txQuery.error) {
     return (
       <InventoryErrorState
-        title="Couldn't load movements"
-        message={(txQuery.error as Error)?.message ?? 'Unknown error'}
+        title={t('movementsLoadError')}
+        message={(txQuery.error as Error)?.message ?? t('errorUnknown')}
         onRetry={() => txQuery.refetch?.()}
       />
     );

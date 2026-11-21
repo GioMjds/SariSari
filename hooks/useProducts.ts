@@ -111,6 +111,10 @@ export function invalidateProductDependencies(
     queryKey: ['sales-stats'],
     refetchType: 'all',
   });
+  // Restock suggestions depend on current stock.
+  queryClient.invalidateQueries({
+    queryKey: ['stock-intelligence'],
+  });
 }
 
 export function useGetProduct(id: number) {

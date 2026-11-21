@@ -44,8 +44,8 @@ export const LedgerToolbar = memo(function LedgerToolbar({
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search notes or dates…"
-              accessibilityLabel="Search ledger entries"
+              placeholder={t('movementsSearch')}
+              accessibilityLabel={t('movementsSearch')}
               debounceMs={200}
             />
           </View>
@@ -67,6 +67,7 @@ export const LedgerToolbar = memo(function LedgerToolbar({
                 label={t('movementFilterAll')}
                 count={
                   (counts.restock ?? 0) +
+                  (counts.sale ?? 0) +
                   (counts.damaged ?? 0) +
                   (counts.adjustment ?? 0)
                 }
@@ -80,6 +81,13 @@ export const LedgerToolbar = memo(function LedgerToolbar({
                 active={selectedType === 'restock'}
                 onPress={() => setSelectedType('restock')}
                 accessibilityLabel="Show only restock entries"
+              />
+              <Chip
+                label={t('movementFilterSale')}
+                count={counts.sale ?? 0}
+                active={selectedType === 'sale'}
+                onPress={() => setSelectedType('sale')}
+                accessibilityLabel={t('movementFilterSale')}
               />
               <Chip
                 label={t('movementFilterDamaged')}

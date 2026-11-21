@@ -104,7 +104,7 @@ function RecommendationsScreen() {
     if (!adjustingProduct) return;
     const qty = parseInt(adjustedQtyText, 10);
     if (isNaN(qty) || qty < 0) {
-      setAdjustError('Please enter a valid positive number');
+      setAdjustError(t('restockQtyInvalid'));
       return;
     }
 
@@ -124,7 +124,7 @@ function RecommendationsScreen() {
           refetch();
         },
         onError: () => {
-          setAdjustError('Failed to save adjustment. Please try again.');
+          setAdjustError(t('restockSaveFailed'));
         },
       },
     );
@@ -150,7 +150,7 @@ function RecommendationsScreen() {
           showUndo(product, t('restockDeferredToast'));
         },
         onError: () => {
-          Alert.alert('Error', 'Failed to defer item. Please try again.');
+          Alert.alert(t('errorTitle'), t('restockSaveFailed'));
         },
       },
     );
@@ -172,7 +172,7 @@ function RecommendationsScreen() {
           showUndo(product, t('restockDismissedToast'));
         },
         onError: () => {
-          Alert.alert('Error', 'Failed to dismiss item. Please try again.');
+          Alert.alert(t('errorTitle'), t('restockSaveFailed'));
         },
       },
     );
@@ -194,8 +194,8 @@ function RecommendationsScreen() {
   };
 
   const handleRestock = (product: ReorderRecommendation) => {
+    // The sheet host lives in the inventory layout, so the owner stays on Restock.
     signal.requestRestock(product.productId);
-    router.push('/(tabs)/inventory/products' as Href);
   };
 
   const renderReorderItem = ({ item }: { item: ReorderRecommendation }) => {
@@ -244,8 +244,8 @@ function RecommendationsScreen() {
                 className={`text-xs ${item.isOutOfStock ? 'text-semantic-danger' : 'text-semantic-warning'}`}
               >
                 {item.isOutOfStock
-                  ? 'Out of Stock'
-                  : `${item.currentStock} ${item.retailUnitName} left`}
+                  ? t('restockOutOfStock')
+                  : t('restockLeft', { qty: item.currentStock, unit: item.retailUnitName })}
               </StyledText>
             </View>
           </View>
@@ -343,7 +343,7 @@ function RecommendationsScreen() {
           >
             <FontAwesome name="plus" size={10} color="#FBF7EE" />
             <StyledText variant="semibold" className="text-xs text-paper-50">
-              Record Restock
+              {t('restockRecord')}
             </StyledText>
           </TouchableOpacity>
         </View>
@@ -398,12 +398,12 @@ function RecommendationsScreen() {
 
         <View className="mt-3 pt-3 border-t border-ink-100 flex-row justify-between items-center">
           <StyledText variant="regular" className="text-xs text-ink-500">
-            No sales recorded in the last 28 days
+            {t('restockNoSales28')}
           </StyledText>
           {item.costPrice !== null && (
             <View className="flex-row items-center gap-1.5">
               <StyledText variant="regular" className="text-xs text-ink-600">
-                Stock Value:
+                {t('restockStockValue')}
               </StyledText>
               <MoneyText value={item.currentStock * item.costPrice} size="sm" />
             </View>
@@ -455,7 +455,7 @@ function RecommendationsScreen() {
                 variant="semibold"
                 className="text-xs text-semantic-info"
               >
-                New Product
+                {t('restockNewProduct')}
               </StyledText>
             </View>
           </View>
@@ -463,10 +463,10 @@ function RecommendationsScreen() {
 
         <View className="mt-3 pt-3 border-t border-ink-100 flex-row justify-between items-center">
           <StyledText variant="regular" className="text-xs text-ink-500">
-            Fewer than 7 days of sales history
+            {t('restockFewDays')}
           </StyledText>
           <StyledText variant="semibold" className="text-xs text-ink-700">
-            Current Stock: {item.currentStock} {item.retailUnitName}
+            {t('currentStock')}: {item.currentStock} {item.retailUnitName}
           </StyledText>
         </View>
       </MotiView>
@@ -522,7 +522,7 @@ function RecommendationsScreen() {
 
         <View className="flex-row justify-between items-center pt-3 border-t border-ink-100">
           <StyledText variant="regular" className="text-xs text-ink-600">
-            Original suggested: +
+            {t('restockOriginalSuggested')} +
             {Math.max(
               0,
               Math.ceil((7 * item.sales28Days) / 28) - item.currentStock,
@@ -701,14 +701,13 @@ function RecommendationsScreen() {
                 variant="extrabold"
                 className="text-lg text-ink-900 mb-2"
               >
-                Adjust Quantity
+                {t('restockAdjustTitle')}
               </StyledText>
               <StyledText
                 variant="regular"
                 className="text-sm text-ink-500 mb-4"
               >
-                Enter the adjusted restock quantity for{' '}
-                {adjustingProduct?.productName}:
+                {t('restockAdjustBody', { name: adjustingProduct?.productName ?? '' })}
               </StyledText>
 
               <TextInput
@@ -719,7 +718,7 @@ function RecommendationsScreen() {
                 }}
                 keyboardType="number-pad"
                 className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
-                placeholder="Quantity"
+                placeholder={t('quantity')}
                 autoFocus
               />
 
@@ -742,7 +741,7 @@ function RecommendationsScreen() {
                     variant="semibold"
                     className="text-sm text-ink-700"
                   >
-                    Cancel
+                    {t('cancel')}
                   </StyledText>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -754,7 +753,7 @@ function RecommendationsScreen() {
                     variant="semibold"
                     className="text-sm text-paper-50"
                   >
-                    Save
+                    {t('save')}
                   </StyledText>
                 </TouchableOpacity>
               </View>

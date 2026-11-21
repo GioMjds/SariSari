@@ -1,6 +1,6 @@
 import { withProf } from '@/utils/perf';
 import { useState, useMemo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { SectionList, View, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Alert } from '@/utils';
@@ -19,14 +19,14 @@ import { useProducts } from '@/hooks/useProducts';
 import {
   StocktakeStartCard,
   StocktakeHistoryList,
-  StocktakeCategorySection,
+  StocktakeCategoryHeader,
+  StocktakeCountRow,
   StocktakeVarianceSummary,
   StocktakeVarianceRow,
   StocktakeSkeleton,
 } from '@/components/inventory/stocktake';
 import type { StocktakeReason } from '@/configs/stocktakeReasons';
 import type { StocktakeCount } from '@/types/stocktake.types';
-import { Product } from '@/types';
 
 function StocktakeScreen() {
   const { t } = useTranslation('stocktake');
@@ -73,12 +73,33 @@ function StocktakeScreen() {
   const categoriesMap = useMemo(() => {
     const map: Record<string, typeof products> = {};
     for (const p of products) {
-      const cat = p.category || 'Uncategorized';
+      const cat = p.category || t('uncategorized');
       if (!map[cat]) map[cat] = [];
       map[cat].push(p);
     }
     return map;
-  }, [products]);
+  }, [products, t]);
+
+  // Categories start collapsed; only open ones feed rows into the virtualized list.
+  const [openCategories, setOpenCategories] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const toggleCategory = (name: string) =>
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  const sections = useMemo(
+    () =>
+      Object.entries(categoriesMap).map(([title, items]) => ({
+        title,
+        total: items.length,
+        data: openCategories.has(title) ? items : [],
+      })),
+    [categoriesMap, openCategories],
+  );
 
   // Compute total counted and variances
   const totalProducts = products.length;
@@ -294,22 +315,39 @@ function StocktakeScreen() {
         </StyledText>
       </View>
 
-      <KeyboardAwareScrollView
-        bottomOffset={64}
+      <SectionList
+        sections={sections}
+        keyExtractor={(p) => String(p.id)}
+        stickySectionHeadersEnabled={false}
         keyboardShouldPersistTaps="handled"
-        className="flex-1 p-4"
-        contentContainerStyle={{ paddingBottom: 80 }}
-      >
-        {Object.entries(categoriesMap).map(([catName, catProducts]) => (
-          <StocktakeCategorySection
-            key={catName}
-            categoryName={catName}
-            products={catProducts}
-            countsMap={countsMap}
-            onCountChange={handleCountChange}
+        initialNumToRender={20}
+        renderScrollComponent={(props) => (
+          <KeyboardAwareScrollView {...props} bottomOffset={64} />
+        )}
+        contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+        renderSectionHeader={({ section }) => (
+          <StocktakeCategoryHeader
+            categoryName={section.title}
+            productCount={section.total}
+            expanded={openCategories.has(section.title)}
+            onToggle={() => toggleCategory(section.title)}
           />
-        ))}
-      </KeyboardAwareScrollView>
+        )}
+        renderItem={({ item }) => {
+          const count = countsMap[item.id];
+          const expected = count ? count.expectedQty : item.quantity;
+          return (
+            <View className="pl-1">
+              <StocktakeCountRow
+                product={item}
+                expectedQty={expected}
+                countedQty={count ? count.countedQty : null}
+                onCountChange={(qty) => handleCountChange(item.id, expected, qty)}
+              />
+            </View>
+          );
+        }}
+      />
 
       {/* Footer controls */}
       <View className="bg-paper-50 p-4 border-t border-paper-300 flex-row gap-x-3">

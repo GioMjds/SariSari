@@ -67,7 +67,7 @@ export function StocktakeCountRow({
         <TouchableOpacity
           onPress={() => onCountChange(Math.max(0, base - 1))}
           className="w-10 h-10 rounded-lg bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-200"
-          accessibilityLabel="Decrease count"
+          accessibilityLabel={t('decreaseCount')}
         >
           <FontAwesome name="minus" size={12} color="#564E45" />
         </TouchableOpacity>

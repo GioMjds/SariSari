@@ -1,8 +1,8 @@
 # Product
 
-## Register
+## Platform
 
-product
+adaptive
 
 ## Users
 

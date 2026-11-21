@@ -42,5 +42,10 @@
   "notCounted": "Hindi pa nabilang",
   "uncountedTitle": "May hindi pa nabilang",
   "uncountedBody": "{{count}} produkto ang hindi pa nabilang. Mananatili ang kasalukuyang stock nila.",
-  "keepCounting": "Ituloy ang bilang"
+  "keepCounting": "Ituloy ang bilang",
+
+  "uncategorized": "Walang kategorya",
+  "decreaseCount": "Bawasan ang bilang",
+  "recentCounts": "Mga huling bilang",
+  "status": {"completed": "Tapos", "abandoned": "Itinapon", "in_progress": "Nagaganap"}
 }
