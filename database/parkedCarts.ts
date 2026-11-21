@@ -31,27 +31,10 @@ export interface ParkCartInput {
   cartItems: NewSaleItem[];
 }
 
-export async function ensureParkedCartsTable(
-  db: SQLiteDatabase,
-): Promise<void> {
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS parked_carts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      label TEXT NOT NULL,
-      customer_id INTEGER REFERENCES customers(id) ON DELETE SET NULL,
-      customer_name TEXT,
-      payment_type TEXT NOT NULL DEFAULT 'cash',
-      payload_json TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      expires_at TEXT NOT NULL
-    );
-  `);
-}
-
+// The parked_carts table is created by migration v10 in database/migrations.ts.
 export async function getParkedCarts(
   db: SQLiteDatabase,
 ): Promise<ParkedCart[]> {
-  await ensureParkedCartsTable(db);
   await cleanupExpiredCarts(db);
 
   const rows = await db.getAllAsync<ParkedCartRow>(
@@ -76,8 +59,6 @@ export async function parkCart(
   db: SQLiteDatabase,
   input: ParkCartInput,
 ): Promise<number> {
-  await ensureParkedCartsTable(db);
-
   if (!input.cartItems || input.cartItems.length === 0) {
     throw new Error('Cannot park an empty cart.');
   }
@@ -112,8 +93,6 @@ export async function swapParkedCart(
   parkInput: ParkCartInput,
   discardId: number,
 ): Promise<{ newParkedId: number }> {
-  await ensureParkedCartsTable(db);
-
   if (!parkInput.cartItems || parkInput.cartItems.length === 0) {
     throw new Error('Cannot park an empty cart.');
   }
@@ -153,12 +132,10 @@ export async function discardParkedCart(
   db: SQLiteDatabase,
   id: number,
 ): Promise<void> {
-  await ensureParkedCartsTable(db);
   await db.runAsync('DELETE FROM parked_carts WHERE id = ?;', [id]);
 }
 
 export async function cleanupExpiredCarts(db: SQLiteDatabase): Promise<void> {
-  await ensureParkedCartsTable(db);
   await db.runAsync(
     "DELETE FROM parked_carts WHERE datetime(expires_at) <= datetime('now');",
   );

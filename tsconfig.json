@@ -30,6 +30,7 @@
     ".expo",
     ".next",
     ".turbo",
-    "coverage"
+    "coverage",
+    "scripts/mascot-stills"
   ]
 }

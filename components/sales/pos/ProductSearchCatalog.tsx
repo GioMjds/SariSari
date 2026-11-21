@@ -9,11 +9,12 @@ import {
 } from 'react-native';
 import { NewSaleItem, Product } from '@/types';
 import { StyledText } from '@/components/elements';
-import { SariMascot } from '@/components/mascot';
+import { useToggleFavorite } from '@/hooks/useProducts';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
 import { usePOSSearchStore } from '@/stores';
+import { Prof } from '@/utils/perf';
 
 interface ProductSearchCatalogProps {
   filteredProducts: Product[];
@@ -67,6 +68,17 @@ export function ProductSearchCatalog({
   onPressParkedList,
   onPressParkCurrent,
 }: ProductSearchCatalogProps) {
+  // One shared mutation instead of one observer per row.
+  const { mutate: toggleFavorite } = useToggleFavorite();
+  const handleToggleFavorite = useCallback(
+    (product: Product) =>
+      toggleFavorite({
+        productId: product.id,
+        isFavorite: !product.is_favorite,
+      }),
+    [toggleFavorite],
+  );
+
   const renderProductRow = useCallback(
     ({ item }: { item: Product }) => {
       const cartLine = getCartLine(item.id);
@@ -76,11 +88,12 @@ export function ProductSearchCatalog({
           {...(cartLine ? { cartLine } : {})}
           onAdd={onAdd}
           onUpdateQuantity={onUpdateQuantity}
+          onToggleFavorite={handleToggleFavorite}
           {...(onToggleUnit ? { onToggleUnit } : {})}
         />
       );
     },
-    [getCartLine, onAdd, onUpdateQuantity, onToggleUnit],
+    [getCartLine, onAdd, onUpdateQuantity, onToggleUnit, handleToggleFavorite],
   );
 
   const handleFastLaneAddToCart = useCallback(
@@ -112,7 +125,9 @@ export function ProductSearchCatalog({
       />
 
       {/* Fast Lane Section (with +1, +2, +5 quick-qty chips) */}
-      <FastLaneSection onAddToCart={handleFastLaneAddToCart} />
+      <Prof id="POS:FastLane">
+        <FastLaneSection onAddToCart={handleFastLaneAddToCart} />
+      </Prof>
 
       {pendingAddProductBarcode ? (
         <View className="mx-4 mb-3 bg-semantic-danger-50 border border-semantic-danger/30 rounded-2xl p-4 shadow-paper">
@@ -161,63 +176,70 @@ export function ProductSearchCatalog({
       {/* Products List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <SariMascot state="loading" size={88} accessibilityLabel="Loading" defer />
+          {/* Spinner, not Sari: the load is too brief to pay a mascot mount. */}
+          <ActivityIndicator
+            size="large"
+            color="#623418"
+            accessibilityLabel="Loading"
+          />
         </View>
       ) : (
-        <FlatList
-          data={filteredProducts}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 82 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          updateCellsBatchingPeriod={50}
-          windowSize={11}
-          removeClippedSubviews={false}
-          onEndReached={() => {
-            if (!isFetchingNextPage && hasNextPage && onEndReached) {
-              onEndReached();
-            }
-          }}
-          onEndReachedThreshold={0.4}
-          renderItem={renderProductRow}
-          ListEmptyComponent={
-            <View className="flex-1 justify-center items-center py-12">
-              <FontAwesome
-                name="inbox"
-                size={56}
-                color="#623418"
-                style={{ opacity: 0.25 }}
-              />
-              <StyledText
-                variant="semibold"
-                className="text-ink-500 text-base mt-3"
-              >
-                No products found
-              </StyledText>
-            </View>
-          }
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <View className="items-center py-4">
-                <ActivityIndicator size="small" color="#623418" />
+        <Prof id="POS:ProductList">
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={{ paddingBottom: 82 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            updateCellsBatchingPeriod={50}
+            windowSize={11}
+            removeClippedSubviews={false}
+            onEndReached={() => {
+              if (!isFetchingNextPage && hasNextPage && onEndReached) {
+                onEndReached();
+              }
+            }}
+            onEndReachedThreshold={0.4}
+            renderItem={renderProductRow}
+            ListEmptyComponent={
+              <View className="flex-1 justify-center items-center py-12">
+                <FontAwesome
+                  name="inbox"
+                  size={56}
+                  color="#623418"
+                  style={{ opacity: 0.25 }}
+                />
                 <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-xs mt-2"
+                  variant="semibold"
+                  className="text-ink-500 text-base mt-3"
                 >
-                  Loading more...
+                  No products found
                 </StyledText>
               </View>
-            ) : !hasNextPage && filteredProducts.length > 0 ? (
-              <View className="items-center py-4">
-                <StyledText variant="medium" className="text-ink-500 text-xs">
-                  End of list
-                </StyledText>
-              </View>
-            ) : null
-          }
-        />
+            }
+            ListFooterComponent={
+              isFetchingNextPage ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator size="small" color="#623418" />
+                  <StyledText
+                    variant="medium"
+                    className="text-ink-500 text-xs mt-2"
+                  >
+                    Loading more...
+                  </StyledText>
+                </View>
+              ) : !hasNextPage && filteredProducts.length > 0 ? (
+                <View className="items-center py-4">
+                  <StyledText variant="medium" className="text-ink-500 text-xs">
+                    End of list
+                  </StyledText>
+                </View>
+              ) : null
+            }
+          />
+        </Prof>
       )}
     </View>
   );

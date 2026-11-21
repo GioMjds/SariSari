@@ -42,7 +42,7 @@ export function SariStage({ source, mascot, bubble, poseKey, size = 120 }: Props
         style={{ width: size, height: size }}
       >
         {mascot ? (
-          <SariMascot state={mascot} size={size} />
+          <SariMascot state={mascot} size={size} defer />
         ) : (
           <Image
             source={shown}

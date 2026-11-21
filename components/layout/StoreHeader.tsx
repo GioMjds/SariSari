@@ -35,6 +35,7 @@ const TABS = [
   'customers',
   'more',
 ] satisfies SariTab[];
+
 const SARI_SIZE = 56;
 
 function useActiveTab(): SariTab {
@@ -95,7 +96,7 @@ export const StoreHeader = memo(function StoreHeader() {
                 <SariMascot
                   state={SARI_TAB_STATE[key]}
                   size={SARI_SIZE}
-                  animated={key === tab}
+                  animated={false}
                 />
               </View>
             ))}

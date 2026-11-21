@@ -1,30 +1,40 @@
 import type { NewSaleItem, Product } from '@/types';
 import { memo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, View, type PressableStateCallbackType } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { Image } from 'expo-image';
 import { calculateBulkSavings, formatPesos, getProductImageUri } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
-import { useToggleFavorite } from '@/hooks/useProducts';
+
+// Pressed colors as Pressable style functions; NativeWind active: classes add a per-node interaction wrapper.
+const pressedBg =
+  (backgroundColor: string) =>
+  ({ pressed }: PressableStateCallbackType) =>
+    pressed ? { backgroundColor } : null;
+const PRESS_ROW = pressedBg('rgba(247, 246, 242, 0.5)'); // paper-200/50
+const PRESS_CINNAMON = pressedBg('#4D2810'); // cinnamon-600
+const PRESS_PAPER = pressedBg('#F7F6F2'); // paper-200
+const PRESS_PAPER_DEEP = pressedBg('#E6E3D8'); // paper-300
+const PRESS_SAGE = pressedBg('#2C4413'); // sage-700
 
 const ROW_OUT_OF_STOCK_CLASS =
   'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card opacity-60';
 const ROW_AVAILABLE_CLASS =
-  'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card active:bg-paper-200/50';
+  'mx-4 mb-3 rounded-2xl bg-paper-100 border border-paper-300/80 p-3.5 shadow-card';
 const ADD_BUTTON_DISABLED_CLASS =
-  'bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm opacity-40';
+  'bg-cinnamon-500 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm opacity-40';
 const ADD_BUTTON_ENABLED_CLASS =
-  'bg-cinnamon-500 active:bg-cinnamon-600 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm';
+  'bg-cinnamon-500 rounded-xl px-4 py-2.5 flex-row items-center justify-center min-h-[44px] min-w-[44px] shadow-sm';
 
 const RETAIL_CHIP_ACTIVE_CLASS =
-  'flex-1 bg-cinnamon-500 active:bg-cinnamon-600 border border-cinnamon-600 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
+  'flex-1 bg-cinnamon-500 border border-cinnamon-600 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
 const RETAIL_CHIP_INACTIVE_CLASS =
-  'flex-1 bg-paper-100 active:bg-paper-200 border border-paper-300/80 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
+  'flex-1 bg-paper-100 border border-paper-300/80 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
 
 const WHOLESALE_CHIP_ACTIVE_CLASS =
-  'flex-1 bg-sage-600 active:bg-sage-700 border border-sage-700 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
+  'flex-1 bg-sage-600 border border-sage-700 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
 const WHOLESALE_CHIP_INACTIVE_CLASS =
-  'flex-1 bg-paper-100 active:bg-paper-200 border border-paper-300/80 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
+  'flex-1 bg-paper-100 border border-paper-300/80 rounded-xl px-3 py-2.5 flex-row items-center justify-center min-h-[44px] shadow-sm';
 
 interface ProductRowProps {
   product: Product;
@@ -39,6 +49,7 @@ interface ProductRowProps {
     selectedUnit?: 'retail' | 'wholesale',
   ) => 'over_stock' | void;
   onToggleUnit?: (productId: number) => void;
+  onToggleFavorite: (product: Product) => void;
 }
 
 function ProductRowImpl({
@@ -47,16 +58,11 @@ function ProductRowImpl({
   onAdd,
   onUpdateQuantity,
   onToggleUnit,
+  onToggleFavorite,
 }: ProductRowProps) {
-  const toggleFavorite = useToggleFavorite();
   const [overStock, setOverStock] = useState(false);
 
-  const handleToggleFavorite = () => {
-    toggleFavorite.mutate({
-      productId: product.id,
-      isFavorite: !product.is_favorite,
-    });
-  };
+  const handleToggleFavorite = () => onToggleFavorite(product);
 
   const isOutOfStock = product.quantity <= 0;
   const isLowStock = !isOutOfStock && product.quantity <= 5;
@@ -99,6 +105,7 @@ function ProductRowImpl({
           : `Add ${product.name} to cart`
       }
       className={isOutOfStock ? ROW_OUT_OF_STOCK_CLASS : ROW_AVAILABLE_CLASS}
+      style={PRESS_ROW}
     >
       {/* Top Header Row: Thumbnail + Details (Title, Category, SKU) */}
       <View className="flex-row items-start mb-2.5">
@@ -220,6 +227,7 @@ function ProductRowImpl({
                   ? RETAIL_CHIP_ACTIVE_CLASS
                   : RETAIL_CHIP_INACTIVE_CLASS
               }
+              style={isRetailActive ? PRESS_CINNAMON : PRESS_PAPER}
             >
               {!inCart && (
                 <FontAwesome
@@ -257,6 +265,7 @@ function ProductRowImpl({
                   ? WHOLESALE_CHIP_ACTIVE_CLASS
                   : WHOLESALE_CHIP_INACTIVE_CLASS
               }
+              style={isWholesaleActive ? PRESS_SAGE : PRESS_PAPER}
             >
               {!inCart ? (
                 <FontAwesome
@@ -341,7 +350,8 @@ function ProductRowImpl({
               }}
               accessibilityRole="button"
               accessibilityLabel={`Decrease quantity for ${product.name}`}
-              className="w-10 h-10 rounded-lg bg-paper-100 items-center justify-center border border-paper-300 active:bg-paper-300 min-h-[44px] min-w-[44px]"
+              className="w-10 h-10 rounded-lg bg-paper-100 items-center justify-center border border-paper-300 min-h-[44px] min-w-[44px]"
+              style={PRESS_PAPER_DEEP}
             >
               <FontAwesome name="minus" size={12} color="#4D2810" />
             </Pressable>
@@ -362,7 +372,8 @@ function ProductRowImpl({
               }}
               accessibilityRole="button"
               accessibilityLabel={`Increase quantity for ${product.name}`}
-              className="w-10 h-10 rounded-lg bg-cinnamon-500 items-center justify-center active:bg-cinnamon-600 min-h-[44px] min-w-[44px]"
+              className="w-10 h-10 rounded-lg bg-cinnamon-500 items-center justify-center min-h-[44px] min-w-[44px]"
+              style={PRESS_CINNAMON}
             >
               <FontAwesome name="plus" size={12} color="#FAFAF7" />
             </Pressable>
@@ -387,6 +398,7 @@ function ProductRowImpl({
                 ? ADD_BUTTON_DISABLED_CLASS
                 : ADD_BUTTON_ENABLED_CLASS
             }
+            style={PRESS_CINNAMON}
             delayLongPress={400}
           >
             <FontAwesome name="plus" size={12} color="#FAFAF7" />

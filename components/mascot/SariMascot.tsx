@@ -23,30 +23,11 @@ import { SariCustomers } from './states/SariCustomers';
 import { SariSaleRecorded } from './states/SariSaleRecorded';
 import { SariUtangRecorded } from './states/SariUtangRecorded';
 
-/** Every state Sari can act out. */
-export const SARI_STATES = [
-  'default',
-  'empty',
-  'error',
-  'loading',
-  'low-stock',
-  'balance-cleared',
-  'outstanding-balance',
-  'inventory',
-  'sales',
-  'utang',
-  'onboarding',
-  'delete',
-  'settings',
-  'reports',
-  'exit',
-  'unimplemented',
-  'customers',
-  'sale-recorded',
-  'utang-recorded',
-] as const;
+import { Image } from 'expo-image';
+import { SARI_STATES, type SariState } from './sariStates';
+import { SARI_STILLS } from './sariStills';
 
-export type SariState = (typeof SARI_STATES)[number];
+export { SARI_STATES, type SariState };
 
 interface SariMascotProps {
   state?: SariState;
@@ -77,7 +58,9 @@ export const SariMascot = memo(function SariMascot({
   }, [ready]);
 
   const focused = useScreenFocused();
-  const animate = animated && !reducedMotion && focused;
+  // A still Sari is a pre-rendered PNG; focus loss keeps the vector so it never remounts on blur.
+  const still = !animated || reducedMotion;
+  const animate = !still && focused;
   const a11y = accessibilityLabel
     ? ({
         accessible: true,
@@ -97,7 +80,15 @@ export const SariMascot = memo(function SariMascot({
         style={[{ width: size, height: size }, style]}
         {...a11y}
       >
-        {ready ? renderState(state, size, animate) : null}
+        {!ready ? null : still ? (
+          <Image
+            source={SARI_STILLS[state]}
+            style={{ width: size, height: size }}
+            contentFit="contain"
+          />
+        ) : (
+          renderState(state, size, animate)
+        )}
       </View>
     </Prof>
   );

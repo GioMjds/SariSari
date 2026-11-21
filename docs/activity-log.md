@@ -480,3 +480,15 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Dropped the box shadow: the blur separates the slip, and a rectangular shadow would not follow the torn edges.
 - Pending: screenshots and a low-end Android performance check for the blur.
 - Follow-up: dropped `expo-blur` from the dialog and `NotificationSheet` in favor of a plain `ink-900/55` tint on every platform. Android blur was experimental and slow on budget phones, and iOS-only blur made the two platforms look different. The tint still covers the status bar, and status bar icons still switch to light.
+
+## 2026-11-21 - Dev seed size and JS-thread performance pass
+
+- `database/seed.ts`: `EXPO_PUBLIC_MOCK_SEED` = `off` | `lite` (default) | `full`. Lite keeps the first 10 products and only the rows that reference them. The seed still runs only into an empty products table, so clear app data to reseed.
+- `configs/sqlite.ts`: dropped `useNewConnection: true`. Dev reloads leaked a native connection that kept the write lock, so init failed with "database is locked".
+- `database/parkedCarts.ts`: removed `ensureParkedCartsTable` (migration v10 owns the table). It ran `CREATE TABLE` before every call and cost 367 ms when POS opened.
+- `hooks/useHomeDashboardData.ts`: the skeleton waits for every dashboard query, so Home mounts once with full data instead of re-rendering as each query lands.
+- POS: `initialNumToRender` and `maxToRenderPerBatch` are 5, one shared `useToggleFavorite` lives in the catalog, the loading state is an `ActivityIndicator`, and `ProductRow` uses Pressable `pressed` styles instead of NativeWind `active:` classes (same colors).
+- Receipts: uses `useAllSales` and `useTodayStats` instead of `useSales()`, which also mounted five unused mutations. Renders 5 rows up front.
+- Sari: a still Sari (`animated={false}` or Reduce Motion) renders a PNG from `assets/images/sari-stills/` instead of the layered vector. The PNGs are 512px rest poses rendered by `scripts/mascot-stills/render.tsx` (Node static markup plus headless Chrome). Rerun it after editing any state in `components/mascot/states/`. `SARI_STATES` moved to `components/mascot/sariStates.ts`.
+- Finding: query times of about 200-450 ms in the dev log are queue wait behind a blocked JS thread, not SQL cost, because every table holds 10 rows or fewer.
+- Pending: a release-mode measurement (`EXPO_PUBLIC_PERF=1 npx expo start --no-dev --minify`), SQL pagination for receipts, and the `datetime(...)` predicates that block index use once the data grows.

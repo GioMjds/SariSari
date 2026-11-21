@@ -40,10 +40,17 @@ export function useHomeDashboardData() {
     () => format(todayRange.startDate, 'yyyy-MM-dd'),
     [todayRange],
   );
-  const { data: todayCashOut } = useFinancialTotals(todayDate, todayDate);
-  const { data: todayKpisData, error: todayKpisError } =
-    useReportKPIs(todayRange);
-  const { data: topSellingToday } = useTopSellingProducts(todayRange, 1);
+  const { data: todayCashOut, isLoading: cashOutLoading } = useFinancialTotals(
+    todayDate,
+    todayDate,
+  );
+  const {
+    data: todayKpisData,
+    error: todayKpisError,
+    isLoading: kpisLoading,
+  } = useReportKPIs(todayRange);
+  const { data: topSellingToday, isLoading: topLoading } =
+    useTopSellingProducts(todayRange, 1);
 
   const profitMargin = useMemo(
     () => todayKpisData?.totalProfit ?? null,
@@ -134,11 +141,15 @@ export function useHomeDashboardData() {
     goal,
     suggestions,
     isError,
+    // Wait for every dashboard query so the screen mounts once with full data.
     isLoading:
       todayStatsQuery.isLoading ||
       productsLoading ||
       recentLoading ||
-      creditKpisLoading,
+      creditKpisLoading ||
+      cashOutLoading ||
+      kpisLoading ||
+      topLoading,
     refreshing,
     refetchAll,
   };

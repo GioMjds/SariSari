@@ -215,17 +215,16 @@ export function useInsertSale() {
   });
 }
 
-export function useSales() {
-
-  const getTodayStatsQuery = useQuery({
-    queryKey: salesKeys.salesStats,
-    queryFn: () => getTodayStats(),
-  });
-
-  const getAllSalesQuery = useQuery({
+export function useAllSales() {
+  return useQuery({
     queryKey: salesKeys.all,
     queryFn: () => getAllSales(),
   });
+}
+
+export function useSales() {
+  const getTodayStatsQuery = useTodayStats();
+  const getAllSalesQuery = useAllSales();
 
   const insertSaleMutation = useInsertSale();
 

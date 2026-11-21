@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2022",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": "../..",
+    "paths": {
+      "react-native": ["scripts/mascot-stills/stubs/react-native.tsx"],
+      "react-native-reanimated": ["scripts/mascot-stills/stubs/reanimated.tsx"],
+      "react-native-svg": ["scripts/mascot-stills/stubs/svg.tsx"],
+      "@/*": ["*"]
+    }
+  },
+  "include": ["./**/*", "../../components/mascot/**/*"]
+}

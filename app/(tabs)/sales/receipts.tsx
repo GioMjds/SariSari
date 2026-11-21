@@ -10,7 +10,7 @@ import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination, RefreshableFlatList } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
-import { useSales } from '@/hooks';
+import { useAllSales, useTodayStats } from '@/hooks';
 import { SaleWithItems } from '@/types';
 import { parseStoredTimestamp } from '@/utils';
 import { Href, useRouter } from 'expo-router';
@@ -39,15 +39,9 @@ function Receipts() {
     dateRange: 'all',
   });
 
-  const { getTodayStatsQuery, getAllSalesQuery } = useSales();
-
-  const { refetch: refetchStats } = getTodayStatsQuery;
-
-  const {
-    data: sales = [],
-    refetch: refetchSales,
-    isLoading,
-  } = getAllSalesQuery;
+  // Narrow hooks: useSales() also mounts five mutations this screen never uses.
+  const { refetch: refetchStats } = useTodayStats();
+  const { data: sales = [], refetch: refetchSales, isLoading } = useAllSales();
 
   useEffect(() => {
     setCurrentPage(1);
@@ -268,8 +262,8 @@ function Receipts() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
-          initialNumToRender={ITEMS_PER_PAGE}
-          maxToRenderPerBatch={ITEMS_PER_PAGE}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
           windowSize={5}
           removeClippedSubviews={true}
         />
