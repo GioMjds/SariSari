@@ -45,6 +45,7 @@ export const getSellAction = (t: TFunction): Tab => ({
 export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
+  'categories',
   'movements',
   'stocktake',
   'recommendations',

@@ -19,7 +19,7 @@ import {
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
 import { useInventorySelection, useToastStore } from '@/stores';
-import { type AlertKind } from '@/components/inventory';
+import { type AlertKind, CategoryFilterBar } from '@/components/inventory';
 import { SearchBar } from '@/components/ui';
 import type { Product } from '@/types/products.types';
 import { type InventoryEventType } from '@/types/inventory.types';
@@ -272,6 +272,11 @@ function ProductsScreen() {
     [router],
   );
 
+  const handleSelectCategory = useCallback(
+    (name: string | undefined) => router.setParams({ category: name ?? '' }),
+    [router],
+  );
+
   const handleClearFilters = useCallback(() => {
     setFilter('all');
     router.setParams({ category: '', supplier: '', alert: '' });
@@ -291,6 +296,12 @@ function ProductsScreen() {
           activeFilterCount={activeFilterCount}
         />
       </View>
+
+      <CategoryFilterBar
+        {...(category ? { selectedCategory: category } : {})}
+        onSelectCategory={handleSelectCategory}
+        onOpenAddCategory={handleOpenAddCategory}
+      />
 
       {products.length === 0 ? (
         <ProductsEmptyState
