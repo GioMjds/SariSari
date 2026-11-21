@@ -5,6 +5,7 @@ declare global {
     interface ProcessEnv {
       EXPO_PUBLIC_FORCE_ONBOARDING?: string;
       EXPO_PUBLIC_PERF?: string;
+      EXPO_PUBLIC_MOCK_SEED?: 'off' | 'lite' | 'full';
     }
   }
 }

@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-21T00:00:00Z",
+  "title": "Design System: SariSari",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Vivid Persimmon Orange",
+        "canonical": "#E85A1F",
+        "tonalRamp": ["#4F1B06", "#7A2909", "#A1370C", "#C8460F", "#E85A1F", "#FF9E76", "#FFE0D1", "#FFF1EA"]
+      },
+      "primary-pressed": {
+        "role": "primary",
+        "displayName": "Pressed Persimmon",
+        "canonical": "#A1370C",
+        "tonalRamp": ["#4F1B06", "#7A2909", "#A1370C", "#C8460F", "#E85A1F", "#FF9E76", "#FFE0D1", "#FFF1EA"]
+      },
+      "primary-bg": {
+        "role": "primary",
+        "displayName": "Persimmon Wash",
+        "canonical": "#FFF1EA",
+        "tonalRamp": ["#4F1B06", "#7A2909", "#A1370C", "#C8460F", "#E85A1F", "#FF9E76", "#FFE0D1", "#FFF1EA"]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Organic Countertop Sage Green",
+        "canonical": "#4F7A24",
+        "tonalRamp": ["#2C4413", "#3D5E1B", "#4F7A24", "#6E9A3D", "#92B662", "#B7CF91", "#D7E5BF", "#EEF4E5"]
+      },
+      "secondary-bg": {
+        "role": "secondary",
+        "displayName": "Sage Wash",
+        "canonical": "#EEF4E5",
+        "tonalRamp": ["#2C4413", "#3D5E1B", "#4F7A24", "#6E9A3D", "#92B662", "#B7CF91", "#D7E5BF", "#EEF4E5"]
+      },
+      "cinnamon": {
+        "role": "primary",
+        "displayName": "Deep Cinnamon Brown",
+        "canonical": "#623418",
+        "tonalRamp": ["#150903", "#391C0A", "#4D2810", "#623418", "#8E4A23", "#B86B3F", "#E9C5AD", "#F6E3D6"]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Clean Thermal Off-White Background",
+        "canonical": "#F7F6F2",
+        "tonalRamp": ["#7A7165", "#A89F90", "#D2CCC1", "#D8D4C7", "#E6E3D8", "#F2F0E8", "#F7F6F2", "#FAFAF7"]
+      },
+      "neutral-card": {
+        "role": "neutral",
+        "displayName": "Bright Off-White Card Surface",
+        "canonical": "#FAFAF7",
+        "tonalRamp": ["#7A7165", "#A89F90", "#D2CCC1", "#D8D4C7", "#E6E3D8", "#F2F0E8", "#F7F6F2", "#FAFAF7"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Soft Charcoal Ink",
+        "canonical": "#0E0C0A",
+        "tonalRamp": ["#0E0C0A", "#191612", "#28231D", "#3D372F", "#564E45", "#7A7165", "#A89F90", "#EAE6DF"]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#564E45",
+        "tonalRamp": ["#0E0C0A", "#191612", "#28231D", "#3D372F", "#564E45", "#7A7165", "#A89F90", "#EAE6DF"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero totals and checkout summaries."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default body text, capped at 65ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Receipt metadata fields; not an eyebrow above every section."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper",
+        "value": "0 1px 0 rgba(86, 78, 69, 0.04), 0 2px 6px rgba(86, 78, 69, 0.06)",
+        "purpose": "Separates content blocks."
+      },
+      {
+        "name": "paper-lift",
+        "value": "0 1px 0 rgba(86, 78, 69, 0.05), 0 6px 16px rgba(86, 78, 69, 0.10)",
+        "purpose": "Pressed states and sheets only."
+      },
+      {
+        "name": "modal",
+        "value": "0 6px 20px rgba(86, 78, 69, 0.16)",
+        "purpose": "Floating modals."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press-scale",
+        "value": "transform 120ms ease",
+        "purpose": "Active touch feedback at scale(0.97)."
+      },
+      {
+        "name": "swipe-nav",
+        "value": "250ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Swipe navigation between screens in the same tab task family."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Persimmon action button with tactile press-scale response.",
+      "html": "<button class=\"ds-btn-primary\">Register Sale</button>",
+      "css": ".ds-btn-primary { background-color: #E85A1F; color: #FAFAF7; padding: 12px 24px; font-family: 'StackSansText', system-ui, sans-serif; font-size: 14px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; transition: background-color 120ms ease, transform 120ms ease; } .ds-btn-primary:focus-visible { outline: 2px solid #FF9E76; outline-offset: 2px; } .ds-btn-primary:active { background-color: #A1370C; transform: scale(0.97); }"
+    },
+    {
+      "name": "Action Button",
+      "kind": "button",
+      "refersTo": "action-button",
+      "description": "Grid quick-action button such as New Sale or Scan Item.",
+      "html": "<button class=\"ds-btn-action\">New Sale</button>",
+      "css": ".ds-btn-action { background-color: #E85A1F; color: #FAFAF7; padding: 12px 16px; font-family: 'StackSansText', system-ui, sans-serif; font-size: 14px; font-weight: 600; border: none; border-radius: 12px; min-height: 48px; cursor: pointer; transition: background-color 120ms ease, transform 120ms ease; } .ds-btn-action:focus-visible { outline: 2px solid #FF9E76; outline-offset: 2px; } .ds-btn-action:active { background-color: #A1370C; transform: scale(0.97); }"
+    },
+    {
+      "name": "Summary Card",
+      "kind": "card",
+      "refersTo": "summary-card",
+      "description": "Flat paper metric card with a dashed receipt border.",
+      "html": "<div class=\"ds-summary-card\"><p class=\"ds-summary-title\">Today's Sales</p><p class=\"ds-summary-value\">₱1,250.00</p></div>",
+      "css": ".ds-summary-card { background-color: #FAFAF7; border: 1px dashed #D2CCC1; border-radius: 16px; padding: 16px; font-family: 'StackSansText', system-ui, sans-serif; } .ds-summary-title { color: #564E45; font-size: 14px; margin: 0 0 4px 0; } .ds-summary-value { color: #0E0C0A; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Flat paper input with a persimmon-300 focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Product name\" />",
+      "css": ".ds-input { background-color: #FAFAF7; color: #0E0C0A; border: 1px solid #D2CCC1; border-radius: 6px; padding: 12px; font-family: 'StackSansText', system-ui, sans-serif; font-size: 14px; width: 100%; outline: none; } .ds-input:focus-visible { border-color: #FF9E76; outline: 2px solid #FF9E76; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Pill",
+      "kind": "chip",
+      "description": "Fully rounded filter pill; cinnamon fill for primary selection, ink fill for secondary.",
+      "html": "<div class=\"ds-pill-row\"><button class=\"ds-pill ds-pill-on\">Low Stock</button><button class=\"ds-pill\">Overstock</button></div>",
+      "css": ".ds-pill-row { display: flex; gap: 8px; } .ds-pill { background-color: #F2F0E8; color: #28231D; border: 1px solid #D2CCC1; border-radius: 9999px; padding: 10px 14px; font-family: 'StackSansText', system-ui, sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: transform 120ms ease; } .ds-pill:focus-visible { outline: 2px solid #FF9E76; outline-offset: 2px; } .ds-pill:active { transform: scale(0.97); } .ds-pill-on { background-color: #623418; border-color: #623418; color: #FAFAF7; }"
+    },
+    {
+      "name": "Alert Badge",
+      "kind": "chip",
+      "refersTo": "alert-badge",
+      "description": "Small status badge for low stock, expiring, or overdue items.",
+      "html": "<span class=\"ds-alert-badge\">Overdue</span>",
+      "css": ".ds-alert-badge { display: inline-block; background-color: #EEF4E5; color: #4F7A24; border: 1px solid #4F7A24; border-radius: 6px; padding: 4px 8px; font-family: 'StackSansText', system-ui, sans-serif; font-size: 12px; font-weight: 600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Garapon Countertop",
+    "overview": "SariSari is styled with a cozy, tactile countertop feel, evoking the presence of the traditional Filipino garapon candy jars and paper receipts. The interface relies on warm-neutral backgrounds, crisp charcoal ink typography, and the interactive mascot Sari who guides the store owner through tasks and states.\n\nThe system rejects cold, over-decorated modern SaaS landing pages. Layouts prioritize rapid data entry at a physical counter, readability under direct ambient sunlight, and offline responsiveness.",
+    "keyCharacteristics": [
+      "Warm & Cozy Tactility: Flat surfaces resembling cream-toned ledger paper and physical receipts.",
+      "Mascot-Led Context: Sari (the garapon) is integrated directly into main views to signal store states (readiness, alerts, sales success).",
+      "High-Density Utility: Optimized for single-column mobile viewports with fast POS checkouts and transaction ledger audit trails."
+    ],
+    "rules": [
+      {
+        "name": "The Persimmon Accent Rule",
+        "body": "Saturated Persimmon Orange (#E85A1F) must only carry active actions or status focus. Never use it decoratively for large header panels, borders, or container backdrops.",
+        "section": "colors"
+      },
+      {
+        "name": "The Receipt Contrast Rule",
+        "body": "Body text must be written in Soft Charcoal Ink (#0E0C0A) to guarantee readability against cream paper under intense daylight.",
+        "section": "colors"
+      },
+      {
+        "name": "The Alert Color Contract",
+        "body": "When an alert kind appears as a chip, pill, badge, or filter, its icon color must match this palette verbatim. Do not introduce a fifth literal — promote any new alert kind here first.",
+        "section": "colors"
+      },
+      {
+        "name": "The Letter-Spacing Rule",
+        "body": "Large display headers must not set letter-spacing tighter than -0.02em (or -0.03em for hero metrics) to prevent overlapping characters on low-DPI mobile devices.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Display-In-UI Rule",
+        "body": "Never use display fonts or clamp size scales for regular UI buttons, inputs, or navigation labels. Keep them strictly mapped to body and title tokens.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-At-Rest Rule",
+        "body": "All list entries, static cards, and inputs must lie flat on their backgrounds. Shadows are strictly active state changes or modal indicators.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Use the mascot Sari in empty states, dashboards, and alert backgrounds to provide contextual feedback.",
+      "Design for rapid POS entry: large tap targets, minimal steps, immediate feedback.",
+      "Maintain high contrast: body text in Soft Charcoal Ink (#0E0C0A) on Cream Page Background (#EFE6D2) or Brightest Receipt Paper (#FBF7EE).",
+      "Use bottom tabs for primary navigation (Home, Sales, Inventory, Customers, More) with swipe gestures inside tabs for related screens.",
+      "Keep detail screens in stack navigation to preserve context.",
+      "Show sync status, offline/online badge, and date/time in the header for instant operational awareness.",
+      "Present status summary cards (Today’s Sales, Expected Profit, Low Stock Count, Credits Due) as a glanceable dashboard.",
+      "Provide a grid of primary actions (New Sale, Scan Item, Add Stock, Add Customer, View Alerts, Reports) for one‑tap access.",
+      "Display a today snapshot of recent operations (latest sale, recent payment, stock update, customer payment).",
+      "Highlight priority alerts (low stock, expiring items, overdue payments, unsynced transactions) with action buttons.",
+      "Include mini‑insights (best‑selling item, fast‑moving category, most overdue customer) to turn data into action.",
+      "Show a recent activity feed (last 5‑10 operations) for traceability and confidence."
+    ],
+    "donts": [
+      "Use side‑stripe borders as decoration on cards or alerts.",
+      "Apply gradient text or decorative glassmorphism.",
+      "Use generic warm‑neutral gradients as page backgrounds; stick to flat cream or paper tones.",
+      "Set card rounding radii larger than 16px.",
+      "Use display fonts or large clamp scales for regular UI buttons, inputs, or navigation labels.",
+      "Add arbitrary loading spinners; prefer skeleton states where possible.",
+      "Use tiny uppercase tracked eyebrow above every section.",
+      "Number sections as default scaffolding (01 / 02 / 03) unless the sequence carries real meaning."
+    ]
+  }
+}

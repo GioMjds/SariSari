@@ -1,8 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
-export const db = SQLite.openDatabaseSync('sarisari.db', {
-  useNewConnection: true,
-});
+// Shared cached connection, so dev reloads reuse it instead of leaking a locked handle.
+export const db = SQLite.openDatabaseSync('sarisari.db');
 
 try {
   db.execSync('PRAGMA journal_mode = WAL;');

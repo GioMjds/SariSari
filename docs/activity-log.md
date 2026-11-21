@@ -460,3 +460,23 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Stocktake counting list is now a virtualized `SectionList`. The new `StocktakeCategoryHeader` replaces `StocktakeCategorySection`. Only open categories feed rows into the list.
 - Removed unused `components/inventory/MovementRow.tsx` and `components/inventory/stocktake/StocktakeBanner.tsx`.
 - Screenshots and video are still pending, because no device or emulator is reachable from this session.
+
+## 2026-11-21 - System overlays redesign, phase 1 (Sheet, dialog, toast)
+
+- New `components/ui/Sheet.tsx` replaces `components/inventory/modals/_shared/sheetChrome.tsx`. It adds a drag handle with swipe-down to close, an animated exit, safe-area bottom padding, an `ink-900/50` scrim, and an optional `title` header with a 48dp close button. The five existing callers now import it from `@/components/ui`.
+- `components/ui/Modal.tsx`: receipt-paper card with a full border and the `modal` shadow, a 48dp icon tile, a dashed receipt divider above the actions, and buttons of at least 48dp. Two buttons sit side by side; three or more stack. Android Back now closes the in-tree dialog. The `loading` spinner no longer lands on the Cancel button. Reduced motion uses the shared `useReducedMotion` hook.
+- `components/ui/Toast.tsx`: removed the side stripe and the uppercase eyebrow. The tone shows as an icon tile and a tinted full border, and the spoken label keeps the meaning for screen readers. Text is 15px. The progress bar animates `scaleX` on the UI thread and hides under reduced motion. Only one element announces each toast.
+- `.gitignore`: stopped ignoring all of `.impeccable/`, so `design.json` and `design-full.md` can be committed. Runtime folders, critique snapshots, `config.local.json` and `hook.cache.json` stay ignored.
+- Kept as-is: the public props of `Modal`, `Toast` and the toast/modal stores, so no caller changes.
+- Pending: screenshots, because no device or emulator is reachable. Phase 2 (replacing `Alert.alert`) and phase 3 (moving the hand-built sheets onto `Sheet`) still need approval.
+
+## 2026-11-21 - Alert dialog redesign: resibo slip and blurred backdrop
+
+- `components/ui/Modal.tsx` now looks like a printed receipt slip: torn (serrated) top and bottom edges drawn with `react-native-svg`, a paper body, a dashed perforation, and a darker paper stub that holds the buttons.
+- The variant icon is a dashed rubber-stamp ring that thumps in at -8 degrees after the slip slides up. Reduced motion shows it flat with no animation. The Sari mascot still replaces the stamp when `mascot` is set.
+- Danger and warning dialogs give a warning haptic when they open.
+- Backdrop: `expo-blur` dark blur (intensity 32, `dimezisBlurView` on Android) plus an `ink-900/40` tint. The status bar switches to light icons while the dialog is open and restores on close, as in `BarcodeScannerModal`.
+- Inline `<Modal visible>` dialogs now render in a native modal by default (`statusBarTranslucent` and `navigationBarTranslucent`), so the blur covers the status bar and nav bar. Store dialogs from `openModal()` still render in-tree at the app root, which already covers the status bar.
+- Dropped the box shadow: the blur separates the slip, and a rectangular shadow would not follow the torn edges.
+- Pending: screenshots and a low-end Android performance check for the blur.
+- Follow-up: dropped `expo-blur` from the dialog and `NotificationSheet` in favor of a plain `ink-900/55` tint on every platform. Android blur was experimental and slow on budget phones, and iOS-only blur made the two platforms look different. The tint still covers the status bar, and status bar icons still switch to light.

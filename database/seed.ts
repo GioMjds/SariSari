@@ -1,20 +1,52 @@
 import { db } from '../configs/sqlite';
 import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
 import { insertCatalogProductsBatch } from './catalog';
-import {
-  MOCK_CATEGORIES,
-  MOCK_SUPPLIERS,
-  MOCK_PRODUCTS,
-  MOCK_CUSTOMERS,
-  MOCK_CREDIT_TRANSACTIONS,
-  MOCK_PAYMENTS,
-  MOCK_SALES,
-  MOCK_SALE_ITEMS,
-  MOCK_INVENTORY_TRANSACTIONS,
-  MOCK_FINANCIAL_ENTRIES,
-  MOCK_STOCKTAKE_SESSIONS,
-  MOCK_STOCKTAKE_COUNTS,
-} from '@/scripts/sample-mock-datas';
+import * as mock from '@/scripts/sample-mock-datas';
+
+const LITE_PRODUCT_COUNT = 10;
+
+// Picks the dev seed set: EXPO_PUBLIC_MOCK_SEED = 'off' | 'lite' (default) | 'full'.
+function pickMockData() {
+  const mode = process.env.EXPO_PUBLIC_MOCK_SEED ?? 'lite';
+  if (mode === 'off') return null;
+  if (mode === 'full') return mock;
+
+  const products = mock.MOCK_PRODUCTS.slice(0, LITE_PRODUCT_COUNT);
+  const keep = new Set(products.map((p) => p.id));
+  const has = (id: number | null | undefined) => id == null || keep.has(id);
+
+  // Drop whole sales that reference a removed product so totals stay consistent.
+  const droppedSales = new Set(
+    mock.MOCK_SALE_ITEMS.filter((i) => !has(i.product_id)).map(
+      (i) => i.sale_id,
+    ),
+  );
+  const credits = mock.MOCK_CREDIT_TRANSACTIONS.filter((c) =>
+    has(c.product_id),
+  );
+  const creditIds = new Set(credits.map((c) => c.id));
+
+  return {
+    ...mock,
+    MOCK_PRODUCTS: products,
+    MOCK_CREDIT_TRANSACTIONS: credits,
+    MOCK_PAYMENTS: mock.MOCK_PAYMENTS.filter(
+      (p) =>
+        p.credit_transaction_id == null ||
+        creditIds.has(p.credit_transaction_id),
+    ),
+    MOCK_SALES: mock.MOCK_SALES.filter((s) => !droppedSales.has(s.id)),
+    MOCK_SALE_ITEMS: mock.MOCK_SALE_ITEMS.filter(
+      (i) => !droppedSales.has(i.sale_id),
+    ),
+    MOCK_INVENTORY_TRANSACTIONS: mock.MOCK_INVENTORY_TRANSACTIONS.filter((t) =>
+      has(t.product_id),
+    ),
+    MOCK_STOCKTAKE_COUNTS: mock.MOCK_STOCKTAKE_COUNTS.filter((c) =>
+      has(c.product_id),
+    ),
+  };
+}
 
 export async function seedProductCatalog(): Promise<void> {
   const startedAt = Date.now();
@@ -58,6 +90,26 @@ export const seedDatabase = async () => {
     console.log('🌱 Products table is non-empty — skipping seed.');
     return;
   }
+
+  const data = pickMockData();
+  if (!data) {
+    console.log('🌱 EXPO_PUBLIC_MOCK_SEED=off — skipping seed.');
+    return;
+  }
+  const {
+    MOCK_CATEGORIES,
+    MOCK_SUPPLIERS,
+    MOCK_PRODUCTS,
+    MOCK_CUSTOMERS,
+    MOCK_CREDIT_TRANSACTIONS,
+    MOCK_PAYMENTS,
+    MOCK_SALES,
+    MOCK_SALE_ITEMS,
+    MOCK_INVENTORY_TRANSACTIONS,
+    MOCK_FINANCIAL_ENTRIES,
+    MOCK_STOCKTAKE_SESSIONS,
+    MOCK_STOCKTAKE_COUNTS,
+  } = data;
 
   console.log('🌱 Empty database — seeding mock data...');
 
