@@ -413,10 +413,10 @@ function LogTransactionBody({
                     onPress={() => form.setReason(active ? null : label)}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active }}
-                    className={`min-h-[44px] px-4 rounded-pill border flex-row items-center gap-x-2 ${
+                    className={`min-h-[44px] px-4 rounded-pill border flex-row items-center gap-x-2 active:opacity-80 ${
                       active
                         ? 'bg-cinnamon-500 border-cinnamon-500'
-                        : 'bg-paper-50 border-paper-400 active:bg-paper-200'
+                        : 'bg-paper-50 border-paper-400'
                     }`}
                   >
                     {active ? (
@@ -467,10 +467,9 @@ function LogTransactionBody({
           accessibilityRole="button"
           accessibilityLabel={submitLabel}
           accessibilityState={{ disabled: !canSubmit, busy: form.isPending }}
-          className={`min-h-[52px] rounded-xl flex-row items-center justify-center gap-x-2 press-scale ${
-            form.isValid
-              ? 'bg-persimmon-500 active:bg-persimmon-700'
-              : 'bg-paper-300'
+          // Keep `active:` constant; toggling pseudo-classes after mount crashes css-interop.
+          className={`min-h-[52px] rounded-xl flex-row items-center justify-center gap-x-2 press-scale active:opacity-80 ${
+            form.isValid ? 'bg-persimmon-500' : 'bg-paper-300'
           }`}
         >
           {form.isPending ? (
