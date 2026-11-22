@@ -23,7 +23,7 @@ export function RestockSummaryCard({
   return (
     <View className="bg-paper-50 rounded-2xl p-4 border border-paper-300 gap-y-3">
       <View className="flex-row items-center gap-x-3">
-        <SariMascot state="low-stock" size={56} defer />
+        <SariMascot state="low-stock" size={56} animated={false} defer />
         <View className="flex-1 gap-y-1">
           <StyledText
             variant="extrabold"

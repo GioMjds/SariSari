@@ -55,7 +55,7 @@ const SinglePinBox: FC<{
   }));
 
   let boxClass =
-    'w-16 h-20 rounded-2xl border-2 items-center justify-center mx-1.5 ';
+    'w-14 h-14 rounded-full border-2 items-center justify-center mx-1.5 ';
   if (status === 'error') {
     boxClass += 'border-semantic-danger bg-semantic-danger-50';
   } else if (status === 'success') {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, TextInput, Pressable, Switch, Alert } from 'react-native';
+import { View, TextInput, Pressable, Switch } from 'react-native';
+import { Alert } from '@/utils';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { isOwnerPinConfigured } from '@/database/auth';

@@ -97,6 +97,8 @@ export const AuthScreenShell: FC<Props> = ({
           state={sari}
           size={132}
           {...(sariLabel !== undefined && { accessibilityLabel: sariLabel })}
+          animated={false}
+          defer
         />
         <StyledText
           variant="extrabold"

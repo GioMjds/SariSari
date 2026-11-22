@@ -68,7 +68,7 @@
     "not_enrolled": "Magrehistro muna ng fingerprint o mukha sa settings ng telepono.",
     "risk_title": "Kahit sino na nakarehistro ay makaka-aprubahan",
     "risk_body": "Lahat ng fingerprint at mukha na nakarehistro sa teleponong ito ay makaka-aprubahan ng void, refund, credit limit override, stock adjustment, at restore kahit hindi alam ang PIN. I-on lamang ito kung ikaw lang ang nakarehistro.",
-    "risk_confirm": "Naiintindihan ko, i-on",
+    "risk_confirm": "Naiintindihan ko",
     "risk_cancel": "Huwag",
     "reason_unlock": "I-unlock ang SariSari",
     "reason_restore": "Aprubahan ang pag-restore ng backup",

@@ -68,7 +68,7 @@
     "not_enrolled": "Register a fingerprint or face in your phone settings first.",
     "risk_title": "Anyone enrolled on this phone can approve",
     "risk_body": "Every fingerprint and face registered on this phone will be able to approve voids, refunds, credit limit overrides, stock adjustments, and restores without knowing your PIN. Turn this on only if you are the only person enrolled.",
-    "risk_confirm": "I understand, turn it on",
+    "risk_confirm": "I understand",
     "risk_cancel": "Cancel",
     "reason_unlock": "Unlock SariSari",
     "reason_restore": "Approve restoring a backup",

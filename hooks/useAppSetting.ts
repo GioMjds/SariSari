@@ -21,7 +21,17 @@ export const useSetAppSetting = (key: AppSettingKey) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (value: string) => setAppSetting(key, value),
-    onSuccess: () =>
+    // Optimistic write so controlled switches do not snap back while the DB write runs.
+    onMutate: async (value) => {
+      const queryKey = appSettingKey.appSettingKey(key);
+      await qc.cancelQueries({ queryKey });
+      const previous = qc.getQueryData(queryKey);
+      qc.setQueryData(queryKey, value);
+      return { previous };
+    },
+    onError: (_err, _value, ctx) =>
+      qc.setQueryData(appSettingKey.appSettingKey(key), ctx?.previous ?? null),
+    onSettled: () =>
       qc.invalidateQueries({ queryKey: appSettingKey.appSettingKey(key) }),
   });
 };
