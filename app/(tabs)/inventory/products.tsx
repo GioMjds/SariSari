@@ -1,33 +1,42 @@
+import { StyledText } from '@/components/elements';
+import { type AlertKind } from '@/components/inventory';
+import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
+import { LogTransactionForm } from '@/components/inventory/ledger';
+import { BulkMoveCategoryModal } from '@/components/inventory/modals';
+import {
+  ProductActionMenuModal,
+  ProductFilterModal,
+  ProductsEmptyState,
+  ProductsList,
+  ProductsSkeleton,
+  type ProductsFilter,
+} from '@/components/inventory/products';
+import { SearchBar, ViewModeToggle } from '@/components/ui';
+import { usePaginatedProducts, useProducts } from '@/hooks/useProducts';
+import {
+  useAddCategorySheet,
+  useInventorySelection,
+  useToastStore,
+  useViewModeStore,
+  type ViewMode,
+} from '@/stores';
+import { type InventoryEventType } from '@/types/inventory.types';
+import type { Product } from '@/types/products.types';
 import { withProf } from '@/utils/perf';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useFocusEffect,
   useLocalSearchParams,
   useRouter,
   type Href,
 } from 'expo-router';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+} from 'react';
 import { View } from 'react-native';
-import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
-import {
-  ProductsList,
-  ProductsSkeleton,
-  ProductsEmptyState,
-  ProductActionMenuModal,
-  ProductFilterModal,
-  type ProductsFilter,
-} from '@/components/inventory/products';
-import { BulkMoveCategoryModal } from '@/components/inventory/modals';
-import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
-import {
-  useAddCategorySheet,
-  useInventorySelection,
-  useToastStore,
-} from '@/stores';
-import { type AlertKind, CategoryFilterBar } from '@/components/inventory';
-import { SearchBar } from '@/components/ui';
-import type { Product } from '@/types/products.types';
-import { type InventoryEventType } from '@/types/inventory.types';
-import { LogTransactionForm } from '@/components/inventory/ledger';
 
 type EmptyVariant = 'no-products' | 'no-search' | 'no-filter';
 
@@ -61,6 +70,13 @@ function ProductsScreen() {
   const clearSelection = selection.clear;
   const selectMode = selection.selectMode;
   const selectedIdsSet = selection.selectedIds;
+
+  const viewMode = useViewModeStore((s) => s.modes.inventory);
+  const setViewMode = useViewModeStore((s) => s.setMode);
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => setViewMode('inventory', mode),
+    [setViewMode],
+  );
 
   const [filter, setFilter] = useState<ProductsFilter>('all');
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -256,11 +272,11 @@ function ProductsScreen() {
   }, [router]);
 
   const handleApplyFilters = useCallback(
-    (newFilters: {
-      status: ProductsFilter;
-      category?: string;
-      alert?: string;
-    }) => {
+    (
+      newFilters: Parameters<
+        NonNullable<ComponentProps<typeof ProductFilterModal>['onApplyFilters']>
+      >[0],
+    ) => {
       setFilter(newFilters.status);
       router.setParams({
         category: newFilters.category ?? '',
@@ -272,11 +288,6 @@ function ProductsScreen() {
   );
 
   const handleOpenAddCategory = useAddCategorySheet((s) => s.show);
-
-  const handleSelectCategory = useCallback(
-    (name: string | undefined) => router.setParams({ category: name ?? '' }),
-    [router],
-  );
 
   const handleClearFilters = useCallback(() => {
     setFilter('all');
@@ -298,11 +309,19 @@ function ProductsScreen() {
         />
       </View>
 
-      <CategoryFilterBar
-        {...(category ? { selectedCategory: category } : {})}
-        onSelectCategory={handleSelectCategory}
-        onOpenAddCategory={handleOpenAddCategory}
-      />
+      <View className="flex-row items-center">
+        <View className="flex-1">
+          <StyledText
+            variant="semibold"
+            className="text-ink-700 text-sm px-4 pb-1"
+          >
+            Products
+          </StyledText>
+        </View>
+        <View className="pl-1 pr-4">
+          <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+        </View>
+      </View>
 
       {products.length === 0 ? (
         <ProductsEmptyState
@@ -321,6 +340,7 @@ function ProductsScreen() {
           isFetchingNextPage={isFetchingNextPage}
           hasNextPage={hasNextPage}
           onEndReached={handleEndReached}
+          viewMode={viewMode}
         />
       )}
 

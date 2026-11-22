@@ -565,3 +565,46 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `StocktakeClosedState` covers a finished or discarded session opened by back stack or deep link.
 - Home `StocktakeNudge` still opens the hub; the hub's Continue card handles resume.
 - Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22: Product photos not appearing
+
+- Cause: `expo-image` was never registered with NativeWind `cssInterop`, so `className` sizes (`w-11 h-11`, `w-full h-full`) were dropped and every product `Image` rendered at 0x0. Save and DB paths were fine.
+- Fix: `lib/css-interop.ts` registers `Image` from `expo-image` and is imported in `app/_layout.tsx`. Test: `tests/lib/css-interop.test.ts`.
+- Open follow-ups: backups skip `product_images/`; edit deletes the old photo before copying the new one; `app.json` has no `expo-image-picker` plugin for iOS permission strings.
+- Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22: Stock correction and damage sheet redesign
+
+- `LogTransactionForm` now renders inside the house `Sheet` (drag or X to close, safe areas, reduced motion). The hand-rolled modal is gone. The type selector branch was dead code, because callers always pass `initialType`, so it was removed.
+- Correct stock defaults to "Count on shelf": the owner types what they see, and the app saves the signed difference. "Add or remove" stays as a toggle. Notes get "Shelf count N (was M)" so the ledger shows the reason.
+- Mark damaged has one-tap reason chips (Expired, Broken or leaking, Lost or missing, Eaten by pests). The chosen reason is added at the front of the note, so there is no schema change.
+- Shared layout: product name with recorded stock, one large stepper (64pt buttons, number field selects on focus), a Now / change / After strip with the sign in text and color, and one pinned primary button whose label says the result (for example "Remove 3 damaged").
+- Math lives in `resolveStockChange` (`ledgerMath.ts`) with a test case. Owner PIN guard and the stocktake block are unchanged. The block now shows as a warning card inside the sheet.
+- `Sheet` shrinks above the keyboard (`flexShrink`), so long content scrolls instead of moving off screen.
+- Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22: Photo-first product lists (Inventory Products, POS)
+
+- New shared `components/ui/ProductThumb.tsx`: shows the product photo (`expo-image`, `recyclingKey` for list reuse) or a tinted tile with two-letter initials. The tint is picked from the name, so the same product keeps the same color. Persimmon is not used, because it is reserved for actions. Test: `components/ui/__tests__/ProductThumb.test.ts`.
+- Inventory Products row: 68pt photo, two-line name, category, and a stock chip (icon plus text: "24 in stock", "Low · 3 left", "Out of stock") using `LOW_STOCK_THRESHOLD`. A "Bundle" chip shows for wholesale products. Price shows "per Pc". Out-of-stock photos are dimmed. The row now has a pressed state. Skeleton matches the new row.
+- POS catalog is now a two-column grid of photo tiles. Overlays on the photo: stock pill (bottom left), in-cart count (top left), bundle icon (bottom right), star button (top right, outside the thumb so screen readers reach it). Below the photo: name, price per active unit, bulk savings, then a Tingi / Pakyaw segmented picker for bundles and a full-width Add button or stepper. The stepper minus shows a trash icon at quantity 1, because that tap removes the line. Cart and unit logic is unchanged.
+- Fast Lane cards show a 40pt thumbnail next to a two-line name. The bundle badge moved onto the thumbnail.
+- Tiles dropped their resting shadow to follow the Flat-At-Rest rule.
+- Not done: screenshots and video, because no device or emulator was available. A list/grid toggle for Inventory was skipped.
+
+## 2026-11-22: Grid and list view toggle (Inventory Products, POS)
+
+- New `stores/useViewModeStore.ts`: zustand `persist` with AsyncStorage key `view_modes_v1`. It keeps one mode per screen. Defaults: POS is grid, Inventory is list.
+- New `components/ui/ViewModeToggle.tsx`: two 40pt icon buttons (`th-large`, `th-list`) with 4pt hit slop, radio semantics and a selected state. It also exports `GRID_COLUMN_STYLE` for two-column lists.
+- New `components/ui/StockBadge.tsx` (`getStockTone`, `getStockLabel`): one stock chip shared by both screens and both views.
+- POS: a "Products" header row above the catalog holds the toggle. `ProductRow` takes `variant`. The grid tile is unchanged. The list row has a 56pt photo, name, price per unit, stock chip, star, and a compact Add button. Bundles and in-cart items get a bottom row with the Tingi / Pakyaw picker or "In cart · total", plus the stepper.
+- Inventory: new `ProductTile` grid card (photo, stock chip and bundle icon overlays, ⋮ actions, name, category, price per unit). `ProductsList` takes `viewMode`. The skeleton follows the saved mode.
+- Both FlatLists use `key={viewMode}`, because `numColumns` cannot change on a mounted list.
+- Tests: `components/ui/__tests__/StockBadge.test.ts` covers stock labels and store defaults.
+- Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22: Grid tiles fit long product names
+
+- Problem: grid tiles cut names at 2 lines. Sari-sari names end with the size or flavor ("... Chilimansi 60g"), so the part that tells products apart was lost. Name height also changed from tile to tile, so prices did not line up.
+- Fix (POS `ProductRow` grid variant, Inventory `ProductTile`): names use 13/17 type with up to 3 lines and a reserved `min-h-[51px]`, so prices line up across a row. Photo height dropped from 112 to 96pt to make room. The Inventory tile now shows the price above the category. The skeleton matches.
+- `min-h`, not a fixed height, so larger system font sizes grow the tile instead of clipping the name.

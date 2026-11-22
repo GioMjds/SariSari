@@ -83,12 +83,8 @@ function POSScreen() {
       if (customerId != null) {
         const foundInList = customers.find((c) => c.id === customerId);
         if (foundInList) return foundInList;
-        try {
-          const fetched = await getCustomer(customerId);
-          if (fetched) return fetched;
-        } catch {
-          // ignore lookup error
-        }
+        const fetched = await getCustomer(customerId);
+        if (fetched) return fetched;
       }
       return customerName ?? null;
     },
