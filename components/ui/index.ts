@@ -4,6 +4,7 @@ export * from './LoadingBar';
 export * from './Modal';
 export * from './MoneyText';
 export * from './Pagination';
+export * from './ProductThumb';
 export * from './ReceiptHero';
 export * from './RefreshableFlatList';
 export * from './RefreshableScrollView';

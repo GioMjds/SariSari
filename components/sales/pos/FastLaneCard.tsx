@@ -4,11 +4,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { FastLaneProduct } from '@/database/products';
 import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
+import { ProductThumb } from '@/components/ui/ProductThumb';
 
 const CARD_AVAILABLE_CLASS =
-  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[102px] justify-between shadow-paper active:bg-paper-200/60';
+  'bg-paper-100 border border-paper-300 rounded-2xl p-2.5 mr-2.5 w-44 h-[100px] justify-between shadow-paper active:bg-paper-200/60';
 const CARD_OUT_OF_STOCK_CLASS =
-  'bg-paper-100 border border-paper-300 rounded-2xl p-3 mr-2.5 w-36 h-[102px] justify-between shadow-paper active:bg-paper-200/60 opacity-60';
+  'bg-paper-100 border border-paper-300 rounded-2xl p-2.5 mr-2.5 w-44 h-[100px] justify-between shadow-paper active:bg-paper-200/60 opacity-60';
 
 interface FastLaneCardProps {
   product: FastLaneProduct;
@@ -36,16 +37,26 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
 
   return (
     <View
-      className={
-        isOutOfStock ? CARD_OUT_OF_STOCK_CLASS : CARD_AVAILABLE_CLASS
-      }
+      className={isOutOfStock ? CARD_OUT_OF_STOCK_CLASS : CARD_AVAILABLE_CLASS}
     >
       <View>
-        <View className="flex-row items-center justify-between mb-1">
+        <View className="flex-row items-start justify-between mb-1">
+          <ProductThumb
+            name={product.name}
+            imageUri={product.image_uri}
+            className="w-10 h-10 rounded-lg border border-paper-300 mr-2"
+            initialsClassName="text-sm"
+          >
+            {hasWholesale ? (
+              <View className="absolute bottom-0.5 right-0.5 bg-sage-50 rounded px-0.5">
+                <FontAwesome name="cubes" size={8} color="#4F7A24" />
+              </View>
+            ) : null}
+          </ProductThumb>
           <StyledText
             variant="extrabold"
-            className="text-ink-900 text-xs flex-1 mr-1"
-            numberOfLines={1}
+            className="text-ink-900 text-xs leading-tight flex-1 mr-1"
+            numberOfLines={2}
           >
             {product.name}
           </StyledText>
@@ -65,21 +76,6 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
               color={product.is_favorite ? '#E85A1F' : '#7A7165'}
             />
           </Pressable>
-        </View>
-
-        <View className="h-5 mb-1 justify-center">
-          {hasWholesale ? (
-            <View className="bg-sage-50 border border-sage-200 rounded-md px-1.5 py-0.5 self-start flex-row items-center">
-              <FontAwesome name="cubes" size={9} color="#4F7A24" />
-              <StyledText
-                variant="extrabold"
-                className="text-sage-700 text-[9px] ml-1"
-                numberOfLines={1}
-              >
-                Bundle{product.conversion_factor ? ` (${product.conversion_factor}x)` : ''}
-              </StyledText>
-            </View>
-          ) : null}
         </View>
       </View>
 

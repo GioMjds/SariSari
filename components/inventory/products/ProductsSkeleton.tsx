@@ -9,12 +9,13 @@ export function ProductsSkeleton() {
           key={i}
           className="bg-paper-50 mx-4 p-3 rounded-2xl border border-ink-100 flex-row items-center gap-3"
         >
-          <Skeleton width={40} height={40} borderRadius={20} />
-          <View className="flex-1 gap-y-1">
-            <Skeleton width="60%" height={12} />
+          <Skeleton width={68} height={68} borderRadius={12} />
+          <View className="flex-1 gap-y-1.5">
+            <Skeleton width="70%" height={14} />
             <Skeleton width="40%" height={10} />
+            <Skeleton width={84} height={18} borderRadius={9} />
           </View>
-          <Skeleton width={50} height={14} />
+          <Skeleton width={56} height={16} />
         </View>
       ))}
     </View>

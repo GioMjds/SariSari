@@ -16,6 +16,12 @@ import { FastLaneProduct } from '@/database/products';
 import { usePOSSearchStore } from '@/stores';
 import { Prof } from '@/utils/perf';
 
+// Tiles are 48.5% wide, so space-between leaves the gutter and keeps a lone last tile half-width.
+const GRID_COLUMN_STYLE = {
+  paddingHorizontal: 16,
+  justifyContent: 'space-between',
+} as const;
+
 interface ProductSearchCatalogProps {
   filteredProducts: Product[];
   isLoading: boolean;
@@ -188,11 +194,13 @@ export function ProductSearchCatalog({
           <FlatList
             data={filteredProducts}
             keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            columnWrapperStyle={GRID_COLUMN_STYLE}
             contentContainerStyle={{ paddingBottom: 82 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            initialNumToRender={5}
-            maxToRenderPerBatch={5}
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
             updateCellsBatchingPeriod={50}
             windowSize={11}
             removeClippedSubviews={false}
