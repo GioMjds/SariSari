@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   View,
   useWindowDimensions,
@@ -22,6 +20,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+// Tracks real keyboard frames on both platforms, where RN's version does nothing on edge-to-edge Android.
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -113,7 +113,7 @@ export function Sheet({ visible, onClose, title, children }: SheetProps) {
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
           className="flex-1 justify-end"
         >
           <Animated.View
