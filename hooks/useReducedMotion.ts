@@ -1,25 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
+// One shared native query and listener, however many components read the flag.
+let value = false;
+const listeners = new Set<() => void>();
+let started = false;
+
+const set = (next: boolean) => {
+  if (next === value) return;
+  value = next;
+  listeners.forEach((l) => l());
+};
+
+function start() {
+  started = true;
+  AccessibilityInfo.isReduceMotionEnabled().then(set);
+  AccessibilityInfo.addEventListener('reduceMotionChanged', set);
+}
+
+function subscribe(listener: () => void) {
+  if (!started) start();
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 export function useReducedMotion(): boolean {
-  const [reducedMotion, setReducedMotion] = useState<boolean>(false);
-
-  useEffect(() => {
-    let active = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (active) setReducedMotion(enabled);
-    });
-    const sub = AccessibilityInfo.addEventListener(
-      'reduceMotionChanged',
-      (enabled) => {
-        if (active) setReducedMotion(enabled);
-      },
-    );
-    return () => {
-      active = false;
-      sub.remove();
-    };
-  }, []);
-
-  return reducedMotion;
+  return useSyncExternalStore(
+    subscribe,
+    () => value,
+    () => false,
+  );
 }

@@ -9,7 +9,7 @@ import { SALES_SUB_TABS } from '@/constants/tabs';
 
 const TOP_TABS_SCREEN_OPTIONS = {
   tabBarStyle: { display: 'none' as const },
-  swipeEnabled: true,
+  swipeEnabled: false,
   lazy: true,
   lazyPreloadDistance: 0,
 } as const;

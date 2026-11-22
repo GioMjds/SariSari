@@ -1,9 +1,9 @@
 import {
+  ForwardedRef,
+  forwardRef,
   useCallback,
   useEffect,
   useRef,
-  forwardRef,
-  ForwardedRef,
 } from 'react';
 import {
   FlatList,
@@ -21,8 +21,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { PullToRefreshHeader } from './LoadingBar';
 import { scheduleOnRN } from 'react-native-worklets';
+import { PullToRefreshHeader } from './LoadingBar';
 
 type RefreshableFlatListProps<T> = Omit<
   FlatListProps<T>,
@@ -35,14 +35,6 @@ type RefreshableFlatListProps<T> = Omit<
   className?: string;
 };
 
-/**
- * FlatList counterpart of `RefreshableScrollView` — same pull-to-refresh feel
- * (custom `PullToRefreshHeader` / `LoadingBar`) but built on top of
- * `FlatList` so virtualization and pagination are preserved.
- *
- * The pull gesture is only intercepted when the list is scrolled to the top,
- * matching the ScrollView version's behavior.
- */
 function RefreshableFlatListInner<T>(
   props: RefreshableFlatListProps<T>,
   ref: ForwardedRef<FlatList<T>>,
@@ -58,27 +50,16 @@ function RefreshableFlatListInner<T>(
   } = props;
 
   const flatListRef = useRef<FlatList<T>>(null);
-  // We can't pass the forwarded `ref` directly to the inner FlatList because
-  // the gesture handler below needs its own stable ref to attach
-  // `simultaneousWithExternalGesture`. We keep the inner ref as the source of
-  // truth and mirror it to the forwarded ref after mount.
+
   useEffect(() => {
     if (typeof ref === 'function') ref(flatListRef.current);
     else if (ref) (ref as any).current = flatListRef.current;
   }, [ref]);
 
-  // `simultaneousWithExternalGesture` is typed for `Animated.ScrollView` /
-  // `ScrollView` refs, but `FlatList` is a thin wrapper over one — the
-  // runtime works the same way. The cast mirrors the one in
-  // `RefreshableScrollView` (which uses a `RefObject<Animated.ScrollView>`).
-  const scrollRef = flatListRef as unknown as React.RefObject<any>;
-
   const isAtTop = useSharedValue(true);
   const pullY = useSharedValue(0);
   const virtualScrollY = useDerivedValue(() => -pullY.value);
 
-  // `useAnimatedScrollHandler` returns a Reanimated event handler object
-  // that runs on the UI thread and must be passed directly to `Animated.FlatList`.
   const scrollHandler = useAnimatedScrollHandler((event) => {
     isAtTop.value = event.contentOffset.y <= 0;
   });
@@ -87,17 +68,29 @@ function RefreshableFlatListInner<T>(
     onRefresh();
   }, [onRefresh]);
 
+  const touchStartY = useSharedValue(0);
+
+  // Activate only for a downward pull at the top, otherwise fail so the native scroll is never cancelled.
   const panGesture = Gesture.Pan()
-    .activeOffsetY(20)
-    .failOffsetY(-10)
-    .failOffsetX([-15, 15])
-    .onUpdate((event) => {
-      if (isAtTop.value && event.translationY > 0) {
-        pullY.value = Math.min(
-          event.translationY * 0.5,
-          refreshThreshold * 1.6,
-        );
+    .manualActivation(true)
+    .onTouchesDown((event) => {
+      touchStartY.value = event.allTouches[0]?.absoluteY ?? 0;
+    })
+    .onTouchesMove((event, state) => {
+      if (!isAtTop.value) {
+        state.fail();
+        return;
       }
+      const dy = (event.allTouches[0]?.absoluteY ?? 0) - touchStartY.value;
+      if (dy > 20) state.activate();
+      else if (dy < -10) state.fail();
+    })
+    .onUpdate((event) => {
+      if (!isAtTop.value) return;
+      pullY.value = Math.max(
+        0,
+        Math.min(event.translationY * 0.5, refreshThreshold * 1.6),
+      );
     })
     .onEnd(() => {
       if (pullY.value >= refreshThreshold) {
@@ -109,8 +102,7 @@ function RefreshableFlatListInner<T>(
       } else {
         pullY.value = withTiming(0, { duration: 200 });
       }
-    })
-    .simultaneousWithExternalGesture(scrollRef);
+    });
 
   useEffect(() => {
     if (isRefreshing) {
@@ -152,8 +144,6 @@ function RefreshableFlatListInner<T>(
  * Generic wrapper — usage is `RefreshableFlatList<SaleWithItems>`.
  * `forwardRef` preserves the standard `FlatList` ref contract.
  */
-export const RefreshableFlatList = forwardRef(RefreshableFlatListInner) as <
-  T,
->(
+export const RefreshableFlatList = forwardRef(RefreshableFlatListInner) as <T>(
   props: RefreshableFlatListProps<T> & { ref?: ForwardedRef<FlatList<T>> },
 ) => ReturnType<typeof RefreshableFlatListInner>;

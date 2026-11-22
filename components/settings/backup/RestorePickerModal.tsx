@@ -94,7 +94,8 @@ export function RestorePickerModal({
   return (
     <>
       <Modal
-        visible={visible}
+        // Hidden while the confirm dialog shows so two native modals never stack.
+        visible={visible && !confirmOpen}
         onClose={onClose}
         title={t('common:restorePickerTitle')}
         icon="history"
@@ -154,7 +155,7 @@ export function RestorePickerModal({
             </View>
           ) : (
             <ScrollView
-              className="max-h-72"
+              className="max-h-56"
               showsVerticalScrollIndicator={false}
             >
               {snapshots.map((snap) => {
@@ -221,7 +222,7 @@ export function RestorePickerModal({
             </StyledText>
           </View>
         ) : (
-          <ScrollView className="max-h-72" showsVerticalScrollIndicator={false}>
+          <ScrollView className="max-h-56" showsVerticalScrollIndicator={false}>
             {cloudBackups.map((backup) => {
               const dt = new Date(backup.metadata.updatedAt);
               const monthNames = [
