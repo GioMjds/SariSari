@@ -74,5 +74,16 @@
   "categoryDone": "All counted",
   "reasonsProgress": "Reasons picked: {{picked}} of {{total}}",
   "allMatchTitle": "Everything matches",
-  "allMatchBody": "Your shelf matches the app. Tap Update stock to finish."
+  "allMatchBody": "Your shelf matches the app. Tap Update stock to finish.",
+
+  "countTitle": "Count your shelf",
+  "stepOfTwo": "Step {{step}} of 2",
+  "goBack": "Go back",
+  "resumeTitle": "Count in progress",
+  "resumeStarted": "Started {{date}}. Your counts are saved as you go.",
+  "resumeCta": "Continue counting",
+  "sessionClosedTitle": "This count is closed",
+  "sessionClosedBody": "It was finished or discarded. Start a new count from the Stocktake tab.",
+  "backToHub": "Back to Stocktake",
+  "commitSuccess": "Stock updated to match your count."
 }

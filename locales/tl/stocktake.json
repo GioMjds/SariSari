@@ -74,5 +74,16 @@
   "categoryDone": "Nabilang lahat",
   "reasonsProgress": "May dahilan na: {{picked}} sa {{total}}",
   "allMatchTitle": "Tugma lahat",
-  "allMatchBody": "Tugma ang estante sa app. Pindutin ang I-update ang stock para tapusin."
+  "allMatchBody": "Tugma ang estante sa app. Pindutin ang I-update ang stock para tapusin.",
+
+  "countTitle": "Bilangin ang estante",
+  "stepOfTwo": "Hakbang {{step}} sa 2",
+  "goBack": "Bumalik",
+  "resumeTitle": "May bilang na nagaganap",
+  "resumeStarted": "Sinimulan {{date}}. Naka-save ang bilang mo habang nagbibilang.",
+  "resumeCta": "Ituloy ang bilang",
+  "sessionClosedTitle": "Sarado na ang bilang na ito",
+  "sessionClosedBody": "Tapos na o itinapon na ito. Magsimula ng bago sa Stocktake tab.",
+  "backToHub": "Bumalik sa Stocktake",
+  "commitSuccess": "Na-update ang stock ayon sa bilang mo."
 }

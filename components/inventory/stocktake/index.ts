@@ -5,3 +5,6 @@ export * from './StocktakeStartCard';
 export * from './StocktakeVarianceRow';
 export * from './StocktakeVarianceSummary';
 export * from './StocktakeSkeleton';
+export * from './StocktakeScreenHeader';
+export * from './StocktakeResumeCard';
+export * from './StocktakeClosedState';

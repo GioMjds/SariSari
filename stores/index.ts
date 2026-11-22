@@ -9,3 +9,4 @@ export * from './posSearchStore';
 export * from './useStockSheetSignal';
 export * from './useInventorySelection';
 export * from './useAddCategorySheet';
+export * from './useStocktakeReasons';
