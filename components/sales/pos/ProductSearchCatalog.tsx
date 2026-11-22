@@ -13,14 +13,12 @@ import { useToggleFavorite } from '@/hooks/useProducts';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
-import { usePOSSearchStore } from '@/stores';
+import { usePOSSearchStore, useViewModeStore, type ViewMode } from '@/stores';
+import {
+  GRID_COLUMN_STYLE,
+  ViewModeToggle,
+} from '@/components/ui/ViewModeToggle';
 import { Prof } from '@/utils/perf';
-
-// Tiles are 48.5% wide, so space-between leaves the gutter and keeps a lone last tile half-width.
-const GRID_COLUMN_STYLE = {
-  paddingHorizontal: 16,
-  justifyContent: 'space-between',
-} as const;
 
 interface ProductSearchCatalogProps {
   filteredProducts: Product[];
@@ -74,6 +72,14 @@ export function ProductSearchCatalog({
   onPressParkedList,
   onPressParkCurrent,
 }: ProductSearchCatalogProps) {
+  const viewMode = useViewModeStore((s) => s.modes.pos);
+  const setViewMode = useViewModeStore((s) => s.setMode);
+  const handleViewModeChange = useCallback(
+    (mode: ViewMode) => setViewMode('pos', mode),
+    [setViewMode],
+  );
+  const isGrid = viewMode === 'grid';
+
   // One shared mutation instead of one observer per row.
   const { mutate: toggleFavorite } = useToggleFavorite();
   const handleToggleFavorite = useCallback(
@@ -95,11 +101,19 @@ export function ProductSearchCatalog({
           onAdd={onAdd}
           onUpdateQuantity={onUpdateQuantity}
           onToggleFavorite={handleToggleFavorite}
+          variant={viewMode}
           {...(onToggleUnit ? { onToggleUnit } : {})}
         />
       );
     },
-    [getCartLine, onAdd, onUpdateQuantity, onToggleUnit, handleToggleFavorite],
+    [
+      getCartLine,
+      onAdd,
+      onUpdateQuantity,
+      onToggleUnit,
+      handleToggleFavorite,
+      viewMode,
+    ],
   );
 
   const handleFastLaneAddToCart = useCallback(
@@ -179,6 +193,13 @@ export function ProductSearchCatalog({
         </View>
       ) : null}
 
+      <View className="flex-row items-center justify-between px-4 mb-2">
+        <StyledText variant="extrabold" className="text-ink-900 text-sm">
+          Products
+        </StyledText>
+        <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+      </View>
+
       {/* Products List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
@@ -192,10 +213,12 @@ export function ProductSearchCatalog({
       ) : (
         <Prof id="POS:ProductList">
           <FlatList
+            // numColumns cannot change on a mounted FlatList, so remount per mode.
+            key={viewMode}
             data={filteredProducts}
             keyExtractor={(item) => item.id.toString()}
-            numColumns={2}
-            columnWrapperStyle={GRID_COLUMN_STYLE}
+            numColumns={isGrid ? 2 : 1}
+            {...(isGrid ? { columnWrapperStyle: GRID_COLUMN_STYLE } : {})}
             contentContainerStyle={{ paddingBottom: 82 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"

@@ -13,5 +13,7 @@ export * from './Sheet';
 export * from './Skeleton';
 export * from './StatusPill';
 export * from './StatusStamp';
+export * from './StockBadge';
+export * from './ViewModeToggle';
 export * from './Toast';
 export * from './SheetActions';

@@ -10,3 +10,4 @@ export * from './useStockSheetSignal';
 export * from './useInventorySelection';
 export * from './useAddCategorySheet';
 export * from './useStocktakeReasons';
+export * from './useViewModeStore';

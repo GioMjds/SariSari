@@ -2,7 +2,10 @@ import { memo, useCallback, useMemo } from 'react';
 import { FlatList, ListRenderItemInfo, Platform, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
+import { GRID_COLUMN_STYLE } from '@/components/ui/ViewModeToggle';
+import type { ViewMode } from '@/stores/useViewModeStore';
 import { ProductRow } from './ProductRow';
+import { ProductTile } from './ProductTile';
 import type { Product } from '@/types/products.types';
 
 export interface ProductsListProps {
@@ -13,6 +16,7 @@ export interface ProductsListProps {
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
   onEndReached?: () => void;
+  viewMode?: ViewMode;
 }
 
 const keyExtractor = (item: Product) => String(item.id);
@@ -25,17 +29,22 @@ export const ProductsList = memo(function ProductsList({
   isFetchingNextPage,
   hasNextPage,
   onEndReached,
+  viewMode = 'list',
 }: ProductsListProps) {
+  const isGrid = viewMode === 'grid';
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<Product>) => (
-      <ProductRow
-        product={item}
-        onPress={onPress}
-        onLongPress={onLongPress}
-        onActionPress={onActionPress}
-      />
-    ),
-    [onPress, onLongPress, onActionPress],
+    ({ item }: ListRenderItemInfo<Product>) => {
+      const Item = isGrid ? ProductTile : ProductRow;
+      return (
+        <Item
+          product={item}
+          onPress={onPress}
+          onLongPress={onLongPress}
+          onActionPress={onActionPress}
+        />
+      );
+    },
+    [isGrid, onPress, onLongPress, onActionPress],
   );
 
   const handleEndReached = useCallback(() => {
@@ -79,8 +88,12 @@ export const ProductsList = memo(function ProductsList({
 
   return (
     <FlatList
+      // numColumns cannot change on a mounted FlatList, so remount per mode.
+      key={viewMode}
       testID="product-flat-list"
       data={products}
+      numColumns={isGrid ? 2 : 1}
+      {...(isGrid ? { columnWrapperStyle: GRID_COLUMN_STYLE } : {})}
       keyExtractor={keyExtractor}
       contentContainerClassName="pt-3"
       contentContainerStyle={contentContainerStyle}
