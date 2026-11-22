@@ -539,3 +539,29 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Restored `tests/__setup__/expo-sqlite-mock.ts` (removed in 7b5ba16 but still referenced by `jest.setup.ts`); reset now pauses foreign keys.
 - Added `tests/database/price-correction.test.ts`; it fails on the old SQL (12016 vs 516) and passes now.
 - Not repaired: sale totals already corrupted by past price corrections on wholesale sales.
+
+## 2026-11-22 - Stocktake and Restock sub-tab redesign
+
+- Goal: make both Inventory sub-tabs explain their purpose and be easy to use at the counter.
+- Stocktake idle: `StocktakeStartCard` now shows Sari, a plain "Count your shelf" intro, a real 3-step strip (Count, Check the gaps, Update stock), the last count, and a 48 px start button.
+- Stocktake counting: header has a progress bar with percent and a readable hint. Category headers show "3 of 12 counted" and turn sage with a check when done. The first unfinished category opens on load; the rest stay collapsed.
+- `StocktakeCountRow`: "App says 12 Pc", 48 px minus/plus buttons, a larger qty input, and a "Same as app (12)" button that sets counted to expected. Status reads "Matches", "3 short", or "2 extra" with an icon. The +2/+5 chips were removed.
+- Variance review: summary splits short, extra, and net pesos, and shows "Reasons picked: x of y". Rows read "App said 12 · You counted 9". An all-match state with Sari appears when there are no differences. A hint explains why Update stock is disabled.
+- Restock: split into `components/inventory/restock/` (`RestockSummaryCard`, `RestockCards`, `RestockAdjustModal`). The screen went from 770 to about 300 lines.
+- Restock summary card: purpose, items to buy now, estimated total cost (items without cost price excluded), and a Receive delivery row with a hint on when to use it.
+- Each filter chip now has a one-line hint under the chip row. Buy now cards have one full-width Add stock button, with Change qty, Later, and Skip as quiet buttons below.
+- "Original suggestion" now uses `defaultSuggestedQuantity` from the DB instead of recomputing the formula in the screen.
+- Hardcoded "SKU:", "Supplier:", "Stock:" moved to `inventory` locale keys. All new strings exist in `en` and `tl`.
+- No data, schema, or commit-logic changes.
+- Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22 - Stocktake counting moved to its own screens
+
+- `app/(tabs)/inventory/stocktake.tsx` is now a hub only: the start card when idle, or `StocktakeResumeCard` (progress, "manual stock edits are paused" note, Continue, Discard) while a count is open, plus history.
+- New `app/(edit-forms)/stocktake/[id]/index.tsx` (step 1, count) and `.../[id]/review.tsx` (step 2, review). Both use `StocktakeScreenHeader` (back, step label, title) and a safe-area footer; no tab bar, sub-tab strip, or FAB.
+- Review is its own route so system back returns to counting without a custom handler.
+- Variance reasons moved from local state to `stores/useStocktakeReasons.ts` (keyed by session id), so going back to fix a count keeps picked reasons.
+- Start pushes to the count screen using the id `startSession` returns. Commit shows a success toast and `router.dismissTo` the hub. Discard from the count screen goes back to the hub.
+- `StocktakeClosedState` covers a finished or discarded session opened by back stack or deep link.
+- Home `StocktakeNudge` still opens the hub; the hub's Continue card handles resume.
+- Not done: screenshots and video, because no device or emulator was available.

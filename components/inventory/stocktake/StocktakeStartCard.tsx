@@ -14,7 +14,6 @@ interface StocktakeStartCardProps {
 
 const STEPS = ['stepCount', 'stepCheck', 'stepUpdate'] as const;
 
-// Idle state: explains what a stocktake is, how it works, and starts one.
 export function StocktakeStartCard({
   lastSession,
   onStart,

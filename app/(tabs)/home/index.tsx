@@ -1,28 +1,28 @@
-import { useCallback, useMemo } from 'react';
-import { Prof, useChangeLog, withProf } from '@/utils/perf';
-import { View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { Href, useRouter } from 'expo-router';
 import { StyledText } from '@/components/elements';
 import {
-  DashboardKPIGrid,
+  DashboardEmptyState,
+  DashboardErrorState,
   DashboardGoalCard,
+  DashboardKPIGrid,
   DashboardQuickActions,
   DashboardRecentSales,
   DashboardStockAlert,
   DashboardSuggestions,
-  StocktakeNudge,
-  DashboardEmptyState,
-  DashboardErrorState,
-  HomeOverviewSkeleton,
-  MiniInsightsCard,
   GettingStartedCard,
   HomeDestination,
+  HomeOverviewSkeleton,
+  MiniInsightsCard,
+  StocktakeNudge,
 } from '@/components/home';
-import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { useTabBarBottomOffset } from '@/components/layout';
-import { formatCurrency } from '@/utils';
 import { RefreshableScrollView } from '@/components/ui';
+import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
+import { formatCurrency } from '@/utils';
+import { Prof, useChangeLog, withProf } from '@/utils/perf';
+import { Href, useRouter } from 'expo-router';
+import { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { View } from 'react-native';
 
 const routes = {
   addProduct: '/(edit-forms)/add-product',
@@ -34,7 +34,7 @@ const routes = {
   reports: '/settings/reports',
 } satisfies Record<HomeDestination, Href>;
 
-const RESTOCK = '/(tabs)/inventory/recommendations' as Href;
+const RESTOCK = '/(tabs)/inventory/restock' as Href;
 const STOCKTAKE = '/(tabs)/inventory/stocktake' as Href;
 const SALE_DETAILS = '/(edit-forms)/sale-details/';
 const RECEIPTS = '/(tabs)/sales/receipts' as Href;

@@ -6,16 +6,12 @@ import * as Haptics from 'expo-haptics';
 import { SearchBar } from '@/components/ui';
 import { StyledText } from '@/components/elements';
 import { Customer } from '@/types/credits.types';
-import {
-  CustomerFilterChips,
-  type CustomerListFilter,
-} from './CustomerFilterChips';
+import { type CustomerListFilter } from './CustomerFilterChips';
 import { CustomerCard } from './CustomerCard';
 import { CustomersEmptyState } from './CustomersEmptyState';
 
 interface AllCustomersTabProps {
   customers: Customer[];
-  /** customerId -> days overdue, only for suki with overdue utang. */
   overdueById?: ReadonlyMap<number, number>;
   onSelectCustomer: (customer: Customer) => void;
   onAddCustomer: () => void;
@@ -23,15 +19,17 @@ interface AllCustomersTabProps {
 
 type SortKey = 'balance' | 'name' | 'recent';
 
+type SortOption = {
+  key: SortKey;
+  shortKey: string;
+  longKey: string;
+};
+
 const SORT_OPTIONS = [
   { key: 'balance', shortKey: 'sortShortBalance', longKey: 'sortByBalance' },
   { key: 'name', shortKey: 'sortShortName', longKey: 'sortByName' },
   { key: 'recent', shortKey: 'sortShortRecent', longKey: 'sortByRecent' },
-] as const satisfies readonly {
-  key: SortKey;
-  shortKey: string;
-  longKey: string;
-}[];
+] satisfies SortOption[];
 
 export const AllCustomersTab: FC<AllCustomersTabProps> = ({
   customers,
@@ -44,17 +42,6 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
   const [activeFilter, setActiveFilter] = useState<CustomerListFilter>('all');
   // Biggest utang first: the owner opens this list to see who owes what.
   const [sortKey, setSortKey] = useState<SortKey>('balance');
-
-  const counts = useMemo(() => {
-    const withBalance = customers.filter(
-      (c) => c.outstanding_balance > 0,
-    ).length;
-    return {
-      all: customers.length,
-      with_balance: withBalance,
-      paid: customers.length - withBalance,
-    } satisfies Record<CustomerListFilter, number>;
-  }, [customers]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -151,12 +138,6 @@ export const AllCustomersTab: FC<AllCustomersTabProps> = ({
           </StyledText>
         </Pressable>
       </View>
-
-      <CustomerFilterChips
-        activeFilter={activeFilter}
-        onSelectFilter={setActiveFilter}
-        counts={counts}
-      />
 
       <View className="px-4 mb-1 flex-row flex-wrap items-center justify-between gap-x-2">
         <StyledText variant="semibold" className="text-ink-500 text-sm">
