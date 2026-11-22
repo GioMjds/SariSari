@@ -2,30 +2,25 @@ import { withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { TabGuide } from '@/components/inventory';
+import {
+  ReorderCard,
+  RestockAdjustModal,
+  RestockSummaryCard,
+  SavedPlanCard,
+  SlowMoverCard,
+  WatchCard,
+} from '@/components/inventory/restock';
 import { useStockSheetSignal, useToastStore } from '@/stores';
-import { MoneyText } from '@/components/ui';
 import {
   useDeleteReorderPlan,
   useSaveReorderPlan,
   useStockRecommendations,
 } from '@/hooks';
 import { ReorderRecommendation } from '@/types/stock-intelligence.types';
-import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, Href } from 'expo-router';
-import { MotiView } from 'moti';
 import { useMemo, useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Pressable,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, ScrollView, View } from 'react-native';
 import { Alert } from '@/utils';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { useTabBarBottomOffset } from '@/components/layout';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { useTranslation } from 'react-i18next';
 
@@ -40,11 +35,9 @@ const FILTER_IDS: TabType[] = [
 
 function RestockScreen() {
   const router = useRouter();
-  const { t: tReceiving } = useTranslation('receiving');
   const { t } = useTranslation('inventory');
   const addToast = useToastStore((s) => s.addToast);
   const signal = useStockSheetSignal();
-  const tabBarBottomOffset = useTabBarBottomOffset();
   const fabClearance = useFabClearance();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
 
@@ -61,34 +54,38 @@ function RestockScreen() {
   const [adjustedQtyText, setAdjustedQtyText] = useState('');
   const [adjustError, setAdjustError] = useState('');
 
-  const reorderList = useMemo(() => {
-    if (!recommendations) return [];
-    return recommendations.filter((rec) => {
-      const isDeferred =
-        rec.savedPlan?.status === 'deferred' &&
-        rec.savedPlan.deferredUntil &&
-        new Date(rec.savedPlan.deferredUntil).getTime() > Date.now();
-      const isDismissed = rec.savedPlan?.status === 'dismissed';
-      return (
-        (rec.isOutOfStock || rec.isLowStock) && !isDeferred && !isDismissed
-      );
-    });
+  const lists = useMemo(() => {
+    const recs = recommendations ?? [];
+    const now = Date.now();
+    return {
+      reorder: recs.filter((rec) => {
+        const isDeferred =
+          rec.savedPlan?.status === 'deferred' &&
+          rec.savedPlan.deferredUntil &&
+          new Date(rec.savedPlan.deferredUntil).getTime() > now;
+        const isDismissed = rec.savedPlan?.status === 'dismissed';
+        return (
+          (rec.isOutOfStock || rec.isLowStock) && !isDeferred && !isDismissed
+        );
+      }),
+      slow_movers: recs.filter((rec) => rec.isSlowMover),
+      watch_list: recs.filter((rec) => rec.isWatchItem),
+      saved_plans: recs.filter((rec) => rec.savedPlan !== null),
+    } satisfies Record<TabType, ReorderRecommendation[]>;
   }, [recommendations]);
 
-  const slowMoversList = useMemo(() => {
-    if (!recommendations) return [];
-    return recommendations.filter((rec) => rec.isSlowMover);
-  }, [recommendations]);
-
-  const watchList = useMemo(() => {
-    if (!recommendations) return [];
-    return recommendations.filter((rec) => rec.isWatchItem);
-  }, [recommendations]);
-
-  const savedPlansList = useMemo(() => {
-    if (!recommendations) return [];
-    return recommendations.filter((rec) => rec.savedPlan !== null);
-  }, [recommendations]);
+  // Items without a cost price are left out of the estimate.
+  const estimatedTotal = useMemo(
+    () =>
+      lists.reorder.reduce(
+        (sum, rec) =>
+          rec.costPrice !== null && rec.suggestedQuantity > 0
+            ? sum + (rec.estimatedSpend ?? 0)
+            : sum,
+        0,
+      ),
+    [lists.reorder],
+  );
 
   // Actions
   const handleOpenAdjust = (product: ReorderRecommendation) => {
@@ -195,574 +192,132 @@ function RestockScreen() {
     });
   };
 
-  const handleRestock = (product: ReorderRecommendation) => {
-    // The sheet host lives in the inventory layout, so the owner stays on Restock.
-    signal.requestRestock(product.productId);
-  };
-
-  const renderReorderItem = ({ item }: { item: ReorderRecommendation }) => {
-    const showEstimatedSpend =
-      item.costPrice !== null && item.suggestedQuantity > 0;
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 250 }}
-        className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper"
-      >
-        <View className="flex-row justify-between items-start mb-2">
-          <View className="flex-1 mr-2">
-            <StyledText variant="semibold" className="text-base text-ink-900">
-              {item.productName}
-            </StyledText>
-            <View className="flex-row flex-wrap items-center mt-1 gap-x-2">
-              <StyledText variant="regular" className="text-xs text-ink-500">
-                SKU: {item.sku}
-              </StyledText>
-              {item.category && (
-                <>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-300"
-                  >
-                    •
-                  </StyledText>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-500"
-                  >
-                    {item.category}
-                  </StyledText>
-                </>
-              )}
-            </View>
-          </View>
-          <View className="items-end">
-            <View
-              className={`px-2 py-0.5 rounded-full ${item.isOutOfStock ? 'bg-semantic-danger-50' : 'bg-semantic-warning-50'}`}
-            >
-              <StyledText
-                variant="semibold"
-                className={`text-xs ${item.isOutOfStock ? 'text-semantic-danger' : 'text-semantic-warning'}`}
-              >
-                {item.isOutOfStock
-                  ? t('restockOutOfStock')
-                  : t('restockLeft', { qty: item.currentStock, unit: item.retailUnitName })}
-              </StyledText>
-            </View>
-          </View>
-        </View>
-
-        {/* Demand & Recommendation Metrics */}
-        <View className="bg-paper-100 rounded-xl p-3 flex-row justify-between items-center mb-3">
-          <View>
-            <StyledText variant="regular" className="text-xs text-ink-600">
-              {t('restockSales28')}
-            </StyledText>
-            <StyledText
-              variant="semibold"
-              className="text-sm text-ink-700 mt-0.5"
-            >
-              {item.sales28Days} {item.retailUnitName}
-            </StyledText>
-          </View>
-          <View className="items-center">
-            <StyledText variant="regular" className="text-xs text-ink-600">
-              {t('restockSuggested')}
-            </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-sm text-persimmon-600 mt-0.5"
-            >
-              +{item.suggestedQuantity} {item.retailUnitName}
-            </StyledText>
-          </View>
-          <View className="items-end">
-            <StyledText variant="regular" className="text-xs text-ink-600">
-              {t('restockEstCost')}
-            </StyledText>
-            {showEstimatedSpend ? (
-              <MoneyText
-                value={item.estimatedSpend ?? 0}
-                size="sm"
-                className="mt-0.5"
-              />
-            ) : (
-              <StyledText
-                variant="semibold"
-                className="text-sm text-ink-600 mt-0.5"
-              >
-                —
-              </StyledText>
-            )}
-          </View>
-        </View>
-
-        {item.preferredSupplierName && (
-          <View className="flex-row items-center mb-3 gap-1">
-            <FontAwesome name="truck" size={12} color="#7A7165" />
-            <StyledText variant="medium" className="text-xs text-ink-500">
-              Supplier: {item.preferredSupplierName}
-            </StyledText>
-          </View>
-        )}
-
-        {/* Actions Row */}
-        <View className="flex-row justify-between gap-2 mt-1">
-          <View className="flex-row gap-2">
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => handleOpenAdjust(item)}
-              className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
-            >
-              <StyledText variant="semibold" className="text-xs text-ink-700">
-                {t('restockAdjust')}
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => handleDefer(item)}
-              className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
-            >
-              <StyledText variant="semibold" className="text-xs text-ink-700">
-                {t('restockDefer')}
-              </StyledText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => handleDismiss(item)}
-              className="px-3 py-2 bg-paper-200 border border-ink-200 rounded-xl active:bg-paper-300"
-            >
-              <StyledText variant="semibold" className="text-xs text-ink-700">
-                {t('restockDismiss')}
-              </StyledText>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => handleRestock(item)}
-            className="px-3 py-2 bg-persimmon-500 rounded-xl flex-row items-center gap-1.5 active:bg-persimmon-600 shadow-persimmon-glow"
-          >
-            <FontAwesome name="plus" size={10} color="#FBF7EE" />
-            <StyledText variant="semibold" className="text-xs text-paper-50">
-              {t('restockRecord')}
-            </StyledText>
-          </TouchableOpacity>
-        </View>
-      </MotiView>
-    );
-  };
-
-  // Render Item for Slow Movers Tab
-  const renderSlowMoverItem = ({ item }: { item: ReorderRecommendation }) => {
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 250 }}
-        className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper"
-      >
-        <View className="flex-row justify-between items-start">
-          <View className="flex-1 mr-2">
-            <StyledText variant="semibold" className="text-base text-ink-900">
-              {item.productName}
-            </StyledText>
-            <View className="flex-row flex-wrap items-center mt-1 gap-x-2">
-              <StyledText variant="regular" className="text-xs text-ink-500">
-                SKU: {item.sku}
-              </StyledText>
-              {item.category && (
-                <>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-300"
-                  >
-                    •
-                  </StyledText>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-500"
-                  >
-                    {item.category}
-                  </StyledText>
-                </>
-              )}
-            </View>
-          </View>
-          <View className="items-end">
-            <View className="px-2 py-0.5 rounded-full bg-paper-200 border border-ink-150">
-              <StyledText variant="semibold" className="text-xs text-ink-700">
-                Stock: {item.currentStock} {item.retailUnitName}
-              </StyledText>
-            </View>
-          </View>
-        </View>
-
-        <View className="mt-3 pt-3 border-t border-ink-100 flex-row justify-between items-center">
-          <StyledText variant="regular" className="text-xs text-ink-500">
-            {t('restockNoSales28')}
-          </StyledText>
-          {item.costPrice !== null && (
-            <View className="flex-row items-center gap-1.5">
-              <StyledText variant="regular" className="text-xs text-ink-600">
-                {t('restockStockValue')}
-              </StyledText>
-              <MoneyText value={item.currentStock * item.costPrice} size="sm" />
-            </View>
-          )}
-        </View>
-      </MotiView>
-    );
-  };
-
-  // Render Item for Watch List Tab
-  const renderWatchItem = ({ item }: { item: ReorderRecommendation }) => {
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 250 }}
-        className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper"
-      >
-        <View className="flex-row justify-between items-start">
-          <View className="flex-1 mr-2">
-            <StyledText variant="semibold" className="text-base text-ink-900">
-              {item.productName}
-            </StyledText>
-            <View className="flex-row flex-wrap items-center mt-1 gap-x-2">
-              <StyledText variant="regular" className="text-xs text-ink-500">
-                SKU: {item.sku}
-              </StyledText>
-              {item.category && (
-                <>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-300"
-                  >
-                    •
-                  </StyledText>
-                  <StyledText
-                    variant="regular"
-                    className="text-xs text-ink-500"
-                  >
-                    {item.category}
-                  </StyledText>
-                </>
-              )}
-            </View>
-          </View>
-          <View className="items-end">
-            <View className="px-2 py-0.5 rounded-full bg-semantic-info-50">
-              <StyledText
-                variant="semibold"
-                className="text-xs text-semantic-info"
-              >
-                {t('restockNewProduct')}
-              </StyledText>
-            </View>
-          </View>
-        </View>
-
-        <View className="mt-3 pt-3 border-t border-ink-100 flex-row justify-between items-center">
-          <StyledText variant="regular" className="text-xs text-ink-500">
-            {t('restockFewDays')}
-          </StyledText>
-          <StyledText variant="semibold" className="text-xs text-ink-700">
-            {t('currentStock')}: {item.currentStock} {item.retailUnitName}
-          </StyledText>
-        </View>
-      </MotiView>
-    );
-  };
-
-  // Render Item for Saved Plans Tab
-  const renderSavedPlanItem = ({ item }: { item: ReorderRecommendation }) => {
-    if (!item.savedPlan) return null;
-    const { status, adjustedQuantity, deferredUntil } = item.savedPlan;
-
-    let statusText = '';
-    let statusColorClass = 'text-ink-600 bg-paper-200';
-    if (status === 'adjusted') {
-      statusText = t('restockStatusAdjusted', { qty: adjustedQuantity, unit: item.retailUnitName });
-      statusColorClass = 'text-persimmon-700 bg-persimmon-50';
-    } else if (status === 'deferred') {
-      const dateStr = deferredUntil
-        ? new Date(deferredUntil).toLocaleDateString()
-        : '';
-      statusText = t('restockStatusDeferred', { date: dateStr });
-      statusColorClass = 'text-semantic-warning bg-semantic-warning-50';
-    } else if (status === 'dismissed') {
-      statusText = t('restockStatusDismissed');
-      statusColorClass = 'text-semantic-danger bg-semantic-danger-50';
-    }
-
-    return (
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 250 }}
-        className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper"
-      >
-        <View className="flex-row justify-between items-start mb-3">
-          <View className="flex-1 mr-2">
-            <StyledText variant="semibold" className="text-base text-ink-900">
-              {item.productName}
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-xs text-ink-500 mt-0.5"
-            >
-              SKU: {item.sku}
-            </StyledText>
-          </View>
-          <View className={`px-2.5 py-1 rounded-full ${statusColorClass}`}>
-            <StyledText variant="semibold" className="text-xs">
-              {statusText}
-            </StyledText>
-          </View>
-        </View>
-
-        <View className="flex-row justify-between items-center pt-3 border-t border-ink-100">
-          <StyledText variant="regular" className="text-xs text-ink-600">
-            {t('restockOriginalSuggested')} +
-            {Math.max(
-              0,
-              Math.ceil((7 * item.sales28Days) / 28) - item.currentStock,
-            )}{' '}
-            {item.retailUnitName}
-          </StyledText>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => handleRestore(item)}
-            className="px-3.5 py-1.5 bg-paper-100 border border-ink-200 rounded-xl flex-row items-center gap-1 active:bg-paper-200"
-          >
-            <FontAwesome name="undo" size={10} color="#564E45" />
-            <StyledText variant="semibold" className="text-xs text-ink-700">
-              {t('restockRestore')}
-            </StyledText>
-          </TouchableOpacity>
-        </View>
-      </MotiView>
-    );
-  };
-
-  const getActiveList = () => {
+  const renderItem = ({ item }: { item: ReorderRecommendation }) => {
     switch (activeTab) {
       case 'reorder':
-        return reorderList;
+        return (
+          <ReorderCard
+            item={item}
+            // The sheet host lives in the inventory layout, so the owner stays on Restock.
+            onRestock={() => signal.requestRestock(item.productId)}
+            onAdjust={() => handleOpenAdjust(item)}
+            onDefer={() => handleDefer(item)}
+            onDismiss={() => handleDismiss(item)}
+          />
+        );
       case 'slow_movers':
-        return slowMoversList;
+        return <SlowMoverCard item={item} />;
       case 'watch_list':
-        return watchList;
-      case 'saved_plans':
-        return savedPlansList;
+        return <WatchCard item={item} />;
       default:
-        return [];
+        return <SavedPlanCard item={item} onRestore={() => handleRestore(item)} />;
     }
   };
 
-  const activeList = getActiveList();
-  const counts: Record<TabType, number> = {
-    reorder: reorderList.length,
-    slow_movers: slowMoversList.length,
-    watch_list: watchList.length,
-    saved_plans: savedPlansList.length,
-  };
+  const header = (
+    <View className="gap-y-3 pb-3">
+      <RestockSummaryCard
+        buyCount={lists.reorder.length}
+        estimatedTotal={estimatedTotal}
+        onReceiveDelivery={() =>
+          router.push('/(edit-forms)/delivery-receipts' as Href)
+        }
+      />
+      <TabGuide
+        guideId="restock"
+        steps={[t('restockGuide1'), t('restockGuide2'), t('restockGuide3')]}
+      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="-mx-4"
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+      >
+        {FILTER_IDS.map((id) => {
+          const isActive = activeTab === id;
+          const count = lists[id].length;
+          return (
+            <Pressable
+              key={id}
+              onPress={() => setActiveTab(id)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={`${t(`restockFilter_${id}`)}, ${count}`}
+              className={`min-h-[44px] px-4 rounded-full border flex-row items-center gap-2 ${
+                isActive
+                  ? 'bg-ink-900 border-ink-900'
+                  : 'bg-paper-50 border-ink-200'
+              }`}
+            >
+              <StyledText
+                variant={isActive ? 'extrabold' : 'semibold'}
+                className={`text-sm ${isActive ? 'text-paper-50' : 'text-ink-700'}`}
+              >
+                {t(`restockFilter_${id}`)}
+              </StyledText>
+              {count > 0 && (
+                <StyledText
+                  variant="extrabold"
+                  className={`text-sm ${
+                    isActive ? 'text-persimmon-300' : 'text-persimmon-700'
+                  }`}
+                >
+                  {count}
+                </StyledText>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <StyledText variant="regular" className="text-sm text-ink-700">
+        {t(`restockFilterHint_${activeTab}`)}
+      </StyledText>
+    </View>
+  );
+
+  const empty = isLoading ? (
+    <View className="items-center py-10">
+      <SariMascot state="loading" size={96} accessibilityLabel="Loading" defer />
+    </View>
+  ) : (
+    <View className="items-center py-8 px-4">
+      <SariMascot state="inventory" size={120} defer />
+      <StyledText variant="extrabold" className="text-lg text-ink-900 text-center mb-1">
+        {t(`restockEmpty_${activeTab}_title`)}
+      </StyledText>
+      <StyledText variant="regular" className="text-sm text-ink-700 text-center">
+        {t(`restockEmpty_${activeTab}_body`)}
+      </StyledText>
+    </View>
+  );
 
   return (
     <View className="flex-1 bg-paper-200">
-      <View className="px-4 pt-2 flex-row justify-end">
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={() => router.push('/(edit-forms)/delivery-receipts' as Href)}
-          accessibilityRole="button"
-          accessibilityLabel={tReceiving('newDelivery')}
-          className="px-3 py-2 bg-persimmon-500 rounded-xl flex-row items-center gap-1.5 active:bg-persimmon-600 shadow-persimmon-glow"
-        >
-          <FontAwesome name="truck" size={11} color="#FBF7EE" />
-          <StyledText variant="semibold" className="text-xs text-paper-50">
-            {tReceiving('newDelivery')}
-          </StyledText>
-        </TouchableOpacity>
-      </View>
-      <StyledText variant="regular" className="text-xs text-ink-600 px-4 pb-2">
-        {t('restockSubtitle')}
-      </StyledText>
-      <View className="px-4">
-        <TabGuide
-          guideId="restock"
-          steps={[t('restockGuide1'), t('restockGuide2'), t('restockGuide3')]}
-        />
-      </View>
-      <View className="pt-1 pb-3">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-        >
-          {FILTER_IDS.map((id) => {
-            const isActive = activeTab === id;
-            const count = counts[id];
-            return (
-              <Pressable
-                key={id}
-                onPress={() => setActiveTab(id)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`${t(`restockFilter_${id}`)}, ${count}`}
-                style={{ minHeight: 40 }}
-                className={`px-4 rounded-full border flex-row items-center gap-2 ${
-                  isActive
-                    ? 'bg-ink-900 border-ink-900'
-                    : 'bg-paper-50 border-ink-200'
-                }`}
-              >
-                <StyledText
-                  variant={isActive ? 'extrabold' : 'semibold'}
-                  className={`text-sm ${
-                    isActive ? 'text-paper-50' : 'text-ink-700'
-                  }`}
-                >
-                  {t(`restockFilter_${id}`)}
-                </StyledText>
-                {count > 0 && (
-                  <StyledText
-                    variant="extrabold"
-                    className={`text-sm ${
-                      isActive ? 'text-persimmon-300' : 'text-persimmon-700'
-                    }`}
-                  >
-                    {count}
-                  </StyledText>
-                )}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <FlatList
+        data={isLoading ? [] : lists[activeTab]}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.productId.toString()}
+        ListHeaderComponent={header}
+        ListEmptyComponent={empty}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: fabClearance,
+        }}
+        showsVerticalScrollIndicator={false}
+      />
 
-      {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          <SariMascot state="loading" size={96} accessibilityLabel="Loading" defer />
-        </View>
-      ) : activeList.length === 0 ? (
-        <View className="flex-1 justify-center items-center px-8">
-          <SariMascot state="inventory" size={120} defer />
-          <StyledText
-            variant="extrabold"
-            className="text-lg text-ink-900 text-center mb-1"
-          >
-            {t(`restockEmpty_${activeTab}_title`)}
-          </StyledText>
-          <StyledText
-            variant="regular"
-            className="text-sm text-ink-600 text-center"
-          >
-            {t(`restockEmpty_${activeTab}_body`)}
-          </StyledText>
-        </View>
-      ) : (
-        <FlatList
-          data={activeList}
-          renderItem={
-            activeTab === 'reorder'
-              ? renderReorderItem
-              : activeTab === 'slow_movers'
-                ? renderSlowMoverItem
-                : activeTab === 'watch_list'
-                  ? renderWatchItem
-                  : renderSavedPlanItem
-          }
-          keyExtractor={(item) => item.productId.toString()}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 4,
-            paddingBottom: fabClearance,
-          }}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-
-      {/* Adjust Quantity Modal */}
-      <Modal
-        visible={adjustingProduct !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAdjustingProduct(null)}
-      >
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-          <Pressable
-            className="flex-1 bg-black/50 justify-center items-center px-6"
-            onPress={() => setAdjustingProduct(null)}
-          >
-            <Pressable
-              className="bg-paper-50 rounded-2xl p-5 w-full max-w-sm border border-ink-150 shadow-modal"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <StyledText
-                variant="extrabold"
-                className="text-lg text-ink-900 mb-2"
-              >
-                {t('restockAdjustTitle')}
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-sm text-ink-500 mb-4"
-              >
-                {t('restockAdjustBody', { name: adjustingProduct?.productName ?? '' })}
-              </StyledText>
-
-              <TextInput
-                value={adjustedQtyText}
-                onChangeText={(text) => {
-                  setAdjustedQtyText(text);
-                  setAdjustError('');
-                }}
-                keyboardType="number-pad"
-                className="bg-paper-100 border border-ink-200 rounded-xl p-3 font-stack-sans text-ink-900 text-base mb-2"
-                placeholder={t('quantity')}
-                autoFocus
-              />
-
-              {adjustError ? (
-                <StyledText
-                  variant="semibold"
-                  className="text-xs text-semantic-danger mb-3"
-                >
-                  {adjustError}
-                </StyledText>
-              ) : null}
-
-              <View className="flex-row justify-end gap-3 mt-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setAdjustingProduct(null)}
-                  className="px-4 py-2 bg-paper-200 rounded-xl"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-sm text-ink-700"
-                  >
-                    {t('cancel')}
-                  </StyledText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={handleSaveAdjustment}
-                  className="px-4 py-2 bg-persimmon-500 rounded-xl shadow-persimmon-glow"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-sm text-paper-50"
-                  >
-                    {t('save')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
+      <RestockAdjustModal
+        productName={adjustingProduct?.productName ?? null}
+        value={adjustedQtyText}
+        error={adjustError}
+        onChange={(text) => {
+          setAdjustedQtyText(text);
+          setAdjustError('');
+        }}
+        onSave={handleSaveAdjustment}
+        onClose={() => setAdjustingProduct(null)}
+      />
     </View>
   );
 }

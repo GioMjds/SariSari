@@ -1,9 +1,10 @@
 import { withProf } from '@/utils/perf';
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { SectionList, View, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { Alert } from '@/utils';
+import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
@@ -82,10 +83,17 @@ function StocktakeScreen() {
     return map;
   }, [products, t]);
 
-  // Categories start collapsed; only open ones feed rows into the virtualized list.
-  const [openCategories, setOpenCategories] = useState<Set<string>>(
-    () => new Set(),
+  // Only open categories feed rows into the virtualized list; null means not yet initialized.
+  const [openCategories, setOpenCategories] = useState<Set<string> | null>(
+    null,
   );
+  useEffect(() => {
+    if (openCategories || products.length === 0) return;
+    const first = Object.entries(categoriesMap).find(([, items]) =>
+      items.some((p) => !countsMap[p.id]),
+    )?.[0];
+    setOpenCategories(new Set(first ? [first] : []));
+  }, [openCategories, products.length, categoriesMap, countsMap]);
   const toggleCategory = (name: string) =>
     setOpenCategories((prev) => {
       const next = new Set(prev);
@@ -98,29 +106,43 @@ function StocktakeScreen() {
       Object.entries(categoriesMap).map(([title, items]) => ({
         title,
         total: items.length,
-        data: openCategories.has(title) ? items : [],
+        counted: items.filter((p) => countsMap[p.id]).length,
+        data: openCategories?.has(title) ? items : [],
       })),
-    [categoriesMap, openCategories],
+    [categoriesMap, openCategories, countsMap],
   );
 
   // Compute total counted and variances
   const totalProducts = products.length;
   const countedCount = Object.keys(countsMap).length;
+  const progressPct =
+    totalProducts > 0 ? Math.round((countedCount / totalProducts) * 100) : 0;
 
   const varianceRows = useMemo(() => {
     return counts.filter((c) => c.countedQty !== c.expectedQty);
   }, [counts]);
 
-  const netVariancePesos = useMemo(() => {
-    let sum = 0;
+  // Short and extra are kept apart so a big loss is not hidden by a small gain.
+  const { shortPesos, extraPesos, netVariancePesos } = useMemo(() => {
+    let short = 0;
+    let extra = 0;
     for (const c of counts) {
-      const p = productsById.get(c.productId);
-      const cost = p?.cost_price ?? 0;
-      const delta = c.countedQty - c.expectedQty;
-      sum += delta * cost;
+      const cost = productsById.get(c.productId)?.cost_price ?? 0;
+      const value = (c.countedQty - c.expectedQty) * cost;
+      if (value < 0) short += value;
+      else extra += value;
     }
-    return Math.round(sum * 100) / 100;
+    const round = (n: number) => Math.round(n * 100) / 100;
+    return {
+      shortPesos: round(short),
+      extraPesos: round(extra),
+      netVariancePesos: round(short + extra),
+    };
   }, [counts, productsById]);
+
+  const reasonsPicked = varianceRows.filter((v) =>
+    Boolean(reasonsMap[v.productId]?.reasonCode),
+  ).length;
 
   const allVariancesHaveReasons = useMemo(() => {
     return varianceRows.every((v) =>
@@ -236,8 +258,22 @@ function StocktakeScreen() {
         <StocktakeVarianceSummary
           totalProducts={totalProducts}
           varianceCount={varianceRows.length}
+          reasonsPicked={reasonsPicked}
+          shortPesos={shortPesos}
+          extraPesos={extraPesos}
           netVariancePesos={netVariancePesos}
         />
+
+        {varianceRows.length === 0 ? (
+          <View className="items-center py-6 gap-y-1">
+            <StyledText variant="extrabold" className="text-ink-900 text-lg text-center">
+              {t('allMatchTitle')}
+            </StyledText>
+            <StyledText variant="regular" className="text-ink-700 text-sm text-center">
+              {t('allMatchBody')}
+            </StyledText>
+          </View>
+        ) : null}
 
         {varianceRows.map((c) => {
           const product = productsById.get(c.productId);
@@ -272,10 +308,21 @@ function StocktakeScreen() {
           );
         })}
 
-        <View className="flex-row gap-x-3 mt-4">
+        {!allVariancesHaveReasons ? (
+          <StyledText
+            variant="semibold"
+            accessibilityLiveRegion="polite"
+            className="text-persimmon-700 text-sm mt-2"
+          >
+            {t('commitDisabledReason')}
+          </StyledText>
+        ) : null}
+
+        <View className="flex-row gap-x-3 mt-3">
           <TouchableOpacity
             onPress={() => setViewState('counting')}
-            className="flex-1 bg-paper-100 border border-paper-300 py-3.5 rounded-xl items-center"
+            accessibilityRole="button"
+            className="flex-1 min-h-[48px] bg-paper-100 border border-paper-300 rounded-xl items-center justify-center"
           >
             <StyledText variant="extrabold" className="text-ink-700">
               {t('backToCount')}
@@ -285,7 +332,12 @@ function StocktakeScreen() {
           <TouchableOpacity
             onPress={handleCommit}
             disabled={!allVariancesHaveReasons || commitMut.isPending}
-            className={`flex-1 py-3.5 rounded-xl items-center ${
+            accessibilityRole="button"
+            accessibilityState={{
+              disabled: !allVariancesHaveReasons || commitMut.isPending,
+              busy: commitMut.isPending,
+            }}
+            className={`flex-1 min-h-[48px] rounded-xl items-center justify-center ${
               allVariancesHaveReasons ? 'bg-persimmon-500' : 'bg-paper-300'
             }`}
           >
@@ -308,13 +360,32 @@ function StocktakeScreen() {
       className="flex-1 bg-paper-200"
       style={{ paddingBottom: tabBarBottomOffset }}
     >
-      <View className="bg-paper-50 px-4 py-3 border-b border-paper-300 flex-row items-center justify-between">
-        <StyledText variant="semibold" className="text-ink-800 text-xs">
-          {t('progressLabel', { counted: countedCount, total: totalProducts })}
-        </StyledText>
-        <StyledText variant="regular" className="text-ink-500 text-xs flex-1 text-right ml-3">
-          {t('countHint')}
-        </StyledText>
+      <View className="bg-paper-50 px-4 py-3 border-b border-paper-300 gap-y-2">
+        <View className="flex-row items-center justify-between">
+          <StyledText variant="extrabold" className="text-ink-900 text-base">
+            {t('progressLabel', { counted: countedCount, total: totalProducts })}
+          </StyledText>
+          <StyledText variant="extrabold" className="text-sage-700 text-sm">
+            {progressPct}%
+          </StyledText>
+        </View>
+        <View
+          accessible
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: totalProducts, now: countedCount }}
+          className="h-2 rounded-full bg-paper-300 overflow-hidden"
+        >
+          <View
+            className="h-full bg-sage-500 rounded-full"
+            style={{ width: `${progressPct}%` }}
+          />
+        </View>
+        <View className="flex-row items-start gap-x-1.5">
+          <FontAwesome name="info-circle" size={13} color="#564E45" style={{ marginTop: 2 }} />
+          <StyledText variant="regular" className="text-ink-700 text-sm flex-1">
+            {t('countHint')}
+          </StyledText>
+        </View>
       </View>
 
       <SectionList
@@ -334,7 +405,8 @@ function StocktakeScreen() {
           <StocktakeCategoryHeader
             categoryName={section.title}
             productCount={section.total}
-            expanded={openCategories.has(section.title)}
+            countedCount={section.counted}
+            expanded={Boolean(openCategories?.has(section.title))}
             onToggle={() => toggleCategory(section.title)}
           />
         )}
@@ -358,18 +430,20 @@ function StocktakeScreen() {
       <View className="bg-paper-50 p-4 border-t border-paper-300 flex-row gap-x-3">
         <TouchableOpacity
           onPress={handleAbandon}
-          className="bg-rose-50 border border-rose-200 px-4 py-3 rounded-xl items-center"
+          accessibilityRole="button"
+          className="min-h-[48px] bg-semantic-danger-50 border border-semantic-danger-100 px-4 rounded-xl items-center justify-center"
         >
-          <StyledText variant="extrabold" className="text-rose-700 text-xs">
+          <StyledText variant="extrabold" className="text-semantic-danger text-sm">
             {t('discardCta')}
           </StyledText>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleFinish}
-          className="flex-1 bg-persimmon-500 py-3 rounded-xl items-center"
+          accessibilityRole="button"
+          className="flex-1 min-h-[48px] bg-persimmon-500 rounded-xl items-center justify-center active:bg-persimmon-600"
         >
-          <StyledText variant="extrabold" className="text-paper-50 text-sm">
+          <StyledText variant="extrabold" className="text-paper-50 text-base">
             {t('finishReviewCta')}
           </StyledText>
         </TouchableOpacity>

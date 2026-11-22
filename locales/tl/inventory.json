@@ -189,5 +189,19 @@
   "ledgerEmptyBody": "Lalabas dito ang deliveries, benta at correction ng produktong ito.",
   "ledgerLoadError": "Hindi ma-load ang talaang ito",
   "ledgerNotFoundTitle": "Hindi makita ang produkto",
-  "ledgerNotFoundBody": "Baka na-delete na ito. Bumalik at piliin ulit."
+  "ledgerNotFoundBody": "Baka na-delete na ito. Bumalik at piliin ulit.",
+
+  "restockIntroTitle": "Ano ang bibilhin",
+  "restockToBuyLabel": "Bilhin na",
+  "restockItemsCount_one": "{{count}} produkto",
+  "restockItemsCount_other": "{{count}} produkto",
+  "restockEstTotal": "Tinatayang kabuuan",
+  "restockDeliveryHint": "Maraming produkto mula sa isang supplier? Itala nang sabay-sabay.",
+  "restockFilterHint_reorder": "Paubos o ubos na. Unahin itong bilhin.",
+  "restockFilterHint_slow_movers": "May stock pero walang benta nitong 28 araw. Huwag munang dagdagan.",
+  "restockFilterHint_watch_list": "Bagong produkto. May mungkahi pagkatapos ng 7 araw ng benta.",
+  "restockFilterHint_saved_plans": "Binago, ipinagpaliban, o nilaktawan. Pindutin ang Ibalik para bawiin.",
+  "restockSku": "SKU {{sku}}",
+  "restockSupplier": "Supplier: {{name}}",
+  "restockStock": "Stock: {{qty}} {{unit}}"
 }

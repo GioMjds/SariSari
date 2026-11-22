@@ -2,6 +2,7 @@ import { View, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { SariMascot } from '@/components/mascot';
 import { MoneyText } from '@/components/ui';
 import type { StocktakeSession } from '@/types/stocktake.types';
 
@@ -11,61 +12,82 @@ interface StocktakeStartCardProps {
   isStarting?: boolean;
 }
 
+const STEPS = ['stepCount', 'stepCheck', 'stepUpdate'] as const;
+
+// Idle state: explains what a stocktake is, how it works, and starts one.
 export function StocktakeStartCard({
   lastSession,
   onStart,
   isStarting = false,
 }: StocktakeStartCardProps) {
   const { t } = useTranslation('stocktake');
+  const net = lastSession?.totalVariancePesos ?? 0;
 
   return (
-    <View className="bg-paper-50 rounded-2xl p-5 border border-paper-300 shadow-sm gap-y-4">
+    <View className="bg-paper-50 rounded-2xl p-4 border border-paper-300 gap-y-4">
       <View className="flex-row items-center gap-x-3">
-        <View className="w-10 h-10 rounded-full bg-persimmon-100 items-center justify-center">
-          <FontAwesome name="clipboard" size={18} color="#E85A1F" />
-        </View>
-        <View className="flex-1">
-          <StyledText variant="extrabold" className="text-ink-900 text-lg">
-            {t('title')}
+        <SariMascot state="inventory" size={64} defer animated={false} />
+        <View className="flex-1 gap-y-1">
+          <StyledText
+            variant="extrabold"
+            accessibilityRole="header"
+            className="text-ink-900 text-lg"
+          >
+            {t('introTitle')}
           </StyledText>
-          {lastSession ? (
-            <StyledText
-              variant="medium"
-              className="text-ink-500 text-xs mt-0.5"
-            >
-              {new Date(lastSession.createdAt).toLocaleDateString()} ·{' '}
-              {lastSession.totalProductsCounted} {t('countedSuffix')}
-            </StyledText>
-          ) : (
-            <StyledText
-              variant="medium"
-              className="text-ink-500 text-xs mt-0.5"
-            >
-              {t('noRecent')}
-            </StyledText>
-          )}
+          <StyledText variant="regular" className="text-ink-700 text-sm">
+            {t('introBody')}
+          </StyledText>
         </View>
       </View>
 
-      <StyledText variant="regular" className="text-ink-600 text-xs">
-        {t('subtitle')} {t('steps')}
-      </StyledText>
+      <View className="gap-y-3">
+        {STEPS.map((key, i) => (
+          <View key={key} className="flex-row items-start gap-x-3">
+            <View className="w-7 h-7 rounded-full bg-ink-900 items-center justify-center">
+              <StyledText variant="extrabold" className="text-paper-50 text-xs">
+                {i + 1}
+              </StyledText>
+            </View>
+            <View className="flex-1">
+              <StyledText variant="extrabold" className="text-ink-900 text-sm">
+                {t(`${key}Title`)}
+              </StyledText>
+              <StyledText variant="regular" className="text-ink-600 text-sm">
+                {t(`${key}Body`)}
+              </StyledText>
+            </View>
+          </View>
+        ))}
+      </View>
 
-      {lastSession ? (
-        <View className="bg-paper-100 rounded-xl p-3 flex-row items-center justify-between border border-paper-200">
-          <StyledText variant="semibold" className="text-ink-600 text-xs">
-            {t('netVariance')}
+      <View className="bg-paper-100 rounded-xl p-3 border border-paper-300 flex-row items-center justify-between">
+        <View className="flex-1 pr-2">
+          <StyledText variant="semibold" className="text-ink-700 text-xs">
+            {t('lastCount')}
           </StyledText>
-          <MoneyText
-            value={lastSession.totalVariancePesos}
-            className={`text-sm font-bold ${
-              lastSession.totalVariancePesos < 0
-                ? 'text-semantic-danger'
-                : 'text-sage-700'
-            }`}
-          />
+          <StyledText variant="extrabold" className="text-ink-900 text-sm">
+            {lastSession
+              ? t('lastCountValue', {
+                  date: new Date(lastSession.createdAt).toLocaleDateString(),
+                  counted: lastSession.totalProductsCounted,
+                })
+              : t('noRecent')}
+          </StyledText>
         </View>
-      ) : null}
+        {lastSession ? (
+          <View className="items-end">
+            <StyledText variant="semibold" className="text-ink-700 text-xs">
+              {net < 0 ? t('shortLabel') : t('netLabel')}
+            </StyledText>
+            <MoneyText
+              value={net}
+              size="sm"
+              variant={net < 0 ? 'danger' : 'default'}
+            />
+          </View>
+        ) : null}
+      </View>
 
       <TouchableOpacity
         onPress={onStart}
@@ -73,10 +95,10 @@ export function StocktakeStartCard({
         accessibilityState={{ busy: isStarting, disabled: isStarting }}
         accessibilityRole="button"
         accessibilityLabel={t('startCta')}
-        className={`w-full bg-persimmon-500 rounded-xl py-3.5 items-center justify-center flex-row gap-x-2 active:bg-persimmon-600 ${isStarting ? 'opacity-60' : ''}`}
+        className={`w-full min-h-[48px] bg-persimmon-500 rounded-xl items-center justify-center flex-row gap-x-2 active:bg-persimmon-600 ${isStarting ? 'opacity-60' : ''}`}
       >
-        <FontAwesome name="play" size={14} color="#FFFFFF" />
-        <StyledText variant="extrabold" className="text-paper-50 text-sm">
+        <FontAwesome name="play" size={14} color="#FAFAF7" />
+        <StyledText variant="extrabold" className="text-paper-50 text-base">
           {t('startCta')}
         </StyledText>
       </TouchableOpacity>

@@ -189,5 +189,19 @@
   "ledgerEmptyBody": "Deliveries, sales and corrections for this product will show here.",
   "ledgerLoadError": "Could not load this ledger",
   "ledgerNotFoundTitle": "Product not found",
-  "ledgerNotFoundBody": "It may have been deleted. Pull back and pick it again."
+  "ledgerNotFoundBody": "It may have been deleted. Pull back and pick it again.",
+
+  "restockIntroTitle": "What to buy next",
+  "restockToBuyLabel": "To buy now",
+  "restockItemsCount_one": "{{count}} item",
+  "restockItemsCount_other": "{{count}} items",
+  "restockEstTotal": "Est. total cost",
+  "restockDeliveryHint": "Many items from one supplier? Record them all at once.",
+  "restockFilterHint_reorder": "Low or out of stock. Buy these first.",
+  "restockFilterHint_slow_movers": "In stock but no sales in 28 days. Hold off on buying more.",
+  "restockFilterHint_watch_list": "New items. Buy suggestions start after 7 days of sales.",
+  "restockFilterHint_saved_plans": "Items you changed, delayed or skipped. Tap Bring back to undo.",
+  "restockSku": "SKU {{sku}}",
+  "restockSupplier": "Supplier: {{name}}",
+  "restockStock": "Stock: {{qty}} {{unit}}"
 }

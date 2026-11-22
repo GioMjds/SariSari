@@ -16,7 +16,8 @@ export function StocktakeHistoryList({ sessions }: StocktakeHistoryListProps) {
     <View className="gap-y-2 mt-4">
       <StyledText
         variant="extrabold"
-        className="text-ink-800 text-sm uppercase px-1"
+        accessibilityRole="header"
+        className="text-ink-900 text-base px-1"
       >
         {t('recentCounts')}
       </StyledText>
@@ -29,7 +30,7 @@ export function StocktakeHistoryList({ sessions }: StocktakeHistoryListProps) {
             <StyledText variant="semibold" className="text-ink-900 text-sm">
               {new Date(s.createdAt).toLocaleDateString()}
             </StyledText>
-            <StyledText variant="medium" className="text-ink-500 text-xs">
+            <StyledText variant="medium" className="text-ink-600 text-sm">
               {s.totalProductsCounted} {t('countedSuffix')}
             </StyledText>
           </View>
@@ -42,11 +43,8 @@ export function StocktakeHistoryList({ sessions }: StocktakeHistoryListProps) {
             {s.status === 'completed' && (
               <MoneyText
                 value={s.totalVariancePesos}
-                className={`text-xs font-semibold ${
-                  s.totalVariancePesos < 0
-                    ? 'text-semantic-danger'
-                    : 'text-sage-700'
-                }`}
+                size="sm"
+                variant={s.totalVariancePesos < 0 ? 'danger' : 'default'}
               />
             )}
           </View>
