@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useInsertInventory } from '@/hooks/useInventory';
+import { AdjustMode, resolveStockChange } from './ledgerMath';
 
 export type AdjustmentSign = 'positive' | 'negative';
 
@@ -20,6 +21,12 @@ interface UseLogTransactionFormReturn {
   setNote: (n: string) => void;
   adjustmentSign: AdjustmentSign;
   setAdjustmentSign: (s: AdjustmentSign) => void;
+  adjustMode: AdjustMode;
+  setAdjustMode: (m: AdjustMode) => void;
+  countedQuantity: number;
+  setCountedQuantity: (q: number) => void;
+  reason: string | null;
+  setReason: (r: string | null) => void;
 
   unitMode: 'retail' | 'wholesale';
   setUnitMode: (m: 'retail' | 'wholesale') => void;
@@ -50,6 +57,9 @@ export function useLogTransactionForm(
   const [note, setNote] = useState<string>('');
   const [adjustmentSign, setAdjustmentSign] =
     useState<AdjustmentSign>('positive');
+  const [adjustMode, setAdjustMode] = useState<AdjustMode>('count');
+  const [countedQuantity, setCountedQuantity] = useState(product.quantity);
+  const [reason, setReason] = useState<string | null>(null);
   const [unitMode, setUnitMode] = useState<'retail' | 'wholesale'>('retail');
 
   const [shakeTrigger, setShakeTrigger] = useState(0);
@@ -61,24 +71,21 @@ export function useLogTransactionForm(
     product.conversion_factor >= 2 &&
     !!product.wholesale_unit_name;
 
-  const actualPieces =
-    type === 'restock' && unitMode === 'wholesale' && hasWholesale
-      ? quantity * (product.conversion_factor || 1)
-      : quantity;
+  const isWholesaleRestock =
+    type === 'restock' && unitMode === 'wholesale' && hasWholesale;
 
-  let quantityChange = 0;
-  if (type === 'restock') {
-    quantityChange = actualPieces;
-  } else if (type === 'sale' || type === 'damaged') {
-    quantityChange = -actualPieces;
-  } else if (type === 'adjustment') {
-    quantityChange =
-      adjustmentSign === 'positive' ? actualPieces : -actualPieces;
-  }
+  const change = resolveStockChange({
+    type,
+    current: currentQuantity,
+    quantity,
+    counted: countedQuantity,
+    adjustMode,
+    sign: adjustmentSign,
+    multiplier: isWholesaleRestock ? product.conversion_factor || 1 : 1,
+  });
 
-  const projectedQuantity = currentQuantity + quantityChange;
-  const isNegative = projectedQuantity < 0;
-  const isValid = quantity > 0 && !isNegative;
+  const projectedQuantity = change.after;
+  const isValid = change.pieces > 0 && projectedQuantity >= 0;
 
   // ─── Reset on mount / when the product identity changes ─────────
 
@@ -87,9 +94,12 @@ export function useLogTransactionForm(
     setQuantity(1);
     setNote('');
     setAdjustmentSign('positive');
+    setAdjustMode('count');
+    setCountedQuantity(product.quantity);
+    setReason(null);
     setUnitMode('retail');
     setShakeTrigger(0);
-  }, [initialType]);
+  }, [initialType, product.quantity]);
 
   useEffect(() => {
     reset();
@@ -100,22 +110,24 @@ export function useLogTransactionForm(
   const submit = useCallback(() => {
     if (!isValid || insertInventory.isPending) return;
 
-    const isWholesaleRestock =
-      type === 'restock' && unitMode === 'wholesale' && hasWholesale;
-
-    const autoNote = isWholesaleRestock
-      ? `Restocked ${quantity} ${product.wholesale_unit_name} (${actualPieces} ${product.retail_unit_name || 'Pcs'})${
-          note.trim() ? ' - ' + note.trim() : ''
-        }`
-      : note.trim() || null;
+    const noteParts = [
+      isWholesaleRestock
+        ? `Restocked ${quantity} ${product.wholesale_unit_name} (${change.pieces} ${product.retail_unit_name || 'Pcs'})`
+        : null,
+      type === 'adjustment' && adjustMode === 'count'
+        ? `Shelf count ${countedQuantity} (was ${currentQuantity})`
+        : null,
+      type === 'damaged' ? reason : null,
+      note.trim() || null,
+    ].filter(Boolean);
 
     insertInventory.mutate(
       {
         product_id: product.id,
         type,
-        quantity: actualPieces,
-        note: autoNote,
-        adjustment_sign: type === 'adjustment' ? adjustmentSign : null,
+        quantity: change.pieces,
+        note: noteParts.length ? noteParts.join(' - ') : null,
+        adjustment_sign: type === 'adjustment' ? change.sign : null,
       },
       {
         onSuccess: () => {
@@ -134,10 +146,13 @@ export function useLogTransactionForm(
     type,
     quantity,
     note,
-    adjustmentSign,
-    unitMode,
-    hasWholesale,
-    actualPieces,
+    reason,
+    adjustMode,
+    countedQuantity,
+    currentQuantity,
+    isWholesaleRestock,
+    change.pieces,
+    change.sign,
     reset,
     onSuccessCallback,
     product.retail_unit_name,
@@ -153,6 +168,12 @@ export function useLogTransactionForm(
     setNote,
     adjustmentSign,
     setAdjustmentSign,
+    adjustMode,
+    setAdjustMode,
+    countedQuantity,
+    setCountedQuantity,
+    reason,
+    setReason,
     unitMode,
     setUnitMode,
     currentQuantity,

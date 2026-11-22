@@ -135,6 +135,8 @@ export function Sheet({ visible, onClose, title, children }: SheetProps) {
             style={[
               sheetStyle,
               {
+                // Shrinks above the keyboard so inner scroll views take the cut.
+                flexShrink: 1,
                 maxHeight: screenHeight - insets.top - 24,
                 paddingBottom: Math.max(insets.bottom, 20),
               },
@@ -167,7 +169,7 @@ export function Sheet({ visible, onClose, title, children }: SheetProps) {
                 ) : null}
               </View>
             </GestureDetector>
-            <View className="px-5 pt-3 gap-y-4">{children}</View>
+            <View className="px-5 pt-3 gap-y-4 shrink">{children}</View>
           </Animated.View>
         </KeyboardAvoidingView>
       </GestureHandlerRootView>

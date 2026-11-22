@@ -2,26 +2,26 @@ import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
+  Pressable,
+  ScrollView,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
-import { MoneyText } from '@/components/ui';
+import { Sheet } from '@/components/ui';
 import { Product } from '@/types/products.types';
 import { InventoryEventType } from '@/types/inventory.types';
 import { useLogTransactionForm } from './useLogTransactionForm';
 import { formatDualStock } from '@/lib';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useProducts } from '@/hooks/useProducts';
-import { ProductPicker } from '@/components/inventory/modals';
+import { ProductPicker, SegmentedControl } from '@/components/inventory/modals';
 import { useStocktakeGuard } from '@/hooks';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
+
+type IconName = keyof typeof FontAwesome.glyphMap;
 
 const titleKey = {
   restock: 'logTitle_restock',
@@ -37,43 +37,176 @@ const confirmKey = {
   adjustment: 'logConfirm_adjustment',
 } satisfies Record<InventoryEventType, string>;
 
-function typeIconFor(t: InventoryEventType): keyof typeof FontAwesome.glyphMap {
-  if (t === 'restock') return 'plus';
-  if (t === 'damaged') return 'exclamation-triangle';
-  if (t === 'adjustment') return 'sliders';
-  return 'book';
+const DAMAGE_REASONS = ['expired', 'broken', 'lost', 'pests'] as const;
+
+interface StepButtonProps {
+  icon: IconName;
+  label: string;
+  disabled?: boolean;
+  onPress: () => void;
 }
 
-interface LogTransactionFormInnerProps {
+function StepButton({ icon, label, disabled, onPress }: StepButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      className={`w-16 h-16 rounded-xl items-center justify-center bg-paper-50 border border-paper-400 active:bg-paper-200 press-scale ${
+        disabled ? 'opacity-40' : ''
+      }`}
+    >
+      <FontAwesome name={icon} size={18} color="#0E0C0A" />
+    </Pressable>
+  );
+}
+
+interface BigStepperProps {
+  value: number;
+  min: number;
+  label: string;
+  onChange: (next: number) => void;
+}
+
+function BigStepper({ value, min, label, onChange }: BigStepperProps) {
+  const { t: tr } = useTranslation('inventory');
+  return (
+    <View className="flex-row items-center gap-x-3">
+      <StepButton
+        icon="minus"
+        label={tr('logStepDown')}
+        disabled={value <= min}
+        onPress={() => onChange(Math.max(min, value - 1))}
+      />
+      <TextInput
+        value={String(value)}
+        onChangeText={(text) => {
+          const n = parseInt(text.replace(/[^0-9]/g, ''), 10);
+          onChange(Number.isNaN(n) ? 0 : n);
+        }}
+        keyboardType="number-pad"
+        selectTextOnFocus
+        maxLength={6}
+        accessibilityLabel={label}
+        className="flex-1 h-16 rounded-xl bg-paper-100 border border-paper-300 text-center text-h1 text-ink-900"
+        style={{ fontFamily: 'StackSansText-Bold' }}
+      />
+      <StepButton
+        icon="plus"
+        label={tr('logStepUp')}
+        onPress={() => onChange(value + 1)}
+      />
+    </View>
+  );
+}
+
+interface StockPreviewProps {
+  current: number;
+  after: number;
+}
+
+// Before/after strip so the owner sees the result before saving.
+function StockPreview({ current, after }: StockPreviewProps) {
+  const { t: tr } = useTranslation('inventory');
+  const delta = after - current;
+  const badge =
+    delta > 0
+      ? { text: `+${delta}`, icon: 'arrow-up' as const, box: 'bg-sage-50 border-sage-200', fg: 'text-sage-700', color: '#2C4413' }
+      : delta < 0
+        ? { text: `−${-delta}`, icon: 'arrow-down' as const, box: 'bg-semantic-danger-50 border-semantic-danger-100', fg: 'text-semantic-danger', color: '#C13030' }
+        : { text: '0', icon: 'minus' as const, box: 'bg-paper-50 border-paper-300', fg: 'text-ink-600', color: '#564E45' };
+
+  return (
+    <View
+      accessible
+      accessibilityLiveRegion="polite"
+      accessibilityLabel={`${tr('logNow')} ${current}, ${tr('logAfter')} ${after}`}
+      className="flex-row items-center rounded-xl border border-dashed border-paper-400 bg-paper-100 px-4 py-3"
+    >
+      <View className="flex-1">
+        <StyledText variant="medium" className="text-caption text-ink-500">
+          {tr('logNow')}
+        </StyledText>
+        <StyledText variant="extrabold" className="text-h2 text-ink-700">
+          {current}
+        </StyledText>
+      </View>
+      <View
+        className={`flex-row items-center gap-x-1.5 px-3 py-1.5 rounded-pill border ${badge.box}`}
+      >
+        <FontAwesome name={badge.icon} size={11} color={badge.color} />
+        <StyledText variant="extrabold" className={`text-body ${badge.fg}`}>
+          {badge.text}
+        </StyledText>
+      </View>
+      <View className="flex-1 items-end">
+        <StyledText variant="medium" className="text-caption text-ink-500">
+          {tr('logAfter')}
+        </StyledText>
+        <StyledText
+          variant="extrabold"
+          className={`text-h2 ${after < 0 ? 'text-semantic-danger' : 'text-ink-900'}`}
+        >
+          {after}
+        </StyledText>
+      </View>
+    </View>
+  );
+}
+
+function FormHint({ tone, text }: { tone: 'danger' | 'muted'; text: string }) {
+  const danger = tone === 'danger';
+  return (
+    <View
+      accessibilityRole={danger ? 'alert' : 'text'}
+      className="flex-row items-center gap-x-2 -mt-2"
+    >
+      <FontAwesome
+        name={danger ? 'exclamation-circle' : 'check-circle'}
+        size={13}
+        color={danger ? '#C13030' : '#564E45'}
+      />
+      <StyledText
+        variant="semibold"
+        className={`flex-1 text-caption ${danger ? 'text-semantic-danger' : 'text-ink-600'}`}
+      >
+        {text}
+      </StyledText>
+    </View>
+  );
+}
+
+interface LogTransactionBodyProps {
   product: Product;
-  initialType?: InventoryEventType;
-  visible: boolean;
+  initialType: InventoryEventType;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-function LogTransactionFormInner({
+function LogTransactionBody({
   product,
   initialType,
-  visible,
   onClose,
   onSuccess,
-}: LogTransactionFormInnerProps) {
+}: LogTransactionBodyProps) {
   const { t: tr } = useTranslation('inventory');
   const stocktakeGuard = useStocktakeGuard();
+  const { runWithPinGuard } = useOwnerPinGuard();
 
   const handleSuccess = useCallback(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+      () => {},
+    );
     onSuccess?.();
     onClose();
   }, [onSuccess, onClose]);
 
-  const formOptions: Parameters<typeof useLogTransactionForm>[1] = {
+  const form = useLogTransactionForm(product, {
+    initialType,
     onSuccessCallback: handleSuccess,
-  };
-  if (initialType) formOptions.initialType = initialType;
-
-  const form = useLogTransactionForm(product, formOptions);
-  const { runWithPinGuard } = useOwnerPinGuard();
+  });
 
   const handleFormSubmit = () => {
     if (form.type === 'adjustment') {
@@ -90,514 +223,278 @@ function LogTransactionFormInner({
     }
   };
 
-  const activeTitle = tr(titleKey[form.type]);
-  const activeConfirmLabel = tr(confirmKey[form.type]);
-
-  const isBlocked =
+  if (
     stocktakeGuard.isActive &&
-    (form.type === 'adjustment' || form.type === 'damaged');
-
-  if (isBlocked) {
+    (form.type === 'adjustment' || form.type === 'damaged')
+  ) {
     return (
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={onClose}
-      >
-        <View className="flex-1 justify-end bg-black/50">
-          <View className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100 gap-y-4">
-            <StyledText variant="extrabold" className="text-xl text-ink-900">
+      <>
+        <View className="flex-row gap-x-3 rounded-xl border border-semantic-warning-100 bg-semantic-warning-50 p-4">
+          <FontAwesome
+            name="pause-circle"
+            size={18}
+            color="#C77B0E"
+            style={{ marginTop: 2 }}
+          />
+          <View className="flex-1 gap-y-1">
+            <StyledText variant="extrabold" className="text-h3 text-ink-900">
               {tr('logBlockedTitle')}
             </StyledText>
-            <StyledText variant="medium" className="text-ink-600 text-sm">
+            <StyledText variant="regular" className="text-body text-ink-700">
               {tr('logBlockedBody')}
             </StyledText>
-            <TouchableOpacity
-              onPress={onClose}
-              className="bg-persimmon-500 py-3 rounded-xl items-center"
-            >
-              <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                {tr('guideGotIt')}
-              </StyledText>
-            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+        <Pressable
+          onPress={onClose}
+          accessibilityRole="button"
+          className="min-h-[52px] rounded-xl items-center justify-center bg-persimmon-500 active:bg-persimmon-700 press-scale"
+        >
+          <StyledText variant="extrabold" className="text-paper-50 text-[15px]">
+            {tr('guideGotIt')}
+          </StyledText>
+        </Pressable>
+      </>
     );
   }
 
+  const isCount = form.type === 'adjustment' && form.adjustMode === 'count';
+  const unit = product.retail_unit_name ?? 'Pc';
+  const hasWholesale =
+    product.conversion_factor != null &&
+    product.conversion_factor >= 2 &&
+    !!product.wholesale_unit_name;
+  const delta = form.projectedQuantity - form.currentQuantity;
+  const question = isCount
+    ? tr('logCountPrompt')
+    : tr(`logHowMany_${form.type}`);
+  const notePlaceholder =
+    form.type === 'damaged' || form.type === 'adjustment'
+      ? tr(`logNotePlaceholder_${form.type}`)
+      : tr('logNotePlaceholder');
+  const submitLabel = form.isValid
+    ? tr(`logSubmit_${form.type}`, {
+        qty: Math.abs(delta),
+        after: form.projectedQuantity,
+      })
+    : tr(confirmKey[form.type]);
+  const canSubmit = form.isValid && !form.isPending;
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+    <>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={{ flexGrow: 0, flexShrink: 1 }}
+        contentContainerStyle={{ gap: 16, paddingBottom: 4 }}
       >
-        <View className="flex-1 justify-end bg-black/50">
-          <TouchableOpacity
-            className="flex-1"
-            activeOpacity={1}
-            onPress={onClose}
-            disabled={form.isPending}
-          />
-
-          <View
-            className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100"
-            style={{ maxHeight: '88%' }}
+        {/* Product context */}
+        <View className="gap-y-0.5">
+          <StyledText
+            variant="extrabold"
+            className="text-h3 text-ink-900"
+            numberOfLines={2}
           >
-            {/* Header */}
-            <View className="flex-row items-center justify-between mb-4">
-              <StyledText variant="extrabold" className="text-xl text-ink-900">
-                {activeTitle}
-              </StyledText>
-              <TouchableOpacity
-                onPress={onClose}
-                disabled={form.isPending}
-                accessibilityLabel={tr('close')}
-                accessibilityRole="button"
-                className="p-1"
-              >
-                <FontAwesome name="times" size={20} color="#7A7165" />
-              </TouchableOpacity>
-            </View>
+            {product.name}
+          </StyledText>
+          <StyledText variant="regular" className="text-caption text-ink-500">
+            {tr('logOnRecord', {
+              stock: formatDualStock(
+                form.currentQuantity,
+                unit,
+                product.wholesale_unit_name,
+                product.conversion_factor,
+              ),
+            })}
+          </StyledText>
+        </View>
 
-            <KeyboardAwareScrollView
-              showsVerticalScrollIndicator={false}
-              bottomOffset={64}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 24 }}
-            >
-              {/* Product context block */}
-              <View className="bg-paper-100 border border-ink-100 rounded-xl p-4 mb-4">
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-900 text-base mb-1"
-                  numberOfLines={1}
+        {form.type === 'adjustment' ? (
+          <SegmentedControl
+            value={form.adjustMode}
+            onChange={form.setAdjustMode}
+            options={[
+              { label: tr('logModeCount'), value: 'count', icon: 'list-ol' },
+              { label: tr('logModeDelta'), value: 'delta', icon: 'exchange' },
+            ]}
+          />
+        ) : null}
+
+        {form.type === 'adjustment' && !isCount ? (
+          <View className="flex-row gap-x-3">
+            {(['positive', 'negative'] as const).map((sign) => {
+              const active = form.adjustmentSign === sign;
+              const add = sign === 'positive';
+              return (
+                <Pressable
+                  key={sign}
+                  onPress={() => form.setAdjustmentSign(sign)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: active }}
+                  className={`flex-1 min-h-[48px] rounded-xl border flex-row items-center justify-center gap-x-2 ${
+                    active
+                      ? add
+                        ? 'bg-sage-50 border-sage-500'
+                        : 'bg-semantic-danger-50 border-semantic-danger'
+                      : 'bg-paper-50 border-paper-400'
+                  }`}
                 >
-                  {product.name}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-xs mb-3"
-                >
-                  SKU: {product.sku}
-                </StyledText>
-                <View className="flex-row gap-6">
-                  <View>
-                    <StyledText
-                      variant="regular"
-                      className="text-ink-500 text-xs"
-                    >
-                      {tr('currentStock')}
-                    </StyledText>
-                    <StyledText
-                      variant="semibold"
-                      className="text-ink-900 text-lg mt-0.5"
-                    >
-                      {formatDualStock(
-                        form.currentQuantity,
-                        product.retail_unit_name ?? 'Pc',
-                        product.wholesale_unit_name,
-                        product.conversion_factor,
-                      )}
-                    </StyledText>
-                  </View>
-                  <View>
-                    <StyledText
-                      variant="regular"
-                      className="text-ink-500 text-xs"
-                    >
-                      {tr('price')}
-                    </StyledText>
-                    <MoneyText
-                      value={product.price}
-                      className="text-lg text-ink-900 font-semibold mt-0.5"
-                    />
-                  </View>
-                </View>
-              </View>
-
-              {/* Type selection / Adjustment direction toggle */}
-              {form.type === 'adjustment' ? (
-                <View className="mb-4">
-                  <View className="flex-row justify-between items-center mb-2">
-                    <StyledText
-                      variant="medium"
-                      className="text-ink-900 text-xs uppercase"
-                      style={{ letterSpacing: 0.5 }}
-                    >
-                      {tr('logDirection')}
-                    </StyledText>
-                  </View>
-                  <View className="flex-row gap-3">
-                    <TouchableOpacity
-                      onPress={() => form.setAdjustmentSign('positive')}
-                      accessibilityRole="button"
-                      accessibilityLabel={tr('logIncrease')}
-                      className={`flex-1 py-3 rounded-xl border items-center justify-center flex-row gap-2 ${
-                        form.adjustmentSign === 'positive'
-                          ? 'bg-sage-50 border-sage-500'
-                          : 'bg-paper-50 border-ink-200'
-                      }`}
-                    >
-                      <FontAwesome
-                        name="plus"
-                        size={14}
-                        color={
-                          form.adjustmentSign === 'positive'
-                            ? '#2F5C3E'
-                            : '#7A7165'
-                        }
-                      />
-                      <StyledText
-                        variant="semibold"
-                        className={
-                          form.adjustmentSign === 'positive'
-                            ? 'text-sage-700'
-                            : 'text-ink-600'
-                        }
-                      >
-                        {tr('logIncrease')} (+)
-                      </StyledText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => form.setAdjustmentSign('negative')}
-                      accessibilityRole="button"
-                      accessibilityLabel={tr('logDecrease')}
-                      className={`flex-1 py-3 rounded-xl border items-center justify-center flex-row gap-2 ${
-                        form.adjustmentSign === 'negative'
-                          ? 'bg-semantic-danger-50 border-semantic-danger'
-                          : 'bg-paper-50 border-ink-200'
-                      }`}
-                    >
-                      <FontAwesome
-                        name="minus"
-                        size={14}
-                        color={
-                          form.adjustmentSign === 'negative'
-                            ? '#C22D2D'
-                            : '#7A7165'
-                        }
-                      />
-                      <StyledText
-                        variant="semibold"
-                        className={
-                          form.adjustmentSign === 'negative'
-                            ? 'text-semantic-danger'
-                            : 'text-ink-600'
-                        }
-                      >
-                        {tr('logDecrease')} (−)
-                      </StyledText>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : initialType ? (
-                <View className="mb-4">
-                  <StyledText
-                    variant="medium"
-                    className="text-ink-900 mb-2 text-xs uppercase"
-                    style={{ letterSpacing: 0.5 }}
-                  >
-                    {tr('logType')}
-                  </StyledText>
-                  <View className="bg-paper-100 border border-ink-100 rounded-xl px-4 py-3 flex-row items-center gap-2">
-                    <FontAwesome
-                      name={typeIconFor(initialType)}
-                      size={14}
-                      color="#7A7165"
-                    />
-                    <StyledText
-                      variant="semibold"
-                      className="text-ink-700 text-sm"
-                    >
-                      {tr(`movementType_${initialType}`)}
-                    </StyledText>
-                  </View>
-                </View>
-              ) : (
-                <View className="mb-4">
-                  <StyledText
-                    variant="medium"
-                    className="text-ink-900 mb-2 text-xs uppercase"
-                    style={{ letterSpacing: 0.5 }}
-                  >
-                    {tr('logType')}
-                  </StyledText>
-                  <View className="flex-row gap-2">
-                    {[
-                      {
-                        type: 'restock' as const,
-                        label: tr('movementFilterRestock'),
-                        icon: 'plus',
-                        activeBg: 'bg-sage-500',
-                      },
-                      {
-                        type: 'damaged' as const,
-                        label: tr('movementFilterDamaged'),
-                        icon: 'exclamation-triangle',
-                        activeBg: 'bg-semantic-danger',
-                      },
-                      {
-                        type: 'adjustment' as const,
-                        label: tr('movementFilterAdjust'),
-                        icon: 'sliders',
-                        activeBg: 'bg-semantic-warning',
-                      },
-                    ].map(({ type: t, label, icon, activeBg }) => {
-                      const isActive = form.type === t;
-                      return (
-                        <TouchableOpacity
-                          key={t}
-                          onPress={() => {
-                            form.setType(t);
-                            if (t === 'adjustment')
-                              form.setAdjustmentSign('positive');
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel={label}
-                          accessibilityState={{ selected: isActive }}
-                          className={`flex-1 flex-row items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl border ${
-                            isActive
-                              ? `${activeBg} border-transparent shadow-sm`
-                              : 'bg-paper-50 border-ink-200 shadow-none'
-                          }`}
-                        >
-                          <FontAwesome
-                            name={icon as any}
-                            size={13}
-                            color={isActive ? '#FBF7EE' : '#564E45'}
-                          />
-                          <StyledText
-                            variant="extrabold"
-                            className={`text-xs ${
-                              isActive ? 'text-paper-50' : 'text-ink-700'
-                            }`}
-                          >
-                            {label}
-                          </StyledText>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              )}
-
-              {product.conversion_factor != null &&
-                product.conversion_factor >= 2 &&
-                !!product.wholesale_unit_name &&
-                form.type === 'restock' && (
-                  <View className="mb-4">
-                    <StyledText
-                      variant="medium"
-                      className="text-ink-900 mb-2 text-xs uppercase"
-                      style={{ letterSpacing: 0.5 }}
-                    >
-                      {tr('logUnit')}
-                    </StyledText>
-                    <View className="flex-row gap-2">
-                      <TouchableOpacity
-                        onPress={() => form.setUnitMode('retail')}
-                        className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
-                          form.unitMode === 'retail'
-                            ? 'bg-cinnamon-500 border-cinnamon-600'
-                            : 'bg-paper-50 border-ink-200'
-                        }`}
-                      >
-                        <StyledText
-                          variant="extrabold"
-                          className={`text-xs ${
-                            form.unitMode === 'retail'
-                              ? 'text-paper-50'
-                              : 'text-ink-700'
-                          }`}
-                        >
-                          Tingi ({product.retail_unit_name || 'Pc'})
-                        </StyledText>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={() => form.setUnitMode('wholesale')}
-                        className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
-                          form.unitMode === 'wholesale'
-                            ? 'bg-cinnamon-500 border-cinnamon-600'
-                            : 'bg-paper-50 border-ink-200'
-                        }`}
-                      >
-                        <StyledText
-                          variant="extrabold"
-                          className={`text-xs ${
-                            form.unitMode === 'wholesale'
-                              ? 'text-paper-50'
-                              : 'text-ink-700'
-                          }`}
-                        >
-                          Pakyaw ({product.wholesale_unit_name})
-                        </StyledText>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-
-              {/* Quantity stepper */}
-              <View className="mb-4">
-                <StyledText
-                  variant="medium"
-                  className="text-ink-900 mb-2 text-xs uppercase"
-                  style={{ letterSpacing: 0.5 }}
-                >
-                  {tr('quantity')}
-                </StyledText>
-                <View className="flex-row items-center justify-center gap-4 my-2">
-                  <TouchableOpacity
-                    onPress={() =>
-                      form.setQuantity(Math.max(1, form.quantity - 1))
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={tr('logDecrease')}
-                    className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 items-center justify-center"
-                  >
-                    <FontAwesome name="minus" size={16} color="#4A2610" />
-                  </TouchableOpacity>
-
-                  <TextInput
-                    value={String(form.quantity)}
-                    onChangeText={(text) => {
-                      const val = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                      form.setQuantity(Number.isNaN(val) ? 0 : val);
-                    }}
-                    keyboardType="number-pad"
-                    accessibilityLabel={tr('quantity')}
-                    className="w-24 text-center text-2xl font-extrabold text-ink-900 border-b border-ink-300 py-1"
-                    style={{ fontFamily: 'StackSansText-Bold' }}
+                  <FontAwesome
+                    name={add ? 'plus' : 'minus'}
+                    size={13}
+                    color={active ? (add ? '#2C4413' : '#C13030') : '#564E45'}
                   />
-
-                  <TouchableOpacity
-                    onPress={() => form.setQuantity(form.quantity + 1)}
-                    accessibilityRole="button"
-                    accessibilityLabel={tr('logIncrease')}
-                    className="w-12 h-12 rounded-xl bg-ink-50 border border-ink-200 items-center justify-center"
-                  >
-                    <FontAwesome name="plus" size={16} color="#4A2610" />
-                  </TouchableOpacity>
-                </View>
-
-                <View
-                  className="items-center mt-2 mb-2"
-                  accessibilityLiveRegion="polite"
-                >
-                  <StyledText variant="medium" className="text-ink-500 text-xs">
-                    {tr('logNow')}:{' '}
-                    <StyledText variant="extrabold" className="text-ink-700">
-                      {form.currentQuantity}
-                    </StyledText>{' '}
-                    → {tr('logAfter')}:{' '}
-                    <StyledText
-                      variant="extrabold"
-                      className={
-                        form.projectedQuantity < 0
-                          ? 'text-semantic-danger'
-                          : 'text-persimmon-600'
-                      }
-                    >
-                      {form.projectedQuantity}
-                    </StyledText>
-                  </StyledText>
-                  {form.projectedQuantity < 0 && (
-                    <StyledText
-                      variant="semibold"
-                      className="text-semantic-danger text-xs mt-1"
-                    >
-                      {tr('logBelowZero')}
-                    </StyledText>
-                  )}
-                </View>
-              </View>
-
-              {/* Note input */}
-              <View className="mb-6">
-                <StyledText
-                  variant="medium"
-                  className="text-ink-900 mb-2 text-xs uppercase"
-                  style={{ letterSpacing: 0.5 }}
-                >
-                  {tr('logNote')}
-                </StyledText>
-                <TextInput
-                  placeholder={tr('logNotePlaceholder')}
-                  value={form.note}
-                  onChangeText={form.setNote}
-                  placeholderTextColor="#A1978A"
-                  accessibilityLabel={tr('logNote')}
-                  className="bg-paper-50 border border-ink-200 rounded-xl px-4 py-3 text-ink-900 text-sm shadow-sm"
-                />
-              </View>
-
-              {/* Action buttons */}
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={onClose}
-                  disabled={form.isPending}
-                  accessibilityRole="button"
-                  accessibilityLabel={tr('cancel')}
-                  activeOpacity={0.85}
-                  className="flex-1 border border-ink-200 bg-paper-50 rounded-xl py-3 items-center justify-center"
-                >
-                  <StyledText variant="medium" className="text-ink-600">
-                    {tr('cancel')}
-                  </StyledText>
-                </TouchableOpacity>
-                <MotiView
-                  key={form.shakeTrigger}
-                  from={{ translateX: 0 }}
-                  animate={{
-                    translateX:
-                      form.shakeTrigger > 0
-                        ? [0, -10, 10, -10, 10, -5, 5, 0]
-                        : 0,
-                  }}
-                  transition={{ type: 'timing', duration: 350 }}
-                  className="flex-1"
-                >
-                  <TouchableOpacity
-                    onPress={handleFormSubmit}
-                    disabled={!form.isValid || form.isPending}
-                    accessibilityRole="button"
-                    accessibilityLabel={activeConfirmLabel}
-                    accessibilityState={{
-                      disabled: !form.isValid || form.isPending,
-                    }}
-                    activeOpacity={0.85}
-                    className={`w-full rounded-xl py-3 items-center justify-center shadow-persimmon-glow ${
-                      form.isValid ? 'bg-persimmon-500' : 'bg-ink-200'
+                  <StyledText
+                    variant="extrabold"
+                    className={`text-[15px] ${
+                      active
+                        ? add
+                          ? 'text-sage-700'
+                          : 'text-semantic-danger'
+                        : 'text-ink-700'
                     }`}
                   >
-                    {form.isPending ? (
-                      <ActivityIndicator size="small" color="#FBF7EE" />
-                    ) : (
-                      <StyledText
-                        variant="semibold"
-                        className={
-                          form.isValid ? 'text-paper-50' : 'text-ink-500'
-                        }
-                      >
-                        {activeConfirmLabel}
-                      </StyledText>
-                    )}
-                  </TouchableOpacity>
-                </MotiView>
-              </View>
-            </KeyboardAwareScrollView>
+                    {tr(add ? 'logIncrease' : 'logDecrease')}
+                  </StyledText>
+                </Pressable>
+              );
+            })}
           </View>
+        ) : null}
+
+        {form.type === 'restock' && hasWholesale ? (
+          <SegmentedControl
+            value={form.unitMode}
+            onChange={form.setUnitMode}
+            options={[
+              { label: `Tingi (${unit})`, value: 'retail' },
+              {
+                label: `Pakyaw (${product.wholesale_unit_name})`,
+                value: 'wholesale',
+              },
+            ]}
+          />
+        ) : null}
+
+        <View className="gap-y-2">
+          <StyledText variant="semibold" className="text-body text-ink-800">
+            {question}
+          </StyledText>
+          <BigStepper
+            value={isCount ? form.countedQuantity : form.quantity}
+            min={isCount ? 0 : 1}
+            label={question}
+            onChange={isCount ? form.setCountedQuantity : form.setQuantity}
+          />
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+
+        <StockPreview
+          current={form.currentQuantity}
+          after={form.projectedQuantity}
+        />
+        {form.projectedQuantity < 0 ? (
+          <FormHint tone="danger" text={tr('logBelowZero')} />
+        ) : isCount && delta === 0 ? (
+          <FormHint tone="muted" text={tr('logCountSame')} />
+        ) : null}
+
+        {form.type === 'damaged' ? (
+          <View className="gap-y-2">
+            <StyledText variant="semibold" className="text-body text-ink-800">
+              {tr('logReason')}
+            </StyledText>
+            <View className="flex-row flex-wrap gap-2">
+              {DAMAGE_REASONS.map((key) => {
+                const label = tr(`logReason_${key}`);
+                const active = form.reason === label;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => form.setReason(active ? null : label)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: active }}
+                    className={`min-h-[44px] px-4 rounded-pill border flex-row items-center gap-x-2 ${
+                      active
+                        ? 'bg-cinnamon-500 border-cinnamon-500'
+                        : 'bg-paper-50 border-paper-400 active:bg-paper-200'
+                    }`}
+                  >
+                    {active ? (
+                      <FontAwesome name="check" size={12} color="#FBF7EE" />
+                    ) : null}
+                    <StyledText
+                      variant="semibold"
+                      className={`text-body ${active ? 'text-paper-50' : 'text-ink-700'}`}
+                    >
+                      {label}
+                    </StyledText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        <View className="gap-y-2">
+          <StyledText variant="semibold" className="text-body text-ink-800">
+            {tr('logNote')}
+          </StyledText>
+          <TextInput
+            placeholder={notePlaceholder}
+            value={form.note}
+            onChangeText={form.setNote}
+            placeholderTextColor="#8A8176"
+            accessibilityLabel={tr('logNote')}
+            returnKeyType="done"
+            className="min-h-[48px] bg-paper-50 border border-paper-400 rounded-xl px-4 py-3 text-ink-900 text-body"
+          />
+        </View>
+      </ScrollView>
+
+      {/* Single primary action stays pinned under the scroll area. */}
+      <MotiView
+        key={form.shakeTrigger}
+        from={{ translateX: 0 }}
+        animate={{
+          translateX:
+            form.shakeTrigger > 0 ? [0, -10, 10, -10, 10, -5, 5, 0] : 0,
+        }}
+        transition={{ type: 'timing', duration: 350 }}
+      >
+        <Pressable
+          onPress={handleFormSubmit}
+          disabled={!canSubmit}
+          accessibilityRole="button"
+          accessibilityLabel={submitLabel}
+          accessibilityState={{ disabled: !canSubmit, busy: form.isPending }}
+          className={`min-h-[52px] rounded-xl flex-row items-center justify-center gap-x-2 press-scale ${
+            form.isValid
+              ? 'bg-persimmon-500 active:bg-persimmon-700'
+              : 'bg-paper-300'
+          }`}
+        >
+          {form.isPending ? (
+            <ActivityIndicator size="small" color="#FBF7EE" />
+          ) : (
+            <>
+              {form.type === 'adjustment' ? (
+                <FontAwesome
+                  name="lock"
+                  size={14}
+                  color={form.isValid ? '#FBF7EE' : '#736B63'}
+                />
+              ) : null}
+              <StyledText
+                variant="extrabold"
+                className={`text-[15px] ${form.isValid ? 'text-paper-50' : 'text-ink-500'}`}
+              >
+                {submitLabel}
+              </StyledText>
+            </>
+          )}
+        </Pressable>
+      </MotiView>
+    </>
   );
 }
 
@@ -620,82 +517,40 @@ export function LogTransactionForm({
   const { getAllProductsQuery } = useProducts();
   const products = getAllProductsQuery.data ?? [];
   const [pickedProduct, setPickedProduct] = useState<Product | null>(null);
+  const [lastShown, setLastShown] = useState<Product | null>(null);
+
+  const locked = product ?? pickedProduct;
 
   useEffect(() => {
     if (!visible) setPickedProduct(null);
   }, [visible]);
 
-  const handleClose = useCallback(() => {
-    setPickedProduct(null);
-    onClose();
-  }, [onClose]);
+  useEffect(() => {
+    if (locked) setLastShown(locked);
+  }, [locked]);
 
-  const locked = product ?? pickedProduct;
-  const showPicker = visible && !locked;
-  const showForm = visible && !!locked;
+  // Keep the last product on screen while the sheet slides out.
+  const shown = locked ?? (visible ? null : lastShown);
 
   return (
-    <>
-      {showPicker ? (
-        <Modal
-          visible
-          transparent
-          animationType="fade"
-          onRequestClose={handleClose}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
-          >
-            <View className="flex-1 justify-end bg-black/50">
-              <TouchableOpacity
-                className="flex-1"
-                activeOpacity={1}
-                onPress={handleClose}
-              />
-              <View
-                className="w-full bg-paper-50 rounded-t-2xl p-6 shadow-modal border-t border-ink-100"
-                style={{ maxHeight: '88%' }}
-              >
-                <StyledText
-                  variant="extrabold"
-                  className="text-xl text-ink-900 mb-4"
-                >
-                  {tr(titleKey[initialType])}
-                </StyledText>
-                <ProductPicker
-                  products={products}
-                  selectedId={null}
-                  onSelect={(id) => {
-                    const p = products.find((x) => x.id === id) ?? null;
-                    setPickedProduct(p);
-                  }}
-                />
-                <TouchableOpacity
-                  onPress={handleClose}
-                  className="flex-1 border border-ink-200 bg-paper-50 rounded-xl py-3 items-center justify-center mt-6"
-                  accessibilityRole="button"
-                  accessibilityLabel={tr('cancel')}
-                >
-                  <StyledText variant="medium" className="text-ink-600">
-                    {tr('cancel')}
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </Modal>
-      ) : null}
-
-      {showForm && locked ? (
-        <LogTransactionFormInner
-          product={locked}
-          visible={visible}
-          onClose={handleClose}
-          {...(initialType ? { initialType } : {})}
+    <Sheet visible={visible} onClose={onClose} title={tr(titleKey[initialType])}>
+      {shown ? (
+        <LogTransactionBody
+          key={shown.id}
+          product={shown}
+          initialType={initialType}
+          onClose={onClose}
           {...(onSuccess ? { onSuccess } : {})}
         />
-      ) : null}
-    </>
+      ) : (
+        <ProductPicker
+          products={products}
+          selectedId={null}
+          onSelect={(id) =>
+            setPickedProduct(products.find((x) => x.id === id) ?? null)
+          }
+        />
+      )}
+    </Sheet>
   );
 }

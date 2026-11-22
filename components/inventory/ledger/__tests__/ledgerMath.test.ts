@@ -3,6 +3,7 @@ import {
   buildLedgerRows,
   filterLedgerRows,
   groupLedgerRows,
+  resolveStockChange,
   summarizeLedger,
 } from '../ledgerMath';
 import { InventoryTransaction } from '@/types/inventory.types';
@@ -64,5 +65,27 @@ describe('ledgerMath', () => {
     const buckets = bucketByDay(rows, 3, new Date(2026, 10, 3, 12).getTime());
     expect(buckets).toHaveLength(3);
     expect(buckets[2]!.removed).toBe(2);
+  });
+
+  it('resolves shelf counts and plain amounts into a signed change', () => {
+    const base = {
+      current: 12,
+      quantity: 2,
+      counted: 9,
+      sign: 'positive' as const,
+      multiplier: 1,
+    };
+    expect(
+      resolveStockChange({ ...base, type: 'adjustment', adjustMode: 'count' }),
+    ).toEqual({ pieces: 3, sign: 'negative', after: 9 });
+    expect(
+      resolveStockChange({ ...base, type: 'adjustment', adjustMode: 'count', counted: 12 }).pieces,
+    ).toBe(0);
+    expect(
+      resolveStockChange({ ...base, type: 'damaged', adjustMode: 'count' }).after,
+    ).toBe(10);
+    expect(
+      resolveStockChange({ ...base, type: 'restock', adjustMode: 'delta', multiplier: 24 }),
+    ).toEqual({ pieces: 48, sign: 'positive', after: 60 });
   });
 });

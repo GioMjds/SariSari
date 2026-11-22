@@ -44,6 +44,41 @@ export function signedQuantity(tx: {
   return 0;
 }
 
+export type AdjustMode = 'count' | 'delta';
+
+export type StockChangeInput = {
+  type: InventoryTransaction['type'];
+  current: number;
+  quantity: number;
+  counted: number;
+  adjustMode: AdjustMode;
+  sign: 'positive' | 'negative';
+  multiplier: number;
+};
+
+// Count mode turns a shelf count into the signed difference against recorded stock.
+export function resolveStockChange(input: StockChangeInput): {
+  pieces: number;
+  sign: 'positive' | 'negative';
+  after: number;
+} {
+  if (input.type === 'adjustment' && input.adjustMode === 'count') {
+    const diff = input.counted - input.current;
+    return {
+      pieces: Math.abs(diff),
+      sign: diff < 0 ? 'negative' : 'positive',
+      after: input.counted,
+    };
+  }
+  const pieces = input.quantity * input.multiplier;
+  const signed = signedQuantity({
+    type: input.type,
+    quantity: pieces,
+    adjustment_sign: input.sign,
+  });
+  return { pieces, sign: input.sign, after: input.current + signed };
+}
+
 // SQLite stores "YYYY-MM-DD HH:MM:SS" in UTC, which some engines reject without the T and Z.
 export function parseLedgerDate(timestamp: string): Date | null {
   const d = parseStoredTimestamp(timestamp);
@@ -94,7 +129,8 @@ export function filterLedgerRows(
   if (!q && type === 'all') return rows;
   return rows.filter(
     (row) =>
-      (type === 'all' || row.type === type) && (!q || row.searchText.includes(q)),
+      (type === 'all' || row.type === type) &&
+      (!q || row.searchText.includes(q)),
   );
 }
 
@@ -132,7 +168,13 @@ function dayTitle(
 }
 
 export function summarizeLedger(rows: LedgerRowData[]): LedgerTotals {
-  const totals: LedgerTotals = { added: 0, sold: 0, damaged: 0, corrected: 0, net: 0 };
+  const totals: LedgerTotals = {
+    added: 0,
+    sold: 0,
+    damaged: 0,
+    corrected: 0,
+    net: 0,
+  };
   for (const row of rows) {
     if (row.type === 'restock') totals.added += row.quantity;
     else if (row.type === 'sale') totals.sold += row.quantity;
