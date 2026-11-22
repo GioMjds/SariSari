@@ -377,7 +377,7 @@ function ProductRowImpl({
       <ProductThumb
         name={product.name}
         imageUri={product.image_uri}
-        className="w-full h-28"
+        className="w-full h-24"
         initialsClassName="text-3xl"
       >
         {photoOverlays}
@@ -398,8 +398,9 @@ function ProductRowImpl({
       <View className="flex-1 p-2.5">
         <StyledText
           variant="extrabold"
-          className="text-ink-900 text-sm leading-tight min-h-[36px]"
-          numberOfLines={2}
+          // Three reserved lines keep size and flavor visible and align prices across a row.
+          className="text-ink-900 text-[13px] leading-[17px] min-h-[51px]"
+          numberOfLines={3}
         >
           {product.name}
         </StyledText>

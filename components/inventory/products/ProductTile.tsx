@@ -51,7 +51,7 @@ function ProductTileImpl({
       <ProductThumb
         name={name}
         imageUri={image_uri}
-        className="w-full h-28"
+        className="w-full h-24"
         initialsClassName="text-3xl"
       >
         {quantity <= 0 ? (
@@ -77,20 +77,14 @@ function ProductTileImpl({
         </Pressable>
       ) : null}
 
-      <View className="p-2.5 gap-0.5">
+      <View className="flex-1 p-2.5 gap-0.5">
+        {/* Three reserved lines keep size and flavor visible and align prices across a row. */}
         <StyledText
           variant="extrabold"
-          numberOfLines={2}
-          className="text-sm leading-tight text-ink-900 min-h-[36px]"
+          numberOfLines={3}
+          className="text-ink-900 text-[13px] leading-[17px] min-h-[51px]"
         >
           {name}
-        </StyledText>
-        <StyledText
-          variant="medium"
-          numberOfLines={1}
-          className="text-ink-500 text-xs"
-        >
-          {category ?? 'Uncategorized'}
         </StyledText>
         <View className="flex-row items-baseline mt-1">
           <MoneyText value={price ?? 0} size="md" className="text-ink-900" />
@@ -101,6 +95,13 @@ function ProductTileImpl({
             / {retailUnit}
           </StyledText>
         </View>
+        <StyledText
+          variant="medium"
+          numberOfLines={1}
+          className="text-ink-500 text-xs"
+        >
+          {category ?? 'Uncategorized'}
+        </StyledText>
       </View>
     </Pressable>
   );

@@ -13,11 +13,12 @@ export function ProductsSkeleton() {
             key={i}
             className="w-[48.5%] mb-3 rounded-2xl bg-paper-50 border border-ink-100 overflow-hidden"
           >
-            <Skeleton width="100%" height={112} borderRadius={0} />
+            <Skeleton width="100%" height={96} borderRadius={0} />
             <View className="p-2.5 gap-y-1.5">
-              <Skeleton width="80%" height={14} />
-              <Skeleton width="50%" height={10} />
+              <Skeleton width="90%" height={13} />
+              <Skeleton width="70%" height={13} />
               <Skeleton width={56} height={16} />
+              <Skeleton width="50%" height={10} />
             </View>
           </View>
         ))}
