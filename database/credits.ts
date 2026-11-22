@@ -19,7 +19,7 @@ import {
   NewPayment,
   Payment,
 } from '@/types/credits.types';
-import { getCurrentLocalTimestamp, getTodayDateString } from '@/utils/timezone';
+import { getCurrentLocalTimestamp } from '@/utils/timezone';
 import { db } from '../configs/sqlite';
 
 // Initialize all credits-related tables
@@ -556,17 +556,29 @@ export const getPaymentsByCustomer = async (
 // ==================== KPI & ANALYTICS ====================
 
 export const getCreditKPIs = async (): Promise<CreditKPIs> => {
-  // Get today's date in local timezone (format: YYYY-MM-DD)
-  const todayString = getTodayDateString();
+  // Local day as a UTC range; datetime() normalises the mixed stored formats (ISO Z and CURRENT_TIMESTAMP).
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setHours(23, 59, 59, 999);
+  const range = [dayStart.toISOString(), dayEnd.toISOString()];
 
-  const totalOutstanding = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
-     FROM credit_transactions WHERE status != 'paid'`,
-  );
-
-  const customersWithBalance = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(DISTINCT customer_id) as count 
-     FROM credit_transactions WHERE status != 'paid'`,
+  // One pass over credit_transactions replaces five separate scans.
+  const credit = await db.getFirstAsync<{
+    total_outstanding: number;
+    customers_with_balance: number;
+    credits_today: number;
+    overdue_count: number;
+    overdue_amount: number;
+  }>(
+    `SELECT
+       COALESCE(SUM(CASE WHEN status != 'paid' THEN amount - amount_paid END), 0) AS total_outstanding,
+       COUNT(DISTINCT CASE WHEN status != 'paid' THEN customer_id END) AS customers_with_balance,
+       COALESCE(SUM(CASE WHEN datetime(date) BETWEEN datetime(?) AND datetime(?) THEN amount END), 0) AS credits_today,
+       COUNT(DISTINCT CASE WHEN status != 'paid' AND due_date < date('now') THEN customer_id END) AS overdue_count,
+       COALESCE(SUM(CASE WHEN status != 'paid' AND due_date < date('now') THEN amount - amount_paid END), 0) AS overdue_amount
+     FROM credit_transactions`,
+    range,
   );
 
   const mostOwed = await db.getFirstAsync<{ name: string; amount: number }>(
@@ -580,37 +592,19 @@ export const getCreditKPIs = async (): Promise<CreditKPIs> => {
   );
 
   const collectedToday = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM payments WHERE date(date, 'localtime') = ?`,
-    [todayString],
-  );
-
-  const creditsToday = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount), 0) as total 
-     FROM credit_transactions WHERE date(date, 'localtime') = ?`,
-    [todayString],
-  );
-
-  const overdueCount = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(DISTINCT customer_id) as count 
-     FROM credit_transactions 
-     WHERE status != 'paid' AND due_date < date('now')`,
-  );
-
-  const overdueAmount = await db.getFirstAsync<{ total: number }>(
-    `SELECT COALESCE(SUM(amount - amount_paid), 0) as total 
-     FROM credit_transactions 
-     WHERE status != 'paid' AND due_date < date('now')`,
+    `SELECT COALESCE(SUM(amount), 0) as total
+     FROM payments WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)`,
+    range,
   );
 
   return {
-    totalOutstanding: totalOutstanding?.total || 0,
-    totalCustomersWithBalance: customersWithBalance?.count || 0,
+    totalOutstanding: credit?.total_outstanding || 0,
+    totalCustomersWithBalance: credit?.customers_with_balance || 0,
     mostOwedCustomer: mostOwed || null,
     totalCollectedToday: collectedToday?.total || 0,
-    totalCreditsToday: creditsToday?.total || 0,
-    totalOverdueAmount: overdueAmount?.total || 0,
-    overdueCount: overdueCount?.count || 0,
+    totalCreditsToday: credit?.credits_today || 0,
+    totalOverdueAmount: credit?.overdue_amount || 0,
+    overdueCount: credit?.overdue_count || 0,
   };
 };
 
