@@ -1,4 +1,5 @@
 import '../global.css';
+import '@/lib/css-interop';
 import { GlobalModal, Toast } from '@/components/ui';
 import { DatabaseErrorScreen } from '@/components/system/DatabaseErrorScreen';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
