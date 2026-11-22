@@ -2,13 +2,13 @@
   "expo": {
     "name": "SariSari",
     "slug": "sarisari",
-    "version": "2.1.0",
+    "version": "2.1.2",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "sarisari",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F7F6F2",
-    "runtimeVersion": "2.1.0",
+    "runtimeVersion": "2.1.2",
     "ios": {
       "supportsTablet": true,
       "backgroundColor": "#F7F6F2",

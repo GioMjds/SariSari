@@ -492,3 +492,14 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Sari: a still Sari (`animated={false}` or Reduce Motion) renders a PNG from `assets/images/sari-stills/` instead of the layered vector. The PNGs are 512px rest poses rendered by `scripts/mascot-stills/render.tsx` (Node static markup plus headless Chrome). Rerun it after editing any state in `components/mascot/states/`. `SARI_STATES` moved to `components/mascot/sariStates.ts`.
 - Finding: query times of about 200-450 ms in the dev log are queue wait behind a blocked JS thread, not SQL cost, because every table holds 10 rows or fewer.
 - Pending: a release-mode measurement (`EXPO_PUBLIC_PERF=1 npx expo start --no-dev --minify`), SQL pagination for receipts, and the `datetime(...)` predicates that block index use once the data grows.
+
+## 2026-11-22 - First-load performance: stock summary, alert summary, deferred backup, credit KPIs
+
+- `database/products.ts`: added `getProductStockSummary` (one row: total, out of stock, low stock, at or below threshold) and `getLowStockProducts` (id, name, quantity where quantity <= threshold). Hooks `useProductStockSummary` and `useLowStockProducts` live under `productKeys.all`, so existing product invalidations refresh them.
+- Home dashboard, tab badges, header alerts, and the getting-started card no longer load the full products table. Screens that need full rows (POS, inventory, forms) still use `getAllProductsQuery`.
+- `resolveHomeState` now takes `productCount`, `outOfStockCount`, and `lowStockCount` instead of a quantity array. Threshold rules are unchanged: home goal low stock is 1 to 4, badges and the KPI are 0 to 5.
+- `useSystemNotifications`: two or more new alerts of one type send one summary notification (`triggerAlertSummaryNotification`). A single new alert keeps the per-item text.
+- `app/_layout.tsx`: `runStartupChecks` waits 5 s (`STARTUP_CHECKS_DELAY_MS`) so the daily snapshot and WAL checkpoint do not queue ahead of first-screen queries.
+- `getCreditKPIs`: 3 queries instead of 7. Today filters use the local day as a UTC range through `datetime()`. A scratch check against the old SQL matched in 300 random trials with mixed date formats around midnight (Asia/Manila).
+- Migration v25 adds expression indexes `idx_payments_datetime` and `idx_credit_transactions_datetime` on `datetime(date)`. The query plan shows SEARCH instead of SCAN for the range filters.
+- Pending: `getAllCustomers` full-history aggregation, cloud upload reading the whole DB as base64 on resume, and the catalog seed on every launch.

@@ -38,7 +38,13 @@ export const DashboardStockAlert = memo(function DashboardStockAlert({
         className="flex-row items-center justify-between bg-paper-50 rounded-xl px-4 py-3 border border-ink-100 active:opacity-80"
       >
         <View className="flex-row items-center flex-1 mr-3">
-          <SariMascot state="low-stock" size={52} style={{ marginRight: 8 }} defer />
+          <SariMascot
+            state="low-stock"
+            size={52}
+            style={{ marginRight: 8 }}
+            defer
+            animated={false}
+          />
           <View className="flex-1">
             <StyledText variant="semibold" className="text-sm text-ink-900">
               {message}

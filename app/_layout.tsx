@@ -12,7 +12,8 @@ import { StatusBar } from 'expo-status-bar';
 import { AppState, View } from 'react-native';
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { ThemeProvider } from '@react-navigation/native';
+import { NAV_THEME } from '@/lib/theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { consumeQueue, runStartupChecks, subscribeCounter } from '@/lib/backup';
@@ -29,6 +30,7 @@ import { AppLockGate } from '@/components/auth/AppLockGate';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { isBiometricPromptActive } from '@/lib/auth/biometrics';
 import { shouldRelockOnResume } from '@/lib/auth/appLock';
+import { PortalHost } from '@rn-primitives/portal';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -46,14 +48,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const CUSTOM_THEME = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: '#F7F6F2',
-  },
-} as const;
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -182,7 +176,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={CUSTOM_THEME}>
+    <ThemeProvider value={NAV_THEME.light}>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
         <KeyboardProvider>
           <QueryClientProvider client={queryClient}>
@@ -196,6 +190,7 @@ export default function RootLayout() {
                         contentStyle: { backgroundColor: '#F7F6F2' },
                       }}
                     />
+                    <PortalHost />
                     {fontsLoaded && i18nReady && !bannerDismissed ? (
                       <CloudNewerBanner
                         onRestorePress={handleBannerRestore}
