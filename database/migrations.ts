@@ -1139,4 +1139,20 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v24.');
   }
+
+  if (currentVersion < 25) {
+    console.log('Running migration to v25 (Normalised date indexes)...');
+    await db.withTransactionAsync(async () => {
+      // Expression indexes match the datetime(date) filters, since stored dates mix ISO and CURRENT_TIMESTAMP formats.
+      await db.execAsync(`
+        CREATE INDEX IF NOT EXISTS idx_payments_datetime
+          ON payments(datetime(date));
+        CREATE INDEX IF NOT EXISTS idx_credit_transactions_datetime
+          ON credit_transactions(datetime(date));
+      `);
+
+      await db.execAsync('PRAGMA user_version = 25;');
+    });
+    console.log('Database migrated to v25.');
+  }
 }
