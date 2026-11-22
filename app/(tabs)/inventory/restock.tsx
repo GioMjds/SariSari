@@ -37,7 +37,7 @@ const FILTER_IDS: TabType[] = [
   'saved_plans',
 ];
 
-function RecommendationsScreen() {
+function RestockScreen() {
   const router = useRouter();
   const { t: tReceiving } = useTranslation('receiving');
   const { t } = useTranslation('inventory');
@@ -765,4 +765,4 @@ function RecommendationsScreen() {
   );
 }
 
-export default withProf(RecommendationsScreen, 'inventory/recommendations');
+export default withProf(RestockScreen, 'inventory/recommendations');

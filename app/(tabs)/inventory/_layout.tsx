@@ -20,7 +20,7 @@ const SUB_TAB_SEGMENTS = [
   'categories',
   'movements',
   'stocktake',
-  'recommendations',
+  'restock',
 ] satisfies InventorySubTab[];
 
 const INVENTORY_TAB_DEFS = [
@@ -28,7 +28,7 @@ const INVENTORY_TAB_DEFS = [
   { key: 'categories', label: 'Categories' },
   { key: 'movements', label: 'Movements' },
   { key: 'stocktake', label: 'Stocktake' },
-  { key: 'recommendations', label: 'Restock' },
+  { key: 'restock', label: 'Restock' },
 ] satisfies { key: InventorySubTab; label: string }[];
 
 const DEFAULT_TAB = INVENTORY_SUB_TABS[0];
