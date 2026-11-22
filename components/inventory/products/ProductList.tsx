@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { FlatList, ListRenderItemInfo, Platform, View } from 'react-native';
 import { StyledText } from '@/components/elements';
+import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { ProductRow } from './ProductRow';
 import type { Product } from '@/types/products.types';
 
@@ -44,10 +45,14 @@ export const ProductsList = memo(function ProductsList({
   }, [isFetchingNextPage, hasNextPage, onEndReached]);
 
   const isShortList = products.length <= 2;
+  const fabClearance = useFabClearance();
 
   const contentContainerStyle = useMemo(
-    () => (isShortList ? { minHeight: 360 } : undefined),
-    [isShortList],
+    () => ({
+      paddingBottom: fabClearance,
+      ...(isShortList ? { minHeight: 360 } : {}),
+    }),
+    [isShortList, fabClearance],
   );
 
   const listFooter = useMemo(() => {
@@ -77,7 +82,7 @@ export const ProductsList = memo(function ProductsList({
       testID="product-flat-list"
       data={products}
       keyExtractor={keyExtractor}
-      contentContainerClassName="pt-3 pb-32"
+      contentContainerClassName="pt-3"
       contentContainerStyle={contentContainerStyle}
       renderItem={renderItem}
       initialNumToRender={10}

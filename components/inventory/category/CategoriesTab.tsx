@@ -5,8 +5,8 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
 import { RefreshableFlatList } from '@/components/ui';
-import { useTabBarBottomOffset } from '@/components/layout';
 import { SariMascot } from '@/components/mascot';
+import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { useCategories } from '@/hooks';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { CategoryWithCount } from '@/types';
@@ -24,7 +24,7 @@ const MIX_SEGMENTS = 4;
 function CategoriesTabComponent() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
-  const tabBarBottomOffset = useTabBarBottomOffset();
+  const fabClearance = useFabClearance();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<SheetMode>(null);
   // Kept after close so the form title does not flip while it slides out.
@@ -133,7 +133,7 @@ function CategoriesTabComponent() {
         data={categories}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 88 }}
+        contentContainerStyle={{ paddingBottom: fabClearance }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           categories.length > 0 ? (

@@ -26,6 +26,7 @@ import {
 import { Alert } from '@/utils';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTabBarBottomOffset } from '@/components/layout';
+import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { useTranslation } from 'react-i18next';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
@@ -44,6 +45,7 @@ function RestockScreen() {
   const addToast = useToastStore((s) => s.addToast);
   const signal = useStockSheetSignal();
   const tabBarBottomOffset = useTabBarBottomOffset();
+  const fabClearance = useFabClearance();
   const [activeTab, setActiveTab] = useState<TabType>('reorder');
 
   const {
@@ -675,7 +677,7 @@ function RestockScreen() {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 4,
-            paddingBottom: tabBarBottomOffset + 24,
+            paddingBottom: fabClearance,
           }}
           showsVerticalScrollIndicator={false}
         />

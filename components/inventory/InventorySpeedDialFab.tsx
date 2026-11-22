@@ -1,13 +1,16 @@
 import { StyledText } from '@/components/elements';
 import { useTabBarBottomOffset } from '@/components/layout';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
+  Easing,
   Extrapolation,
   SharedValue,
   interpolate,
+  interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -22,107 +25,45 @@ export interface InventorySpeedDialFabProps {
   onAddSupplier: () => void;
 }
 
-const SPRING_CONFIG = {
-  damping: 18,
-  stiffness: 220,
-  mass: 0.8,
+type IconName = keyof typeof FontAwesome.glyphMap;
+
+const FAB_HEIGHT = 56;
+const FAB_GAP = 16;
+const MENU_WIDTH = 288;
+const OPEN_SPRING = { damping: 20, stiffness: 260, mass: 0.8 } as const;
+const PERSIMMON = '#E85A1F';
+const INK = '#191612';
+const PAPER = '#FAFAF7';
+
+// Persimmon-tinted lift so the pill reads as the one raised control on the page.
+const FAB_SHADOW = {
+  shadowColor: '#A1370C',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.28,
+  shadowRadius: 14,
+  elevation: 8,
 } as const;
 
-interface SpeedDialItemProps {
-  label: string;
-  icon: keyof typeof FontAwesome.glyphMap;
-  isPrimary: boolean;
-  onPress: () => void;
-  index: number;
-  total: number;
-  expandProgress: SharedValue<number>;
+const MENU_SHADOW = {
+  shadowColor: '#564E45',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.18,
+  shadowRadius: 24,
+  elevation: 12,
+} as const;
+
+/** Bottom padding a list needs so its last row clears the tab bar and this FAB. */
+export function useFabClearance(): number {
+  return useTabBarBottomOffset() + FAB_GAP + FAB_HEIGHT + 16;
 }
 
-function SpeedDialItem({
-  label,
-  icon,
-  isPrimary,
-  onPress,
-  index,
-  total,
-  expandProgress,
-}: SpeedDialItemProps) {
-  const itemStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      expandProgress.value,
-      [0.08 * index, 1],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-    const shadowProgress = interpolate(
-      expandProgress.value,
-      [0, 1],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      opacity,
-      shadowColor: '#0E0C0A',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: shadowProgress * 0.18,
-      shadowRadius: shadowProgress * 8,
-      elevation: shadowProgress * 6,
-      transform: [
-        {
-          translateY: interpolate(
-            expandProgress.value,
-            [0, 1],
-            [16 * (total - index), 0],
-            Extrapolation.CLAMP,
-          ),
-        },
-        {
-          scale: interpolate(
-            expandProgress.value,
-            [0, 1],
-            [0.85, 1],
-            Extrapolation.CLAMP,
-          ),
-        },
-      ],
-    };
-  });
-
-  return (
-    <Animated.View style={itemStyle}>
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        className="flex-row items-center gap-x-3 active:scale-95"
-      >
-        <View className="bg-ink-900 px-3.5 py-2 rounded-xl border border-ink-700">
-          <StyledText variant="extrabold" className="text-paper-50 text-base">
-            {label}
-          </StyledText>
-        </View>
-
-        <View
-          className={`w-16 h-16 rounded-full items-center justify-center border ${
-            isPrimary
-              ? 'bg-persimmon-500 border-persimmon-400'
-              : 'bg-cinnamon-500 border-cinnamon-400'
-          }`}
-        >
-          <FontAwesome name={icon} size={20} color="#FAFAF7" />
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-interface Actions {
+interface MenuAction {
   id: string;
   label: string;
-  icon: keyof typeof FontAwesome.glyphMap;
-  isPrimary: boolean;
-  onPress: () => void;
+  hint: string;
+  icon: IconName;
+  primary?: boolean;
+  run: () => void;
 }
 
 export function InventorySpeedDialFab({
@@ -131,219 +72,294 @@ export function InventorySpeedDialFab({
   onAddCategory,
   onAddSupplier,
 }: InventorySpeedDialFabProps) {
-  const [expanded, setExpanded] = useState(false);
-  const tabBarBottomOffset = useTabBarBottomOffset();
-  const bottomOffset = tabBarBottomOffset + 16;
-  const expandProgress = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
+  const bottom = useTabBarBottomOffset() + FAB_GAP;
+  const [open, setOpen] = useState(false);
+  const progress = useSharedValue(0);
+  // Runs once the menu has fully closed, so the next screen or modal never overlaps it.
+  const pendingAction = useRef<(() => void) | null>(null);
 
-  const handleOpen = useCallback(() => {
+  const finishClose = useCallback(() => {
+    setOpen(false);
+    const next = pendingAction.current;
+    pendingAction.current = null;
+    next?.();
+  }, []);
+
+  const show = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setExpanded(true);
-    expandProgress.value = withSpring(1, SPRING_CONFIG);
-  }, [expandProgress]);
+    setOpen(true);
+    progress.value = reducedMotion
+      ? withTiming(1, { duration: 0 })
+      : withSpring(1, OPEN_SPRING);
+  }, [progress, reducedMotion]);
 
-  const handleClose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    expandProgress.value = withTiming(0, { duration: 180 }, (finished) => {
-      if (finished) scheduleOnRN(setExpanded, false);
-    });
-  }, [expandProgress]);
+  const hide = useCallback(
+    (then?: () => void) => {
+      pendingAction.current = then ?? null;
+      progress.value = withTiming(
+        0,
+        { duration: reducedMotion ? 0 : 160, easing: Easing.in(Easing.cubic) },
+        (finished) => {
+          if (finished) scheduleOnRN(finishClose);
+        },
+      );
+    },
+    [progress, reducedMotion, finishClose],
+  );
 
-  const actions = [
+  const actions: MenuAction[] = [
     {
       id: 'add_product',
-      label: 'Add Product',
+      label: 'Add product',
+      hint: 'Name, price and starting stock',
       icon: 'plus',
-      isPrimary: true,
-      onPress: () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-        handleClose();
-        onAddProduct();
-      },
-    },
-    {
-      id: 'add_category',
-      label: 'Add Category',
-      icon: 'tag',
-      isPrimary: false,
-      onPress: () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        handleClose();
-        onAddCategory();
-      },
-    },
-    {
-      id: 'add_supplier',
-      label: 'Add Supplier',
-      icon: 'users',
-      isPrimary: false,
-      onPress: () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        handleClose();
-        onAddSupplier();
-      },
+      primary: true,
+      run: onAddProduct,
     },
     {
       id: 'scan_barcode',
-      label: 'Scan Barcode',
+      label: 'Scan barcode',
+      hint: 'Find an item or add it by code',
       icon: 'barcode',
-      isPrimary: false,
-      onPress: () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-        handleClose();
-        onScanBarcode();
-      },
+      run: onScanBarcode,
     },
-  ] satisfies Actions[];
+    {
+      id: 'add_category',
+      label: 'Add category',
+      hint: 'Group items into a shelf',
+      icon: 'tag',
+      run: onAddCategory,
+    },
+    {
+      id: 'add_supplier',
+      label: 'Add supplier',
+      hint: 'Who you restock from',
+      icon: 'truck',
+      run: onAddSupplier,
+    },
+  ];
 
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: expandProgress.value,
-  }));
+  const pick = (action: MenuAction) => {
+    Haptics.impactAsync(
+      action.primary
+        ? Haptics.ImpactFeedbackStyle.Medium
+        : Haptics.ImpactFeedbackStyle.Light,
+    ).catch(() => {});
+    hide(action.run);
+  };
 
-  const ellipsisStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      expandProgress.value,
-      [0, 0.4],
-      [1, 0],
-      Extrapolation.CLAMP,
-    ),
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+
+  const menuStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.6], [0, 1], Extrapolation.CLAMP),
     transform: [
-      {
-        rotate: `${interpolate(
-          expandProgress.value,
-          [0, 1],
-          [0, 90],
-          Extrapolation.CLAMP,
-        )}deg`,
-      },
-      {
-        scale: interpolate(
-          expandProgress.value,
-          [0, 1],
-          [1, 0.4],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
-  }));
-
-  const closeStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      expandProgress.value,
-      [0.4, 1],
-      [0, 1],
-      Extrapolation.CLAMP,
-    ),
-    transform: [
-      {
-        rotate: `${interpolate(
-          expandProgress.value,
-          [0, 1],
-          [-90, 0],
-          Extrapolation.CLAMP,
-        )}deg`,
-      },
-      {
-        scale: interpolate(
-          expandProgress.value,
-          [0, 1],
-          [0.4, 1],
-          Extrapolation.CLAMP,
-        ),
-      },
+      { translateY: interpolate(progress.value, [0, 1], [12, 0], Extrapolation.CLAMP) },
+      { scale: interpolate(progress.value, [0, 1], [0.92, 1], Extrapolation.CLAMP) },
     ],
   }));
 
   return (
     <>
-      {/* Collapsed FAB Trigger Button (on main screen) */}
+      {/* On-screen trigger; hidden while the menu copy sits exactly on top of it. */}
       <View
-        className={`absolute right-5 items-end z-50 pointer-events-box-none ${
-          expanded ? 'opacity-0' : 'opacity-100'
-        }`}
-        style={{ bottom: bottomOffset }}
-        pointerEvents={expanded ? 'none' : 'box-none'}
+        className="absolute right-5 z-50"
+        style={{ bottom, opacity: open ? 0 : 1 }}
+        pointerEvents={open ? 'none' : 'box-none'}
       >
-        <Pressable
-          onPress={handleOpen}
-          accessibilityRole="button"
-          accessibilityLabel="Inventory actions menu"
-          accessibilityState={{ expanded: false }}
-          className="w-16 h-16 rounded-full bg-persimmon-500 items-center justify-center shadow-xl border border-persimmon-400 active:scale-95"
-        >
-          <FontAwesome name="ellipsis-v" size={24} color="#FAFAF7" />
-        </Pressable>
+        <FabPill progress={progress} expanded={false} onPress={show} />
       </View>
 
-      {/* Expanded Speed Dial Full-Screen Modal Backdrop & Animated Menu */}
       <Modal
-        visible={expanded}
+        visible={open}
         transparent
         animationType="none"
-        onRequestClose={handleClose}
+        statusBarTranslucent
+        navigationBarTranslucent
+        onRequestClose={() => hide()}
       >
-        <View style={StyleSheet.absoluteFill} className="relative">
-          {/* 100% Full-Screen Backdrop Overlay */}
-          <Animated.View style={[StyleSheet.absoluteFill, backdropStyle]}>
-            <Pressable
-              style={StyleSheet.absoluteFill}
-              onPress={handleClose}
-              className="bg-ink-900/60"
-            />
-          </Animated.View>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, backdropStyle]}
+          className="bg-ink-900/55"
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => hide()}
+            accessibilityRole="button"
+            accessibilityLabel="Close add menu"
+          />
+        </Animated.View>
 
-          {/* Speed Dial Actions & Interactive Toggle FAB inside Modal */}
-          <View
-            className="absolute right-5 items-end z-50 pointer-events-box-none"
-            style={{ bottom: bottomOffset }}
-            pointerEvents="box-none"
+        <View
+          className="absolute right-5 items-end gap-y-3"
+          style={{ bottom }}
+          pointerEvents="box-none"
+        >
+          <Animated.View
+            accessibilityViewIsModal
+            onAccessibilityEscape={() => hide()}
+            className="bg-paper-50 rounded-2xl border border-paper-300 overflow-hidden"
+            style={[
+              { width: MENU_WIDTH, transformOrigin: 'bottom right' },
+              MENU_SHADOW,
+              menuStyle,
+            ]}
           >
-            {/* Actions Menu */}
-            <View className="mb-3 items-end gap-y-3">
+            <View className="px-4 pt-3.5 pb-3 border-b border-dashed border-paper-400">
+              <StyledText
+                variant="extrabold"
+                accessibilityRole="header"
+                className="text-h3 text-ink-900"
+              >
+                Add to inventory
+              </StyledText>
+              <StyledText variant="regular" className="text-caption text-ink-500">
+                What are you adding today?
+              </StyledText>
+            </View>
+            <View className="p-2 gap-y-1">
               {actions.map((action, index) => (
-                <SpeedDialItem
+                <MenuRow
                   key={action.id}
-                  label={action.label}
-                  icon={action.icon}
-                  isPrimary={action.isPrimary}
-                  onPress={action.onPress}
+                  action={action}
                   index={index}
-                  total={actions.length}
-                  expandProgress={expandProgress}
+                  progress={progress}
+                  onPress={() => pick(action)}
                 />
               ))}
             </View>
+          </Animated.View>
 
-            {/* Close Toggle Button inside Modal with icon morphing */}
-            <Pressable
-              onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close actions menu"
-              accessibilityState={{ expanded: true }}
-              className="w-16 h-16 rounded-full bg-ink-900 items-center justify-center shadow-xl border border-ink-700 active:scale-95"
-            >
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  ellipsisStyle,
-                  { alignItems: 'center', justifyContent: 'center' },
-                ]}
-              >
-                <FontAwesome name="ellipsis-v" size={24} color="#FAFAF7" />
-              </Animated.View>
-              <Animated.View
-                style={[
-                  StyleSheet.absoluteFill,
-                  closeStyle,
-                  { alignItems: 'center', justifyContent: 'center' },
-                ]}
-              >
-                <FontAwesome name="close" size={20} color="#FAFAF7" />
-              </Animated.View>
-            </Pressable>
-          </View>
+          <FabPill progress={progress} expanded onPress={() => hide()} />
         </View>
       </Modal>
     </>
+  );
+}
+
+interface FabPillProps {
+  progress: SharedValue<number>;
+  expanded: boolean;
+  onPress: () => void;
+}
+
+/** Extended FAB: persimmon "Add" pill that turns into an ink "Close" pill as the menu opens. */
+function FabPill({ progress, expanded, onPress }: FabPillProps) {
+  const pressed = useSharedValue(0);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [PERSIMMON, INK]),
+    transform: [{ scale: 1 - pressed.value * 0.05 }],
+  }));
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${interpolate(progress.value, [0, 1], [0, 45], Extrapolation.CLAMP)}deg` },
+    ],
+  }));
+  const addLabelStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.5], [1, 0], Extrapolation.CLAMP),
+  }));
+  const closeLabelStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0.5, 1], [0, 1], Extrapolation.CLAMP),
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => {
+        pressed.value = withTiming(1, { duration: 90 });
+      }}
+      onPressOut={() => {
+        pressed.value = withTiming(0, { duration: 140 });
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={expanded ? 'Close add menu' : 'Add to inventory'}
+      accessibilityHint={expanded ? undefined : 'Opens add product, scan, category and supplier'}
+      accessibilityState={{ expanded }}
+      hitSlop={6}
+    >
+      <Animated.View
+        className="flex-row items-center rounded-pill pl-1.5 pr-5 gap-x-2.5"
+        style={[{ height: FAB_HEIGHT }, FAB_SHADOW, pillStyle]}
+      >
+        <View className="w-11 h-11 rounded-pill items-center justify-center bg-paper-50/20">
+          <Animated.View style={iconStyle}>
+            <FontAwesome name="plus" size={18} color={PAPER} />
+          </Animated.View>
+        </View>
+        <View>
+          {/* Invisible sizer keeps the pill the same width for both labels. */}
+          <StyledText variant="extrabold" className="text-[16px] opacity-0">
+            Close
+          </StyledText>
+          <Animated.View style={[StyleSheet.absoluteFill, addLabelStyle]}>
+            <StyledText variant="extrabold" className="text-[16px] text-paper-50">
+              Add
+            </StyledText>
+          </Animated.View>
+          <Animated.View style={[StyleSheet.absoluteFill, closeLabelStyle]}>
+            <StyledText variant="extrabold" className="text-[16px] text-paper-50">
+              Close
+            </StyledText>
+          </Animated.View>
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+interface MenuRowProps {
+  action: MenuAction;
+  index: number;
+  progress: SharedValue<number>;
+  onPress: () => void;
+}
+
+function MenuRow({ action, index, progress, onPress }: MenuRowProps) {
+  const start = 0.15 + index * 0.08;
+  const rowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [start, 1], [0, 1], Extrapolation.CLAMP),
+    transform: [
+      { translateY: interpolate(progress.value, [start, 1], [8, 0], Extrapolation.CLAMP) },
+    ],
+  }));
+
+  return (
+    <Animated.View style={rowStyle}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="menuitem"
+        accessibilityLabel={action.label}
+        accessibilityHint={action.hint}
+        className={`min-h-[60px] px-2.5 rounded-xl flex-row items-center gap-x-3 ${
+          action.primary
+            ? 'bg-persimmon-50 border border-persimmon-100 active:bg-persimmon-100'
+            : 'active:bg-paper-100'
+        }`}
+      >
+        <View
+          className={`w-10 h-10 rounded-xl items-center justify-center ${
+            action.primary ? 'bg-persimmon-500' : 'bg-paper-100 border border-paper-300'
+          }`}
+        >
+          <FontAwesome
+            name={action.icon}
+            size={action.primary ? 16 : 15}
+            color={action.primary ? PAPER : '#623418'}
+          />
+        </View>
+        <View className="flex-1">
+          <StyledText variant="extrabold" className="text-[15px] text-ink-900">
+            {action.label}
+          </StyledText>
+          <StyledText variant="regular" className="text-caption text-ink-500">
+            {action.hint}
+          </StyledText>
+        </View>
+        {action.primary ? (
+          <FontAwesome name="angle-right" size={18} color="#C8460F" />
+        ) : null}
+      </Pressable>
+    </Animated.View>
   );
 }

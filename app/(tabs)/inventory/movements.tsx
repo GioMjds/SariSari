@@ -9,6 +9,7 @@ import {
   LedgerToolbar,
   type LedgerTypeFilter,
 } from '@/components/inventory/ledger';
+import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { MovementEmptyState } from '@/components/inventory/movements';
 import { StyledText } from '@/components/elements';
 import { InventoryErrorState } from '@/components/inventory';
@@ -18,6 +19,7 @@ import type { InventoryEventType } from '@/types';
 function MovementsScreen() {
   const { t } = useTranslation('inventory');
   const router = useRouter();
+  const fabClearance = useFabClearance();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const signal = useStockSheetSignal();
 
@@ -119,6 +121,7 @@ function MovementsScreen() {
         transactions={transactions}
         currentStock={0}
         hideBalance={true}
+        bottomPadding={fabClearance}
         searchQuery={searchQuery}
         selectedType={selectedType}
         isFetchingNextPage={txQuery.isFetchingNextPage}

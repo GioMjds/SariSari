@@ -24,6 +24,8 @@ interface LedgerListProps {
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
   onEndReached?: () => void;
+  /** Extra bottom room, e.g. to clear a floating button; defaults to 140. */
+  bottomPadding?: number;
 }
 
 const LIST_CONTAINER_STYLE = { paddingBottom: 140, minHeight: 280 } as const;
@@ -44,6 +46,7 @@ export const LedgerList = memo(function LedgerList({
   isFetchingNextPage,
   hasNextPage,
   onEndReached,
+  bottomPadding,
 }: LedgerListProps) {
   const { t } = useTranslation('inventory');
   const filtered = useMemo(() => {
@@ -133,7 +136,11 @@ export const LedgerList = memo(function LedgerList({
       renderSectionHeader={renderSectionHeader}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={renderEmpty}
-      contentContainerStyle={LIST_CONTAINER_STYLE}
+      contentContainerStyle={
+        bottomPadding === undefined
+          ? LIST_CONTAINER_STYLE
+          : { ...LIST_CONTAINER_STYLE, paddingBottom: bottomPadding }
+      }
       showsVerticalScrollIndicator={false}
       keyExtractor={keyExtractor}
       onEndReached={() => {

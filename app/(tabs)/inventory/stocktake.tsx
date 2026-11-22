@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert } from '@/utils';
 import { StyledText } from '@/components/elements';
 import { useTabBarBottomOffset } from '@/components/layout';
+import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import {
   useActiveStocktakeSession,
   useStocktakeCounts,
@@ -34,6 +35,7 @@ function StocktakeScreen() {
     'counting',
   );
   const tabBarBottomOffset = useTabBarBottomOffset();
+  const fabClearance = useFabClearance();
 
   // Queries & Mutations
   const { data: activeSession, isLoading: loadingSession } =
@@ -210,7 +212,7 @@ function StocktakeScreen() {
         bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         className="flex-1 bg-paper-200 p-4"
-        contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
+        contentContainerStyle={{ paddingBottom: fabClearance }}
       >
         <StocktakeStartCard
           lastSession={lastSession}
@@ -229,7 +231,7 @@ function StocktakeScreen() {
         bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         className="flex-1 bg-paper-200 p-4"
-        contentContainerStyle={{ paddingBottom: 40 + tabBarBottomOffset }}
+        contentContainerStyle={{ paddingBottom: fabClearance }}
       >
         <StocktakeVarianceSummary
           totalProducts={totalProducts}
@@ -324,7 +326,10 @@ function StocktakeScreen() {
         renderScrollComponent={(props) => (
           <KeyboardAwareScrollView {...props} bottomOffset={64} />
         )}
-        contentContainerStyle={{ padding: 16, paddingBottom: 80 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: fabClearance - tabBarBottomOffset,
+        }}
         renderSectionHeader={({ section }) => (
           <StocktakeCategoryHeader
             categoryName={section.title}
