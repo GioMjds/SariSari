@@ -48,7 +48,7 @@ export const INVENTORY_SUB_TABS = [
   'categories',
   'movements',
   'stocktake',
-  'recommendations',
+  'restock',
 ] as const;
 export const CUSTOMERS_SUB_TABS = ['all', 'collection'] as const;
 export const MORE_SUB_TABS = [] as const;

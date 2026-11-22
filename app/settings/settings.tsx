@@ -74,7 +74,7 @@ function Settings() {
             </View>
 
             {/* Right: mascot */}
-            <SariMascot state="settings" size={96} />
+            <SariMascot state="settings" size={96} defer animated={false} />
           </View>
         </View>
 

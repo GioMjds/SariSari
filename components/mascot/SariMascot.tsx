@@ -1,27 +1,27 @@
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { Prof } from '@/utils/perf';
 import { memo, startTransition, useEffect, useState } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useScreenFocused } from './useScreenFocused';
-import { Prof } from '@/utils/perf';
+import { SariBalanceCleared } from './states/SariBalanceCleared';
+import { SariCustomers } from './states/SariCustomers';
 import { SariDefault } from './states/SariDefault';
+import { SariDelete } from './states/SariDelete';
 import { SariEmpty } from './states/SariEmpty';
 import { SariError } from './states/SariError';
+import { SariExit } from './states/SariExit';
+import { SariInventory } from './states/SariInventory';
 import { SariLoading } from './states/SariLoading';
 import { SariLowStock } from './states/SariLowStock';
-import { SariBalanceCleared } from './states/SariBalanceCleared';
-import { SariOutstandingBalance } from './states/SariOutstandingBalance';
-import { SariInventory } from './states/SariInventory';
-import { SariSales } from './states/SariSales';
-import { SariUtang } from './states/SariUtang';
 import { SariOnboarding } from './states/SariOnboarding';
-import { SariDelete } from './states/SariDelete';
-import { SariSettings } from './states/SariSettings';
+import { SariOutstandingBalance } from './states/SariOutstandingBalance';
 import { SariReports } from './states/SariReports';
-import { SariExit } from './states/SariExit';
-import { SariUnimplemented } from './states/SariUnimplemented';
-import { SariCustomers } from './states/SariCustomers';
 import { SariSaleRecorded } from './states/SariSaleRecorded';
+import { SariSales } from './states/SariSales';
+import { SariSettings } from './states/SariSettings';
+import { SariUnimplemented } from './states/SariUnimplemented';
+import { SariUtang } from './states/SariUtang';
 import { SariUtangRecorded } from './states/SariUtangRecorded';
+import { useScreenFocused } from './useScreenFocused';
 
 import { Image } from 'expo-image';
 import { SARI_STATES, type SariState } from './sariStates';
@@ -84,6 +84,7 @@ export const SariMascot = memo(function SariMascot({
           <Image
             source={SARI_STILLS[state]}
             style={{ width: size, height: size }}
+            priority={'normal'}
             contentFit="contain"
           />
         ) : (

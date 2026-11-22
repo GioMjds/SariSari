@@ -196,11 +196,13 @@ function ReportsScreen() {
 
   return (
     <View className="flex-1 bg-paper-200">
-      <Prof id="Reports:Header"><MoreDetailHeader
-        title={t('common:reportsTitle')}
-        onBack={goBackToMore}
-        backAccessibilityLabel={t('common:moreBackA11y')}
-      /></Prof>
+      <Prof id="Reports:Header">
+        <MoreDetailHeader
+          title={t('common:reportsTitle')}
+          onBack={goBackToMore}
+          backAccessibilityLabel={t('common:moreBackA11y')}
+        />
+      </Prof>
       <RefreshableScrollView
         className="flex-1 bg-paper-200"
         contentContainerStyle={{
@@ -241,17 +243,19 @@ function ReportsScreen() {
             }}
           />
           {sari.state ? (
-            <SariMascot state={sari.state} size={96} defer />
+            <SariMascot state={sari.state} size={96} animated={false} defer />
           ) : (
             <View style={{ width: 96, height: 96 }} />
           )}
         </View>
 
         <View className="px-5 mt-3">
-          <Prof id="Reports:DateRange"><DateRangeSelector
-            activeRange={dateRangeType}
-            onRangeChange={handleDateRangeChange}
-          /></Prof>
+          <Prof id="Reports:DateRange">
+            <DateRangeSelector
+              activeRange={dateRangeType}
+              onRangeChange={handleDateRangeChange}
+            />
+          </Prof>
         </View>
 
         {/* ─── Smart Alerts / Insights ────────────────────────── */}
@@ -276,149 +280,155 @@ function ReportsScreen() {
         {/* ─── Bento KPI grid ─────────────────────────────────── */}
         <View className="px-5 mt-6">
           {isKPIsLoading ? (
-            <Prof id="Reports:KpiSkeleton"><View className="mt-3 gap-y-3">
-              <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100/60 shadow-sm gap-y-3">
-                <Skeleton width={140} height={12} borderRadius={4} />
-                <Skeleton width={180} height={32} borderRadius={6} />
-                <Skeleton width="60%" height={14} borderRadius={4} />
-              </View>
-
-              <View className="flex-row gap-3">
-                <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                  <Skeleton width={90} height={10} borderRadius={4} />
-                  <Skeleton width={100} height={24} borderRadius={6} />
-                  <Skeleton width="80%" height={12} borderRadius={4} />
+            <Prof id="Reports:KpiSkeleton">
+              <View className="mt-3 gap-y-3">
+                <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100/60 shadow-sm gap-y-3">
+                  <Skeleton width={140} height={12} borderRadius={4} />
+                  <Skeleton width={180} height={32} borderRadius={6} />
+                  <Skeleton width="60%" height={14} borderRadius={4} />
                 </View>
-                <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                  <Skeleton width={90} height={10} borderRadius={4} />
-                  <Skeleton width={100} height={24} borderRadius={6} />
-                  <Skeleton width="80%" height={12} borderRadius={4} />
-                </View>
-              </View>
-
-              <View className="flex-row gap-3">
-                <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                  <Skeleton width={90} height={10} borderRadius={4} />
-                  <Skeleton width={100} height={24} borderRadius={6} />
-                  <Skeleton width="80%" height={12} borderRadius={4} />
-                </View>
-                <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                  <Skeleton width={90} height={10} borderRadius={4} />
-                  <Skeleton width={100} height={24} borderRadius={6} />
-                  <Skeleton width="80%" height={12} borderRadius={4} />
-                </View>
-              </View>
-
-              <View className="mt-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                <Skeleton width={140} height={14} borderRadius={4} />
-                <Skeleton width="100%" height={40} borderRadius={8} />
-              </View>
-            </View></Prof>
-          ) : (
-            <View className="mt-3">
-              <Prof id="Reports:BentoGrid"><BentoGrid>
-                <BentoHero
-                  animationKey={`${dateRangeType}-${kpis.totalSales}`}
-                  kicker="Cash sales"
-                  headline={formatCompactCurrency(kpis.totalSales)}
-                  subline={`${salesBreakdown.totalTransactions} ${
-                    salesBreakdown.totalTransactions === 1
-                      ? 'transaction'
-                      : 'transactions'
-                  } · utang not counted until paid`}
-                  icon={
-                    <FontAwesome
-                      name="shopping-cart"
-                      size={14}
-                      color="#FBF7EE"
-                    />
-                  }
-                  accent="persimmon"
-                />
 
                 <View className="flex-row gap-3">
-                  <BentoKPICard
-                    kicker="Tubo (gross profit)"
-                    headline={
-                      kpis.totalProfit === null
-                        ? '—'
-                        : formatCompactCurrency(kpis.totalProfit)
-                    }
-                    subline={
-                      kpis.totalProfit === null
-                        ? 'Add cost prices to compute tubo'
-                        : `${profitSubline(kpis.marginPercent)} · includes utang`
-                    }
+                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                    <Skeleton width={90} height={10} borderRadius={4} />
+                    <Skeleton width={100} height={24} borderRadius={6} />
+                    <Skeleton width="80%" height={12} borderRadius={4} />
+                  </View>
+                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                    <Skeleton width={90} height={10} borderRadius={4} />
+                    <Skeleton width={100} height={24} borderRadius={6} />
+                    <Skeleton width="80%" height={12} borderRadius={4} />
+                  </View>
+                </View>
+
+                <View className="flex-row gap-3">
+                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                    <Skeleton width={90} height={10} borderRadius={4} />
+                    <Skeleton width={100} height={24} borderRadius={6} />
+                    <Skeleton width="80%" height={12} borderRadius={4} />
+                  </View>
+                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                    <Skeleton width={90} height={10} borderRadius={4} />
+                    <Skeleton width={100} height={24} borderRadius={6} />
+                    <Skeleton width="80%" height={12} borderRadius={4} />
+                  </View>
+                </View>
+
+                <View className="mt-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
+                  <Skeleton width={140} height={14} borderRadius={4} />
+                  <Skeleton width="100%" height={40} borderRadius={8} />
+                </View>
+              </View>
+            </Prof>
+          ) : (
+            <View className="mt-3">
+              <Prof id="Reports:BentoGrid">
+                <BentoGrid>
+                  <BentoHero
+                    animationKey={`${dateRangeType}-${kpis.totalSales}`}
+                    kicker="Cash sales"
+                    headline={formatCompactCurrency(kpis.totalSales)}
+                    subline={`${salesBreakdown.totalTransactions} ${
+                      salesBreakdown.totalTransactions === 1
+                        ? 'transaction'
+                        : 'transactions'
+                    } · utang not counted until paid`}
                     icon={
                       <FontAwesome
-                        name="line-chart"
-                        size={16}
-                        color="#3D5E1B"
-                      />
-                    }
-                    accent="sage"
-                  />
-                  <BentoKPICard
-                    kicker="Utang not yet paid"
-                    headline={formatCompactCurrency(
-                      creditsOverview.outstanding,
-                    )}
-                    subline={`${creditsOverview.activeAccounts} ${
-                      creditsOverview.activeAccounts === 1
-                        ? 'suki owes'
-                        : 'sukis owe'
-                    } you`}
-                    icon={
-                      <FontAwesome
-                        name="credit-card"
-                        size={16}
-                        color="#A1370C"
+                        name="shopping-cart"
+                        size={14}
+                        color="#FBF7EE"
                       />
                     }
                     accent="persimmon"
                   />
-                </View>
 
-                <View className="flex-row gap-3">
-                  <BentoKPICard
-                    kicker="Stock value (at cost)"
-                    headline={formatCompactCurrency(
-                      inventoryValue.currentStockValue,
-                    )}
-                    subline={
-                      inventoryValue.costCoverage !== null &&
-                      inventoryValue.costCoverage < 1
-                        ? `${Math.round(
-                            inventoryValue.costCoverage * 100,
-                          )}% of stock has cost data`
-                        : `Potential retail: ${formatCompactCurrency(
-                            inventoryValue.potentialSalesValue,
-                          )}`
-                    }
-                    icon={
-                      <FontAwesome name="archive" size={16} color="#391C0A" />
-                    }
-                    accent="cinnamon"
-                  />
-                  <BentoKPICard
-                    kicker="Cash collected"
-                    headline={formatCompactCurrency(salesBreakdown.cashSales)}
-                    subline={`Avg ticket: ${formatCompactCurrency(
-                      salesBreakdown.averageTransactionValue,
-                    )}`}
-                    icon={
-                      <FontAwesome name="money" size={16} color="#3D5E1B" />
-                    }
-                    accent="sage"
-                  />
-                </View>
-              </BentoGrid></Prof>
+                  <View className="flex-row gap-3">
+                    <BentoKPICard
+                      kicker="Tubo (gross profit)"
+                      headline={
+                        kpis.totalProfit === null
+                          ? '—'
+                          : formatCompactCurrency(kpis.totalProfit)
+                      }
+                      subline={
+                        kpis.totalProfit === null
+                          ? 'Add cost prices to compute tubo'
+                          : `${profitSubline(kpis.marginPercent)} · includes utang`
+                      }
+                      icon={
+                        <FontAwesome
+                          name="line-chart"
+                          size={16}
+                          color="#3D5E1B"
+                        />
+                      }
+                      accent="sage"
+                    />
+                    <BentoKPICard
+                      kicker="Utang not yet paid"
+                      headline={formatCompactCurrency(
+                        creditsOverview.outstanding,
+                      )}
+                      subline={`${creditsOverview.activeAccounts} ${
+                        creditsOverview.activeAccounts === 1
+                          ? 'suki owes'
+                          : 'sukis owe'
+                      } you`}
+                      icon={
+                        <FontAwesome
+                          name="credit-card"
+                          size={16}
+                          color="#A1370C"
+                        />
+                      }
+                      accent="persimmon"
+                    />
+                  </View>
+
+                  <View className="flex-row gap-3">
+                    <BentoKPICard
+                      kicker="Stock value (at cost)"
+                      headline={formatCompactCurrency(
+                        inventoryValue.currentStockValue,
+                      )}
+                      subline={
+                        inventoryValue.costCoverage !== null &&
+                        inventoryValue.costCoverage < 1
+                          ? `${Math.round(
+                              inventoryValue.costCoverage * 100,
+                            )}% of stock has cost data`
+                          : `Potential retail: ${formatCompactCurrency(
+                              inventoryValue.potentialSalesValue,
+                            )}`
+                      }
+                      icon={
+                        <FontAwesome name="archive" size={16} color="#391C0A" />
+                      }
+                      accent="cinnamon"
+                    />
+                    <BentoKPICard
+                      kicker="Cash collected"
+                      headline={formatCompactCurrency(salesBreakdown.cashSales)}
+                      subline={`Avg ticket: ${formatCompactCurrency(
+                        salesBreakdown.averageTransactionValue,
+                      )}`}
+                      icon={
+                        <FontAwesome name="money" size={16} color="#3D5E1B" />
+                      }
+                      accent="sage"
+                    />
+                  </View>
+                </BentoGrid>
+              </Prof>
 
               <View className="mt-4">
-                <Prof id="Reports:FinancialResult"><FinancialResultSection
-                  kpis={kpis}
-                  onOpenLedger={() => router.push('/settings/cash-entries')}
-                /></Prof>
+                <Prof id="Reports:FinancialResult">
+                  <FinancialResultSection
+                    kpis={kpis}
+                    onOpenLedger={() => router.push('/settings/cash-entries')}
+                  />
+                </Prof>
               </View>
             </View>
           )}
@@ -427,392 +437,407 @@ function ReportsScreen() {
         {/* ─── Sales Trend & Payments ─────────────────────────── */}
         <View className="px-5 mt-6">
           <View>
-            <Prof id="Reports:Section1"><CollapsibleSection
-              id="trend"
-              title="Sales and payments"
-              subtitle="Daily sales and how customers paid"
-              tone="persimmon"
-              icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
-              defaultExpanded={
-                requestedSection === 'trend' || requestedSection === undefined
-              }
-            >
-              {isSalesTrendLoading ? (
-                <View className="py-2 gap-y-4">
-                  <Skeleton width="100%" height={180} borderRadius={12} />
-                  <View
-                    style={{
-                      borderBottomWidth: 1,
-                      borderStyle: 'dashed',
-                      borderColor: '#D1D5DC',
-                    }}
-                  />
-                  <View className="gap-y-2">
-                    <Skeleton width="100%" height={24} borderRadius={6} />
-                    <View className="flex-row justify-between">
-                      <Skeleton width={100} height={14} borderRadius={4} />
-                      <Skeleton width={100} height={14} borderRadius={4} />
+            <Prof id="Reports:Section1">
+              <CollapsibleSection
+                id="trend"
+                title="Sales and payments"
+                subtitle="Daily sales and how customers paid"
+                tone="persimmon"
+                icon={
+                  <FontAwesome name="bar-chart" size={16} color="#A1370C" />
+                }
+                defaultExpanded={
+                  requestedSection === 'trend' || requestedSection === undefined
+                }
+              >
+                {isSalesTrendLoading ? (
+                  <View className="py-2 gap-y-4">
+                    <Skeleton width="100%" height={180} borderRadius={12} />
+                    <View
+                      style={{
+                        borderBottomWidth: 1,
+                        borderStyle: 'dashed',
+                        borderColor: '#D1D5DC',
+                      }}
+                    />
+                    <View className="gap-y-2">
+                      <Skeleton width="100%" height={24} borderRadius={6} />
+                      <View className="flex-row justify-between">
+                        <Skeleton width={100} height={14} borderRadius={4} />
+                        <Skeleton width={100} height={14} borderRadius={4} />
+                      </View>
                     </View>
                   </View>
-                </View>
-              ) : (
-                <View>
-                  <SimpleBarChart data={salesOverTime} height={200} />
+                ) : (
+                  <View>
+                    <SimpleBarChart data={salesOverTime} height={200} />
 
-                  {/* Perforation between chart and breakdown */}
-                  <View
-                    style={{
-                      marginTop: 20,
-                      marginBottom: 12,
-                      borderBottomWidth: 1,
-                      borderStyle: 'dashed',
-                      borderColor: '#D1D5DC',
-                    }}
-                  />
+                    {/* Perforation between chart and breakdown */}
+                    <View
+                      style={{
+                        marginTop: 20,
+                        marginBottom: 12,
+                        borderBottomWidth: 1,
+                        borderStyle: 'dashed',
+                        borderColor: '#D1D5DC',
+                      }}
+                    />
 
-                  <PaymentSplitStrip
-                    cash={salesBreakdown.cashSales}
-                    credit={salesBreakdown.creditSales}
-                    total={kpis.totalSales}
-                    transactions={salesBreakdown.totalTransactions}
-                    avgTicket={salesBreakdown.averageTransactionValue}
-                  />
-                </View>
-              )}
-            </CollapsibleSection></Prof>
+                    <PaymentSplitStrip
+                      cash={salesBreakdown.cashSales}
+                      credit={salesBreakdown.creditSales}
+                      total={kpis.totalSales}
+                      transactions={salesBreakdown.totalTransactions}
+                      avgTicket={salesBreakdown.averageTransactionValue}
+                    />
+                  </View>
+                )}
+              </CollapsibleSection>
+            </Prof>
           </View>
         </View>
 
         {/* ─── Top Products ──────────────────────────────────── */}
         <View className="px-5 mt-6">
-          <Prof id="Reports:Section2"><CollapsibleSection
-            id="top"
-            title="Top products and profit"
-            subtitle="Best sellers and what earns the most"
-            tone="cinnamon"
-            icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
-            defaultExpanded={requestedSection === 'top'}
-          >
-            {isTopProductsLoading ? (
-              <View className="py-2 gap-y-4">
-                <Skeleton width={160} height={12} borderRadius={4} />
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <View
-                    key={`top-prod-skel-${i}`}
-                    className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
-                  >
-                    <View className="flex-row items-center flex-1 mr-3 gap-2">
-                      <Skeleton width={24} height={24} circle />
-                      <Skeleton width="60%" height={14} borderRadius={4} />
+          <Prof id="Reports:Section2">
+            <CollapsibleSection
+              id="top"
+              title="Top products and profit"
+              subtitle="Best sellers and what earns the most"
+              tone="cinnamon"
+              icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
+              defaultExpanded={requestedSection === 'top'}
+            >
+              {isTopProductsLoading ? (
+                <View className="py-2 gap-y-4">
+                  <Skeleton width={160} height={12} borderRadius={4} />
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <View
+                      key={`top-prod-skel-${i}`}
+                      className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
+                    >
+                      <View className="flex-row items-center flex-1 mr-3 gap-2">
+                        <Skeleton width={24} height={24} circle />
+                        <Skeleton width="60%" height={14} borderRadius={4} />
+                      </View>
+                      <Skeleton width={70} height={16} borderRadius={4} />
                     </View>
-                    <Skeleton width={70} height={16} borderRadius={4} />
-                  </View>
-                ))}
+                  ))}
 
-                <View className="my-2 flex-row items-center">
-                  <View className="flex-1 h-px bg-ink-200" />
+                  <View className="my-2 flex-row items-center">
+                    <View className="flex-1 h-px bg-ink-200" />
+                  </View>
+
+                  <Skeleton width={180} height={12} borderRadius={4} />
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <View
+                      key={`profit-skel-${i}`}
+                      className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
+                    >
+                      <Skeleton width="50%" height={14} borderRadius={4} />
+                      <Skeleton width={60} height={14} borderRadius={4} />
+                    </View>
+                  ))}
                 </View>
-
-                <Skeleton width={180} height={12} borderRadius={4} />
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <View
-                    key={`profit-skel-${i}`}
-                    className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
-                  >
-                    <Skeleton width="50%" height={14} borderRadius={4} />
-                    <Skeleton width={60} height={14} borderRadius={4} />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <View>
-                {/* Top by revenue */}
-                <StyledText
-                  variant="semibold"
-                  className="text-sm text-ink-700 mb-3"
-                >
-                  Top sellers by sales
-                </StyledText>
-                <TopProductsList products={topProducts} />
-
-                <View className="my-4 h-px bg-ink-200" />
-
-                {/* Most profitable */}
-                <View className="flex-row items-center justify-between mb-3">
+              ) : (
+                <View>
+                  {/* Top by revenue */}
                   <StyledText
                     variant="semibold"
-                    className="text-sm text-ink-700"
+                    className="text-sm text-ink-700 mb-3"
                   >
-                    Most profitable (tubo)
+                    Top sellers by sales
                   </StyledText>
-                  {kpis.totalProfit === null && (
+                  <TopProductsList products={topProducts} />
+
+                  <View className="my-4 h-px bg-ink-200" />
+
+                  {/* Most profitable */}
+                  <View className="flex-row items-center justify-between mb-3">
                     <StyledText
-                      variant="medium"
-                      className="text-ink-500 text-xs"
+                      variant="semibold"
+                      className="text-sm text-ink-700"
                     >
-                      Add cost prices
+                      Most profitable (tubo)
                     </StyledText>
-                  )}
+                    {kpis.totalProfit === null && (
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-500 text-xs"
+                      >
+                        Add cost prices
+                      </StyledText>
+                    )}
+                  </View>
+                  <ProfitabilityRanking products={productProfitability} />
                 </View>
-                <ProfitabilityRanking products={productProfitability} />
-              </View>
-            )}
-          </CollapsibleSection></Prof>
+              )}
+            </CollapsibleSection>
+          </Prof>
         </View>
 
         {/* ─── Stock Movement ────────────────────────────────── */}
         <View className="px-5 mt-6">
-          <Prof id="Reports:Section3"><CollapsibleSection
-            id="stock"
-            title="Stock and movement"
-            subtitle="What sold, what is running low"
-            tone="sage"
-            icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
-            defaultExpanded={requestedSection === 'stock'}
-          >
-            {isStockLoading ? (
-              <View className="py-2 gap-y-4">
-                <View className="flex-row flex-wrap gap-2">
-                  <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
-                    <Skeleton width={80} height={10} borderRadius={4} />
-                    <Skeleton width={50} height={20} borderRadius={4} />
+          <Prof id="Reports:Section3">
+            <CollapsibleSection
+              id="stock"
+              title="Stock and movement"
+              subtitle="What sold, what is running low"
+              tone="sage"
+              icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
+              defaultExpanded={requestedSection === 'stock'}
+            >
+              {isStockLoading ? (
+                <View className="py-2 gap-y-4">
+                  <View className="flex-row flex-wrap gap-2">
+                    <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
+                      <Skeleton width={80} height={10} borderRadius={4} />
+                      <Skeleton width={50} height={20} borderRadius={4} />
+                    </View>
+                    <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
+                      <Skeleton width={80} height={10} borderRadius={4} />
+                      <Skeleton width={50} height={20} borderRadius={4} />
+                    </View>
                   </View>
-                  <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
-                    <Skeleton width={80} height={10} borderRadius={4} />
-                    <Skeleton width={50} height={20} borderRadius={4} />
+
+                  <View className="flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden bg-paper-50 p-3 gap-3">
+                    <View className="flex-1 gap-y-2">
+                      <Skeleton width={60} height={10} borderRadius={4} />
+                      <Skeleton width={80} height={16} borderRadius={4} />
+                    </View>
+                    <View className="flex-1 gap-y-2">
+                      <Skeleton width={60} height={10} borderRadius={4} />
+                      <Skeleton width={80} height={16} borderRadius={4} />
+                    </View>
                   </View>
                 </View>
+              ) : (
+                <View>
+                  <StockMovementDetails
+                    itemsSold={inventoryMovement.itemsSold}
+                    lowStockCount={inventoryMovement.lowStockCount}
+                    outOfStockCount={inventoryMovement.outOfStockCount}
+                    fastMoving={fastMovingProducts}
+                    slowMoving={slowMovingProducts}
+                  />
 
-                <View className="flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden bg-paper-50 p-3 gap-3">
-                  <View className="flex-1 gap-y-2">
-                    <Skeleton width={60} height={10} borderRadius={4} />
-                    <Skeleton width={80} height={16} borderRadius={4} />
-                  </View>
-                  <View className="flex-1 gap-y-2">
-                    <Skeleton width={60} height={10} borderRadius={4} />
-                    <Skeleton width={80} height={16} borderRadius={4} />
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View>
-                <StockMovementDetails
-                  itemsSold={inventoryMovement.itemsSold}
-                  lowStockCount={inventoryMovement.lowStockCount}
-                  outOfStockCount={inventoryMovement.outOfStockCount}
-                  fastMoving={fastMovingProducts}
-                  slowMoving={slowMovingProducts}
-                />
-
-                {/* Inventory value sub-block */}
-                <View className="mt-4 flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden">
-                  <View className="flex-1 p-3 border-r border-dashed border-ink-200 bg-cinnamon-50/40">
-                    <StyledText
-                      variant="semibold"
-                      className="text-sm text-cinnamon-700 mb-1"
-                    >
-                      At cost
-                    </StyledText>
-                    <MoneyText
-                      value={inventoryValue.currentStockValue}
-                      size="md"
-                      variant="default"
-                      className="text-ink-900 text-sm"
-                    />
-                    {inventoryValue.costCoverage !== null &&
-                      inventoryValue.costCoverage < 1 && (
-                        <StyledText
-                          variant="medium"
-                          className="text-ink-500 text-xs mt-1"
-                        >
-                          {Math.round(inventoryValue.costCoverage * 100)}% cost
-                          coverage
-                        </StyledText>
-                      )}
-                  </View>
-                  <View className="flex-1 p-3 bg-sage-50/40">
-                    <StyledText
-                      variant="semibold"
-                      className="text-sm text-sage-700 mb-1"
-                    >
-                      At retail
-                    </StyledText>
-                    <MoneyText
-                      value={inventoryValue.potentialSalesValue}
-                      size="md"
-                      variant="success"
-                      className="text-sm"
-                    />
-                    <StyledText
-                      variant="medium"
-                      className="text-ink-500 text-xs mt-1"
-                    >
-                      Potential takings
-                    </StyledText>
-                  </View>
-                </View>
-
-                {/* Low stock alert */}
-                {lowStockItems.length > 0 && (
-                  <View className="mt-4 rounded-xl border border-semantic-warning p-3 bg-semantic-warning-50">
-                    <View className="flex-row items-center mb-2">
-                      <View className="w-6 h-6 rounded-full bg-semantic-warning items-center justify-center mr-2">
-                        <FontAwesome
-                          name="exclamation"
-                          size={12}
-                          color="#FBF7EE"
-                        />
-                      </View>
+                  {/* Inventory value sub-block */}
+                  <View className="mt-4 flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden">
+                    <View className="flex-1 p-3 border-r border-dashed border-ink-200 bg-cinnamon-50/40">
                       <StyledText
-                        variant="extrabold"
-                        className="text-sm text-ink-900"
+                        variant="semibold"
+                        className="text-sm text-cinnamon-700 mb-1"
                       >
-                        {`Low stock: ${lowStockItems.length} ${
-                          lowStockItems.length === 1 ? 'item' : 'items'
-                        }`}
+                        At cost
+                      </StyledText>
+                      <MoneyText
+                        value={inventoryValue.currentStockValue}
+                        size="md"
+                        variant="default"
+                        className="text-ink-900 text-sm"
+                      />
+                      {inventoryValue.costCoverage !== null &&
+                        inventoryValue.costCoverage < 1 && (
+                          <StyledText
+                            variant="medium"
+                            className="text-ink-500 text-xs mt-1"
+                          >
+                            {Math.round(inventoryValue.costCoverage * 100)}%
+                            cost coverage
+                          </StyledText>
+                        )}
+                    </View>
+                    <View className="flex-1 p-3 bg-sage-50/40">
+                      <StyledText
+                        variant="semibold"
+                        className="text-sm text-sage-700 mb-1"
+                      >
+                        At retail
+                      </StyledText>
+                      <MoneyText
+                        value={inventoryValue.potentialSalesValue}
+                        size="md"
+                        variant="success"
+                        className="text-sm"
+                      />
+                      <StyledText
+                        variant="medium"
+                        className="text-ink-500 text-xs mt-1"
+                      >
+                        Potential takings
                       </StyledText>
                     </View>
-                    {lowStockItems.slice(0, 4).map((item) => (
-                      <View
-                        key={item.id}
-                        className="flex-row items-center justify-between mt-1"
-                      >
-                        <StyledText
-                          variant="medium"
-                          className="text-ink-700 text-sm flex-1"
-                          numberOfLines={1}
-                        >
-                          · {item.name}
-                        </StyledText>
+                  </View>
+
+                  {/* Low stock alert */}
+                  {lowStockItems.length > 0 && (
+                    <View className="mt-4 rounded-xl border border-semantic-warning p-3 bg-semantic-warning-50">
+                      <View className="flex-row items-center mb-2">
+                        <View className="w-6 h-6 rounded-full bg-semantic-warning items-center justify-center mr-2">
+                          <FontAwesome
+                            name="exclamation"
+                            size={12}
+                            color="#FBF7EE"
+                          />
+                        </View>
                         <StyledText
                           variant="extrabold"
-                          className={`text-sm ${
-                            item.quantity === 0
-                              ? 'text-semantic-danger'
-                              : 'text-semantic-warning'
-                          }`}
+                          className="text-sm text-ink-900"
                         >
-                          {item.quantity} left
+                          {`Low stock: ${lowStockItems.length} ${
+                            lowStockItems.length === 1 ? 'item' : 'items'
+                          }`}
                         </StyledText>
                       </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-          </CollapsibleSection></Prof>
+                      {lowStockItems.slice(0, 4).map((item) => (
+                        <View
+                          key={item.id}
+                          className="flex-row items-center justify-between mt-1"
+                        >
+                          <StyledText
+                            variant="medium"
+                            className="text-ink-700 text-sm flex-1"
+                            numberOfLines={1}
+                          >
+                            · {item.name}
+                          </StyledText>
+                          <StyledText
+                            variant="extrabold"
+                            className={`text-sm ${
+                              item.quantity === 0
+                                ? 'text-semantic-danger'
+                                : 'text-semantic-warning'
+                            }`}
+                          >
+                            {item.quantity} left
+                          </StyledText>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+            </CollapsibleSection>
+          </Prof>
         </View>
 
         {/* ─── Suki Credit Aging ─────────────────────────────── */}
         <View className="px-5 mt-6">
-          <Prof id="Reports:Section4"><CollapsibleSection
-            id="aging"
-            title="Utang aging"
-            subtitle="How long each suki has owed you"
-            tone="cinnamon"
-            icon={
-              <FontAwesome name="hourglass-half" size={16} color="#391C0A" />
-            }
-            defaultExpanded={requestedSection === 'aging'}
-          >
-            {isCreditAgingLoading ? (
-              <View className="py-2 gap-y-4">
-                <Skeleton width="100%" height={140} borderRadius={12} />
-                <View className="flex-row gap-3">
-                  <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
-                    <Skeleton width={60} height={10} borderRadius={4} />
-                    <Skeleton width={80} height={16} borderRadius={4} />
-                  </View>
-                  <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
-                    <Skeleton width={60} height={10} borderRadius={4} />
-                    <Skeleton width={80} height={16} borderRadius={4} />
+          <Prof id="Reports:Section4">
+            <CollapsibleSection
+              id="aging"
+              title="Utang aging"
+              subtitle="How long each suki has owed you"
+              tone="cinnamon"
+              icon={
+                <FontAwesome name="hourglass-half" size={16} color="#391C0A" />
+              }
+              defaultExpanded={requestedSection === 'aging'}
+            >
+              {isCreditAgingLoading ? (
+                <View className="py-2 gap-y-4">
+                  <Skeleton width="100%" height={140} borderRadius={12} />
+                  <View className="flex-row gap-3">
+                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
+                      <Skeleton width={60} height={10} borderRadius={4} />
+                      <Skeleton width={80} height={16} borderRadius={4} />
+                    </View>
+                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
+                      <Skeleton width={60} height={10} borderRadius={4} />
+                      <Skeleton width={80} height={16} borderRadius={4} />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ) : (
-              <View>
-                <CreditAgingChart
-                  buckets={agingBuckets}
-                  totalOutstanding={creditsOverview.outstanding}
-                />
+              ) : (
+                <View>
+                  <CreditAgingChart
+                    buckets={agingBuckets}
+                    totalOutstanding={creditsOverview.outstanding}
+                  />
 
-                <View className="mt-4 flex-row gap-3">
-                  <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-semantic-danger-50/30">
-                    <StyledText
-                      variant="semibold"
-                      className="text-sm text-ink-700"
-                    >
-                      Utang given
-                    </StyledText>
-                    <MoneyText
-                      value={creditsOverview.issued}
-                      size="md"
-                      variant="danger"
-                      className="text-sm"
-                    />
-                  </View>
-                  <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-sage-50">
-                    <StyledText
-                      variant="semibold"
-                      className="text-sm text-ink-700"
-                    >
-                      Collected
-                    </StyledText>
-                    <MoneyText
-                      value={creditsOverview.collected}
-                      size="md"
-                      variant="success"
-                      className="text-sm"
-                    />
+                  <View className="mt-4 flex-row gap-3">
+                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-semantic-danger-50/30">
+                      <StyledText
+                        variant="semibold"
+                        className="text-sm text-ink-700"
+                      >
+                        Utang given
+                      </StyledText>
+                      <MoneyText
+                        value={creditsOverview.issued}
+                        size="md"
+                        variant="danger"
+                        className="text-sm"
+                      />
+                    </View>
+                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-sage-50">
+                      <StyledText
+                        variant="semibold"
+                        className="text-sm text-ink-700"
+                      >
+                        Collected
+                      </StyledText>
+                      <MoneyText
+                        value={creditsOverview.collected}
+                        size="md"
+                        variant="success"
+                        className="text-sm"
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-            )}
-          </CollapsibleSection></Prof>
+              )}
+            </CollapsibleSection>
+          </Prof>
         </View>
 
         {/* ─── Cashbook History ──────────────────────────────── */}
         <View className="px-5 mt-6">
-          <Prof id="Reports:Section5"><CollapsibleSection
-            id="cashbook"
-            title="Cash drawer history"
-            subtitle="Daily drawer counts and any shortage or overage"
-            tone="cinnamon"
-            icon={<FontAwesome name="book" size={16} color="#391C0A" />}
-            defaultExpanded={requestedSection === 'cashbook'}
-          >
-            {isSessionsLoading ? (
-              <View className="py-2 gap-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <View
-                    key={`session-skel-${i}`}
-                    className="border border-ink-200 rounded-xl bg-paper-50 p-4 gap-y-2"
+          <Prof id="Reports:Section5">
+            <CollapsibleSection
+              id="cashbook"
+              title="Cash drawer history"
+              subtitle="Daily drawer counts and any shortage or overage"
+              tone="cinnamon"
+              icon={<FontAwesome name="book" size={16} color="#391C0A" />}
+              defaultExpanded={requestedSection === 'cashbook'}
+            >
+              {isSessionsLoading ? (
+                <View className="py-2 gap-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <View
+                      key={`session-skel-${i}`}
+                      className="border border-ink-200 rounded-xl bg-paper-50 p-4 gap-y-2"
+                    >
+                      <View className="flex-row justify-between items-center">
+                        <Skeleton width={100} height={16} borderRadius={4} />
+                        <Skeleton width={50} height={18} borderRadius={10} />
+                      </View>
+                      <View className="flex-row gap-3">
+                        <Skeleton width={90} height={12} borderRadius={4} />
+                        <Skeleton width={90} height={12} borderRadius={4} />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : filteredSessions.length === 0 ? (
+                <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-400 text-sm"
                   >
-                    <View className="flex-row justify-between items-center">
-                      <Skeleton width={100} height={16} borderRadius={4} />
-                      <Skeleton width={50} height={18} borderRadius={10} />
-                    </View>
-                    <View className="flex-row gap-3">
-                      <Skeleton width={90} height={12} borderRadius={4} />
-                      <Skeleton width={90} height={12} borderRadius={4} />
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : filteredSessions.length === 0 ? (
-              <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
-                <StyledText variant="regular" className="text-ink-400 text-sm">
-                  No past drawer sessions in this period.
-                </StyledText>
-              </View>
-            ) : (
-              <View>
-                {filteredSessions.map((session) => (
-                  <CashSessionRow key={session.id} session={session} />
-                ))}
-              </View>
-            )}
-          </CollapsibleSection></Prof>
+                    No past drawer sessions in this period.
+                  </StyledText>
+                </View>
+              ) : (
+                <View>
+                  {filteredSessions.map((session) => (
+                    <CashSessionRow key={session.id} session={session} />
+                  ))}
+                </View>
+              )}
+            </CollapsibleSection>
+          </Prof>
         </View>
       </RefreshableScrollView>
     </View>
