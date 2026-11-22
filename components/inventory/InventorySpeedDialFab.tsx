@@ -78,6 +78,8 @@ export function InventorySpeedDialFab({
   const progress = useSharedValue(0);
   // Runs once the menu has fully closed, so the next screen or modal never overlaps it.
   const pendingAction = useRef<(() => void) | null>(null);
+  // Guards onShow against a close that lands before the native modal finishes presenting.
+  const wantOpen = useRef(false);
 
   const finishClose = useCallback(() => {
     setOpen(false);
@@ -88,7 +90,13 @@ export function InventorySpeedDialFab({
 
   const show = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    wantOpen.current = true;
     setOpen(true);
+  }, []);
+
+  // Start only once the modal is on screen; starting on press let it pop in mid-animation.
+  const handleShow = useCallback(() => {
+    if (!wantOpen.current) return;
     progress.value = reducedMotion
       ? withTiming(1, { duration: 0 })
       : withSpring(1, OPEN_SPRING);
@@ -96,6 +104,7 @@ export function InventorySpeedDialFab({
 
   const hide = useCallback(
     (then?: () => void) => {
+      wantOpen.current = false;
       pendingAction.current = then ?? null;
       progress.value = withTiming(
         0,
@@ -161,10 +170,10 @@ export function InventorySpeedDialFab({
 
   return (
     <>
-      {/* On-screen trigger; hidden while the menu copy sits exactly on top of it. */}
+      {/* Stays visible under the modal so there is no blank frame while it presents. */}
       <View
         className="absolute right-5 z-50"
-        style={{ bottom, opacity: open ? 0 : 1 }}
+        style={{ bottom }}
         pointerEvents={open ? 'none' : 'box-none'}
       >
         <FabPill progress={progress} expanded={false} onPress={show} />
@@ -176,6 +185,7 @@ export function InventorySpeedDialFab({
         animationType="none"
         statusBarTranslucent
         navigationBarTranslucent
+        onShow={handleShow}
         onRequestClose={() => hide()}
       >
         <Animated.View
@@ -198,7 +208,7 @@ export function InventorySpeedDialFab({
           <Animated.View
             accessibilityViewIsModal
             onAccessibilityEscape={() => hide()}
-            className="bg-paper-50 rounded-2xl border border-paper-300 overflow-hidden"
+            className="bg-paper-50 rounded-2xl border border-paper-300"
             style={[
               { width: MENU_WIDTH, transformOrigin: 'bottom right' },
               MENU_SHADOW,
