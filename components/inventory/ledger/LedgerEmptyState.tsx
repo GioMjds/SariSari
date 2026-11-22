@@ -1,115 +1,36 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 
 interface LedgerEmptyStateProps {
-  /**
-   * The product's current on-hand count. Rendered as a "ghost stat"
-   * so the empty screen still communicates useful information
-   * instead of a lone mascot + paragraph.
-   */
-  currentStock: number;
-  /**
-   * Optional number of categories the cashier is most likely to log.
-   * Drives the "Try logging" copy below the illustration.
-   */
-  currentStockLabel?: string;
+  onLogTransaction: () => void;
 }
 
-/**
- * LedgerEmptyState — shown when a product has no transactions in the
- * last 30 days. The Sari mascot illustration explains what'll appear
- * here once the user starts logging restocks, sales, or damage
- * adjustments.
- *
- * The previous version was a single mascot + paragraph that left the
- * bottom half of the screen blank. This iteration adds two "ghost
- * stat" tiles (current stock + 30-day activity) so the screen reads
- * as finished even before data exists. A short action hint at the
- * bottom reminds the cashier to use the floating + button.
- */
-export function LedgerEmptyState({
-  currentStock,
-  currentStockLabel,
-}: LedgerEmptyStateProps) {
+// Sits under the hero when a product has no entries in the last 30 days.
+export function LedgerEmptyState({ onLogTransaction }: LedgerEmptyStateProps) {
+  const { t } = useTranslation('inventory');
   return (
-    <View className="flex-1 justify-center items-center px-6 py-10 bg-paper-100">
-      <SariMascot state="inventory" size={160} style={{ marginBottom: 16 }} />
-
-      <StyledText
-        variant="extrabold"
-        className="text-ink-900 text-xl text-center mb-1.5"
-      >
-        No ledger entries yet
+    <View className="mx-4 mt-5 items-center px-6 py-8 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
+      <SariMascot state="inventory" size={112} style={{ marginBottom: 12 }} />
+      <StyledText variant="extrabold" className="text-ink-900 text-lg text-center">
+        {t('ledgerEmptyTitle')}
       </StyledText>
-      <StyledText
-        variant="regular"
-        className="text-ink-500 text-sm text-center px-4 leading-5"
-      >
-        Restocks, sales, damaged goods, and adjustments will appear here once
-        you start logging them.
+      <StyledText variant="regular" className="text-ink-600 text-sm text-center mt-1 leading-5">
+        {t('ledgerEmptyBody')}
       </StyledText>
-
-      {/* Ghost stat tiles — give the empty screen useful shape */}
-      <View className="flex-row gap-3 mt-6 w-full max-w-sm">
-        <View className="flex-1 bg-paper-50 border border-ink-100 rounded-xl px-3 py-3 shadow-paper">
-          <StyledText
-            variant="extrabold"
-            className="label-caps text-ink-400 mb-1"
-          >
-            Current Stock
-          </StyledText>
-          <StyledText
-            variant="black"
-            className="text-ink-900 text-xl"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            {currentStock}
-          </StyledText>
-          <StyledText
-            variant="medium"
-            className="text-mono text-ink-500 mt-0.5"
-            style={{ fontSize: 10 }}
-          >
-            {currentStockLabel ?? 'pcs on hand'}
-          </StyledText>
-        </View>
-        <View className="flex-1 bg-paper-50 border border-dashed border-ink-200 rounded-xl px-3 py-3">
-          <StyledText
-            variant="extrabold"
-            className="label-caps text-ink-400 mb-1"
-          >
-            30-Day Activity
-          </StyledText>
-          <StyledText
-            variant="black"
-            className="text-ink-500 text-xl"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            —
-          </StyledText>
-          <StyledText
-            variant="medium"
-            className="text-mono text-ink-500 mt-0.5"
-            style={{ fontSize: 10 }}
-          >
-            no entries yet
-          </StyledText>
-        </View>
-      </View>
-
-      {/* Hint */}
-      <View className="flex-row items-center mt-6 bg-paper-50 border border-ink-100 rounded-full px-3.5 py-2 shadow-paper">
-        <FontAwesome name="plus-circle" size={12} color="#E85A1F" />
-        <StyledText
-          variant="semibold"
-          className="text-mono text-ink-700 ml-2"
-          style={{ fontSize: 11 }}
-        >
-          Tap the + button to log your first transaction
+      <Pressable
+        onPress={onLogTransaction}
+        accessibilityRole="button"
+        accessibilityLabel={t('ledgerLogChange')}
+        className="press-scale mt-5 min-h-[48px] px-5 rounded-xl bg-persimmon-500 active:bg-persimmon-700 flex-row items-center justify-center"
+      >
+        <FontAwesome name="plus" size={14} color="#FAFAF7" />
+        <StyledText variant="extrabold" className="text-paper-50 text-sm ml-2">
+          {t('ledgerLogChange')}
         </StyledText>
-      </View>
+      </Pressable>
     </View>
   );
 }

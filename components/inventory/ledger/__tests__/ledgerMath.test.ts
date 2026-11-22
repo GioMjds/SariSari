@@ -1,0 +1,68 @@
+import {
+  bucketByDay,
+  buildLedgerRows,
+  filterLedgerRows,
+  groupLedgerRows,
+  summarizeLedger,
+} from '../ledgerMath';
+import { InventoryTransaction } from '@/types/inventory.types';
+
+const tx = (
+  id: number,
+  type: InventoryTransaction['type'],
+  quantity: number,
+  timestamp: string,
+  extra: Partial<InventoryTransaction> = {},
+): InventoryTransaction => ({ id, product_id: 1, type, quantity, timestamp, ...extra });
+
+const LABELS = { today: 'Today', yesterday: 'Yesterday', earlier: 'Earlier' };
+
+const sample = [
+  tx(1, 'restock', 10, '2026-11-01T08:00:00Z'),
+  tx(2, 'sale', 3, '2026-11-02T09:00:00Z', { note: 'suki order' }),
+  tx(3, 'damaged', 1, '2026-11-02T10:00:00Z'),
+  tx(4, 'adjustment', 2, '2026-11-03T10:00:00Z', { adjustment_sign: 'negative' }),
+];
+
+describe('ledgerMath', () => {
+  it('walks balances back from current stock, newest first', () => {
+    const rows = buildLedgerRows(sample, 4);
+    expect(rows.map((r) => r.id)).toEqual([4, 3, 2, 1]);
+    expect(rows.map((r) => r.balance)).toEqual([4, 6, 7, 10]);
+  });
+
+  it('keeps true balances after filtering by type', () => {
+    const sales = filterLedgerRows(buildLedgerRows(sample, 4), '', 'sale');
+    expect(sales).toHaveLength(1);
+    expect(sales[0]!.balance).toBe(7);
+  });
+
+  it('searches notes and parses SQLite timestamps', () => {
+    const rows = buildLedgerRows(
+      [...sample, tx(5, 'restock', 1, '2026-11-04 08:00:00')],
+      5,
+    );
+    expect(rows[0]!.id).toBe(5);
+    expect(filterLedgerRows(rows, 'SUKI', 'all').map((r) => r.id)).toEqual([2]);
+  });
+
+  it('groups by day with a net per day', () => {
+    const sections = groupLedgerRows(buildLedgerRows(sample, 4), LABELS);
+    expect(sections.map((s) => s.data.length)).toEqual([1, 2, 1]);
+    expect(sections[1]!.net).toBe(-4);
+  });
+
+  it('summarizes totals and buckets days ending today', () => {
+    const rows = buildLedgerRows(sample, 4);
+    expect(summarizeLedger(rows)).toEqual({
+      added: 10,
+      sold: 3,
+      damaged: 1,
+      corrected: -2,
+      net: 4,
+    });
+    const buckets = bucketByDay(rows, 3, new Date(2026, 10, 3, 12).getTime());
+    expect(buckets).toHaveLength(3);
+    expect(buckets[2]!.removed).toBe(2);
+  });
+});

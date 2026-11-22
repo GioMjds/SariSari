@@ -203,7 +203,7 @@ export const getInventoryTransactionsPage = async (params: {
   const limit = Math.max(1, Math.floor(params.limit));
 
   const rows = await db.getAllAsync<InventoryTransaction>(
-    `SELECT t.* FROM inventory_transactions t
+    `SELECT t.*, p.name AS product_name FROM inventory_transactions t
      LEFT JOIN products p ON t.product_id = p.id
      WHERE (
        ? = '' OR

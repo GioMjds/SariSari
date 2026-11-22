@@ -7,4 +7,3 @@ export type { LedgerTypeFilter } from './types';
 export { isLedgerTypeFilter } from './types';
 export { LogTransactionForm } from './LogTransactionForm';
 export { Chip } from './Chip';
-export { MovementChip } from './MovementChip';

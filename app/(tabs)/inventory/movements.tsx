@@ -122,7 +122,8 @@ function MovementsScreen() {
         currentStock={0}
         hideBalance={true}
         bottomPadding={fabClearance}
-        searchQuery={searchQuery}
+        // The query already filters by search on the database side.
+        searchQuery=""
         selectedType={selectedType}
         isFetchingNextPage={txQuery.isFetchingNextPage}
         hasNextPage={txQuery.hasNextPage}
