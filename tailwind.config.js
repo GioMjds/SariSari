@@ -1,5 +1,9 @@
+const { hairlineWidth } = require('nativewind/theme');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // The app is light-only; 'class' stops the system theme from flipping dark: variants.
+  darkMode: 'class',
   content: [
     './app/**/*.{js,jsx,ts,tsx}',
     './components/**/*.{js,jsx,ts,tsx}',
@@ -129,6 +133,8 @@ module.exports = {
         // `warm-*` to ink. `surface-warm` to persimmon-100.
         // `background` to paper-200.
         primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
           50: '#FFF1EA',
           100: '#FFE0D1',
           200: '#FFC4A8',
@@ -141,6 +147,8 @@ module.exports = {
           900: '#4F1B06',
         },
         secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
           50: '#EEF4E5',
           100: '#D7E5BF',
           200: '#B7CF91',
@@ -165,8 +173,35 @@ module.exports = {
           900: '#0E0C0A',
         },
         'surface-warm': '#FFE0D1',
-        background: '#F7F6F2',
+        background: 'hsl(var(--background))',
         'surface-subtle': '#FAFAF7',
+
+        // ─── React Native Reusables semantic tokens ────────────────
+        // Values live in global.css and map onto the brand palette above.
+        foreground: 'hsl(var(--foreground))',
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
       },
       fontFamily: {
         'stack-sans': ['StackSansText-Regular'],
@@ -176,6 +211,7 @@ module.exports = {
         'stack-sans-semibold': ['StackSansText-SemiBold'],
         'stack-sans-bold': ['StackSansText-Bold'],
       },
+      // Kept as px; lg equals --radius (0.75rem) in global.css, so Reusables rounded-lg matches the app.
       borderRadius: {
         md: '6px',
         lg: '12px',
@@ -200,6 +236,23 @@ module.exports = {
         'persimmon-glow': '0 8px 24px rgba(232, 90, 31, 0.18)',
         // Brand-tinted shadow for sage surfaces (success states)
         'glow-sage': '0 8px 24px rgba(79, 122, 36, 0.18)',
+      },
+      borderWidth: {
+        hairline: hairlineWidth(),
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontSize: {
         display: [
@@ -230,5 +283,8 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
+  plugins: [require('tailwindcss-animate')],
 };

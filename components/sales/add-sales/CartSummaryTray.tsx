@@ -227,7 +227,7 @@ function PaymentChip({ label, icon, active, onPress }: PaymentChipProps) {
       accessibilityState={{ selected: active }}
       className={`flex-1 flex-row items-center justify-center rounded-xl py-3 border-2 ${
         active
-          ? 'border-secondary bg-secondary-500/10'
+          ? 'border-secondary-500 bg-secondary-500/10'
           : 'border-ink-100 bg-white'
       } active:opacity-70`}
     >

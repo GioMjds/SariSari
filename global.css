@@ -53,6 +53,67 @@ a[target="_blank"]::after {
 	--color-info: #2E6FA8;
 }
 
+/* ─── React Native Reusables tokens ───────────────────────────
+   shadcn-style HSL channels consumed as hsl(var(--x)) by tailwind.config.js.
+   Every value is an existing brand token, named in the trailing comment. */
+@layer base {
+	:root {
+		--background: 48 23.8% 95.9%; /* paper-200 */
+		--foreground: 30 16.7% 4.7%; /* ink-900 */
+		--card: 60 23.1% 97.5%; /* paper-50 */
+		--card-foreground: 30 16.7% 4.7%; /* ink-900 */
+		--popover: 60 23.1% 97.5%; /* paper-50 */
+		--popover-foreground: 30 16.7% 4.7%; /* ink-900 */
+		--primary: 18 81.4% 51.6%; /* persimmon-500 */
+		--primary-foreground: 60 23.1% 97.5%; /* paper-50 */
+		--secondary: 48 27.8% 92.9%; /* paper-100 */
+		--secondary-foreground: 34 16.3% 8.4%; /* ink-800 */
+		--muted: 48 27.8% 92.9%; /* paper-100 */
+		--muted-foreground: 32 11% 30.4%; /* ink-500 */
+		--accent: 47 21.9% 87.5%; /* paper-300, pressed surface */
+		--accent-foreground: 30 16.7% 4.7%; /* ink-900 */
+		--destructive: 0 60.2% 47.3%; /* semantic-danger */
+		--destructive-foreground: 60 23.1% 97.5%; /* paper-50 */
+		--border: 47 21.9% 87.5%; /* paper-300 */
+		--input: 46 17.9% 81.4%; /* paper-400 */
+		--ring: 18 100% 73.1%; /* persimmon-300, matches .focus-ring */
+		--radius: 0.75rem; /* 12px, same as rounded-lg */
+		--chart-1: 18 81.4% 51.6%; /* persimmon-500 */
+		--chart-2: 90 54.4% 31%; /* sage-500 */
+		--chart-3: 208 57% 42%; /* semantic-info */
+		--chart-4: 35 86.9% 41.8%; /* semantic-warning */
+		--chart-5: 23 60.7% 23.9%; /* cinnamon-500 */
+	}
+
+	/* Reserved: darkMode is 'class' and the app never sets it, so this stays dormant. */
+	.dark:root {
+		--background: 30 13% 9%; /* dark-ink-50 */
+		--foreground: 42 61.9% 95.9%; /* dark-ink-900 */
+		--card: 33 15.9% 13.5%; /* dark-paper-50 */
+		--card-foreground: 42 61.9% 95.9%;
+		--popover: 33 15.9% 13.5%;
+		--popover-foreground: 42 61.9% 95.9%;
+		--primary: 18 100% 67.6%; /* dark-persimmon-500 */
+		--primary-foreground: 30 16.7% 4.7%;
+		--secondary: 34 16.3% 16.9%; /* dark-paper-100 */
+		--secondary-foreground: 40 33.3% 91.2%; /* dark-ink-800 */
+		--muted: 34 16.3% 16.9%;
+		--muted-foreground: 38 12.1% 61.2%; /* dark-ink-500 */
+		--accent: 35 16.2% 20.6%; /* dark-paper-200 */
+		--accent-foreground: 42 61.9% 95.9%;
+		--destructive: 0 69.6% 60%;
+		--destructive-foreground: 42 61.9% 95.9%;
+		--border: 33 13.8% 25.5%; /* dark-paper-300 */
+		--input: 33 13.9% 31%; /* dark-paper-400 */
+		--ring: 18 69.7% 49.2%; /* dark-persimmon-400 */
+		--chart-1: 18 100% 67.6%;
+		--chart-2: 86 36.5% 54.9%;
+		--chart-3: 210 55.7% 63.7%;
+		--chart-4: 36 78.8% 57.5%;
+		--chart-5: 22 53.8% 63.5%;
+	}
+}
+
 /* ─── Receipt paper texture ─────────────────────────────────────
    A subtle radial gradient gives the cream paper a soft vignette
    rather than reading as a flat fill. Applied to receipt surfaces. */
