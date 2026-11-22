@@ -32,7 +32,8 @@ export function SegmentedControl<V extends string>({
             accessibilityLabel={opt.label}
             accessibilityState={{ selected: active }}
             className={`flex-1 min-h-[36px] rounded-full flex-row items-center justify-center gap-x-1.5 ${
-              active ? 'bg-paper-50 shadow-paper' : 'bg-transparent'
+              // shadow-none keeps the shadow CSS variables set from first render, or css-interop crashes on toggle.
+              active ? 'bg-paper-50 shadow-paper' : 'bg-transparent shadow-none'
             }`}
           >
             {opt.icon ? (
