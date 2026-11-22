@@ -5,25 +5,30 @@ import {
   SaleDetailsHeader,
   SaleDetailsHero,
   SaleDetailsItemList,
+  SaleDetailsSkeleton,
 } from '@/components/sales';
+import { ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
 import { useDeleteSale, useGetSale } from '@/hooks';
-import { Alert, parseStoredTimestamp } from '@/utils';
+import { Alert } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
-import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
+import { MotiView } from 'moti';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const SCROLL_CONTENT_STYLE = { paddingTop: 16, paddingBottom: 140 } as const;
+// Height of the sticky correction bar above the safe-area inset.
+const ACTION_BAR_HEIGHT = 76;
 
 function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const numericId = Number(id);
-  const { data: sale, isLoading } = useGetSale(numericId);
+  const { data: sale, isLoading, isError, refetch } = useGetSale(numericId);
   const deleteSaleMutation = useDeleteSale();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
 
   const handleDeleteSale = () => {
     Alert.alert(
@@ -56,7 +61,8 @@ function SaleDetails() {
 
   const handleBack = () => {
     Haptics.selectionAsync().catch(() => {});
-    router.back();
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/sales/receipts' as Href);
   };
 
   const handleVoid = () => {
@@ -74,94 +80,88 @@ function SaleDetails() {
     router.push(`/price-correction/${numericId}` as Href);
   };
 
-  const isCredit = sale?.payment_type === 'credit';
-  const ts = parseStoredTimestamp(sale?.timestamp) || new Date();
-  const dateLine = format(ts, 'MMM dd, yyyy · hh:mm a');
-  const dateShort = format(ts, 'MM/dd/yy');
-  const timeShort = format(ts, 'hh:mm a');
-  const grandTotalDisplay = (sale?.total ?? 0).toLocaleString('en-PH', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  const itemsCount = sale?.items_count ?? 0;
-  const buyerName = sale?.customer_name?.trim() ?? null;
-
-  // TODO: Must replace with loading skeleton
-  if (isLoading || !sale) {
-    return (
-      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-        {/* Slim top bar so loading state still feels intentional */}
-        <View className="flex-row items-center px-5 pt-3 pb-2">
-          <Pressable
-            onPress={handleBack}
-            hitSlop={20}
-            className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center shadow-paper border border-ink-100"
-          >
-            <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
-          </Pressable>
-        </View>
-        <View className="flex-1 justify-center items-center">
-          <View
-            className="w-12 h-12 rounded-full border-2 border-ink-200 animate-pulse"
-            style={{ borderTopColor: '#E85A1F' }}
-          />
-          <StyledText variant="medium" className="text-ink-500 mt-4 label-caps">
-            Loading resibo…
-          </StyledText>
-        </View>
-      </View>
-    );
-  }
+  const canCorrect = !!sale && !sale.cancelled_at;
+  const tone = sale?.cancelled_at
+    ? 'cinnamon'
+    : sale?.payment_type === 'credit'
+      ? 'persimmon'
+      : 'sage';
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <SaleDetailsHeader
-        saleId={sale.id}
+        saleId={numericId}
         onBack={handleBack}
-        onDelete={handleDeleteSale}
+        onDelete={sale ? handleDeleteSale : undefined}
       />
 
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={SCROLL_CONTENT_STYLE}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="mx-4">
-          <SaleDetailsHero
-            paymentType={sale.payment_type}
-            hasCustomerName={!!buyerName}
-            customerName={buyerName}
-            dateLine={dateLine}
-            dateShort={dateShort}
-            timeShort={timeShort}
-            itemsCount={itemsCount}
-            saleId={sale.id}
-            total={sale.total}
-            heroTitleLabel={isCredit ? 'Utang Record' : 'Paid in Full'}
-            creditTotalLabel="BALANCE OUTSTANDING"
-            cashTotalLabel="TOTAL PAID"
-          />
+      {isLoading ? (
+        <SaleDetailsSkeleton />
+      ) : !sale ? (
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-16 h-16 rounded-full bg-paper-100 border border-paper-300 items-center justify-center">
+            <FontAwesome name="file-text-o" size={24} color="#564E45" />
+          </View>
+          <StyledText variant="black" accessibilityRole="header" className="text-ink-900 text-xl mt-4 text-center">
+            {isError ? "Couldn't load this resibo" : 'Resibo not found'}
+          </StyledText>
+          <StyledText variant="regular" className="text-ink-500 text-sm mt-1 text-center">
+            {isError
+              ? 'Something went wrong reading this sale. Try again.'
+              : 'This sale may have been deleted.'}
+          </StyledText>
+          <Pressable
+            onPress={isError ? () => refetch() : handleBack}
+            accessibilityRole="button"
+            className="mt-6 min-h-12 px-6 rounded-xl bg-persimmon-500 items-center justify-center active:bg-persimmon-700"
+          >
+            <StyledText variant="extrabold" className="text-paper-50 text-base">
+              {isError ? 'Try again' : 'Back to receipts'}
+            </StyledText>
+          </Pressable>
         </View>
+      ) : (
+        <>
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{
+              paddingTop: 16,
+              paddingBottom: insets.bottom + (canCorrect ? ACTION_BAR_HEIGHT + 24 : 32),
+            }}
+            showsVerticalScrollIndicator={false}
+          >
+            <MotiView
+              from={{ opacity: 0, translateY: reduceMotion ? 0 : 12 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ type: 'timing', duration: reduceMotion ? 120 : 280 }}
+            >
+              <ReceiptHero tone={tone}>
+                <SaleDetailsHero sale={sale} />
+                <SaleDetailsItemList sale={sale} />
+                <View className="pt-3 pb-5">
+                  <ReceiptHeroDivider label="thank you" tone="sage" />
+                  <StyledText
+                    variant="regular"
+                    className="text-ink-500 text-xs text-center mt-1 px-5"
+                    style={{ lineHeight: 18 }}
+                  >
+                    {'Salamat sa iyong pagbili.\nKeep this resibo for your records.'}
+                  </StyledText>
+                </View>
+              </ReceiptHero>
+            </MotiView>
+          </ScrollView>
 
-        <SaleDetailsItemList
-          items={sale.items}
-          subtotal={sale.total}
-          sectionLabel="Itemised list"
-          subtotalLabel="Subtotal"
-        />
-
-        <SaleDetailsFooter
-          grandTotalLabel={isCredit ? 'Utang total' : 'Grand total'}
-          grandTotalDisplay={grandTotalDisplay}
-          thankYouMessage={
-            'Salamat sa iyong pagbili.\nKeep this resibo for your records.'
-          }
-          onDelete={handleDeleteSale}
-          onVoid={handleVoid}
-          onRefund={handleRefund}
-          onPriceCorrection={handlePriceCorrection}
-        />
-      </ScrollView>
+          {canCorrect && (
+            <SaleDetailsFooter
+              bottomInset={insets.bottom}
+              onVoid={handleVoid}
+              onRefund={handleRefund}
+              onPriceCorrection={handlePriceCorrection}
+            />
+          )}
+        </>
+      )}
     </View>
   );
 }

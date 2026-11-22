@@ -1,7 +1,9 @@
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
 type Tone = 'persimmon' | 'cinnamon' | 'sage';
+
+const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
 
 type Props = {
   children: React.ReactNode;
@@ -131,10 +133,12 @@ export function ReceiptHeroTotal({
   label = 'AMOUNT DUE',
   amount,
   currency = '₱',
+  struck = false,
 }: {
   label?: string;
   amount: number;
   currency?: string;
+  struck?: boolean;
 }) {
   const formatted = amount.toLocaleString('en-PH', {
     minimumFractionDigits: 2,
@@ -142,7 +146,11 @@ export function ReceiptHeroTotal({
   });
 
   return (
-    <View className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200">
+    <View
+      accessible
+      accessibilityLabel={`${label}, ${currency}${formatted}${struck ? ', cancelled' : ''}`}
+      className="px-5 py-5 bg-paper-100 border-y border-dashed border-ink-200"
+    >
       <StyledText variant="extrabold" className="label-caps text-ink-400 mb-2">
         {label}
       </StyledText>
@@ -153,7 +161,11 @@ export function ReceiptHeroTotal({
         >
           {currency}
         </StyledText>
-        <StyledText variant="black" className="text-hero text-ink-900">
+        <StyledText
+          variant="black"
+          className={`text-hero ${struck ? 'text-ink-400 line-through' : 'text-ink-900'}`}
+          style={TABULAR}
+        >
           {formatted}
         </StyledText>
       </View>

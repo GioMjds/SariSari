@@ -7,54 +7,55 @@ interface SaleDetailsHeaderProps {
   saleId: number;
   /** Number of digits the sale-id should be padded to. Defaults to 5. */
   idPadding?: number;
-  /** Tap handlers for back + delete. */
   onBack: () => void;
-  onDelete: () => void;
+  /** Omitted while loading or when the sale is missing, hiding the trash button. */
+  onDelete?: (() => void) | undefined;
 }
 
-/**
- * SaleDetailsHeader — top bar of the Sale Details (receipt) screen.
- *
- * Three equal-weight columns:
- *   • Back button (circular, paper-50).
- *   • Centered `Sale · 00123` label.
- *   • Trash/delete button (circular, paper-50 with semantic-danger icon).
- *
- * Pure presentational — orchestration lives in the screen.
- */
+const ICON_BUTTON =
+  'w-11 h-11 rounded-full bg-paper-50 items-center justify-center border border-ink-100 active:bg-paper-100';
+
+// Top bar of the resibo screen: back, centered sale label, delete.
 export function SaleDetailsHeader({
   saleId,
   idPadding = 5,
   onBack,
   onDelete,
 }: SaleDetailsHeaderProps) {
-  const saleLabel = `Sale · ${String(saleId).padStart(idPadding, '0')}`;
+  const saleLabel = Number.isFinite(saleId)
+    ? `Sale · ${String(saleId).padStart(idPadding, '0')}`
+    : 'Sale';
 
   return (
-    <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
+    <View className="flex-row items-center justify-between px-4 pt-2 pb-2">
       <Pressable
         onPress={onBack}
-        hitSlop={20}
+        hitSlop={12}
         accessibilityRole="button"
         accessibilityLabel="Go back"
-        className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center shadow-paper border border-ink-100 active:opacity-70"
+        className={ICON_BUTTON}
       >
         <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
       </Pressable>
 
-      <StyledText variant="extrabold" className="label-caps text-ink-400">
+      <StyledText variant="extrabold" accessibilityRole="header" className="label-caps text-ink-500">
         {saleLabel}
       </StyledText>
 
-      <Pressable
-        onPress={onDelete}
-        hitSlop={20}
-        accessibilityRole="button"
-        accessibilityLabel="Delete sale"
-        className="w-10 h-10 rounded-full bg-paper-50 items-center justify-center shadow-paper border border-ink-100 active:opacity-70"
-      >
-        <FontAwesome name="trash" size={14} color="#C13030" />
-      </Pressable>
+      {onDelete ? (
+        <Pressable
+          onPress={onDelete}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Delete sale"
+          accessibilityHint="Asks for confirmation, then restores the inventory"
+          className={ICON_BUTTON}
+        >
+          <FontAwesome name="trash" size={15} color="#C13030" />
+        </Pressable>
+      ) : (
+        <View className="w-11 h-11" />
+      )}
     </View>
   );
 }

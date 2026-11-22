@@ -1,6 +1,7 @@
 import { useCorrectSalePrice, useGetSale, useProfile } from '@/hooks';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { tryParsePesosInput } from '@/lib/money';
+import { soldQty } from '@/utils';
 import type { PriceCorrectionReasonCode } from '@/types/corrections.types';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -116,7 +117,7 @@ export function usePriceCorrectionForm(saleId: number) {
           unitPrice = parsed;
         }
       }
-      return sum + unitPrice * item.quantity;
+      return sum + unitPrice * soldQty(item);
     }, 0);
   }, [sale?.items, edits]);
 

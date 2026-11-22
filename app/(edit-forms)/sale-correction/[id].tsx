@@ -10,7 +10,7 @@ import { StyledText } from '@/components/elements';
 import { useGetSale, useProfile, useRefundSale, useVoidSale } from '@/hooks';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { formatPesos } from '@/lib/money';
-import { parseStoredTimestamp } from '@/utils';
+import { parseStoredTimestamp, soldQty } from '@/utils';
 import type {
   RefundReasonCode,
   VoidReasonCode,
@@ -314,7 +314,7 @@ function SaleCorrectionScreen() {
                             variant="extrabold"
                             className="text-ink-900 text-xs"
                           >
-                            {item.quantity}x
+                            {soldQty(item)}x
                           </StyledText>
                         </View>
                         <StyledText
@@ -329,7 +329,7 @@ function SaleCorrectionScreen() {
                         variant="extrabold"
                         className="text-ink-900 text-xs"
                       >
-                        {formatPesos(item.price * item.quantity)}
+                        {formatPesos(item.price * soldQty(item))}
                       </StyledText>
                     </View>
                   ))}

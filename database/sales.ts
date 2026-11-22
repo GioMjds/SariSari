@@ -1,5 +1,6 @@
 import { db } from '../configs/sqlite';
 import { getCurrentLocalTimestamp } from '@/utils/timezone';
+import { soldQty } from '@/utils/saleItems';
 import { useBackupCounter } from '../stores/backupCounter';
 import * as Crypto from 'expo-crypto';
 import {
@@ -817,7 +818,7 @@ export const correctSalePrice = async (
       if (!item) continue;
       if (change.newPrice === item.price) continue;
       const priceDelta = change.newPrice - item.price;
-      totalDelta += priceDelta * item.quantity;
+      totalDelta += priceDelta * soldQty(item);
       changedLines += 1;
 
       await db.runAsync(
@@ -840,9 +841,9 @@ export const correctSalePrice = async (
 
     if (changedLines === 0) return;
 
-    // Recompute the sale total from the line items (price × quantity).
+    // Recompute the sale total from the line items (price × sold units, not pieces).
     const recomputed = await db.getFirstAsync<{ total: number }>(
-      `SELECT COALESCE(SUM(price * quantity), 0) as total FROM sale_items WHERE sale_id = ?`,
+      `SELECT COALESCE(SUM(price * COALESCE(sold_unit_qty, quantity)), 0) as total FROM sale_items WHERE sale_id = ?`,
       [saleId],
     );
     const newTotal = recomputed?.total ?? sale.total;

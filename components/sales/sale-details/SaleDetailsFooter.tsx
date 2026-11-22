@@ -1,162 +1,63 @@
 import { StyledText } from '@/components/elements';
-import { ReceiptHeroDivider } from '@/components/ui';
 import { FontAwesome } from '@expo/vector-icons';
 import { MotiView } from 'moti';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 interface SaleDetailsFooterProps {
-  grandTotalLabel: string;
-  grandTotalDisplay: string;
-  thankYouMessage: string;
-  dividerLabel?: string;
-  onDelete: () => void;
-  onVoid?: () => void;
-  onRefund?: () => void;
-  onPriceCorrection?: () => void;
+  bottomInset: number;
+  onVoid: () => void;
+  onRefund: () => void;
+  onPriceCorrection: () => void;
 }
 
+type IconName = React.ComponentProps<typeof FontAwesome>['name'];
+
+function ActionButton({
+  icon,
+  label,
+  color,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  color: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="flex-1 min-h-12 rounded-xl bg-paper-50 border border-paper-400 flex-row items-center justify-center gap-2 px-2 active:bg-paper-100"
+    >
+      <FontAwesome name={icon} size={14} color={color} />
+      <StyledText variant="extrabold" className="text-sm" style={{ color }} numberOfLines={1}>
+        {label}
+      </StyledText>
+    </Pressable>
+  );
+}
+
+// Sticky correction bar pinned above the home indicator; hidden once a sale is cancelled.
 export function SaleDetailsFooter({
-  grandTotalLabel,
-  grandTotalDisplay,
-  thankYouMessage,
-  dividerLabel,
-  onDelete,
+  bottomInset,
   onVoid,
   onRefund,
   onPriceCorrection,
 }: SaleDetailsFooterProps) {
   return (
-    <>
-      {/* In-flow thank-you note and correction action buttons */}
-      <MotiView
-        from={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ type: 'timing', duration: 480, delay: 320 }}
-      >
-        {(onVoid || onRefund || onPriceCorrection) && (
-          <View className="flex-row gap-2.5 mx-4 mt-6">
-            {onVoid && (
-              <Pressable
-                onPress={onVoid}
-                accessibilityRole="button"
-                accessibilityLabel="Void sale"
-                className="flex-1 bg-rose-50 border border-rose-200 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
-              >
-                <FontAwesome name="ban" size={13} color="#991B1B" />
-                <StyledText
-                  variant="extrabold"
-                  className="text-rose-900 text-xs"
-                  numberOfLines={1}
-                >
-                  Void Sale
-                </StyledText>
-              </Pressable>
-            )}
-            {onRefund && (
-              <Pressable
-                onPress={onRefund}
-                accessibilityRole="button"
-                accessibilityLabel="Refund sale"
-                className="flex-1 bg-amber-50 border border-amber-200 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
-              >
-                <FontAwesome name="undo" size={13} color="#92400E" />
-                <StyledText
-                  variant="extrabold"
-                  className="text-amber-900 text-xs"
-                  numberOfLines={1}
-                >
-                  Refund
-                </StyledText>
-              </Pressable>
-            )}
-            {onPriceCorrection && (
-              <Pressable
-                onPress={onPriceCorrection}
-                accessibilityRole="button"
-                accessibilityLabel="Correct price"
-                className="flex-1 bg-paper-50 border border-warm-300 py-3 px-2 rounded-2xl items-center justify-center flex-row gap-1.5 active:opacity-80 shadow-sm"
-              >
-                <FontAwesome name="pencil" size={13} color="#623418" />
-                <StyledText
-                  variant="extrabold"
-                  className="text-ink-800 text-xs"
-                  numberOfLines={1}
-                >
-                  Edit Price
-                </StyledText>
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        <View className="mx-4 mt-7">
-          <ReceiptHeroDivider label={dividerLabel ?? 'thank you'} tone="sage" />
-          <StyledText
-            variant="regular"
-            className="text-ink-500 text-xs text-center mt-3"
-            style={styles.thankYouText}
-          >
-            {thankYouMessage}
-          </StyledText>
-        </View>
-      </MotiView>
-
-      {/* Sticky grand-total plate */}
-      <MotiView
-        from={{ opacity: 0, translateY: 30 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 520, delay: 220 }}
-        className="absolute bottom-0 left-0 right-0"
-      >
-        <View className="px-4 pb-5 pt-3">
-          <View className="bg-cinnamon-500 rounded-3xl shadow-paper-deep px-5 py-4 flex-row items-center justify-between overflow-hidden">
-            <View className="flex-1">
-              <StyledText
-                variant="medium"
-                className="label-caps text-paper-200 opacity-90"
-              >
-                {grandTotalLabel}
-              </StyledText>
-              <View className="flex-row items-baseline mt-1">
-                <StyledText
-                  variant="medium"
-                  className="text-paper-100 text-base mr-1"
-                  style={styles.totalLabel}
-                >
-                  ₱
-                </StyledText>
-                <StyledText
-                  variant="black"
-                  className="text-paper-50 text-3xl"
-                  style={styles.totalAmount}
-                >
-                  {grandTotalDisplay}
-                </StyledText>
-              </View>
-            </View>
-
-            <Pressable
-              onPress={onDelete}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Delete sale"
-              className="w-12 h-12 rounded-full bg-semantic-danger items-center justify-center shadow-paper active:opacity-80"
-              style={styles.deleteButton}
-            >
-              <FontAwesome name="trash" size={16} color="#FFF1EA" />
-            </Pressable>
-          </View>
-        </View>
-      </MotiView>
-    </>
+    <MotiView
+      from={{ opacity: 0, translateY: 24 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 240, delay: 120 }}
+      className="absolute bottom-0 left-0 right-0 bg-paper-200 border-t border-paper-300 px-4 pt-3"
+      style={{ paddingBottom: bottomInset + 12 }}
+    >
+      <View className="flex-row gap-2.5">
+        <ActionButton icon="ban" label="Void" color="#C13030" onPress={onVoid} />
+        <ActionButton icon="undo" label="Refund" color="#623418" onPress={onRefund} />
+        <ActionButton icon="pencil" label="Edit price" color="#0E0C0A" onPress={onPriceCorrection} />
+      </View>
+    </MotiView>
   );
 }
-
-// ─── Stable style references ──────────────────────────────────────────────────────
-// Hoisted to module scope so inline objects are never re-allocated on render.
-const styles = StyleSheet.create({
-  thankYouText: { lineHeight: 18 },
-  totalLabel: { letterSpacing: -0.5 },
-  totalAmount: { letterSpacing: -0.5 },
-  deleteButton: { marginLeft: 12 },
-});

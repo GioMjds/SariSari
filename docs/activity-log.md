@@ -503,3 +503,39 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `getCreditKPIs`: 3 queries instead of 7. Today filters use the local day as a UTC range through `datetime()`. A scratch check against the old SQL matched in 300 random trials with mixed date formats around midnight (Asia/Manila).
 - Migration v25 adds expression indexes `idx_payments_datetime` and `idx_credit_transactions_datetime` on `datetime(date)`. The query plan shows SEARCH instead of SCAN for the range filters.
 - Pending: `getAllCustomers` full-history aggregation, cloud upload reading the whole DB as base64 on resume, and the catalog seed on every launch.
+
+## 2026-11-22 - Sale details (resibo) screen redesign
+
+- Merged hero, item list, and thank-you note into one continuous `ReceiptHero` ticket; removed the double horizontal margin.
+- Fixed line totals for wholesale lines: price is per sold unit, so lines now use `sold_unit_qty`, not deducted pieces.
+- Fixed the Items meta row: it now shows line count and summed pieces instead of labelling line count as pcs.
+- Cancelled sales (`cancelled_at`) show a VOIDED / REFUNDED / CORRECTED stamp, a dated notice, a struck total, and hide correction actions.
+- Void / Refund / Edit price moved into a sticky safe-area bar; delete stays in the header.
+- Added `SaleDetailsSkeleton` for loading, plus not-found and error (retry) states.
+- One entrance animation for the ticket instead of four staggered ones; respects reduced motion.
+- `ReceiptHeroTotal` gained an optional `struck` prop, tabular numerals, and an accessibility label.
+
+## 2026-11-22 - Inventory ledger screen redesign
+
+- Fixed running balances: they are now computed over every entry before search or type filters, so "Bal" stays correct when filtered.
+- Fixed ledger search: it now matches the day and date as well as the time and note.
+- Fixed Movements search: the database already filters by product name and SKU, so the list no longer re-filters client side and drops those matches.
+- Movements rows now lead with the product name; the paged query selects `p.name AS product_name` (select only, no schema change).
+- New `ledgerMath.ts` holds balance, filter, day grouping, totals, and daily buckets, covered by `__tests__/ledgerMath.test.ts`.
+- Hero: product name, SKU and category, on-hand count with the real retail unit, stock status pill, 30-day net, a 30-day in/out strip (`StockStrip`, plain Views), and Added / Sold / Damaged / Corrected totals.
+- Rows are flat grouped lines with sticky day headers that show each day's net change.
+- Top bar shows the product name and count only after the hero scrolls away; state changes on the threshold crossing only.
+- Added error and not-found states; the empty state sits under the hero with a "Log change" button; the extended FAB clears the bottom safe area.
+- Removed `MovementChip` (no other users) and the toolbar's subtitle and legend lines; `TabGuide` still explains the screen.
+- Animations are 220 ms or shorter and respect reduced motion. The list uses tuned render windows and `removeClippedSubviews` on Android.
+- Not done: screenshots and video, because no device or emulator was available.
+
+## 2026-11-22 - Wholesale line amounts in sale corrections
+
+- Root cause: `sale_items.quantity` stores pieces deducted, while `price` is per sold unit. Code that multiplied the two inflated wholesale lines (1 case of 24 at 500 read as 12,000).
+- Added `soldQty` in `utils/saleItems.ts` (`sold_unit_qty ?? quantity`), matching the rule `database/reports.ts` already uses.
+- `correctSalePrice`: per-line delta and the `sales.total` recompute now use sold units. Before, any price correction on a sale with a wholesale line rewrote the total and pushed the inflated delta into cash entries or the utang amount.
+- Display fixes: sale-correction (void/refund) item list, `PriceCorrectionItemRow`, and the `usePriceCorrectionForm` new-total preview.
+- Restored `tests/__setup__/expo-sqlite-mock.ts` (removed in 7b5ba16 but still referenced by `jest.setup.ts`); reset now pauses foreign keys.
+- Added `tests/database/price-correction.test.ts`; it fails on the old SQL (12016 vs 516) and passes now.
+- Not repaired: sale totals already corrupted by past price corrections on wholesale sales.

@@ -1,113 +1,69 @@
 import { StyledText } from '@/components/elements';
-import { MoneyText } from '@/components/ui';
-import { SaleItemWithProduct } from '@/types';
-import { MotiView } from 'moti';
+import { MoneyText, ReceiptHeroTotal } from '@/components/ui';
+import { formatPesos } from '@/lib/money';
+import { SaleWithItems } from '@/types';
+import { soldQty } from '@/utils';
 import { View } from 'react-native';
 
-interface SaleDetailsItemListProps {
-  /** Itemised list for the sale. */
-  items: SaleItemWithProduct[];
-  /** Subtotal — same as sale total; surfaced in the ledger footer. */
-  subtotal: number;
-  /** Header labels (section eyebrow, line-count caption, subtotal label). */
-  sectionLabel: string;
-  subtotalLabel: string;
-}
+// Itemised lines and grand total, printed inside the resibo ticket.
+export function SaleDetailsItemList({ sale }: { sale: SaleWithItems }) {
+  const isCancelled = !!sale.cancelled_at;
+  const totalLabel = isCancelled
+    ? 'Original total'
+    : sale.payment_type === 'credit'
+      ? 'Amount on utang'
+      : 'Total paid';
 
-/**
- * SaleDetailsItemList — receipt-style itemised list for the sale.
- *
- * Layout (top → bottom):
- *   • Section eyebrow with line count.
- *   • Each item: name + qty × price stamp on the left,
- *     line subtotal on the right. Items separated by dashed rules
- *     like a printed receipt.
- *   • Ledger footer (subtotal) at the bottom.
- *
- * The whole section enters as one unit (single MotiView fade+slide)
- * rather than per-row worklets, keeping Reanimated overhead constant
- * regardless of item count.
- */
-export function SaleDetailsItemList({
-  items,
-  subtotal,
-  sectionLabel,
-  subtotalLabel,
-}: SaleDetailsItemListProps) {
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 18 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 480, delay: 140 }}
-    >
-      <View className="mx-4 mt-7">
-        {/* Section eyebrow */}
-        <View className="flex-row items-center justify-between mb-3 px-1">
-          <StyledText variant="black" className="label-caps text-ink-700">
-            {sectionLabel}
-          </StyledText>
-          <View className="flex-row items-center">
-            <View className="w-1.5 h-1.5 rounded-full bg-persimmon-500 mr-1.5" />
-            <StyledText variant="medium" className="text-mono text-ink-500">
-              {items.length} lines
-            </StyledText>
-          </View>
-        </View>
+    <>
+      <View className="mx-5 mt-2 pb-2 flex-row justify-between border-b border-ink-300">
+        <StyledText variant="extrabold" className="label-caps text-ink-400">
+          Item
+        </StyledText>
+        <StyledText variant="extrabold" className="label-caps text-ink-400">
+          Amount
+        </StyledText>
+      </View>
 
-        <View className="bg-paper-50 rounded-3xl shadow-paper border border-ink-100 overflow-hidden">
-          {items.map((item, index) => {
-            const lineTotal = item.quantity * item.price;
-            const isLast = index === items.length - 1;
-            return (
-              <View key={item.id}>
-                <View
-                  className={`px-5 py-4 ${
-                    isLast ? '' : 'border-b border-dashed border-ink-200'
-                  }`}
-                >
-                  <View className="flex-row items-start justify-between">
-                    <View className="flex-1 pr-3">
-                      <StyledText
-                        variant="extrabold"
-                        className="text-ink-900 text-base"
-                        numberOfLines={2}
-                      >
-                        {item.product_name}
+      <View className="mx-5 mb-4">
+        {sale.items.map((item, index) => {
+          const qty = soldQty(item);
+          const unit = item.sold_unit_name ?? 'Pc';
+          const lineTotal = qty * item.price;
+          const isWholesale = !!item.conversion_factor;
+          return (
+            <View
+              key={item.id}
+              accessible
+              accessibilityLabel={`${item.product_name}, ${qty} ${unit} at ${formatPesos(item.price)}, ${formatPesos(lineTotal)}`}
+              className={`py-3 flex-row items-start ${
+                index < sale.items.length - 1 ? 'border-b border-dashed border-ink-200' : ''
+              }`}
+            >
+              <View className="flex-1 pr-3">
+                <StyledText variant="extrabold" className="text-ink-900 text-base" numberOfLines={2}>
+                  {item.product_name}
+                </StyledText>
+                <View className="flex-row items-center flex-wrap mt-1">
+                  <StyledText variant="medium" className="text-mono text-ink-500 text-sm">
+                    {qty} {unit} × {formatPesos(item.price)}
+                  </StyledText>
+                  {isWholesale && (
+                    <View className="ml-2 bg-paper-200 rounded-md px-1.5 py-0.5">
+                      <StyledText variant="medium" className="text-mono text-ink-700 text-xs">
+                        {item.conversion_factor} pcs each
                       </StyledText>
-                      <View className="flex-row items-center mt-1.5">
-                        <View className="bg-paper-200 rounded-md px-2 py-0.5">
-                          <StyledText
-                            variant="medium"
-                            className="text-mono text-ink-700"
-                          >
-                            {item.quantity}×
-                          </StyledText>
-                        </View>
-                        <MoneyText
-                          value={item.price}
-                          className="text-mono text-ink-700 text-sm ml-3"
-                        />
-                      </View>
                     </View>
-                    <MoneyText
-                      value={lineTotal}
-                      className="text-ink-900 text-base"
-                    />
-                  </View>
+                  )}
                 </View>
               </View>
-            );
-          })}
-
-          {/* Ledger footer — dashes + subtotal line */}
-          <View className="bg-paper-100 px-5 py-3 flex-row items-center justify-between border-t border-dashed border-ink-300">
-            <StyledText variant="medium" className="label-caps text-ink-500">
-              {subtotalLabel}
-            </StyledText>
-            <MoneyText value={subtotal} className="text-base text-ink-900" />
-          </View>
-        </View>
+              <MoneyText value={lineTotal} className="text-ink-900 text-base" />
+            </View>
+          );
+        })}
       </View>
-    </MotiView>
+
+      <ReceiptHeroTotal label={totalLabel} amount={sale.total} struck={isCancelled} />
+    </>
   );
 }

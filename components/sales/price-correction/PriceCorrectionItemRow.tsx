@@ -3,6 +3,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { formatPesos, tryParsePesosInput } from '@/lib/money';
+import { soldQty } from '@/utils';
 
 type PriceCorrectionItemRowProps = {
   item: {
@@ -38,8 +39,9 @@ export const PriceCorrectionItemRow: React.FC<PriceCorrectionItemRowProps> = ({
   const isPriceChanged = hasEdited && parsedNewPrice !== item.price;
   const isInvalid = hasEdited && !(parsedNewPrice > 0);
 
-  const origLineTotal = item.price * item.quantity;
-  const newLineTotal = parsedNewPrice * item.quantity;
+  const qty = soldQty(item);
+  const origLineTotal = item.price * qty;
+  const newLineTotal = parsedNewPrice * qty;
   const itemDelta = newLineTotal - origLineTotal;
 
   const inputContainerClass = isInvalid
@@ -56,7 +58,7 @@ export const PriceCorrectionItemRow: React.FC<PriceCorrectionItemRowProps> = ({
         <View className="flex-1 mr-3 flex-row items-center gap-2">
           <View className="bg-paper-200 px-2 py-0.5 rounded-md border border-ink-100">
             <StyledText variant="extrabold" className="text-ink-900 text-xs">
-              {item.quantity}x
+              {qty}x
             </StyledText>
           </View>
           <View className="flex-1">
