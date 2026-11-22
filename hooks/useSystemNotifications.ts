@@ -6,6 +6,7 @@ import type { Href } from 'expo-router';
 import {
   requestNotificationPermissions,
   setupNotificationChannels,
+  triggerAlertSummaryNotification,
   triggerLowStockNotification,
   triggerOverdueDebtNotification,
   updateAppIconBadge,
@@ -62,27 +63,38 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
       }
       if (cancelled) return;
 
-      let changed = false;
-      alerts.forEach((alert) => {
+      const fresh = alerts.filter((alert) => {
         const alertKey = `${alert.id}-${alert.subtitle}`;
-        if (notifiedAlertIdsRef.current.has(alertKey)) return;
+        if (notifiedAlertIdsRef.current.has(alertKey)) return false;
         notifiedAlertIdsRef.current.add(alertKey);
-        changed = true;
-
-        if (alert.type === 'low_stock') {
-          const match = alert.subtitle.match(/\d+/);
-          const qty = alert.subtitle.includes('Out of stock')
-            ? 0
-            : match?.[0]
-              ? parseInt(match[0], 10)
-              : 0;
-          triggerLowStockNotification(alert.title, qty);
-        } else if (alert.type === 'overdue_debts') {
-          triggerOverdueDebtNotification(alert.title, alert.subtitle);
-        }
+        return true;
       });
 
-      if (changed) {
+      // Several new alerts of one type become a single summary, so a backlog never floods native calls.
+      const lowStock = fresh.filter((alert) => alert.type === 'low_stock');
+      const overdue = fresh.filter((alert) => alert.type === 'overdue_debts');
+      const [firstLowStock] = lowStock;
+      const [firstOverdue] = overdue;
+
+      if (lowStock.length > 1) {
+        void triggerAlertSummaryNotification('low_stock', lowStock.length);
+      } else if (firstLowStock) {
+        const match = firstLowStock.subtitle.match(/\d+/);
+        const qty = firstLowStock.subtitle.includes('Out of stock')
+          ? 0
+          : match?.[0]
+            ? parseInt(match[0], 10)
+            : 0;
+        void triggerLowStockNotification(firstLowStock.title, qty);
+      }
+
+      if (overdue.length > 1) {
+        void triggerAlertSummaryNotification('overdue_debts', overdue.length);
+      } else if (firstOverdue) {
+        void triggerOverdueDebtNotification(firstOverdue.title, firstOverdue.subtitle);
+      }
+
+      if (fresh.length > 0) {
         if (notifiedAlertIdsRef.current.size > MAX_STORED_KEYS) {
           const keep = [...notifiedAlertIdsRef.current].slice(-MAX_STORED_KEYS);
           notifiedAlertIdsRef.current = new Set(keep);

@@ -9,7 +9,7 @@ import {
   setGettingStartedDismissed,
 } from '@/lib/gettingStartedStorage';
 import { useCustomers } from './useCredits';
-import { useProducts } from './useProducts';
+import { useProductStockSummary } from './useProducts';
 import { useHasSales } from './useSales';
 
 /**
@@ -23,7 +23,7 @@ export function useGettingStarted(): {
   progress: GettingStartedProgress;
   dismiss: () => void;
 } {
-  const { getAllProductsQuery } = useProducts();
+  const stockSummaryQuery = useProductStockSummary();
   const { data: hasSales, isSuccess: salesLoaded } = useHasSales();
   const { data: customers, isSuccess: customersLoaded } = useCustomers('all');
   const [dismissed, setDismissed] = useState<boolean | null>(null);
@@ -38,7 +38,7 @@ export function useGettingStarted(): {
     };
   }, []);
 
-  const productCount = getAllProductsQuery.data?.length ?? 0;
+  const productCount = stockSummaryQuery.data?.total ?? 0;
   const customerCount = customers?.length ?? 0;
 
   const progress = useMemo(
@@ -52,7 +52,7 @@ export function useGettingStarted(): {
   );
 
   const loaded =
-    getAllProductsQuery.isSuccess &&
+    stockSummaryQuery.isSuccess &&
     salesLoaded &&
     customersLoaded &&
     dismissed !== null;

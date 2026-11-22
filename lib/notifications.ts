@@ -90,6 +90,36 @@ export async function triggerLowStockNotification(
   }
 }
 
+/** One notification for several new alerts of a type, so a backlog never fires one per item. */
+export async function triggerAlertSummaryNotification(
+  type: 'low_stock' | 'overdue_debts',
+  count: number,
+): Promise<string | null> {
+  const isStock = type === 'low_stock';
+  try {
+    return await Notifications.scheduleNotificationAsync({
+      content: {
+        title: isStock ? 'Low Stock Alert' : 'Overdue Credit',
+        body: isStock
+          ? `${count} items are low or out of stock. Tap to restock.`
+          : `${count} customers have overdue balances. Tap to collect.`,
+        sound: 'default',
+        data: {
+          targetPath: isStock ? '/inventory' : '/(tabs)/customers/collection',
+          type,
+        },
+      },
+      trigger:
+        Platform.OS === 'android'
+          ? { channelId: isStock ? 'low-stock-channel' : 'overdue-debt-channel' }
+          : null,
+    });
+  } catch (error) {
+    console.error(`${TAG} Error triggering ${type} summary notification:`, error);
+    return null;
+  }
+}
+
 export async function triggerOverdueDebtNotification(
   customerName: string,
   amountFormatted: string,

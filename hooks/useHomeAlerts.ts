@@ -1,26 +1,19 @@
 import { useMemo } from 'react';
 import { useCreditKPIs, useCustomers } from './useCredits';
-import { useProducts } from './useProducts';
+import { useLowStockProducts } from './useProducts';
 import { formatPesos } from '@/lib/money';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 import type { DynamicHomeAlert } from './useSystemNotifications';
 
 export function useHomeAlerts() {
-  const { getAllProductsQuery } = useProducts();
+  const { data: lowStockProducts } = useLowStockProducts();
   const { data: creditKpis } = useCreditKPIs();
   const { data: overdueCustomers } = useCustomers('overdue');
-
-  const products = getAllProductsQuery.data;
-
-  const lowStockProducts = useMemo(() => {
-    if (!products || products.length === 0) return [];
-    return products.filter((p) => (p.quantity ?? 0) <= LOW_STOCK_THRESHOLD);
-  }, [products]);
 
   const alerts = useMemo<DynamicHomeAlert[]>(() => {
     const list: DynamicHomeAlert[] = [];
 
-    lowStockProducts.forEach((p) => {
+    lowStockProducts?.forEach((p) => {
       list.push({
         id: `stock-${p.id}`,
         type: 'low_stock',

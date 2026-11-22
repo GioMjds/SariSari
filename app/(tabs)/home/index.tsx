@@ -45,7 +45,7 @@ function HomeScreen() {
   const tabBarBottomOffset = useTabBarBottomOffset();
   const {
     stats,
-    products,
+    productCount,
     recentSales,
     topProduct,
     goal,
@@ -59,7 +59,7 @@ function HomeScreen() {
   const changeLogPayload = useMemo(
     () => ({
       stats,
-      products,
+      productCount,
       recentSales,
       topProduct,
       goal,
@@ -71,7 +71,7 @@ function HomeScreen() {
     }),
     [
       stats,
-      products,
+      productCount,
       recentSales,
       topProduct,
       goal,
@@ -152,7 +152,7 @@ function HomeScreen() {
 
       {isError ? (
         <DashboardErrorState onRetry={refetchAll} />
-      ) : products.length === 0 && stats.transactionCount === 0 ? (
+      ) : productCount === 0 && stats.transactionCount === 0 ? (
         <DashboardEmptyState
           onAddProduct={goAddProduct}
           onStartFirstSale={goNewSale}

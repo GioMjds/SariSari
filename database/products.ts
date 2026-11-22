@@ -577,6 +577,42 @@ export const getAllProducts = async (): Promise<Product[]> => {
   return await db.getAllAsync<Product>('SELECT * FROM products ORDER BY name');
 };
 
+export interface ProductStockSummary {
+  total: number;
+  outOfStock: number;
+  /** Quantity above 0 and below the threshold. */
+  lowStock: number;
+  /** Quantity at or below the threshold, out of stock included. */
+  atOrBelowThreshold: number;
+}
+
+/** Stock counts in one row, so startup screens never load the whole products table. */
+export const getProductStockSummary = async (
+  threshold: number,
+): Promise<ProductStockSummary> => {
+  const row = await db.getFirstAsync<ProductStockSummary>(
+    `SELECT
+       COUNT(*) AS total,
+       COALESCE(SUM(quantity = 0), 0) AS outOfStock,
+       COALESCE(SUM(quantity > 0 AND quantity < ?), 0) AS lowStock,
+       COALESCE(SUM(quantity <= ?), 0) AS atOrBelowThreshold
+     FROM products`,
+    [threshold, threshold],
+  );
+  return row ?? { total: 0, outOfStock: 0, lowStock: 0, atOrBelowThreshold: 0 };
+};
+
+export type LowStockProduct = Pick<Product, 'id' | 'name' | 'quantity'>;
+
+export const getLowStockProducts = async (
+  threshold: number,
+): Promise<LowStockProduct[]> => {
+  return await db.getAllAsync<LowStockProduct>(
+    'SELECT id, name, quantity FROM products WHERE quantity <= ? ORDER BY name',
+    [threshold],
+  );
+};
+
 export const getProductBySku = async (sku: string): Promise<Product | null> => {
   const result = await db.getFirstAsync<Product>(
     'SELECT * FROM products WHERE sku = ?',

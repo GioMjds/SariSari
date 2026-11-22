@@ -10,6 +10,8 @@ import {
   updateProductCategory,
   getProductsPage,
   getFastLaneProducts,
+  getProductStockSummary,
+  getLowStockProducts,
   type ProductsPageCursor,
   type ProductFilterType,
   toggleProductFavorite,
@@ -28,6 +30,7 @@ import {
 } from '@tanstack/react-query';
 import { saveProductImageLocal, deleteLocalProductImage } from '@/lib';
 import { catalogKeys } from './useCatalog';
+import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
 
 const PAGE_SIZE = 30;
 
@@ -55,7 +58,23 @@ export const productKeys = {
       alert ?? '',
     ] as const,
   fastLaneProducts: () => [...productKeys.all, 'fastLaneProducts'] as const,
+  stockSummary: () => [...productKeys.all, 'stockSummary'] as const,
+  lowStock: () => [...productKeys.all, 'lowStock'] as const,
 };
+
+export function useProductStockSummary() {
+  return useQuery({
+    queryKey: productKeys.stockSummary(),
+    queryFn: () => getProductStockSummary(LOW_STOCK_THRESHOLD),
+  });
+}
+
+export function useLowStockProducts() {
+  return useQuery({
+    queryKey: productKeys.lowStock(),
+    queryFn: () => getLowStockProducts(LOW_STOCK_THRESHOLD),
+  });
+}
 
 export function invalidateProductDependencies(
   queryClient: QueryClient,

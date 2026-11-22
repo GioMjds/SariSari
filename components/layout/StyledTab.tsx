@@ -22,7 +22,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { useProducts } from '@/hooks/useProducts';
+import { useProductStockSummary } from '@/hooks/useProducts';
 import { useCreditKPIs } from '@/hooks/useCredits';
 
 export const TAB_BAR_TOTAL_OFFSET = 68;
@@ -59,7 +59,6 @@ const INACTIVE_LABEL_COLOR = '#C8C0B2';
 const ACTIVE_PILL_COLOR = '#E85A1F';
 const BADGE_COLOR = '#C62828';
 const BAR_COLOR = '#150903';
-const LOW_STOCK_THRESHOLD = 5;
 
 const TAB_ROOTS = {
   '/sales': '/(tabs)/sales/pos' as Href,
@@ -251,18 +250,16 @@ export const StyledTab = memo(() => {
     [pathname],
   );
 
-  const { getAllProductsQuery } = useProducts();
+  const { data: stockSummary } = useProductStockSummary();
   const { data: creditKpis } = useCreditKPIs();
 
-  const badges = useMemo<Record<string, number>>(() => {
-    const lowStock = (getAllProductsQuery.data ?? []).filter(
-      (p) => p.quantity <= LOW_STOCK_THRESHOLD,
-    ).length;
-    return {
-      '/inventory': lowStock,
+  const badges = useMemo<Record<string, number>>(
+    () => ({
+      '/inventory': stockSummary?.atOrBelowThreshold ?? 0,
       '/customers': creditKpis?.overdueCount ?? 0,
-    };
-  }, [getAllProductsQuery.data, creditKpis?.overdueCount]);
+    }),
+    [stockSummary?.atOrBelowThreshold, creditKpis?.overdueCount],
+  );
 
   const handlePress = useCallback(
     (href: Href) => {

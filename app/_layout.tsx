@@ -37,6 +37,8 @@ configureReanimatedLogger({
 
 SplashScreen.preventAutoHideAsync();
 
+const STARTUP_CHECKS_DELAY_MS = 5000;
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -116,7 +118,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!fontsLoaded || !i18nReady || !dbReady || dbInitError) return;
-    void runStartupChecks(schedulerInputs);
+    // Wait so the snapshot and WAL checkpoint do not queue ahead of first-screen queries.
+    const startupChecksTimer = setTimeout(
+      () => void runStartupChecks(schedulerInputs),
+      STARTUP_CHECKS_DELAY_MS,
+    );
     const unsubCounter = subscribeCounter(schedulerInputs);
     const subAppState = AppState.addEventListener('change', (state) => {
       if (state === 'background' || state === 'inactive') {
@@ -136,6 +142,7 @@ export default function RootLayout() {
       }
     });
     return () => {
+      clearTimeout(startupChecksTimer);
       unsubCounter();
       subAppState.remove();
     };

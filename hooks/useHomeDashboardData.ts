@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { useFinancialTotals } from './useFinancial';
 import { useCreditKPIs } from './useCredits';
-import { useProducts } from './useProducts';
+import { useProductStockSummary } from './useProducts';
 import { useRecentSales, useTodayStats } from './useSales';
 import { useReportKPIs, useTopSellingProducts } from './useReports';
 import { getDateRangeFromType } from '@/utils';
@@ -25,15 +25,14 @@ export function useHomeDashboardData() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { getAllProductsQuery } = useProducts();
+  const stockSummaryQuery = useProductStockSummary();
   const todayStatsQuery = useTodayStats();
   // Only 3 recent sales are rendered — fetch only what we need.
   const { data: recentSalesData, isLoading: recentLoading } = useRecentSales(3);
   const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
 
   const { data: todayStats } = todayStatsQuery;
-  const { data: productsData, isLoading: productsLoading } =
-    getAllProductsQuery;
+  const { data: stockSummary, isLoading: productsLoading } = stockSummaryQuery;
 
   const todayRange = useMemo(() => getDateRangeFromType('today'), []);
   const todayDate = useMemo(
@@ -57,26 +56,22 @@ export function useHomeDashboardData() {
     [todayKpisData],
   );
 
-  // Stable identity regardless of undefined → [] flip.
-  const products = useMemo(() => productsData ?? [], [productsData]);
+  const productCount = stockSummary?.total ?? 0;
   const recentSales = useMemo<SaleWithItems[]>(
     () => recentSalesData ?? [],
     [recentSalesData],
   );
 
-  const lowStockProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    return products.filter((p) => (p.quantity ?? 0) <= 5);
-  }, [products]);
-
   const homeStateInput = useMemo(
     () => ({
-      productQuantities: products.map((p) => p.quantity ?? 0),
+      productCount,
+      outOfStockCount: stockSummary?.outOfStock ?? 0,
+      lowStockCount: stockSummary?.lowStock ?? 0,
       hasAnySales: (todayStats?.transaction_count ?? 0) > 0,
       overdueCount: creditKpis?.overdueCount ?? 0,
       hour: new Date().getHours(),
     }),
-    [products, todayStats, creditKpis],
+    [productCount, stockSummary, todayStats, creditKpis],
   );
 
   const { goal, suggestions } = useMemo(
@@ -92,8 +87,8 @@ export function useHomeDashboardData() {
   }, [topSellingToday]);
 
   const isError = useMemo(
-    () => todayStatsQuery.error || getAllProductsQuery.error || todayKpisError,
-    [todayStatsQuery.error, getAllProductsQuery.error, todayKpisError],
+    () => todayStatsQuery.error || stockSummaryQuery.error || todayKpisError,
+    [todayStatsQuery.error, stockSummaryQuery.error, todayKpisError],
   );
 
   const refetchAll = useCallback(async () => {
@@ -118,7 +113,7 @@ export function useHomeDashboardData() {
       todaySalesTotal: todayStats?.total ?? 0,
       transactionCount: todayStats?.cash_count ?? 0,
       profitMargin,
-      lowStockCount: lowStockProducts.length,
+      lowStockCount: stockSummary?.atOrBelowThreshold ?? 0,
       overdueCount: creditKpis?.overdueCount ?? 0,
       overdueAmount: creditKpis?.totalOverdueAmount ?? 0,
       expensesToday: todayCashOut?.paidExpenses ?? 0,
@@ -127,7 +122,7 @@ export function useHomeDashboardData() {
     [
       todayStats,
       profitMargin,
-      lowStockProducts.length,
+      stockSummary,
       creditKpis,
       todayCashOut,
     ],
@@ -135,7 +130,7 @@ export function useHomeDashboardData() {
 
   return {
     stats,
-    products,
+    productCount,
     recentSales,
     topProduct,
     goal,

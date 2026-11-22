@@ -1,5 +1,3 @@
-import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-
 export type HomeDestination =
   | 'addProduct'
   | 'inventory'
@@ -25,7 +23,10 @@ export interface HomeRecommendation {
 }
 
 export interface HomeStateInput {
-  productQuantities: number[];
+  productCount: number;
+  outOfStockCount: number;
+  /** Products with quantity above 0 and below LOW_STOCK_THRESHOLD. */
+  lowStockCount: number;
   hasAnySales: boolean;
   overdueCount: number;
   hour: number;
@@ -39,14 +40,11 @@ export interface HomeState {
 }
 
 export function resolveHomeState(input: HomeStateInput): HomeState {
-  const outOfStockCount = input.productQuantities.filter((q) => q === 0).length;
-  const lowStockCount = input.productQuantities.filter(
-    (q) => q > 0 && q < LOW_STOCK_THRESHOLD,
-  ).length;
+  const { outOfStockCount, lowStockCount } = input;
 
   let goal: HomeRecommendation;
 
-  if (input.productQuantities.length === 0) {
+  if (input.productCount === 0) {
     goal = { kind: 'setupCatalog', destination: 'addProduct' };
   } else if (outOfStockCount > 0) {
     goal = {
