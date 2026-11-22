@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RestockSheet } from '@/components/inventory/modals/';
+import { AddCategorySheet } from '@/components/inventory/category/AddCategorySheet';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { BarcodeScannerModal } from '@/components/ui';
 import { useStockSheetSignal } from '@/stores';
@@ -109,6 +110,7 @@ export function InventoryModalsHost({
         onClose={handleCloseTxForm}
         onSuccess={handleCloseTxForm}
       />
+      <AddCategorySheet />
       <BarcodeScannerModal
         mode="single"
         visible={scannerOpen}

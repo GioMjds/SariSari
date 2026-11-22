@@ -18,7 +18,11 @@ import {
 } from '@/components/inventory/products';
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import { InventoryErrorState } from '@/components/inventory/InventoryErrorState';
-import { useInventorySelection, useToastStore } from '@/stores';
+import {
+  useAddCategorySheet,
+  useInventorySelection,
+  useToastStore,
+} from '@/stores';
 import { type AlertKind, CategoryFilterBar } from '@/components/inventory';
 import { SearchBar } from '@/components/ui';
 import type { Product } from '@/types/products.types';
@@ -267,10 +271,7 @@ function ProductsScreen() {
     [router],
   );
 
-  const handleOpenAddCategory = useCallback(
-    () => router.push('/(edit-forms)/add-category' as Href),
-    [router],
-  );
+  const handleOpenAddCategory = useAddCategorySheet((s) => s.show);
 
   const handleSelectCategory = useCallback(
     (name: string | undefined) => router.setParams({ category: name ?? '' }),

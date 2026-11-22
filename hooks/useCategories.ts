@@ -14,7 +14,6 @@ import {
   UpdateCategoryParams,
 } from '@/types/categories.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 
 export function useGetCategory(id: number) {
   return useQuery({
@@ -34,7 +33,6 @@ export function useGetCategoryByName(name: string) {
 
 export function useCategories() {
   const queryClient = useQueryClient();
-  const router = useRouter();
   const addToast = useToastStore((state) => state.addToast);
 
   // Query: Get all categories
@@ -57,7 +55,6 @@ export function useCategories() {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['categories-with-count'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      router.replace('/(tabs)/inventory/products');
       addToast({
         message: i18n.t('toastCategoryAdded', { ns: 'inventory' }),
         variant: 'success',

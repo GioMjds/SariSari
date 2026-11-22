@@ -9,6 +9,7 @@ import { SariMascot } from '@/components/mascot';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { useCategories } from '@/hooks';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useAddCategorySheet } from '@/stores';
 import { CategoryWithCount } from '@/types';
 import { CategoryActionSheet } from './CategoryActionSheet';
 import { CATEGORY_TINTS, CategoryCard } from './CategoryCard';
@@ -27,13 +28,10 @@ function CategoriesTabComponent() {
   const fabClearance = useFabClearance();
   const [refreshing, setRefreshing] = useState(false);
   const [mode, setMode] = useState<SheetMode>(null);
-  // Kept after close so the form title does not flip while it slides out.
-  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
   const [selected, setSelected] = useState<CategoryWithCount | null>(null);
 
   const {
     getCategoriesWithCountQuery,
-    insertCategoryMutation,
     updateCategoryMutation,
     deleteCategoryMutation,
   } = useCategories();
@@ -50,9 +48,9 @@ function CategoriesTabComponent() {
   const takenNames = useMemo(
     () =>
       categories
-        .filter((c) => formMode !== 'edit' || c.id !== selected?.id)
+        .filter((c) => c.id !== selected?.id)
         .map((c) => c.name.trim().toLowerCase()),
-    [categories, formMode, selected?.id],
+    [categories, selected?.id],
   );
 
   const onRefresh = useCallback(async () => {
@@ -64,14 +62,10 @@ function CategoriesTabComponent() {
   const closeSheet = useCallback(() => setMode(null), []);
   const openRename = () => {
     setMode(null);
-    setFormMode('edit');
     setTimeout(() => setMode('form'), SHEET_SWAP_MS);
   };
 
-  const openAdd = useCallback(() => {
-    setFormMode('add');
-    setMode('form');
-  }, []);
+  const openAdd = useAddCategorySheet((s) => s.show);
   const openActions = useCallback((category: CategoryWithCount) => {
     setSelected(category);
     setMode('actions');
@@ -90,15 +84,12 @@ function CategoriesTabComponent() {
   const handleDelete = (category: CategoryWithCount) =>
     deleteCategoryMutation.mutate(category.id, { onSuccess: closeSheet });
 
-  const handleSubmit = (name: string) => {
-    if (formMode === 'edit' && selected) {
-      updateCategoryMutation.mutate(
-        { id: selected.id, name },
-        { onSuccess: closeSheet },
-      );
-    } else {
-      insertCategoryMutation.mutate({ name }, { onSuccess: closeSheet });
-    }
+  const handleRename = (name: string) => {
+    if (!selected) return;
+    updateCategoryMutation.mutate(
+      { id: selected.id, name },
+      { onSuccess: closeSheet },
+    );
   };
 
   const renderItem = useCallback(
@@ -160,11 +151,11 @@ function CategoriesTabComponent() {
 
       <CategoryFormSheet
         visible={mode === 'form'}
-        mode={formMode}
-        initialName={formMode === 'edit' ? (selected?.name ?? '') : ''}
+        mode="edit"
+        initialName={selected?.name ?? ''}
         takenNames={takenNames}
-        saving={insertCategoryMutation.isPending || updateCategoryMutation.isPending}
-        onSubmit={handleSubmit}
+        saving={updateCategoryMutation.isPending}
+        onSubmit={handleRename}
         onClose={closeSheet}
       />
     </View>

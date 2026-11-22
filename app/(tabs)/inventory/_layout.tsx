@@ -7,6 +7,7 @@ import { InventorySpeedDialFab } from '@/components/inventory';
 import { INVENTORY_SUB_TABS, type InventorySubTab } from '@/constants/tabs';
 import { useTabProgress } from '@/hooks';
 import { InventoryModalsHost } from '@/components/inventory/InventoryModalsHost';
+import { useAddCategorySheet } from '@/stores';
 
 const TOP_TABS_SCREEN_OPTIONS = {
   tabBarStyle: { display: 'none' as const },
@@ -64,10 +65,7 @@ export default function InventoryLayout() {
     () => router.push('/(edit-forms)/add-product' as Href),
     [router],
   );
-  const openAddCategory = useCallback(
-    () => router.push('/(edit-forms)/add-category' as Href),
-    [router],
-  );
+  const openAddCategory = useAddCategorySheet((s) => s.show);
   const openAddSupplier = useCallback(
     () => router.push('/(edit-forms)/add-supplier' as Href),
     [router],

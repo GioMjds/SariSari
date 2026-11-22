@@ -493,7 +493,7 @@ export function ProductFilterModal({
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Add new category"
-                  accessibilityHint="Opens the add-category modal"
+                  accessibilityHint="Opens the new category sheet"
                   hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                   className="px-3.5 py-2.5 rounded-pill border border-dashed border-persimmon-400 bg-persimmon-50 flex-row items-center gap-1.5"
                 >

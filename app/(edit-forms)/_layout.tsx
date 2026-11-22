@@ -18,7 +18,6 @@ export default function EditFormsLayout() {
         <Stack.Screen name="edit-product/[id]" />
         <Stack.Screen name="product-details/[id]" />
         <Stack.Screen name="inventory-ledger/[productId]" />
-        <Stack.Screen name="add-category/index" />
         <Stack.Screen name="add-supplier/index" />
         <Stack.Screen name="add-payment/[id]" />
         <Stack.Screen name="add-credit/[id]" />
