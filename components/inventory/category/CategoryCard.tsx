@@ -12,7 +12,7 @@ interface CategoryCardProps {
 }
 
 // Tile and bar tints cycle by id so neighbours look distinct; the name still carries the meaning.
-const TINTS = [
+export const CATEGORY_TINTS = [
   { tile: 'bg-persimmon-50', text: 'text-persimmon-600', bar: 'bg-persimmon-400' },
   { tile: 'bg-sage-50', text: 'text-sage-600', bar: 'bg-sage-300' },
   { tile: 'bg-semantic-info-50', text: 'text-semantic-info', bar: 'bg-semantic-info' },
@@ -26,7 +26,7 @@ export const CategoryCard = memo(function CategoryCard({
   onPress,
   onMore,
 }: CategoryCardProps) {
-  const tint = TINTS[category.id % TINTS.length]!;
+  const tint = CATEGORY_TINTS[category.id % CATEGORY_TINTS.length]!;
   const count = category.product_count;
   const share = maxCount > 0 ? Math.max((count / maxCount) * 100, count > 0 ? 6 : 0) : 0;
   const countLabel = `${count} ${count === 1 ? 'product' : 'products'}`;

@@ -1,47 +1,35 @@
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { Href, useRouter } from 'expo-router';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
 import { StyledText } from '@/components/elements';
-import { CategoryCard } from './CategoryCard';
-import { CategoriesSkeleton } from './CategoriesSkeleton';
-import { useCategories } from '@/hooks';
-import { CategoryWithCount } from '@/types';
-import { Alert } from '@/utils';
 import { RefreshableFlatList } from '@/components/ui';
 import { useTabBarBottomOffset } from '@/components/layout';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { Href, useRouter } from 'expo-router';
-import { useState, memo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  TextInput,
-  View,
-  Platform,
-  KeyboardAvoidingView,
-  TouchableOpacity,
-} from 'react-native';
-import { MotiView } from 'moti';
+import { SariMascot } from '@/components/mascot';
+import { useCategories } from '@/hooks';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { CategoryWithCount } from '@/types';
+import { CategoryActionSheet } from './CategoryActionSheet';
+import { CATEGORY_TINTS, CategoryCard } from './CategoryCard';
+import { CategoryFormSheet } from './CategoryFormSheet';
+import { CategoriesSkeleton } from './CategoriesSkeleton';
 
-interface CategoryFormData {
-  name: string;
-}
+type SheetMode = 'actions' | 'form' | null;
+
+// Slightly longer than the Sheet exit so two native modals never present at once.
+const SHEET_SWAP_MS = 200;
+const MIX_SEGMENTS = 4;
 
 function CategoriesTabComponent() {
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [showAddModal, setShowAddModal] = useState<boolean>(false);
-  const [showEditModal, setShowEditModal] = useState<boolean>(false);
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryWithCount | null>(null);
-
-  const { handleSubmit, control, reset } = useForm({
-    mode: 'onBlur',
-    defaultValues: {
-      name: '',
-    },
-  });
-
   const router = useRouter();
+  const reducedMotion = useReducedMotion();
+  const tabBarBottomOffset = useTabBarBottomOffset();
+  const [refreshing, setRefreshing] = useState(false);
+  const [mode, setMode] = useState<SheetMode>(null);
+  // Kept after close so the form title does not flip while it slides out.
+  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
+  const [selected, setSelected] = useState<CategoryWithCount | null>(null);
 
   const {
     getCategoriesWithCountQuery,
@@ -49,595 +37,281 @@ function CategoriesTabComponent() {
     updateCategoryMutation,
     deleteCategoryMutation,
   } = useCategories();
+  const { data: categories = [], isLoading, refetch } = getCategoriesWithCountQuery;
 
-  const {
-    data: categories = [],
-    isLoading,
-    refetch,
-  } = getCategoriesWithCountQuery;
+  const { maxCount, totalProducts } = useMemo(
+    () => ({
+      maxCount: Math.max(0, ...categories.map((c) => c.product_count)),
+      totalProducts: categories.reduce((sum, c) => sum + c.product_count, 0),
+    }),
+    [categories],
+  );
 
-  const tabBarBottomOffset = useTabBarBottomOffset();
-  const maxCount = Math.max(0, ...categories.map((c) => c.product_count));
-  const totalProducts = categories.reduce((sum, c) => sum + c.product_count, 0);
+  const takenNames = useMemo(
+    () =>
+      categories
+        .filter((c) => formMode !== 'edit' || c.id !== selected?.id)
+        .map((c) => c.name.trim().toLowerCase()),
+    [categories, formMode, selected?.id],
+  );
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
+  }, [refetch]);
+
+  const closeSheet = useCallback(() => setMode(null), []);
+  const openRename = () => {
+    setMode(null);
+    setFormMode('edit');
+    setTimeout(() => setMode('form'), SHEET_SWAP_MS);
   };
 
-  const handleAddCategory = () => {
-    reset({ name: '' });
-    setShowAddModal(true);
+  const openAdd = useCallback(() => {
+    setFormMode('add');
+    setMode('form');
+  }, []);
+  const openActions = useCallback((category: CategoryWithCount) => {
+    setSelected(category);
+    setMode('actions');
+  }, []);
+  const openCategory = useCallback(
+    (category: CategoryWithCount) =>
+      router.push(`/(edit-forms)/category/${category.id}` as Href),
+    [router],
+  );
+
+  const handleViewProducts = (category: CategoryWithCount) => {
+    setMode(null);
+    openCategory(category);
   };
 
-  const handleEditCategory = (category: CategoryWithCount) => {
-    setSelectedCategory(category);
-    reset({ name: category.name });
-    setShowEditModal(true);
-  };
+  const handleDelete = (category: CategoryWithCount) =>
+    deleteCategoryMutation.mutate(category.id, { onSuccess: closeSheet });
 
-  const handleDeleteCategory = (category: CategoryWithCount) => {
-    setSelectedCategory(category);
-    if (category.product_count > 0) {
-      Alert.alert(
-        'Category Has Products',
-        `This category has ${category.product_count} product(s). Deleting it will remove the category from all products. Continue?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete Anyway',
-            style: 'destructive',
-            onPress: () => setShowDeleteModal(true),
-          },
-        ],
+  const handleSubmit = (name: string) => {
+    if (formMode === 'edit' && selected) {
+      updateCategoryMutation.mutate(
+        { id: selected.id, name },
+        { onSuccess: closeSheet },
       );
     } else {
-      setShowDeleteModal(true);
+      insertCategoryMutation.mutate({ name }, { onSuccess: closeSheet });
     }
   };
 
-  const handleCategoryPress = (category: CategoryWithCount) => {
-    router.push(`/(edit-forms)/category/${category.id}` as any);
-  };
+  const renderItem = useCallback(
+    ({ item, index }: { item: CategoryWithCount; index: number }) => (
+      <MotiView
+        from={{ opacity: reducedMotion ? 1 : 0, translateY: reducedMotion ? 0 : 10 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{
+          type: 'timing',
+          duration: reducedMotion ? 0 : 240,
+          delay: reducedMotion ? 0 : Math.min(index, 8) * 30,
+        }}
+      >
+        <CategoryCard
+          category={item}
+          maxCount={maxCount}
+          onPress={openCategory}
+          onMore={openActions}
+        />
+      </MotiView>
+    ),
+    [reducedMotion, maxCount, openCategory, openActions],
+  );
 
-  const handleOpenActionSheet = (category: CategoryWithCount) => {
-    setSelectedCategory(category);
-  };
-
-  const handleCloseActionSheet = () => {
-    setSelectedCategory(null);
-  };
-
-  const handleSheetViewProducts = () => {
-    if (!selectedCategory) return;
-    const id = selectedCategory.id;
-    setSelectedCategory(null);
-    router.push(`/(edit-forms)/category/${id}` as Href);
-  };
-
-  const handleSheetEdit = () => {
-    if (!selectedCategory) return;
-    const cat = selectedCategory;
-    setSelectedCategory(null);
-    handleEditCategory(cat);
-  };
-
-  const handleSheetDelete = () => {
-    if (!selectedCategory) return;
-    const cat = selectedCategory;
-    setSelectedCategory(null);
-    handleDeleteCategory(cat);
-  };
-
-  const submitAddCategory = async (data: CategoryFormData) => {
-    if (!data.name.trim()) {
-      Alert.alert('Error', 'Please enter a category name');
-      return;
-    }
-
-    await insertCategoryMutation.mutateAsync({ name: data.name.trim() });
-    setShowAddModal(false);
-    reset({ name: '' });
-  };
-
-  const submitEditCategory = async (data: CategoryFormData) => {
-    if (!selectedCategory) return;
-    if (!data.name.trim()) {
-      Alert.alert('Error', 'Please enter a category name');
-      return;
-    }
-
-    await updateCategoryMutation.mutateAsync({
-      id: selectedCategory.id,
-      name: data.name.trim(),
-    });
-    setShowEditModal(false);
-    setSelectedCategory(null);
-    reset({ name: '' });
-  };
-
-  const confirmDelete = async () => {
-    if (!selectedCategory) return;
-
-    await deleteCategoryMutation.mutateAsync(selectedCategory.id);
-    setShowDeleteModal(false);
-    setSelectedCategory(null);
-  };
-
-  if (isLoading) {
-    return <CategoriesSkeleton />;
-  }
+  if (isLoading) return <CategoriesSkeleton />;
 
   return (
     <View className="flex-1">
-      {/* Categories list with the app's custom pull-to-refresh */}
       <RefreshableFlatList<CategoryWithCount>
         isRefreshing={refreshing}
         onRefresh={onRefresh}
         data={categories}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{
-              type: 'timing',
-              duration: 240,
-              delay: Math.min(index, 8) * 30,
-            }}
-          >
-            <CategoryCard
-              category={item}
-              maxCount={maxCount}
-              onPress={handleCategoryPress}
-              onMore={handleOpenActionSheet}
-            />
-          </MotiView>
-        )}
+        renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 88 }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           categories.length > 0 ? (
-            <View className="flex-row items-center justify-between px-4 pt-2 pb-3">
-              <View>
-                <StyledText variant="extrabold" className="text-ink-900 text-lg">
-                  {categories.length}{' '}
-                  {categories.length === 1 ? 'category' : 'categories'}
-                </StyledText>
-                <StyledText
-                  variant="regular"
-                  className="text-ink-500 text-caption"
-                  style={{ fontVariant: ['tabular-nums'] }}
-                >
-                  {totalProducts} {totalProducts === 1 ? 'product' : 'products'} sorted
-                </StyledText>
-              </View>
-              <Pressable
-                onPress={handleAddCategory}
-                accessibilityRole="button"
-                accessibilityLabel="Add category"
-                className="h-11 px-4 rounded-full bg-persimmon-500 flex-row items-center gap-x-1.5 active:bg-persimmon-600"
-              >
-                <Ionicons name="add" size={18} color="#FFFFFF" />
-                <StyledText variant="extrabold" className="text-white text-sm">
-                  New
-                </StyledText>
-              </Pressable>
-            </View>
+            <ShelfSummary
+              categories={categories}
+              totalProducts={totalProducts}
+              onAdd={openAdd}
+            />
           ) : null
         }
-        ListEmptyComponent={
-          <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ type: 'timing', duration: 400 }}
-            className="flex-1 justify-center items-center px-8 mt-24"
-          >
-            <FontAwesome
-              name="folder-open"
-              size={64}
-              color="#E85A1F"
-              style={{ opacity: 0.3 }}
-            />
-            <StyledText
-              variant="semibold"
-              className="text-ink-700 text-lg mt-4 text-center"
-            >
-              No categories yet
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-sm mt-2 text-center"
-            >
-              Create categories to organize your products
-            </StyledText>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={handleAddCategory}
-              className="bg-persimmon-500 rounded-pill px-6 py-3 mt-6 shadow-persimmon-glow"
-            >
-              <StyledText variant="extrabold" className="text-white text-base">
-                Add Category
-              </StyledText>
-            </TouchableOpacity>
-          </MotiView>
-        }
+        ListEmptyComponent={<CategoriesEmpty onAdd={openAdd} />}
       />
 
-      {/* Action Sheet Modal (Overflow menu) */}
-      <Modal
-        visible={!!selectedCategory && !showAddModal && !showEditModal && !showDeleteModal}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCloseActionSheet}
-        statusBarTranslucent
-      >
+      <CategoryActionSheet
+        visible={mode === 'actions'}
+        category={selected}
+        totalProducts={totalProducts}
+        deleting={deleteCategoryMutation.isPending}
+        onClose={closeSheet}
+        onViewProducts={handleViewProducts}
+        onRename={openRename}
+        onDelete={handleDelete}
+      />
+
+      <CategoryFormSheet
+        visible={mode === 'form'}
+        mode={formMode}
+        initialName={formMode === 'edit' ? (selected?.name ?? '') : ''}
+        takenNames={takenNames}
+        saving={insertCategoryMutation.isPending || updateCategoryMutation.isPending}
+        onSubmit={handleSubmit}
+        onClose={closeSheet}
+      />
+    </View>
+  );
+}
+
+interface ShelfSummaryProps {
+  categories: CategoryWithCount[];
+  totalProducts: number;
+  onAdd: () => void;
+}
+
+/** Header card: shelf count, product total and a stacked bar of the biggest shelves. */
+const ShelfSummary = memo(function ShelfSummary({
+  categories,
+  totalProducts,
+  onAdd,
+}: ShelfSummaryProps) {
+  const mix = useMemo(() => {
+    const sorted = categories
+      .filter((c) => c.product_count > 0)
+      .sort((a, b) => b.product_count - a.product_count);
+    const top = sorted.slice(0, MIX_SEGMENTS).map((c) => ({
+      key: String(c.id),
+      name: c.name,
+      count: c.product_count,
+      bar: CATEGORY_TINTS[c.id % CATEGORY_TINTS.length]!.bar,
+    }));
+    const rest = sorted
+      .slice(MIX_SEGMENTS)
+      .reduce((sum, c) => sum + c.product_count, 0);
+    return rest > 0
+      ? [...top, { key: 'other', name: 'Other', count: rest, bar: 'bg-ink-300' }]
+      : top;
+  }, [categories]);
+
+  const pct = (n: number) => Math.round((n / totalProducts) * 100);
+  const mixLabel = mix.map((m) => `${m.name} ${pct(m.count)}%`).join(', ');
+  const shelfWord = categories.length === 1 ? 'category' : 'categories';
+
+  return (
+    <View className="mx-4 mt-2 mb-3 p-4 rounded-card bg-paper-50 border border-ink-100">
+      <View className="flex-row items-start justify-between gap-x-3">
+        <View className="flex-1">
+          <StyledText variant="medium" className="text-caption text-ink-500">
+            Your shelves
+          </StyledText>
+          <View className="flex-row items-baseline gap-x-1.5">
+            <StyledText
+              variant="black"
+              className="text-h1 text-ink-900"
+              style={{ fontVariant: ['tabular-nums'] }}
+            >
+              {categories.length}
+            </StyledText>
+            <StyledText variant="semibold" className="text-body text-ink-600">
+              {shelfWord}
+            </StyledText>
+          </View>
+          <StyledText
+            variant="regular"
+            className="text-caption text-ink-500"
+            style={{ fontVariant: ['tabular-nums'] }}
+          >
+            {totalProducts} {totalProducts === 1 ? 'product' : 'products'} sorted
+          </StyledText>
+        </View>
         <Pressable
-          className="flex-1 justify-end"
-          onPress={handleCloseActionSheet}
-          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
+          onPress={onAdd}
+          accessibilityRole="button"
+          accessibilityLabel="Add category"
+          className="h-11 px-4 rounded-pill bg-persimmon-500 flex-row items-center gap-x-1.5 active:bg-persimmon-700 press-scale"
         >
-          <Pressable
-            className="bg-paper-50 rounded-t-2xl p-6 pb-10 border-t border-ink-100"
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View className="items-center mb-4">
-              <View className="w-12 h-1 bg-ink-200 rounded-full mb-4" />
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-lg text-center"
-              >
-                {selectedCategory?.name}
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-ink-500 text-xs text-center mt-1"
-              >
-                Select action to perform
-              </StyledText>
-            </View>
-
-            <View className="gap-2">
-              {/* Action: View Products */}
-              <TouchableOpacity
-                onPress={handleSheetViewProducts}
-                activeOpacity={0.7}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
-              >
-                <FontAwesome
-                  name="list-alt"
-                  size={18}
-                  color="#E85A1F"
-                  className="mr-3 w-6 text-center"
-                />
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-800 text-base"
-                >
-                  View Products
-                </StyledText>
-              </TouchableOpacity>
-
-              {/* Action: Edit Category Name */}
-              <TouchableOpacity
-                onPress={handleSheetEdit}
-                activeOpacity={0.7}
-                className="flex-row items-center py-4 px-4 bg-paper-100 rounded-xl border border-ink-100"
-              >
-                <FontAwesome
-                  name="pencil"
-                  size={18}
-                  color="#4A2610"
-                  className="mr-3 w-6 text-center"
-                />
-                <StyledText
-                  variant="extrabold"
-                  className="text-cinnamon-500 text-base"
-                >
-                  Edit Category Name
-                </StyledText>
-              </TouchableOpacity>
-
-              {/* Action: Delete Category */}
-              <TouchableOpacity
-                onPress={handleSheetDelete}
-                activeOpacity={0.7}
-                className="flex-row items-center py-4 px-4 bg-red-50 rounded-xl border border-red-200"
-              >
-                <FontAwesome
-                  name="trash"
-                  size={18}
-                  color="#C22D2D"
-                  className="mr-3 w-6 text-center"
-                />
-                <StyledText
-                  variant="extrabold"
-                  className="text-semantic-danger text-base"
-                >
-                  Delete Category
-                </StyledText>
-              </TouchableOpacity>
-
-              {/* Divider */}
-              <View className="h-[1px] bg-ink-100 my-2" />
-
-              {/* Action: Cancel */}
-              <TouchableOpacity
-                onPress={handleCloseActionSheet}
-                activeOpacity={0.7}
-                className="flex-row items-center py-4 px-4 bg-ink-100 rounded-xl border border-ink-200"
-              >
-                <FontAwesome
-                  name="times"
-                  size={18}
-                  color="#564E45"
-                  className="mr-3 w-6 text-center"
-                />
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-700 text-base"
-                >
-                  Cancel
-                </StyledText>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
+          <Ionicons name="add" size={18} color="#FBF7EE" />
+          <StyledText variant="extrabold" className="text-paper-50 text-sm">
+            New
+          </StyledText>
         </Pressable>
-      </Modal>
+      </View>
 
-      {/* Add Category Modal */}
-      <Modal
-        visible={showAddModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowAddModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 justify-end"
-            onPress={() => setShowAddModal(false)}
-            style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
-          >
-            <Pressable
-              className="bg-paper-50 rounded-t-2xl p-6 max-h-[80%] w-full border-t border-ink-100"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-xl mb-4"
-              >
-                Add Category
-              </StyledText>
-
-              {/* Name Input */}
-              <View className="mb-6">
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-700 text-sm mb-2"
-                >
-                  Category Name *
-                </StyledText>
-                <Controller
-                  control={control}
-                  name="name"
-                  rules={{ required: true }}
-                  render={({ field: { onChange, value } }) => (
-                    <TextInput
-                      placeholder="e.g., Beverages"
-                      value={value}
-                      onChangeText={onChange}
-                      className="bg-ink-50 border border-ink-100 rounded-xl px-4 py-3 font-stack-sans text-base text-ink-900"
-                      placeholderTextColor="#A89F90"
-                    />
-                  )}
-                />
-              </View>
-
-              {/* Buttons */}
-              <View className="gap-3 mt-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={handleSubmit(submitAddCategory)}
-                  disabled={insertCategoryMutation.isPending}
-                  className="bg-persimmon-500 rounded-xl py-3.5 shadow-persimmon-glow"
-                >
-                  {insertCategoryMutation.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <StyledText
-                      variant="extrabold"
-                      className="text-white text-center text-base"
-                    >
-                      Add Category
-                    </StyledText>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setShowAddModal(false)}
-                  className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-center text-base"
-                  >
-                    Cancel
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Edit Category Modal */}
-      <Modal
-        visible={showEditModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowEditModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          className="flex-1"
-        >
-          <Pressable
-            className="flex-1 justify-end"
-            onPress={() => setShowEditModal(false)}
-            style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
-          >
-            <Pressable
-              className="bg-paper-50 rounded-t-2xl p-6 max-h-[80%] w-full border-t border-ink-100"
-              onPress={(e) => e.stopPropagation()}
-            >
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-xl mb-4"
-              >
-                Edit Category
-              </StyledText>
-
-              {/* Name Input */}
-              <View className="mb-6">
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-700 text-sm mb-2"
-                >
-                  Category Name *
-                </StyledText>
-                <Controller
-                  control={control}
-                  name="name"
-                  rules={{ required: true }}
-                  render={({ field: { onChange, value } }) => (
-                    <TextInput
-                      placeholder="e.g., Beverages"
-                      value={value}
-                      onChangeText={onChange}
-                      className="bg-ink-50 border border-ink-100 rounded-xl px-4 py-3 font-stack-sans text-base text-ink-900"
-                      placeholderTextColor="#A89F90"
-                    />
-                  )}
-                />
-              </View>
-
-              {/* Buttons */}
-              <View className="gap-3 mt-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={handleSubmit(submitEditCategory)}
-                  disabled={updateCategoryMutation.isPending}
-                  className="bg-persimmon-500 rounded-xl py-3.5 shadow-persimmon-glow"
-                >
-                  {updateCategoryMutation.isPending ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <StyledText
-                      variant="extrabold"
-                      className="text-white text-center text-base"
-                    >
-                      Save Changes
-                    </StyledText>
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => setShowEditModal(false)}
-                  className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
-                >
-                  <StyledText
-                    variant="semibold"
-                    className="text-ink-700 text-center text-base"
-                  >
-                    Cancel
-                  </StyledText>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        visible={showDeleteModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDeleteModal(false)}
-      >
+      {totalProducts > 0 ? (
         <View
-          className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: 'rgba(14, 12, 10, 0.6)' }}
+          accessible
+          accessibilityLabel={`Product mix: ${mixLabel}`}
+          className="mt-4 pt-3 border-t border-dashed border-paper-400"
         >
-          <View className="bg-white rounded-2xl p-6 w-full max-w-sm border border-ink-100">
-            <View className="items-center mb-4">
-              <View className="bg-red-50 rounded-full p-4 mb-3">
-                <FontAwesome
-                  name="exclamation-triangle"
-                  size={32}
-                  color="#C13030"
-                />
+          <View className="flex-row h-2.5 rounded-pill overflow-hidden gap-x-0.5 bg-ink-100">
+            {mix.map((m) => (
+              <View key={m.key} className={m.bar} style={{ flex: m.count }} />
+            ))}
+          </View>
+          <View className="flex-row flex-wrap gap-x-4 gap-y-1.5 mt-2.5">
+            {mix.map((m) => (
+              <View key={m.key} className="flex-row items-center gap-x-1.5 max-w-[46%]">
+                <View className={`w-2 h-2 rounded-pill ${m.bar}`} />
+                <StyledText
+                  variant="medium"
+                  numberOfLines={1}
+                  className="text-caption text-ink-700 shrink"
+                >
+                  {m.name}
+                </StyledText>
+                <StyledText
+                  variant="extrabold"
+                  className="text-caption text-ink-900"
+                  style={{ fontVariant: ['tabular-nums'] }}
+                >
+                  {pct(m.count)}%
+                </StyledText>
               </View>
-              <StyledText
-                variant="extrabold"
-                className="text-ink-900 text-xl mb-2 text-center"
-              >
-                Delete Category?
-              </StyledText>
-              <StyledText
-                variant="regular"
-                className="text-ink-500 text-sm text-center"
-              >
-                {`Are you sure you want to delete "${selectedCategory?.name || ''}"?`}
-              </StyledText>
-              {selectedCategory && selectedCategory.product_count > 0 && (
-                <StyledText
-                  variant="semibold"
-                  className="text-semantic-danger text-sm mt-2 text-center"
-                >
-                  This will remove the category from{' '}
-                  {selectedCategory.product_count} product(s).
-                </StyledText>
-              )}
-            </View>
-            <View className="gap-3">
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={confirmDelete}
-                disabled={deleteCategoryMutation.isPending}
-                className="bg-semantic-danger rounded-xl py-3.5 active:opacity-70"
-              >
-                {deleteCategoryMutation.isPending ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <StyledText
-                    variant="extrabold"
-                    className="text-white text-center text-base"
-                  >
-                    Yes, Delete Category
-                  </StyledText>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => setShowDeleteModal(false)}
-                className="bg-ink-100 border border-ink-200 rounded-xl py-3.5"
-              >
-                <StyledText
-                  variant="semibold"
-                  className="text-ink-700 text-center text-base"
-                >
-                  Cancel
-                </StyledText>
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
         </View>
-      </Modal>
+      ) : null}
+    </View>
+  );
+});
+
+function CategoriesEmpty({ onAdd }: { onAdd: () => void }) {
+  return (
+    <View className="mx-4 mt-6 px-6 pt-6 pb-7 rounded-card bg-paper-50 border border-ink-100 items-center">
+      <SariMascot state="inventory" size={150} defer />
+      <StyledText
+        variant="black"
+        accessibilityRole="header"
+        className="text-h2 text-ink-900 mt-3 text-center"
+      >
+        Wala pang kategorya
+      </StyledText>
+      <StyledText
+        variant="regular"
+        className="text-body text-ink-500 mt-1.5 text-center"
+      >
+        Group drinks, snacks and canned goods into shelves so every item is
+        quicker to find.
+      </StyledText>
+      <Pressable
+        onPress={onAdd}
+        accessibilityRole="button"
+        accessibilityLabel="Add your first category"
+        className="mt-5 min-h-[48px] px-6 rounded-pill bg-persimmon-500 flex-row items-center gap-x-2 shadow-persimmon-glow active:bg-persimmon-700 press-scale"
+      >
+        <FontAwesome name="plus" size={13} color="#FBF7EE" />
+        <StyledText variant="extrabold" className="text-paper-50 text-[15px]">
+          Add category
+        </StyledText>
+      </Pressable>
     </View>
   );
 }
