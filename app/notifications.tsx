@@ -1,6 +1,6 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
@@ -45,6 +45,7 @@ type Row =
   | { kind: 'alert'; key: string; alert: DynamicHomeAlert };
 
 const PALENGKE_MIN_ITEMS = 3;
+const CONTENT_MAX_WIDTH = 560;
 
 const matches = (f: (typeof FILTERS)[number], a: DynamicHomeAlert) =>
   f.types.length === 0 || f.types.includes(a.type);
@@ -53,12 +54,15 @@ function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('notifications');
-  const { alerts, isLoading } = useHomeAlerts();
+  const { alerts, isLoading, isError, refetch } = useHomeAlerts();
   const [filter, setFilter] = useState<Filter>('all');
   // Held as an object so RestockSheet sees a stable reference and keeps its form state.
-  const [restockTarget, setRestockTarget] = useState<{ id: number } | null>(
-    null,
-  );
+  const [restockTarget, setRestockTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  // Mounted on first use only: the sheet reads every product and supplier.
+  const [restockMounted, setRestockMounted] = useState(false);
   const [followUpFor, setFollowUpFor] = useState<DynamicHomeAlert | null>(
     null,
   );
@@ -111,7 +115,8 @@ function NotificationsScreen() {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
             () => {},
           );
-          setRestockTarget({ id });
+          setRestockMounted(true);
+          setRestockTarget({ id, name: alert.title });
         } else router.push(productPath);
         return;
       }
@@ -176,8 +181,26 @@ function NotificationsScreen() {
     [t, isMarking, markingId, handleAction],
   );
 
+  // The resolved card leaves the list, so say what happened instead of dropping focus.
+  const handleRestocked = useCallback(() => {
+    if (restockTarget) {
+      AccessibilityInfo.announceForAccessibility(
+        t('announceRestocked', { name: restockTarget.name }),
+      );
+    }
+  }, [restockTarget, t]);
+
   const showPalengke =
-    stockCount >= PALENGKE_MIN_ITEMS && (filter === 'all' || filter === 'stock');
+    !isError &&
+    stockCount >= PALENGKE_MIN_ITEMS &&
+    (filter === 'all' || filter === 'stock');
+  const subtitle = isError
+    ? undefined
+    : isLoading
+      ? t('heroLoading')
+      : alerts.length === 0
+        ? t('subtitleClear')
+        : t('subtitle', { count: alerts.length });
 
   const listHeader = (
     <>
@@ -185,8 +208,10 @@ function NotificationsScreen() {
         total={alerts.length}
         summary={summary}
         isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
       />
-      {alerts.length > 0 ? (
+      {!isError && alerts.length > 0 ? (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -237,7 +262,11 @@ function NotificationsScreen() {
   const listFooter = showPalengke ? (
     <View className="mx-4 mt-4 p-4 rounded-2xl border border-dashed border-ink-300 bg-paper-100">
       <View className="flex-row items-center">
-        <FontAwesome name="shopping-basket" size={18} color="#623418" />
+        <FontAwesome
+          name="shopping-basket"
+          size={18}
+          className="text-cinnamon-500"
+        />
         <StyledText variant="extrabold" className="ml-2 text-base text-ink-900">
           {t('palengkeTitle')}
         </StyledText>
@@ -262,23 +291,19 @@ function NotificationsScreen() {
       <StatusBar style="dark" backgroundColor="#F7F6F2" />
       <MoreDetailHeader
         title={t('title')}
-        subtitle={
-          alerts.length === 0
-            ? t('subtitleClear')
-            : t('subtitle', { count: alerts.length })
-        }
+        {...(subtitle ? { subtitle } : {})}
         onBack={handleBack}
         backAccessibilityLabel={t('back')}
       />
       <Animated.FlatList
-        data={rows}
+        data={isError ? [] : rows}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         itemLayoutAnimation={LinearTransition.duration(220)}
         ListHeaderComponent={listHeader}
         ListFooterComponent={listFooter}
         ListEmptyComponent={
-          alerts.length > 0 ? (
+          !isError && alerts.length > 0 ? (
             <StyledText
               variant="medium"
               className="text-ink-500 text-sm text-center py-10"
@@ -288,14 +313,25 @@ function NotificationsScreen() {
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        // Capped and centered so tablets get a readable column; side insets clear landscape cutouts.
+        contentContainerStyle={{
+          width: '100%',
+          maxWidth: CONTENT_MAX_WIDTH,
+          alignSelf: 'center',
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+          paddingBottom: insets.bottom + 24,
+        }}
       />
 
-      <RestockSheet
-        visible={restockTarget !== null}
-        initialProductId={restockTarget}
-        onClose={() => setRestockTarget(null)}
-      />
+      {restockMounted ? (
+        <RestockSheet
+          visible={restockTarget !== null}
+          initialProductId={restockTarget}
+          onSubmitted={handleRestocked}
+          onClose={() => setRestockTarget(null)}
+        />
+      ) : null}
       <FollowUpSheet
         visible={followUpFor !== null}
         name={followUpFor?.title ?? ''}

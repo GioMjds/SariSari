@@ -109,7 +109,7 @@ export const StoreHeader = memo(function StoreHeader() {
             accessibilityLabel={`Notifications, ${alertCount} active alerts`}
             className="w-11 h-11 rounded-full bg-paper-50 items-center justify-center border border-ink-100 relative shadow-sm"
           >
-            <FontAwesome5 name="bell" size={16} color="#44403C" />
+            <FontAwesome5 name="bell" size={16} className="text-ink-600" />
             {alertCount > 0 ? (
               <View
                 className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-semantic-danger border-2 border-paper-200 items-center justify-center"
@@ -117,7 +117,7 @@ export const StoreHeader = memo(function StoreHeader() {
               >
                 <StyledText
                   variant="extrabold"
-                  className="text-white text-[10px]"
+                  className="text-white text-[11px]"
                   maxFontSizeMultiplier={1.2}
                 >
                   {alertCount > 9 ? '9+' : alertCount}

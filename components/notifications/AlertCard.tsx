@@ -24,13 +24,13 @@ const TONES = {
   danger: {
     chip: 'bg-semantic-danger-50',
     text: 'text-semantic-danger',
-    icon: '#C13030',
+    icon: 'text-semantic-danger',
     bar: 'bg-semantic-danger',
   },
   warning: {
     chip: 'bg-semantic-warning-50',
     text: 'text-ink-700',
-    icon: '#C77B0E',
+    icon: 'text-semantic-warning',
     bar: 'bg-semantic-warning',
   },
 } as const;
@@ -72,9 +72,7 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
     chipLabel = t('chipOverdue', { count: alert.overdueDays ?? 0 });
     figure = formatPesos(alert.amount ?? 0);
     primary = { label: t('actionRecordPayment'), icon: 'money' };
-    secondary = alert.contactedToday
-      ? t('contactedToday')
-      : t('actionContacted');
+    secondary = t('actionContacted');
   } else {
     const pct = Math.round((alert.pctUsed ?? 0) * 100);
     chipLabel = t('chipNearLimit', { pct });
@@ -86,7 +84,6 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
 
   const toneStyle = TONES[tone];
   const isOverdue = alert.type === 'overdue_debts';
-  const contactDisabled = isOverdue && (isBusy || !!alert.contactedToday);
 
   const followUpLabel = alert.followUpBy
     ? t('followUpOn', {
@@ -141,7 +138,7 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
             <FontAwesome
               name={chipIcon}
               size={11}
-              color={toneStyle.icon}
+              className={toneStyle.icon}
               style={{ marginRight: 4 }}
             />
             <StyledText
@@ -176,7 +173,11 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
 
       <View className="px-4 pb-4">
         {meter !== null ? (
-          <View className="mb-3" importantForAccessibility="no-hide-descendants">
+          <View
+            className="mb-3"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
             <View className="h-1.5 rounded-full bg-paper-300 overflow-hidden">
               <View
                 className={`h-full rounded-full ${toneStyle.bar}`}
@@ -201,7 +202,7 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
             <FontAwesome
               name={alert.followUpBy ? 'calendar-check-o' : 'calendar-plus-o'}
               size={14}
-              color="#28231D"
+              className="text-ink-700"
               style={{ marginRight: 8 }}
             />
             <StyledText
@@ -214,60 +215,90 @@ function AlertCardComponent({ alert, isBusy, onAction }: AlertCardProps) {
             <FontAwesome
               name="chevron-right"
               size={11}
-              color="#28231D"
-              style={{ opacity: 0.6 }}
+              className="text-ink-500"
+
             />
           </Pressable>
         ) : null}
 
         {/* Secondary left, primary right; labels wrap, never clip. */}
         <View className="flex-row gap-2">
-          <Pressable
-            onPress={() => onAction(alert, 'secondary')}
-            disabled={contactDisabled}
-            accessibilityRole="button"
-            accessibilityLabel={`${secondary}, ${alert.title}`}
-            accessibilityState={{ disabled: contactDisabled }}
-            className={`flex-1 min-h-12 px-2 py-2 rounded-xl border flex-row items-center justify-center ${
-              isOverdue
-                ? 'border-sage-300 bg-sage-50 active:bg-sage-100'
-                : 'border-paper-400 bg-paper-50 active:bg-paper-100'
-            } ${contactDisabled && !alert.contactedToday ? 'opacity-50' : ''}`}
-          >
-            {isOverdue ? (
+          {isOverdue && alert.contactedToday ? (
+            // Already logged today: a status, not a second tap target.
+            <View
+              accessible
+              accessibilityLabel={`${t('contactedToday')}, ${alert.title}`}
+              className="flex-1 min-h-12 px-2 py-2 rounded-xl bg-sage-50 flex-row items-center justify-center"
+            >
               <FontAwesome
-                name="check-circle"
-                size={14}
-                color="#2C4413"
+                name="check"
+                size={13}
+                className="text-sage-700"
                 style={{ marginRight: 6 }}
               />
-            ) : null}
-            <StyledText
-              variant="extrabold"
-              maxFontSizeMultiplier={1.4}
-              className={`shrink text-center text-sm ${
-                isOverdue ? 'text-sage-700' : 'text-ink-700'
-              }`}
+              <StyledText
+                variant="semibold"
+                maxFontSizeMultiplier={1.4}
+                className="shrink text-center text-sm text-sage-700"
+              >
+                {t('contactedToday')}
+              </StyledText>
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => onAction(alert, 'secondary')}
+              disabled={isBusy}
+              accessibilityRole="button"
+              accessibilityLabel={`${secondary}, ${alert.title}`}
+              accessibilityState={{ disabled: isBusy, busy: isBusy }}
+              className={`flex-1 min-h-12 px-2 py-2 rounded-xl border flex-row items-center justify-center ${
+                isOverdue
+                  ? 'border-sage-300 bg-sage-50 active:bg-sage-100'
+                  : 'border-paper-400 bg-paper-50 active:bg-paper-100'
+              } ${isBusy ? 'opacity-50' : ''}`}
             >
-              {secondary}
-            </StyledText>
-          </Pressable>
+              {isOverdue ? (
+                <FontAwesome
+                  name="check-circle"
+                  size={14}
+                  className="text-sage-700"
+                  style={{ marginRight: 6 }}
+                />
+              ) : null}
+              <StyledText
+                variant="extrabold"
+                maxFontSizeMultiplier={1.4}
+                className={`shrink text-center text-sm ${
+                  isOverdue ? 'text-sage-700' : 'text-ink-700'
+                }`}
+              >
+                {secondary}
+              </StyledText>
+            </Pressable>
+          )}
+          {/* Filled persimmon only where it is urgent; watch cards get the tonal form. */}
           <Pressable
             onPress={() => onAction(alert, 'primary')}
             accessibilityRole="button"
             accessibilityLabel={`${primary.label}, ${alert.title}`}
-            className="flex-1 min-h-12 px-2 py-2 rounded-xl bg-persimmon-600 active:bg-persimmon-700 flex-row items-center justify-center"
+            className={`flex-1 min-h-12 px-2 py-2 rounded-xl flex-row items-center justify-center ${
+              alert.urgent
+                ? 'bg-persimmon-600 active:bg-persimmon-700'
+                : 'border border-persimmon-200 bg-persimmon-50 active:bg-persimmon-100'
+            }`}
           >
             <FontAwesome
               name={primary.icon}
               size={14}
-              color="#FFFFFF"
+              className={alert.urgent ? 'text-white' : 'text-persimmon-700'}
               style={{ marginRight: 6 }}
             />
             <StyledText
               variant="extrabold"
               maxFontSizeMultiplier={1.4}
-              className="shrink text-center text-sm text-white"
+              className={`shrink text-center text-sm ${
+                alert.urgent ? 'text-white' : 'text-persimmon-700'
+              }`}
             >
               {primary.label}
             </StyledText>

@@ -66,5 +66,11 @@ export function useHomeAlerts() {
     alerts,
     alertCount: alerts.length,
     isLoading: lowStock.isLoading || queue.isLoading,
+    // An empty list after a failed read must not pass for "all clear".
+    isError: lowStock.isError || queue.isError,
+    refetch: () => {
+      void lowStock.refetch();
+      void queue.refetch();
+    },
   };
 }
