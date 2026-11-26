@@ -123,6 +123,7 @@ function ProductsScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
     isLoading,
     error,
   } = productsQuery;
@@ -339,6 +340,7 @@ function ProductsScreen() {
           onActionPress={handleActionPress}
           isFetchingNextPage={isFetchingNextPage}
           hasNextPage={hasNextPage}
+          isFetchNextPageError={isFetchNextPageError}
           onEndReached={handleEndReached}
           viewMode={viewMode}
         />

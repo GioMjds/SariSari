@@ -405,6 +405,7 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
   const {
     isLoading: isProductsLoading,
     isFetchingNextPage,
+    isFetchNextPageError,
     hasNextPage,
     fetchNextPage,
   } = productsQuery;
@@ -435,6 +436,7 @@ function CatalogProductsBridge(props: CatalogProductsBridgeProps) {
       onDismissPendingAddProduct={props.onDismissPendingAddProduct}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={hasNextPage}
+      isFetchNextPageError={isFetchNextPageError}
       onEndReached={handleFetchNextPage}
       onRetryFetchNext={handleRetryFetchNext}
       onSearchTextChange={props.onSearchTextChange}

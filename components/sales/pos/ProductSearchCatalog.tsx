@@ -18,6 +18,7 @@ import {
   GRID_COLUMN_STYLE,
   ViewModeToggle,
 } from '@/components/ui/ViewModeToggle';
+import { ListFooterStatus } from '@/components/ui/ListFooterStatus';
 import { Prof } from '@/utils/perf';
 
 interface ProductSearchCatalogProps {
@@ -40,6 +41,7 @@ interface ProductSearchCatalogProps {
   onDismissPendingAddProduct?: () => void;
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
+  isFetchNextPageError?: boolean;
   onEndReached?: () => void;
   onRetryFetchNext?: () => void;
   searchText?: string;
@@ -63,7 +65,9 @@ export function ProductSearchCatalog({
   onDismissPendingAddProduct,
   isFetchingNextPage = false,
   hasNextPage = false,
+  isFetchNextPageError = false,
   onEndReached,
+  onRetryFetchNext,
   // To use for a better data fetching
   searchText,
   onSearchTextChange,
@@ -251,23 +255,14 @@ export function ProductSearchCatalog({
               </View>
             }
             ListFooterComponent={
-              isFetchingNextPage ? (
-                <View className="items-center py-4">
-                  <ActivityIndicator size="small" color="#623418" />
-                  <StyledText
-                    variant="medium"
-                    className="text-ink-500 text-xs mt-2"
-                  >
-                    Loading more...
-                  </StyledText>
-                </View>
-              ) : !hasNextPage && filteredProducts.length > 0 ? (
-                <View className="items-center py-4">
-                  <StyledText variant="medium" className="text-ink-500 text-xs">
-                    End of list
-                  </StyledText>
-                </View>
-              ) : null
+              <ListFooterStatus
+                itemCount={filteredProducts.length}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isFetchNextPageError={isFetchNextPageError}
+                onRetry={onRetryFetchNext}
+                endLabel="End of list"
+              />
             }
           />
         </Prof>

@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
-import { FlatList, ListRenderItemInfo, Platform, View } from 'react-native';
-import { StyledText } from '@/components/elements';
+import { FlatList, ListRenderItemInfo, Platform } from 'react-native';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
+import { ListFooterStatus } from '@/components/ui/ListFooterStatus';
 import { GRID_COLUMN_STYLE } from '@/components/ui/ViewModeToggle';
 import type { ViewMode } from '@/stores/useViewModeStore';
 import { ProductRow } from './ProductRow';
@@ -15,14 +15,12 @@ export interface ProductsListProps {
   onActionPress: (product: Product) => void;
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
+  isFetchNextPageError?: boolean;
   onEndReached?: () => void;
   viewMode?: ViewMode;
 }
 
 const keyExtractor = (item: Product) => String(item.id);
-
-// Matches the 16px gutter both row and grid layouts use.
-const FOOTER_STYLE = { width: '100%', paddingHorizontal: 16 } as const;
 
 export const ProductsList = memo(function ProductsList({
   products,
@@ -31,6 +29,7 @@ export const ProductsList = memo(function ProductsList({
   onActionPress,
   isFetchingNextPage,
   hasNextPage,
+  isFetchNextPageError,
   onEndReached,
   viewMode = 'list',
 }: ProductsListProps) {
@@ -67,28 +66,16 @@ export const ProductsList = memo(function ProductsList({
     [isShortList, fabClearance],
   );
 
-  // Footer spans the full row and sits below the grid gutter so a lone last tile does not crowd it.
-  const listFooter = useMemo(() => {
-    if (isFetchingNextPage) {
-      return (
-        <View className="mt-1 h-12 items-center justify-center flex-row gap-x-2 border-t border-ink-100">
-          <StyledText variant="medium" className="text-cinnamon-500 text-xs">
-            Loading more products...
-          </StyledText>
-        </View>
-      );
-    }
-    if (!hasNextPage && products.length > 0) {
-      return (
-        <View className="mt-1 h-12 items-center justify-center border-t border-ink-100">
-          <StyledText variant="medium" className="text-ink-400 text-xs">
-            End of products
-          </StyledText>
-        </View>
-      );
-    }
-    return null;
-  }, [isFetchingNextPage, hasNextPage, products.length]);
+  const listFooter = (
+    <ListFooterStatus
+      itemCount={products.length}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      isFetchNextPageError={isFetchNextPageError}
+      onRetry={onEndReached}
+      endLabel="End of products"
+    />
+  );
 
   return (
     <FlatList
@@ -105,12 +92,10 @@ export const ProductsList = memo(function ProductsList({
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
-      // Clipping detaches multi-column rows near the end and re-fires onEndReached.
-      removeClippedSubviews={Platform.OS === 'android' && !isGrid}
+      removeClippedSubviews={Platform.OS === 'android'}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.4}
       ListFooterComponent={listFooter}
-      ListFooterComponentStyle={FOOTER_STYLE}
     />
   );
 });
