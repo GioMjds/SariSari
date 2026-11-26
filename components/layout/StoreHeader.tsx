@@ -6,9 +6,8 @@ import { Href, useRouter, useSegments } from 'expo-router';
 import { StyledText } from '@/components/elements';
 import { SariWordmark } from '@/components/brand/SariWordmark';
 import { SariMascot, type SariState } from '@/components/mascot';
-import { NotificationSheet } from './NotificationSheet';
 import { useHomeAlerts, useSystemNotifications } from '@/hooks';
-import { Prof, useChangeLog } from '@/utils/perf';
+import { useChangeLog } from '@/utils/perf';
 
 type SariTab = 'home' | 'sales' | 'inventory' | 'customers' | 'more';
 
@@ -59,29 +58,17 @@ export const StoreHeader = memo(function StoreHeader() {
   const [builtTabs, setBuiltTabs] = useState<SariTab[]>([tab]);
   if (!builtTabs.includes(tab)) setBuiltTabs([...builtTabs, tab]);
 
-  const [isSheetVisible, setSheetVisible] = useState(false);
-
   // Stable payload — alerts is memoized in useHomeAlerts, tab is primitive.
   const changeLogPayload = useMemo(
-    () => ({ tab, alertCount, alerts, isSheetVisible }),
-    [tab, alertCount, alerts, isSheetVisible],
+    () => ({ tab, alertCount, alerts }),
+    [tab, alertCount, alerts],
   );
   useChangeLog('StoreHeader', changeLogPayload);
 
   const handleNotificationSelect = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    setSheetVisible(true);
-  }, []);
-
-  const handleSheetClose = useCallback(() => setSheetVisible(false), []);
-
-  const handleAlertAction = useCallback(
-    (alert: { targetPath: string }) => {
-      setSheetVisible(false);
-      router.push(alert.targetPath as Href);
-    },
-    [router],
-  );
+    router.push('/notifications' as Href);
+  }, [router]);
 
   return (
     <View className="bg-paper-200 px-4 pt-3 pb-2">
@@ -124,20 +111,22 @@ export const StoreHeader = memo(function StoreHeader() {
           >
             <FontAwesome5 name="bell" size={16} color="#44403C" />
             {alertCount > 0 ? (
-              <View className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-cinnamon-500 border border-paper-50" />
+              <View
+                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-semantic-danger border-2 border-paper-200 items-center justify-center"
+                importantForAccessibility="no-hide-descendants"
+              >
+                <StyledText
+                  variant="extrabold"
+                  className="text-white text-[10px]"
+                  maxFontSizeMultiplier={1.2}
+                >
+                  {alertCount > 9 ? '9+' : alertCount}
+                </StyledText>
+              </View>
             ) : null}
           </Pressable>
         </View>
       </View>
-
-      <Prof id="Header:NotificationSheet">
-        <NotificationSheet
-          visible={isSheetVisible}
-          alerts={alerts}
-          onClose={handleSheetClose}
-          onAlertAction={handleAlertAction}
-        />
-      </Prof>
     </View>
   );
 });

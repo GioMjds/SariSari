@@ -78,7 +78,7 @@ export async function triggerLowStockNotification(
             ? `${productName} is out of stock! Tap to restock.`
             : `Only ${quantity} item${quantity === 1 ? '' : 's'} remaining in inventory. Tap to restock.`,
         sound: 'default',
-        data: { targetPath: '/inventory', type: 'low_stock' },
+        data: { targetPath: '/notifications', type: 'low_stock' },
       },
       trigger:
         Platform.OS === 'android' ? { channelId: 'low-stock-channel' } : null,
@@ -105,7 +105,7 @@ export async function triggerAlertSummaryNotification(
           : `${count} customers have overdue balances. Tap to collect.`,
         sound: 'default',
         data: {
-          targetPath: isStock ? '/inventory' : '/(tabs)/customers/collection',
+          targetPath: '/notifications',
           type,
         },
       },
@@ -130,7 +130,7 @@ export async function triggerOverdueDebtNotification(
         title: `Overdue Credit: ${customerName}`,
         body: `Outstanding balance of ${amountFormatted} requires collection.`,
         sound: 'default',
-        data: { targetPath: '/(tabs)/customers/collection', type: 'overdue_debts' },
+        data: { targetPath: '/notifications', type: 'overdue_debts' },
       },
       trigger:
         Platform.OS === 'android'

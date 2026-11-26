@@ -12,13 +12,25 @@ import {
   updateAppIconBadge,
 } from '@/lib/notifications';
 
+export type HomeAlertType = 'low_stock' | 'overdue_debts' | 'near_limit';
+
 export interface DynamicHomeAlert {
-  id: string | number;
-  type: 'low_stock' | 'expiring' | 'overdue_debts';
+  id: string;
+  type: HomeAlertType;
+  /** Urgent alerts list under "Act now"; the rest under "Keep an eye on". */
+  urgent: boolean;
+  /** Product id for stock alerts, customer id for utang alerts. */
+  entityId: number;
   title: string;
+  /** English line used for push bodies and push de-duplication keys. */
   subtitle: string;
-  actionLabel: string;
-  targetPath: string;
+  imageUri: string | null;
+  quantity?: number;
+  amount?: number;
+  overdueDays?: number;
+  pctUsed?: number;
+  followUpBy?: string | null;
+  contactedToday?: boolean;
 }
 
 const TAG = '[useSystemNotifications]';
@@ -79,13 +91,10 @@ export function useSystemNotifications(alerts: DynamicHomeAlert[]) {
       if (lowStock.length > 1) {
         void triggerAlertSummaryNotification('low_stock', lowStock.length);
       } else if (firstLowStock) {
-        const match = firstLowStock.subtitle.match(/\d+/);
-        const qty = firstLowStock.subtitle.includes('Out of stock')
-          ? 0
-          : match?.[0]
-            ? parseInt(match[0], 10)
-            : 0;
-        void triggerLowStockNotification(firstLowStock.title, qty);
+        void triggerLowStockNotification(
+          firstLowStock.title,
+          firstLowStock.quantity ?? 0,
+        );
       }
 
       if (overdue.length > 1) {

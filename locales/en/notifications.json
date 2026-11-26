@@ -1,0 +1,50 @@
+{
+  "title": "Notifications",
+  "back": "Go back",
+  "subtitle_one": "{{count}} needs your attention",
+  "subtitle_other": "{{count}} need your attention",
+  "subtitleClear": "Nothing needs you right now",
+
+  "heroTitle_one": "1 thing needs you today",
+  "heroTitle_other": "{{count}} things need you today",
+  "heroClearTitle": "All clear!",
+  "heroClearBody": "Shelves are stocked and no suki is overdue.",
+  "heroLoading": "Sari is checking the store…",
+  "factOut": "{{count}} out of stock",
+  "factLow": "{{count}} running low",
+  "factOverdue": "{{amount}} overdue",
+  "factNearLimit": "{{count}} near credit limit",
+
+  "filterAll": "All",
+  "filterStock": "Stock",
+  "filterUtang": "Utang",
+  "filterA11y": "{{label}}, {{count}} alerts",
+  "filterEmpty": "Nothing here right now.",
+
+  "sectionUrgent": "Act now",
+  "sectionWatch": "Keep an eye on",
+
+  "chipOut": "Out of stock",
+  "chipLeft": "{{count}} left",
+  "restockAt": "Restock at {{count}}",
+  "chipOverdue_one": "1 day overdue",
+  "chipOverdue_other": "{{count}} days overdue",
+  "chipNearLimit": "{{pct}}% of limit used",
+  "utangLabel": "utang",
+  "contactedToday": "Contacted today",
+  "followUpOn": "Follow up on {{date}}",
+  "followUpNone": "Set a follow-up reminder",
+
+  "actionRestock": "Restock",
+  "actionViewItem": "View item",
+  "actionRecordPayment": "Record payment",
+  "actionContacted": "Mark contacted",
+  "actionViewLedger": "View ledger",
+  "openProductHint": "Opens product details",
+  "openLedgerHint": "Opens this suki's utang ledger",
+
+  "palengkeTitle": "Going to the palengke?",
+  "palengkeBody_one": "Turn this item into a shopping list.",
+  "palengkeBody_other": "Turn these {{count}} items into one shopping list.",
+  "palengkeAction": "Make palengke list"
+}

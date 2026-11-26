@@ -1,0 +1,50 @@
+{
+  "title": "Mga Abiso",
+  "back": "Bumalik",
+  "subtitle_one": "{{count}} ang kailangan ng pansin mo",
+  "subtitle_other": "{{count}} ang kailangan ng pansin mo",
+  "subtitleClear": "Wala kang kailangang asikasuhin ngayon",
+
+  "heroTitle_one": "1 bagay ang kailangan mo ngayon",
+  "heroTitle_other": "{{count}} bagay ang kailangan mo ngayon",
+  "heroClearTitle": "Ayos lahat!",
+  "heroClearBody": "Puno ang paninda at walang overdue na suki.",
+  "heroLoading": "Sinisilip ni Sari ang tindahan…",
+  "factOut": "{{count}} ubos na",
+  "factLow": "{{count}} paubos na",
+  "factOverdue": "{{amount}} overdue",
+  "factNearLimit": "{{count}} malapit sa credit limit",
+
+  "filterAll": "Lahat",
+  "filterStock": "Paninda",
+  "filterUtang": "Utang",
+  "filterA11y": "{{label}}, {{count}} abiso",
+  "filterEmpty": "Walang laman dito ngayon.",
+
+  "sectionUrgent": "Asikasuhin ngayon",
+  "sectionWatch": "Bantayan",
+
+  "chipOut": "Ubos na",
+  "chipLeft": "{{count}} na lang",
+  "restockAt": "Mag-restock sa {{count}}",
+  "chipOverdue_one": "1 araw nang overdue",
+  "chipOverdue_other": "{{count}} araw nang overdue",
+  "chipNearLimit": "{{pct}}% ng limit ang nagamit",
+  "utangLabel": "utang",
+  "contactedToday": "Nakausap na ngayon",
+  "followUpOn": "Sundan sa {{date}}",
+  "followUpNone": "Magtakda ng paalala",
+
+  "actionRestock": "Mag-restock",
+  "actionViewItem": "Tingnan",
+  "actionRecordPayment": "Itala ang bayad",
+  "actionContacted": "Nakausap na",
+  "actionViewLedger": "Tingnan ang talaan",
+  "openProductHint": "Bubuksan ang detalye ng produkto",
+  "openLedgerHint": "Bubuksan ang talaan ng utang ng suki",
+
+  "palengkeTitle": "Pupunta ka ba sa palengke?",
+  "palengkeBody_one": "Gawing listahan ng bibilhin ang item na ito.",
+  "palengkeBody_other": "Gawing isang listahan ang {{count}} item na ito.",
+  "palengkeAction": "Gumawa ng listahan"
+}

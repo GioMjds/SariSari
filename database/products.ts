@@ -602,13 +602,13 @@ export const getProductStockSummary = async (
   return row ?? { total: 0, outOfStock: 0, lowStock: 0, atOrBelowThreshold: 0 };
 };
 
-export type LowStockProduct = Pick<Product, 'id' | 'name' | 'quantity'>;
+export type LowStockProduct = Pick<Product, 'id' | 'name' | 'quantity' | 'image_uri'>;
 
 export const getLowStockProducts = async (
   threshold: number,
 ): Promise<LowStockProduct[]> => {
   return await db.getAllAsync<LowStockProduct>(
-    'SELECT id, name, quantity FROM products WHERE quantity <= ? ORDER BY name',
+    'SELECT id, name, quantity, image_uri FROM products WHERE quantity <= ? ORDER BY name',
     [threshold],
   );
 };

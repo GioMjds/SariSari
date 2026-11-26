@@ -24,7 +24,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onSubmitted?: (productId: number, qty: number) => void;
-  initialProductId: Product | null;
+  initialProductId: Pick<Product, 'id'> | null;
 }
 
 export function RestockSheet({
