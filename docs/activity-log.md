@@ -4,6 +4,23 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-26 — Product Form Audit Fixes
+
+Applied the fixes from the impeccable audit (`.impeccable/audit/2026-11-26T12-51-26Z__components-inventory-products-form.md`).
+
+- **Focus on error:** validated inputs now receive the Controller `ref`, so a failed save focuses and scrolls to the first invalid field instead of doing nothing visible.
+- **Unsaved-changes guard:** both form hooks use `usePreventRemove` (the add-customer pattern) instead of `BackHandler`, so the iOS edge swipe is guarded too. The pending navigation action is dispatched on Discard; a `saved` ref lets save and delete leave without the prompt.
+- **Contrast:** filled buttons with text (Save, Scan, active markup chip) moved from persimmon-500 (about 3.4:1) to persimmon-600 (about 4.6:1).
+- **Touch targets and scaling:** scan buttons, the bundle checkbox and the "Open that product" link are at least 44pt; select rows wrap to two lines.
+- **Tablet:** form content and footer are capped at 640 wide and centered (`FORM_CONTENT_STYLE`, `FORM_MAX_WIDTH`).
+- **Removed:** `useSectionNav` and `PRODUCT_FORM_SECTIONS`, dead since the header strip was removed.
+- **Motion:** the `(edit-forms)` stack uses the platform slide instead of fade. The Product Details hero skips its slide when Reduce Motion is on.
+- **Polish:** the bundle toggle announces as a checkbox; the empty select value uses ink-500.
+
+Not verified on a device or simulator.
+
+---
+
 ## 2026-11-26 — Add/Edit Product Form Redesign and Barcode Fix
 
 ### Overview
@@ -672,3 +689,43 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Polish: section cards and the hero card are flat. The hero card radius dropped to 16px.
 - Skipped: the fade transition stays, per the owner's decision. Hex-to-token for dark mode and the FontAwesome-to-system-icons change are app-wide, so they are not done here.
 - Not verified on a device. The `usePreventRemove` swipe-back block on native-stack iOS is still to confirm by hand.
+
+## 2026-11-26: Notifications screen replaces the floating sheet
+
+- Route: `app/notifications.tsx` is a full-screen page. The header bell pushes it, and tapping a push notification opens it. `components/layout/NotificationSheet.tsx` was deleted.
+- Sari hero: `NotificationsHero` shows Sari's mood from the most pressing alert (`low-stock`, `outstanding-balance`, `utang`, or `balance-cleared` when clear), a headline, and a one-line fact summary. The mood logic is in `summarizeAlerts`, which is tested.
+- Filters: All / Stock / Utang chips with counts. The list is grouped into "Act now" (out of stock, overdue utang) and "Keep an eye on" (low stock, near credit limit).
+- Cards (`AlertCard`): stock cards show the product photo, a stock chip, and a meter against the restock threshold. Restock opens `RestockSheet` in place, and View item opens product details. Overdue cards show the suki photo, days overdue, the balance, and the follow-up reminder (`FollowUpSheet`). They also have Mark contacted (inline mutation) and Record payment. Near-limit cards show a limit meter, View ledger, and Record payment.
+- A "Make palengke list" footer appears when 3 or more stock alerts exist.
+- Data: `DynamicHomeAlert` gained `urgent`, `entityId`, `imageUri`, and numeric fields. It dropped `actionLabel` and `targetPath`. Utang alerts now come from `useCollectionQueue`. `getLowStockProducts` also selects `image_uri`. Push de-duplication keys are unchanged.
+- The bell badge shows the alert count (9+ cap) instead of a dot.
+- Skipped: expiring-soon alerts. The products table has no `expiry_date` column, so they need a schema migration first.
+- Not verified on a device. No screenshots or video yet.
+
+## 2026-11-26: Notifications audit fixes (impeccable audit 13/20)
+
+- Harden: `useHomeAlerts` exposes `isError` and `refetch`. A failed read shows Sari in the `error` state with "Try again" instead of "All clear!", and hides the filters, list, and palengke footer. While loading, the header subtitle reads "Sari is checking the store…" instead of "Nothing needs you right now". The stock meter is hidden from VoiceOver (`accessibilityElementsHidden`). A finished restock is announced through `AccessibilityInfo`.
+- Polish: "Contacted today" is now a non-pressable status, not a disabled button that looks live.
+- Quieter: filled persimmon primary buttons appear only on "Act now" cards. "Keep an eye on" cards use the tonal form (persimmon-50 background, persimmon-700 label, 6.2:1).
+- Optimize: `RestockSheet` mounts on the first Restock tap, so opening the screen no longer reads every product and supplier.
+- Adapt: list content is capped at 560pt and centered. Side safe-area insets are applied for landscape cutouts.
+- Typeset: the bell badge count is 11px (was 10px).
+- Colorize: `lib/css-interop.ts` registers `FontAwesome` and `FontAwesome5` with NativeWind, so icons take token classes (`className="text-ink-700"`). The notification screen, cards, hero, and bell have no hex icon colors left. Other screens can migrate as they are touched.
+- Not verified on a device.
+
+## 2026-11-26: Notifications polish pass
+
+- Copy now matches the Collection tab: "Follow up by {{date}}" and "Set follow-up" (en). The tl strings use "Magtala ng bayad" and "Itakda ang follow-up".
+- The success haptic on "Mark contacted" fires after the write succeeds, so a failed save no longer feels done.
+- This was a source-only pass. No simulator, emulator, or adb was available, so no rendered states were checked.
+
+## 2026-11-26: Suki ledger (credit-details) redesign
+
+- Header: back, avatar, name, and phone/address stay fixed. Statement share moved here. Delete moved to a text button at the bottom of the scroll.
+- `BalanceCard` replaces `CustomerHeroCard` and the `SukiPanel` on this screen. It shows one balance, one status pill (overdue, due soon, settled), open item count with the oldest date, trust tags, the limit meter (no emoji), a stats strip (total utang, total paid, last payment), and Call/SMS.
+- Tabs went from 3 to 2: Utang (open credits oldest first to match FIFO, settled behind a toggle) and Ledger (month groups with month totals, All/Utang/Payments chips, payment method, running balance, 40-row pages). Search shows only at 7+ items.
+- `LedgerActionBar` pins Add Credit and Add Payment to the bottom.
+- New helpers `splitCredits`, `paymentStats`, `groupLedgerByMonth` in `lib/creditDetails.ts`, tested in `components/utang/credit-details/__tests__/ledger.test.ts`.
+- All new copy is in `locales/{en,tl}/utang.json` (`detail*` keys).
+- Removed: Payments and History tab components, `PaymentCard`, `ContactRow`, the old empty states.
+- Not verified on a device. No screenshots or video.
