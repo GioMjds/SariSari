@@ -123,10 +123,13 @@ function NotificationsScreen() {
       if (kind === 'primary') {
         router.push(`/(edit-forms)/add-payment/${id}` as Href);
       } else if (kind === 'secondary' && alert.type === 'overdue_debts') {
-        Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success,
-        ).catch(() => {});
-        markContacted(id);
+        // Success haptic only once the contact is saved, so a failed write never feels done.
+        markContacted(id, {
+          onSuccess: () =>
+            void Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success,
+            ).catch(() => {}),
+        });
       } else {
         router.push(ledgerPath);
       }

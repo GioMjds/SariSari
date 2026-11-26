@@ -37,11 +37,11 @@
   "utangLabel": "utang",
   "contactedToday": "Nakausap na ngayon",
   "followUpOn": "Sundan sa {{date}}",
-  "followUpNone": "Magtakda ng paalala",
+  "followUpNone": "Itakda ang follow-up",
 
   "actionRestock": "Mag-restock",
   "actionViewItem": "Tingnan",
-  "actionRecordPayment": "Itala ang bayad",
+  "actionRecordPayment": "Magtala ng bayad",
   "actionContacted": "Nakausap na",
   "actionViewLedger": "Tingnan ang talaan",
   "openProductHint": "Bubuksan ang detalye ng produkto",

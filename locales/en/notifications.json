@@ -36,8 +36,8 @@
   "chipNearLimit": "{{pct}}% of limit used",
   "utangLabel": "utang",
   "contactedToday": "Contacted today",
-  "followUpOn": "Follow up on {{date}}",
-  "followUpNone": "Set a follow-up reminder",
+  "followUpOn": "Follow up by {{date}}",
+  "followUpNone": "Set follow-up",
 
   "actionRestock": "Restock",
   "actionViewItem": "View item",
