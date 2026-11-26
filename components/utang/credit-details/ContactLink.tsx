@@ -7,19 +7,21 @@ export function ContactLink({
   label,
   tone,
   onPress,
+  accessibilityLabel,
 }: {
   icon: 'phone' | 'comment';
   label: string;
   tone: 'sage' | 'persimmon';
   onPress: () => void;
+  accessibilityLabel?: string;
 }) {
   const active = tone === 'sage';
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={label}
-      className={`press-scale flex-1 rounded-xl py-2.5 flex-row items-center justify-center border ${
+      accessibilityLabel={accessibilityLabel ?? label}
+      className={`press-scale flex-1 rounded-xl py-2.5 min-h-[44px] flex-row items-center justify-center border ${
         active
           ? 'bg-sage-50 border-sage-500'
           : 'bg-persimmon-50 border-persimmon-300'

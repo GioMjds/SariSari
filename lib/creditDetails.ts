@@ -283,6 +283,86 @@ export function matchesSearch(
   return haystacks.some((h) => (h ?? '').toLowerCase().includes(needle));
 }
 
+/* ─── Ledger screen grouping ────────────────────────────────────────── */
+
+// parseStoredTimestamp can return an Invalid Date, so check the time value too.
+const validDate = (date: string): Date | null => {
+  const d = parseStoredTimestamp(date);
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+};
+const timeOf = (date: string) => validDate(date)?.getTime() ?? 0;
+
+/**
+ * Split credits into open (oldest first, the order FIFO payments settle
+ * them) and settled (newest first).
+ */
+export function splitCredits(credits: CreditTransaction[]): {
+  open: CreditTransaction[];
+  settled: CreditTransaction[];
+} {
+  const open = credits
+    .filter((c) => c.status !== 'paid')
+    .sort((a, b) => timeOf(a.date) - timeOf(b.date));
+  const settled = credits
+    .filter((c) => c.status === 'paid')
+    .sort((a, b) => timeOf(b.date) - timeOf(a.date));
+  return { open, settled };
+}
+
+/** Lifetime paid total and the most recent payment date. */
+export function paymentStats(payments: Payment[]): {
+  totalPaid: number;
+  lastPaymentDate: Date | null;
+} {
+  let totalPaid = 0;
+  let last: Date | null = null;
+  for (const p of payments) {
+    totalPaid += p.amount;
+    const d = validDate(p.date);
+    if (d && (!last || d > last)) last = d;
+  }
+  return { totalPaid, lastPaymentDate: last };
+}
+
+export type LedgerMonth = {
+  /** `yyyy-MM`, or `unknown` for rows with an unreadable date. */
+  key: string;
+  date: Date | null;
+  entries: CreditHistory[];
+  credited: number;
+  paid: number;
+};
+
+/** Group ledger rows by calendar month, newest month and newest row first. */
+export function groupLedgerByMonth(history: CreditHistory[]): LedgerMonth[] {
+  const months = new Map<string, LedgerMonth>();
+  const sorted = [...history].sort((a, b) => timeOf(b.date) - timeOf(a.date));
+
+  for (const entry of sorted) {
+    const d = validDate(entry.date);
+    const key = d
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      : 'unknown';
+    let month = months.get(key);
+    if (!month) {
+      month = {
+        key,
+        date: d ? new Date(d.getFullYear(), d.getMonth(), 1) : null,
+        entries: [],
+        credited: 0,
+        paid: 0,
+      };
+      months.set(key, month);
+    }
+    month.entries.push(entry);
+    if (entry.type === 'credit') month.credited += entry.amount;
+    else month.paid += entry.amount;
+  }
+
+  // Map keeps insertion order, so months already run newest first.
+  return [...months.values()];
+}
+
 /* ─── History rendering helpers ─────────────────────────────────────── */
 
 /**

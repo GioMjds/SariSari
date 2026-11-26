@@ -3,13 +3,8 @@ import { View } from 'react-native';
 import { Skeleton } from '@/components/ui';
 
 /**
- * CreditDetailsSkeleton — paper-ledger loading placeholder for the
- * Suki Ledger screen. Mirrors the real layout (slim top bar + hero +
- * tab strip + two card placeholders) so the swap from skeleton →
- * live data is layout-shift-free.
- *
- * Renders inside its own View with safe-area padding top so the screen can early-return
- * this component without extra wrappers.
+ * Loading placeholder that mirrors the ledger layout (app bar, balance
+ * card, tab strip, rows, action bar) so the swap to live data does not shift.
  */
 export function CreditDetailsSkeleton() {
   const insets = useSafeAreaInsets();
@@ -17,29 +12,20 @@ export function CreditDetailsSkeleton() {
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop }}>
-      {/* Slim top bar — three skeleton slots */}
-      <View className="px-5 pt-3 pb-2 flex-row items-center justify-between">
-        <View className="w-10 h-10" />
-        <Skeleton width={120} height={20} borderRadius={6} />
-        <View className="w-10 h-10" />
+      <View className="px-4 pt-2 pb-3 flex-row items-center border-b border-ink-100">
+        <Skeleton width={44} height={44} borderRadius={22} />
+        <Skeleton width={40} height={40} borderRadius={20} style={{ marginLeft: 12 }} />
+        <View className="ml-2.5 gap-1.5">
+          <Skeleton width={140} height={16} borderRadius={6} />
+          <Skeleton width={100} height={12} borderRadius={6} />
+        </View>
       </View>
 
-      <View className="px-4 mt-4">
-        {/* Hero card placeholder */}
-        <Skeleton width={'100%'} height={120} borderRadius={20} shimmer />
-
-        {/* Tab strip placeholder */}
-        <View className="mt-3">
-          <Skeleton width={'100%'} height={44} borderRadius={16} />
-        </View>
-
-        {/* Two card placeholders */}
-        <View className="mt-4">
-          <Skeleton width={'100%'} height={80} borderRadius={16} />
-        </View>
-        <View className="mt-3">
-          <Skeleton width={'100%'} height={80} borderRadius={16} />
-        </View>
+      <View className="px-4 mt-4 gap-3">
+        <Skeleton width={'100%'} height={210} borderRadius={24} shimmer />
+        <Skeleton width={'100%'} height={48} borderRadius={16} />
+        <Skeleton width={'100%'} height={96} borderRadius={16} />
+        <Skeleton width={'100%'} height={96} borderRadius={16} />
       </View>
     </View>
   );

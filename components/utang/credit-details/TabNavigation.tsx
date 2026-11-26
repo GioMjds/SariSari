@@ -2,20 +2,20 @@ import { Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useCallback, useRef, useState, memo } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 
-export type CreditDetailTab = 'credits' | 'payments' | 'history';
+export type CreditDetailTab = 'utang' | 'ledger';
 
 interface TabDefinition {
   key: CreditDetailTab;
-  label: string;
+  labelKey: string;
   icon: keyof typeof FontAwesome.glyphMap;
 }
 
 const TABS = [
-  { key: 'credits', label: 'Credits', icon: 'credit-card' },
-  { key: 'payments', label: 'Payments', icon: 'money' },
-  { key: 'history', label: 'History', icon: 'history' },
+  { key: 'utang', labelKey: 'detailTabUtang', icon: 'file-text-o' },
+  { key: 'ledger', labelKey: 'detailTabLedger', icon: 'book' },
 ] satisfies TabDefinition[];
 
 interface TabNavigationProps {
@@ -47,6 +47,7 @@ export const TabNavigation = memo(function TabNavigation({
     return layoutHandlersRef.current[key]!;
   }, []);
 
+  const { t } = useTranslation('utang');
   const active = metrics[activeTab];
 
   return (
@@ -74,6 +75,7 @@ export const TabNavigation = memo(function TabNavigation({
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
           const count = counts?.[tab.key];
+          const label = t(tab.labelKey);
 
           return (
             <Pressable
@@ -85,13 +87,13 @@ export const TabNavigation = memo(function TabNavigation({
               }}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
-              accessibilityLabel={`${tab.label} tab`}
-              className="flex-1 py-2.5 rounded-xl press-scale"
+              accessibilityLabel={t('detailTabA11y', { label, count: count ?? 0 })}
+              className="flex-1 py-2.5 min-h-[44px] justify-center rounded-xl press-scale"
             >
               <View className="flex-row items-center justify-center">
                 <FontAwesome
                   name={tab.icon}
-                  size={12}
+                  size={13}
                   color={isActive ? '#FBF7EE' : '#7A7165'}
                 />
                 <StyledText
@@ -99,9 +101,9 @@ export const TabNavigation = memo(function TabNavigation({
                   className={`ml-1.5 ${
                     isActive ? 'text-paper-50' : 'text-ink-700'
                   }`}
-                  style={{ fontSize: 13 }}
+                  style={{ fontSize: 14 }}
                 >
-                  {tab.label}
+                  {label}
                 </StyledText>
                 {typeof count === 'number' && count > 0 && (
                   <View

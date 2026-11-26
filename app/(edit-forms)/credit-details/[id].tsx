@@ -1,38 +1,40 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
-import { RefreshControl, View } from 'react-native';
+import { Pressable, RefreshControl, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   useCreditHistory,
   useCustomerDetails,
   useDeleteCustomer,
   useProfile,
-  useCustomerCreditSummary,
 } from '@/hooks';
-import { SukiPanel } from '@/components/utang/credit-guardrails';
 import { useModalStore } from '@/stores';
-import { matchesSearch } from '@/lib/creditDetails';
+import { splitCredits } from '@/lib/creditDetails';
 import { CreditTransaction } from '@/types/credits.types';
+import { StyledText } from '@/components/elements';
 import {
+  BalanceCard,
   CreditDetailsHeader,
   CreditDetailsSkeleton,
-  CustomerHeroCard,
   CustomerNotFound,
-  CreditsTabContent,
-  HistoryTabContent,
-  PaymentsTabContent,
+  LEDGER_ACTION_BAR_HEIGHT,
+  LedgerActionBar,
+  LedgerTabContent,
+  StatementShareButton,
   TabNavigation,
+  UtangTabContent,
   type CreditDetailTab,
 } from '@/components/utang/credit-details';
 
-const SCROLL_CONTENT_STYLE = { paddingBottom: 140 } as const;
-
 function CustomerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useTranslation('utang');
   const queryClient = useQueryClient();
   const { openModal } = useModalStore();
   const insets = useSafeAreaInsets();
@@ -45,20 +47,19 @@ function CustomerDetails() {
   } = useCustomerDetails(id);
 
   const { data: history = [] } = useCreditHistory(id);
-  const { data: creditSummary = null } = useCustomerCreditSummary(id);
   const { profile } = useProfile();
 
   const deleteCustomerMutation = useDeleteCustomer();
 
-  const [activeTab, setActiveTab] = useState<CreditDetailTab>('credits');
-
+  const [activeTab, setActiveTab] = useState<CreditDetailTab>('utang');
   const [searchByTab, setSearchByTab] = useState<
     Record<CreditDetailTab, string>
-  >({
-    credits: '',
-    payments: '',
-    history: '',
-  });
+  >({ utang: '', ledger: '' });
+
+  const { open, settled } = useMemo(
+    () => splitCredits(customer?.credits ?? []),
+    [customer?.credits],
+  );
 
   const handleRefresh = useCallback(() => {
     refetch();
@@ -73,14 +74,14 @@ function CustomerDetails() {
   const handleDeleteCustomer = useCallback(() => {
     if (!customer) return;
     openModal({
-      title: 'Delete Customer',
-      description: `Are you sure you want to delete ${customer.name}? This will delete all credits and payments.`,
+      title: t('detailDeleteTitle'),
+      description: t('detailDeleteBody', { name: customer.name }),
       variant: 'danger',
       icon: 'trash',
       buttons: [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('detailCancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('detailDeleteConfirm'),
           style: 'destructive',
           onPress: () => {
             deleteCustomerMutation.mutate(customer.id);
@@ -88,7 +89,7 @@ function CustomerDetails() {
         },
       ],
     });
-  }, [customer, openModal, deleteCustomerMutation]);
+  }, [customer, openModal, deleteCustomerMutation, t]);
 
   const handleAddCredit = useCallback(() => {
     if (!customer) return;
@@ -113,66 +114,44 @@ function CustomerDetails() {
     [customer],
   );
 
-  const handleTabChange = useCallback((next: CreditDetailTab) => {
-    setActiveTab(next);
-  }, []);
-
-  const filteredCredits = useMemo(() => {
-    if (!customer) return [];
-    const term = searchByTab.credits;
-    return customer.credits.filter((c) =>
-      matchesSearch(term, [c.product_name, c.notes]),
-    );
-  }, [customer, searchByTab.credits]);
-
-  const filteredPayments = useMemo(() => {
-    if (!customer) return [];
-    const term = searchByTab.payments;
-    return customer.payments.filter((p) => matchesSearch(term, [p.notes]));
-  }, [customer, searchByTab.payments]);
-
-  const filteredHistory = useMemo(() => {
-    const term = searchByTab.history;
-    return history.filter((h) => matchesSearch(term, [h.description]));
-  }, [history, searchByTab.history]);
-
-  const handleCreditsSearchChange = useCallback(
-    (v: string) => setSearchByTab((s) => ({ ...s, credits: v })),
+  const handleUtangSearch = useCallback(
+    (v: string) => setSearchByTab((s) => ({ ...s, utang: v })),
     [],
   );
-  const handlePaymentsSearchChange = useCallback(
-    (v: string) => setSearchByTab((s) => ({ ...s, payments: v })),
+  const handleLedgerSearch = useCallback(
+    (v: string) => setSearchByTab((s) => ({ ...s, ledger: v })),
     [],
   );
-  const handleHistorySearchChange = useCallback(
-    (v: string) => setSearchByTab((s) => ({ ...s, history: v })),
-    [],
-  );
-
-  const tabCounts = useMemo(() => {
-    return {
-      credits: customer?.credits?.length ?? 0,
-      payments: customer?.payments?.length ?? 0,
-      history: history?.length ?? 0,
-    };
-  }, [customer, history]);
 
   if (isLoading) return <CreditDetailsSkeleton />;
 
   if (!customer) return <CustomerNotFound onBack={handleBack} />;
 
-  const activeCreditCount = customer.credits.filter(
-    (c) => c.status !== 'paid',
-  ).length;
   const storeName = profile?.storeName?.trim() || 'your sari-sari store';
-
-  const paddingTop = Math.max(insets.top, 40);
+  const hasBalance = customer.outstanding_balance > 0;
+  const subtitle = [customer.phone, customer.address]
+    .filter(Boolean)
+    .join(' · ');
+  const bottomPad = LEDGER_ACTION_BAR_HEIGHT + Math.max(insets.bottom, 12) + 24;
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop }}>
+    <View
+      className="flex-1 bg-background"
+      style={{ paddingTop: Math.max(insets.top, 40) }}
+    >
       <CreditDetailsHeader
+        name={customer.name}
+        photoUri={customer.photo_uri}
+        subtitle={subtitle}
         onBack={handleBack}
-        onDelete={handleDeleteCustomer}
+        action={
+          <StatementShareButton
+            customer={customer}
+            credits={customer.credits}
+            storeName={storeName}
+            disabled={!hasBalance}
+          />
+        }
       />
 
       <KeyboardAwareScrollView
@@ -181,7 +160,7 @@ function CustomerDetails() {
         bottomOffset={64}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        contentContainerStyle={SCROLL_CONTENT_STYLE}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: bottomPad }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -191,62 +170,61 @@ function CustomerDetails() {
           />
         }
       >
-        {/* ─── Hero card ───────────────────────────────────────── */}
         <View className="px-4">
-          <CustomerHeroCard
-            customer={customer}
-            credits={customer.credits}
-            payments={customer.payments}
-            storeName={storeName}
-            activeCreditCount={activeCreditCount}
-            onAddPayment={handleAddPayment}
-            onAddCredit={handleAddCredit}
-          />
-          {creditSummary && (
-            <View className="mt-3">
-              <SukiPanel summary={creditSummary} mode="detailed" />
-            </View>
-          )}
+          <BalanceCard customer={customer} openCredits={open} />
         </View>
 
-        {/* ─── Tab navigation ──────────────────────────────────── */}
-        <View className="px-4 mt-4">
+        <View className="px-4 mt-5">
           <TabNavigation
             activeTab={activeTab}
-            onChange={handleTabChange}
-            counts={tabCounts}
+            onChange={setActiveTab}
+            counts={{ utang: open.length, ledger: history.length }}
           />
         </View>
 
-        {/* ─── Active tab content ──────────────────────────────── */}
         <View className="px-4 mt-4">
-          {activeTab === 'credits' && (
-            <CreditsTabContent
-              credits={filteredCredits}
-              totalCount={customer.credits.length}
-              searchValue={searchByTab.credits}
-              onSearchChange={handleCreditsSearchChange}
+          {activeTab === 'utang' ? (
+            <UtangTabContent
+              open={open}
+              settled={settled}
+              searchValue={searchByTab.utang}
+              onSearchChange={handleUtangSearch}
               onQuickSettle={handleQuickSettle}
             />
-          )}
-          {activeTab === 'payments' && (
-            <PaymentsTabContent
-              payments={filteredPayments}
-              totalCount={customer.payments.length}
-              searchValue={searchByTab.payments}
-              onSearchChange={handlePaymentsSearchChange}
-            />
-          )}
-          {activeTab === 'history' && (
-            <HistoryTabContent
-              history={filteredHistory}
-              totalCount={history.length}
-              searchValue={searchByTab.history}
-              onSearchChange={handleHistorySearchChange}
+          ) : (
+            <LedgerTabContent
+              history={history}
+              payments={customer.payments}
+              searchValue={searchByTab.ledger}
+              onSearchChange={handleLedgerSearch}
             />
           )}
         </View>
+
+        {/* Kept away from the money actions so it is never hit by mistake. */}
+        <View className="px-4 mt-8 items-center">
+          <Pressable
+            onPress={handleDeleteCustomer}
+            accessibilityRole="button"
+            accessibilityHint={t('detailDeleteHint')}
+            className="press-scale min-h-[44px] px-4 flex-row items-center justify-center"
+          >
+            <FontAwesome name="trash-o" size={14} color="#C13030" />
+            <StyledText
+              variant="semibold"
+              className="text-semantic-danger text-sm ml-2"
+            >
+              {t('detailDelete')}
+            </StyledText>
+          </Pressable>
+        </View>
       </KeyboardAwareScrollView>
+
+      <LedgerActionBar
+        canCollect={hasBalance}
+        onAddPayment={handleAddPayment}
+        onAddCredit={handleAddCredit}
+      />
     </View>
   );
 }

@@ -73,23 +73,16 @@ export function StatementShareButton({
     <Pressable
       onPress={handlePress}
       disabled={disabled}
+      hitSlop={6}
       accessibilityRole="button"
-      accessibilityLabel="Share statement"
-      className={`press-scale flex-1 rounded-xl py-2.5 flex-row items-center justify-center bg-paper-100 border ${
-        disabled ? 'border-ink-200 opacity-50' : 'border-ink-300'
+      accessibilityLabel={t('common:shareStatementTitle', 'Share Statement')}
+      accessibilityState={{ disabled: !!disabled }}
+      className={`press-scale h-11 px-3 rounded-full flex-row items-center justify-center bg-paper-50 border border-ink-200 ${
+        disabled ? 'opacity-40' : ''
       }`}
     >
-      <FontAwesome
-        name="share-square-o"
-        size={12}
-        color={disabled ? '#7A7165' : '#623418'}
-      />
-      <StyledText
-        variant="extrabold"
-        className={`text-xs ml-1.5 ${
-          disabled ? 'text-ink-400' : 'text-cinnamon-700'
-        }`}
-      >
+      <FontAwesome name="share-square-o" size={14} color="#623418" />
+      <StyledText variant="extrabold" className="text-xs ml-1.5 text-cinnamon-700">
         {t('common:statement', 'Statement')}
       </StyledText>
     </Pressable>

@@ -2,263 +2,187 @@ import { FontAwesome } from '@expo/vector-icons';
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { format, isValid } from 'date-fns';
-import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
+import { useTranslation } from 'react-i18next';
 import { CreditTransaction } from '@/types/credits.types';
 import { formatPesos } from '@/lib/money';
-import { classifyOverdue, overdueLabel } from '@/lib/creditDetails';
+import { classifyOverdue } from '@/lib/creditDetails';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { StatusPill } from '@/components/ui';
 import { StyledText } from '@/components/elements';
+import { proximityLabel, shortDate } from './labels';
 
 interface UtangCardProps {
   credit: CreditTransaction;
-  /**
-   * Resolved status tone for the overdue pill. Passed in (rather than
-   * derived here) so the parent can pin the same classification across
-   * the credits list and any aggregate banner.
-   */
-  onQuickSettle: (credit: CreditTransaction) => void;
-  /**
-   * Position in the list — drives the staggered entry animation. When
-   * omitted, no entrance animation is rendered (the card appears bare).
-   */
+  /** Omitted for settled credits, which have nothing left to collect. */
+  onQuickSettle?: (credit: CreditTransaction) => void;
+  /** List position for the entry stagger; omit to skip the animation. */
   index?: number;
 }
 
+// Entrance stagger stops after this many rows so long lists appear at once.
+const STAGGER_LIMIT = 8;
+
 /**
- * UtangCard — one row in the Credits tab.
- *
- * Layout follows the receipt-ledger visual language:
- *   • Product name + date on the left, total amount on the right.
- *   • A colored status pill (overdue / due-soon / safe / paid / partial)
- *     sits under the amount so the eye lands on urgency first.
- *   • For unpaid/partial credits, a payment-allocation progress bar
- *     shows how much has been paid toward the total.
- *   • An inline notes callout surfaces anything the cashier wrote
- *     during the sale.
- *   • A "Quick Settle" pill jumps straight to the add-payment screen
- *     with the amount pre-filled.
- *
- * Pure presentation — no queries, no DB calls. The parent owns data
- * fetching and the settle handler. When `index` is provided, the row
- * fades + slides into place on mount via Moti.
+ * One credit in the Utang tab. Leads with what is still owed, then the
+ * due status and a Settle shortcut that prefills the payment form.
  */
-export const UtangCard = memo(function UtangCard({ credit, onQuickSettle, index }: UtangCardProps) {
+export const UtangCard = memo(function UtangCard({
+  credit,
+  onQuickSettle,
+  index,
+}: UtangCardProps) {
+  const { t } = useTranslation('utang');
   const creditDate = parseStoredTimestamp(credit.date);
-  const dueDate = credit.due_date
-    ? parseStoredTimestamp(credit.due_date)
-    : null;
+  const dueDate = credit.due_date ? parseStoredTimestamp(credit.due_date) : null;
   const proximity = classifyOverdue(credit);
 
+  const name = credit.product_name || t('detailCreditFallback');
   const remaining = credit.amount - credit.amount_paid;
   const isPaid = credit.status === 'paid';
-  const isPartial = credit.status === 'partial';
-  const showProgress = isPartial || (credit.amount_paid > 0 && !isPaid);
-  const progressPct = credit.amount > 0
-    ? Math.max(0, Math.min(100, (credit.amount_paid / credit.amount) * 100))
-    : 0;
+  const hasPartial = !isPaid && credit.amount_paid > 0;
+  const progressPct =
+    credit.amount > 0
+      ? Math.max(0, Math.min(100, (credit.amount_paid / credit.amount) * 100))
+      : 0;
+
+  const pill = isPaid
+    ? { variant: 'success' as const, label: t('detailPillPaid') }
+    : proximity.tier === 'overdue'
+      ? { variant: 'danger' as const, label: proximityLabel(t, proximity)! }
+      : proximity.tier === 'due-soon'
+        ? { variant: 'warning' as const, label: proximityLabel(t, proximity)! }
+        : hasPartial
+          ? { variant: 'warning' as const, label: t('detailPillPartial') }
+          : { variant: 'neutral' as const, label: t('detailPillUnpaid') };
+
+  const meta = [
+    creditDate && isValid(creditDate)
+      ? format(creditDate, 'MMM d, yyyy · h:mm a')
+      : t('detailUnknownDate'),
+    credit.quantity != null ? t('detailQty', { qty: credit.quantity }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const card = (
     <View
-      className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper mb-3 overflow-hidden"
-      accessibilityLabel={`Credit for ${credit.product_name ?? 'Credit'} worth ${formatPesos(credit.amount)}`}
+      className={`rounded-2xl border mb-3 overflow-hidden ${
+        isPaid ? 'bg-paper-100 border-ink-100' : 'bg-paper-50 border-ink-100 shadow-paper'
+      }`}
     >
-      {/* Header row: name/date vs amount/pill */}
-      <View className="flex-row items-start justify-between p-4 pb-3">
+      <View
+        accessible
+        accessibilityLabel={t('detailCreditA11y', {
+          name,
+          amount: formatPesos(isPaid ? credit.amount : remaining),
+          status: pill.label,
+        })}
+        className="flex-row items-start justify-between px-4 pt-3.5 pb-3"
+      >
         <View className="flex-1 pr-3">
           <StyledText
             variant="extrabold"
-            className="text-ink-900 text-base"
+            className={`text-base ${isPaid ? 'text-ink-600' : 'text-ink-900'}`}
             numberOfLines={2}
           >
-            {credit.product_name || 'Credit'}
+            {name}
           </StyledText>
-          <View className="flex-row items-center mt-1">
-            <FontAwesome name="calendar" size={10} color="#7A7165" />
-            <StyledText
-              variant="medium"
-              className="text-mono text-ink-500 ml-1.5"
-            >
-              {creditDate && isValid(creditDate)
-                ? format(creditDate, 'MMM dd, yyyy · h:mm a')
-                : 'Unknown date'}
-            </StyledText>
-          </View>
-          {credit.quantity !== undefined && credit.quantity !== null && (
-            <StyledText
-              variant="medium"
-              className="text-mono text-ink-500 mt-0.5"
-            >
-              Qty {credit.quantity}
-            </StyledText>
-          )}
+          <StyledText variant="medium" className="text-mono text-ink-500 mt-0.5">
+            {meta}
+          </StyledText>
         </View>
 
         <View className="items-end">
           <StyledText
             variant="black"
-            className="text-ink-900 text-lg"
+            className={`text-lg ${isPaid ? 'text-ink-500 line-through' : 'text-ink-900'}`}
           >
-            {formatPesos(credit.amount)}
+            {formatPesos(isPaid ? credit.amount : remaining)}
           </StyledText>
-          <View className="mt-1.5">
-            <ProximityPill proximity={proximity} status={credit.status} />
-          </View>
+          {hasPartial && (
+            <StyledText variant="medium" className="text-mono text-ink-500">
+              {t('detailOfTotal', { amount: formatPesos(credit.amount) })}
+            </StyledText>
+          )}
+          {isPaid && (
+            <View className="mt-1">
+              <StatusPill variant="success" size="sm" dot>
+                {pill.label}
+              </StatusPill>
+            </View>
+          )}
         </View>
       </View>
 
-      {/* Allocation progress — only when partially paid */}
-      {showProgress && (
+      {hasPartial && (
         <View className="px-4 pb-3">
-          <View className="flex-row items-baseline justify-between mb-1.5">
-            <StyledText
-              variant="medium"
-              className="text-mono text-ink-500"
-            >
-              {formatPesos(credit.amount_paid)} of{' '}
-              {formatPesos(credit.amount)} paid
-            </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-mono text-ink-700"
-            >
-              {Math.round(progressPct)}%
-            </StyledText>
-          </View>
-          <View className="h-2 rounded-full bg-paper-200 overflow-hidden">
+          <View className="h-1.5 rounded-full bg-paper-200 overflow-hidden">
             <View
               className="h-full rounded-full bg-sage-500"
               style={{ width: `${progressPct}%` }}
             />
           </View>
-          <StyledText
-            variant="medium"
-            className="text-mono text-ink-500 mt-1.5"
-          >
-            Remaining: {formatPesos(remaining)}
+          <StyledText variant="medium" className="text-mono text-ink-500 mt-1">
+            {t('detailPaidOf', {
+              paid: formatPesos(credit.amount_paid),
+              total: formatPesos(credit.amount),
+            })}
           </StyledText>
         </View>
       )}
 
-      {/* Due date row */}
-      {dueDate && isValid(dueDate) && !isPaid && (
-        <View className="px-4 pb-3 flex-row items-center">
-          <FontAwesome name="clock-o" size={11} color="#7A7165" />
-          <StyledText
-            variant="medium"
-            className="text-mono text-ink-500 ml-1.5"
-          >
-            Due {format(dueDate, 'MMM dd, yyyy')}
-          </StyledText>
-        </View>
-      )}
-
-      {/* Inline notes callout */}
-      {credit.notes && credit.notes.trim() !== '' && (
-        <View className="mx-4 mb-3 rounded-xl bg-paper-100 px-3 py-2">
-          <StyledText
-            variant="medium"
-            className="text-ink-700 text-caption"
-          >
+      {credit.notes?.trim() ? (
+        <View className="mx-4 mb-3 flex-row rounded-xl bg-paper-100 px-3 py-2">
+          <FontAwesome name="sticky-note-o" size={12} color="#7A7165" style={{ marginTop: 2 }} />
+          <StyledText variant="medium" className="flex-1 ml-2 text-ink-700 text-caption">
             {credit.notes}
           </StyledText>
         </View>
-      )}
+      ) : null}
 
-      {/* Quick Settle action — hidden when already paid */}
       {!isPaid && (
-        <View className="border-t border-dashed border-ink-200 px-4 py-3 flex-row items-center justify-between">
-          <StyledText
-            variant="medium"
-            className="text-mono text-ink-500"
-          >
-            Owes {formatPesos(remaining)}
-          </StyledText>
-          <Pressable
-            onPress={() => onQuickSettle(credit)}
-            accessibilityRole="button"
-            accessibilityLabel={`Quick settle ${formatPesos(remaining)} for ${credit.product_name ?? 'credit'}`}
-            className="press-scale bg-sage-500 rounded-pill px-4 py-2.5 flex-row items-center justify-center min-h-[44px]"
-            style={{
-              shadowColor: '#4F7A24',
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.2,
-              shadowRadius: 6,
-              elevation: 2,
-            }}
-          >
-            <FontAwesome name="bolt" size={12} color="#FBF7EE" />
-            <StyledText
-              variant="extrabold"
-              className="text-paper-50 text-xs ml-1.5"
+        <View className="border-t border-dashed border-ink-200 pl-4 pr-2 py-2 flex-row items-center">
+          <View className="flex-1 flex-row items-center flex-wrap gap-x-2 gap-y-1">
+            <StatusPill variant={pill.variant} size="sm" dot>
+              {pill.label}
+            </StatusPill>
+            {dueDate && isValid(dueDate) && proximity.tier === 'safe' && (
+              <StyledText variant="medium" className="text-mono text-ink-500">
+                {t('detailDue', { date: shortDate(dueDate) })}
+              </StyledText>
+            )}
+          </View>
+          {onQuickSettle && (
+            <Pressable
+              onPress={() => onQuickSettle(credit)}
+              accessibilityRole="button"
+              accessibilityLabel={t('detailSettleA11y', {
+                amount: formatPesos(remaining),
+                name,
+              })}
+              className="press-scale ml-2 bg-sage-50 border border-sage-500 rounded-pill px-4 min-h-[44px] flex-row items-center justify-center"
             >
-              Quick Settle
-            </StyledText>
-          </Pressable>
+              <FontAwesome name="check" size={12} color="#4F7A24" />
+              <StyledText variant="extrabold" className="text-sage-700 text-sm ml-1.5">
+                {t('detailSettle')}
+              </StyledText>
+            </Pressable>
+          )}
         </View>
       )}
     </View>
   );
 
-  if (typeof index !== 'number') return card;
+  if (typeof index !== 'number' || index >= STAGGER_LIMIT) return card;
 
   return (
     <MotiView
-      from={{ opacity: 0, translateY: 10 }}
+      from={{ opacity: 0, translateY: 8 }}
       animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 320, delay: 60 + index * 35 }}
+      transition={{ type: 'timing', duration: 220, delay: index * 30 }}
     >
       {card}
     </MotiView>
   );
-})
-
-/* ─── Status pill ────────────────────────────────────────────────────── */
-
-function ProximityPill({
-  proximity,
-  status,
-}: {
-  proximity: ReturnType<typeof classifyOverdue>;
-  status: CreditTransaction['status'];
-}) {
-  // Paid takes precedence — the pill shows what's done, not when due.
-  if (proximity.tier === 'paid' || status === 'paid') {
-    return (
-      <StatusPill variant="success" size="sm" dot>
-        Paid
-      </StatusPill>
-    );
-  }
-
-  if (status === 'partial') {
-    return (
-      <StatusPill variant="warning" size="sm" dot>
-        Partial
-      </StatusPill>
-    );
-  }
-
-  if (proximity.tier === 'overdue') {
-    return (
-      <StatusPill variant="danger" size="sm" dot>
-        {overdueLabel(proximity)}
-      </StatusPill>
-    );
-  }
-
-  if (proximity.tier === 'due-soon') {
-    return (
-      <StatusPill variant="warning" size="sm" dot>
-        {overdueLabel(proximity)}
-      </StatusPill>
-    );
-  }
-
-  return (
-    <StatusPill variant="neutral" size="sm" dot>
-      Unpaid
-    </StatusPill>
-  );
-}
+});
