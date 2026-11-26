@@ -23,12 +23,7 @@ function AddProduct() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <StatusBar style={form.isScannerOpen ? 'light' : 'dark'} />
-      <ProductFormHeader
-        title="Add product"
-        onBack={form.confirmDiscard}
-        active={nav.active}
-        onJump={nav.jumpTo}
-      />
+      <ProductFormHeader title="Add Product" onBack={form.confirmDiscard} />
 
       <KeyboardAwareScrollView
         ref={nav.scrollRef}
@@ -47,7 +42,9 @@ function AddProduct() {
             control={form.control}
             onPressScan={() => form.openScanner('barcode')}
             conflictProduct={form.barcodeConflictProduct}
-            onEditConflict={(id) => router.push(`/(edit-forms)/edit-product/${id}` as Href)}
+            onEditConflict={(id) =>
+              router.push(`/(edit-forms)/edit-product/${id}` as Href)
+            }
             autoGenerateSku={form.autoGenerateSku}
             onToggleAutoGenerateSku={form.setAutoGenerateSku}
           />
@@ -81,7 +78,11 @@ function AddProduct() {
         description="You have unsaved changes. Are you sure you want to discard them?"
         variant="warning"
         buttons={[
-          { text: "Don't Leave", style: 'cancel', onPress: () => form.setShowDialog(false) },
+          {
+            text: "Don't Leave",
+            style: 'cancel',
+            onPress: () => form.setShowDialog(false),
+          },
           {
             text: 'Discard',
             style: 'destructive',

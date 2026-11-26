@@ -4,6 +4,43 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-26 — Add/Edit Product Form Redesign and Barcode Fix
+
+### Overview
+
+Rebuilt the Add Product and Edit Product screens on one shared set of form sections, replacing three diverging copies (`products/add-product/*` cards, `edit-product/*` cards, and the unused `products/form/*`). Fixed the barcode flow so scans and typed barcodes never end up in the SKU.
+
+### Barcode bug (root cause)
+
+- There was no standalone barcode field. The scan link sat under SKU ("Scan barcode or type a custom SKU") and the barcode field only appeared after a scan, so owners typed barcodes into SKU.
+- A catalog-match scan flipped auto-generate SKU off; with an empty name the SKU stayed blank and submit fell back to `sku = barcode`.
+- Fix: barcode field is always visible with an inline Scan button; SKU is a separate field with an auto-generate switch; `applyBarcodeToAddProductForm` no longer touches the SKU toggle; submit falls back to a generated SKU, never the barcode.
+- Edit screen now has a working scanner and barcode field (previously had scanner state but no UI). Case (pakyaw) barcode got its own field and scan button.
+
+### New structure (`components/inventory/products/form/`)
+
+- `types.ts`: `ProductFormData` shared by both hooks, defaults, presets, `generateSku`, `findBarcodeConflict`.
+- `ProductDetailsSection`: photo tile, name, Category and Supplier select rows opening `OptionPickerSheet` (search plus inline create).
+- `ProductCodesSection`: barcode with scan and conflict card, SKU (auto switch on Add, locked on Edit).
+- `ProductPricingSection`: cost (optional bundle mode), quick markup chips, selling price, live profit or loss card, pakyaw tier.
+- `ProductStockSection`: Add sets opening stock with a stepper; Edit shows on-hand stock with Restock and Adjust count buttons (logged movements).
+- `ProductFormHeader` with a section jump strip (`useSectionNav`), `ProductFormFooter` that states what blocks saving.
+- `ProductImagePicker` now uses the house `Sheet`.
+
+### Decisions
+
+- Single scrolling form, not a wizard (user choice): fastest for repeat entry.
+- Edit stock is read-only; Restock and Adjust reuse `RestockSheet` and `LogTransactionForm` so every change is logged. Update sends the latest saved `product.quantity`.
+- Edit form uses `resetOptions: { keepDirtyValues: true }` so a refetch after restocking does not wipe typed edits.
+- Hardware back on Edit now asks before discarding unsaved changes, matching Add.
+- Barcode inputs accept digits only (8 to 14), matching `validateBarcode`.
+
+### Not done
+
+- No screenshots or video: no emulator or adb available in the session.
+
+---
+
 ## 2026-08-11 — Collection Queue Graduate to Done (Completed)
 
 ### Overview
@@ -608,3 +645,18 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Problem: grid tiles cut names at 2 lines. Sari-sari names end with the size or flavor ("... Chilimansi 60g"), so the part that tells products apart was lost. Name height also changed from tile to tile, so prices did not line up.
 - Fix (POS `ProductRow` grid variant, Inventory `ProductTile`): names use 13/17 type with up to 3 lines and a reserved `min-h-[51px]`, so prices line up across a row. Photo height dropped from 112 to 96pt to make room. The Inventory tile now shows the price above the category. The skeleton matches.
 - `min-h`, not a fixed height, so larger system font sizes grow the tile instead of clipping the name.
+
+## 2026-11-26: Add Customer redesign (faster typing, clearer sections)
+
+- Performance: `useAddCustomerForm` no longer watches field values, so the screen does not re-render on each keystroke. Only `PassbookPreview` (header card) and `SubmitButton` subscribe through `useWatch`. Dirty state uses `formState.isDirty`. Validation runs `onTouched` instead of `onChange`.
+- New `TextField`: one input shell (icon, prefix, 48pt height, real focus and error borders through local state). The old `focus-within:` classes did nothing on native.
+- New `FormSection`: numbered card header (icon, title, subtitle, "1 / 3") for Suki Information, Account Settings, and Internal Notes. `FieldGroup` now shows "Optional" tags and announces errors politely.
+- Suki Information: the name is trimmed and required, so whitespace no longer passes. Phone uses `phone.ts` helpers. A pasted +63 becomes 0, mobile numbers display as `0917 123 4567`, and only digits are saved. Partial numbers show an error on blur.
+- Account Settings: credit limit preset chips (No limit, ₱500, ₱1,000, ₱2,000, ₱5,000) plus a custom amount with format validation. The address accepts a landmark.
+- Internal Notes: tap-to-add phrases, a 500-character counter, and a taller input.
+- The keyboard Next key moves Name, Phone, Limit, Address, then Notes. An invalid save focuses the first bad field and gives a warning haptic.
+- The save bar sticks above the keyboard (`KeyboardStickyView`). It shows a real spinner while saving. The button is muted, but still tappable, until a name is entered.
+- Success: a toast, a success haptic, and an immediate return. The blocking success Alert was removed from `useInsertCustomer` (its only caller is this form). Errors show a toast and keep the typed details.
+- Press feedback is opacity-only. The `press-scale` transitions were removed from this screen.
+- Test: `components/utang/add-customer/__tests__/phone.test.ts`.
+- Not done: screenshots and video, because no device or emulator was available. The shared `(edit-forms)` fade transition is unchanged, because 17 screens use it.

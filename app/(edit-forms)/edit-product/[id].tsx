@@ -35,11 +35,9 @@ function EditProduct() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <ProductFormHeader
-        title="Edit product"
+        title="Edit Product"
         subtitle={product.name}
         onBack={form.handleBack}
-        active={nav.active}
-        onJump={nav.jumpTo}
       />
 
       <KeyboardAwareScrollView
@@ -59,7 +57,9 @@ function EditProduct() {
             control={form.control}
             onPressScan={() => form.openScanner('barcode')}
             conflictProduct={form.barcodeConflictProduct}
-            onEditConflict={(id) => router.push(`/(edit-forms)/edit-product/${id}` as Href)}
+            onEditConflict={(id) =>
+              router.push(`/(edit-forms)/edit-product/${id}` as Href)
+            }
           />
         </View>
         <View onLayout={nav.register('pricing')}>
@@ -79,7 +79,10 @@ function EditProduct() {
           />
         </View>
 
-        <ProductMetaCard createdAt={product.created_at} updatedAt={product.updated_at} />
+        <ProductMetaCard
+          createdAt={product.created_at}
+          updatedAt={product.updated_at}
+        />
         <EditDangerZone onDelete={form.openDeleteModal} />
       </KeyboardAwareScrollView>
 
@@ -121,7 +124,11 @@ function EditProduct() {
         icon="exclamation-triangle"
         buttons={[
           { text: "Don't Leave", style: 'cancel', onPress: form.cancelDiscard },
-          { text: 'Discard Changes', style: 'destructive', onPress: form.confirmDiscard },
+          {
+            text: 'Discard Changes',
+            style: 'destructive',
+            onPress: form.confirmDiscard,
+          },
         ]}
       />
 
@@ -134,7 +141,11 @@ function EditProduct() {
         description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
         buttons={[
           { text: 'Cancel', style: 'cancel', onPress: form.cancelDelete },
-          { text: 'Yes, Delete Product', style: 'destructive', onPress: form.confirmDelete },
+          {
+            text: 'Yes, Delete Product',
+            style: 'destructive',
+            onPress: form.confirmDelete,
+          },
         ]}
         loading={form.deleteProductMutation.isPending}
       />
