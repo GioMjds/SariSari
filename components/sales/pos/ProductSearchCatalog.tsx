@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   TextInput,
@@ -19,6 +18,8 @@ import {
   ViewModeToggle,
 } from '@/components/ui/ViewModeToggle';
 import { ListFooterStatus } from '@/components/ui/ListFooterStatus';
+import { useUserScrollEndReached } from '@/hooks/useUserScrollEndReached';
+import { ProductsSkeleton } from '@/components/inventory/products/ProductsSkeleton';
 import { Prof } from '@/utils/perf';
 
 interface ProductSearchCatalogProps {
@@ -120,6 +121,11 @@ export function ProductSearchCatalog({
     ],
   );
 
+  const loadNextPage = useCallback(() => {
+    if (!isFetchingNextPage && hasNextPage && onEndReached) onEndReached();
+  }, [isFetchingNextPage, hasNextPage, onEndReached]);
+  const endReached = useUserScrollEndReached(loadNextPage);
+
   const handleFastLaneAddToCart = useCallback(
     (product: FastLaneProduct, qty: number) => {
       const existingLine = getCartLine(product.id);
@@ -206,14 +212,7 @@ export function ProductSearchCatalog({
 
       {/* Products List */}
       {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          {/* Spinner, not Sari: the load is too brief to pay a mascot mount. */}
-          <ActivityIndicator
-            size="large"
-            color="#623418"
-            accessibilityLabel="Loading"
-          />
-        </View>
+        <ProductsSkeleton viewMode={viewMode} />
       ) : (
         <Prof id="POS:ProductList">
           <FlatList
@@ -231,12 +230,9 @@ export function ProductSearchCatalog({
             updateCellsBatchingPeriod={50}
             windowSize={11}
             removeClippedSubviews={false}
-            onEndReached={() => {
-              if (!isFetchingNextPage && hasNextPage && onEndReached) {
-                onEndReached();
-              }
-            }}
-            onEndReachedThreshold={0.4}
+            onScrollBeginDrag={endReached.onScrollBeginDrag}
+            onEndReached={endReached.onEndReached}
+            onEndReachedThreshold={0.2}
             renderItem={renderProductRow}
             ListEmptyComponent={
               <View className="flex-1 justify-center items-center py-12">
@@ -262,6 +258,9 @@ export function ProductSearchCatalog({
                 isFetchNextPageError={isFetchNextPageError}
                 onRetry={onRetryFetchNext}
                 endLabel="End of list"
+                loadingPlaceholder={
+                  <ProductsSkeleton viewMode={viewMode} inline />
+                }
               />
             }
           />

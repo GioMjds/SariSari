@@ -2,9 +2,11 @@ import { memo, useCallback, useMemo } from 'react';
 import { FlatList, ListRenderItemInfo, Platform } from 'react-native';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { ListFooterStatus } from '@/components/ui/ListFooterStatus';
+import { useUserScrollEndReached } from '@/hooks/useUserScrollEndReached';
 import { GRID_COLUMN_STYLE } from '@/components/ui/ViewModeToggle';
 import type { ViewMode } from '@/stores/useViewModeStore';
 import { ProductRow } from './ProductRow';
+import { ProductsSkeleton } from './ProductsSkeleton';
 import { ProductTile } from './ProductTile';
 import type { Product } from '@/types/products.types';
 
@@ -49,11 +51,12 @@ export const ProductsList = memo(function ProductsList({
     [isGrid, onPress, onLongPress, onActionPress],
   );
 
-  const handleEndReached = useCallback(() => {
+  const loadNextPage = useCallback(() => {
     if (!isFetchingNextPage && hasNextPage && onEndReached) {
       onEndReached();
     }
   }, [isFetchingNextPage, hasNextPage, onEndReached]);
+  const endReached = useUserScrollEndReached(loadNextPage);
 
   const isShortList = products.length <= 2;
   const fabClearance = useFabClearance();
@@ -74,6 +77,7 @@ export const ProductsList = memo(function ProductsList({
       isFetchNextPageError={isFetchNextPageError}
       onRetry={onEndReached}
       endLabel="End of products"
+      loadingPlaceholder={<ProductsSkeleton viewMode={viewMode} inline />}
     />
   );
 
@@ -93,8 +97,9 @@ export const ProductsList = memo(function ProductsList({
       maxToRenderPerBatch={10}
       windowSize={5}
       removeClippedSubviews={Platform.OS === 'android'}
-      onEndReached={handleEndReached}
-      onEndReachedThreshold={0.4}
+      onScrollBeginDrag={endReached.onScrollBeginDrag}
+      onEndReached={endReached.onEndReached}
+      onEndReachedThreshold={0.2}
       ListFooterComponent={listFooter}
     />
   );

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type ReactElement } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { StyledText } from '@/components/elements';
 
@@ -9,6 +9,8 @@ interface ListFooterStatusProps {
   isFetchNextPageError?: boolean | undefined;
   onRetry?: (() => void) | undefined;
   endLabel: string;
+  /** Replaces the spinner while more pages load, e.g. skeleton rows. */
+  loadingPlaceholder?: ReactElement | undefined;
 }
 
 /** Infinite-list footer: one fixed-height slot for loading, retry, and end states. */
@@ -19,6 +21,7 @@ export const ListFooterStatus = memo(function ListFooterStatus({
   isFetchNextPageError,
   onRetry,
   endLabel,
+  loadingPlaceholder,
 }: ListFooterStatusProps) {
   if (itemCount === 0) return null;
 
@@ -37,8 +40,9 @@ export const ListFooterStatus = memo(function ListFooterStatus({
     );
   }
 
-  // More pages exist: keep the spinner up so the list never shows a false end.
+  // More pages exist: keep a placeholder up so the list never shows a false end.
   if (hasNextPage || isFetchingNextPage) {
+    if (loadingPlaceholder) return loadingPlaceholder;
     return (
       <View className="h-14 items-center justify-center">
         <ActivityIndicator

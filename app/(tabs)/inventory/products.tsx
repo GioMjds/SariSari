@@ -295,7 +295,6 @@ function ProductsScreen() {
     router.setParams({ category: '', supplier: '', alert: '' });
   }, [router]);
 
-  if (isLoading) return <ProductsSkeleton />;
   if (error) return <InventoryErrorState onRetry={refetchProducts} />;
 
   return (
@@ -324,7 +323,10 @@ function ProductsScreen() {
         </View>
       </View>
 
-      {products.length === 0 ? (
+      {/* Skeleton fills only the list slot so search and the view toggle stay mounted. */}
+      {isLoading ? (
+        <ProductsSkeleton viewMode={viewMode} />
+      ) : products.length === 0 ? (
         <ProductsEmptyState
           variant={emptyVariant}
           searchTerm={searchTerm}
