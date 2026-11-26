@@ -1155,4 +1155,22 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v25.');
   }
+
+  if (currentVersion < 26) {
+    console.log('Running migration to v26 (Drop bundled barcode catalog)...');
+    await db.withTransactionAsync(async () => {
+      // Rebuild the catalog from the store's own products so only owner-entered barcodes prefill scans.
+      await db.execAsync(`
+        DELETE FROM product_catalog;
+        INSERT OR IGNORE INTO product_catalog (barcode, name, brand, category, unit, image_url, created_at)
+          SELECT TRIM(barcode), name, NULL, category, COALESCE(retail_unit_name, 'Pc'), NULL,
+                 CAST(strftime('%s', 'now') AS INTEGER) * 1000
+          FROM products
+          WHERE barcode IS NOT NULL AND TRIM(barcode) <> '';
+      `);
+
+      await db.execAsync('PRAGMA user_version = 26;');
+    });
+    console.log('Database migrated to v26.');
+  }
 }

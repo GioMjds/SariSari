@@ -1,6 +1,4 @@
 import { db } from '../configs/sqlite';
-import { BUNDLED_CATALOG_RECORDS } from '../constants/barcodes';
-import { insertCatalogProductsBatch } from './catalog';
 import * as mock from '@/scripts/sample-mock-datas';
 
 const LITE_PRODUCT_COUNT = 10;
@@ -46,38 +44,6 @@ function pickMockData() {
       has(c.product_id),
     ),
   };
-}
-
-export async function seedProductCatalog(): Promise<void> {
-  const startedAt = Date.now();
-  if (__DEV__) {
-    console.log(
-      '[Barcode][Seed] seeding up to',
-      BUNDLED_CATALOG_RECORDS.length,
-      'bundled records...',
-    );
-  }
-  try {
-    const productsToInsert = BUNDLED_CATALOG_RECORDS.map((record) => ({
-      barcode: record.barcode,
-      name: record.name,
-      brand: null,
-      category: record.category,
-      unit: 'Pc',
-      imageUrl: null,
-    }));
-    await insertCatalogProductsBatch(db, productsToInsert);
-    if (__DEV__) {
-      console.log(
-        `[Barcode][Seed] catalog seed complete in ${Date.now() - startedAt}ms.`,
-      );
-    }
-  } catch (error) {
-    console.error(
-      'Failed to seed bundled product catalog; continuing without catalog metadata.',
-      error,
-    );
-  }
 }
 
 export const seedDatabase = async () => {

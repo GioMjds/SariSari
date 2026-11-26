@@ -13,7 +13,7 @@ import {
   initCashMovementsView,
   runMigrations,
 } from '@/database';
-import { seedDatabase, seedProductCatalog } from '@/database/seed';
+import { seedDatabase } from '@/database/seed';
 
 let databaseInitialized = false;
 
@@ -59,9 +59,6 @@ export const initializeDatabases = async () => {
       await runMigrations();
       await initCashMovementsView();
     });
-
-
-    await seedProductCatalog();
 
     if (__DEV__) await seedDatabase();
 

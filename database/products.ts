@@ -1,6 +1,6 @@
 import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
-import { insertCatalogProductIfMissing } from './catalog';
+import { upsertCatalogProduct } from './catalog';
 import {
   clearRepriceFlag,
   evaluateRepriceFlag,
@@ -194,7 +194,7 @@ export const insertProduct = async (
 
       if (normalizedBarcode) {
         try {
-          await insertCatalogProductIfMissing(db, {
+          await upsertCatalogProduct(db, {
             barcode: normalizedBarcode,
             name,
             brand: null,
@@ -340,7 +340,7 @@ export const updateProduct = async (
 
       if (normalizedBarcode) {
         try {
-          await insertCatalogProductIfMissing(db, {
+          await upsertCatalogProduct(db, {
             barcode: normalizedBarcode,
             name,
             brand: null,
