@@ -660,3 +660,15 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Press feedback is opacity-only. The `press-scale` transitions were removed from this screen.
 - Test: `components/utang/add-customer/__tests__/phone.test.ts`.
 - Not done: screenshots and video, because no device or emulator was available. The shared `(edit-forms)` fade transition is unchanged, because 17 screens use it.
+
+## 2026-11-26: Add Customer audit fixes (impeccable audit 12/20)
+
+- Harden: `usePreventRemove(isDirty)` replaces the Android-only `BackHandler`, so the iOS edge swipe also asks before discarding. A `saved` ref lets the post-save `router.back()` through. A failed save now announces the first error through `AccessibilityInfo`, and `TextField` reads its error as the input hint.
+- Colorize: the Save button uses persimmon-600 (4.53:1 against the label; persimmon-500 was 3.32:1). The muted-but-tappable state was removed, so the button no longer watches the name field.
+- Adapt: iOS gets `KeyboardToolbar` (prev / next / done), because phone and decimal pads have no return key. On iOS the save bar no longer rides the keyboard; tapping Done reveals it. Content is capped at 560pt and centered for tablets. Notes chips are now 40pt (48pt with hit slop).
+- Quieter: removed the "1 / 3" counters, the persimmon icon tiles, the "Customer Passbook" eyebrow, and the "New Suki" / "Member Card" pill row.
+- Typeset: the hero card labels use 12px `text-caption` in sentence case instead of 10px `label-caps`.
+- Clarify: a visible "Or type your own amount" label sits above the custom limit input. Placeholders are examples only and use ink-400 (4.2:1 on paper-100).
+- Polish: section cards and the hero card are flat. The hero card radius dropped to 16px.
+- Skipped: the fade transition stays, per the owner's decision. Hex-to-token for dark mode and the FontAwesome-to-system-icons change are app-wide, so they are not done here.
+- Not verified on a device. The `usePreventRemove` swipe-back block on native-stack iOS is still to confirm by hand.

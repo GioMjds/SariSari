@@ -22,7 +22,7 @@ SariSari replaces the paper notebook and calculator rather than imitating a gene
 
 - **Fully offline.** Sales, inventory, utang, and reports work end to end in airplane mode; no signal or data plan is needed.
 - **Exact utang ledger.** Payments are allocated FIFO against the oldest unpaid credit, and balances are integer-accurate, so the owner can trust them and show them to the suki.
-- **Built for sari-sari.** Tingi and pakyaw pricing, a preloaded catalog of common Philippine store items, Tagalog and English, and the Sari mascot.
+- **Built for sari-sari.** Tingi and pakyaw pricing, owner-entered barcodes, Tagalog and English, and the Sari mascot.
 - **Free and local.** No account, subscription, or cloud lock-in; the store's data stays on the phone.
 
 ## Operating Context
@@ -30,7 +30,7 @@ SariSari replaces the paper notebook and calculator rather than imitating a gene
 - Used at a physical store counter, often under bright daylight, with customers waiting.
 - Several people may share one phone: the owner plus helpers ringing up sales.
 - Sales are cash or credit (utang); credit checkouts are not counted as sales.
-- Barcode scanning looks up products offline; unknown barcodes are learned.
+- Barcode scanning looks up products offline; owners set each product's barcode, and the app learns it on save.
 - Suki statements and the palengke sheet are shared as PDFs from the device.
 - The UI ships in English and Tagalog (`locales/en`, `locales/tl`).
 
@@ -58,7 +58,7 @@ Tactile & Cozy. Warm, receipt-paper aesthetic utilizing the mascot Sari (an inte
 
 - Pilot stores use the app. This is internal only: never cite pilots, their counts, or their feedback in app copy or marketing.
 - A feedback survey exists (`SURVEY.md`); no results are recorded, so none may be quoted.
-- Real product assets: the Sari mascot (`components/mascot/`) and the preloaded PH product catalog.
+- Real product assets: the Sari mascot (`components/mascot/`).
 - No testimonials, ratings, install counts, or press exist. Do not fabricate them.
 
 ## Product Principles
