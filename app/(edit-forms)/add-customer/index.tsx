@@ -16,6 +16,7 @@ import {
   SubmitButton,
   useAddCustomerForm,
 } from '@/components/utang/add-customer';
+import { ProductFormHeader } from '@/components/inventory/products/form';
 
 // Height of the sticky save bar, so the focused field scrolls clear of it.
 const SAVE_BAR_HEIGHT = 76;
@@ -35,6 +36,8 @@ function AddCustomer() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <ProductFormHeader title="Add Customer" onBack={router.back} />
+
       <KeyboardAwareScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -44,7 +47,7 @@ function AddCustomer() {
         contentContainerStyle={{ paddingBottom: SAVE_BAR_HEIGHT + insets.bottom + 24 }}
       >
         <View className={CONTENT}>
-          <AddCustomerHeader control={form.control} onBack={router.back} />
+          <AddCustomerHeader control={form.control} />
           <AddCustomerFormSheet control={form.control} setFocus={form.setFocus} />
         </View>
       </KeyboardAwareScrollView>

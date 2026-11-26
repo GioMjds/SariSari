@@ -1,7 +1,6 @@
 import { memo } from 'react';
-import { FontAwesome } from '@expo/vector-icons';
 import { Control, useWatch } from 'react-hook-form';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { formatPesos, tryParsePesosInput } from '@/lib/money';
 import { formatPhone } from './phone';
@@ -9,38 +8,14 @@ import { CustomerFormData } from './useAddCustomerForm';
 
 interface AddCustomerHeaderProps {
   control: Control<CustomerFormData>;
-  onBack: () => void;
 }
 
-/** Top bar with back button; never re-renders while typing. */
+/** Preview card above the form; the top bar is the shared ProductFormHeader. */
 export const AddCustomerHeader = memo(function AddCustomerHeader({
   control,
-  onBack,
 }: AddCustomerHeaderProps) {
   return (
-    <View className="px-5 pt-3 pb-4 bg-background">
-      <View className="flex-row items-center justify-between mb-4">
-        <Pressable
-          onPress={onBack}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          className="w-11 h-11 items-center justify-center rounded-full bg-paper-50 shadow-paper border border-ink-100 active:opacity-70"
-        >
-          <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
-        </Pressable>
-
-        <StyledText
-          variant="extrabold"
-          className="text-ink-900 text-h2"
-          accessibilityRole="header"
-        >
-          New Suki
-        </StyledText>
-
-        <View className="w-11 h-11" />
-      </View>
-
+    <View className="px-4 pt-4 pb-3">
       <PassbookPreview control={control} />
     </View>
   );
