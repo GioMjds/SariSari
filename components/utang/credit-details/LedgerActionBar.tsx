@@ -32,10 +32,14 @@ export const LedgerActionBar = memo(function LedgerActionBar({
         onPress={onAddCredit}
         accessibilityRole="button"
         accessibilityLabel={t('detailAddCreditA11y')}
-        className="press-scale flex-1 min-h-[52px] rounded-xl bg-paper-50 border border-cinnamon-500 flex-row items-center justify-center"
+        className="press-scale flex-1 min-h-[52px] rounded-xl bg-paper-50 border border-cinnamon-500 flex-row items-center justify-center px-3"
       >
         <FontAwesome name="plus" size={14} color="#623418" />
-        <StyledText variant="extrabold" className="text-cinnamon-700 text-base ml-2">
+        <StyledText
+          variant="extrabold"
+          className="text-cinnamon-700 text-base ml-2 flex-shrink-1"
+          numberOfLines={1}
+        >
           {t('detailAddCredit')}
         </StyledText>
       </Pressable>
@@ -45,9 +49,11 @@ export const LedgerActionBar = memo(function LedgerActionBar({
         disabled={!canCollect}
         accessibilityRole="button"
         accessibilityLabel={t('detailAddPaymentA11y')}
-        accessibilityHint={canCollect ? undefined : t('detailAddPaymentDisabledHint')}
+        accessibilityHint={
+          canCollect ? undefined : t('detailAddPaymentDisabledHint')
+        }
         accessibilityState={{ disabled: !canCollect }}
-        className={`press-scale flex-[1.3] min-h-[52px] rounded-xl flex-row items-center justify-center ${
+        className={`press-scale flex-[1.3] min-h-[52px] rounded-xl flex-row items-center justify-center px-3 ${
           canCollect ? 'bg-sage-500' : 'bg-paper-200'
         }`}
       >
@@ -58,7 +64,8 @@ export const LedgerActionBar = memo(function LedgerActionBar({
         />
         <StyledText
           variant="extrabold"
-          className={`text-base ml-2 ${canCollect ? 'text-paper-50' : 'text-ink-500'}`}
+          className={`text-base ml-2 flex-shrink-1 ${canCollect ? 'text-paper-50' : 'text-ink-500'}`}
+          numberOfLines={1}
         >
           {t('detailAddPayment')}
         </StyledText>
