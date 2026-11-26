@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
-import { BackHandler } from 'react-native';
+import { useRef } from 'react';
+import { AccessibilityInfo } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { NewCustomer } from '@/types';
@@ -43,39 +43,24 @@ export function useAddCustomerForm() {
     },
   });
 
-  const confirmDiscard = useCallback(() => {
-    if (!isDirty) {
-      router.back();
+  const navigation = useNavigation();
+  const saved = useRef(false);
+
+  // Guards every exit path: header back, Android back, and the iOS edge swipe.
+  usePreventRemove(isDirty, ({ data }) => {
+    if (saved.current) {
+      navigation.dispatch(data.action);
       return;
     }
-    Alert.alert(
-      'Discard this suki?',
-      'The details you typed will be lost.',
-      [
-        { text: 'Keep Editing', style: 'cancel', onPress: () => {} },
-        {
-          text: 'Discard',
-          style: 'destructive',
-          onPress: () => router.back(),
-        },
-      ],
-    );
-  }, [isDirty]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (!isDirty) return false;
-        confirmDiscard();
-        return true;
-      };
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        onBackPress,
-      );
-      return () => backHandler.remove();
-    }, [confirmDiscard, isDirty]),
-  );
+    Alert.alert('Discard this suki?', 'The details you typed will be lost.', [
+      { text: 'Keep Editing', style: 'cancel', onPress: () => {} },
+      {
+        text: 'Discard',
+        style: 'destructive',
+        onPress: () => navigation.dispatch(data.action),
+      },
+    ]);
+  });
 
   const submit = handleSubmit(
     (data) => {
@@ -99,6 +84,7 @@ export function useAddCustomerForm() {
             Haptics.NotificationFeedbackType.Success,
           ).catch(() => {});
           addToast({ message: `${name} added to your suki list`, variant: 'success' });
+          saved.current = true;
           router.back();
         },
         onError: () => {
@@ -109,11 +95,13 @@ export function useAddCustomerForm() {
         },
       });
     },
-    () => {
-      // RHF focuses the first invalid field; the buzz tells the owner why nothing saved.
+    (errors) => {
+      // RHF focuses the first invalid field; buzz and speech tell the owner why nothing saved.
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
         () => {},
       );
+      const first = Object.values(errors)[0]?.message;
+      if (first) AccessibilityInfo.announceForAccessibility(first);
     },
   );
 
@@ -121,7 +109,6 @@ export function useAddCustomerForm() {
     control,
     setFocus,
     submit,
-    confirmDiscard,
     isPending: insertCustomer.isPending,
   };
 }

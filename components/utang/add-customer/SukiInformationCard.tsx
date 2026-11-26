@@ -11,13 +11,12 @@ interface SukiInformationCardProps {
 }
 
 /**
- * SukiInformationCard — step 1 of the sheet. Customer Name (required,
+ * SukiInformationCard — first section of the sheet. Customer Name (required,
  * trimmed) and Phone Number (digits stored, PH mobile grouping shown).
  */
 export function SukiInformationCard({ control, setFocus }: SukiInformationCardProps) {
   return (
     <FormSection
-      step={1}
       icon="user"
       title="Suki Information"
       subtitle="Who they are and how to reach them"
@@ -38,7 +37,7 @@ export function SukiInformationCard({ control, setFocus }: SukiInformationCardPr
             <TextField
               ref={ref}
               icon="user"
-              invalid={!!error}
+              error={error?.message}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -70,7 +69,7 @@ export function SukiInformationCard({ control, setFocus }: SukiInformationCardPr
             <TextField
               ref={ref}
               icon="phone"
-              invalid={!!error}
+              error={error?.message}
               value={formatPhone(value)}
               onChangeText={(t) => onChange(normalizePhoneInput(t))}
               onBlur={onBlur}

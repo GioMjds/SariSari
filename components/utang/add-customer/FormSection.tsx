@@ -4,25 +4,24 @@ import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 
 interface FormSectionProps {
-  step: number;
   icon: ComponentProps<typeof FontAwesome>['name'];
   title: string;
   subtitle: string;
   children: ReactNode;
 }
 
-/** FormSection — numbered paper card that groups related add-customer fields. */
-export function FormSection({ step, icon, title, subtitle, children }: FormSectionProps) {
+/** FormSection — flat paper card that groups related add-customer fields. */
+export function FormSection({ icon, title, subtitle, children }: FormSectionProps) {
   return (
-    <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
+    <View className="bg-paper-50 rounded-2xl border border-ink-100 p-4">
       <View
         className="flex-row items-center mb-4"
         accessible
         accessibilityRole="header"
-        accessibilityLabel={`${title}, step ${step} of 3. ${subtitle}`}
+        accessibilityLabel={`${title}. ${subtitle}`}
       >
-        <View className="w-9 h-9 rounded-full bg-persimmon-50 border border-persimmon-100 items-center justify-center">
-          <FontAwesome name={icon} size={15} color="#C8460F" />
+        <View className="w-9 h-9 rounded-full bg-paper-100 border border-ink-100 items-center justify-center">
+          <FontAwesome name={icon} size={15} color="#564E45" />
         </View>
         <View className="flex-1 ml-3">
           <StyledText variant="extrabold" className="text-ink-900 text-base">
@@ -32,9 +31,6 @@ export function FormSection({ step, icon, title, subtitle, children }: FormSecti
             {subtitle}
           </StyledText>
         </View>
-        <StyledText variant="medium" className="label-caps text-ink-400">
-          {step} / 3
-        </StyledText>
       </View>
       <View className="gap-y-4">{children}</View>
     </View>

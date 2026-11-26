@@ -1,5 +1,6 @@
 import { withProf } from '@/utils/perf';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { router } from 'expo-router';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -7,6 +8,7 @@ import {
 import {
   KeyboardAwareScrollView,
   KeyboardStickyView,
+  KeyboardToolbar,
 } from 'react-native-keyboard-controller';
 import {
   AddCustomerHeader,
@@ -17,6 +19,15 @@ import {
 
 // Height of the sticky save bar, so the focused field scrolls clear of it.
 const SAVE_BAR_HEIGHT = 76;
+// iOS phone and decimal pads have no return key, so iOS gets a prev/next/done toolbar.
+const IS_IOS = Platform.OS === 'ios';
+// Caps the form on tablets so labels and fields stay close together.
+const CONTENT = 'w-full max-w-[560px] self-center';
+
+const TOOLBAR_THEME = {
+  light: { primary: '#C8460F', disabled: '#A89F90', background: '#F2F0E8', ripple: '#E6E3D8' },
+  dark: { primary: '#C8460F', disabled: '#A89F90', background: '#F2F0E8', ripple: '#E6E3D8' },
+};
 
 function AddCustomer() {
   const form = useAddCustomerForm();
@@ -32,22 +43,25 @@ function AddCustomer() {
         keyboardDismissMode="interactive"
         contentContainerStyle={{ paddingBottom: SAVE_BAR_HEIGHT + insets.bottom + 24 }}
       >
-        <AddCustomerHeader control={form.control} onBack={form.confirmDiscard} />
-        <AddCustomerFormSheet control={form.control} setFocus={form.setFocus} />
+        <View className={CONTENT}>
+          <AddCustomerHeader control={form.control} onBack={router.back} />
+          <AddCustomerFormSheet control={form.control} setFocus={form.setFocus} />
+        </View>
       </KeyboardAwareScrollView>
 
-      <KeyboardStickyView offset={{ opened: insets.bottom }}>
+      {/* On iOS the toolbar owns the keyboard edge; Done reveals the save bar. */}
+      <KeyboardStickyView enabled={!IS_IOS} offset={{ opened: insets.bottom }}>
         <View
           className="px-4 pt-3 bg-background border-t border-ink-100"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
-          <SubmitButton
-            control={form.control}
-            isPending={form.isPending}
-            onSubmit={form.submit}
-          />
+          <View className={CONTENT}>
+            <SubmitButton isPending={form.isPending} onSubmit={form.submit} />
+          </View>
         </View>
       </KeyboardStickyView>
+
+      {IS_IOS ? <KeyboardToolbar theme={TOOLBAR_THEME} doneText="Done" /> : null}
     </SafeAreaView>
   );
 }

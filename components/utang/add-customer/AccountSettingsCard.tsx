@@ -11,13 +11,12 @@ interface AccountSettingsCardProps {
 }
 
 /**
- * AccountSettingsCard — step 2 of the sheet. Credit Limit (presets or
+ * AccountSettingsCard — second section of the sheet. Credit Limit (presets or
  * custom peso input) and Address (optional, wraps to a second line).
  */
 export function AccountSettingsCard({ control, setFocus }: AccountSettingsCardProps) {
   return (
     <FormSection
-      step={2}
       icon="credit-card"
       title="Account Settings"
       subtitle="Borrowing cap and where to find them"

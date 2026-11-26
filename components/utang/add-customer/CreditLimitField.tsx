@@ -86,15 +86,18 @@ export function CreditLimitField({ control, setFocus }: CreditLimitFieldProps) {
                 );
               })}
             </View>
+            <StyledText variant="medium" className="text-caption text-ink-700 mb-1.5">
+              Or type your own amount
+            </StyledText>
             <TextField
               ref={ref}
               icon="money"
               prefix="₱"
-              invalid={!!error}
+              error={error?.message}
               value={value}
               onChangeText={(t) => onChange(t.replace(/[^\d.]/g, ''))}
               onBlur={onBlur}
-              placeholder="Or type a custom amount"
+              placeholder="e.g. 1500"
               keyboardType="decimal-pad"
               maxLength={10}
               returnKeyType="next"

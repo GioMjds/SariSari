@@ -20,13 +20,12 @@ const QUICK_NOTES = [
 ] as const;
 
 /**
- * NotesField — step 3 of the sheet. A spacious multiline field for
+ * NotesField — last section of the sheet. A spacious multiline field for
  * private comments, with tap-to-add phrases and a character counter.
  */
 export function NotesField({ control }: NotesFieldProps) {
   return (
     <FormSection
-      step={3}
       icon="sticky-note-o"
       title="Internal Notes"
       subtitle="Private, only you can see this"
@@ -56,7 +55,7 @@ export function NotesField({ control }: NotesFieldProps) {
                       accessibilityRole="button"
                       accessibilityLabel={`Add note: ${note}`}
                       hitSlop={4}
-                      className="min-h-[36px] flex-row items-center px-3 rounded-pill border border-dashed border-ink-200 bg-paper-50 active:opacity-70"
+                      className="min-h-[40px] flex-row items-center px-3 rounded-pill border border-dashed border-ink-200 bg-paper-50 active:opacity-70"
                     >
                       <FontAwesome name="plus" size={10} color="#7A7165" />
                       <StyledText variant="medium" className="text-xs text-ink-700 ml-1.5">

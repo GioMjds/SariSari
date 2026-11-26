@@ -30,18 +30,13 @@ export const AddCustomerHeader = memo(function AddCustomerHeader({
           <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
         </Pressable>
 
-        <View className="items-center">
-          <StyledText
-            variant="extrabold"
-            className="text-ink-900 text-h2"
-            accessibilityRole="header"
-          >
-            New Suki
-          </StyledText>
-          <StyledText variant="medium" className="label-caps text-ink-400 mt-0.5">
-            Customer Passbook
-          </StyledText>
-        </View>
+        <StyledText
+          variant="extrabold"
+          className="text-ink-900 text-h2"
+          accessibilityRole="header"
+        >
+          New Suki
+        </StyledText>
 
         <View className="w-11 h-11" />
       </View>
@@ -65,7 +60,7 @@ function PassbookPreview({ control }: Pick<AddCustomerHeaderProps, 'control'>) {
 
   return (
     <View
-      className="bg-cinnamon-500 rounded-3xl shadow-paper-deep px-5 py-4 overflow-hidden relative"
+      className="bg-cinnamon-500 rounded-2xl px-5 py-4 overflow-hidden relative"
       accessible
       accessibilityLabel={`Preview: ${trimmedName || 'no name yet'}, phone ${
         phone ? formatPhone(phone) : 'none'
@@ -80,17 +75,6 @@ function PassbookPreview({ control }: Pick<AddCustomerHeaderProps, 'control'>) {
         ₱
       </StyledText>
 
-      <View className="flex-row items-center justify-between mb-3 relative">
-        <View className="bg-persimmon-500/20 border border-persimmon-500 rounded-pill px-2.5 py-1">
-          <StyledText variant="extrabold" className="label-caps text-persimmon-300">
-            New Suki
-          </StyledText>
-        </View>
-        <StyledText variant="medium" className="label-caps text-paper-200 opacity-90">
-          Member Card
-        </StyledText>
-      </View>
-
       <StyledText
         variant="extrabold"
         className={`text-h3 relative ${trimmedName ? 'text-paper-50' : 'text-paper-200 opacity-60'}`}
@@ -101,7 +85,7 @@ function PassbookPreview({ control }: Pick<AddCustomerHeaderProps, 'control'>) {
 
       <View className="flex-row items-end justify-between mt-3 relative">
         <View className="flex-1 pr-3">
-          <StyledText variant="medium" className="label-caps text-paper-200 opacity-90">
+          <StyledText variant="medium" className="text-caption text-paper-200">
             Phone
           </StyledText>
           <StyledText
@@ -114,8 +98,8 @@ function PassbookPreview({ control }: Pick<AddCustomerHeaderProps, 'control'>) {
         </View>
 
         <View className="items-end">
-          <StyledText variant="medium" className="label-caps text-paper-200 opacity-90">
-            Credit Limit
+          <StyledText variant="medium" className="text-caption text-paper-200">
+            Credit limit
           </StyledText>
           <StyledText
             variant="extrabold"

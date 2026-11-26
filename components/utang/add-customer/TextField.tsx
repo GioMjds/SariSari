@@ -7,7 +7,8 @@ interface TextFieldProps extends TextInputProps {
   icon?: ComponentProps<typeof FontAwesome>['name'];
   /** Static text shown before the input, e.g. a currency sign. */
   prefix?: string;
-  invalid?: boolean;
+  /** Error message; turns the border red and is read as the input's hint. */
+  error?: string | undefined;
 }
 
 /**
@@ -16,10 +17,11 @@ interface TextFieldProps extends TextInputProps {
  */
 export const TextField = forwardRef<TextInput, TextFieldProps>(
   function TextField(
-    { icon, prefix, invalid, multiline, onFocus, onBlur, className, ...rest },
+    { icon, prefix, error, multiline, onFocus, onBlur, className, ...rest },
     ref,
   ) {
     const [focused, setFocused] = useState(false);
+    const invalid = !!error;
     const border = invalid
       ? 'border-semantic-danger'
       : focused
@@ -50,7 +52,8 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(
         <TextInput
           ref={ref}
           multiline={multiline}
-          placeholderTextColor="#A89F90"
+          accessibilityHint={error}
+          placeholderTextColor="#7A7165"
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
