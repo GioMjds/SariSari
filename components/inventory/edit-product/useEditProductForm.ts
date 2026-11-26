@@ -1,319 +1,162 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { BackHandler } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
-import {
-  useBarcodeResolver,
-  useCategories,
-  useGetProduct,
-  useProducts,
-} from '@/hooks';
+import { useGetProduct, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib';
-import { MarkupPreset } from '../products/form/ProductPricingCard';
-import type { UpdateProductParams } from '@/types/products.types';
+import { validateBarcode } from '@/lib/barcodes/format';
+import { useToastStore } from '@/stores';
+import type { Product, UpdateProductParams } from '@/types/products.types';
+import {
+  PRODUCT_FORM_DEFAULTS,
+  type ProductFormData,
+  findBarcodeConflict,
+  safeTrim,
+} from '../products/form';
+import type { ScanTarget } from '../products/add-product';
 
-export interface EditProductFormData {
-  name: string;
-  sku: string;
-  barcode: string;
-  costPerPiece: string;
-  price: string;
-  initialStock: string;
-  category: string;
-  supplier_id: string;
-  imageUri: string;
-  bundleCost: string;
-  piecesPerBundle: string;
-  enableWholesale: boolean;
-  retailUnitName: string;
-  wholesaleUnitName: string;
-  conversionFactor: string;
-  wholesalePrice: string;
-  wholesaleCostPrice: string;
-  wholesaleBarcode: string;
-}
-
-const safeTrim = (s?: string) => (s ?? '').trim();
+const toFormValues = (p: Product): ProductFormData => ({
+  ...PRODUCT_FORM_DEFAULTS,
+  productName: p.name,
+  sku: p.sku,
+  barcode: p.barcode ?? '',
+  category: p.category ?? '',
+  supplierId: p.supplier_id ?? '',
+  imageUri: p.image_uri ?? '',
+  costPerPiece: p.cost_price ? String(p.cost_price) : '',
+  price: String(p.price),
+  initialStock: String(p.quantity),
+  enableWholesale: !!(p.wholesale_unit_name && (p.conversion_factor ?? 0) > 1),
+  retailUnitName: p.retail_unit_name || 'Pc',
+  wholesaleUnitName: p.wholesale_unit_name || 'Case',
+  conversionFactor: p.conversion_factor ? String(p.conversion_factor) : '12',
+  wholesalePrice: p.wholesale_price ? String(p.wholesale_price) : '',
+  wholesaleCostPrice: p.wholesale_cost_price ? String(p.wholesale_cost_price) : '',
+  wholesaleBarcode: p.wholesale_barcode ?? '',
+});
 
 export function useEditProductForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const productId = parseInt(id ?? '0', 10);
 
-  const { updateProductMutation, deleteProductMutation, getAllProductsQuery } =
-    useProducts();
-  const { getAllCategoriesQuery } = useCategories();
-  const { data: categories = [] } = getAllCategoriesQuery;
+  const { updateProductMutation, deleteProductMutation, getAllProductsQuery } = useProducts();
   const { data: product, isLoading } = useGetProduct(productId);
-  const { resolve } = useBarcodeResolver();
+  const addToast = useToastStore((state) => state.addToast);
 
-  const [useBundlePricing, setUseBundlePricing] = useState<boolean>(false);
-  const [showDiscardModal, setShowDiscardModal] = useState<boolean>(false);
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [stockSheet, setStockSheet] = useState<'restock' | 'adjust' | null>(null);
+  const [scanTarget, setScanTarget] = useState<ScanTarget | null>(null);
 
-  const defaultValues = useMemo<EditProductFormData>(() => {
-    if (!product) {
-      return {
-        name: '',
-        sku: '',
-        barcode: '',
-        costPerPiece: '',
-        price: '',
-        initialStock: '',
-        category: '',
-        supplier_id: '',
-        imageUri: '',
-        bundleCost: '',
-        piecesPerBundle: '',
-        enableWholesale: false,
-        retailUnitName: 'Pc',
-        wholesaleUnitName: 'Case',
-        conversionFactor: '12',
-        wholesalePrice: '',
-        wholesaleCostPrice: '',
-        wholesaleBarcode: '',
-      };
-    }
-
-    return {
-      name: product.name,
-      sku: product.sku,
-      barcode: product.barcode || '',
-      costPerPiece: product.cost_price ? product.cost_price.toString() : '',
-      price: product.price.toString(),
-      initialStock: product.quantity.toString(),
-      category: product.category || '',
-      supplier_id: product.supplier_id || '',
-      imageUri: product.image_uri || '',
-      bundleCost: '',
-      piecesPerBundle: '',
-      enableWholesale: !!(
-        product.wholesale_unit_name &&
-        product.conversion_factor &&
-        product.conversion_factor > 1
-      ),
-      retailUnitName: product.retail_unit_name || 'Pc',
-      wholesaleUnitName: product.wholesale_unit_name || 'Case',
-      conversionFactor: product.conversion_factor
-        ? product.conversion_factor.toString()
-        : '12',
-      wholesalePrice: product.wholesale_price
-        ? product.wholesale_price.toString()
-        : '',
-      wholesaleCostPrice: product.wholesale_cost_price
-        ? product.wholesale_cost_price.toString()
-        : '',
-      wholesaleBarcode: product.wholesale_barcode || '',
-    };
-  }, [product]);
+  const values = useMemo(() => (product ? toFormValues(product) : PRODUCT_FORM_DEFAULTS), [product]);
 
   const {
     control,
     handleSubmit,
     setValue,
     formState: { isDirty },
-  } = useForm<EditProductFormData>({
-    defaultValues,
-    values: defaultValues,
+  } = useForm<ProductFormData>({
+    defaultValues: values,
+    values,
+    // A restock refetches the product; keep whatever the user already typed.
+    resetOptions: { keepDirtyValues: true, keepDirty: true },
   });
 
-  const name = useWatch({ control, name: 'name' });
-  const sku = useWatch({ control, name: 'sku' });
-  const barcode = useWatch({ control, name: 'barcode' });
-  const costPerPiece = useWatch({ control, name: 'costPerPiece' });
-  const price = useWatch({ control, name: 'price' });
-  const initialStock = useWatch({ control, name: 'initialStock' });
-  const category = useWatch({ control, name: 'category' });
-  const supplierId = useWatch({ control, name: 'supplier_id' });
-  const enableWholesale = useWatch({ control, name: 'enableWholesale' });
-  const retailUnitName = useWatch({ control, name: 'retailUnitName' });
-  const wholesaleUnitName = useWatch({ control, name: 'wholesaleUnitName' });
-  const conversionFactor = useWatch({ control, name: 'conversionFactor' });
-  const wholesalePrice = useWatch({ control, name: 'wholesalePrice' });
-  const wholesaleCostPrice = useWatch({ control, name: 'wholesaleCostPrice' });
-  const wholesaleBarcode = useWatch({ control, name: 'wholesaleBarcode' });
+  const [name, price, barcode] = useWatch({ control, name: ['productName', 'price', 'barcode'] });
 
-  const existingProducts = useMemo(
-    () => getAllProductsQuery.data ?? [],
-    [getAllProductsQuery.data],
+  const barcodeConflictProduct = useMemo(
+    () => findBarcodeConflict(getAllProductsQuery.data ?? [], barcode, productId),
+    [getAllProductsQuery.data, barcode, productId],
   );
 
-  const trimmedBarcode = safeTrim(barcode);
-  const barcodeConflictProduct = useMemo(() => {
-    if (!trimmedBarcode) return null;
-    return (
-      existingProducts.find(
-        (p) =>
-          p.id !== productId &&
-          ((p.barcode != null && p.barcode === trimmedBarcode) ||
-            (p.wholesale_barcode != null &&
-              p.wholesale_barcode === trimmedBarcode) ||
-            p.sku === trimmedBarcode),
-      ) ?? null
-    );
-  }, [trimmedBarcode, existingProducts, productId]);
-
-  const isBarcodeDuplicate = barcodeConflictProduct != null;
-
-  const parsedCost = costPerPiece ? tryParsePesosInput(costPerPiece) : 0;
-  const parsedPrice = price ? tryParsePesosInput(price) : 0;
-  const profitPerPiece = parsedPrice - parsedCost;
-  const markupPercent =
-    parsedCost > 0 && parsedPrice > 0
-      ? ((parsedPrice - parsedCost) / parsedCost) * 100
-      : 0;
-  const isLossWarning =
-    parsedCost > 0 && parsedPrice > 0 && parsedPrice <= parsedCost;
-
-  const isSubmitDisabled =
-    updateProductMutation.isPending ||
-    !safeTrim(name) ||
-    !price ||
-    parsedPrice <= 0 ||
-    isBarcodeDuplicate;
-
-  const applyMarkupPreset = useCallback(
-    (markup: MarkupPreset) => {
-      if (parsedCost <= 0) return;
-      const calculated = parsedCost * (1 + markup);
-      setValue('price', calculated.toFixed(2), { shouldDirty: true });
-    },
-    [parsedCost, setValue],
-  );
-
-  const bumpStock = useCallback(
-    (delta: number) => {
-      const current = parseInt(initialStock ?? '0', 10);
-      const base = Number.isFinite(current) ? current : 0;
-      const next = Math.max(0, base + delta);
-      setValue('initialStock', String(next), { shouldDirty: true });
-    },
-    [initialStock, setValue],
-  );
-
-  const categoryRef = useRef(category);
-  categoryRef.current = category;
-
-  const selectCategory = useCallback(
-    (nextCat: string) => {
-      const current = categoryRef.current;
-      const nextCategory = current === nextCat ? '' : nextCat;
-      setValue('category', nextCategory, { shouldDirty: true });
-    },
-    [setValue],
-  );
-
-  const openScanner = useCallback(() => setIsScannerOpen(true), []);
-  const closeScanner = useCallback(() => setIsScannerOpen(false), []);
-
-  const handleScannedBarcode = useCallback(
-    async (barcodeValue: string) => {
-      setValue('barcode', safeTrim(barcodeValue), { shouldDirty: true });
-      setIsScannerOpen(false);
-    },
-    [setValue],
-  );
+  const blocker = !isDirty
+    ? 'No changes yet'
+    : !safeTrim(name)
+      ? 'Add a product name to save'
+      : !(tryParsePesosInput(price) > 0)
+        ? 'Add a selling price to save'
+        : barcodeConflictProduct
+          ? 'That barcode belongs to another product'
+          : null;
 
   const handleBack = useCallback(() => {
-    if (isDirty) {
-      setShowDiscardModal(true);
-    } else {
-      router.back();
-    }
+    if (isDirty) setShowDiscardModal(true);
+    else router.back();
   }, [isDirty]);
 
-  const cancelDiscard = useCallback(() => {
-    setShowDiscardModal(false);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (!isDirty) return false;
+        setShowDiscardModal(true);
+        return true;
+      });
+      return () => sub.remove();
+    }, [isDirty]),
+  );
 
-  const confirmDiscard = useCallback(() => {
-    setShowDiscardModal(false);
-    router.back();
-  }, []);
+  // Scans only fill barcode fields; duplicates surface through the conflict card.
+  const handleScannedBarcode = useCallback(
+    (value: string) => {
+      const check = validateBarcode(value);
+      if (check.ok && scanTarget) setValue(scanTarget, check.barcode, { shouldDirty: true });
+      else addToast({ message: 'Barcodes are 8 to 14 digits.', variant: 'warning' });
+      setScanTarget(null);
+    },
+    [scanTarget, setValue, addToast],
+  );
 
   const submit = handleSubmit(async (data) => {
-    const priceValue = parsePesosInput(data.price);
-    const stockValue = data.initialStock
-      ? parseInt(data.initialStock, 10)
-      : product?.quantity || 0;
-    const costPriceValue = data.costPerPiece
-      ? parsePesosInput(data.costPerPiece)
-      : undefined;
-    const barcodeVal = safeTrim(data.barcode);
+    if (!product) return;
+    const wholesale = data.enableWholesale;
+    const factor = parseInt(data.conversionFactor, 10);
+    const payload: UpdateProductParams = {
+      id: productId,
+      name: safeTrim(data.productName),
+      sku: product.sku,
+      price: parsePesosInput(data.price),
+      // Stock only moves through restock/adjust, so always send the latest saved count.
+      quantity: product.quantity,
+      barcode: safeTrim(data.barcode) || null,
+      supplier_id: safeTrim(data.supplierId) || null,
+      image_uri: safeTrim(data.imageUri) || null,
+      retail_unit_name: safeTrim(data.retailUnitName) || 'Pc',
+      wholesale_unit_name: wholesale ? safeTrim(data.wholesaleUnitName) || null : null,
+      wholesale_price: wholesale && data.wholesalePrice ? parsePesosInput(data.wholesalePrice) : null,
+      wholesale_cost_price:
+        wholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null,
+      conversion_factor: wholesale && Number.isFinite(factor) && factor >= 2 ? factor : null,
+      wholesale_barcode: wholesale ? safeTrim(data.wholesaleBarcode) || null : null,
+    };
+    if (data.costPerPiece) payload.cost_price = parsePesosInput(data.costPerPiece);
+    if (safeTrim(data.category)) payload.category = safeTrim(data.category);
 
     try {
-      const updatePayload: UpdateProductParams = {
-        id: productId,
-        name: safeTrim(data.name),
-        sku: safeTrim(data.sku),
-        price: priceValue,
-        quantity: Number.isFinite(stockValue)
-          ? stockValue
-          : product?.quantity || 0,
-        barcode: barcodeVal || null,
-        supplier_id: data.supplier_id ? data.supplier_id : null,
-        image_uri: data.imageUri ? safeTrim(data.imageUri) : null,
-        retail_unit_name: safeTrim(data.retailUnitName) || 'Pc',
-        wholesale_unit_name: data.enableWholesale
-          ? safeTrim(data.wholesaleUnitName) || null
-          : null,
-        wholesale_price:
-          data.enableWholesale && data.wholesalePrice
-            ? parsePesosInput(data.wholesalePrice)
-            : null,
-        wholesale_cost_price:
-          data.enableWholesale && data.wholesaleCostPrice
-            ? parsePesosInput(data.wholesaleCostPrice)
-            : null,
-        conversion_factor:
-          data.enableWholesale && data.conversionFactor
-            ? parseInt(data.conversionFactor, 10)
-            : null,
-        wholesale_barcode:
-          data.enableWholesale && safeTrim(data.wholesaleBarcode)
-            ? safeTrim(data.wholesaleBarcode)
-            : null,
-      };
-
-      if (costPriceValue !== undefined) {
-        updatePayload.cost_price = costPriceValue;
-      }
-      const trimmedCategory = safeTrim(data.category);
-      if (trimmedCategory) {
-        updatePayload.category = trimmedCategory;
-      }
-
-      await updateProductMutation.mutateAsync(updatePayload);
+      await updateProductMutation.mutateAsync(payload);
       router.back();
     } catch {
-      // Surfaced by mutation state
+      // Surfaced by mutation state.
     }
   });
 
   return {
     product,
     isLoading,
-    categories,
     control,
     setValue,
-    name,
-    sku,
-    barcode,
-    costPerPiece,
-    price,
-    initialStock,
-    category,
-    supplierId,
-    enableWholesale,
-    retailUnitName,
-    wholesaleUnitName,
-    conversionFactor,
-    wholesalePrice,
-    wholesaleCostPrice,
-    wholesaleBarcode,
-    useBundlePricing,
-    setUseBundlePricing,
+    blocker,
+    barcodeConflictProduct,
+    submit,
+    updateProductMutation,
+    deleteProductMutation,
+    handleBack,
     showDiscardModal,
-    setShowDiscardModal,
+    cancelDiscard: () => setShowDiscardModal(false),
+    confirmDiscard: () => {
+      setShowDiscardModal(false);
+      router.back();
+    },
     showDeleteModal,
     openDeleteModal: () => setShowDeleteModal(true),
     cancelDelete: () => setShowDeleteModal(false),
@@ -322,25 +165,11 @@ export function useEditProductForm() {
       await deleteProductMutation.mutateAsync(productId);
       router.back();
     },
-    isScannerOpen,
-    openScanner,
-    closeScanner,
+    stockSheet,
+    setStockSheet,
+    isScannerOpen: scanTarget !== null,
+    openScanner: setScanTarget,
+    closeScanner: () => setScanTarget(null),
     handleScannedBarcode,
-    profitPerPiece,
-    markupPercent,
-    isLossWarning,
-    isBarcodeDuplicate,
-    barcodeConflictProduct,
-    isSubmitDisabled,
-    applyMarkupPreset,
-    bumpStock,
-    selectCategory,
-    handleBack,
-    cancelDiscard,
-    confirmDiscard,
-    submit,
-    updateProductMutation,
-    deleteProductMutation,
-    resolve,
   };
 }

@@ -13,27 +13,18 @@ interface EditDangerZoneProps {
  */
 export function EditDangerZone({ onDelete }: EditDangerZoneProps) {
   return (
-    <View className="mt-4 border-t border-ink-100 pt-4">
-      <StyledText variant="extrabold" className="label-caps text-ink-400 text-xs mb-2">
-        Danger Zone
-      </StyledText>
+    <View className="border-t border-dashed border-paper-400 pt-4">
       <TouchableOpacity
         onPress={onDelete}
         accessibilityRole="button"
         accessibilityLabel="Delete product"
-        className="press-scale bg-semantic-danger rounded-pill py-4 items-center"
+        accessibilityHint="Asks for confirmation before deleting"
+        className="press-scale min-h-[52px] rounded-xl border border-semantic-danger-100 bg-semantic-danger-50 flex-row items-center justify-center"
       >
-        <View className="flex-row items-center">
-          <FontAwesome
-            name="trash"
-            size={16}
-            color="#FBF7EE"
-            style={{ marginRight: 8 }}
-          />
-          <StyledText variant="extrabold" className="text-paper-50 text-base">
-            Delete Product
-          </StyledText>
-        </View>
+        <FontAwesome name="trash" size={16} color="#C13030" style={{ marginRight: 8 }} />
+        <StyledText variant="semibold" className="text-semantic-danger text-base">
+          Delete product
+        </StyledText>
       </TouchableOpacity>
     </View>
   );

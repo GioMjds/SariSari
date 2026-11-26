@@ -6,7 +6,6 @@ import type { ScanResolution } from './types';
 
 export interface AddProductScanInput {
   resolution: Extract<ScanResolution, { kind: 'catalog_match' | 'missing' }>;
-  autoGenerateSku: boolean;
 }
 
 export interface AddProductScanPatch {
@@ -18,8 +17,6 @@ export interface AddProductScanPatch {
   category?: string;
   /** Filled only when the offline catalog returns a match. */
   retailUnitName?: string;
-  /** When true, the hook should flip auto-generate-SKU OFF first. */
-  setAutoGenerateSku?: boolean;
   /** Toast payload to surface when the catalog has no match. */
   toast?: {
     variant: 'warning';
@@ -36,7 +33,7 @@ export interface AddProductScanPatch {
 export function applyBarcodeToAddProductForm(
   input: AddProductScanInput,
 ): AddProductScanPatch {
-  const { resolution, autoGenerateSku } = input;
+  const { resolution } = input;
 
   if (resolution.kind === 'catalog_match') {
     const { catalogProduct } = resolution;
@@ -49,10 +46,6 @@ export function applyBarcodeToAddProductForm(
 
     if (catalogProduct.category !== null && catalogProduct.category !== undefined) {
       patch.category = catalogProduct.category;
-    }
-
-    if (autoGenerateSku) {
-      patch.setAutoGenerateSku = true;
     }
 
     return patch;

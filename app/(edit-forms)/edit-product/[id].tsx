@@ -1,22 +1,31 @@
 import { withProf } from '@/utils/perf';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View } from 'react-native';
+import { router, Href } from 'expo-router';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { Modal } from '@/components/ui';
+import { BarcodeScannerModal, Modal } from '@/components/ui';
+import { RestockSheet } from '@/components/inventory/modals';
+import { LogTransactionForm } from '@/components/inventory/ledger';
 import {
-  EditActionButtons,
-  EditBasicInfoCard,
   EditDangerZone,
-  EditPricingCard,
-  EditProductHeader,
   EditProductSkeleton,
   ProductMetaCard,
   ProductNotFound,
   useEditProductForm,
 } from '@/components/inventory/edit-product';
+import {
+  ProductCodesSection,
+  ProductDetailsSection,
+  ProductFormFooter,
+  ProductFormHeader,
+  ProductPricingSection,
+  ProductStockSection,
+  useSectionNav,
+} from '@/components/inventory/products/form';
 
 function EditProduct() {
   const form = useEditProductForm();
+  const nav = useSectionNav();
 
   if (form.isLoading) return <EditProductSkeleton />;
   if (!form.product) return <ProductNotFound onBack={form.handleBack} />;
@@ -25,70 +34,84 @@ function EditProduct() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <EditProductHeader onBack={form.handleBack} />
+      <ProductFormHeader
+        title="Edit product"
+        subtitle={product.name}
+        onBack={form.handleBack}
+        active={nav.active}
+        onJump={nav.jumpTo}
+      />
 
       <KeyboardAwareScrollView
+        ref={nav.scrollRef}
+        onScroll={nav.onScroll}
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        bottomOffset={80}
+        bottomOffset={96}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
       >
-        <EditBasicInfoCard
-          control={form.control}
-          categories={form.categories}
-          selectedCategory={form.category}
-          onSelectCategory={form.selectCategory}
-        />
-
-        <View className="mt-3">
-          <EditPricingCard
+        <View onLayout={nav.register('details')}>
+          <ProductDetailsSection control={form.control} />
+        </View>
+        <View onLayout={nav.register('codes')}>
+          <ProductCodesSection
             control={form.control}
-            profitPerPiece={form.profitPerPiece}
-            markupPercent={form.markupPercent}
-            isLossWarning={form.isLossWarning}
-            price={form.price}
-            enableWholesale={form.enableWholesale}
-            onToggleWholesale={() =>
-              form.setValue('enableWholesale', !form.enableWholesale, {
-                shouldDirty: true,
-              })
-            }
-            retailUnitName={form.retailUnitName}
-            wholesaleUnitName={form.wholesaleUnitName}
-            conversionFactor={form.conversionFactor}
-            wholesalePrice={form.wholesalePrice}
-            wholesaleCostPrice={form.wholesaleCostPrice}
+            onPressScan={() => form.openScanner('barcode')}
+            conflictProduct={form.barcodeConflictProduct}
+            onEditConflict={(id) => router.push(`/(edit-forms)/edit-product/${id}` as Href)}
+          />
+        </View>
+        <View onLayout={nav.register('pricing')}>
+          <ProductPricingSection
+            control={form.control}
+            setValue={form.setValue}
+            onPressScanCase={() => form.openScanner('wholesaleBarcode')}
+          />
+        </View>
+        <View onLayout={nav.register('stock')}>
+          <ProductStockSection
+            mode="edit"
+            control={form.control}
+            quantity={product.quantity}
+            onRestock={() => form.setStockSheet('restock')}
+            onAdjust={() => form.setStockSheet('adjust')}
           />
         </View>
 
-        <View className="mt-3">
-          <ProductMetaCard
-            createdAt={product.created_at}
-            updatedAt={product.updated_at}
-          />
-        </View>
-
-        <View className="mt-6 mb-2">
-          <EditDangerZone onDelete={form.openDeleteModal} />
-        </View>
+        <ProductMetaCard createdAt={product.created_at} updatedAt={product.updated_at} />
+        <EditDangerZone onDelete={form.openDeleteModal} />
       </KeyboardAwareScrollView>
 
-      {/* Sticky footer — always reachable without scrolling */}
-      <SafeAreaView
-        edges={['bottom']}
-        className="bg-background border-t border-ink-100"
-      >
-        <View className="px-4 pt-3 pb-2">
-          <EditActionButtons
-            onSubmit={form.submit}
-            onCancel={form.handleBack}
-            isSubmitting={form.updateProductMutation.isPending}
-          />
-        </View>
-      </SafeAreaView>
+      <ProductFormFooter
+        submitLabel="Save changes"
+        pendingLabel="Saving…"
+        blocker={form.blocker}
+        isPending={form.updateProductMutation.isPending}
+        onSubmit={form.submit}
+        onCancel={form.handleBack}
+      />
 
-      {/* Discard-changes confirmation */}
+      <RestockSheet
+        visible={form.stockSheet === 'restock'}
+        initialProductId={product}
+        onClose={() => form.setStockSheet(null)}
+      />
+      <LogTransactionForm
+        product={product}
+        initialType="adjustment"
+        visible={form.stockSheet === 'adjust'}
+        onClose={() => form.setStockSheet(null)}
+        onSuccess={() => form.setStockSheet(null)}
+      />
+
+      <BarcodeScannerModal
+        visible={form.isScannerOpen}
+        mode="single"
+        onClose={form.closeScanner}
+        onScan={form.handleScannedBarcode}
+      />
+
       <Modal
         visible={form.showDiscardModal}
         onClose={form.cancelDiscard}
@@ -98,15 +121,10 @@ function EditProduct() {
         icon="exclamation-triangle"
         buttons={[
           { text: "Don't Leave", style: 'cancel', onPress: form.cancelDiscard },
-          {
-            text: 'Discard Changes',
-            style: 'destructive',
-            onPress: form.confirmDiscard,
-          },
+          { text: 'Discard Changes', style: 'destructive', onPress: form.confirmDiscard },
         ]}
       />
 
-      {/* Delete-product confirmation */}
       <Modal
         visible={form.showDeleteModal}
         onClose={form.cancelDelete}
@@ -116,11 +134,7 @@ function EditProduct() {
         description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
         buttons={[
           { text: 'Cancel', style: 'cancel', onPress: form.cancelDelete },
-          {
-            text: 'Yes, Delete Product',
-            style: 'destructive',
-            onPress: form.confirmDelete,
-          },
+          { text: 'Yes, Delete Product', style: 'destructive', onPress: form.confirmDelete },
         ]}
         loading={form.deleteProductMutation.isPending}
       />
