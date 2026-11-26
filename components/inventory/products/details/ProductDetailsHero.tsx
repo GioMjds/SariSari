@@ -1,11 +1,10 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { MotiView } from 'moti';
 import { memo } from 'react';
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
-import { getProductImageUri } from '@/lib';
+import { ProductThumb } from '@/components/ui/ProductThumb';
 import {
   ReceiptHero,
   ReceiptHeroMeta,
@@ -40,11 +39,6 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
     stampTone = 'sage';
     stampLabel = stockLabel ?? 'IN STOCK';
   }
-
-  const placeholderText = product.name
-    ? product.name.trim().charAt(0).toUpperCase()
-    : '?';
-  const displayImageUri = getProductImageUri(product.image_uri);
 
   return (
     <MotiView
@@ -88,27 +82,12 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
             A monogram keeps the receipt feeling personal even when no
             photo has been captured. */}
         <View className="mx-5 mb-2 flex-row items-center">
-          <View className="w-16 h-16 rounded-xl bg-persimmon-50 border border-persimmon-100 overflow-hidden items-center justify-center">
-            {displayImageUri ? (
-              <Image
-                source={{ uri: displayImageUri }}
-                className="w-full h-full"
-                contentFit="cover"
-              />
-            ) : (
-              <StyledText
-                variant="black"
-                className="text-persimmon-500 text-3xl"
-                style={{ letterSpacing: -0.5 }}
-              >
-                {placeholderText}
-              </StyledText>
-            )}
-            <View
-              className="absolute inset-0 border border-black/10 rounded-xl"
-              pointerEvents="none"
-            />
-          </View>
+          <ProductThumb
+            name={product.name}
+            imageUri={product.image_uri}
+            className="w-16 h-16 rounded-xl border border-paper-300"
+            initialsClassName="text-2xl"
+          />
 
           <View className="flex-1 ml-4">
             <View className="flex-row items-center gap-2">
