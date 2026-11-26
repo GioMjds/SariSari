@@ -1,10 +1,10 @@
-import { memo } from 'react';
-import { Pressable, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { formatPesos } from '@/lib/money';
+import { FontAwesome } from '@expo/vector-icons';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, View } from 'react-native';
 import type { AlertSummary } from './summary';
 
 interface NotificationsHeroProps {
@@ -34,11 +34,19 @@ function NotificationsHeroComponent({
 
   // Error wins over loading and empty, so a failed read never reads as "all clear".
   const state = isError
-    ? { mood: 'error' as const, title: t('heroErrorTitle'), body: t('heroErrorBody') }
+    ? {
+        mood: 'error' as const,
+        title: t('heroErrorTitle'),
+        body: t('heroErrorBody'),
+      }
     : isLoading
       ? { mood: 'loading' as const, title: t('heroLoading'), body: null }
       : total === 0
-        ? { mood: summary.mood, title: t('heroClearTitle'), body: t('heroClearBody') }
+        ? {
+            mood: summary.mood,
+            title: t('heroClearTitle'),
+            body: t('heroClearBody'),
+          }
         : {
             mood: summary.mood,
             title: t('heroTitle', { count: total }),
@@ -50,10 +58,12 @@ function NotificationsHeroComponent({
       <View
         accessible
         accessibilityRole={isError ? 'alert' : 'summary'}
-        accessibilityLabel={[state.title, state.body].filter(Boolean).join('. ')}
+        accessibilityLabel={[state.title, state.body]
+          .filter(Boolean)
+          .join('. ')}
         className="flex-row items-center"
       >
-        <SariMascot state={state.mood} size={88} />
+        <SariMascot state={state.mood} size={88} animated={false} />
         <View className="flex-1 min-w-0 ml-3">
           <StyledText variant="black" className="text-lg text-ink-900">
             {state.title}
