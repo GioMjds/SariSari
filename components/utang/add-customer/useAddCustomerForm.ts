@@ -1,28 +1,39 @@
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { NewCustomer } from '@/types';
 import { tryParsePesosInput } from '@/lib/money';
 import { useInsertCustomer } from '@/hooks';
+import { useToastStore } from '@/stores';
 import { Alert } from '@/utils';
 
 export interface CustomerFormData {
   name: string;
+  /** Digits only; the phone field formats it for display. */
   phone: string;
   address: string;
   notes: string;
   credit_limit: string;
 }
 
-const trim = (s: string | undefined) => (s ?? '').trim();
-
+/**
+ * Owns the add-customer form. It never watches field values itself, so the
+ * screen does not re-render per keystroke; preview widgets subscribe directly.
+ */
 export function useAddCustomerForm() {
   const insertCustomer = useInsertCustomer();
+  const addToast = useToastStore((s) => s.addToast);
 
-  const { control, handleSubmit } = useForm<CustomerFormData>({
-    mode: 'onChange',
+  const {
+    control,
+    handleSubmit,
+    setFocus,
+    formState: { isDirty },
+  } = useForm<CustomerFormData>({
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       phone: '',
@@ -32,34 +43,16 @@ export function useAddCustomerForm() {
     },
   });
 
-  const name = useWatch({ control, name: 'name' });
-  const phone = useWatch({ control, name: 'phone' });
-  const address = useWatch({ control, name: 'address' });
-  const notes = useWatch({ control, name: 'notes' });
-  const creditLimit = useWatch({ control, name: 'credit_limit' });
-
-  const parsedLimit = creditLimit
-    ? tryParsePesosInput(creditLimit)
-    : (0 as number);
-  const hasLimit = parsedLimit > 0;
-
-  const hasActualChanges =
-    trim(name) !== '' ||
-    trim(phone) !== '' ||
-    trim(address) !== '' ||
-    trim(notes) !== '' ||
-    trim(creditLimit) !== '';
-
   const confirmDiscard = useCallback(() => {
-    if (!hasActualChanges) {
+    if (!isDirty) {
       router.back();
       return;
     }
     Alert.alert(
-      'Unsaved Changes',
-      'You have unsaved changes. Are you sure you want to discard them?',
+      'Discard this suki?',
+      'The details you typed will be lost.',
       [
-        { text: "Don't Leave", style: 'cancel', onPress: () => {} },
+        { text: 'Keep Editing', style: 'cancel', onPress: () => {} },
         {
           text: 'Discard',
           style: 'destructive',
@@ -67,66 +60,68 @@ export function useAddCustomerForm() {
         },
       ],
     );
-  }, [hasActualChanges]);
+  }, [isDirty]);
 
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (hasActualChanges) {
-          confirmDiscard();
-          return true;
-        }
-        return false;
+        if (!isDirty) return false;
+        confirmDiscard();
+        return true;
       };
       const backHandler = BackHandler.addEventListener(
         'hardwareBackPress',
         onBackPress,
       );
       return () => backHandler.remove();
-    }, [confirmDiscard, hasActualChanges]),
+    }, [confirmDiscard, isDirty]),
   );
 
-  const submit = handleSubmit((data) => {
-    const parsed = data.credit_limit
-      ? tryParsePesosInput(data.credit_limit)
-      : 0;
-    const credit_limit = parsed > 0 ? parsed : undefined;
+  const submit = handleSubmit(
+    (data) => {
+      const parsed = data.credit_limit
+        ? tryParsePesosInput(data.credit_limit)
+        : 0;
+      const name = data.name.trim();
 
-    const payload = {
-      name: data.name,
-      phone: data.phone,
-      address: data.address,
-      notes: data.notes,
-      credit_limit,
-    } as NewCustomer;
+      // insertCustomer stores empty strings and a missing limit as NULL.
+      const payload: NewCustomer = {
+        name,
+        phone: data.phone,
+        address: data.address.trim(),
+        notes: data.notes.trim(),
+        ...(parsed > 0 ? { credit_limit: parsed } : {}),
+      };
 
-    insertCustomer.mutate(payload);
-  });
+      insertCustomer.mutate(payload, {
+        onSuccess: () => {
+          Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          ).catch(() => {});
+          addToast({ message: `${name} added to your suki list`, variant: 'success' });
+          router.back();
+        },
+        onError: () => {
+          addToast({
+            message: 'Could not save this suki. Your details are kept, try again.',
+            variant: 'danger',
+          });
+        },
+      });
+    },
+    () => {
+      // RHF focuses the first invalid field; the buzz tells the owner why nothing saved.
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
+        () => {},
+      );
+    },
+  );
 
   return {
-    // Form wiring (passed through to the ticket sheet / RHF controllers)
     control,
-    handleSubmit,
-
-    // Watched values — drive the Passbook preview.
-    name,
-    phone,
-    address,
-    notes,
-    creditLimit,
-
-    // Derived (for Passbook display).
-    hasLimit,
-    parsedLimit,
-
-    // Handlers
+    setFocus,
     submit,
     confirmDiscard,
-
-    // Mutation state
-    insertCustomer,
-
-    // Router (exposed for the back button)
-    router,
+    isPending: insertCustomer.isPending,
   };
 }

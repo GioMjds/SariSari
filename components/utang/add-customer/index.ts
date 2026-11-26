@@ -5,5 +5,7 @@ export { AccountSettingsCard } from './AccountSettingsCard';
 export { CreditLimitField } from './CreditLimitField';
 export { NotesField } from './NotesField';
 export { FieldGroup } from './FieldGroup';
+export { FormSection } from './FormSection';
+export { TextField } from './TextField';
 export { useAddCustomerForm } from './useAddCustomerForm';
 export type { CustomerFormData } from './useAddCustomerForm';

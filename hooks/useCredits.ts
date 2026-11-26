@@ -46,7 +46,6 @@ import type {
   CustomerInsights,
   CustomerCreditSummary,
 } from '@/types/credits.types';
-import { Alert } from '@/utils/alert';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 
@@ -143,9 +142,9 @@ export function useSearchCustomers(query: string, opts = {}) {
   });
 }
 
+// Success and error feedback live with the caller so the form controls navigation.
 export function useInsertCustomer() {
   const queryClient = useQueryClient();
-  const router = useRouter();
   return useMutation({
     mutationFn: (data: NewCustomer) => insertCustomer(data),
     onSuccess: () => {
@@ -154,15 +153,6 @@ export function useInsertCustomer() {
       queryClient.invalidateQueries({
         queryKey: ['collection-queue'],
       });
-      Alert.alert('Success', 'Customer added successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]);
-    },
-    onError: () => {
-      Alert.alert('Error', 'Failed to add customer. Please try again.');
     },
   });
 }
