@@ -21,6 +21,9 @@ export interface ProductsListProps {
 
 const keyExtractor = (item: Product) => String(item.id);
 
+// Matches the 16px gutter both row and grid layouts use.
+const FOOTER_STYLE = { width: '100%', paddingHorizontal: 16 } as const;
+
 export const ProductsList = memo(function ProductsList({
   products,
   onPress,
@@ -64,10 +67,11 @@ export const ProductsList = memo(function ProductsList({
     [isShortList, fabClearance],
   );
 
+  // Footer spans the full row and sits below the grid gutter so a lone last tile does not crowd it.
   const listFooter = useMemo(() => {
     if (isFetchingNextPage) {
       return (
-        <View className="py-4 items-center justify-center flex-row gap-x-2">
+        <View className="mt-1 h-12 items-center justify-center flex-row gap-x-2 border-t border-ink-100">
           <StyledText variant="medium" className="text-cinnamon-500 text-xs">
             Loading more products...
           </StyledText>
@@ -76,7 +80,7 @@ export const ProductsList = memo(function ProductsList({
     }
     if (!hasNextPage && products.length > 0) {
       return (
-        <View className="py-4 items-center justify-center">
+        <View className="mt-1 h-12 items-center justify-center border-t border-ink-100">
           <StyledText variant="medium" className="text-ink-400 text-xs">
             End of products
           </StyledText>
@@ -101,10 +105,12 @@ export const ProductsList = memo(function ProductsList({
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       windowSize={5}
-      removeClippedSubviews={Platform.OS === 'android'}
+      // Clipping detaches multi-column rows near the end and re-fires onEndReached.
+      removeClippedSubviews={Platform.OS === 'android' && !isGrid}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.4}
       ListFooterComponent={listFooter}
+      ListFooterComponentStyle={FOOTER_STYLE}
     />
   );
 });

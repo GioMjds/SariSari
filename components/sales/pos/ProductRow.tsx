@@ -395,7 +395,7 @@ function ProductRowImpl({
       {/* Favorite toggle sits outside the decorative thumb so it stays reachable. */}
       {favoriteButton}
 
-      <View className="flex-1 p-2.5">
+      <View className="p-2.5">
         <StyledText
           variant="extrabold"
           // Three reserved lines keep size and flavor visible and align prices across a row.

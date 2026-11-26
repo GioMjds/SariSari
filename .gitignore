@@ -9,6 +9,9 @@ dist/
 web-build/
 expo-env.d.ts
 
+.serena
+.omc
+
 # Native
 .kotlin/
 *.orig.*

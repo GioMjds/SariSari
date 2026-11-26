@@ -77,7 +77,7 @@ function ProductTileImpl({
         </Pressable>
       ) : null}
 
-      <View className="flex-1 p-2.5 gap-0.5">
+      <View className="p-2.5 gap-0.5">
         {/* Three reserved lines keep size and flavor visible and align prices across a row. */}
         <StyledText
           variant="extrabold"
