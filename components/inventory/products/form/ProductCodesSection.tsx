@@ -37,7 +37,7 @@ export function ProductCodesSection({
           validate: (v) =>
             !v.trim() || validateBarcode(v).ok || 'Barcodes are 8 to 14 digits',
         }}
-        render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+        render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
           <Field
             label="Barcode"
             error={error?.message}
@@ -46,6 +46,7 @@ export function ProductCodesSection({
             <View className={`${inputClass(!!error || !!conflictProduct)} pr-1`}>
               <FontAwesome name="barcode" size={16} color="#564E45" />
               <TextInput
+                ref={ref}
                 value={value}
                 onChangeText={(t) => onChange(t.replace(/\D/g, ''))}
                 onBlur={onBlur}
@@ -60,7 +61,7 @@ export function ProductCodesSection({
                 onPress={onPressScan}
                 accessibilityRole="button"
                 accessibilityLabel="Scan barcode with camera"
-                className="h-10 px-3 rounded-lg bg-persimmon-500 flex-row items-center active:bg-persimmon-700"
+                className="min-h-[44px] px-3 rounded-lg bg-persimmon-600 flex-row items-center active:bg-persimmon-700"
               >
                 <FontAwesome name="camera" size={14} color="#FAFAF7" />
                 <StyledText variant="semibold" className="text-paper-50 text-sm ml-2">
@@ -88,8 +89,7 @@ export function ProductCodesSection({
               <Pressable
                 onPress={() => onEditConflict(conflictProduct.id)}
                 accessibilityRole="link"
-                hitSlop={8}
-                className="mt-1 self-start active:opacity-70"
+                className="min-h-[44px] justify-center self-start active:opacity-70"
               >
                 <StyledText variant="semibold" className="text-semantic-danger text-xs underline">
                   Open that product
@@ -134,7 +134,7 @@ export function ProductCodesSection({
             rules={{
               validate: (v) => autoGenerateSku || v.trim().length > 0 || 'Enter a SKU or turn on auto-generate',
             }}
-            render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+            render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
               <Field
                 label="SKU"
                 error={error?.message}
@@ -142,6 +142,7 @@ export function ProductCodesSection({
               >
                 <View className={`${inputClass(!!error)} ${autoGenerateSku ? 'bg-paper-200' : ''}`}>
                   <TextInput
+                    ref={ref}
                     value={value}
                     onChangeText={(t) => onChange(t.toUpperCase())}
                     onBlur={onBlur}

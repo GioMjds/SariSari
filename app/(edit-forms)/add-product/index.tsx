@@ -1,5 +1,4 @@
 import { withProf } from '@/utils/perf';
-import { View } from 'react-native';
 import { router, Href } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -13,53 +12,42 @@ import {
   ProductFormHeader,
   ProductPricingSection,
   ProductStockSection,
-  useSectionNav,
+  FORM_CONTENT_STYLE,
 } from '@/components/inventory/products/form';
 
 function AddProduct() {
   const form = useAddProductForm();
-  const nav = useSectionNav();
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <StatusBar style={form.isScannerOpen ? 'light' : 'dark'} />
-      <ProductFormHeader title="Add Product" onBack={form.confirmDiscard} />
+      <ProductFormHeader title="Add Product" onBack={form.handleBack} />
 
       <KeyboardAwareScrollView
-        ref={nav.scrollRef}
-        onScroll={nav.onScroll}
         className="flex-1"
         showsVerticalScrollIndicator={false}
         bottomOffset={96}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+        contentContainerStyle={FORM_CONTENT_STYLE}
       >
-        <View onLayout={nav.register('details')}>
-          <ProductDetailsSection control={form.control} />
-        </View>
-        <View onLayout={nav.register('codes')}>
-          <ProductCodesSection
-            control={form.control}
-            onPressScan={() => form.openScanner('barcode')}
-            conflictProduct={form.barcodeConflictProduct}
-            onEditConflict={(id) =>
-              router.push(`/(edit-forms)/edit-product/${id}` as Href)
-            }
-            autoGenerateSku={form.autoGenerateSku}
-            onToggleAutoGenerateSku={form.setAutoGenerateSku}
-          />
-        </View>
-        <View onLayout={nav.register('pricing')}>
-          <ProductPricingSection
-            control={form.control}
-            setValue={form.setValue}
-            priceInputRef={form.priceInputRef}
-            onPressScanCase={() => form.openScanner('wholesaleBarcode')}
-          />
-        </View>
-        <View onLayout={nav.register('stock')}>
-          <ProductStockSection mode="add" control={form.control} />
-        </View>
+        <ProductDetailsSection control={form.control} />
+        <ProductCodesSection
+          control={form.control}
+          onPressScan={() => form.openScanner('barcode')}
+          conflictProduct={form.barcodeConflictProduct}
+          onEditConflict={(id) =>
+            router.push(`/(edit-forms)/edit-product/${id}` as Href)
+          }
+          autoGenerateSku={form.autoGenerateSku}
+          onToggleAutoGenerateSku={form.setAutoGenerateSku}
+        />
+        <ProductPricingSection
+          control={form.control}
+          setValue={form.setValue}
+          priceInputRef={form.priceInputRef}
+          onPressScanCase={() => form.openScanner('wholesaleBarcode')}
+        />
+        <ProductStockSection mode="add" control={form.control} />
       </KeyboardAwareScrollView>
 
       <ProductFormFooter
@@ -68,7 +56,7 @@ function AddProduct() {
         blocker={form.blocker}
         isPending={form.insertProductMutation.isPending}
         onSubmit={form.submit}
-        onCancel={form.confirmDiscard}
+        onCancel={form.handleBack}
       />
 
       <Modal
@@ -86,10 +74,7 @@ function AddProduct() {
           {
             text: 'Discard',
             style: 'destructive',
-            onPress: () => {
-              form.setShowDialog(false);
-              router.back();
-            },
+            onPress: form.discard,
           },
         ]}
       />

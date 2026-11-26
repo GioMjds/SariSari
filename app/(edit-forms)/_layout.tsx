@@ -9,7 +9,8 @@ export default function EditFormsLayout() {
         screenOptions={{
           headerShown: false,
           presentation: 'card',
-          animation: 'fade',
+          // Platform slide keeps forward and back spatially distinct.
+          animation: 'default',
           gestureEnabled: true,
           contentStyle: { backgroundColor: '#FAFAF7' },
         }}

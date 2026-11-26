@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useState } from 'react';
+import { type Ref, useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
@@ -12,7 +12,7 @@ import { MARKUP_PRESETS, type ProductFormData } from './types';
 interface ProductPricingSectionProps {
   control: Control<ProductFormData>;
   setValue: UseFormSetValue<ProductFormData>;
-  priceInputRef?: RefObject<TextInput | null>;
+  priceInputRef?: { current: TextInput | null };
   onPressScanCase: () => void;
 }
 
@@ -58,11 +58,10 @@ export function ProductPricingSection({
               aside={
                 <Pressable
                   onPress={() => setByBundle((b) => !b)}
-                  accessibilityRole="switch"
+                  accessibilityRole="checkbox"
                   accessibilityState={{ checked: byBundle }}
                   accessibilityLabel="Enter cost by bundle"
-                  hitSlop={10}
-                  className="flex-row items-center active:opacity-70"
+                  className="min-h-[44px] -my-3 flex-row items-center active:opacity-70"
                 >
                   <FontAwesome name={byBundle ? 'check-square' : 'square-o'} size={14} color="#C8460F" />
                   <StyledText variant="semibold" className="text-persimmon-700 text-xs ml-1.5">
@@ -137,7 +136,7 @@ export function ProductPricingSection({
                 accessibilityState={{ disabled: parsedCost <= 0, selected: active }}
                 className={`flex-1 min-h-[44px] rounded-xl border items-center justify-center ${
                   active
-                    ? 'bg-persimmon-500 border-persimmon-500'
+                    ? 'bg-persimmon-600 border-persimmon-600'
                     : 'bg-paper-100 border-paper-300 active:bg-paper-200'
                 } ${parsedCost <= 0 ? 'opacity-40' : ''}`}
               >
@@ -164,14 +163,18 @@ export function ProductPricingSection({
         rules={{
           validate: (v) => tryParsePesosInput(v) > 0 || 'Enter a selling price above ₱0',
         }}
-        render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+        render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
           <Field label="Selling price per piece" required error={error?.message}>
             <PesoInput
               value={value}
               onChange={onChange}
               onBlur={onBlur}
               label="Selling price per piece, required"
-              inputRef={priceInputRef}
+              inputRef={(el) => {
+                // RHF focuses this on a failed save; the add flow also focuses it after a scan.
+                ref(el);
+                if (priceInputRef) priceInputRef.current = el;
+              }}
               large
               error={!!error}
             />
@@ -275,10 +278,11 @@ function WholesaleFields({
           validate: (v, all) =>
             !all.enableWholesale || parseInt(v, 10) >= 2 || 'A case holds at least 2 pieces',
         }}
-        render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+        render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
           <Field label={`${retailUnit || 'Pc'} per ${caseUnit || 'case'}`} error={error?.message}>
             <View className={inputClass(!!error)}>
               <TextInput
+                ref={ref}
                 value={value}
                 onChangeText={(t) => onChange(t.replace(/\D/g, ''))}
                 onBlur={onBlur}
@@ -331,10 +335,11 @@ function WholesaleFields({
           validate: (v, all) =>
             !all.enableWholesale || !v.trim() || validateBarcode(v).ok || 'Barcodes are 8 to 14 digits',
         }}
-        render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+        render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
           <Field label="Case barcode" hint="Optional. The code on the outer box." error={error?.message}>
             <View className={`${inputClass(!!error)} pr-1`}>
               <TextInput
+                ref={ref}
                 value={value}
                 onChangeText={(t) => onChange(t.replace(/\D/g, ''))}
                 onBlur={onBlur}
@@ -349,7 +354,7 @@ function WholesaleFields({
                 onPress={onPressScanCase}
                 accessibilityRole="button"
                 accessibilityLabel="Scan case barcode with camera"
-                className="h-10 w-11 rounded-lg bg-paper-50 border border-paper-300 items-center justify-center active:bg-paper-200"
+                className="min-h-[44px] w-11 rounded-lg bg-paper-50 border border-paper-300 items-center justify-center active:bg-paper-200"
               >
                 <FontAwesome name="camera" size={14} color="#C8460F" />
               </Pressable>
@@ -412,7 +417,7 @@ function PesoInput({
   editable?: boolean;
   large?: boolean;
   error?: boolean;
-  inputRef?: RefObject<TextInput | null> | undefined;
+  inputRef?: Ref<TextInput> | undefined;
 }) {
   return (
     <View className={`${inputClass(error)} ${editable ? '' : 'bg-paper-200'}`}>

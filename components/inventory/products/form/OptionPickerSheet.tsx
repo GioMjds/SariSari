@@ -186,8 +186,8 @@ export function SelectRow({ label, icon, value, placeholder, onPress }: SelectRo
         </StyledText>
         <StyledText
           variant={value ? 'semibold' : 'regular'}
-          numberOfLines={1}
-          className={`text-base ${value ? 'text-ink-900' : 'text-ink-400'}`}
+          numberOfLines={2}
+          className={`text-base ${value ? 'text-ink-900' : 'text-ink-500'}`}
         >
           {value ?? placeholder}
         </StyledText>

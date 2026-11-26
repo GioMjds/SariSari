@@ -49,10 +49,11 @@ export function ProductDetailsSection({ control }: ProductDetailsSectionProps) {
             rules={{
               validate: (v) => v.trim().length > 0 || 'Enter a product name',
             }}
-            render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+            render={({ field: { ref, value, onChange, onBlur }, fieldState: { error } }) => (
               <Field label="Product name" required error={error?.message}>
                 <View className={inputClass(!!error)}>
                   <TextInput
+                    ref={ref}
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}

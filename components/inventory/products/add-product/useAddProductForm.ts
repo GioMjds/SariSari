@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, TextInput } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import type { TextInput } from 'react-native';
+import { type NavigationAction, useNavigation, usePreventRemove } from '@react-navigation/native';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { useProducts, useBarcodeResolver } from '@/hooks';
@@ -62,24 +62,24 @@ export function useAddProductForm() {
     if (next !== sku) setValue('sku', next, { shouldDirty: false });
   }, [productName, autoGenerateSku, setValue, sku]);
 
-  const confirmDiscard = useCallback(() => {
-    if (!isDirty) {
-      router.back();
+  const navigation = useNavigation();
+  const saved = useRef(false);
+  const pendingLeave = useRef<NavigationAction | null>(null);
+
+  // Guards every exit path: header back, Android back, and the iOS edge swipe.
+  usePreventRemove(isDirty, ({ data }) => {
+    if (saved.current) {
+      navigation.dispatch(data.action);
       return;
     }
+    pendingLeave.current = data.action;
     setShowDialog(true);
-  }, [isDirty]);
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-        if (!isDirty) return false;
-        setShowDialog(true);
-        return true;
-      });
-      return () => sub.remove();
-    }, [isDirty]),
-  );
+  const discard = useCallback(() => {
+    setShowDialog(false);
+    if (pendingLeave.current) navigation.dispatch(pendingLeave.current);
+  }, [navigation]);
 
   const closeScanner = useCallback(() => setScanTarget(null), []);
 
@@ -175,7 +175,12 @@ export function useAddProductForm() {
         conversion_factor: wholesale && Number.isFinite(factor) && factor >= 2 ? factor : null,
         wholesale_barcode: wholesale ? safeTrim(data.wholesaleBarcode) || null : null,
       },
-      { onSuccess: () => router.replace('/(tabs)/inventory/products' as Href) },
+      {
+        onSuccess: () => {
+          saved.current = true;
+          router.replace('/(tabs)/inventory/products' as Href);
+        },
+      },
     );
   });
 
@@ -194,7 +199,8 @@ export function useAddProductForm() {
     priceInputRef,
     barcodeConflictProduct,
     blocker,
-    confirmDiscard,
+    handleBack: router.back,
+    discard,
     submit,
     insertProductMutation,
   };

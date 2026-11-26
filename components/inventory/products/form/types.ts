@@ -48,16 +48,6 @@ export type MarkupPreset = (typeof MARKUP_PRESETS)[number];
 
 export const STOCK_PRESETS = [5, 10, 20] as const;
 
-/** Jump targets for the section strip, in scroll order. */
-export const PRODUCT_FORM_SECTIONS = [
-  { key: 'details', label: 'Details' },
-  { key: 'codes', label: 'Barcode' },
-  { key: 'pricing', label: 'Pricing' },
-  { key: 'stock', label: 'Stock' },
-] as const;
-export type ProductFormSectionKey =
-  (typeof PRODUCT_FORM_SECTIONS)[number]['key'];
-
 export const safeTrim = (s?: string | null) => (s ?? '').trim();
 
 /** Finds another product already owning this code, including legacy rows where SKU doubled as barcode. */

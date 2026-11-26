@@ -11,6 +11,18 @@ export const inputClass = (error?: boolean) =>
 export const INPUT_TEXT_CLASS = 'flex-1 py-3 text-ink-900 text-base';
 export const PLACEHOLDER_COLOR = '#7A7165';
 
+/** Caps the form column so tablets get a centered column, not a stretched phone layout. */
+export const FORM_MAX_WIDTH = 640;
+
+export const FORM_CONTENT_STYLE = {
+  padding: 16,
+  paddingBottom: 32,
+  gap: 12,
+  width: '100%',
+  maxWidth: FORM_MAX_WIDTH,
+  alignSelf: 'center',
+} as const;
+
 interface SectionCardProps {
   title: string;
   hint?: string;
@@ -18,7 +30,12 @@ interface SectionCardProps {
   children: ReactNode;
 }
 
-export function SectionCard({ title, hint, aside, children }: SectionCardProps) {
+export function SectionCard({
+  title,
+  hint,
+  aside,
+  children,
+}: SectionCardProps) {
   return (
     <View className="bg-paper-50 rounded-2xl border border-paper-300 p-4 gap-y-4">
       <View className="flex-row items-start">
@@ -31,7 +48,10 @@ export function SectionCard({ title, hint, aside, children }: SectionCardProps) 
             {title}
           </StyledText>
           {hint ? (
-            <StyledText variant="regular" className="text-ink-500 text-xs mt-0.5">
+            <StyledText
+              variant="regular"
+              className="text-ink-500 text-xs mt-0.5"
+            >
               {hint}
             </StyledText>
           ) : null}
@@ -53,7 +73,14 @@ interface FieldProps {
 }
 
 /** Label, control, then either the error or the helper text below it. */
-export function Field({ label, required, aside, hint, error, children }: FieldProps) {
+export function Field({
+  label,
+  required,
+  aside,
+  hint,
+  error,
+  children,
+}: FieldProps) {
   return (
     <View>
       <View className="flex-row items-center justify-between mb-1.5">

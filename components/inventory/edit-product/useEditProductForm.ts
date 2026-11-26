@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { type NavigationAction, useNavigation, usePreventRemove } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, useWatch } from 'react-hook-form';
 import { useGetProduct, useProducts } from '@/hooks';
@@ -80,21 +79,24 @@ export function useEditProductForm() {
           ? 'That barcode belongs to another product'
           : null;
 
-  const handleBack = useCallback(() => {
-    if (isDirty) setShowDiscardModal(true);
-    else router.back();
-  }, [isDirty]);
+  const navigation = useNavigation();
+  const saved = useRef(false);
+  const pendingLeave = useRef<NavigationAction | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-        if (!isDirty) return false;
-        setShowDiscardModal(true);
-        return true;
-      });
-      return () => sub.remove();
-    }, [isDirty]),
-  );
+  // Guards every exit path: header back, Android back, and the iOS edge swipe.
+  usePreventRemove(isDirty, ({ data }) => {
+    if (saved.current) {
+      navigation.dispatch(data.action);
+      return;
+    }
+    pendingLeave.current = data.action;
+    setShowDiscardModal(true);
+  });
+
+  const leaveAfterSave = () => {
+    saved.current = true;
+    router.back();
+  };
 
   // Scans only fill barcode fields; duplicates surface through the conflict card.
   const handleScannedBarcode = useCallback(
@@ -134,7 +136,7 @@ export function useEditProductForm() {
 
     try {
       await updateProductMutation.mutateAsync(payload);
-      router.back();
+      leaveAfterSave();
     } catch {
       // Surfaced by mutation state.
     }
@@ -150,12 +152,12 @@ export function useEditProductForm() {
     submit,
     updateProductMutation,
     deleteProductMutation,
-    handleBack,
+    handleBack: router.back,
     showDiscardModal,
     cancelDiscard: () => setShowDiscardModal(false),
     confirmDiscard: () => {
       setShowDiscardModal(false);
-      router.back();
+      if (pendingLeave.current) navigation.dispatch(pendingLeave.current);
     },
     showDeleteModal,
     openDeleteModal: () => setShowDeleteModal(true),
@@ -163,7 +165,7 @@ export function useEditProductForm() {
     confirmDelete: async () => {
       setShowDeleteModal(false);
       await deleteProductMutation.mutateAsync(productId);
-      router.back();
+      leaveAfterSave();
     },
     stockSheet,
     setStockSheet,

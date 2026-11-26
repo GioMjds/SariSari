@@ -1,6 +1,5 @@
 import { withProf } from '@/utils/perf';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View } from 'react-native';
 import { router, Href } from 'expo-router';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { BarcodeScannerModal, Modal } from '@/components/ui';
@@ -20,12 +19,11 @@ import {
   ProductFormHeader,
   ProductPricingSection,
   ProductStockSection,
-  useSectionNav,
+  FORM_CONTENT_STYLE,
 } from '@/components/inventory/products/form';
 
 function EditProduct() {
   const form = useEditProductForm();
-  const nav = useSectionNav();
 
   if (form.isLoading) return <EditProductSkeleton />;
   if (!form.product) return <ProductNotFound onBack={form.handleBack} />;
@@ -41,43 +39,33 @@ function EditProduct() {
       />
 
       <KeyboardAwareScrollView
-        ref={nav.scrollRef}
-        onScroll={nav.onScroll}
         className="flex-1"
         showsVerticalScrollIndicator={false}
         bottomOffset={96}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+        contentContainerStyle={FORM_CONTENT_STYLE}
       >
-        <View onLayout={nav.register('details')}>
-          <ProductDetailsSection control={form.control} />
-        </View>
-        <View onLayout={nav.register('codes')}>
-          <ProductCodesSection
-            control={form.control}
-            onPressScan={() => form.openScanner('barcode')}
-            conflictProduct={form.barcodeConflictProduct}
-            onEditConflict={(id) =>
-              router.push(`/(edit-forms)/edit-product/${id}` as Href)
-            }
-          />
-        </View>
-        <View onLayout={nav.register('pricing')}>
-          <ProductPricingSection
-            control={form.control}
-            setValue={form.setValue}
-            onPressScanCase={() => form.openScanner('wholesaleBarcode')}
-          />
-        </View>
-        <View onLayout={nav.register('stock')}>
-          <ProductStockSection
-            mode="edit"
-            control={form.control}
-            quantity={product.quantity}
-            onRestock={() => form.setStockSheet('restock')}
-            onAdjust={() => form.setStockSheet('adjust')}
-          />
-        </View>
+        <ProductDetailsSection control={form.control} />
+        <ProductCodesSection
+          control={form.control}
+          onPressScan={() => form.openScanner('barcode')}
+          conflictProduct={form.barcodeConflictProduct}
+          onEditConflict={(id) =>
+            router.push(`/(edit-forms)/edit-product/${id}` as Href)
+          }
+        />
+        <ProductPricingSection
+          control={form.control}
+          setValue={form.setValue}
+          onPressScanCase={() => form.openScanner('wholesaleBarcode')}
+        />
+        <ProductStockSection
+          mode="edit"
+          control={form.control}
+          quantity={product.quantity}
+          onRestock={() => form.setStockSheet('restock')}
+          onAdjust={() => form.setStockSheet('adjust')}
+        />
 
         <ProductMetaCard
           createdAt={product.created_at}

@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { View } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ProductThumb } from '@/components/ui/ProductThumb';
 import {
   ReceiptHero,
@@ -23,6 +24,7 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
   product,
   stockLabel,
 }: ProductDetailsHeroProps) {
+  const reducedMotion = useReducedMotion();
   const isOutOfStock = product.quantity === 0;
   const isLowStock =
     product.quantity > 0 && product.quantity < LOW_STOCK_THRESHOLD;
@@ -42,9 +44,9 @@ export const ProductDetailsHero = memo(function ProductDetailsHero({
 
   return (
     <MotiView
-      from={{ opacity: 0, translateY: 18 }}
+      from={{ opacity: 0, translateY: reducedMotion ? 0 : 18 }}
       animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 480, delay: 60 }}
+      transition={{ type: 'timing', duration: reducedMotion ? 160 : 480, delay: 60 }}
     >
       <ReceiptHero tone="cinnamon" headerLabel="PRODUCT PROFILE">
         {/* Eyebrow + product name + stock stamp */}
