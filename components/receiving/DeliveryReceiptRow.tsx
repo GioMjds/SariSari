@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { Skeleton } from '@/components/ui';
 import { formatPesos } from '@/lib/money';
 import type { DeliveryReceiptSummary } from '@/types/deliveries.types';
+import { ICON } from './iconColors';
 import { receiptDate, supplierInitials } from './receiptList';
 
 type ChipTone = 'danger' | 'success' | 'warning' | 'neutral';
@@ -15,22 +15,22 @@ const CHIP_TONES: Record<ChipTone, { box: string; text: string; icon: string }> 
   danger: {
     box: 'bg-semantic-danger-50 border-semantic-danger-100',
     text: 'text-semantic-danger',
-    icon: '#C13030',
+    icon: ICON.danger,
   },
   success: {
     box: 'bg-sage-50 border-sage-200',
     text: 'text-sage-700',
-    icon: '#3D5E1B',
+    icon: ICON.sage600,
   },
   warning: {
     box: 'bg-semantic-warning-50 border-semantic-warning-100',
-    text: 'text-semantic-warning',
-    icon: '#C77B0E',
+    text: 'text-semantic-warning-700',
+    icon: ICON.warning700,
   },
   neutral: {
     box: 'bg-ink-100 border-ink-200',
     text: 'text-ink-700',
-    icon: '#564E45',
+    icon: ICON.ink500,
   },
 };
 
@@ -67,11 +67,16 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
   receipt: r,
   onPress,
 }: DeliveryReceiptRowProps) {
-  const { t } = useTranslation('receiving');
+  const { t, i18n } = useTranslation('receiving');
   const isDraft = r.status === 'draft';
   const isVoided = r.status === 'voided';
   const date = receiptDate(r);
-  const time = date ? format(date, 'hh:mm a') : '—';
+  const time = date
+    ? date.toLocaleTimeString(i18n.language, {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : '—';
   const invoice = r.invoiceNo ?? t('noInvoice');
   const timeLabel = t(
     isDraft ? 'rowStarted' : isVoided ? 'rowVoided' : 'rowReceived',
@@ -106,7 +111,7 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
       accessibilityHint={isDraft ? t('draftHint') : t('openHint')}
       className={`mb-3 rounded-2xl border p-4 active:opacity-90 ${cardClass}`}
     >
-      <View className="flex-row items-center">
+      <View className="flex-row items-start">
         <View
           className={`w-11 h-11 rounded-full items-center justify-center mr-3 border ${
             isVoided
@@ -116,6 +121,7 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
         >
           <StyledText
             variant="extrabold"
+            maxFontSizeMultiplier={1.3}
             className={`text-sm ${isVoided ? 'text-ink-500' : 'text-cinnamon-700'}`}
           >
             {supplierInitials(r.supplierName)}
@@ -126,44 +132,41 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
           <StyledText
             variant="semibold"
             className={`text-base ${isVoided ? 'text-ink-600' : 'text-ink-900'}`}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {r.supplierName}
           </StyledText>
-          <View className="flex-row items-center mt-0.5">
-            <FontAwesome name="file-text-o" size={11} color="#7A7165" />
+          <View className="flex-row items-start mt-0.5">
+            <FontAwesome
+              name="file-text-o"
+              size={11}
+              color={ICON.ink400}
+              style={{ marginTop: 3 }}
+            />
             <StyledText
               variant="regular"
-              className="text-xs text-ink-500 ml-1.5 flex-shrink"
-              numberOfLines={1}
+              className="text-xs text-ink-500 ml-1.5 flex-1"
+              style={{ fontVariant: ['tabular-nums'] }}
+              numberOfLines={2}
             >
-              {invoice}
+              {invoice} · {timeLabel}
             </StyledText>
           </View>
         </View>
 
-        <View className="items-end">
-          <StyledText
-            variant="extrabold"
-            className={`text-base ${
-              isVoided
-                ? 'text-ink-400 line-through'
-                : isDraft
-                  ? 'text-ink-700'
-                  : 'text-ink-900'
-            }`}
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            {formatPesos(r.totalCost)}
-          </StyledText>
-          <StyledText
-            variant="medium"
-            className="text-xs text-ink-500 mt-0.5"
-            style={{ fontVariant: ['tabular-nums'] }}
-          >
-            {timeLabel}
-          </StyledText>
-        </View>
+        <StyledText
+          variant="extrabold"
+          className={`text-base ${
+            isVoided
+              ? 'text-ink-500 line-through'
+              : isDraft
+                ? 'text-ink-700'
+                : 'text-ink-900'
+          }`}
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
+          {formatPesos(r.totalCost)}
+        </StyledText>
       </View>
 
       <View
@@ -171,7 +174,7 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
           isDraft ? 'border-dashed border-ink-200' : 'border-ink-100'
         }`}
       >
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row flex-wrap items-center gap-2 flex-1 mr-2">
           {isDraft ? (
             <Chip tone="warning" icon="pencil" label={t('statusDraft')} />
           ) : isVoided ? (
@@ -198,10 +201,14 @@ export const DeliveryReceiptRow = memo(function DeliveryReceiptRow({
             >
               {t('continueDraft')}
             </StyledText>
-            <FontAwesome name="chevron-right" size={10} color="#C8460F" />
+            <FontAwesome
+              name="chevron-right"
+              size={10}
+              color={ICON.persimmon600}
+            />
           </View>
         ) : (
-          <FontAwesome name="chevron-right" size={10} color="#A89F90" />
+          <FontAwesome name="chevron-right" size={10} color={ICON.ink300} />
         )}
       </View>
     </Pressable>
@@ -216,12 +223,9 @@ export function DeliveryReceiptRowSkeleton() {
         <Skeleton width={44} height={44} circle />
         <View className="flex-1 mx-3">
           <Skeleton width={'60%'} height={14} />
-          <Skeleton width={'35%'} height={10} style={{ marginTop: 8 }} />
+          <Skeleton width={'45%'} height={10} style={{ marginTop: 8 }} />
         </View>
-        <View className="items-end">
-          <Skeleton width={72} height={14} />
-          <Skeleton width={56} height={10} style={{ marginTop: 8 }} />
-        </View>
+        <Skeleton width={72} height={14} />
       </View>
       <View className="flex-row justify-between mt-3 pt-3 border-t border-ink-100">
         <Skeleton width={110} height={16} borderRadius={8} />

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { MoneyText } from '@/components/ui';
+import { ICON } from './iconColors';
 import type { MonthSummary } from './receiptList';
 
 interface DeliveryMonthCardProps {
@@ -75,7 +76,7 @@ export function DeliveryMonthCard({
           <FontAwesome
             name={hasShort ? 'exclamation-triangle' : 'truck'}
             size={13}
-            color={hasShort ? '#C13030' : '#623418'}
+            color={hasShort ? ICON.danger : ICON.cinnamon500}
           />
           <StyledText
             variant="semibold"
@@ -91,7 +92,7 @@ export function DeliveryMonthCard({
           <StyledText variant="semibold" className="text-xs text-cinnamon-700">
             {t('shortagesShort')}
           </StyledText>
-          <FontAwesome name="angle-right" size={14} color="#623418" />
+          <FontAwesome name="angle-right" size={14} color={ICON.cinnamon500} />
         </View>
       </Pressable>
     </View>

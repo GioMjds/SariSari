@@ -108,7 +108,7 @@
   "searchPlaceholder": "Hanapin ang supplier o invoice no.",
   "searchLabel": "Hanapin ang delivery",
   "clearSearch": "I-clear ang hanap",
-  "searchEmpty": "Walang delivery na tugma sa \"{{query}}\".",
+  "searchEmpty": "Walang delivery sa {{tab}} na tugma sa \"{{query}}\".",
   "today": "Ngayon",
   "yesterday": "Kahapon",
   "rowStarted": "Sinimulan {{time}}",
@@ -121,5 +121,6 @@
   "draftHint": "Bubuksan ang draft para matapos mo.",
   "openHint": "Bubuksan ang detalye ng delivery.",
   "errorLoad": "Hindi makuha ang mga delivery.",
-  "retry": "Subukan ulit"
+  "retry": "Subukan ulit",
+  "refreshFailed": "Hindi ma-refresh. Ipinapakita ang huling listahan."
 }

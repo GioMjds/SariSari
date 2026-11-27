@@ -108,7 +108,7 @@
   "searchPlaceholder": "Search supplier or invoice no.",
   "searchLabel": "Search deliveries",
   "clearSearch": "Clear search",
-  "searchEmpty": "No deliveries match \"{{query}}\".",
+  "searchEmpty": "No deliveries in {{tab}} match \"{{query}}\".",
   "today": "Today",
   "yesterday": "Yesterday",
   "rowStarted": "Started {{time}}",
@@ -121,5 +121,6 @@
   "draftHint": "Opens the draft so you can finish it.",
   "openHint": "Opens the delivery details.",
   "errorLoad": "Could not load deliveries.",
-  "retry": "Try again"
+  "retry": "Try again",
+  "refreshFailed": "Could not refresh. Showing the last loaded list."
 }

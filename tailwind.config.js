@@ -84,6 +84,7 @@ module.exports = {
         'semantic-warning': '#C77B0E',
         'semantic-warning-50': '#FCF1DE',
         'semantic-warning-100': '#F8E2BC',
+        'semantic-warning-700': '#8F5A0A', // text on warning-50, 5.2:1
         'semantic-info': '#2E6FA8',
         'semantic-info-50': '#E6F0F9',
         'semantic-info-100': '#D0E2F0',
