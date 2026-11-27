@@ -1,6 +1,7 @@
 import { StyledText } from '@/components/elements';
 import { MoneyText, ReceiptHeroMeta, StatusStamp } from '@/components/ui';
 import { formatPesos } from '@/lib/money';
+import { ICON_COLOR } from '@/lib/theme';
 import { SaleWithItems } from '@/types';
 import type { SaleCorrection } from '@/types/corrections.types';
 import { formatReceiptRef, getCancelledKind, parseStoredTimestamp } from '@/utils';
@@ -41,18 +42,18 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
   const status: { icon: IconName; color: string; text: string; className: string } = cancelled
     ? {
         icon: 'ban',
-        color: '#564E45',
+        color: ICON_COLOR.inkMuted,
         text: `${cancelled.note} · not counted in sales`,
         className: 'text-ink-700',
       }
     : isCredit
       ? {
           icon: 'book',
-          color: '#A1370C',
+          color: ICON_COLOR.persimmonStrong,
           text: customerName ? `Added to ${customerName}'s utang` : 'Added to utang',
           className: 'text-persimmon-700',
         }
-      : { icon: 'check-circle', color: '#2C4413', text: 'Paid in cash', className: 'text-sage-700' };
+      : { icon: 'check-circle', color: ICON_COLOR.sageStrong, text: 'Paid in cash', className: 'text-sage-700' };
 
   return (
     <>
@@ -63,7 +64,7 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
         className="px-5 pt-6 pb-4"
       >
         <View className="flex-row items-center justify-between">
-          <StyledText variant="extrabold" className="label-caps text-ink-400 flex-1 pr-3">
+          <StyledText variant="medium" className="text-sm text-ink-500 flex-1 pr-3">
             {cancelled ? 'Original total' : isCredit ? 'Amount on utang' : 'Total paid'}
           </StyledText>
           <StatusStamp
@@ -94,7 +95,7 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
 
       {cancelled && (
         <View accessible className="mx-5 mb-3 rounded-xl bg-paper-100 border border-ink-200 px-4 py-3 flex-row items-start">
-          <FontAwesome name="info-circle" size={14} color="#564E45" style={{ marginTop: 2 }} />
+          <FontAwesome name="info-circle" size={14} color={ICON_COLOR.inkMuted} style={{ marginTop: 2 }} />
           <View className="ml-2 flex-1">
             <StyledText variant="extrabold" className="text-ink-900 text-sm">
               {cancelled.note}
@@ -120,7 +121,7 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
 
       {priceFix && (
         <View accessible className="mx-5 mb-3 rounded-xl bg-paper-100 border border-ink-200 px-4 py-3 flex-row items-start">
-          <FontAwesome name="pencil" size={13} color="#564E45" style={{ marginTop: 2 }} />
+          <FontAwesome name="pencil" size={13} color={ICON_COLOR.inkMuted} style={{ marginTop: 2 }} />
           <StyledText variant="medium" className="text-ink-700 text-sm ml-2 flex-1">
             Price corrected
             {priceFixAt ? ` on ${format(priceFixAt, 'MMM d · h:mm a')}` : ''}
@@ -139,7 +140,7 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
           className="mx-5 mb-1 min-h-12 rounded-xl px-4 py-3 border border-dashed border-ink-200 bg-paper-100 flex-row items-center active:bg-paper-200"
         >
           <View className="flex-1">
-            <StyledText variant="extrabold" className="label-caps text-ink-400 mb-1">
+            <StyledText variant="medium" className="text-sm text-ink-500">
               {isCredit ? 'Bill to' : 'Sold to'}
             </StyledText>
             <StyledText variant="extrabold" className="text-ink-900 text-lg">
@@ -151,11 +152,12 @@ export function SaleDetailsHero({ sale, correction, onOpenCustomer }: SaleDetail
               </StyledText>
             )}
           </View>
-          {onOpenCustomer && <FontAwesome name="chevron-right" size={12} color="#564E45" />}
+          {onOpenCustomer && <FontAwesome name="chevron-right" size={12} color={ICON_COLOR.inkMuted} />}
         </Pressable>
       ) : null}
 
       <ReceiptHeroMeta
+        caps={false}
         rows={[
           { label: 'Ref No.', value: formatReceiptRef(sale.id) },
           { label: 'Date', value: format(ts, 'MMM d, yyyy · h:mm a') },

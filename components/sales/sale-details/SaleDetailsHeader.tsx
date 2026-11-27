@@ -1,4 +1,5 @@
 import { StyledText } from '@/components/elements';
+import { ICON_COLOR } from '@/lib/theme';
 import { formatReceiptRef } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
@@ -27,10 +28,15 @@ export function SaleDetailsHeader({ saleId, onBack, onMore }: SaleDetailsHeaderP
         accessibilityLabel="Go back"
         className={ICON_BUTTON}
       >
-        <FontAwesome name="arrow-left" size={16} color="#0E0C0A" />
+        <FontAwesome name="arrow-left" size={16} color={ICON_COLOR.ink} />
       </Pressable>
 
-      <StyledText variant="extrabold" accessibilityRole="header" className="label-caps text-ink-500">
+      <StyledText
+        variant="extrabold"
+        accessibilityRole="header"
+        numberOfLines={1}
+        className="text-base text-ink-900 shrink mx-3"
+      >
         {label}
       </StyledText>
 
@@ -43,7 +49,7 @@ export function SaleDetailsHeader({ saleId, onBack, onMore }: SaleDetailsHeaderP
           accessibilityHint="Copy the reference number or delete this sale"
           className={ICON_BUTTON}
         >
-          <FontAwesome name="ellipsis-h" size={16} color="#0E0C0A" />
+          <FontAwesome name="ellipsis-h" size={16} color={ICON_COLOR.ink} />
         </Pressable>
       ) : (
         <View className="w-11 h-11" />

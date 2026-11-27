@@ -15,6 +15,7 @@ import { useAppSetting } from '@/hooks/useAppSetting';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { useProfile } from '@/hooks/useProfile';
 import { buildSaleReceiptText, shareSaleReceiptPdf } from '@/lib/saleReceipt';
+import { ICON_COLOR } from '@/lib/theme';
 import { useToastStore } from '@/stores/ToastStore';
 import { Alert, formatReceiptRef, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
@@ -22,13 +23,15 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Share, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActionSheetIOS, Platform, Pressable, ScrollView, Share, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Height of the sticky action bar above the safe-area inset.
+// Starting guess for the sticky bar until onLayout reports its real height.
 const ACTION_BAR_HEIGHT = 76;
+// Receipt and footer stop growing here so tablets get a readable ticket, not a stretched phone one.
+const TICKET_MAX_WIDTH = 480;
 const DEFAULT_VOID_WINDOW_HOURS = 24;
 
 function SaleDetails() {
@@ -47,6 +50,9 @@ function SaleDetails() {
   const [fixOpen, setFixOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [footerHeight, setFooterHeight] = useState<number | null>(null);
+  // Set when Delete is confirmed; the PIN prompt opens only after the More sheet has left, so iOS never stacks two modals.
+  const deleteQueued = useRef(false);
 
   const refLabel = formatReceiptRef(numericId);
   const storeName = profile?.storeName?.trim() || 'Sari-sari store';
@@ -93,8 +99,18 @@ function SaleDetails() {
     addToast({ message: `Copied ${refLabel}`, variant: 'success', duration: 2500 });
   };
 
-  const handleDeleteSale = async () => {
+  const queueDelete = () => {
+    deleteQueued.current = true;
     setMoreOpen(false);
+  };
+
+  const handleMoreClosed = () => {
+    if (!deleteQueued.current) return;
+    deleteQueued.current = false;
+    void handleDeleteSale();
+  };
+
+  const handleDeleteSale = async () => {
     await runWithPinGuard({
       actionId: 'sale_delete',
       title: 'Delete sale',
@@ -131,10 +147,25 @@ function SaleDetails() {
     if (!ok) Alert.alert('Could not share PDF', 'Try sharing as text instead.');
   };
 
+  // iOS expects an action sheet for a choice of actions; Android keeps its native dialog.
   const handleShare = () => {
     Haptics.selectionAsync().catch(() => {});
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: 'Share resibo',
+          options: ['As text (SMS or chat)', 'As PDF', 'Cancel'],
+          cancelButtonIndex: 2,
+        },
+        (index) => {
+          if (index === 0) void shareText();
+          if (index === 1) void sharePdf();
+        },
+      );
+      return;
+    }
     Alert.alert('Share resibo', 'How do you want to send this resibo?', [
-      { text: 'As text (SMS/Chat)', onPress: shareText },
+      { text: 'As text (SMS or chat)', onPress: shareText },
       { text: 'As PDF', onPress: sharePdf },
       { text: 'Cancel', style: 'cancel' },
     ]);
@@ -168,7 +199,7 @@ function SaleDetails() {
       ) : !sale ? (
         <View className="flex-1 items-center justify-center px-8">
           <View className="w-16 h-16 rounded-full bg-paper-100 border border-paper-300 items-center justify-center">
-            <FontAwesome name="file-text-o" size={24} color="#564E45" />
+            <FontAwesome name="file-text-o" size={24} color={ICON_COLOR.inkMuted} />
           </View>
           <StyledText variant="black" accessibilityRole="header" className="text-ink-900 text-xl mt-4 text-center">
             {isError ? "Couldn't load this resibo" : 'Resibo not found'}
@@ -194,11 +225,13 @@ function SaleDetails() {
             className="flex-1"
             contentContainerStyle={{
               paddingTop: 16,
-              paddingBottom: insets.bottom + ACTION_BAR_HEIGHT + 24,
+              paddingBottom: (footerHeight ?? insets.bottom + ACTION_BAR_HEIGHT) + 24,
             }}
             showsVerticalScrollIndicator={false}
           >
             <MotiView
+              className="w-full self-center"
+              style={{ maxWidth: TICKET_MAX_WIDTH }}
               from={{ opacity: 0, translateY: reduceMotion ? 0 : 12 }}
               animate={{ opacity: 1, translateY: 0 }}
               transition={{ type: 'timing', duration: reduceMotion ? 120 : 280 }}
@@ -207,7 +240,7 @@ function SaleDetails() {
                 <SaleDetailsHero sale={sale} correction={latestCorrection} onOpenCustomer={openCustomer} />
                 <SaleDetailsItemList sale={sale} oldPrices={oldPrices} />
                 <View className="pt-3 pb-5">
-                  <ReceiptHeroDivider label="thank you" tone="sage" />
+                  <ReceiptHeroDivider />
                   <StyledText
                     variant="regular"
                     className="text-ink-500 text-xs text-center mt-1 px-5"
@@ -225,6 +258,7 @@ function SaleDetails() {
             onShare={handleShare}
             sharing={sharing}
             onFix={canFix ? () => openSheet(setFixOpen) : undefined}
+            onLayout={setFooterHeight}
           />
 
           <SaleFixSheet
@@ -239,11 +273,12 @@ function SaleDetails() {
           <SaleMoreSheet
             visible={moreOpen}
             onClose={() => setMoreOpen(false)}
+            onClosed={handleMoreClosed}
             refLabel={refLabel}
             onCopyRef={handleCopyRef}
             canDelete={!sale.cancelled_at && (corrections?.length ?? 0) === 0}
             deleting={deleteSaleMutation.isPending}
-            onDelete={handleDeleteSale}
+            onDelete={queueDelete}
           />
         </>
       )}

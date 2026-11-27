@@ -7,7 +7,8 @@ const LINE_ROWS = [0, 1, 2];
 export function SaleDetailsSkeleton() {
   return (
     <View
-      className="pt-4"
+      className="pt-4 w-full self-center"
+      style={{ maxWidth: 480 }}
       accessible
       accessibilityLabel="Loading resibo"
       accessibilityState={{ busy: true }}

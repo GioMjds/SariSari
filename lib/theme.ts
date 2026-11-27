@@ -80,3 +80,15 @@ export const NAV_THEME: Record<'light' | 'dark', Theme> = {
     },
   },
 };
+
+// Hex mirror of tailwind.config.js colors for icon `color` props, which cannot take class names.
+export const ICON_COLOR = {
+  ink: '#0E0C0A', // ink-900
+  inkMuted: '#564E45', // ink-500
+  inkFaint: '#A89F90', // ink-300
+  paper: '#FBF7EE', // light text on filled buttons
+  persimmonStrong: '#A1370C', // persimmon-700
+  sageStrong: '#2C4413', // sage-700
+  cinnamon: '#623418', // cinnamon-500
+  danger: '#C13030', // semantic-danger
+} as const;

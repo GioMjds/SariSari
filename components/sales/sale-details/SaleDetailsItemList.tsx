@@ -1,13 +1,14 @@
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { formatPesos } from '@/lib/money';
+import { ICON_COLOR } from '@/lib/theme';
 import { SaleWithItems } from '@/types';
 import { saleProfit, soldQty } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { MotiView } from 'moti';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
 
@@ -32,14 +33,16 @@ function ProfitRow({ sale }: { sale: SaleWithItems }) {
       accessibilityRole="button"
       accessibilityState={{ expanded: shown }}
       accessibilityLabel={
-        shown && !allMissing
-          ? `Profit ${formatPesos(profit)}, ${Math.round(margin * 100)} percent margin. Tap to hide.`
-          : 'Show profit for this sale'
+        !shown
+          ? 'Show profit for this sale'
+          : allMissing
+            ? 'Profit unknown, no cost prices saved. Tap to hide.'
+            : `Profit ${formatPesos(profit)}, ${Math.round(margin * 100)} percent margin. Tap to hide.`
       }
       className="mx-5 mt-3 min-h-12 px-4 py-3 rounded-xl border border-paper-300 bg-paper-50 active:bg-paper-100"
     >
       <View className="flex-row items-center">
-        <FontAwesome name={shown ? 'eye-slash' : 'eye'} size={14} color="#564E45" />
+        <FontAwesome name={shown ? 'eye-slash' : 'eye'} size={14} color={ICON_COLOR.inkMuted} />
         <StyledText variant="extrabold" className="text-ink-700 text-sm ml-2 flex-1">
           {shown ? 'Profit on this sale' : 'Show profit'}
         </StyledText>
@@ -70,11 +73,14 @@ export function SaleDetailsItemList({ sale, oldPrices }: SaleDetailsItemListProp
   const isCancelled = !!sale.cancelled_at;
   const isCredit = sale.payment_type === 'credit';
   const struck = isCancelled ? 'text-ink-400 line-through' : 'text-ink-900';
+  // Qty column grows with text size so "12×" never clips; capped so names keep room.
+  const { fontScale } = useWindowDimensions();
+  const qtyColumn = { minWidth: 40 * Math.min(fontScale, 1.8) };
 
   return (
     <>
       <View className="mx-5 mt-2 pb-2 flex-row border-b border-ink-300">
-        <StyledText variant="extrabold" className="label-caps text-ink-400 w-10">
+        <StyledText variant="extrabold" className="label-caps text-ink-400" style={qtyColumn}>
           Qty
         </StyledText>
         <StyledText variant="extrabold" className="label-caps text-ink-400 flex-1">
@@ -103,7 +109,7 @@ export function SaleDetailsItemList({ sale, oldPrices }: SaleDetailsItemListProp
                 index < sale.items.length - 1 ? 'border-b border-dashed border-ink-200' : ''
               }`}
             >
-              <StyledText variant="extrabold" className="text-ink-700 text-base w-10" style={TABULAR}>
+              <StyledText variant="extrabold" className="text-ink-700 text-base pr-1" style={[TABULAR, qtyColumn]}>
                 {qty}×
               </StyledText>
               <View className="flex-1 pr-3">
@@ -159,7 +165,7 @@ export function SaleDetailsItemList({ sale, oldPrices }: SaleDetailsItemListProp
         </View>
         {isCredit && !isCancelled && (
           <View className="flex-row items-center mt-1.5">
-            <FontAwesome name="book" size={12} color="#A1370C" />
+            <FontAwesome name="book" size={12} color={ICON_COLOR.persimmonStrong} />
             <StyledText variant="medium" className="text-persimmon-700 text-sm ml-1.5">
               Charged to utang. Payments show in the customer ledger.
             </StyledText>

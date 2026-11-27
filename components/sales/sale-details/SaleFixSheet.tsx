@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { Sheet, SheetActionGroup, SheetActionRow } from '@/components/ui';
+import { ICON_COLOR } from '@/lib/theme';
 
 interface SaleFixSheetProps {
   visible: boolean;
@@ -29,7 +30,7 @@ export function SaleFixSheet({
       <SheetActionGroup>
         <SheetActionRow
           icon="ban"
-          iconColor="#C13030"
+          iconColor={ICON_COLOR.danger}
           label="Void sale"
           hint={windowOpen ? 'Mistake at the counter. Restores stock, removes it from sales.' : closedHint}
           disabled={!windowOpen}
@@ -37,7 +38,7 @@ export function SaleFixSheet({
         />
         <SheetActionRow
           icon="undo"
-          iconColor="#623418"
+          iconColor={ICON_COLOR.cinnamon}
           label="Refund"
           hint={windowOpen ? 'Customer returned items. Restores stock, records cash back.' : closedHint}
           disabled={!windowOpen}
@@ -45,7 +46,7 @@ export function SaleFixSheet({
         />
         <SheetActionRow
           icon="pencil"
-          iconColor="#0E0C0A"
+          iconColor={ICON_COLOR.ink}
           label="Edit price"
           hint="Wrong price was charged. Keeps the sale, fixes the total."
           onPress={onPriceCorrection}

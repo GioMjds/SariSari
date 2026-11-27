@@ -5,6 +5,8 @@ import { View } from 'react-native';
 interface SaleMoreSheetProps {
   visible: boolean;
   onClose: () => void;
+  /** Fires once the sheet is fully gone, so a PIN prompt can follow without stacking modals. */
+  onClosed?: () => void;
   refLabel: string;
   onCopyRef: () => void;
   /** False once a void, refund or price fix exists, because the correction log must keep the sale. */
@@ -17,6 +19,7 @@ interface SaleMoreSheetProps {
 export function SaleMoreSheet({
   visible,
   onClose,
+  onClosed,
   refLabel,
   onCopyRef,
   canDelete,
@@ -24,7 +27,7 @@ export function SaleMoreSheet({
   onDelete,
 }: SaleMoreSheetProps) {
   return (
-    <Sheet visible={visible} onClose={onClose} title="More">
+    <Sheet visible={visible} onClose={onClose} {...(onClosed && { onClosed })} title="More">
       <SheetActionGroup>
         <SheetActionRow
           icon="clipboard"

@@ -105,8 +105,11 @@ export function ReceiptHero({
 
 export function ReceiptHeroMeta({
   rows,
+  caps = true,
 }: {
   rows: { label: string; value: string }[];
+  /** Sentence-case labels for screens that already carry enough uppercase. */
+  caps?: boolean;
 }) {
   return (
     <View className="px-5 pt-5 pb-3">
@@ -117,7 +120,10 @@ export function ReceiptHeroMeta({
             idx < rows.length - 1 ? 'border-b border-dashed border-ink-200' : ''
           }`}
         >
-          <StyledText variant="extrabold" className="label-caps text-ink-400">
+          <StyledText
+            variant={caps ? 'extrabold' : 'medium'}
+            className={caps ? 'label-caps text-ink-400' : 'text-sm text-ink-500'}
+          >
             {row.label}
           </StyledText>
           <StyledText variant="medium" className="text-mono text-ink-700">

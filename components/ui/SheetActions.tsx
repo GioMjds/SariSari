@@ -60,7 +60,7 @@ export function SheetActionRow({
           {hint}
         </StyledText>
       </View>
-      <FontAwesome name="angle-right" size={18} color="#A89F90" />
+      <FontAwesome name={disabled ? 'lock' : 'angle-right'} size={disabled ? 14 : 18} color="#A89F90" />
     </Pressable>
   );
 }

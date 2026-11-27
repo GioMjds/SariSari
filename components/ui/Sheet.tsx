@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   View,
   useWindowDimensions,
@@ -32,12 +33,14 @@ interface SheetProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
+  /** Runs once the sheet has fully left the screen, so a follow-up modal can open safely. */
+  onClosed?: () => void;
 }
 
 const DISMISS_DISTANCE = 96;
 const DISMISS_VELOCITY = 900;
 
-export function Sheet({ visible, onClose, title, children }: SheetProps) {
+export function Sheet({ visible, onClose, title, children, onClosed }: SheetProps) {
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -47,6 +50,13 @@ export function Sheet({ visible, onClose, title, children }: SheetProps) {
   useEffect(() => {
     if (visible) setMounted(true);
   }, [visible]);
+
+  // iOS reports the native dismissal through Modal.onDismiss; Android has no such event.
+  const wasMounted = useRef(mounted);
+  useEffect(() => {
+    if (wasMounted.current && !mounted && Platform.OS !== 'ios') onClosed?.();
+    wasMounted.current = mounted;
+  }, [mounted, onClosed]);
 
   // Enter on open; slide out before unmounting so close never snaps.
   useEffect(() => {
@@ -102,14 +112,14 @@ export function Sheet({ visible, onClose, title, children }: SheetProps) {
     ),
   }));
 
-  if (!mounted) return null;
-
+  // Stays rendered while hidden so iOS can fire onDismiss after the slide-out.
   return (
     <Modal
-      visible
+      visible={mounted}
       transparent
       animationType="none"
       onRequestClose={onClose}
+      {...(onClosed && { onDismiss: onClosed })}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <KeyboardAvoidingView
