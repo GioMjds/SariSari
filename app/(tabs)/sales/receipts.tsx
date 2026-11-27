@@ -7,6 +7,7 @@ import {
   SalesEmptyState,
   SalesFilterModal,
   SalesSkeleton,
+  ReceiptsErrorState,
 } from '@/components/sales';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination, RefreshableFlatList } from '@/components/ui';
@@ -20,7 +21,14 @@ import {
   summarizeReceipts,
 } from '@/utils';
 import { Href, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FlatList, View } from 'react-native';
 import {
   endOfDay,
@@ -46,7 +54,14 @@ function Receipts() {
 
   // Narrow hooks: useSales() also mounts five mutations this screen never uses.
   const { refetch: refetchStats } = useTodayStats();
-  const { data: sales = [], refetch: refetchSales, isLoading } = useAllSales();
+  const {
+    data: sales = [],
+    refetch: refetchSales,
+    isLoading,
+    isError,
+  } = useAllSales();
+  // Typing stays responsive while the ledger re-filters at lower priority.
+  const deferredQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -56,8 +71,8 @@ function Receipts() {
   const filteredSales = useMemo(() => {
     let filtered = [...sales];
 
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase().trim().replace(/^#/, '');
+    if (deferredQuery.trim() !== '') {
+      const q = deferredQuery.toLowerCase().trim().replace(/^#/, '');
       filtered = filtered.filter((sale) => {
         if (sale.customer_name?.toLowerCase().includes(q)) return true;
         const ref = formatReceiptRef(sale.id).toLowerCase();
@@ -125,7 +140,7 @@ function Receipts() {
       const tsB = b.timestamp || '';
       return tsA < tsB ? 1 : tsA > tsB ? -1 : 0;
     });
-  }, [sales, filters, searchQuery]);
+  }, [sales, filters, deferredQuery]);
 
   const summary = useMemo(
     () => summarizeReceipts(filteredSales),
@@ -224,6 +239,7 @@ function Receipts() {
 
   const listEmpty = useMemo(() => {
     if (isLoading) return <SalesSkeleton />;
+    if (isError) return <ReceiptsErrorState onRetry={refetchSales} />;
     return (
       <View className="px-2 pb-12">
         <SalesEmptyState
@@ -233,7 +249,14 @@ function Receipts() {
         />
       </View>
     );
-  }, [isLoading, handleOpenAddSales, sales.length, handleResetFilters]);
+  }, [
+    isLoading,
+    isError,
+    refetchSales,
+    handleOpenAddSales,
+    sales.length,
+    handleResetFilters,
+  ]);
 
   const tabBarBottomOffset = useTabBarBottomOffset();
 
@@ -247,7 +270,15 @@ function Receipts() {
           data={rows}
           renderItem={renderRow}
           keyExtractor={keyExtractor}
-          contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
+          contentContainerStyle={{
+            // Clears the floating pager pill (about 44 tall) when it shows.
+            paddingBottom: tabBarBottomOffset + (totalPages > 1 ? 72 : 24),
+            width: '100%',
+            maxWidth: 640,
+            alignSelf: 'center',
+          }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}

@@ -14,11 +14,9 @@ interface PaginationProps {
   /** Kept for API stability — not consumed at runtime. */
   itemsPerPage?: number;
   /**
-   * Extra distance (in px) to lift the pill above the safe-area inset.
-   * Use this when a sibling absolutely-positioned element (e.g. the
-   * floating tab bar) sits at the same bottom edge — pass the height
-   * of that sibling plus its own bottom margin so the pill clears it
-   * without overlapping. Default 0.
+   * Distance (in px) from the screen bottom that the pill must clear,
+   * such as `useTabBarBottomOffset()`. It already counts the safe-area
+   * inset; the pill sits at whichever of the two is larger. Default 0.
    */
   bottomOffset?: number;
 }
@@ -65,10 +63,8 @@ export const Pagination = React.memo(function Pagination({
         // z-1100 wins against StyledTab's z-1000 even when both are
         // siblings rendered at the same parent level.
         zIndex: 1100,
-        // Lift by both the safe-area inset and any caller-provided
-        // offset (e.g. tab bar height) so the pill clears floating
-        // siblings at the bottom edge.
-        bottom: insets.bottom + 10 + bottomOffset,
+        // A caller offset such as the tab bar already includes the safe-area inset, so take the larger one.
+        bottom: Math.max(insets.bottom, bottomOffset) + 10,
       }}
       pointerEvents="box-none"
     >
@@ -100,6 +96,8 @@ export const Pagination = React.memo(function Pagination({
           from={{ opacity: 0, translateY: 3 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 180 }}
+          accessible
+          accessibilityLabel={`Page ${currentPage} of ${totalPages}`}
           className="flex-row items-center px-3 border-x border-dashed border-ink-200"
         >
           <StyledText

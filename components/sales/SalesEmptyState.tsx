@@ -90,12 +90,13 @@ export function SalesEmptyState({
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onClearFilters}
-            className="mt-5 bg-paper-200 border border-ink-200 rounded-pill px-6 py-2.5 flex-row items-center"
+            accessibilityRole="button"
+            className="mt-5 bg-paper-200 border border-ink-200 rounded-pill px-6 py-2.5 min-h-11 flex-row items-center"
           >
-            <FontAwesome name="undo" size={12} color="#E85A1F" />
+            <FontAwesome name="undo" size={12} color="#A1370C" />
             <StyledText
               variant="extrabold"
-              className="text-persimmon-600 text-sm ml-2"
+              className="text-persimmon-700 text-sm ml-2"
             >
               Clear filters
             </StyledText>
@@ -106,7 +107,8 @@ export function SalesEmptyState({
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onNewSale}
-            className="mt-5 bg-persimmon-500 rounded-pill px-7 py-3 flex-row items-center shadow-persimmon-glow"
+            accessibilityRole="button"
+            className="mt-5 bg-persimmon-600 rounded-pill px-7 py-3 min-h-12 flex-row items-center"
           >
             <FontAwesome name="plus" size={14} color="#FBF7EE" />
             <StyledText

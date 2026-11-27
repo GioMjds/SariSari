@@ -49,17 +49,22 @@ export const SaleRow = React.memo(function SaleRow({ sale, onPress }: SaleRowPro
       accessibilityLabel={`Receipt ${ref}, ${time}, ${buyer}, ${badgeLabel}, ${total}, ${items}`}
       accessibilityHint="Opens receipt details"
       className={`mx-4 mb-2 flex-row items-center rounded-card border px-4 py-3 ${
-        cancelled ? 'bg-paper-100 border-ink-100' : 'bg-paper-50 border-ink-100 active:bg-paper-100'
+        cancelled ? 'bg-paper-100 border-ink-100 active:bg-paper-200' : 'bg-paper-50 border-ink-100 active:bg-paper-100'
       }`}
     >
       <View className="flex-1">
         <View className="flex-row items-baseline justify-between">
-          <StyledText variant="medium" className="text-mono text-ink-500 text-xs">
+          <StyledText
+            variant="medium"
+            numberOfLines={1}
+            className="flex-1 mr-2 text-mono text-ink-500 text-xs"
+          >
             {time} · {ref}
           </StyledText>
           <StyledText
             variant="extrabold"
-            className={`text-mono text-lg ${cancelled ? 'text-ink-400 line-through' : 'text-ink-900'}`}
+            numberOfLines={1}
+            className={`text-mono text-lg ${cancelled ? 'text-ink-500 line-through' : 'text-ink-900'}`}
           >
             {total}
           </StyledText>

@@ -43,7 +43,7 @@ function Chip({
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={`Filter ${label}`}
-      className={`flex-row items-center h-9 px-3.5 rounded-pill border ${
+      className={`flex-row items-center min-h-9 py-1.5 px-3.5 rounded-pill border ${
         selected
           ? 'bg-persimmon-50 border-persimmon-500'
           : 'bg-paper-50 border-ink-200'
@@ -75,8 +75,9 @@ export const FilterChips = memo(function FilterChips({
   onOpenCorrectionsReport,
   onFiltersChange,
 }: FilterChipsProps) {
-  const hasActiveModalFilters =
-    filters.paymentType !== 'all' || filters.dateRange !== 'all';
+  const activeCount =
+    Number(filters.paymentType !== 'all') + Number(filters.dateRange !== 'all');
+  const hasActiveModalFilters = activeCount > 0;
   // A range picked in the modal that has no quick chip shows up first as an active chip.
   const dateChips =
     filters.dateRange !== 'all' && !QUICK_DATES.includes(filters.dateRange)
@@ -98,7 +99,7 @@ export const FilterChips = memo(function FilterChips({
             value={searchQuery}
             onChangeText={onSearchChange}
             placeholder="Search buyer, item, or receipt #..."
-            placeholderTextColor="#9A9083"
+            placeholderTextColor="#564E45"
             className="flex-1 py-2 text-sm text-ink-900 font-medium h-full"
             accessibilityLabel="Search receipts"
             returnKeyType="search"
@@ -108,6 +109,7 @@ export const FilterChips = memo(function FilterChips({
               onPress={() => onSearchChange?.('')}
               activeOpacity={0.7}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
               accessibilityLabel="Clear search"
               className="w-8 h-8 min-w-[32px] min-h-[32px] items-center justify-center rounded-full bg-paper-200 ml-1"
             >
@@ -119,7 +121,12 @@ export const FilterChips = memo(function FilterChips({
         <TouchableOpacity
           onPress={onOpenMore}
           activeOpacity={0.8}
-          accessibilityLabel="Open filters"
+          accessibilityRole="button"
+          accessibilityLabel={
+            hasActiveModalFilters
+              ? `Open filters, ${activeCount} active`
+              : 'Open filters'
+          }
           className="w-12 h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-paper-100 border border-paper-300 items-center justify-center ml-2.5 relative"
         >
           <FontAwesome
@@ -136,7 +143,8 @@ export const FilterChips = memo(function FilterChips({
           <TouchableOpacity
             onPress={onOpenCorrectionsReport}
             activeOpacity={0.8}
-            accessibilityLabel="Corrections Audit Log"
+            accessibilityRole="button"
+            accessibilityLabel="Corrections audit log"
             className="w-12 h-12 min-w-[44px] min-h-[44px] rounded-2xl bg-paper-100 border border-paper-300 items-center justify-center ml-2 relative"
           >
             <FontAwesome name="history" size={16} color="#564E45" />

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Animated, Easing as PulseEasing, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import Reanimated, {
   Easing,
   useAnimatedStyle,
@@ -92,8 +93,9 @@ export function Skeleton({
   style,
 }: SkeletonProps) {
   const radius = resolveBorderRadius(width, height, borderRadius, circle);
+  const reducedMotion = useReducedMotion();
   // The pulse is a core Animated value on a core Animated.View, never mixed into a Reanimated view.
-  useEffect(retainPulse, []);
+  useEffect(() => (reducedMotion ? undefined : retainPulse()), [reducedMotion]);
 
   return (
     <Animated.View
@@ -110,11 +112,11 @@ export function Skeleton({
           // state rather than a flat grey bar.
           overflow: 'hidden',
         },
-        { opacity: pulse },
+        { opacity: reducedMotion ? 0.75 : pulse },
         style,
       ]}
     >
-      {shimmer && <ShimmerOverlay height={height} />}
+      {shimmer && !reducedMotion && <ShimmerOverlay height={height} />}
     </Animated.View>
   );
 }

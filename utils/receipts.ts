@@ -65,7 +65,9 @@ export const buildReceiptRows = (
   const byDay = new Map<string, Sale[]>();
   for (const sale of allSales) {
     const key = dayKeyOf(sale);
-    byDay.set(key, [...(byDay.get(key) ?? []), sale]);
+    const day = byDay.get(key);
+    if (day) day.push(sale);
+    else byDay.set(key, [sale]);
   }
 
   const rows: ReceiptRow[] = [];

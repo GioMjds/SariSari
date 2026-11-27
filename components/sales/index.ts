@@ -11,3 +11,4 @@ export * from './add-sales';
 export * from './sale-details';
 export * from './ReceiptDayHeader';
 export * from './ReceiptsSummary';
+export * from './ReceiptsErrorState';

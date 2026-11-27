@@ -28,9 +28,9 @@ interface DateRangeOptions {
 }
 
 export const paymentTypeOptions: PaymentOptions[] = [
-	{ value: 'all', label: 'All Payments', icon: 'list' },
-	{ value: 'cash', label: 'Cash Only', icon: 'money' },
-	{ value: 'credit', label: 'Credit Only', icon: 'credit-card' },
+	{ value: 'all', label: 'All payments', icon: 'list' },
+	{ value: 'cash', label: 'Cash only', icon: 'money' },
+	{ value: 'credit', label: 'Utang only', icon: 'clock-o' },
 ];
 
 export const dateRangeOptions: DateRangeOptions[] = [
