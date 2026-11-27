@@ -48,7 +48,7 @@ export const DashboardErrorState = memo(function DashboardErrorState({
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={retryLabel}
-          className="bg-persimmon-500 rounded-xl py-3 px-6 flex-row items-center justify-center press-scale"
+          className="bg-persimmon-600 rounded-xl py-3 px-6 flex-row items-center justify-center press-scale"
         >
           <FontAwesome name="refresh" size={14} color="#FBF7EE" />
           <StyledText

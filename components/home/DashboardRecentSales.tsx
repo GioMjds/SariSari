@@ -3,6 +3,7 @@ import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { formatPesos } from '@/lib/money';
 import { SaleWithItems } from '@/types/sales.types';
 import { DashboardSection } from './DashboardSection';
@@ -13,16 +14,20 @@ export interface DashboardRecentSalesProps {
   onSeeAll?: () => void;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: TFunction): string {
   const parsed = new Date(dateStr);
   if (isNaN(parsed.getTime())) return '';
   const diff = Date.now() - parsed.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t('common:dashboard.recentActivity.justNow');
+  if (mins < 60)
+    return t('common:dashboard.recentActivity.minutesAgo', { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24)
+    return t('common:dashboard.recentActivity.hoursAgo', { count: hrs });
+  return t('common:dashboard.recentActivity.daysAgo', {
+    count: Math.floor(hrs / 24),
+  });
 }
 
 const SALE_ROW_CLASS_PRESETS = {
@@ -59,7 +64,7 @@ export const DashboardRecentSales = memo(function DashboardRecentSales({
           const itemCount = sale.items_count || sale.items?.length || 0;
           const isLast = index === Math.min(sales.length, 3) - 1;
           const isCash = sale.payment_type?.toLowerCase() === 'cash';
-          const ago = sale.timestamp ? timeAgo(sale.timestamp) : '';
+          const ago = sale.timestamp ? timeAgo(sale.timestamp, t) : '';
 
           return (
             <Pressable

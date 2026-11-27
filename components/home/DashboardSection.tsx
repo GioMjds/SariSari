@@ -39,11 +39,11 @@ export const DashboardSection = memo(function DashboardSection({
           >
             <StyledText
               variant="semibold"
-              className="text-sm text-persimmon-600 mr-1"
+              className="text-sm text-persimmon-700 mr-1"
             >
               {actionLabel}
             </StyledText>
-            <FontAwesome name="chevron-right" size={10} color="#C8460F" />
+            <FontAwesome name="chevron-right" size={10} color="#A1370C" />
           </Pressable>
         ) : null}
       </View>

@@ -15,6 +15,7 @@ export interface DashboardQuickActionsProps {
 
 type Glyph = keyof typeof FontAwesome.glyphMap;
 
+// Fill is persimmon-600: white text on persimmon-500 falls under 4.5:1 in daylight.
 export const DashboardQuickActions = memo(function DashboardQuickActions({
   onNewSale,
   onAddProduct,
@@ -33,10 +34,10 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
         onPress={onNewSale}
         accessibilityRole="button"
         accessibilityLabel={newSale}
-        className="bg-persimmon-500 rounded-2xl px-4 flex-row items-center active:bg-persimmon-700"
+        className="bg-persimmon-600 rounded-2xl px-4 flex-row items-center active:bg-persimmon-700"
         style={{ minHeight: 64 }}
       >
-        <View className="w-10 h-10 rounded-xl bg-persimmon-600 items-center justify-center mr-3">
+        <View className="w-10 h-10 rounded-xl bg-persimmon-700 items-center justify-center mr-3">
           <FontAwesome name="plus" size={18} color="#FAFAF7" />
         </View>
         <View className="flex-1">
@@ -45,8 +46,8 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
           </StyledText>
           <StyledText
             variant="regular"
-            className="text-caption text-persimmon-50 mt-0.5"
-            numberOfLines={1}
+            className="text-caption text-paper-50 mt-0.5"
+            numberOfLines={2}
           >
             {t('dashboard.quickActions.newSaleSub', {
               defaultValue: 'Ring up cash or utang',
@@ -135,8 +136,7 @@ function Shortcut({
       <StyledText
         variant="semibold"
         className="text-caption text-ink-900 mt-1.5 text-center"
-        numberOfLines={1}
-        adjustsFontSizeToFit
+        numberOfLines={2}
       >
         {label}
       </StyledText>

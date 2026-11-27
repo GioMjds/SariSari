@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { FINANCIAL_QUERY_KEY, useFinancialTotals } from './useFinancial';
 import { useCreditKPIs } from './useCredits';
 import { useProductStockSummary } from './useProducts';
@@ -17,6 +18,7 @@ import {
 import {
   useActiveStocktakeSession,
   useRecentStocktakeSessions,
+  stocktakeKeys,
 } from './useStocktake';
 import { getDateRangeFromType } from '@/utils';
 import { SaleWithItems } from '@/types/sales.types';
@@ -52,6 +54,29 @@ export interface TopSeller {
   unitsSold: number;
 }
 
+export type WeekStatus = 'loading' | 'error' | 'ready';
+
+const localDay = () => format(new Date(), 'yyyy-MM-dd');
+
+// Local calendar day; rolls over at midnight and when the app returns to the foreground.
+function useLocalDay(): string {
+  const [day, setDay] = useState(localDay);
+  useEffect(() => {
+    const sync = () => setDay(localDay());
+    const midnight = new Date();
+    midnight.setHours(24, 0, 1, 0);
+    const timer = setTimeout(sync, midnight.getTime() - Date.now());
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') sync();
+    });
+    return () => {
+      clearTimeout(timer);
+      sub.remove();
+    };
+  }, [day]);
+  return day;
+}
+
 export function useHomeDashboardData() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
@@ -59,36 +84,68 @@ export function useHomeDashboardData() {
   const stockSummaryQuery = useProductStockSummary();
   const todayStatsQuery = useTodayStats();
   // Only 3 recent sales are rendered, so fetch only what we need.
-  const { data: recentSalesData, isLoading: recentLoading } = useRecentSales(3);
-  const { data: creditKpis, isLoading: creditKpisLoading } = useCreditKPIs();
+  const { data: recentSalesData } = useRecentSales(3);
+  const {
+    data: creditKpis,
+    error: creditKpisError,
+    isLoading: creditKpisLoading,
+  } = useCreditKPIs();
 
   const { data: todayStats } = todayStatsQuery;
   const { data: stockSummary, isLoading: productsLoading } = stockSummaryQuery;
 
-  const todayRange = useMemo(() => getDateRangeFromType('today'), []);
-  const weekRange = useMemo(() => getDateRangeFromType('last7days'), []);
-  const todayDate = useMemo(
-    () => format(todayRange.startDate, 'yyyy-MM-dd'),
-    [todayRange],
+  // Ranges follow the local day so a screen left open overnight moves to the new day.
+  const today = useLocalDay();
+  const todayRange = useMemo(
+    () => getDateRangeFromType('today', parseISO(today)),
+    [today],
   );
-  const { data: todayCashOut, isLoading: cashOutLoading } = useFinancialTotals(
-    todayDate,
-    todayDate,
+  const weekRange = useMemo(
+    () => getDateRangeFromType('last7days', parseISO(today)),
+    [today],
   );
+  const {
+    data: todayCashOut,
+    error: cashOutError,
+    isLoading: cashOutLoading,
+  } = useFinancialTotals(today, today);
   const {
     data: todayKpisData,
     error: todayKpisError,
     isLoading: kpisLoading,
   } = useReportKPIs(todayRange);
-  const { data: topSellingToday, isLoading: topLoading } =
-    useTopSellingProducts(todayRange, 3);
-  const { data: weekPoints, isLoading: weekLoading } =
-    useSalesOverTime(weekRange);
+  const { data: topSellingToday } = useTopSellingProducts(todayRange, 3);
+  const {
+    data: weekPoints,
+    isError: weekFailed,
+    isLoading: weekLoading,
+  } = useSalesOverTime(weekRange);
   const { data: yesterdaySoFar } = useYesterdaySoFarStats();
 
   // Stocktake is a soft reminder, so it never holds back the first render.
   const { data: activeStocktake } = useActiveStocktakeSession();
   const { data: stocktakeSessions } = useRecentStocktakeSessions();
+
+  // Stats keyed without a date must refetch once the day changes.
+  const shownDay = useRef(today);
+  useEffect(() => {
+    if (shownDay.current === today) return;
+    shownDay.current = today;
+    void queryClient.invalidateQueries({ queryKey: ['sales-stats'] });
+    void queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
+  }, [today, queryClient]);
+
+  // The yesterday cutoff is the current clock time, so refresh it on return.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void queryClient.invalidateQueries({
+          queryKey: ['sales-stats', 'yesterday-so-far'],
+        });
+      }
+    });
+    return () => sub.remove();
+  }, [queryClient]);
 
   const productCount = stockSummary?.total ?? 0;
   const recentSales = useMemo<SaleWithItems[]>(
@@ -117,9 +174,15 @@ export function useHomeDashboardData() {
     };
   }, [todayStats, creditKpis, todayKpisData, todayCashOut, stockSummary]);
 
+  const weekStatus: WeekStatus = weekFailed
+    ? 'error'
+    : weekLoading
+      ? 'loading'
+      : 'ready';
   const week = useMemo(
-    () => buildWeekSeries(weekPoints ?? [], stats.todaySalesTotal),
-    [weekPoints, stats.todaySalesTotal],
+    () =>
+      buildWeekSeries(weekPoints ?? [], stats.todaySalesTotal, parseISO(today)),
+    [weekPoints, stats.todaySalesTotal, today],
   );
 
   const changeVsYesterday = useMemo(
@@ -154,9 +217,13 @@ export function useHomeDashboardData() {
     [topSellingToday],
   );
 
-  const isError = useMemo(
-    () => todayStatsQuery.error || stockSummaryQuery.error || todayKpisError,
-    [todayStatsQuery.error, stockSummaryQuery.error, todayKpisError],
+  // Any read behind a zero or an "all clear" counts, so a failure never passes as good news.
+  const isError = Boolean(
+    todayStatsQuery.error ||
+    stockSummaryQuery.error ||
+    todayKpisError ||
+    creditKpisError ||
+    cashOutError,
   );
 
   const refetchAll = useCallback(async () => {
@@ -173,6 +240,7 @@ export function useHomeDashboardData() {
         queryClient.invalidateQueries({
           queryKey: ['report-sales-over-time'],
         }),
+        queryClient.invalidateQueries({ queryKey: stocktakeKeys.all }),
       ]);
     } finally {
       setRefreshing(false);
@@ -184,20 +252,19 @@ export function useHomeDashboardData() {
     productCount,
     recentSales,
     topSellers,
+    today,
     week,
+    weekStatus,
     changeVsYesterday,
     attention,
     isError,
-    // Wait for every dashboard query so the screen mounts once with full data.
+    // Gate only on the numbers above the fold; trend, top sellers and recent sales fill in after.
     isLoading:
       todayStatsQuery.isLoading ||
       productsLoading ||
-      recentLoading ||
       creditKpisLoading ||
       cashOutLoading ||
-      kpisLoading ||
-      topLoading ||
-      weekLoading,
+      kpisLoading,
     refreshing,
     refetchAll,
   };

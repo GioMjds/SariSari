@@ -6,9 +6,10 @@ import { endOfDay, startOfDay, startOfMonth, subDays } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { Linking } from 'react-native';
 
-export const getDateRangeFromType = (type: DateRangeType): DateRange => {
-  const now = new Date();
-
+export const getDateRangeFromType = (
+  type: DateRangeType,
+  now: Date = new Date(),
+): DateRange => {
   switch (type) {
     case 'today':
       return {

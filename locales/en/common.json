@@ -231,7 +231,14 @@
       "itemCount_one": "{{count}} item",
       "itemCount_other": "{{count}} items",
       "cash": "Cash",
-      "utang": "Utang"
+      "utang": "Utang",
+      "justNow": "Just now",
+      "minutesAgo_one": "{{count}} min ago",
+      "minutesAgo_other": "{{count}} min ago",
+      "hoursAgo_one": "{{count}} hr ago",
+      "hoursAgo_other": "{{count}} hrs ago",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
     },
     "stocktakeNudge": {
       "inProgress": "Stock count in progress",

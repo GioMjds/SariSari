@@ -44,7 +44,7 @@ export const DashboardEmptyState = memo(function DashboardEmptyState({
           accessibilityRole="button"
           accessibilityLabel={t('common:emptyAddProduct')}
           accessibilityHint="Navigates to product creation form"
-          className="bg-persimmon-500 rounded-xl py-3.5 flex-row items-center justify-center press-scale"
+          className="bg-persimmon-600 rounded-xl py-3.5 flex-row items-center justify-center press-scale"
         >
           <FontAwesome name="plus" size={14} color="#FBF7EE" />
           <StyledText

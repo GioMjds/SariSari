@@ -17,6 +17,7 @@ import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
 import { Prof, useChangeLog, withProf } from '@/utils/perf';
 import { Href, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
+import { useWindowDimensions, View } from 'react-native';
 
 const routes = {
   addProduct: '/(edit-forms)/add-product',
@@ -31,17 +32,23 @@ const routes = {
 } satisfies Record<HomeDestination, Href>;
 
 const SALE_DETAILS = '/(edit-forms)/sale-details/';
+// Tablet and landscape widths get two columns instead of one stretched phone column.
+const WIDE_MIN_WIDTH = 768;
+const CONTENT_MAX_WIDTH = 1200;
 
 function HomeScreen() {
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
+  const wide = useWindowDimensions().width >= WIDE_MIN_WIDTH;
   const data = useHomeDashboardData();
   const {
     stats,
     productCount,
     recentSales,
     topSellers,
+    today,
     week,
+    weekStatus,
     changeVsYesterday,
     attention,
     isError,
@@ -52,7 +59,13 @@ function HomeScreen() {
   useChangeLog('home/index', data);
 
   const contentContainerStyle = useMemo(
-    () => ({ paddingTop: 8, paddingBottom: tabBarBottomOffset + 24 }),
+    () => ({
+      paddingTop: 8,
+      paddingBottom: tabBarBottomOffset + 24,
+      width: '100%' as const,
+      maxWidth: CONTENT_MAX_WIDTH,
+      alignSelf: 'center' as const,
+    }),
     [tabBarBottomOffset],
   );
 
@@ -95,58 +108,67 @@ function HomeScreen() {
           onStartFirstSale={goNewSale}
         />
       ) : (
-        <>
-          <Prof id="Home:DashboardTodayCard">
-            <DashboardTodayCard
-              salesTotal={stats.todaySalesTotal}
-              transactionCount={stats.transactionCount}
-              itemsSold={stats.itemsSold}
-              changeVsYesterday={changeVsYesterday}
-              week={week}
-              profitToday={stats.profitToday}
-              utangToday={stats.utangToday}
-              collectedToday={stats.collectedToday}
-              onPress={goReports}
-            />
-          </Prof>
+        <View className={wide ? 'flex-row' : ''}>
+          <View className={wide ? 'flex-1' : ''}>
+            <Prof id="Home:DashboardTodayCard">
+              <DashboardTodayCard
+                today={today}
+                salesTotal={stats.todaySalesTotal}
+                transactionCount={stats.transactionCount}
+                itemsSold={stats.itemsSold}
+                changeVsYesterday={changeVsYesterday}
+                week={week}
+                weekStatus={weekStatus}
+                profitToday={stats.profitToday}
+                utangToday={stats.utangToday}
+                collectedToday={stats.collectedToday}
+                onPress={goReports}
+              />
+            </Prof>
 
-          <Prof id="Home:DashboardQuickActions">
-            <DashboardQuickActions
-              onNewSale={goNewSale}
-              onAddProduct={goAddProduct}
-              onRestock={goRestock}
-              onOpenUtang={goUtang}
-              onOpenReports={goReports}
-              overdueCount={stats.overdueCount}
-            />
-          </Prof>
+            <Prof id="Home:DashboardQuickActions">
+              <DashboardQuickActions
+                onNewSale={goNewSale}
+                onAddProduct={goAddProduct}
+                onRestock={goRestock}
+                onOpenUtang={goUtang}
+                onOpenReports={goReports}
+                overdueCount={stats.overdueCount}
+              />
+            </Prof>
+          </View>
 
-          <Prof id="Home:DashboardAttention">
-            <DashboardAttention items={attention} onPress={go} />
-          </Prof>
+          <View className={wide ? 'flex-1' : ''}>
+            <Prof id="Home:DashboardAttention">
+              <DashboardAttention items={attention} onPress={go} />
+            </Prof>
 
-          <Prof id="Home:DashboardMoneyToday">
-            <DashboardMoneyToday
-              cashSales={stats.todaySalesTotal}
-              collected={stats.collectedToday}
-              expenses={stats.expensesToday}
-              drawings={stats.drawingsToday}
-              onOpenCashEntries={goCashEntries}
-            />
-          </Prof>
+            <Prof id="Home:DashboardMoneyToday">
+              <DashboardMoneyToday
+                cashSales={stats.todaySalesTotal}
+                collected={stats.collectedToday}
+                expenses={stats.expensesToday}
+                drawings={stats.drawingsToday}
+                onOpenCashEntries={goCashEntries}
+              />
+            </Prof>
 
-          <Prof id="Home:DashboardTopSellers">
-            <DashboardTopSellers sellers={topSellers} onSeeReport={goReports} />
-          </Prof>
+            <Prof id="Home:DashboardTopSellers">
+              <DashboardTopSellers
+                sellers={topSellers}
+                onSeeReport={goReports}
+              />
+            </Prof>
 
-          <Prof id="Home:DashboardRecentSales">
-            <DashboardRecentSales
-              sales={recentSales}
-              onOpenSale={openSale}
-              onSeeAll={goReceipts}
-            />
-          </Prof>
-        </>
+            <Prof id="Home:DashboardRecentSales">
+              <DashboardRecentSales
+                sales={recentSales}
+                onOpenSale={openSale}
+                onSeeAll={goReceipts}
+              />
+            </Prof>
+          </View>
+        </View>
       )}
     </RefreshableScrollView>
   );

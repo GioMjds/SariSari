@@ -57,6 +57,9 @@ export function HomeOverviewSkeleton() {
         paddingHorizontal: 16,
         paddingVertical: 16,
         paddingBottom: tabBarBottomOffset + 24,
+        width: '100%',
+        maxWidth: 1200,
+        alignSelf: 'center',
       }}
       showsVerticalScrollIndicator={false}
     >

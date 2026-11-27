@@ -231,7 +231,14 @@
       "itemCount_one": "{{count}} paninda",
       "itemCount_other": "{{count}} paninda",
       "cash": "Cash",
-      "utang": "Utang"
+      "utang": "Utang",
+      "justNow": "Ngayon lang",
+      "minutesAgo_one": "{{count}} minuto ang nakalipas",
+      "minutesAgo_other": "{{count}} minuto ang nakalipas",
+      "hoursAgo_one": "{{count}} oras ang nakalipas",
+      "hoursAgo_other": "{{count}} oras ang nakalipas",
+      "daysAgo_one": "{{count}} araw ang nakalipas",
+      "daysAgo_other": "{{count}} araw ang nakalipas"
     },
     "stocktakeNudge": {
       "inProgress": "May bilang ng stock na hindi pa tapos",
