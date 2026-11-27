@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { Pressable, View } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { StyledText } from '@/components/elements';
 import { MoneyText, ProductThumb, StockBadge } from '@/components/ui';
 import { SariMascot } from '@/components/mascot';
@@ -25,21 +27,52 @@ interface CategoryProductsSectionProps {
 }
 
 const TABULAR = { fontVariant: ['tabular-nums' as const] };
+// Two extra points above and below reach the 48dp Android target on 44pt controls.
+const LINK_SLOP = { top: 2, bottom: 2, left: 10, right: 10 };
 
-const SORTS: { key: CategorySort; label: string }[] = [
-  { key: 'priority', label: 'Priority' },
-  { key: 'sales', label: 'Best selling' },
-  { key: 'value', label: 'Value' },
-  { key: 'name', label: 'A–Z' },
+const SORTS: { key: CategorySort; labelKey: string }[] = [
+  { key: 'priority', labelKey: 'category_sortPriority' },
+  { key: 'sales', labelKey: 'category_sortSales' },
+  { key: 'value', labelKey: 'category_sortValue' },
+  { key: 'name', labelKey: 'category_sortName' },
 ];
+
+const FILTERS: {
+  key: CategoryFilter;
+  labelKey: string;
+  count: (s: CategorySummary) => number;
+}[] = [
+  { key: 'all', labelKey: 'category_filterAll', count: (s) => s.productCount },
+  { key: 'out', labelKey: 'category_filterOut', count: (s) => s.out },
+  { key: 'low', labelKey: 'category_filterLow', count: (s) => s.low },
+  { key: 'slow', labelKey: 'category_filterSlow', count: (s) => s.slow },
+  {
+    key: 'nocost',
+    labelKey: 'category_filterNoCost',
+    count: (s) => s.missingCost,
+  },
+];
+
+function movementLabel(row: CategoryRow, t: TFunction): string {
+  if (row.soldUnits > 0)
+    return t('category_moveSold', { count: row.soldUnits });
+  if (row.utangUnits > 0)
+    return t('category_moveUtang', { count: row.utangUnits });
+  // In stock with no movement and not slow can only mean the product is under a week old.
+  return row.isSlow || row.tone === 'out'
+    ? t('category_moveNone')
+    : t('category_moveNew');
+}
 
 function Chip({
   label,
+  a11yLabel,
   selected,
   onPress,
   hint,
 }: {
   label: string;
+  a11yLabel: string;
   selected: boolean;
   onPress: () => void;
   hint: string;
@@ -48,10 +81,11 @@ function Chip({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
       accessibilityState={{ selected }}
       accessibilityHint={hint}
       hitSlop={{ top: 4, bottom: 4 }}
-      className={`rounded-pill px-3.5 min-h-[36px] justify-center border active:opacity-80 ${
+      className={`rounded-pill px-3.5 min-h-[40px] justify-center border active:opacity-80 ${
         selected ? 'bg-ink-900 border-ink-900' : 'bg-paper-50 border-ink-200'
       }`}
     >
@@ -75,23 +109,20 @@ const ProductRow = memo(function ProductRow({
   isLast: boolean;
   onPress: (productId: number) => void;
 }) {
+  const { t } = useTranslation('inventory');
   const { product } = row;
-  // In stock with no movement and not slow can only mean the product is under a week old.
-  const movement =
-    row.soldUnits > 0
-      ? `${row.soldUnits} sold in 28 days`
-      : row.utangUnits > 0
-        ? `${row.utangUnits} on utang in 28 days`
-        : row.isSlow || row.tone === 'out'
-          ? 'No sales in 28 days'
-          : 'New this week';
+  const movement = movementLabel(row, t);
 
   return (
     <Pressable
       onPress={() => onPress(product.id)}
       accessibilityRole="button"
-      accessibilityLabel={`${product.name}, ${product.quantity} in stock, ${movement}`}
-      accessibilityHint="Opens the product profile"
+      accessibilityLabel={t('category_rowA11y', {
+        name: product.name,
+        stock: product.quantity,
+        movement,
+      })}
+      accessibilityHint={t('category_openProfileHint')}
       className={`flex-row items-center px-4 py-3.5 active:bg-paper-100 ${
         isLast ? '' : 'border-b border-dashed border-ink-200'
       }`}
@@ -132,7 +163,7 @@ const ProductRow = memo(function ProductRow({
             className="text-ink-500 text-[12px] mt-0.5"
             style={TABULAR}
           >
-            {formatPesos(row.stockValue)} on shelf
+            {t('category_onShelf', { value: formatPesos(row.stockValue) })}
           </StyledText>
         ) : null}
       </View>
@@ -151,6 +182,8 @@ export function CategoryProductsSection({
   onOpenProduct,
   onOpenInProducts,
 }: CategoryProductsSectionProps) {
+  const { t } = useTranslation('inventory');
+
   if (summary.productCount === 0) {
     return (
       <View className="mx-4 mt-6 rounded-2xl bg-paper-50 border border-ink-100 items-center px-6 pt-6 pb-7">
@@ -159,110 +192,120 @@ export function CategoryProductsSection({
           variant="black"
           className="text-ink-900 text-xl mt-4 text-center"
         >
-          No products yet
+          {t('category_emptyTitle')}
         </StyledText>
         <StyledText
           variant="regular"
           className="text-ink-500 text-sm mt-1.5 text-center"
         >
-          Add a product to this category to start tracking its stock and sales.
+          {t('category_emptyBody')}
         </StyledText>
         <Pressable
           onPress={onAddProduct}
           accessibilityRole="button"
-          className="mt-5 bg-persimmon-500 rounded-pill px-7 min-h-[48px] flex-row items-center active:bg-persimmon-700"
+          accessibilityLabel={t('category_addProductA11y')}
+          className="mt-5 bg-persimmon-600 rounded-pill px-7 min-h-[48px] flex-row items-center active:bg-persimmon-700"
         >
-          <FontAwesome name="plus" size={14} color="#FBF7EE" />
+          <Ionicons name="add" size={18} className="text-paper-50" />
           <StyledText
             variant="extrabold"
-            className="text-paper-50 text-sm ml-2"
+            className="text-paper-50 text-sm ml-1.5"
           >
-            Add Product
+            {t('category_addProduct')}
           </StyledText>
         </Pressable>
       </View>
     );
   }
 
-  const filters: { key: CategoryFilter; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: summary.productCount },
-    { key: 'out', label: 'Out', count: summary.out },
-    { key: 'low', label: 'Low', count: summary.low },
-    { key: 'slow', label: 'Not moving', count: summary.slow },
-    { key: 'nocost', label: 'No cost', count: summary.missingCost },
-  ];
-
   return (
     <View className="mx-4 mt-6">
-      <View className="flex-row items-baseline justify-between mb-2 px-1">
+      <View className="flex-row flex-wrap items-center justify-between mb-2 px-1 gap-x-3">
         <StyledText
           variant="extrabold"
           accessibilityRole="header"
           className="text-ink-900 text-base"
         >
-          Products
+          {t('category_productsTitle')}
         </StyledText>
         <Pressable
           onPress={onOpenInProducts}
           accessibilityRole="link"
-          accessibilityHint="Opens the Products tab filtered to this category"
-          hitSlop={{ left: 10, right: 10 }}
+          accessibilityHint={t('category_openInProductsHint')}
+          hitSlop={LINK_SLOP}
           className="flex-row items-center min-h-[44px] active:opacity-70"
         >
           <StyledText
             variant="semibold"
-            className="text-persimmon-600 text-sm mr-1"
+            className="text-persimmon-700 text-sm mr-1"
           >
-            Open in Products
+            {t('category_openInProducts')}
           </StyledText>
-          <FontAwesome name="external-link" size={11} color="#C8460F" />
+          <Ionicons
+            name="open-outline"
+            size={14}
+            className="text-persimmon-700"
+          />
         </Pressable>
       </View>
 
       {/* Filters: only issues that exist, so every chip leads somewhere. */}
       <View
         className="flex-row flex-wrap gap-2 px-1"
-        accessibilityLabel="Filter products"
+        accessibilityLabel={t('category_filterGroup')}
       >
-        {filters
-          .filter((f) => f.key === 'all' || f.count > 0 || f.key === filter)
-          .map((f) => (
-            <Chip
-              key={f.key}
-              label={`${f.label} ${f.count}`}
-              selected={filter === f.key}
-              onPress={() => onFilter(f.key)}
-              hint={`Shows ${f.label.toLowerCase()} products`}
-            />
-          ))}
+        {FILTERS.map((f) => ({ ...f, n: f.count(summary) }))
+          .filter((f) => f.key === 'all' || f.n > 0 || f.key === filter)
+          .map((f) => {
+            const label = t(f.labelKey);
+            return (
+              <Chip
+                key={f.key}
+                label={`${label} ${f.n}`}
+                a11yLabel={t('category_filterChipA11y', { label, count: f.n })}
+                selected={filter === f.key}
+                onPress={() => onFilter(f.key)}
+                hint={t('category_filterChipHint')}
+              />
+            );
+          })}
       </View>
 
       <View
         className="flex-row items-center mt-3 mb-2 px-1"
-        accessibilityLabel="Sort products"
+        accessibilityLabel={t('category_sortGroup')}
       >
-        <FontAwesome name="sort-amount-desc" size={12} color="#564E45" />
+        <Ionicons
+          name="swap-vertical"
+          size={16}
+          className="text-ink-600"
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+        />
         <View className="flex-row ml-2 bg-paper-200 rounded-pill p-0.5 flex-1">
           {SORTS.map((s) => {
             const selected = sort === s.key;
+            const label = t(s.labelKey);
             return (
               <Pressable
                 key={s.key}
                 onPress={() => onSort(s.key)}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                accessibilityLabel={`Sort by ${s.label}`}
+                accessibilityLabel={t('category_sortA11y', { label })}
                 hitSlop={{ top: 4, bottom: 4 }}
-                className={`flex-1 rounded-pill min-h-[40px] items-center justify-center ${
+                className={`flex-1 rounded-pill min-h-[40px] px-1 items-center justify-center ${
                   selected ? 'bg-paper-50 shadow-paper' : ''
                 }`}
               >
                 <StyledText
                   variant={selected ? 'extrabold' : 'medium'}
-                  className={`text-[12px] ${selected ? 'text-ink-900' : 'text-ink-500'}`}
+                  className={`text-[12px] ${selected ? 'text-ink-900' : 'text-ink-600'}`}
                   numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
-                  {s.label}
+                  {label}
                 </StyledText>
               </Pressable>
             );
@@ -277,19 +320,19 @@ export function CategoryProductsSection({
               variant="semibold"
               className="text-ink-700 text-sm text-center"
             >
-              No products match this filter.
+              {t('category_noMatch')}
             </StyledText>
             <Pressable
               onPress={() => onFilter('all')}
               accessibilityRole="button"
-              hitSlop={{ left: 12, right: 12 }}
+              hitSlop={LINK_SLOP}
               className="mt-1 min-h-[44px] justify-center active:opacity-70"
             >
               <StyledText
                 variant="extrabold"
-                className="text-persimmon-600 text-sm"
+                className="text-persimmon-700 text-sm"
               >
-                Show all
+                {t('category_showAll')}
               </StyledText>
             </Pressable>
           </View>

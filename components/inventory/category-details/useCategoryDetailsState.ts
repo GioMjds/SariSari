@@ -162,6 +162,10 @@ export function useCategoryDetailsState() {
     category,
     sheetCategory,
     loading: categoryQuery.isLoading || getAllProductsQuery.isLoading,
+    // A failed read must not pass for "not found" or an empty category.
+    loadError:
+      (categoryQuery.isError && !categoryQuery.data) ||
+      (getAllProductsQuery.isError && !getAllProductsQuery.data),
     salesLoading: salesQuery.isLoading,
     salesReady: salesQuery.data !== undefined,
     rows,

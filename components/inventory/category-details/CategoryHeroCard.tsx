@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { StyledText } from '@/components/elements';
 import { MoneyText, ReceiptHero, StatusStamp } from '@/components/ui';
 import { CATEGORY_TINTS } from '@/components/inventory/category/CategoryCard';
+import { formatPesos } from '@/lib/money';
 import type { Category } from '@/types';
 import type { CategorySummary } from './categoryInsights';
 
@@ -15,22 +18,26 @@ interface CategoryHeroCardProps {
 
 const TABULAR = { fontVariant: ['tabular-nums' as const] };
 
-function stampFor(summary: CategorySummary) {
+function stampFor(summary: CategorySummary, t: TFunction) {
   if (summary.productCount === 0)
-    return { label: 'EMPTY', tone: 'ink' as const, rotate: -4 };
+    return {
+      label: t('category_stampEmpty'),
+      tone: 'ink' as const,
+      rotate: -4,
+    };
   if (summary.out > 0)
     return {
-      label: `${summary.out} OUT`,
+      label: t('category_stampOut', { count: summary.out }),
       tone: 'cinnamon' as const,
       rotate: -8,
     };
   if (summary.low > 0)
     return {
-      label: `${summary.low} LOW`,
+      label: t('category_stampLow', { count: summary.low }),
       tone: 'cinnamon' as const,
       rotate: -8,
     };
-  return { label: 'ALL GOOD', tone: 'sage' as const, rotate: 6 };
+  return { label: t('category_stampGood'), tone: 'sage' as const, rotate: 6 };
 }
 
 function Stat({
@@ -55,7 +62,6 @@ function Stat({
           variant="medium"
           className={`text-[12px] mt-0.5 ${hintTone}`}
           style={TABULAR}
-          numberOfLines={2}
         >
           {hint}
         </StyledText>
@@ -64,9 +70,25 @@ function Stat({
   );
 }
 
+// Half-width cells are narrow, so big totals shrink to fit instead of ellipsizing.
+function FitMoney({ value, tone }: { value: number; tone: string }) {
+  return (
+    <StyledText
+      variant="black"
+      className={`text-xl ${tone}`}
+      style={TABULAR}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.6}
+    >
+      {formatPesos(value)}
+    </StyledText>
+  );
+}
+
 function Count({ value, unit }: { value: number; unit: string }) {
   return (
-    <View className="flex-row items-baseline">
+    <View className="flex-row flex-wrap items-baseline">
       <StyledText
         variant="black"
         className="text-ink-900 text-2xl"
@@ -87,14 +109,15 @@ export function CategoryHeroCard({
   catalogShare,
   salesLoading,
 }: CategoryHeroCardProps) {
+  const { t } = useTranslation('inventory');
   const tint = CATEGORY_TINTS[category.id % CATEGORY_TINTS.length]!;
-  const stamp = stampFor(summary);
+  const stamp = stampFor(summary, t);
   const count = summary.productCount;
-  const countLabel = `${count} ${count === 1 ? 'product' : 'products'}`;
   const allPriced = summary.missingCost === 0;
+  const pcs = t('category_unitPcs');
 
   return (
-    <ReceiptHero tone="cinnamon" headerLabel="CATEGORY">
+    <ReceiptHero tone="cinnamon" headerLabel={t('category_heroHeader')}>
       {/* Identity */}
       <View className="px-5 pt-5 pb-4 flex-row items-center">
         <View
@@ -120,8 +143,11 @@ export function CategoryHeroCard({
             style={TABULAR}
           >
             {count === 0
-              ? 'No products yet'
-              : `${countLabel} · ${catalogShare}% of catalog`}
+              ? t('category_noProducts')
+              : t('category_catalogShare', {
+                  products: t('category_productCount', { count }),
+                  share: catalogShare,
+                })}
           </StyledText>
         </View>
         <StatusStamp
@@ -135,59 +161,59 @@ export function CategoryHeroCard({
       {/* Key numbers, 2 x 2 */}
       <View className="mx-4 mb-4 rounded-2xl bg-paper-100 border border-dashed border-ink-200">
         <View className="flex-row border-b border-dashed border-ink-200">
-          <Stat label="Stock value" hint="At selling price">
-            <MoneyText
-              value={summary.stockValue}
-              className="text-ink-900 text-xl font-extrabold"
-              numberOfLines={1}
-            />
+          <Stat
+            label={t('category_statStockValue')}
+            hint={t('category_statStockValueHint')}
+          >
+            <FitMoney value={summary.stockValue} tone="text-ink-900" />
           </Stat>
           <View className="w-px bg-ink-200" />
           <Stat
-            label="Potential profit"
+            label={t('category_statProfit')}
             hint={
               summary.pricedCount === 0
-                ? 'Add cost prices to see profit'
+                ? t('category_statProfitNone')
                 : allPriced
-                  ? 'If all stock sells'
-                  : `${summary.pricedCount} of ${count} have cost`
+                  ? t('category_statProfitAll')
+                  : t('category_statProfitPartial', {
+                      priced: summary.pricedCount,
+                      total: count,
+                    })
             }
-            hintTone={allPriced ? 'text-ink-500' : 'text-semantic-warning'}
+            hintTone={allPriced ? 'text-ink-500' : 'text-semantic-warning-700'}
           >
             {summary.pricedCount === 0 ? (
               <StyledText variant="black" className="text-ink-400 text-xl">
                 —
               </StyledText>
             ) : (
-              <MoneyText
-                value={summary.potentialProfit}
-                className="text-sage-700 text-xl font-extrabold"
-                numberOfLines={1}
-              />
+              <FitMoney value={summary.potentialProfit} tone="text-sage-700" />
             )}
           </Stat>
         </View>
         <View className="flex-row">
           <Stat
-            label="On the shelf"
+            label={t('category_statShelf')}
             hint={
-              summary.out > 0 ? `${summary.out} at zero` : 'Pieces in stock'
+              summary.out > 0
+                ? t('category_statShelfOut', { count: summary.out })
+                : t('category_statShelfHint')
             }
           >
-            <Count value={summary.units} unit="pcs" />
+            <Count value={summary.units} unit={pcs} />
           </Stat>
           <View className="w-px bg-ink-200" />
           <Stat
-            label="Sold · 28 days"
+            label={t('category_statSold')}
             hint={
               salesLoading
-                ? 'Counting…'
+                ? t('category_statSoldCounting')
                 : summary.utangUnits > 0
-                  ? `Cash only · ${summary.utangUnits} more on utang`
-                  : 'Cash sales only'
+                  ? t('category_statSoldUtang', { count: summary.utangUnits })
+                  : t('category_statSoldCash')
             }
           >
-            <Count value={summary.soldUnits} unit="pcs" />
+            <Count value={summary.soldUnits} unit={pcs} />
             {summary.revenue > 0 ? (
               <MoneyText
                 value={summary.revenue}

@@ -1,10 +1,20 @@
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui';
+import { CATEGORY_FRAME_STYLE } from './CategoryStickyBar';
 
 // Mirrors the hero, attention card, and product rows so content lands without a jump.
 export function CategoryDetailsSkeleton() {
+  const { t } = useTranslation('inventory');
   return (
-    <View className="pt-4" accessibilityLabel="Loading category">
+    // One grouped progressbar, so screen readers do not announce every placeholder bar.
+    <View
+      className="pt-4"
+      style={CATEGORY_FRAME_STYLE}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={t('category_loading')}
+    >
       <View className="mx-4 rounded-3xl bg-paper-50 border border-ink-100 overflow-hidden">
         <View className="h-12 bg-cinnamon-50" />
         <View className="flex-row items-center px-5 pt-5 pb-4">

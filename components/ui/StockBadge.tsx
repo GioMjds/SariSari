@@ -14,7 +14,7 @@ const TONES = {
   },
   low: {
     chip: 'bg-semantic-warning-50 border-semantic-warning-100',
-    text: 'text-semantic-warning',
+    text: 'text-semantic-warning-700',
     icon: 'exclamation-triangle',
     color: '#C77B0E',
   },
