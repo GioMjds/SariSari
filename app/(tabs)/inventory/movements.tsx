@@ -1,6 +1,6 @@
 import { withProf } from '@/utils/perf';
-import { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ScrollView, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -9,17 +9,23 @@ import {
 } from '@/hooks/useInventory';
 import {
   LedgerList,
+  LedgerNoMatches,
+  LedgerRowsSkeleton,
   LedgerToolbar,
+  MovementsGuide,
   type LedgerTypeFilter,
 } from '@/components/inventory/ledger';
 import { useFabClearance } from '@/components/inventory/InventorySpeedDialFab';
 import { MovementEmptyState } from '@/components/inventory/movements';
-import { StyledText } from '@/components/elements';
 import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
 import type { InventoryEventType } from '@/types';
 
 const EMPTY_COUNTS: Partial<Record<InventoryEventType, number>> = {};
+// The guide lives in the list header so it scrolls away and leaves room for rows.
+const LIST_HEADER = <MovementsGuide />;
+// Caps line length on tablets, matching the product form width.
+const CONTENT_CLASS = 'flex-1 w-full max-w-[640px] self-center';
 
 function MovementsScreen() {
   const { t } = useTranslation('inventory');
@@ -30,15 +36,22 @@ function MovementsScreen() {
 
   const searchQuery = (q ?? '').trim();
   const [selectedType, setSelectedType] = useState<LedgerTypeFilter>('all');
+  const hasFilters = searchQuery !== '' || selectedType !== 'all';
 
   const txQuery = usePaginatedInventoryTransactions(searchQuery, selectedType);
+  const countsQuery = useInventoryTransactionTypeCounts(searchQuery);
+  const counts = countsQuery.data ?? EMPTY_COUNTS;
+  const { fetchNextPage, refetch, error } = txQuery;
+  const refetchCounts = countsQuery.refetch;
 
   const transactions = useMemo(
     () => txQuery.data?.pages.flatMap((page) => page.items) ?? [],
     [txQuery.data],
   );
 
-  const counts = useInventoryTransactionTypeCounts(searchQuery).data ?? EMPTY_COUNTS;
+  useEffect(() => {
+    if (error) console.warn('[movements] load failed', error);
+  }, [error]);
 
   const setSearchQuery = useCallback(
     (next: string) => {
@@ -46,6 +59,16 @@ function MovementsScreen() {
     },
     [router],
   );
+
+  const clearFilters = useCallback(() => {
+    setSelectedType('all');
+    router.setParams({ q: '' });
+  }, [router]);
+
+  const handleRefresh = useCallback(() => {
+    refetch();
+    refetchCounts();
+  }, [refetch, refetchCounts]);
 
   const handleReceiveStock = useCallback(
     () => signal.requestRestock(null),
@@ -57,79 +80,83 @@ function MovementsScreen() {
     [signal],
   );
 
-  if (txQuery.error) {
-    return (
-      <InventoryErrorState
-        title={t('movementsLoadError')}
-        message={(txQuery.error as Error)?.message ?? t('errorUnknown')}
-        onRetry={() => txQuery.refetch?.()}
-      />
-    );
-  }
-  if (txQuery.isLoading) {
+  const listEmpty = useMemo(
+    () =>
+      txQuery.isLoading ? (
+        <LedgerRowsSkeleton />
+      ) : (
+        <LedgerNoMatches onClear={hasFilters ? clearFilters : undefined} />
+      ),
+    [txQuery.isLoading, hasFilters, clearFilters],
+  );
+
+  if (error) {
     return (
       <View className="flex-1 bg-paper-200">
-        <LedgerToolbar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedType={selectedType}
-          setSelectedType={setSelectedType}
-          counts={counts}
+        <InventoryErrorState
+          title={t('movementsLoadError')}
+          message={t('movementsLoadErrorBody')}
+          onRetry={handleRefresh}
         />
       </View>
     );
   }
-  if (transactions.length === 0 && (searchQuery || selectedType !== 'all')) {
+
+  // Placeholder rows belong to the previous filter, so only settled data may decide the store is empty.
+  const storeIsEmpty =
+    !txQuery.isLoading &&
+    !txQuery.isPlaceholderData &&
+    transactions.length === 0 &&
+    !hasFilters;
+
+  if (storeIsEmpty) {
     return (
-      <View className="flex-1 bg-paper-200">
-        <LedgerToolbar
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          selectedType={selectedType}
-          setSelectedType={setSelectedType}
-          counts={counts}
-        />
-        <StyledText variant="medium" className="text-ink-500 text-center mt-10 px-6">
-          {t('movementsNoMatch')}
-        </StyledText>
-      </View>
+      <ScrollView
+        className="flex-1 bg-paper-200"
+        contentContainerStyle={{ paddingBottom: fabClearance }}
+      >
+        <View className="w-full max-w-[640px] self-center">
+          <MovementEmptyState
+            onReceiveStock={handleReceiveStock}
+            onAdjustStock={handleAdjustStock}
+          />
+        </View>
+      </ScrollView>
     );
   }
-  if (transactions.length === 0) {
-    return (
-      <View className="flex-1 bg-paper-200">
-        <MovementEmptyState
-          onReceiveStock={handleReceiveStock}
-          onAdjustStock={handleAdjustStock}
-        />
-      </View>
-    );
-  }
+
   return (
     <View className="flex-1 bg-paper-200">
-      <LedgerToolbar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedType={selectedType}
-        setSelectedType={setSelectedType}
-        counts={counts}
-      />
-      <LedgerList
-        transactions={transactions}
-        currentStock={0}
-        hideBalance={true}
-        bottomPadding={fabClearance}
-        // The query already filters by search on the database side.
-        searchQuery=""
-        selectedType={selectedType}
-        isFetchingNextPage={txQuery.isFetchingNextPage}
-        hasNextPage={txQuery.hasNextPage}
-        onEndReached={() => {
-          if (!txQuery.isFetchingNextPage && txQuery.hasNextPage) {
-            txQuery.fetchNextPage();
+      <View className={CONTENT_CLASS}>
+        <LedgerToolbar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          selectedType={selectedType}
+          setSelectedType={setSelectedType}
+          counts={counts}
+          showGuide={false}
+        />
+        <LedgerList
+          transactions={transactions}
+          currentStock={0}
+          hideBalance={true}
+          bottomPadding={fabClearance}
+          // The query already filters by search and type on the database side.
+          searchQuery=""
+          selectedType="all"
+          ListHeaderComponent={LIST_HEADER}
+          ListEmptyComponent={listEmpty}
+          isRefetching={
+            txQuery.isRefetching &&
+            !txQuery.isFetchingNextPage &&
+            !txQuery.isPlaceholderData
           }
-        }}
-      />
+          onRefresh={handleRefresh}
+          isFetchingNextPage={txQuery.isFetchingNextPage}
+          hasNextPage={txQuery.hasNextPage}
+          onEndReached={fetchNextPage}
+        />
+      </View>
     </View>
   );
 }

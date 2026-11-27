@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useMemo, useCallback, memo } from 'react';
 import {
   View,
+  TouchableOpacity,
   SectionList,
   RefreshControl,
   Platform,
@@ -10,7 +11,7 @@ import {
   NativeScrollEvent,
   SectionListRenderItemInfo,
 } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { InventoryTransaction } from '@/types/inventory.types';
 import { LedgerTypeFilter } from './types';
@@ -277,12 +278,16 @@ function ListFooterNote({ text }: { text: string }) {
   );
 }
 
-const LedgerNoMatches = memo(function LedgerNoMatches() {
+export const LedgerNoMatches = memo(function LedgerNoMatches({
+  onClear,
+}: {
+  onClear?: (() => void) | undefined;
+}) {
   const { t } = useTranslation('inventory');
   return (
     <View className="mx-4 mt-2 items-center py-10 px-6 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
       <View className="w-12 h-12 rounded-full bg-paper-100 items-center justify-center mb-3">
-        <FontAwesome name="search" size={18} color="#7A7165" />
+        <Ionicons name="search" size={20} color="#564E45" />
       </View>
       <StyledText variant="extrabold" className="text-ink-700 text-base text-center">
         {t('movementsNoMatchTitle')}
@@ -290,6 +295,18 @@ const LedgerNoMatches = memo(function LedgerNoMatches() {
       <StyledText variant="regular" className="text-ink-500 text-sm mt-1 text-center">
         {t('movementsNoMatch')}
       </StyledText>
+      {onClear ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onClear}
+          accessibilityRole="button"
+          className="mt-4 px-5 min-h-[44px] justify-center rounded-pill bg-paper-100 border border-ink-200"
+        >
+          <StyledText variant="extrabold" className="text-ink-800 text-sm">
+            {t('movementsClearFilters')}
+          </StyledText>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 });

@@ -31,10 +31,17 @@ export function LedgerSkeleton() {
         </View>
       </View>
 
-      <View className="px-4 mt-5">
-        <Skeleton width={72} height={14} borderRadius={4} style={{ marginLeft: 8, marginBottom: 10 }} />
-        <Skeleton width={'100%'} height={192} borderRadius={16} shimmer />
-      </View>
+      <LedgerRowsSkeleton />
+    </View>
+  );
+}
+
+// Day label plus a grouped row block, shared by the full ledger skeleton and the movements list.
+export function LedgerRowsSkeleton() {
+  return (
+    <View className="px-4 mt-5" accessibilityLabel="Loading" accessibilityState={{ busy: true }}>
+      <Skeleton width={72} height={14} borderRadius={4} style={{ marginLeft: 8, marginBottom: 10 }} />
+      <Skeleton width={'100%'} height={192} borderRadius={16} shimmer />
     </View>
   );
 }

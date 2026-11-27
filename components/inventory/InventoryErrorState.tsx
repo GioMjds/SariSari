@@ -1,4 +1,5 @@
 import { View, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 
@@ -13,23 +14,23 @@ export function InventoryErrorState({
   message = "Couldn't load inventory right now.",
   onRetry,
 }: Props) {
+  const { t } = useTranslation('inventory');
   return (
     <View className="mx-4 mt-6 p-5 rounded-3xl bg-rose-50 border border-rose-200 items-center gap-y-3">
       <SariMascot state="error" size={112} />
-      <StyledText variant="extrabold" className="text-base text-rose-900">
+      <StyledText variant="extrabold" accessibilityRole="header" className="text-base text-rose-900 text-center">
         {title}
       </StyledText>
-      <StyledText variant="regular" className="text-xs text-rose-800 text-center px-4">
+      <StyledText variant="regular" className="text-sm text-rose-800 text-center px-4">
         {message}
       </StyledText>
       <TouchableOpacity
         onPress={onRetry}
         accessibilityRole="button"
-        accessibilityLabel="Retry"
         className="px-4 py-2.5 rounded-xl bg-rose-600 min-h-[44px] items-center justify-center"
       >
         <StyledText variant="extrabold" className="text-paper-50 text-sm">
-          Try again
+          {t('errorRetry')}
         </StyledText>
       </TouchableOpacity>
     </View>

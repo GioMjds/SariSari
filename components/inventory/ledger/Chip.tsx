@@ -26,7 +26,7 @@ export const Chip = memo(function Chip({
       accessibilityState={{ selected: active }}
       className={`px-4 py-2.5 min-h-[44px] justify-center rounded-pill flex-row items-center border ${
         active
-          ? 'bg-persimmon-500 border-persimmon-500 shadow-sm'
+          ? 'bg-persimmon-600 border-persimmon-600'
           : 'bg-paper-50 border-ink-200 shadow-none'
       }`}
     >

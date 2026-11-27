@@ -13,6 +13,7 @@ import {
   InventoryTransaction,
 } from '@/types/inventory.types';
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -149,6 +150,8 @@ export function usePaginatedInventoryTransactions(
         type,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    // Keep the last results on screen while a new search or filter loads, so the list never blanks.
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 }
@@ -157,6 +160,7 @@ export function useInventoryTransactionTypeCounts(search: string = '') {
   return useQuery({
     queryKey: ['inventory_transactions', 'type-counts', search],
     queryFn: () => getInventoryTransactionTypeCounts(search),
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 }

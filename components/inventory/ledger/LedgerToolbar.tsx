@@ -13,6 +13,8 @@ interface LedgerToolbarProps {
   selectedType: LedgerTypeFilter;
   setSelectedType: (t: LedgerTypeFilter) => void;
   counts: Partial<Record<InventoryEventType, number>>;
+  /** Movements renders the guide inside its list so it scrolls away; defaults to true. */
+  showGuide?: boolean;
 }
 
 const CHIP_ROW_STYLE = { paddingHorizontal: 16, gap: 8 } as const;
@@ -23,6 +25,7 @@ export const LedgerToolbar = memo(function LedgerToolbar({
   selectedType,
   setSelectedType,
   counts,
+  showGuide = true,
 }: LedgerToolbarProps) {
   const { t } = useTranslation('inventory');
   const filters: { type: LedgerTypeFilter; label: string; count: number }[] = [
@@ -69,12 +72,19 @@ export const LedgerToolbar = memo(function LedgerToolbar({
           />
         ))}
       </ScrollView>
-      <View className="px-4">
-        <TabGuide
-          guideId="movements"
-          steps={[t('movementsGuide1'), t('movementsGuide2'), t('movementsGuide3')]}
-        />
-      </View>
+      {showGuide && <MovementsGuide />}
     </View>
   );
 });
+
+export function MovementsGuide() {
+  const { t } = useTranslation('inventory');
+  return (
+    <View className="px-4">
+      <TabGuide
+        guideId="movements"
+        steps={[t('movementsGuide1'), t('movementsGuide2'), t('movementsGuide3')]}
+      />
+    </View>
+  );
+}
