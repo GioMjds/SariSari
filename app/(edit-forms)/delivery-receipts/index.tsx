@@ -2,6 +2,7 @@ import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
 import { useKeyboardState } from 'react-native-keyboard-controller';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -153,10 +154,15 @@ function DeliveryReceiptsScreen() {
       {isError ? (
         <View
           accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
           style={{ minHeight: 48 }}
           className="flex-row items-center gap-2 bg-semantic-danger-50 border border-semantic-danger-100 rounded-xl pl-3 pr-1 mb-3"
         >
-          <FontAwesome name="exclamation-circle" size={13} color={ICON.danger} />
+          <FontAwesome
+            name="exclamation-circle"
+            size={13}
+            color={ICON.danger}
+          />
           <StyledText
             variant="medium"
             className="flex-1 text-xs text-semantic-danger"
@@ -398,26 +404,32 @@ function DeliveryReceiptsScreen() {
 
       {/* Bottom action bar, hidden while typing so results keep the room */}
       {keyboardVisible ? null : (
-        <View
-          className="px-4 pt-4 bg-paper-50 border-t border-ink-100 shadow-paper"
-          style={{ paddingBottom: insets.bottom + 16 }}
+        // Slides with the keyboard's direction; Reanimated skips it under Reduce Motion.
+        <Animated.View
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutDown.duration(140)}
         >
-          <Pressable
-            onPress={() => openReceipt('new')}
-            accessibilityRole="button"
-            accessibilityLabel={t('newDelivery')}
-            style={[COLUMN, { minHeight: 52 }]}
-            className="py-4 rounded-xl flex-row items-center justify-center gap-2 bg-persimmon-500 shadow-paper active:bg-persimmon-600"
+          <View
+            className="px-4 pt-4 bg-paper-50 border-t border-ink-100 shadow-paper"
+            style={{ paddingBottom: insets.bottom + 16 }}
           >
-            <FontAwesome name="plus" size={14} color={ICON.paper50} />
-            <StyledText
-              variant="extrabold"
-              className="text-base font-stack-sans-bold text-paper-50"
+            <Pressable
+              onPress={() => openReceipt('new')}
+              accessibilityRole="button"
+              accessibilityLabel={t('newDelivery')}
+              style={[COLUMN, { minHeight: 52 }]}
+              className="py-4 rounded-xl flex-row items-center justify-center gap-2 bg-persimmon-600 shadow-paper active:bg-persimmon-700"
             >
-              {t('newDelivery')}
-            </StyledText>
-          </Pressable>
-        </View>
+              <FontAwesome name="plus" size={14} color={ICON.paper50} />
+              <StyledText
+                variant="extrabold"
+                className="text-base font-stack-sans-bold text-paper-50"
+              >
+                {t('newDelivery')}
+              </StyledText>
+            </Pressable>
+          </View>
+        </Animated.View>
       )}
     </SafeAreaView>
   );

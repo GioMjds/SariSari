@@ -9,6 +9,7 @@ import {
   FlatList,
   FlatListProps,
   Platform,
+  RefreshControl,
   StyleProp,
   View,
   ViewStyle,
@@ -116,6 +117,27 @@ function RefreshableFlatListInner<T>(
   }, [isRefreshing, pullY, refreshThreshold]);
 
   const AnimatedFlatList = Animated.FlatList as any;
+
+  // iOS keeps its native rubber-band and refresh control; the custom pull header is Android-only.
+  if (Platform.OS === 'ios') {
+    return (
+      <View className={`flex-1 ${className}`}>
+        <FlatList
+          {...rest}
+          ref={flatListRef}
+          contentContainerStyle={contentContainerStyle}
+          ListHeaderComponent={ListHeaderComponent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={triggerRefresh}
+              tintColor="#623418"
+            />
+          }
+        />
+      </View>
+    );
+  }
 
   return (
     <GestureDetector gesture={panGesture}>
