@@ -177,6 +177,8 @@ The color palette is Restrained, utilizing warm-neutral background layers with s
 
 **The Persimmon Accent Rule.** Saturated Persimmon Orange (`#E85A1F`) must only carry active actions or status focus. Never use it decoratively for large header panels, borders, or container backdrops.
 
+**The Fill Contrast Rule.** Buttons with light text fill with Persimmon 600 (`#C8460F`, 4.63:1 with paper text) and press to Persimmon 700 (`#A1370C`). Persimmon 500 stays for icons and large accents, because light text on it is only 3.40:1. Persimmon text links use Persimmon 700 (6.33:1 on the page background). Warning-toned text uses `semantic-warning-700` (`#8F5A0A`, at least 5:1 on paper and warning tints), never `semantic-warning`, which is under 4.5:1 on paper.
+
 **The Receipt Contrast Rule.** Body text must be written in Soft Charcoal Ink (`#0E0C0A`) to guarantee readability against cream paper under intense daylight.
 
 ### Alert-Kind Palette

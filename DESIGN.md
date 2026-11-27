@@ -4,6 +4,7 @@ name: SariSari
 description: Cozy, offline-first mobile POS system for Filipino store owners
 colors:
 primary: '#E85A1F'
+primary-fill: '#C8460F'
 primary-pressed: '#A1370C'
 primary-bg: '#FFF1EA'
 secondary: '#4F7A24'
@@ -41,7 +42,7 @@ sm: '8px'
 md: '16px'
 components:
 button-primary:
-backgroundColor: '{colors.primary}'
+backgroundColor: '{colors.primary-fill}'
 textColor: '{colors.neutral-card}'
 rounded: '{rounded.sm}'
 padding: '12px 24px'
@@ -60,7 +61,7 @@ borderStyle: 'dashed'
 rounded: '{rounded.card}'
 padding: '{spacing.md}'
 action-button:
-backgroundColor: '{colors.primary}'
+backgroundColor: '{colors.primary-fill}'
 textColor: '{colors.neutral-card}'
 rounded: '{rounded.md}'
 padding: '12px 16px'
@@ -145,6 +146,7 @@ Colors: primary: primary #E85A1F; neutral: neutral-bg #EFE6D2; neutral: ink #0E0
 North Star: "The Garapon Countertop"
 Rules:
 - The Persimmon Accent Rule. Saturated Persimmon Orange (`#E85A1F`) must only carry active actions or status focus.
+- The Fill Contrast Rule. Buttons with light text fill with Persimmon 600 (`#C8460F`, 4.63:1 with paper text) and press to Persimmon 700 (`#A1370C`); Persimmon 500 stays for icons and large accents, because light text on it is only 3.40:1. Persimmon text links use Persimmon 700. Warning-toned text uses `semantic-warning-700` (`#8F5A0A`), never `semantic-warning`, which is under 4.5:1 on paper.
 - The Receipt Contrast Rule. Body text must be written in Soft Charcoal Ink (`#0E0C0A`) to guarantee readability against cream paper under intense daylight.
 - The Letter-Spacing Rule. Large display headers must not set letter-spacing tighter than `-0.02em` (or `-0.03em` for hero metrics) to prevent overlapping characters on low-DPI mobile devices.
 - The No-Display-In-UI Rule. Never use display fonts or clamp size scales for regular UI buttons, inputs, or navigation labels.

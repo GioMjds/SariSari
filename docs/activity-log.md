@@ -4,6 +4,20 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-27: Home audit fixes
+
+- Errors: `isError` now also covers credit KPIs and cash entries, so a failed read shows the error state instead of zeros and "All caught up". A failed 7-day trend hides the chart instead of drawing empty bars.
+- Day rollover: `useLocalDay` in `useHomeDashboardData` tracks the local date, updating at midnight and on app foreground. Report ranges, cash entries, and the date line follow it, and date-less stats refetch when it changes. `getDateRangeFromType` takes an optional reference date for this.
+- The "this time yesterday" cutoff refreshes when the app returns to the foreground. Pull-to-refresh now also reloads stocktake.
+- Screen readers: the Today card button label now includes the date, profit, utang given, collected, and the 7-day total.
+- Contrast: New Sale and the home empty and error CTAs use persimmon-600 (white text about 4.6:1). Section links use persimmon-700. Past-day bars use cinnamon-300 (about 3.9:1).
+- Text scaling: shortcut labels wrap to 2 lines instead of shrinking. Above font scale 1.15 the three Today stats stack vertically.
+- Tablet: at 768 pt and wider, Home uses two columns (Today and actions left; attention, money, top sellers, recent right), capped at 1200 pt.
+- First paint waits only for today stats, stock, credit, cash entries, and report KPIs. The chart shows flat placeholder bars until the trend loads.
+- Copy: recent-sales relative time is translated (`recentActivity.justNow`, `minutesAgo`, `hoursAgo`, `daysAgo`). Weekday labels use the short form.
+- Not changed: the `button-primary` token in DESIGN.md and primary buttons outside Home still use persimmon-500 with white text.
+- Not verified on a device.
+
 ## 2026-11-27: Home dashboard redesign
 
 - New order: Today card, New Sale plus 4 shortcuts, Needs attention, Money today, Top sellers today, Recent activity.
@@ -20,6 +34,19 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 - "vs this time yesterday" compares today so far with yesterday from midnight to the same clock time (`getSaleStatsBetween`, `useYesterdaySoFarStats`). The chip hides when yesterday had no cash sales by that time.
 - Known gap: report queries (profit, top sellers, 7-day trend) are not invalidated after a sale, so they can lag by up to 2 minutes. Today's bar and the cash total use live stats.
 - Not verified on a device. No screenshots or video, because no emulator or adb was available.
+
+## 2026-11-27 — Category Details Audit Fixes
+
+Applied the audit at `.impeccable/audit/2026-11-27T10-17-58Z__app-edit-forms-category-id-tsx.md` (13/20).
+
+- **Adapt:** hero money values shrink to fit instead of truncating. The scroll view clears the sticky bar's measured height, so the last row stays visible at any text size. Content caps at 640 wide and centers on tablets (`CATEGORY_FRAME_STYLE`), with side safe-area insets. Chips and text links now reach 48dp on Android.
+- **Polish:** warning text uses `semantic-warning-700` (5.17:1), including the shared `StockBadge` low-stock label, so every screen with that badge changes. Icons moved to Ionicons with token colors. The top bar title swaps to the category name after the hero scrolls away, like product details.
+- **Clarify:** sort labels are Priority, Sales, Value, A-Z, and shrink before truncating. Filter chips announce "Out, 2 products".
+- **Harden:** a failed read now shows `InventoryErrorState` with retry instead of "not found" or an empty category. The skeleton reads as one progress bar. All copy moved to `locales/{en,tl}/inventory.json` (`category_*` keys).
+- **Document:** decided with the user that light-text buttons fill with Persimmon 600 (`#C8460F`, 4.63:1) and press to 700. Recorded as the Fill Contrast Rule in DESIGN.md and `.impeccable/design-full.md`, with a new `primary-fill` token. Only this screen uses it so far; other screens still use Persimmon 500.
+- Not verified on a device. No screenshots or video.
+
+---
 
 ## 2026-11-27 — Category Details Redesign
 
@@ -875,4 +902,27 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `ProductHistoryTab` was renamed to `ProductMovementsTab` and reuses `ledgerMath`, `StockStrip`, `LedgerEmptyState`, and `LedgerRowsSkeleton`.
 - All copy is in `locales/{en,tl}/inventory.json` (`details_*` keys).
 - Assumption: transactions for this screen cover only the last 30 days, so "Last stock added" reads "None in 30 days" when empty.
+- Not verified on a device. No screenshots or video, because no emulator or adb was available.
+
+## 2026-11-27: Product details audit fixes (impeccable audit 13/20)
+
+- Adapt: pace strip labels and values wrap instead of truncating. The hero quantity shrinks to fit. Content is capped at 640pt and centered on tablets and in landscape, and side safe-area insets are applied.
+- Typeset: hero labels moved from 10px tracked caps to 12px sentence case. The tab count badge is 11px.
+- Colorize: `lib/css-interop.ts` registers `Ionicons`, so the details screen uses token classes for every icon; no hex icon colors remain there. `EVENT_TONE` is still duplicated from `LedgerList.tsx`, because that file has uncommitted user edits.
+- Polish: the details screen uses Ionicons only. "See all" scrolls back to the tab strip when tapped from further down.
+- Animate: the active tab pill slides on `translateX` in 200ms, instantly with Reduce Motion. Tab changes are announced to screen readers, and the History tab label includes its count.
+- Clarify: the load error shows fixed friendly copy instead of the raw error. An unknown days-left value reads "Not enough sales yet to estimate" to screen readers.
+- Skipped: dark mode, which is app-wide work. Tablet two-column layout; a centered column matches the notifications screen.
+- Not verified on a device.
+
+## 2026-11-27: Reports screen, profit first
+
+- The top of Reports now answers "did the store earn?": a hero card shows Kita (operating profit: cash and utang sales, minus cost of goods, minus paid gastos), a change chip against the previous period, and a stacked bar showing where each peso went (product cost, gastos, kita).
+- KPI grid: Sales (cash), Utang not yet paid, Stock value at cost, Gastos paid. "Cash collected" was removed because it repeated cash sales. The old "Tubo (gross profit)" card actually showed operating profit; the label is gone with it.
+- Every KPI card and section header has a "?" button that opens a sheet with a plain-language definition.
+- Comparison windows (`components/reports/report-math.ts`, tested): today vs yesterday up to the same time, yesterday vs the day before, 7 days vs the 7 days before, this month vs last month to the same day.
+- `getReportKPIs` no longer wraps the end date in `endOfDay`, so a mid-day comparison window works; both callers already pass day ends. Its gastos date filter now uses the local day instead of the UTC date, which had pulled the previous day's gastos into "Today".
+- Performance: Top products, Stock, Utang aging, and Cash drawer sections load their queries only once opened (`enabled` argument on the hooks). Skeletons moved to `ReportsSkeletons.tsx`.
+- All Reports copy moved to the `reports` object in `locales/{en,tl}/common.json`, including the shared `DateRangeSelector`. Insight titles and messages still come in English from `getReportInsights`, and aging bucket labels come from the database.
+- Text below 12px was raised to 12px in report components. Dead `text-sage-800/900` classes were replaced.
 - Not verified on a device. No screenshots or video, because no emulator or adb was available.

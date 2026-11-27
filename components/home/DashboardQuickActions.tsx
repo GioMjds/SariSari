@@ -15,7 +15,6 @@ export interface DashboardQuickActionsProps {
 
 type Glyph = keyof typeof FontAwesome.glyphMap;
 
-// Fill is persimmon-600: white text on persimmon-500 falls under 4.5:1 in daylight.
 export const DashboardQuickActions = memo(function DashboardQuickActions({
   onNewSale,
   onAddProduct,
@@ -61,7 +60,7 @@ export const DashboardQuickActions = memo(function DashboardQuickActions({
         <Shortcut
           icon="plus-square"
           label={t('dashboard.quickActions.addShort', {
-            defaultValue: 'Add item',
+            defaultValue: 'Add Product',
           })}
           onPress={onAddProduct}
         />
