@@ -472,6 +472,14 @@ export const getTodayStats = async (): Promise<SaleStats> => {
   dayStart.setHours(0, 0, 0, 0);
   const dayEnd = new Date(dayStart);
   dayEnd.setHours(23, 59, 59, 999);
+  return getSaleStatsBetween(dayStart, dayEnd);
+};
+
+/** Sale stats for any window, such as yesterday up to this time of day. */
+export const getSaleStatsBetween = async (
+  dayStart: Date,
+  dayEnd: Date,
+): Promise<SaleStats> => {
 
   // total is cash only: utang is not paid yet. Cancelled checkouts are excluded.
   const stats = await db.getFirstAsync<{

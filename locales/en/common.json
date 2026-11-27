@@ -243,7 +243,7 @@
     "today": {
       "title": "Cash sales today",
       "countLine": "{{sales}} sales · {{items}} items",
-      "vsYesterday": "{{value}} vs yesterday",
+      "vsYesterday": "{{value}} vs this time yesterday",
       "hint": "Opens reports",
       "weekA11y": "Last 7 days cash sales, {{total}} total",
       "profit": "Profit",

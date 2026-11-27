@@ -70,7 +70,7 @@ export const DashboardTodayCard = memo(function DashboardTodayCard({
       ? null
       : t('dashboard.today.vsYesterday', {
           value: `${changeVsYesterday > 0 ? '+' : ''}${changeVsYesterday}%`,
-          defaultValue: '{{value}} vs yesterday',
+          defaultValue: '{{value}} vs this time yesterday',
         });
   const profit = profitToday === null ? '-' : formatPesos(profitToday);
 

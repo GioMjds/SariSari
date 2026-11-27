@@ -6,6 +6,7 @@ import {
   getSaleItems,
   getSalesByDateRange,
   getTodayStats,
+  getSaleStatsBetween,
   hasSales,
   insertSale,
   voidSale,
@@ -185,6 +186,20 @@ export function useTodayStats() {
   return useQuery({
     queryKey: salesKeys.salesStats,
     queryFn: () => getTodayStats(),
+  });
+}
+
+// Midnight to this time yesterday, so mid-day "vs yesterday" compares like with like.
+export function useYesterdaySoFarStats() {
+  return useQuery({
+    queryKey: [...salesKeys.salesStats, 'yesterday-so-far'],
+    queryFn: () => {
+      const end = new Date();
+      end.setDate(end.getDate() - 1);
+      const start = new Date(end);
+      start.setHours(0, 0, 0, 0);
+      return getSaleStatsBetween(start, end);
+    },
   });
 }
 

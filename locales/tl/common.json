@@ -243,7 +243,7 @@
     "today": {
       "title": "Benta (cash) ngayon",
       "countLine": "{{sales}} benta · {{items}} piraso",
-      "vsYesterday": "{{value}} kumpara kahapon",
+      "vsYesterday": "{{value}} kumpara kahapon sa ganitong oras",
       "hint": "Buksan ang mga ulat",
       "weekA11y": "Benta (cash) sa huling 7 araw, {{total}} lahat",
       "profit": "Tubo",

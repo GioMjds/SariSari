@@ -4,7 +4,11 @@ import { format } from 'date-fns';
 import { FINANCIAL_QUERY_KEY, useFinancialTotals } from './useFinancial';
 import { useCreditKPIs } from './useCredits';
 import { useProductStockSummary } from './useProducts';
-import { useRecentSales, useTodayStats } from './useSales';
+import {
+  useRecentSales,
+  useTodayStats,
+  useYesterdaySoFarStats,
+} from './useSales';
 import {
   useReportKPIs,
   useSalesOverTime,
@@ -80,6 +84,7 @@ export function useHomeDashboardData() {
     useTopSellingProducts(todayRange, 3);
   const { data: weekPoints, isLoading: weekLoading } =
     useSalesOverTime(weekRange);
+  const { data: yesterdaySoFar } = useYesterdaySoFarStats();
 
   // Stocktake is a soft reminder, so it never holds back the first render.
   const { data: activeStocktake } = useActiveStocktakeSession();
@@ -118,8 +123,8 @@ export function useHomeDashboardData() {
   );
 
   const changeVsYesterday = useMemo(
-    () => percentChange(stats.todaySalesTotal, week[5]?.amount ?? 0),
-    [stats.todaySalesTotal, week],
+    () => percentChange(stats.todaySalesTotal, yesterdaySoFar?.total ?? 0),
+    [stats.todaySalesTotal, yesterdaySoFar],
   );
 
   const stocktakeReminder = useMemo(() => {
