@@ -13,12 +13,16 @@ export function SaleDetailsSkeleton() {
       accessibilityState={{ busy: true }}
     >
       <ReceiptHero headerLabel="OFFICIAL RESIBO">
-        <View className="px-5 pt-6 pb-4 flex-row justify-between">
-          <View>
-            <Skeleton width={170} height={28} borderRadius={6} />
-            <Skeleton width={190} height={14} style={{ marginTop: 10 }} />
+        <View className="px-5 pt-6 pb-4">
+          <View className="flex-row justify-between">
+            <View>
+              <Skeleton width={80} height={10} />
+              <Skeleton width={190} height={44} borderRadius={8} style={{ marginTop: 8 }} />
+            </View>
+            <Skeleton width={72} height={34} borderRadius={6} />
           </View>
-          <Skeleton width={72} height={34} borderRadius={6} />
+          <Skeleton width={150} height={14} style={{ marginTop: 14 }} />
+          <Skeleton width={120} height={12} style={{ marginTop: 8 }} />
         </View>
         <View className="px-5 pt-2 pb-4 gap-3">
           <Skeleton width="100%" height={14} />
@@ -28,17 +32,20 @@ export function SaleDetailsSkeleton() {
         <View className="px-5 pb-5 gap-4">
           {LINE_ROWS.map((i) => (
             <View key={i} className="flex-row justify-between">
-              <View>
-                <Skeleton width={150} height={16} />
-                <Skeleton width={90} height={12} style={{ marginTop: 8 }} />
+              <View className="flex-row">
+                <Skeleton width={24} height={16} />
+                <View style={{ marginLeft: 16 }}>
+                  <Skeleton width={140} height={16} />
+                  <Skeleton width={90} height={12} style={{ marginTop: 8 }} />
+                </View>
               </View>
               <Skeleton width={64} height={16} />
             </View>
           ))}
         </View>
-        <View className="px-5 py-5 bg-paper-100">
-          <Skeleton width={90} height={10} />
-          <Skeleton width={180} height={40} borderRadius={8} style={{ marginTop: 10 }} />
+        <View className="px-5 pb-5 flex-row justify-between">
+          <Skeleton width={60} height={12} />
+          <Skeleton width={110} height={24} borderRadius={6} />
         </View>
       </ReceiptHero>
     </View>

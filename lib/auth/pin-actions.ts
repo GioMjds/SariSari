@@ -28,6 +28,7 @@ export const PIN_ACTIONS = [
   action('stock_adjustment', 'low'),
   action('delivery_receipt_void', 'high'),
   action('product_delete', 'high'),
+  action('sale_delete', 'high'),
   action('credit_limit_override', 'high'),
   action('backup_restore', 'locked'),
   action('drive_unlink', 'locked'),

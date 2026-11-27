@@ -6,81 +6,149 @@ import {
   SaleDetailsHero,
   SaleDetailsItemList,
   SaleDetailsSkeleton,
+  SaleFixSheet,
+  SaleMoreSheet,
 } from '@/components/sales';
 import { ReceiptHero, ReceiptHeroDivider } from '@/components/ui';
-import { useDeleteSale, useGetSale } from '@/hooks';
-import { Alert } from '@/utils';
+import { useDeleteSale, useGetSale, useSaleCorrections } from '@/hooks';
+import { useAppSetting } from '@/hooks/useAppSetting';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
+import { useProfile } from '@/hooks/useProfile';
+import { buildSaleReceiptText, shareSaleReceiptPdf } from '@/lib/saleReceipt';
+import { useToastStore } from '@/stores/ToastStore';
+import { Alert, formatReceiptRef, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { MotiView } from 'moti';
-import { Pressable, ScrollView, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, Share, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Height of the sticky correction bar above the safe-area inset.
+// Height of the sticky action bar above the safe-area inset.
 const ACTION_BAR_HEIGHT = 76;
+const DEFAULT_VOID_WINDOW_HOURS = 24;
 
 function SaleDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const numericId = Number(id);
   const { data: sale, isLoading, isError, refetch } = useGetSale(numericId);
+  const { data: corrections } = useSaleCorrections(Number.isFinite(numericId) ? numericId : null);
+  const { value: windowSetting } = useAppSetting('void_window_hours');
+  const { profile } = useProfile();
+  const { runWithPinGuard } = useOwnerPinGuard();
+  const addToast = useToastStore((s) => s.addToast);
   const deleteSaleMutation = useDeleteSale();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
+  const [fixOpen, setFixOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
-  const handleDeleteSale = () => {
-    Alert.alert(
-      'Delete Sale',
-      'Are you sure you want to delete this sale? This will restore the inventory.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteSaleMutation.mutateAsync(numericId);
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/(tabs)/sales/receipts' as Href);
-              }
-            } catch {
-              Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Error,
-              ).catch(() => {});
-              Alert.alert('Error', 'Failed to delete sale');
-            }
-          },
-        },
-      ],
-    );
-  };
+  const refLabel = formatReceiptRef(numericId);
+  const storeName = profile?.storeName?.trim() || 'Sari-sari store';
+  const latestCorrection = corrections?.at(-1);
+  const windowHours = Number(windowSetting) || DEFAULT_VOID_WINDOW_HOURS;
+  const saleTime = parseStoredTimestamp(sale?.timestamp)?.getTime() ?? Date.now();
+  const windowOpen = (Date.now() - saleTime) / 36e5 <= windowHours;
 
-  const handleBack = () => {
-    Haptics.selectionAsync().catch(() => {});
+  // First recorded old price per line, so a line fixed twice still shows the original.
+  const oldPrices = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const c of corrections ?? []) {
+      if (c.kind !== 'price_correction') continue;
+      for (const line of c.lines) if (!map.has(line.saleItemId)) map.set(line.saleItemId, line.oldPrice);
+    }
+    return map;
+  }, [corrections]);
+
+  const goBack = () => {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/sales/receipts' as Href);
   };
 
-  const handleVoid = () => {
+  const handleBack = () => {
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/sale-correction/${numericId}?mode=void` as Href);
+    goBack();
   };
 
-  const handleRefund = () => {
+  const openSheet = (open: (v: boolean) => void) => {
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/sale-correction/${numericId}?mode=refund` as Href);
+    open(true);
   };
 
-  const handlePriceCorrection = () => {
+  const pushCorrection = (path: string) => {
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/price-correction/${numericId}` as Href);
+    setFixOpen(false);
+    router.push(path as Href);
   };
 
-  const canCorrect = !!sale && !sale.cancelled_at;
+  const handleCopyRef = async () => {
+    await Clipboard.setStringAsync(refLabel);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setMoreOpen(false);
+    addToast({ message: `Copied ${refLabel}`, variant: 'success', duration: 2500 });
+  };
+
+  const handleDeleteSale = async () => {
+    setMoreOpen(false);
+    await runWithPinGuard({
+      actionId: 'sale_delete',
+      title: 'Delete sale',
+      actionDescription: `Delete resibo ${refLabel} and return its stock to inventory.`,
+      onApproved: async () => {
+        try {
+          await deleteSaleMutation.mutateAsync(numericId);
+          addToast({ message: `Deleted resibo ${refLabel}`, variant: 'success', duration: 3000 });
+          goBack();
+        } catch {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+          Alert.alert('Error', 'Failed to delete sale. Try again.');
+        }
+      },
+    });
+  };
+
+  const shareText = async () => {
+    if (!sale) return;
+    const text = buildSaleReceiptText(sale, storeName);
+    try {
+      await Share.share({ message: text, title: `Resibo ${refLabel}` });
+    } catch {
+      await Clipboard.setStringAsync(text);
+      addToast({ message: 'Resibo copied. Paste it in your chat app.', variant: 'default', duration: 3500 });
+    }
+  };
+
+  const sharePdf = async () => {
+    if (!sale) return;
+    setSharing(true);
+    const ok = await shareSaleReceiptPdf(sale, storeName);
+    setSharing(false);
+    if (!ok) Alert.alert('Could not share PDF', 'Try sharing as text instead.');
+  };
+
+  const handleShare = () => {
+    Haptics.selectionAsync().catch(() => {});
+    Alert.alert('Share resibo', 'How do you want to send this resibo?', [
+      { text: 'As text (SMS/Chat)', onPress: shareText },
+      { text: 'As PDF', onPress: sharePdf },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const customerId = sale?.customer_credit_id;
+  const openCustomer = customerId
+    ? () => {
+        Haptics.selectionAsync().catch(() => {});
+        router.push(`/(edit-forms)/credit-details/${customerId}` as Href);
+      }
+    : undefined;
+
+  const canFix = !!sale && !sale.cancelled_at;
   const tone = sale?.cancelled_at
     ? 'cinnamon'
     : sale?.payment_type === 'credit'
@@ -92,7 +160,7 @@ function SaleDetails() {
       <SaleDetailsHeader
         saleId={numericId}
         onBack={handleBack}
-        onDelete={sale ? handleDeleteSale : undefined}
+        onMore={sale ? () => openSheet(setMoreOpen) : undefined}
       />
 
       {isLoading ? (
@@ -113,7 +181,7 @@ function SaleDetails() {
           <Pressable
             onPress={isError ? () => refetch() : handleBack}
             accessibilityRole="button"
-            className="mt-6 min-h-12 px-6 rounded-xl bg-persimmon-500 items-center justify-center active:bg-persimmon-700"
+            className="mt-6 min-h-12 px-6 rounded-xl bg-persimmon-600 items-center justify-center active:bg-persimmon-700"
           >
             <StyledText variant="extrabold" className="text-paper-50 text-base">
               {isError ? 'Try again' : 'Back to receipts'}
@@ -126,7 +194,7 @@ function SaleDetails() {
             className="flex-1"
             contentContainerStyle={{
               paddingTop: 16,
-              paddingBottom: insets.bottom + (canCorrect ? ACTION_BAR_HEIGHT + 24 : 32),
+              paddingBottom: insets.bottom + ACTION_BAR_HEIGHT + 24,
             }}
             showsVerticalScrollIndicator={false}
           >
@@ -136,8 +204,8 @@ function SaleDetails() {
               transition={{ type: 'timing', duration: reduceMotion ? 120 : 280 }}
             >
               <ReceiptHero tone={tone}>
-                <SaleDetailsHero sale={sale} />
-                <SaleDetailsItemList sale={sale} />
+                <SaleDetailsHero sale={sale} correction={latestCorrection} onOpenCustomer={openCustomer} />
+                <SaleDetailsItemList sale={sale} oldPrices={oldPrices} />
                 <View className="pt-3 pb-5">
                   <ReceiptHeroDivider label="thank you" tone="sage" />
                   <StyledText
@@ -152,14 +220,31 @@ function SaleDetails() {
             </MotiView>
           </ScrollView>
 
-          {canCorrect && (
-            <SaleDetailsFooter
-              bottomInset={insets.bottom}
-              onVoid={handleVoid}
-              onRefund={handleRefund}
-              onPriceCorrection={handlePriceCorrection}
-            />
-          )}
+          <SaleDetailsFooter
+            bottomInset={insets.bottom}
+            onShare={handleShare}
+            sharing={sharing}
+            onFix={canFix ? () => openSheet(setFixOpen) : undefined}
+          />
+
+          <SaleFixSheet
+            visible={fixOpen}
+            onClose={() => setFixOpen(false)}
+            windowOpen={windowOpen}
+            windowHours={windowHours}
+            onVoid={() => pushCorrection(`/sale-correction/${numericId}?mode=void`)}
+            onRefund={() => pushCorrection(`/sale-correction/${numericId}?mode=refund`)}
+            onPriceCorrection={() => pushCorrection(`/price-correction/${numericId}`)}
+          />
+          <SaleMoreSheet
+            visible={moreOpen}
+            onClose={() => setMoreOpen(false)}
+            refLabel={refLabel}
+            onCopyRef={handleCopyRef}
+            canDelete={!sale.cancelled_at && (corrections?.length ?? 0) === 0}
+            deleting={deleteSaleMutation.isPending}
+            onDelete={handleDeleteSale}
+          />
         </>
       )}
     </View>

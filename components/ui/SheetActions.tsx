@@ -26,6 +26,8 @@ interface SheetActionRowProps {
   label: string;
   hint: string;
   iconColor?: string;
+  /** Greys the row out and blocks taps; the hint should say why. */
+  disabled?: boolean;
   onPress: () => void;
 }
 
@@ -34,15 +36,18 @@ export function SheetActionRow({
   label,
   hint,
   iconColor = '#564E45',
+  disabled = false,
   onPress,
 }: SheetActionRowProps) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={hint}
-      className="min-h-[60px] px-3 flex-row items-center gap-x-3 active:bg-paper-200"
+      accessibilityState={{ disabled }}
+      className={`min-h-[60px] px-3 flex-row items-center gap-x-3 active:bg-paper-200 ${disabled ? 'opacity-45' : ''}`}
     >
       <View className="w-9 h-9 rounded-lg bg-paper-50 border border-paper-300 items-center justify-center">
         <FontAwesome name={icon} size={15} color={iconColor} />

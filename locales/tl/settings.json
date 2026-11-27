@@ -99,6 +99,7 @@
       "stock_adjustment": "Ayusin ang stock",
       "delivery_receipt_void": "I-void ang delivery receipt",
       "product_delete": "Burahin ang produkto",
+      "sale_delete": "Burahin ang benta",
       "credit_limit_override": "Lampasan ang credit limit",
       "backup_restore": "I-restore ang backup",
       "drive_unlink": "I-unlink ang Google Drive",
