@@ -3,10 +3,12 @@ import {
   buildLedgerRows,
   filterLedgerRows,
   groupLedgerRows,
+  readableNote,
   resolveStockChange,
   summarizeLedger,
 } from '../ledgerMath';
 import { InventoryTransaction } from '@/types/inventory.types';
+import type { TFunction } from 'i18next';
 
 const tx = (
   id: number,
@@ -44,7 +46,31 @@ describe('ledgerMath', () => {
       5,
     );
     expect(rows[0]!.id).toBe(5);
+    expect(rows[0]!.time).toBe(Date.parse('2026-11-04T08:00:00Z'));
     expect(filterLedgerRows(rows, 'SUKI', 'all').map((r) => r.id)).toEqual([2]);
+  });
+
+  it('orders SQLite and ISO timestamps by real time', () => {
+    const rows = buildLedgerRows(
+      [
+        tx(1, 'sale', 1, '2026-11-04 09:00:00'),
+        tx(2, 'adjustment', 1, '2026-11-04T08:30:00.000Z', { adjustment_sign: 'negative' }),
+      ],
+      0,
+    );
+    expect(rows.map((r) => r.id)).toEqual([1, 2]);
+  });
+
+  it('turns machine note tags into readable labels', () => {
+    const t = ((key: string) => `<${key}>`) as unknown as TFunction;
+    expect(readableNote('[stocktake:miscount]', t)).toBe('<stocktake:reason.miscount>');
+    expect(readableNote('[stocktake:spoilage] wet box', t)).toBe('<stocktake:reason.spoilage> · wet box');
+    expect(readableNote('void:12', t)).toBe('<corrections:kind_void>');
+    expect(readableNote('refund:3:returned_damaged', t)).toBe(
+      '<corrections:kind_refund> · <corrections:reason_returned_damaged>',
+    );
+    expect(readableNote('  suki order ', t)).toBe('suki order');
+    expect(readableNote('   ', t)).toBeUndefined();
   });
 
   it('groups by day with a net per day', () => {

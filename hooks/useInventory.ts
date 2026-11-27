@@ -3,6 +3,7 @@ import {
   getInventoryTransactionsByDateRange,
   getInventoryTransactionsByProductAndDateRange,
   getInventoryTransactionsPage,
+  getInventoryTransactionTypeCounts,
   InventoryTransactionsPageCursor,
   insertInventoryTransaction,
 } from '@/database/inventory';
@@ -148,6 +149,14 @@ export function usePaginatedInventoryTransactions(
         type,
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 30_000,
+  });
+}
+
+export function useInventoryTransactionTypeCounts(search: string = '') {
+  return useQuery({
+    queryKey: ['inventory_transactions', 'type-counts', search],
+    queryFn: () => getInventoryTransactionTypeCounts(search),
     staleTime: 30_000,
   });
 }

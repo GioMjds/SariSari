@@ -215,7 +215,7 @@ export const seedDatabase = async () => {
       // 9. Seed Inventory Transactions
       for (const tx of MOCK_INVENTORY_TRANSACTIONS) {
         await db.runAsync(
-          'INSERT INTO inventory_transactions (id, product_id, type, quantity, note, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+          "INSERT INTO inventory_transactions (id, product_id, type, quantity, note, timestamp) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M:%S', ?))",
           [
             tx.id,
             tx.product_id,

@@ -20,6 +20,7 @@ import {
   buildLedgerRows,
   filterLedgerRows,
   groupLedgerRows,
+  readableNote,
 } from './ledgerMath';
 
 interface LedgerListProps {
@@ -176,7 +177,7 @@ const LedgerRow = memo(function LedgerRow({
 }) {
   const { t } = useTranslation('inventory');
   const tone = EVENT_TONE[row.type] ?? EVENT_TONE.adjustment;
-  const note = row.note?.trim();
+  const note = readableNote(row.note, t);
   const positive = row.signed > 0;
   const typeLabel = t(`movementType_${row.type}`, {
     defaultValue: t('movementType_other'),

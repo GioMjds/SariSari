@@ -1,4 +1,5 @@
 import { format, isToday, isValid, isYesterday, startOfDay } from 'date-fns';
+import type { TFunction } from 'i18next';
 import { InventoryTransaction } from '@/types/inventory.types';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { LedgerTypeFilter } from './types';
@@ -79,12 +80,32 @@ export function resolveStockChange(input: StockChangeInput): {
   return { pieces, sign: input.sign, after: input.current + signed };
 }
 
-// SQLite stores "YYYY-MM-DD HH:MM:SS" in UTC, which some engines reject without the T and Z.
+// Stocktake, void and refund writers store machine tags as notes; map them to translated labels.
+export function readableNote(
+  note: string | null | undefined,
+  t: TFunction,
+): string | undefined {
+  const raw = note?.trim();
+  if (!raw) return undefined;
+  const stocktake = raw.match(/^\[stocktake:(\w+)\]\s*(.*)$/);
+  if (stocktake) {
+    const code = stocktake[1] ?? '';
+    const label = t(`stocktake:reason.${code}`, { defaultValue: code });
+    return stocktake[2] ? `${label} · ${stocktake[2]}` : label;
+  }
+  if (/^void:\d+$/.test(raw)) return t('corrections:kind_void');
+  const refund = raw.match(/^refund:\d+:(\w+)$/);
+  if (refund) {
+    const code = refund[1] ?? '';
+    const reason = t(`corrections:reason_${code}`, { defaultValue: code });
+    return `${t('corrections:kind_refund')} · ${reason}`;
+  }
+  return raw;
+}
+
 export function parseLedgerDate(timestamp: string): Date | null {
   const d = parseStoredTimestamp(timestamp);
-  if (d && isValid(d)) return d;
-  const normalized = new Date(timestamp.replace(' ', 'T') + 'Z');
-  return isValid(normalized) ? normalized : null;
+  return d && isValid(d) ? d : null;
 }
 
 // Balances walk back from current stock over every entry, so filtering later never changes them.

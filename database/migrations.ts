@@ -1173,4 +1173,19 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v26.');
   }
+
+  if (currentVersion < 27) {
+    console.log('Running migration to v27 (Uniform inventory timestamps)...');
+    await db.withTransactionAsync(async () => {
+      // Stocktake rows were ISO strings, which sort after same-day CURRENT_TIMESTAMP rows as text.
+      await db.execAsync(`
+        UPDATE inventory_transactions
+          SET timestamp = strftime('%Y-%m-%d %H:%M:%S', timestamp)
+          WHERE timestamp LIKE '%T%' AND strftime('%Y-%m-%d %H:%M:%S', timestamp) IS NOT NULL;
+      `);
+
+      await db.execAsync('PRAGMA user_version = 27;');
+    });
+    console.log('Database migrated to v27.');
+  }
 }

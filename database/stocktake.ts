@@ -172,12 +172,12 @@ export async function commitSession(
           ? `[stocktake:${reasonCode}] ${lineNote}`
           : `[stocktake:${reasonCode}]`;
 
-        // 1. Insert inventory_transactions row
+        // 1. Insert inventory_transactions row; default timestamp keeps one sortable format with other writers.
         await db.runAsync(
           `INSERT INTO inventory_transactions (
-            product_id, type, quantity, note, adjustment_sign, timestamp
-          ) VALUES (?, 'adjustment', ?, ?, ?, ?)`,
-          [count.product_id, absQty, noteText, adjSign, nowIso],
+            product_id, type, quantity, note, adjustment_sign
+          ) VALUES (?, 'adjustment', ?, ?, ?)`,
+          [count.product_id, absQty, noteText, adjSign],
         );
 
         // 2. Update products.quantity by delta

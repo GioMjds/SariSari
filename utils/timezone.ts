@@ -17,8 +17,9 @@ export const parseStoredTimestamp = (
   if (!timestamp) return null;
 
   try {
-    // If the timestamp is in ISO format (from database)
-    const date = new Date(timestamp);
+    // CURRENT_TIMESTAMP writes "YYYY-MM-DD HH:MM:SS" in UTC, which engines otherwise read as local time.
+    const sqliteUtc = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timestamp);
+    const date = new Date(sqliteUtc ? `${timestamp.replace(' ', 'T')}Z` : timestamp);
     return date;
   } catch (error) {
     console.error('Error parsing timestamp:', timestamp, error);

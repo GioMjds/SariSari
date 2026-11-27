@@ -3,7 +3,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { usePaginatedInventoryTransactions } from '@/hooks/useInventory';
+import {
+  useInventoryTransactionTypeCounts,
+  usePaginatedInventoryTransactions,
+} from '@/hooks/useInventory';
 import {
   LedgerList,
   LedgerToolbar,
@@ -15,6 +18,8 @@ import { StyledText } from '@/components/elements';
 import { InventoryErrorState } from '@/components/inventory';
 import { useStockSheetSignal } from '@/stores';
 import type { InventoryEventType } from '@/types';
+
+const EMPTY_COUNTS: Partial<Record<InventoryEventType, number>> = {};
 
 function MovementsScreen() {
   const { t } = useTranslation('inventory');
@@ -33,15 +38,7 @@ function MovementsScreen() {
     [txQuery.data],
   );
 
-  const counts = useMemo<Partial<Record<InventoryEventType, number>>>(() => {
-    const acc: Partial<Record<InventoryEventType, number>> = {};
-    for (const tx of transactions) {
-      if (tx?.type) {
-        acc[tx.type] = (acc[tx.type] ?? 0) + 1;
-      }
-    }
-    return acc;
-  }, [transactions]);
+  const counts = useInventoryTransactionTypeCounts(searchQuery).data ?? EMPTY_COUNTS;
 
   const setSearchQuery = useCallback(
     (next: string) => {

@@ -14,7 +14,7 @@ import type {
   CommitReasonPerLine,
   StocktakeCount,
 } from '@/types/stocktake.types';
-import { inventoryKeys } from './useInventory';
+import { invalidateProductDependencies } from './useProducts';
 
 export const stocktakeKeys = {
   all: ['stocktake'] as const,
@@ -132,8 +132,8 @@ export function useCommitStocktake() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: stocktakeKeys.all });
       queryClient.invalidateQueries({ queryKey: stocktakeKeys.history() });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      // Shared helper also refreshes the movements list and reports that stock changes touch.
+      invalidateProductDependencies(queryClient);
     },
   });
 }

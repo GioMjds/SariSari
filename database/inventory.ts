@@ -189,6 +189,33 @@ export interface InventoryTransactionsPage {
   nextCursor: InventoryTransactionsPageCursor | null;
 }
 
+const SEARCH_CLAUSE = `(
+  ? = '' OR
+  LOWER(t.type) LIKE ? OR
+  LOWER(COALESCE(p.name, '')) LIKE ? OR
+  LOWER(COALESCE(p.sku, '')) LIKE ? OR
+  LOWER(COALESCE(t.note, '')) LIKE ?
+)`;
+
+const searchParams = (search: string) => {
+  const pattern = `%${search.toLowerCase()}%`;
+  return [search, pattern, pattern, pattern, pattern];
+};
+
+// Counts every matching row per type so filter chips stay true regardless of loaded pages or the active type.
+export const getInventoryTransactionTypeCounts = async (
+  search: string = '',
+): Promise<Partial<Record<InventoryTransaction['type'], number>>> => {
+  const rows = await db.getAllAsync<{ type: InventoryTransaction['type']; count: number }>(
+    `SELECT t.type, COUNT(*) AS count FROM inventory_transactions t
+     LEFT JOIN products p ON t.product_id = p.id
+     WHERE ${SEARCH_CLAUSE}
+     GROUP BY t.type`,
+    searchParams(search.trim()),
+  );
+  return Object.fromEntries(rows.map((r) => [r.type, r.count]));
+};
+
 export const getInventoryTransactionsPage = async (params: {
   cursor: InventoryTransactionsPageCursor | null;
   limit: number;
@@ -196,7 +223,6 @@ export const getInventoryTransactionsPage = async (params: {
   type?: string;
 }): Promise<InventoryTransactionsPage> => {
   const search = (params.search ?? '').trim();
-  const searchPattern = `%${search.toLowerCase()}%`;
   const type = (params.type ?? 'all').trim();
   const cursorTimestamp = params.cursor?.timestamp ?? '';
   const cursorId = params.cursor?.id ?? 0;
@@ -212,12 +238,7 @@ export const getInventoryTransactionsPage = async (params: {
      AND (
        ? = 'all' OR t.type = ?
      )
-     AND (
-       ? = '' OR
-       LOWER(t.type) LIKE ? OR
-       LOWER(COALESCE(p.name, '')) LIKE ? OR
-       LOWER(COALESCE(p.sku, '')) LIKE ?
-     )
+     AND ${SEARCH_CLAUSE}
      ORDER BY t.timestamp DESC, t.id DESC
      LIMIT ?`,
     [
@@ -227,10 +248,7 @@ export const getInventoryTransactionsPage = async (params: {
       cursorId,
       type,
       type,
-      search,
-      searchPattern,
-      searchPattern,
-      searchPattern,
+      ...searchParams(search),
       limit,
     ],
   );
