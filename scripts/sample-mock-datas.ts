@@ -1300,3 +1300,169 @@ export const MOCK_FINANCIAL_ENTRIES = [
     updated_at: 1767225600000,
   },
 ];
+
+// ─── Delivery receipts ──────────────────────────────────────────
+// created_at uses the column's SQLite UTC format; committed_at and voided_at are ISO, as the app writes them.
+const sqliteUtc = (iso: string): string => iso.slice(0, 19).replace('T', ' ');
+
+type MockReceiptStatus = 'draft' | 'committed' | 'voided';
+
+const receipt = (
+  id: number,
+  supplier_id: string,
+  status: MockReceiptStatus,
+  invoice_no: string | null,
+  created: string,
+  extra: {
+    committed_at?: string;
+    voided_at?: string;
+    void_reason?: string;
+    note?: string;
+  } = {},
+) => ({
+  id,
+  supplier_id,
+  status,
+  invoice_no,
+  note: extra.note ?? null,
+  created_at: sqliteUtc(created),
+  committed_at: extra.committed_at ?? null,
+  voided_at: extra.voided_at ?? null,
+  void_reason: extra.void_reason ?? null,
+});
+
+export const MOCK_DELIVERY_RECEIPTS = [
+  // Today: one full, one short on corned beef.
+  receipt(1, 'sup-001', 'committed', 'MM-24811', getTodayISO(8, 55), {
+    committed_at: getTodayISO(9, 15),
+  }),
+  receipt(2, 'sup-002', 'committed', 'GT-5530', getTodayISO(7, 20), {
+    committed_at: getTodayISO(7, 40),
+    note: 'Driver said the rest comes next trip.',
+  }),
+  receipt(3, 'sup-004', 'committed', 'MN-77102', getDaysAgoISO(1, 16, 0), {
+    committed_at: getDaysAgoISO(1, 16, 20),
+  }),
+  // Short on two lines, and Colgate cost went up.
+  receipt(4, 'sup-005', 'committed', 'PG-11893', getDaysAgoISO(3, 10, 5), {
+    committed_at: getDaysAgoISO(3, 10, 40),
+  }),
+  // No invoice number: rice and egg run at the mill.
+  receipt(5, 'sup-006', 'committed', null, getDaysAgoISO(5, 6, 30), {
+    committed_at: getDaysAgoISO(5, 6, 45),
+    note: 'Paid cash at the mill.',
+  }),
+  // Short on Chippy, and Piattos cost went down.
+  receipt(6, 'sup-003', 'committed', 'URC-30214', getDaysAgoISO(9, 14, 0), {
+    committed_at: getDaysAgoISO(9, 14, 25),
+  }),
+  receipt(7, 'sup-001', 'committed', 'MM-24502', getDaysAgoISO(16, 9, 0), {
+    committed_at: getDaysAgoISO(16, 9, 10),
+  }),
+  receipt(8, 'sup-002', 'committed', 'GT-5391', getDaysAgoISO(24, 11, 0), {
+    committed_at: getDaysAgoISO(24, 11, 15),
+  }),
+  // Earlier months, so month totals and date headers have history.
+  receipt(9, 'sup-004', 'committed', 'MN-76840', getDaysAgoISO(35, 15, 0), {
+    committed_at: getDaysAgoISO(35, 15, 30),
+  }),
+  receipt(10, 'sup-005', 'committed', 'PG-11540', getDaysAgoISO(50, 10, 0), {
+    committed_at: getDaysAgoISO(50, 10, 20),
+  }),
+  // Voided after being received.
+  receipt(11, 'sup-003', 'voided', 'URC-30188', getDaysAgoISO(12, 13, 0), {
+    committed_at: getDaysAgoISO(12, 13, 15),
+    voided_at: getDaysAgoISO(11, 8, 30),
+    void_reason: 'Wrong supplier on the invoice',
+  }),
+  receipt(12, 'sup-006', 'voided', null, getDaysAgoISO(20, 7, 0), {
+    committed_at: getDaysAgoISO(20, 7, 10),
+    voided_at: getDaysAgoISO(19, 17, 45),
+    void_reason: 'Duplicate entry; this delivery was already recorded',
+  }),
+  // Open drafts: at most one per supplier, enforced by a unique index.
+  receipt(13, 'sup-001', 'draft', 'MM-24830', getTodayISO(10, 5)),
+  receipt(14, 'sup-004', 'draft', null, getDaysAgoISO(1, 18, 30), {
+    note: 'Waiting for the second box of Pancit Canton.',
+  }),
+];
+
+type MockNewProduct = { name: string; price: number; barcode: string | null };
+
+// Entered values only; the seed derives qty, cost, and shortage with convertDeliveryLine.
+const line = (
+  receipt_id: number,
+  product_id: number | null,
+  entered_unit: 'retail' | 'wholesale',
+  entered_expected_qty: number,
+  entered_received_qty: number,
+  entered_unit_cost: number,
+  new_product: MockNewProduct | null = null,
+) => ({
+  receipt_id,
+  product_id,
+  new_product,
+  entered_unit,
+  entered_expected_qty,
+  entered_received_qty,
+  entered_unit_cost,
+});
+
+// Wholesale lines enter the case or box cost; product_id null is a quick-add new product.
+export const MOCK_DELIVERY_LINES = [
+  line(1, 5, 'wholesale', 2, 2, 65000),
+  line(1, 6, 'retail', 48, 48, 1000),
+
+  line(2, 1, 'retail', 48, 48, 2000),
+  line(2, 2, 'retail', 24, 20, 3800),
+  line(2, 13, 'retail', 24, 24, 3600),
+
+  line(3, 11, 'wholesale', 2, 2, 90000),
+  line(3, 12, 'retail', 72, 72, 1150),
+  line(3, 17, 'retail', 24, 24, 900),
+  line(3, 19, 'retail', 100, 100, 450),
+
+  line(4, 7, 'retail', 24, 24, 2500),
+  line(4, 8, 'retail', 12, 10, 4500),
+  line(4, 21, 'retail', 72, 60, 650),
+  line(4, 22, 'retail', 72, 72, 780),
+  line(4, 23, 'retail', 72, 72, 620),
+
+  line(5, 9, 'wholesale', 10, 10, 18000),
+  line(5, 10, 'wholesale', 2, 2, 115000),
+  line(5, 28, 'retail', 25, 25, 4600),
+
+  line(6, 3, 'retail', 30, 30, 1150),
+  line(6, 4, 'retail', 30, 24, 1500),
+  line(6, 15, 'retail', 24, 24, 2000),
+  line(6, 16, 'wholesale', 5, 5, 5800),
+
+  line(7, 26, 'wholesale', 10, 10, 14500),
+  line(7, 5, 'wholesale', 1, 1, 65000),
+
+  line(8, 14, 'retail', 48, 48, 2300),
+  line(8, 2, 'retail', 24, 24, 3800),
+
+  line(9, 25, 'retail', 100, 90, 600),
+  line(9, 29, 'retail', 48, 48, 1200),
+
+  line(10, 27, 'retail', 24, 24, 1400),
+  line(10, 20, 'retail', 12, 12, 2600),
+  line(10, 24, 'retail', 72, 72, 580),
+
+  line(11, 3, 'retail', 30, 30, 1200),
+  line(11, 15, 'retail', 24, 24, 2000),
+
+  line(12, 9, 'wholesale', 5, 5, 18000),
+
+  line(13, 5, 'wholesale', 1, 1, 65000),
+  line(13, 6, 'retail', 24, 24, 1000),
+  line(13, null, 'retail', 24, 24, 1400, {
+    name: 'Mountain Dew 290ml',
+    price: 2000,
+    barcode: null,
+  }),
+
+  line(14, 11, 'wholesale', 2, 1, 90000),
+  line(14, 18, 'retail', 24, 24, 750),
+];

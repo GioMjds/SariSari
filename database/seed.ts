@@ -1,5 +1,6 @@
 import { db } from '../configs/sqlite';
 import * as mock from '@/scripts/sample-mock-datas';
+import { convertDeliveryLine } from '@/lib/deliveryReceipt';
 
 const LITE_PRODUCT_COUNT = 10;
 
@@ -23,6 +24,10 @@ function pickMockData() {
     has(c.product_id),
   );
   const creditIds = new Set(credits.map((c) => c.id));
+  // Receipts left with no lines are dropped so lite mode never seeds an empty delivery.
+  const deliveryLines = mock.MOCK_DELIVERY_LINES.filter((l) =>
+    has(l.product_id),
+  );
 
   return {
     ...mock,
@@ -43,6 +48,10 @@ function pickMockData() {
     MOCK_STOCKTAKE_COUNTS: mock.MOCK_STOCKTAKE_COUNTS.filter((c) =>
       has(c.product_id),
     ),
+    MOCK_DELIVERY_RECEIPTS: mock.MOCK_DELIVERY_RECEIPTS.filter((r) =>
+      deliveryLines.some((l) => l.receipt_id === r.id),
+    ),
+    MOCK_DELIVERY_LINES: deliveryLines,
   };
 }
 
@@ -75,6 +84,8 @@ export const seedDatabase = async () => {
     MOCK_FINANCIAL_ENTRIES,
     MOCK_STOCKTAKE_SESSIONS,
     MOCK_STOCKTAKE_COUNTS,
+    MOCK_DELIVERY_RECEIPTS,
+    MOCK_DELIVERY_LINES,
   } = data;
 
   console.log('🌱 Empty database — seeding mock data...');
@@ -286,10 +297,74 @@ export const seedDatabase = async () => {
           ],
         );
       }
+
+      // 13. Seed Delivery Receipts (headers before lines because lines FK receipts)
+      for (const r of MOCK_DELIVERY_RECEIPTS) {
+        await db.runAsync(
+          `INSERT INTO delivery_receipts (
+            id, supplier_id, status, invoice_no, note, received_at,
+            created_at, committed_at, voided_at, void_reason
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            r.id,
+            r.supplier_id,
+            r.status,
+            r.invoice_no,
+            r.note,
+            r.committed_at,
+            r.created_at,
+            r.committed_at,
+            r.voided_at,
+            r.void_reason,
+          ],
+        );
+      }
+
+      // 14. Seed Delivery Lines, deriving stored values the same way the editor does
+      const productById = new Map(MOCK_PRODUCTS.map((p) => [p.id, p]));
+      for (const l of MOCK_DELIVERY_LINES) {
+        const product =
+          l.product_id === null ? undefined : productById.get(l.product_id);
+        const c = convertDeliveryLine({
+          enteredUnit: l.entered_unit,
+          enteredExpectedQty: l.entered_expected_qty,
+          enteredReceivedQty: l.entered_received_qty,
+          enteredUnitCost: l.entered_unit_cost,
+          conversionFactor:
+            product && 'conversion_factor' in product
+              ? product.conversion_factor
+              : null,
+        });
+        await db.runAsync(
+          `INSERT INTO delivery_receipt_lines (
+            receipt_id, product_id, new_product_name, new_product_price, new_product_barcode,
+            entered_unit, entered_expected_qty, entered_received_qty, entered_unit_cost,
+            expected_qty, received_qty, expected_unit_cost, actual_unit_cost,
+            shortage_qty, conversion_factor_used
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            l.receipt_id,
+            l.product_id,
+            l.new_product?.name ?? null,
+            l.new_product?.price ?? null,
+            l.new_product?.barcode ?? null,
+            l.entered_unit,
+            l.entered_expected_qty,
+            l.entered_received_qty,
+            l.entered_unit_cost,
+            c.expectedQty,
+            c.receivedQty,
+            product?.cost_price ?? null,
+            c.actualUnitCost,
+            c.shortageQty,
+            c.conversionFactorUsed,
+          ],
+        );
+      }
     });
 
     console.log(
-      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_SUPPLIERS.length} suppliers, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions, ${MOCK_FINANCIAL_ENTRIES.length} financial entries, ${MOCK_STOCKTAKE_SESSIONS.length} stocktake sessions, ${MOCK_STOCKTAKE_COUNTS.length} stocktake counts.`,
+      `✅ Seeded ${MOCK_CATEGORIES.length} categories, ${MOCK_SUPPLIERS.length} suppliers, ${MOCK_PRODUCTS.length} products, ${MOCK_CUSTOMERS.length} customers, ${MOCK_CREDIT_TRANSACTIONS.length} credit transactions, ${MOCK_PAYMENTS.length} payments, ${MOCK_SALES.length} sales, ${MOCK_SALE_ITEMS.length} sale items, ${MOCK_INVENTORY_TRANSACTIONS.length} inventory transactions, ${MOCK_FINANCIAL_ENTRIES.length} financial entries, ${MOCK_STOCKTAKE_SESSIONS.length} stocktake sessions, ${MOCK_STOCKTAKE_COUNTS.length} stocktake counts, ${MOCK_DELIVERY_RECEIPTS.length} delivery receipts, ${MOCK_DELIVERY_LINES.length} delivery lines.`,
     );
   } catch (error) {
     console.error('❌ Database seeding failed:', error);
