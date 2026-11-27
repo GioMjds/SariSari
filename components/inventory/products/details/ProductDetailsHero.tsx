@@ -244,7 +244,7 @@ function InsightCell({
 }: {
   label: string;
   value: string;
-  spokenValue?: string;
+  spokenValue?: string | undefined;
 }) {
   return (
     <View
