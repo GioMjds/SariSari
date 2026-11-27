@@ -1,5 +1,6 @@
 import {
   AgingBucket,
+  ProductSalesSplit,
   CreditsOverview,
   DateRange,
   InventoryMovement,
@@ -231,6 +232,27 @@ export const getTopSellingProducts = async (
   );
 
   return results;
+};
+
+export const getRecentProductSales = async (
+  days: number = 28,
+): Promise<ProductSalesSplit[]> => {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  // quantity holds pieces deducted; revenue uses the sold unit count times its price.
+  return db.getAllAsync<ProductSalesSplit>(
+    `SELECT
+       si.product_id as productId,
+       SUM(CASE WHEN s.payment_type = 'cash' THEN si.quantity ELSE 0 END) as cashUnits,
+       SUM(CASE WHEN s.payment_type = 'cash' THEN COALESCE(si.sold_unit_qty, si.quantity) * si.price ELSE 0 END) as cashRevenue,
+       SUM(CASE WHEN s.payment_type = 'credit' THEN si.quantity ELSE 0 END) as utangUnits
+     FROM sale_items si
+     JOIN sales s ON s.id = si.sale_id
+     WHERE s.cancelled_at IS NULL AND s.timestamp >= ?
+     GROUP BY si.product_id`,
+    [formatDateForSQL(startOfDay(since))],
+  );
 };
 
 export const getSalesBreakdown = async (

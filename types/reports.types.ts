@@ -47,6 +47,16 @@ export interface TopSellingProduct extends StockItem {
 	profit?: number;
 }
 
+/** Per-product sales in a recent window; utang is kept apart because it is not a sale. */
+export interface ProductSalesSplit {
+	productId: number;
+	/** Pieces sold on cash checkouts. */
+	cashUnits: number;
+	cashRevenue: number;
+	/** Pieces given out on utang (credit) checkouts. */
+	utangUnits: number;
+}
+
 export interface SalesBreakdown {
 	cashSales: number;
 	creditSales: number;

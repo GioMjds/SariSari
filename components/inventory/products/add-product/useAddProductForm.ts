@@ -139,8 +139,12 @@ export function useAddProductForm() {
     void handleScannedBarcode(queued);
   }, [getAllProductsQuery.isSuccess, getAllProductsQuery.isFetching, handleScannedBarcode]);
 
-  const params = useLocalSearchParams<{ prefillBarcode?: string }>();
+  const params = useLocalSearchParams<{ prefillBarcode?: string; prefillCategory?: string }>();
   const prefillAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (params.prefillCategory) setValue('category', params.prefillCategory);
+  }, [params.prefillCategory, setValue]);
 
   useEffect(() => {
     const prefill = params.prefillBarcode;

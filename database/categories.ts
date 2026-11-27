@@ -20,10 +20,17 @@ export const insertCategory = async (name: string) => {
 };
 
 export const updateCategory = async (id: number, name: string) => {
-  await db.runAsync(
-    'UPDATE categories SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    [name, id],
-  );
+  // Products reference categories by name, so a rename must carry them along.
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      'UPDATE products SET category = ? WHERE category = (SELECT name FROM categories WHERE id = ?)',
+      [name, id],
+    );
+    await db.runAsync(
+      'UPDATE categories SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [name, id],
+    );
+  });
 };
 
 export const deleteCategory = async (id: number) => {

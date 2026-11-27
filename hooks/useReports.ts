@@ -1,5 +1,6 @@
 import {
   getAgingBuckets,
+  getRecentProductSales,
   getCreditsOverview,
   getInventoryMovement,
   getInventoryValue,
@@ -15,6 +16,7 @@ import {
 } from '@/database/reports';
 import type {
   AgingBucket,
+  ProductSalesSplit,
   CreditsOverview,
   DateRange,
   InventoryMovement,
@@ -55,6 +57,14 @@ export const useSalesOverTime = (dateRange: DateRange) =>
     enabled: !!dateRange,
     placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
+  });
+
+// Keyed by window, not category, so renames and product moves never orphan the data;
+// sits under 'sales' so every sale, void, and refund refreshes it.
+export const useRecentProductSales = (days = 28) =>
+  useQuery<ProductSalesSplit[]>({
+    queryKey: ['sales', 'recent-by-product', days],
+    queryFn: () => getRecentProductSales(days),
   });
 
 export const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
