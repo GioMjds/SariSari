@@ -255,7 +255,8 @@
       "weekA11y": "Last 7 days cash sales, {{total}} total",
       "profit": "Profit",
       "utangGiven": "Utang given",
-      "collected": "Collected"
+      "collected": "Collected",
+      "profitNote": "Includes utang"
     },
     "attention": {
       "title": "Needs attention",

@@ -101,6 +101,10 @@ export const DashboardTodayCard = memo(function DashboardTodayCard({
       key: 'profit',
       label: t('dashboard.today.profit', { defaultValue: 'Profit' }),
       value: profitToday === null ? '-' : formatPesos(profitToday),
+      // Report profit counts utang checkouts, unlike the cash total above it.
+      note: t('dashboard.today.profitNote', {
+        defaultValue: 'Includes utang',
+      }),
     },
     {
       key: 'utang',
@@ -121,7 +125,11 @@ export const DashboardTodayCard = memo(function DashboardTodayCard({
     total,
     changeLine,
     countLine,
-    ...stats.map((s) => `${s.label} ${s.value}`),
+    ...stats.map((s) =>
+      'note' in s
+        ? `${s.label} ${s.value}, ${s.note}`
+        : `${s.label} ${s.value}`,
+    ),
     weekStatus === 'ready'
       ? t('dashboard.today.weekA11y', {
           total: formatPesos(weekTotal),
@@ -224,12 +232,22 @@ export const DashboardTodayCard = memo(function DashboardTodayCard({
                     }`
               }
             >
-              <StyledText
-                variant="regular"
-                className="text-caption text-ink-500"
-              >
-                {s.label}
-              </StyledText>
+              <View>
+                <StyledText
+                  variant="regular"
+                  className="text-caption text-ink-500"
+                >
+                  {s.label}
+                </StyledText>
+                {'note' in s ? (
+                  <StyledText
+                    variant="regular"
+                    className="text-caption text-ink-500"
+                  >
+                    {s.note}
+                  </StyledText>
+                ) : null}
+              </View>
               <StyledText
                 variant="extrabold"
                 className="text-sm text-ink-900 mt-0.5"

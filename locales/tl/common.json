@@ -255,7 +255,8 @@
       "weekA11y": "Benta (cash) sa huling 7 araw, {{total}} lahat",
       "profit": "Tubo",
       "utangGiven": "Inutang",
-      "collected": "Nasingil"
+      "collected": "Nasingil",
+      "profitNote": "Kasama ang utang"
     },
     "attention": {
       "title": "Kailangang asikasuhin",
