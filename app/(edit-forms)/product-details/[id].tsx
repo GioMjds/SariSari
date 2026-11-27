@@ -1,276 +1,338 @@
 import { withProf } from '@/utils/perf';
-import { useCallback, useMemo, useState } from 'react';
-import { View, ScrollView, Pressable, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { useGetProduct, useGetSupplier, useProducts } from '@/hooks';
 import { useInventoryTransactionsByProduct } from '@/hooks/useInventory';
+import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import { Modal } from '@/components/ui';
+import { InventoryErrorState } from '@/components/inventory';
 import { LogTransactionForm } from '@/components/inventory/ledger';
-import { PriceHistoryCard } from '@/components/pricing';
-import type { InventoryEventType } from '@/types/inventory.types';
+import { buildLedgerRows } from '@/components/inventory/ledger/ledgerMath';
+import type { InventoryEventType, InventoryTransaction } from '@/types/inventory.types';
 import {
+  computeProductInsights,
+  ProductActionBar,
   ProductDetailsHero,
+  ProductDetailsSkeleton,
   ProductDetailsTabs,
-  ProductHistoryTab,
+  ProductMovementsTab,
   ProductOverviewTab,
+  ProductPricingTab,
   ProductSupplierTab,
   type ProductDetailTab,
 } from '@/components/inventory/products/details';
 
-const SCROLL_CONTENT_STYLE = { paddingBottom: 32 } as const;
+const SCROLL_CONTENT_STYLE = { paddingTop: 8, paddingBottom: 24 } as const;
+// Scroll distance after which the hero's product name has left the screen.
+const TITLE_SWAP_OFFSET = 96;
+const EMPTY_TRANSACTIONS: InventoryTransaction[] = [];
+
+const tapHaptic = () => Haptics.selectionAsync().catch(() => {});
 
 function ProductDetailsPage() {
+  const { t } = useTranslation('inventory');
+  const insets = useSafeAreaInsets();
   const rawId = useLocalSearchParams<{ id: string | string[] }>().id;
   const parsedProductId = parseInt(
     Array.isArray(rawId) ? (rawId[0] ?? '') : (rawId ?? ''),
     10,
   );
   const queryClient = useQueryClient();
+  const { runWithPinGuard } = useOwnerPinGuard();
 
   const productQuery = useGetProduct(parsedProductId);
   const transactionsQuery = useInventoryTransactionsByProduct(parsedProductId);
-
   const product = productQuery.data;
   const supplierQuery = useGetSupplier(product?.supplier_id ?? '');
+  const { deleteProductMutation } = useProducts();
 
   const [activeTab, setActiveTab] = useState<ProductDetailTab>('overview');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [logFormType, setLogFormType] = useState<InventoryEventType | null>(
-    null,
+  // Type outlives the open flag so the sheet keeps its title while sliding out.
+  const [logFormType, setLogFormType] = useState<InventoryEventType>('restock');
+  const [logFormOpen, setLogFormOpen] = useState(false);
+  const [showTitle, setShowTitle] = useState(false);
+  const showTitleRef = useRef(false);
+
+  const transactions = transactionsQuery.data ?? EMPTY_TRANSACTIONS;
+  const quantity = product?.quantity ?? 0;
+  const unitLabel = product?.retail_unit_name || t('ledgerUnitDefault');
+
+  const rows = useMemo(() => buildLedgerRows(transactions, quantity), [transactions, quantity]);
+  const insights = useMemo(
+    () => computeProductInsights(transactions, quantity),
+    [transactions, quantity],
   );
-  const { deleteProductMutation } = useProducts();
+  const tabCounts = useMemo(() => ({ movements: rows.length }), [rows.length]);
 
   const handleBack = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {});
+    tapHaptic();
     router.back();
   }, []);
 
+  const productId = product?.id;
   const handleEdit = useCallback(() => {
-    Haptics.selectionAsync().catch(() => {});
-    if (product) {
-      router.push(`/(edit-forms)/edit-product/${product.id}` as Href);
-    }
-  }, [product]);
+    tapHaptic();
+    if (productId != null) router.push(`/(edit-forms)/edit-product/${productId}` as Href);
+  }, [productId]);
 
-  const handleRestock = useCallback(() => {
-    setLogFormType('restock');
+  const handleOpenLedger = useCallback(() => {
+    tapHaptic();
+    if (productId != null) router.push(`/(edit-forms)/inventory-ledger/${productId}` as Href);
+  }, [productId]);
+
+  const openLogForm = useCallback((type: InventoryEventType) => {
+    tapHaptic();
+    setLogFormType(type);
+    setLogFormOpen(true);
+  }, []);
+  const handleRestock = useCallback(() => openLogForm('restock'), [openLogForm]);
+  const handleAdjust = useCallback(() => openLogForm('adjustment'), [openLogForm]);
+  const handleDamaged = useCallback(() => openLogForm('damaged'), [openLogForm]);
+  const handleCloseLogForm = useCallback(() => setLogFormOpen(false), []);
+
+  const { refetch: refetchProduct } = productQuery;
+  const { refetch: refetchTransactions } = transactionsQuery;
+  const handleLogSuccess = useCallback(() => {
+    setLogFormOpen(false);
+    refetchProduct();
+    refetchTransactions();
+  }, [refetchProduct, refetchTransactions]);
+
+  const handleRefresh = useCallback(() => {
+    refetchProduct();
+    refetchTransactions();
+    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+  }, [refetchProduct, refetchTransactions, queryClient]);
+
+  const handleTabChange = useCallback((next: ProductDetailTab) => {
+    tapHaptic();
+    setActiveTab(next);
   }, []);
 
-  const handleAdjust = useCallback(() => {
-    setLogFormType('adjustment');
-  }, []);
+  const handleSeeAllMovements = useCallback(() => handleTabChange('movements'), [handleTabChange]);
 
-  const handleDamaged = useCallback(() => {
-    setLogFormType('damaged');
-  }, []);
-
-  const handleDelete = useCallback(() => {
-    setDeleteModalOpen(true);
-  }, []);
+  const handleDelete = useCallback(() => setDeleteModalOpen(true), []);
+  const handleCloseDelete = useCallback(() => setDeleteModalOpen(false), []);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!product) return;
     setDeleteModalOpen(false);
-    await deleteProductMutation.mutateAsync(product.id);
-    router.back();
-  }, [product, deleteProductMutation]);
+    await runWithPinGuard({
+      actionId: 'product_delete',
+      title: t('logPinTitle'),
+      actionDescription: t('details_deletePinBody', { name: product.name }),
+      onApproved: async () => {
+        try {
+          await deleteProductMutation.mutateAsync(product.id);
+          router.back();
+        } catch {
+          // The mutation's own error handler already shows the toast.
+        }
+      },
+    });
+  }, [product, runWithPinGuard, deleteProductMutation, t]);
 
-  const handleTabChange = useCallback((next: ProductDetailTab) => {
-    Haptics.selectionAsync().catch(() => {});
-    setActiveTab(next);
+  // Re-renders only when the threshold is crossed, not on every scroll frame.
+  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = e.nativeEvent.contentOffset.y > TITLE_SWAP_OFFSET;
+    if (next !== showTitleRef.current) {
+      showTitleRef.current = next;
+      setShowTitle(next);
+    }
   }, []);
 
-  const handleRefresh = useCallback(() => {
-    productQuery.refetch();
-    transactionsQuery.refetch();
-    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-  }, [productQuery, transactionsQuery, queryClient]);
-
-  const tabCounts = useMemo<Partial<Record<ProductDetailTab, number>>>(
-    () => ({
-      history: transactionsQuery.data?.length ?? 0,
-    }),
-    [transactionsQuery.data],
+  const hasProduct = !!product;
+  const topBar = (
+    <View className="flex-row items-center justify-between px-4 pt-2 pb-2">
+      <IconButton icon="arrow-back" label={t('ledgerBack')} onPress={handleBack} />
+      <StyledText
+        variant="extrabold"
+        accessibilityRole="header"
+        className="flex-1 mx-3 text-center text-ink-900 text-base"
+        numberOfLines={1}
+      >
+        {showTitle && product ? product.name : t('details_title')}
+      </StyledText>
+      {hasProduct ? (
+        <IconButton icon="create-outline" label={t('details_edit')} onPress={handleEdit} />
+      ) : (
+        <View className="w-11 h-11" />
+      )}
+    </View>
   );
 
-  // Replace with a loading skeleton
+  let body: React.ReactNode;
   if (productQuery.isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-        <View className="flex-1 justify-center items-center">
-          <View
-            className="w-12 h-12 rounded-full border-2 border-ink-200"
-            style={{ borderTopColor: '#E85A1F' }}
-          />
-          <StyledText variant="medium" className="text-ink-500 mt-4 label-caps">
-            Loading product…
-          </StyledText>
-        </View>
-      </SafeAreaView>
+    body = <ProductDetailsSkeleton />;
+  } else if (productQuery.error) {
+    body = (
+      <InventoryErrorState
+        title={t('details_loadErrorTitle')}
+        message={productQuery.error.message || t('errorUnknown')}
+        onRetry={refetchProduct}
+      />
     );
-  }
-
-  if (!product) {
-    return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-        <View className="flex-1 justify-center items-center px-6">
-          <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100 items-center shadow-paper">
-            <View className="w-14 h-14 rounded-full bg-paper-100 border border-ink-200 items-center justify-center">
-              <Ionicons name="cube-outline" size={28} color="#A89F90" />
-            </View>
-            <StyledText
-              variant="black"
-              className="text-ink-900 text-xl mt-3 text-center"
-            >
-              Product Not Found
-            </StyledText>
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-sm mt-1 text-center"
-            >
-              This product may have been deleted.
-            </StyledText>
-            <Pressable
-              onPress={handleBack}
-              accessibilityRole="button"
-              accessibilityLabel="Dismiss"
-              className="mt-5 bg-persimmon-500 rounded-pill px-6 py-3 active:opacity-80"
-              style={{
-                shadowColor: '#E85A1F',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.22,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
-            >
-              <StyledText variant="extrabold" className="text-paper-50 text-sm">
-                Dismiss
-              </StyledText>
-            </Pressable>
+  } else if (!product) {
+    body = (
+      <View className="flex-1 justify-center items-center px-6">
+        <View className="w-full bg-paper-50 rounded-2xl p-6 border border-ink-100 items-center">
+          <View className="w-14 h-14 rounded-full bg-paper-100 items-center justify-center">
+            <Ionicons name="cube-outline" size={28} color="#7A7165" />
           </View>
+          <StyledText variant="black" className="text-ink-900 text-xl mt-3 text-center">
+            {t('details_notFoundTitle')}
+          </StyledText>
+          <StyledText variant="regular" className="text-ink-600 text-sm mt-1 text-center">
+            {t('details_notFoundBody')}
+          </StyledText>
+          <Pressable
+            onPress={handleBack}
+            accessibilityRole="button"
+            className="mt-5 min-h-[48px] bg-persimmon-500 rounded-xl px-6 items-center justify-center active:bg-persimmon-700"
+          >
+            <StyledText variant="extrabold" className="text-paper-50 text-sm">
+              {t('ledgerBack')}
+            </StyledText>
+          </Pressable>
         </View>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-      {/* ── Top bar with Back button & title ── */}
-      <View className="flex-row items-center justify-between px-5 pt-3 pb-2">
-        <Pressable
-          onPress={handleBack}
-          hitSlop={{ top: 16, bottom: 16, left: 20, right: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          className="press-scale w-10 h-10 items-center justify-center rounded-full bg-paper-100 border border-ink-100 active:opacity-70"
-        >
-          <Ionicons name="arrow-back" size={18} color="#0E0C0A" />
-        </Pressable>
-        <StyledText variant="extrabold" className="label-caps text-ink-400">
-          Product Profile
-        </StyledText>
-        <View className="w-10 h-10" />
       </View>
-
-      {/* ── Scrollable body (hero + tabs + content) ──────────── */}
+    );
+  } else {
+    body = (
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={SCROLL_CONTENT_STYLE}
+        onScroll={handleScroll}
+        scrollEventThrottle={32}
         refreshControl={
           <RefreshControl
-            refreshing={productQuery.isRefetching}
+            refreshing={productQuery.isRefetching || transactionsQuery.isRefetching}
             onRefresh={handleRefresh}
-            tintColor="#623418"
+            tintColor="#E85A1F"
             colors={['#E85A1F']}
           />
         }
       >
-        {/* ── Receipt-style hero ────────────────────────────── */}
-        <ProductDetailsHero product={product} />
+        <ProductDetailsHero product={product} insights={insights} unitLabel={unitLabel} />
 
-        {/* ── Segmented control ─────────────────────────────── */}
-        <View className="px-4 mt-4">
-          <ProductDetailsTabs
-            activeTab={activeTab}
-            onChange={handleTabChange}
-            counts={tabCounts}
-          />
+        <View className="px-4 mt-5">
+          <ProductDetailsTabs activeTab={activeTab} onChange={handleTabChange} counts={tabCounts} />
         </View>
 
-        {/* ── Tab content ────────────────────────────────────── */}
         <View className="mt-4">
           {activeTab === 'overview' && (
-            <>
-              <ProductOverviewTab
-                product={product}
-                onEdit={handleEdit}
-                onRestock={handleRestock}
-                onAdjust={handleAdjust}
-                onDamaged={handleDamaged}
-                onDelete={handleDelete}
-              />
-              <PriceHistoryCard productId={product.id} />
-            </>
-          )}
-
-          {activeTab === 'history' && (
-            <ProductHistoryTab
-              transactions={transactionsQuery.data ?? []}
-              isLoading={transactionsQuery.isLoading}
-              currentStock={product.quantity}
+            <ProductOverviewTab
+              product={product}
+              rows={rows}
+              unitLabel={unitLabel}
+              onEdit={handleEdit}
+              onSeeAllMovements={handleSeeAllMovements}
+              onDelete={handleDelete}
             />
           )}
-
+          {activeTab === 'movements' && (
+            <ProductMovementsTab
+              rows={rows}
+              isLoading={transactionsQuery.isLoading}
+              unitLabel={unitLabel}
+              onOpenLedger={handleOpenLedger}
+              onRestock={handleRestock}
+            />
+          )}
+          {activeTab === 'pricing' && (
+            <ProductPricingTab product={product} insights={insights} unitLabel={unitLabel} />
+          )}
           {activeTab === 'supplier' && (
             <ProductSupplierTab
               supplier={supplierQuery.data ?? null}
               isLoading={supplierQuery.isLoading && !!product.supplier_id}
+              insights={insights}
+              unitLabel={unitLabel}
               onLinkSupplier={handleEdit}
             />
           )}
         </View>
       </ScrollView>
+    );
+  }
 
-      <LogTransactionForm
-        product={product}
-        initialType={logFormType ?? 'restock'}
-        visible={logFormType !== null}
-        onClose={() => setLogFormType(null)}
-        onSuccess={() => {
-          setLogFormType(null);
-          productQuery.refetch();
-          transactionsQuery.refetch();
-        }}
-      />
+  return (
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      {topBar}
+      {body}
 
-      <Modal
-        visible={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        variant="danger"
-        mascot="delete"
-        title="Delete Product?"
-        description={`Are you sure you want to delete "${product.name}"?\nThis action cannot be undone.`}
-        buttons={[
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => setDeleteModalOpen(false),
-          },
-          {
-            text: 'Yes, Delete Product',
-            style: 'destructive',
-            onPress: handleConfirmDelete,
-          },
-        ]}
-        loading={deleteProductMutation.isPending}
-      />
-    </SafeAreaView>
+      {product && (
+        <>
+          <View className="bg-paper-50" style={{ paddingBottom: insets.bottom }}>
+            <ProductActionBar
+              onRestock={handleRestock}
+              onAdjust={handleAdjust}
+              onDamaged={handleDamaged}
+            />
+          </View>
+
+          <LogTransactionForm
+            product={product}
+            initialType={logFormType}
+            visible={logFormOpen}
+            onClose={handleCloseLogForm}
+            onSuccess={handleLogSuccess}
+          />
+
+          <Modal
+            visible={deleteModalOpen}
+            onClose={handleCloseDelete}
+            variant="danger"
+            mascot="delete"
+            title={t('deleteTitle')}
+            description={`${t('deleteBody', { name: product.name })}\n${t('deleteWarning')}`}
+            buttons={[
+              { text: t('cancel'), style: 'cancel', onPress: handleCloseDelete },
+              { text: t('deleteConfirm'), style: 'destructive', onPress: handleConfirmDelete },
+            ]}
+            loading={deleteProductMutation.isPending}
+          />
+        </>
+      )}
+    </View>
+  );
+}
+
+function IconButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={8}
+      className="w-11 h-11 items-center justify-center rounded-full bg-paper-100 border border-ink-100 active:opacity-70"
+    >
+      <Ionicons name={icon} size={20} color="#0E0C0A" />
+    </Pressable>
   );
 }
 

@@ -1,294 +1,192 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
-import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { format } from 'date-fns';
+import { memo, useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { MoneyText } from '@/components/ui';
-import { Product } from '@/types';
+import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
+import { parseLedgerDate, type LedgerRowData } from '@/components/inventory/ledger/ledgerMath';
 import { formatPesos } from '@/lib/money';
+import type { Product } from '@/types';
+import { MovementRow } from './ProductMovementsTab';
+
+const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
+const RECENT_LIMIT = 3;
 
 interface ProductOverviewTabProps {
   product: Product;
+  rows: LedgerRowData[];
+  unitLabel: string;
   onEdit: () => void;
-  onRestock: () => void;
-  onAdjust: () => void;
-  onDamaged: () => void;
+  onSeeAllMovements: () => void;
   onDelete: () => void;
 }
 
-/**
- * ProductOverviewTab — the body of the Overview tab.
- *
- * The product identity, stock status, and selling price all live in
- * `ProductDetailsHero` above the tab strip. This component is
- * strictly the "what can I do with this product" surface:
- *
- *   1. Edit Product — single primary affordance, kept inside the
- *      tab body so the top bar can stay quiet.
- *   2. Stock actions — three ghost buttons (Restock / Adjust /
- *      Damaged) using the established sage / persimmon / danger
- *      tinted tiles.
- *   3. Financials — cost / markup / margin tile row, shown only
- *      when cost price is recorded.
- *   4. Danger zone — destructive Delete action at the bottom,
- *      separated by a dashed divider.
- *
- * Pure presentational. The screen owns the data and the handlers.
- */
-export const ProductOverviewTab = React.memo(function ProductOverviewTab({
+const formatDate = (value: string): string => {
+  const d = parseLedgerDate(value);
+  return d ? format(d, 'MMM d, yyyy') : '—';
+};
+
+export const ProductOverviewTab = memo(function ProductOverviewTab({
   product,
+  rows,
+  unitLabel,
   onEdit,
-  onRestock,
-  onAdjust,
-  onDamaged,
+  onSeeAllMovements,
   onDelete,
 }: ProductOverviewTabProps) {
-  const costPrice = product.cost_price ?? null;
-  const price = product.price;
-  const markup =
-    costPrice !== null && costPrice !== undefined ? price - costPrice : null;
-  const margin =
-    costPrice !== null && costPrice !== undefined && costPrice > 0
-      ? ((price - costPrice) / costPrice) * 100
-      : null;
+  const { t } = useTranslation('inventory');
+  const cost = product.cost_price ?? null;
 
-  const hasFinancials =
-    costPrice !== null || markup !== null || margin !== null;
+  // Preview rows lose their day header, so the date joins the time label.
+  const recent = useMemo(
+    () =>
+      rows.slice(0, RECENT_LIMIT).map((row) => ({
+        ...row,
+        timeLabel: row.time ? `${format(row.time, 'MMM d')} · ${row.timeLabel}` : row.timeLabel,
+      })),
+    [rows],
+  );
+
+  const info: { label: string; value: string }[] = [
+    { label: t('details_category'), value: product.category?.trim() || t('details_uncategorized') },
+    { label: t('details_sku'), value: product.sku || t('details_none') },
+    { label: t('details_barcode'), value: product.barcode || t('details_none') },
+    { label: t('details_unit'), value: unitLabel },
+    ...(product.wholesale_barcode
+      ? [{ label: t('details_wholesaleBarcode'), value: product.wholesale_barcode }]
+      : []),
+    { label: t('details_added'), value: formatDate(product.created_at) },
+    { label: t('details_updated'), value: formatDate(product.updated_at) },
+  ];
 
   return (
-    <View className="flex-1">
-      {/* ── Edit Product — single primary affordance ──────────── */}
-      <MotiView
-        from={{ opacity: 0, translateY: 8 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 320, delay: 80 }}
-        className="mx-4 mb-4"
-      >
-        <TouchableOpacity
-          onPress={onEdit}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Edit product details"
-          className="bg-persimmon-500 rounded-2xl py-3.5 flex-row items-center justify-center press-scale"
-          style={{
-            shadowColor: '#E85A1F',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.22,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
-        >
-          <FontAwesome name="pencil" size={14} color="#FBF7EE" />
-          <StyledText
-            variant="extrabold"
-            className="text-paper-50 text-sm ml-2"
-          >
-            Edit Product
-          </StyledText>
-        </TouchableOpacity>
-      </MotiView>
-
-      {/* ── Quick Actions ─────────────────────────────────────── */}
-      <View className="mx-4 mb-4">
-        <StyledText
-          variant="extrabold"
-          className="label-caps text-ink-400 mb-2"
-        >
-          Stock Actions
+    <View>
+      {/* Stock value */}
+      <View className="mx-4 p-4 bg-paper-50 rounded-2xl border border-ink-100">
+        <StyledText variant="extrabold" className="text-ink-900 text-sm mb-3">
+          {t('details_stockValue')}
         </StyledText>
-        <View className="flex-row gap-2.5">
-          <TouchableOpacity
-            onPress={onRestock}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Restock this product"
-            className="flex-1 bg-sage-50 border border-sage-200 rounded-xl py-3 items-center justify-center gap-1 active:scale-[0.97]"
-          >
-            <FontAwesome name="plus" size={14} color="#4F7A24" />
-            <StyledText
-              variant="extrabold"
-              className="text-sage-700 text-xs"
-            >
-              Restock
-            </StyledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={onAdjust}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Adjust stock"
-            className="flex-1 bg-persimmon-50 border border-persimmon-100 rounded-xl py-3 items-center justify-center gap-1 active:scale-[0.97]"
-          >
-            <Ionicons name="options" size={15} color="#E85A1F" />
-            <StyledText
-              variant="extrabold"
-              className="text-persimmon-700 text-xs"
-            >
-              Adjust
-            </StyledText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={onDamaged}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Mark damaged stock"
-            className="flex-1 bg-semantic-danger-50 border border-semantic-danger-100 rounded-xl py-3 items-center justify-center gap-1 active:scale-[0.97]"
-          >
-            <Ionicons name="warning" size={15} color="#C13030" />
-            <StyledText
-              variant="extrabold"
-              className="text-semantic-danger text-xs"
-            >
-              Damaged
-            </StyledText>
-          </TouchableOpacity>
+        <View className="flex-row">
+          {cost !== null && (
+            <ValueCell label={t('details_atCost')} value={formatPesos(cost * product.quantity)} />
+          )}
+          <ValueCell label={t('details_atPrice')} value={formatPesos(product.price * product.quantity)} />
+        </View>
+        <View className="flex-row items-center mt-3 pt-3 border-t border-dashed border-ink-200">
+          <Ionicons name="notifications-outline" size={14} color="#7A7165" />
+          <StyledText variant="medium" className="text-ink-600 text-xs ml-1.5 flex-1">
+            {t('details_lowAt', { count: LOW_STOCK_THRESHOLD, unit: unitLabel })}
+          </StyledText>
         </View>
       </View>
 
-      {/* ── Financials — only when cost is recorded ─────────────── */}
-      {hasFinancials && (
-        <View className="mx-4 mb-4">
-          <StyledText
-            variant="extrabold"
-            className="label-caps text-ink-400 mb-2"
-          >
-            Financials
-          </StyledText>
-          <View className="flex-row gap-3">
-            {costPrice !== null && (
-              <View className="flex-1 bg-paper-50 rounded-xl border border-ink-100 px-3 py-2.5 shadow-paper">
-                <StyledText
-                  variant="extrabold"
-                  className="label-caps text-ink-400 mb-1"
-                >
-                  Cost
-                </StyledText>
-                <MoneyText
-                  value={costPrice}
-                  size="md"
-                  className="text-ink-800 font-extrabold"
-                />
-              </View>
-            )}
-            {markup !== null && (
-              <View className="flex-1 bg-sage-50 rounded-xl border border-sage-100 px-3 py-2.5">
-                <StyledText
-                  variant="extrabold"
-                  className="label-caps text-sage-700 mb-1"
-                >
-                  Markup
-                </StyledText>
-                <MoneyText
-                  value={markup}
-                  size="md"
-                  className="text-sage-600 font-extrabold"
-                />
-              </View>
-            )}
-            {margin !== null && (
-              <View className="flex-1 bg-sage-50 rounded-xl border border-sage-100 px-3 py-2.5">
-                <StyledText
-                  variant="extrabold"
-                  className="label-caps text-sage-700 mb-1"
-                >
-                  Margin
-                </StyledText>
-                <StyledText
-                  variant="black"
-                  className="text-sage-600 text-base"
-                  style={{ fontVariant: ['tabular-nums'] }}
-                >
-                  {margin.toFixed(1)}%
-                </StyledText>
-              </View>
-            )}
-          </View>
+      {/* Recent stock changes */}
+      {recent.length > 0 && (
+        <View className="mt-5">
+          <SectionHeader
+            title={t('details_recent')}
+            action={t('details_seeAll')}
+            onAction={onSeeAllMovements}
+          />
+          {recent.map((row, i) => (
+            <MovementRow
+              key={`${row.type}-${row.id}-${row.time}`}
+              row={row}
+              unitLabel={unitLabel}
+              isFirst={i === 0}
+              isLast={i === recent.length - 1}
+            />
+          ))}
         </View>
       )}
 
-      {/* ── At-a-glance facts (derived) ──────────────────────────── */}
-      <View className="mx-4 mb-4">
-        <StyledText
-          variant="extrabold"
-          className="label-caps text-ink-400 mb-2"
-        >
-          At a Glance
-        </StyledText>
-        <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper overflow-hidden">
-          <GlanceRow
-            icon="clock-o"
-            label="Last updated"
-            value={
-              product.updated_at
-                ? new Date(product.updated_at).toLocaleDateString('en-PH', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })
-                : '—'
-            }
-          />
-          <View className="h-px border-t border-dashed border-ink-200 mx-4" />
-          <GlanceRow
-            icon="money"
-            label="Inventory value"
-            value={formatPesos(product.price * product.quantity)}
-          />
+      {/* Product info */}
+      <View className="mt-5">
+        <SectionHeader title={t('details_info')} action={t('details_infoEdit')} onAction={onEdit} />
+        <View className="mx-4 bg-paper-50 rounded-2xl border border-ink-100">
+          {info.map((row, idx) => (
+            <View
+              key={row.label}
+              accessible
+              accessibilityLabel={`${row.label}, ${row.value}`}
+              className={`px-4 py-3 flex-row items-center justify-between ${
+                idx < info.length - 1 ? 'border-b border-dashed border-ink-200' : ''
+              }`}
+            >
+              <StyledText variant="medium" className="text-ink-500 text-sm">
+                {row.label}
+              </StyledText>
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-sm flex-1 text-right ml-4"
+                style={TABULAR}
+                numberOfLines={1}
+              >
+                {row.value}
+              </StyledText>
+            </View>
+          ))}
         </View>
       </View>
 
-      {/* ── Danger Zone ───────────────────────────────────────────── */}
-      <View className="mx-4 pt-3 border-t border-dashed border-ink-200">
-        <TouchableOpacity
+      {/* Destructive action, kept apart from everyday actions */}
+      <View className="mx-4 mt-6 pt-2 border-t border-dashed border-ink-200">
+        <Pressable
           onPress={onDelete}
-          activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel="Delete this product"
-          className="flex-row items-center justify-center gap-2 py-3 active:scale-[0.97]"
+          className="min-h-[48px] flex-row items-center justify-center active:opacity-70"
         >
-          <FontAwesome name="trash" size={13} color="#C13030" />
-          <StyledText
-            variant="extrabold"
-            className="text-semantic-danger text-sm"
-          >
-            Delete Product
+          <FontAwesome name="trash" size={14} color="#C13030" />
+          <StyledText variant="extrabold" className="text-semantic-danger text-sm ml-2">
+            {t('actionDeleteProduct')}
           </StyledText>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
 });
 
-/* ─── At-a-glance row ─────────────────────────────────────────── */
-
-function GlanceRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: keyof typeof FontAwesome.glyphMap;
-  label: string;
-  value: string;
-}) {
+function ValueCell({ label, value }: { label: string; value: string }) {
   return (
-    <View className="px-4 py-3 flex-row items-center justify-between">
-      <View className="flex-row items-center">
-        <FontAwesome name={icon} size={12} color="#7A7165" />
-        <StyledText
-          variant="extrabold"
-          className="label-caps text-ink-400 ml-2"
-        >
-          {label}
-        </StyledText>
-      </View>
-      <StyledText
-        variant="extrabold"
-        className="text-mono text-ink-900"
-      >
+    <View accessible accessibilityLabel={`${label}, ${value}`} className="flex-1">
+      <StyledText variant="semibold" className="text-ink-500 text-xs">
+        {label}
+      </StyledText>
+      <StyledText variant="black" className="text-ink-900 text-lg" style={TABULAR} numberOfLines={1}>
         {value}
       </StyledText>
+    </View>
+  );
+}
+
+export function SectionHeader({
+  title,
+  action,
+  onAction,
+}: {
+  title: string;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <View className="px-5 mb-2 flex-row items-center justify-between">
+      <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-sm">
+        {title}
+      </StyledText>
+      {action && onAction ? (
+        <Pressable
+          onPress={onAction}
+          accessibilityRole="button"
+          accessibilityLabel={`${action}, ${title}`}
+          hitSlop={12}
+          className="min-h-[44px] justify-center active:opacity-70"
+        >
+          <StyledText variant="extrabold" className="text-cinnamon-700 text-sm">
+            {action}
+          </StyledText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

@@ -98,6 +98,7 @@
       "sale_price_correction": "Itama ang presyo ng benta",
       "stock_adjustment": "Ayusin ang stock",
       "delivery_receipt_void": "I-void ang delivery receipt",
+      "product_delete": "Burahin ang produkto",
       "credit_limit_override": "Lampasan ang credit limit",
       "backup_restore": "I-restore ang backup",
       "drive_unlink": "I-unlink ang Google Drive",

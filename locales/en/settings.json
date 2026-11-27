@@ -98,6 +98,7 @@
       "sale_price_correction": "Correct sale prices",
       "stock_adjustment": "Adjust stock",
       "delivery_receipt_void": "Void a delivery receipt",
+      "product_delete": "Delete a product",
       "credit_limit_override": "Override a credit limit",
       "backup_restore": "Restore a backup",
       "drive_unlink": "Unlink Google Drive",
