@@ -1,5 +1,6 @@
 import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 type InsightCardProps = {
@@ -13,7 +14,6 @@ type Colors = {
   accent: string;
   text: string;
   bg: string;
-  label: string;
 };
 
 export function InsightCard({ type, title, message, icon }: InsightCardProps) {
@@ -22,23 +22,21 @@ export function InsightCard({ type, title, message, icon }: InsightCardProps) {
       accent: '#4F7A24',
       text: '#3D5E1B',
       bg: 'bg-sage-50',
-      label: 'BULLETIN',
     },
     warning: {
       accent: '#C77B0E',
       text: '#8A5400',
       bg: 'bg-semantic-warning-50',
-      label: 'ALERT',
     },
     info: {
       accent: '#2E6FA8',
       text: '#1F4D78',
       bg: 'bg-semantic-info-50',
-      label: 'NOTE',
     },
   } satisfies Record<string, Colors>;
 
-  const { accent, text, bg, label } = colors[type];
+  const { t } = useTranslation();
+  const { accent, text, bg } = colors[type];
 
   return (
     <View
@@ -55,14 +53,14 @@ export function InsightCard({ type, title, message, icon }: InsightCardProps) {
         <View className="flex-1">
           <StyledText
             variant="extrabold"
-            className="text-label mb-0.5"
-            style={{ letterSpacing: 1.4, color: accent }}
+            className="text-xs mb-0.5"
+            style={{ color: text }}
           >
-            {label} · {title.toUpperCase()}
+            {t(`common:reports.insight.${type}`)} · {title}
           </StyledText>
           <StyledText
             variant="medium"
-            className="text-xs leading-5"
+            className="text-sm leading-5"
             style={{ color: text }}
           >
             {message}

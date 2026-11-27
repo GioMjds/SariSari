@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { format, parseISO } from 'date-fns';
 import { MotiView } from 'moti';
 import { memo, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, View } from 'react-native';
 import { formatCompactCurrency } from '@/utils';
 
@@ -19,6 +20,7 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
   barColor = '#623418',
   accentColor = '#E85A1F',
 }: SimpleBarChartProps) {
+  const { t } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const hasMounted = useRef(false);
   const shouldAnimate = hasMounted.current;
@@ -33,15 +35,11 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
         className="items-center justify-center border border-dashed border-ink-200 rounded-md"
         style={{ height }}
       >
-        <StyledText
-          variant="extrabold"
-          className="text-label text-ink-300 mb-1"
-          style={{ letterSpacing: 1.6 }}
-        >
-          NO DATA RECORDED
+        <StyledText variant="extrabold" className="text-sm text-ink-500 mb-1">
+          {t('common:reports.trend.empty')}
         </StyledText>
-        <StyledText variant="medium" className="text-ink-400 text-xs">
-          Try a wider date range.
+        <StyledText variant="medium" className="text-ink-500 text-xs">
+          {t('common:reports.trend.emptyHint')}
         </StyledText>
       </View>
     );
@@ -58,19 +56,24 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
     return formatCompactCurrency(v);
   };
 
+  const peakDay = data[maxIndex];
+
   return (
-    <View>
+    <View
+      accessibilityLabel={t('common:reports.trend.chartA11y', {
+        day: peakDay ? format(parseISO(peakDay.date), 'EEE d') : '',
+        amount: formatLabel(peakDay?.amount ?? 0),
+      })}
+    >
       {/* Headline row */}
       <View className="flex-row items-baseline justify-between mb-3">
-        <StyledText
-          variant="extrabold"
-          className="text-label text-ink-400"
-          style={{ letterSpacing: 1.4 }}
-        >
-          DAILY SALES · ₱ PESOS
+        <StyledText variant="extrabold" className="text-sm text-ink-900">
+          {t('common:reports.trend.chartTitle')}
         </StyledText>
-        <StyledText variant="medium" className="text-mono text-ink-500">
-          PEAK {formatLabel(maxValue)}
+        <StyledText variant="semibold" className="text-xs text-persimmon-700">
+          {t('common:reports.trend.peak', {
+            amount: formatLabel(peakDay?.amount ?? 0),
+          })}
         </StyledText>
       </View>
 
@@ -100,6 +103,12 @@ export const AlmanacBarChart = memo(function AlmanacBarChart({
             <Pressable
               key={`bar-${index}`}
               onPress={() => setSelectedIndex(isSelected ? null : index)}
+              accessibilityRole="button"
+              accessibilityLabel={t('common:reports.trend.barA11y', {
+                day: format(day, 'EEE d'),
+                amount: formatLabel(point.amount),
+              })}
+              accessibilityState={{ selected: isSelected }}
               className="flex-1 items-center justify-end mx-0.5"
             >
               {/* Value label (only on peak or selected for clarity) */}

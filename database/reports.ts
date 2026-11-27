@@ -12,7 +12,7 @@ import {
   StockItem,
   TopSellingProduct,
 } from '@/types/reports.types';
-import { endOfDay, startOfDay } from 'date-fns';
+import { endOfDay, format, startOfDay } from 'date-fns';
 import { db } from '../configs/sqlite';
 import { formatCurrency } from '@/utils';
 
@@ -39,10 +39,12 @@ export const getReportKPIs = async (
   dateRange: DateRange,
 ): Promise<ReportKPIs> => {
   const startDate = formatDateForSQL(startOfDay(dateRange.startDate));
-  const endDate = formatDateForSQL(endOfDay(dateRange.endDate));
+  // No endOfDay here: callers already pass day ends, and the previous-period window stops mid-day.
+  const endDate = formatDateForSQL(dateRange.endDate);
 
-  const startDateStr = dateRange.startDate.toISOString().split('T')[0] ?? '';
-  const endDateStr = dateRange.endDate.toISOString().split('T')[0] ?? '';
+  // business_date is the local day, so a UTC date here would pull in the previous day's gastos.
+  const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
+  const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
 
   const [
     salesResult,

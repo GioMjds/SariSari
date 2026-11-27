@@ -214,7 +214,7 @@
       "reports": "Reports",
       "overdueCount": "{{count}} overdue",
       "newSaleSub": "Ring up cash or utang",
-      "addShort": "Add item",
+      "addShort": "Add Prodic",
       "restock": "Restock",
       "utang": "Utang"
     },
@@ -286,6 +286,202 @@
       "action": "Report",
       "units_one": "{{count}} pc",
       "units_other": "{{count}} pcs"
+    }
+  },
+  "reports": {
+    "sariSays": "Sari says",
+    "sari": {
+      "loading": "Counting your numbers...",
+      "noSales": "No sales in this period yet. Make a sale and I will tally it.",
+      "loss": "Costs and gastos were bigger than what came in. Check your expenses.",
+      "lowStock_one": "{{count}} item is running low. Check your inventory.",
+      "lowStock_other": "{{count}} items are running low. Check your inventory.",
+      "utang_one": "{{amount}} utang still unpaid from {{count}} suki.",
+      "utang_other": "{{amount}} utang still unpaid from {{count}} sukis.",
+      "healthy": "You earned {{amount}} kita. Stock and utang look fine."
+    },
+    "ranges": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7days": "7 days",
+      "thisMonth": "This month"
+    },
+    "compare": {
+      "yesterday": "vs yesterday at this time",
+      "dayBefore": "vs the day before",
+      "prev7days": "vs the 7 days before",
+      "lastMonth": "vs last month so far",
+      "up": "Up {{pct}}% {{period}}",
+      "down": "Down {{pct}}% {{period}}",
+      "same": "Same {{period}}"
+    },
+    "hero": {
+      "kicker": "Kita (net profit)",
+      "profitLine": "What is left after product costs and gastos",
+      "lossLine": "Lugi: costs and gastos were more than what came in",
+      "missingCost": "Some sold items have no cost price, so kita cannot be counted yet. Add cost prices to see it.",
+      "noCostHeadline": "Not yet known"
+    },
+    "flow": {
+      "title": "Where each peso went",
+      "revenue": "Came in (cash + utang)",
+      "cost": "Product cost",
+      "expenses": "Gastos",
+      "profit": "Kita",
+      "a11y": "{{revenue}} came in: {{cost}} product cost, {{expenses}} gastos, {{profit}} kita."
+    },
+    "kpi": {
+      "sales": "Sales (cash)",
+      "salesSub_one": "{{count}} checkout, avg {{avg}}",
+      "salesSub_other": "{{count}} checkouts, avg {{avg}}",
+      "utang": "Utang not yet paid",
+      "utangSub_one": "{{count}} suki owes you",
+      "utangSub_other": "{{count}} sukis owe you",
+      "stock": "Stock value (at cost)",
+      "stockCoverage": "{{pct}}% of stock has cost data",
+      "stockRetail": "Sells for {{amount}}",
+      "expenses": "Gastos paid",
+      "expensesSub": "Rent, kuryente, and other costs"
+    },
+    "explain": {
+      "a11y": "What does {{name}} mean?",
+      "close": "Got it",
+      "profit": "Kita is what the store really earned: everything sold (cash and utang) minus what those goods cost you, minus the gastos you paid. Owner take-out is not counted.",
+      "flow": "This bar splits everything that came in. The first part paid for your goods, the next paid gastos, and the rest is your kita.",
+      "sales": "Money from cash checkouts only. Utang is not a sale until the suki pays it.",
+      "utang": "Credit your sukis still owe you right now, counting every unpaid record. You collect it later.",
+      "stock": "What the goods on your shelves cost you to buy. If everything sells, it brings in the retail amount shown.",
+      "expenses": "Gastos you recorded as paid in this period, like rent, kuryente, or supplies.",
+      "trend": "Cash sales per day, and how customers paid: cash now or utang for later.",
+      "top": "Which products sold the most, and which earn the most tubo per piece.",
+      "stock_section": "How many pieces left the shelves, which products move fast or slow, and what needs restocking.",
+      "aging": "How long unpaid utang has been waiting. The older it gets, the harder it is to collect.",
+      "cashbook": "Each day's drawer: the cash you started with, what you counted, and any shortage or overage."
+    },
+    "result": {
+      "title": "How kita was counted",
+      "action": "Cash & expenses",
+      "actionA11y": "Open cash and expenses",
+      "missingCost": "Record cost prices for all sold items to count tubo and kita.",
+      "cashSales": "Cash sales",
+      "utangSales": "Utang sales",
+      "utangNote": "Not paid yet, but counted in tubo",
+      "cogs": "Product cost (COGS)",
+      "gross": "Tubo (gross profit)",
+      "expenses": "Gastos paid",
+      "net": "Kita (net profit)",
+      "netNote": "Store profit after gastos",
+      "drawings": "Owner take-out",
+      "drawingsNote": "Not counted as gastos"
+    },
+    "sections": {
+      "trend": {
+        "title": "Sales and payments",
+        "subtitle": "Daily sales and how customers paid"
+      },
+      "top": {
+        "title": "Top products and profit",
+        "subtitle": "Best sellers and what earns the most"
+      },
+      "stock": {
+        "title": "Stock and movement",
+        "subtitle": "What sold, what is running low"
+      },
+      "aging": {
+        "title": "Utang aging",
+        "subtitle": "How long each suki has owed you"
+      },
+      "cashbook": {
+        "title": "Cash drawer history",
+        "subtitle": "Daily drawer counts and any shortage or overage"
+      }
+    },
+    "trend": {
+      "chartTitle": "Daily cash sales",
+      "peak": "Best day {{amount}}",
+      "empty": "No sales recorded",
+      "emptyHint": "Try a wider date range.",
+      "chartA11y": "Daily cash sales chart. Best day {{day}} with {{amount}}.",
+      "barA11y": "{{day}}: {{amount}}",
+      "paymentMix": "How customers paid",
+      "checkouts_one": "{{count}} checkout",
+      "checkouts_other": "{{count}} checkouts",
+      "cash": "Cash",
+      "credit": "Utang",
+      "avgTicket": "Average checkout",
+      "sales": "Cash sales"
+    },
+    "top": {
+      "bySales": "Top sellers by sales",
+      "mostProfit": "Most profitable (tubo)",
+      "addCost": "Add cost prices",
+      "emptyTitle": "No top sellers yet",
+      "emptyBody": "Once sales come in, they will rank here.",
+      "units_one": "{{count}} piece sold",
+      "units_other": "{{count}} pieces sold",
+      "tuboPerPiece": "Tubo per piece",
+      "noProfitTitle": "No profit data yet",
+      "noProfitBody": "Add cost prices to products to see the most profitable items.",
+      "total": "Total {{amount}}",
+      "margin": "{{pct}}% margin",
+      "perPiece": "+{{amount}} per piece"
+    },
+    "stock": {
+      "atCost": "At cost",
+      "atRetail": "At retail",
+      "retailNote": "If everything sells",
+      "coverage": "{{pct}}% cost coverage",
+      "lowStock_one": "Low stock: {{count}} item",
+      "lowStock_other": "Low stock: {{count}} items",
+      "left": "{{count}} left",
+      "unitsOut": "pieces sold",
+      "needRestock": "need restock",
+      "emptyShelves": "empty shelves",
+      "fast": "Fast movers",
+      "slow": "Slow movers",
+      "none": "None yet",
+      "sold": "Sold",
+      "low": "Low",
+      "out": "Out"
+    },
+    "aging": {
+      "given": "Utang given",
+      "collected": "Collected",
+      "emptyTitle": "No unpaid utang",
+      "emptyBody": "All suki accounts are settled.",
+      "range": {
+        "0": "0-7 days",
+        "1": "8-15 days",
+        "2": "16-30 days",
+        "3": "Over 30 days"
+      },
+      "suki_one": "{{count}} suki",
+      "suki_other": "{{count}} sukis"
+    },
+    "cashbook": {
+      "empty": "No drawer sessions in this period.",
+      "sessionA11y": "{{date}} cash session",
+      "opened": "Opened: {{amount}}",
+      "counted": "Counted: {{amount}}",
+      "expected": "Expected: {{amount}}",
+      "variance": "Short/over: {{amount}}",
+      "movements": "Manual movements ({{count}})",
+      "noMovements": "No manual cash movements recorded.",
+      "status": {
+        "open": "Open",
+        "closed": "Closed"
+      },
+      "type": {
+        "expense": "Gastos",
+        "owner_drawing": "Owner take-out",
+        "owner_addition": "Owner added",
+        "cash_refund": "Refund"
+      }
+    },
+    "insight": {
+      "success": "Good news",
+      "warning": "Heads up",
+      "info": "Note"
     }
   }
 }

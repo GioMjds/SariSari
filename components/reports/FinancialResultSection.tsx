@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ReportKPIs } from '@/types/reports.types';
 import { formatPesos } from '@/lib/money';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -11,131 +12,128 @@ interface Props {
   onOpenLedger: () => void;
 }
 
+function Row({
+  label,
+  note,
+  children,
+}: {
+  label: string;
+  note?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
+      <View className="flex-1 mr-3">
+        <StyledText variant="medium" className="text-sm text-ink-700">
+          {label}
+        </StyledText>
+        {note && (
+          <StyledText variant="regular" className="text-xs text-ink-500">
+            {note}
+          </StyledText>
+        )}
+      </View>
+      {children}
+    </View>
+  );
+}
+
 export const FinancialResultSection: React.FC<Props> = ({
   kpis,
   onOpenLedger,
 }) => {
+  const { t } = useTranslation();
+  const r = (key: string) => t(`common:reports.result.${key}`);
+
   return (
-    <View className="bg-paper-50 rounded-xl p-4 mb-4 border border-ink-200 shadow-sm">
-      {/* Section Header */}
+    <View className="bg-paper-50 rounded-xl p-4 border border-ink-200 shadow-sm">
       <View className="flex-row items-center justify-between mb-3">
-        <StyledText variant="extrabold" className="text-base text-ink-900">
-          Financial Result
+        <StyledText variant="extrabold" className="text-base text-ink-900 flex-1 mr-2">
+          {r('title')}
         </StyledText>
         <Pressable
           onPress={onOpenLedger}
           accessibilityRole="button"
-          accessibilityLabel="Open cash and expenses"
-          className="flex-row items-center px-3 py-1.5 bg-cinnamon-500 rounded-full active:bg-cinnamon-600 shadow-sm"
+          accessibilityLabel={r('actionA11y')}
+          hitSlop={8}
+          className="flex-row items-center px-3 py-2 bg-cinnamon-500 rounded-full active:bg-cinnamon-600"
         >
           <StyledText variant="semibold" className="text-xs text-paper-50 mr-1.5">
-            Cash & Expenses
+            {r('action')}
           </StyledText>
           <FontAwesome5 name="arrow-right" size={10} color="#FBF7EE" />
         </Pressable>
       </View>
 
-      {/* Warning Banner when Cost Prices are Missing */}
       {kpis.operatingProfit === null && (
         <View className="bg-cinnamon-50/60 p-3 rounded-lg mb-3 border border-dashed border-cinnamon-300 flex-row items-center gap-2.5">
           <FontAwesome5 name="info-circle" size={13} color="#623418" />
-          <StyledText variant="medium" className="text-xs text-cinnamon-800 flex-1 leading-4">
-            Record cost prices for all sold items to calculate gross and true operating profit.
+          <StyledText variant="medium" className="text-xs text-cinnamon-700 flex-1 leading-4">
+            {r('missingCost')}
           </StyledText>
         </View>
       )}
 
-      {/* Tally Breakdown Rows */}
-      <View className="space-y-1">
-        {/* Total Sales */}
-        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
-          <StyledText variant="medium" className="text-xs text-ink-600">
-            Cash Sales
-          </StyledText>
-          <MoneyText value={kpis.totalSales} size="sm" variant="default" className="text-ink-900" />
-        </View>
+      <Row label={r('cashSales')}>
+        <MoneyText value={kpis.totalSales} size="sm" variant="default" className="text-ink-900" />
+      </Row>
+      <Row label={r('utangSales')} note={r('utangNote')}>
+        <MoneyText value={kpis.utangSales} size="sm" variant="default" className="text-ink-900" />
+      </Row>
+      <Row label={r('cogs')}>
+        <StyledText variant="semibold" className="text-sm text-ink-900">
+          -{formatPesos(kpis.inventoryCostOut)}
+        </StyledText>
+      </Row>
 
-        {/* Utang counted in profit although not yet paid */}
-        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
-          <View>
-            <StyledText variant="medium" className="text-xs text-ink-600">
-              Utang Sales
-            </StyledText>
-            <StyledText variant="regular" className="text-[10px] text-ink-400">
-              Not paid yet, but counted in profit
-            </StyledText>
-          </View>
-          <MoneyText value={kpis.utangSales} size="sm" variant="default" className="text-ink-900" />
-        </View>
+      <View className="flex-row justify-between items-center py-2 px-2.5 bg-sage-50 rounded-lg my-1 border border-sage-200">
+        <StyledText variant="extrabold" className="text-sm text-sage-700">
+          {r('gross')}
+        </StyledText>
+        {kpis.grossProfit === null ? (
+          <StyledText variant="semibold" className="text-sm text-ink-500">—</StyledText>
+        ) : (
+          <MoneyText value={kpis.grossProfit} size="sm" variant="success" />
+        )}
+      </View>
 
-        {/* Cost of Goods Sold */}
-        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
-          <StyledText variant="medium" className="text-xs text-ink-600">
-            Cost of Goods Sold (COGS)
+      <Row label={r('expenses')}>
+        <StyledText variant="semibold" className="text-sm text-semantic-danger">
+          -{formatPesos(kpis.paidExpenses)}
+        </StyledText>
+      </Row>
+
+      <View className="flex-row justify-between items-center py-3 px-3 bg-sage-100 rounded-xl my-2 border border-sage-300">
+        <View className="flex-1 mr-3">
+          <StyledText variant="extrabold" className="text-sm text-sage-700">
+            {r('net')}
           </StyledText>
-          <StyledText variant="semibold" className="text-xs text-ink-900">
-            -{formatPesos(kpis.inventoryCostOut)}
+          <StyledText variant="medium" className="text-xs text-sage-700">
+            {r('netNote')}
           </StyledText>
         </View>
-
-        {/* Gross Profit (Tubo Subtotal) */}
-        <View className="flex-row justify-between items-center py-2 px-2.5 bg-sage-50/60 rounded-lg my-1 border border-sage-200/50">
-          <StyledText variant="extrabold" className="text-xs text-sage-800">
-            Gross Profit (Tubo)
-          </StyledText>
+        {kpis.operatingProfit === null ? (
+          <StyledText variant="extrabold" className="text-base text-ink-500">—</StyledText>
+        ) : (
           <MoneyText
-            value={kpis.grossProfit ?? 0}
-            size="sm"
-            variant="success"
-          />
-        </View>
-
-        {/* Paid Operating Gastos */}
-        <View className="flex-row justify-between items-center py-2 border-b border-dashed border-ink-200">
-          <StyledText variant="medium" className="text-xs text-ink-600">
-            Paid Operating Gastos
-          </StyledText>
-          <StyledText variant="semibold" className="text-xs text-semantic-danger">
-            -{formatPesos(kpis.paidExpenses)}
-          </StyledText>
-        </View>
-
-        {/* True Operating Profit (Hero Bottom-line) */}
-        <View className="flex-row justify-between items-center py-3 px-3 bg-sage-100/90 rounded-xl my-2 border border-sage-300 shadow-sm">
-          <View>
-            <StyledText variant="extrabold" className="text-sm text-sage-900">
-              True Operating Profit
-            </StyledText>
-            <StyledText variant="medium" className="text-[10px] text-sage-700">
-              Net store profit after operating expenses
-            </StyledText>
-          </View>
-          <MoneyText
-            value={kpis.operatingProfit ?? 0}
+            value={kpis.operatingProfit}
             size="lg"
-            variant="success"
+            variant={kpis.operatingProfit < 0 ? 'danger' : 'success'}
           />
-        </View>
+        )}
+      </View>
 
-        {/* Owner Drawings Audit Line */}
-        <View className="flex-row justify-between items-center py-2 pt-2.5 mt-1 border-t border-dashed border-ink-200">
-          <View>
-            <StyledText variant="semibold" className="text-xs text-cinnamon-800">
-              Owner Drawings (Kaha Take-out)
-            </StyledText>
-            <StyledText variant="regular" className="text-[10px] text-ink-400">
-              Excluded from operating profit
-            </StyledText>
-          </View>
-          <MoneyText
-            value={kpis.ownerDrawings}
-            size="sm"
-            variant="default"
-            className="text-cinnamon-700"
-          />
+      <View className="flex-row justify-between items-center pt-2.5 mt-1 border-t border-dashed border-ink-200">
+        <View className="flex-1 mr-3">
+          <StyledText variant="semibold" className="text-sm text-cinnamon-700">
+            {r('drawings')}
+          </StyledText>
+          <StyledText variant="regular" className="text-xs text-ink-500">
+            {r('drawingsNote')}
+          </StyledText>
         </View>
+        <MoneyText value={kpis.ownerDrawings} size="sm" variant="default" className="text-cinnamon-700" />
       </View>
     </View>
   );
 };
-

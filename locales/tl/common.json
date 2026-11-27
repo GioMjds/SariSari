@@ -214,7 +214,7 @@
       "reports": "Mga Ulat",
       "overdueCount": "{{count}} lagpas na",
       "newSaleSub": "Cash o utang",
-      "addShort": "Bagong item",
+      "addShort": "Bagong Product",
       "restock": "Mag-restock",
       "utang": "Utang"
     },
@@ -286,6 +286,202 @@
       "action": "Ulat",
       "units_one": "{{count}} piraso",
       "units_other": "{{count}} piraso"
+    }
+  },
+  "reports": {
+    "sariSays": "Sabi ni Sari",
+    "sari": {
+      "loading": "Binibilang ko ang mga numero mo...",
+      "noSales": "Wala pang benta sa panahong ito. Magbenta ka at bibilangin ko.",
+      "loss": "Mas malaki ang puhunan at gastos kaysa sa pumasok. Silipin ang mga gastos mo.",
+      "lowStock_one": "{{count}} paninda ang paubos na. Silipin ang imbentaryo.",
+      "lowStock_other": "{{count}} paninda ang paubos na. Silipin ang imbentaryo.",
+      "utang_one": "{{amount}} na utang ang hindi pa bayad mula sa {{count}} suki.",
+      "utang_other": "{{amount}} na utang ang hindi pa bayad mula sa {{count}} suki.",
+      "healthy": "Kumita ka ng {{amount}}. Ayos ang paninda at utang."
+    },
+    "ranges": {
+      "today": "Ngayon",
+      "yesterday": "Kahapon",
+      "last7days": "7 araw",
+      "thisMonth": "Ngayong buwan"
+    },
+    "compare": {
+      "yesterday": "kumpara kahapon sa ganitong oras",
+      "dayBefore": "kumpara noong isang araw",
+      "prev7days": "kumpara sa naunang 7 araw",
+      "lastMonth": "kumpara noong nakaraang buwan",
+      "up": "Tumaas ng {{pct}}% {{period}}",
+      "down": "Bumaba ng {{pct}}% {{period}}",
+      "same": "Kapareho {{period}}"
+    },
+    "hero": {
+      "kicker": "Kita (net profit)",
+      "profitLine": "Natira matapos ang puhunan at gastos",
+      "lossLine": "Lugi: mas malaki ang puhunan at gastos kaysa sa pumasok",
+      "missingCost": "May nabentang walang presyo ng puhunan, kaya hindi pa mabilang ang kita. Ilagay ang presyo ng puhunan para makita ito.",
+      "noCostHeadline": "Hindi pa alam"
+    },
+    "flow": {
+      "title": "Saan napunta ang bawat piso",
+      "revenue": "Pumasok (cash + utang)",
+      "cost": "Puhunan sa paninda",
+      "expenses": "Gastos",
+      "profit": "Kita",
+      "a11y": "{{revenue}} ang pumasok: {{cost}} puhunan, {{expenses}} gastos, {{profit}} kita."
+    },
+    "kpi": {
+      "sales": "Benta (cash)",
+      "salesSub_one": "{{count}} checkout, avg {{avg}}",
+      "salesSub_other": "{{count}} checkout, avg {{avg}}",
+      "utang": "Utang na hindi pa bayad",
+      "utangSub_one": "{{count}} suki ang may utang",
+      "utangSub_other": "{{count}} suki ang may utang",
+      "stock": "Halaga ng paninda (puhunan)",
+      "stockCoverage": "{{pct}}% ng paninda ang may presyo ng puhunan",
+      "stockRetail": "Mabebenta sa {{amount}}",
+      "expenses": "Gastos na bayad",
+      "expensesSub": "Upa, kuryente, at iba pa"
+    },
+    "explain": {
+      "a11y": "Ano ang ibig sabihin ng {{name}}?",
+      "close": "Sige",
+      "profit": "Ang kita ay ang totoong kinita ng tindahan: lahat ng nabenta (cash at utang), bawas ang puhunan sa mga ito, bawas ang mga gastos na binayaran. Hindi kasama ang kinuha ng may-ari.",
+      "flow": "Hinahati ng bar na ito ang lahat ng pumasok. Ang una ay pambayad sa paninda, ang sunod ay sa gastos, at ang natira ay kita mo.",
+      "sales": "Pera mula sa cash na checkout lang. Hindi benta ang utang hangga't hindi pa nababayaran ng suki.",
+      "utang": "Lahat ng utang na hindi pa bayad ng mga suki mo ngayon. Sisingilin mo ito mamaya.",
+      "stock": "Magkano ang puhunan mo sa mga paninda sa estante. Kapag naubos lahat, papasok ang halagang retail na nakalagay.",
+      "expenses": "Mga gastos na naitala mong bayad sa panahong ito, gaya ng upa, kuryente, o supplies.",
+      "trend": "Benta (cash) bawat araw, at paano nagbayad ang mga customer: cash ngayon o utang para mamaya.",
+      "top": "Aling paninda ang pinakamabenta, at alin ang may pinakamalaking tubo bawat piraso.",
+      "stock_section": "Ilang piraso ang nabenta, aling paninda ang mabilis o mabagal mabenta, at ano ang kailangang i-restock.",
+      "aging": "Gaano na katagal naghihintay ang hindi pa bayad na utang. Habang tumatagal, mas mahirap singilin.",
+      "cashbook": "Ang kaha bawat araw: ang perang panimula, ang nabilang mo, at kung may kulang o sobra."
+    },
+    "result": {
+      "title": "Paano binilang ang kita",
+      "action": "Cash at gastos",
+      "actionA11y": "Buksan ang cash at gastos",
+      "missingCost": "Ilagay ang presyo ng puhunan ng lahat ng nabenta para mabilang ang tubo at kita.",
+      "cashSales": "Benta (cash)",
+      "utangSales": "Benta (utang)",
+      "utangNote": "Hindi pa bayad, pero kasama sa tubo",
+      "cogs": "Puhunan sa paninda (COGS)",
+      "gross": "Tubo (gross profit)",
+      "expenses": "Gastos na bayad",
+      "net": "Kita (net profit)",
+      "netNote": "Kita ng tindahan matapos ang gastos",
+      "drawings": "Kinuha ng may-ari",
+      "drawingsNote": "Hindi kasama sa gastos"
+    },
+    "sections": {
+      "trend": {
+        "title": "Benta at bayad",
+        "subtitle": "Benta bawat araw at paano nagbayad"
+      },
+      "top": {
+        "title": "Pinakamabenta at tubo",
+        "subtitle": "Mabentang paninda at pinakamalaking tubo"
+      },
+      "stock": {
+        "title": "Paninda at galaw",
+        "subtitle": "Ano ang nabenta, ano ang paubos"
+      },
+      "aging": {
+        "title": "Edad ng utang",
+        "subtitle": "Gaano na katagal may utang ang bawat suki"
+      },
+      "cashbook": {
+        "title": "Kasaysayan ng kaha",
+        "subtitle": "Bilang ng kaha bawat araw at kung may kulang o sobra"
+      }
+    },
+    "trend": {
+      "chartTitle": "Benta (cash) bawat araw",
+      "peak": "Pinakamataas {{amount}}",
+      "empty": "Walang naitalang benta",
+      "emptyHint": "Subukan ang mas mahabang petsa.",
+      "chartA11y": "Tsart ng benta bawat araw. Pinakamataas noong {{day}}, {{amount}}.",
+      "barA11y": "{{day}}: {{amount}}",
+      "paymentMix": "Paano nagbayad",
+      "checkouts_one": "{{count}} checkout",
+      "checkouts_other": "{{count}} checkout",
+      "cash": "Cash",
+      "credit": "Utang",
+      "avgTicket": "Karaniwang checkout",
+      "sales": "Benta (cash)"
+    },
+    "top": {
+      "bySales": "Pinakamabenta",
+      "mostProfit": "Pinakamalaking tubo",
+      "addCost": "Ilagay ang puhunan",
+      "emptyTitle": "Wala pang pinakamabenta",
+      "emptyBody": "Kapag may benta na, dito sila lalabas.",
+      "units_one": "{{count}} pirasong nabenta",
+      "units_other": "{{count}} pirasong nabenta",
+      "tuboPerPiece": "Tubo bawat piraso",
+      "noProfitTitle": "Wala pang datos ng tubo",
+      "noProfitBody": "Ilagay ang presyo ng puhunan sa mga paninda para makita ang may pinakamalaking tubo.",
+      "total": "Kabuuan {{amount}}",
+      "margin": "{{pct}}% tubo",
+      "perPiece": "+{{amount}} bawat piraso"
+    },
+    "stock": {
+      "atCost": "Sa puhunan",
+      "atRetail": "Sa retail",
+      "retailNote": "Kapag naubos lahat",
+      "coverage": "{{pct}}% may puhunan",
+      "lowStock_one": "Paubos: {{count}} paninda",
+      "lowStock_other": "Paubos: {{count}} paninda",
+      "left": "{{count}} natira",
+      "unitsOut": "pirasong nabenta",
+      "needRestock": "kailangang i-restock",
+      "emptyShelves": "ubos na",
+      "fast": "Mabilis mabenta",
+      "slow": "Mabagal mabenta",
+      "none": "Wala pa",
+      "sold": "Nabenta",
+      "low": "Paubos",
+      "out": "Ubos"
+    },
+    "aging": {
+      "given": "Naibigay na utang",
+      "collected": "Nasingil",
+      "emptyTitle": "Walang hindi bayad na utang",
+      "emptyBody": "Bayad na lahat ng suki.",
+      "range": {
+        "0": "0-7 araw",
+        "1": "8-15 araw",
+        "2": "16-30 araw",
+        "3": "Higit 30 araw"
+      },
+      "suki_one": "{{count}} suki",
+      "suki_other": "{{count}} suki"
+    },
+    "cashbook": {
+      "empty": "Walang kaha session sa panahong ito.",
+      "sessionA11y": "Kaha session noong {{date}}",
+      "opened": "Panimula: {{amount}}",
+      "counted": "Nabilang: {{amount}}",
+      "expected": "Inaasahan: {{amount}}",
+      "variance": "Kulang/sobra: {{amount}}",
+      "movements": "Manwal na galaw ({{count}})",
+      "noMovements": "Walang naitalang manwal na galaw ng cash.",
+      "status": {
+        "open": "Bukas",
+        "closed": "Sarado"
+      },
+      "type": {
+        "expense": "Gastos",
+        "owner_drawing": "Kinuha ng may-ari",
+        "owner_addition": "Dinagdag ng may-ari",
+        "cash_refund": "Refund"
+      }
+    },
+    "insight": {
+      "success": "Magandang balita",
+      "warning": "Paalala",
+      "info": "Tala"
     }
   }
 }

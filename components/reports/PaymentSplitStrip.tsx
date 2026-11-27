@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { StyledText } from '../elements';
 import { MoneyText } from '../ui';
@@ -17,6 +18,7 @@ export function PaymentSplitStrip({
   transactions,
   avgTicket,
 }: Props) {
+  const { t } = useTranslation();
   const totalForSplit = cash + credit;
   const cashPct = totalForSplit > 0 ? (cash / totalForSplit) * 100 : 0;
   const creditPct = totalForSplit > 0 ? (credit / totalForSplit) * 100 : 0;
@@ -24,15 +26,11 @@ export function PaymentSplitStrip({
   return (
     <View>
       <View className="flex-row items-baseline justify-between mb-2">
-        <StyledText
-          variant="extrabold"
-          className="text-label text-ink-400"
-          style={{ letterSpacing: 1.4 }}
-        >
-          PAYMENT MIX
+        <StyledText variant="extrabold" className="text-sm text-ink-900">
+          {t('common:reports.trend.paymentMix')}
         </StyledText>
-        <StyledText variant="medium" className="text-mono text-ink-500">
-          {transactions} txs
+        <StyledText variant="medium" className="text-xs text-ink-500">
+          {t('common:reports.trend.checkouts', { count: transactions })}
         </StyledText>
       </View>
 
@@ -57,12 +55,8 @@ export function PaymentSplitStrip({
       <View className="flex-row mt-2">
         <View className="flex-1 flex-row items-center">
           <View className="w-2 h-2 rounded-full bg-sage-500 mr-1.5" />
-          <StyledText
-            variant="extrabold"
-            className="text-label text-sage-700"
-            style={{ letterSpacing: 1.2 }}
-          >
-            CASH
+          <StyledText variant="semibold" className="text-xs text-sage-700">
+            {t('common:reports.trend.cash')} {Math.round(cashPct)}%
           </StyledText>
           <MoneyText
             value={cash}
@@ -73,12 +67,8 @@ export function PaymentSplitStrip({
         </View>
         <View className="flex-1 flex-row items-center justify-end">
           <View className="w-2 h-2 rounded-full bg-persimmon-500 mr-1.5" />
-          <StyledText
-            variant="extrabold"
-            className="text-label text-persimmon-600"
-            style={{ letterSpacing: 1.2 }}
-          >
-            CREDIT
+          <StyledText variant="semibold" className="text-xs text-persimmon-700">
+            {t('common:reports.trend.credit')} {Math.round(creditPct)}%
           </StyledText>
           <MoneyText
             value={credit}
@@ -92,12 +82,8 @@ export function PaymentSplitStrip({
       {/* Footer stat row */}
       <View className="mt-4 flex-row items-stretch border-t border-dashed border-ink-200 pt-3">
         <View className="flex-1">
-          <StyledText
-            variant="extrabold"
-            className="text-label text-ink-400"
-            style={{ letterSpacing: 1.2 }}
-          >
-            AVG TICKET
+          <StyledText variant="medium" className="text-xs text-ink-500">
+            {t('common:reports.trend.avgTicket')}
           </StyledText>
           <MoneyText
             value={avgTicket}
@@ -107,12 +93,8 @@ export function PaymentSplitStrip({
           />
         </View>
         <View className="flex-1">
-          <StyledText
-            variant="extrabold"
-            className="text-label text-ink-400"
-            style={{ letterSpacing: 1.2 }}
-          >
-            SALES
+          <StyledText variant="medium" className="text-xs text-ink-500">
+            {t('common:reports.trend.sales')}
           </StyledText>
           <MoneyText
             value={total}

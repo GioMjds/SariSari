@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { formatCurrency } from '@/utils';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 /**
@@ -30,18 +31,15 @@ type ProfitabilityRankingProps = {
 };
 
 export const ProfitabilityRanking = memo(function ProfitabilityRanking({ products }: ProfitabilityRankingProps) {
+	const { t } = useTranslation();
 	if (products.length === 0) {
 		return (
 			<View className="py-4 items-center">
-				<StyledText
-					variant="extrabold"
-					className="text-label text-ink-300 mb-1"
-					style={{ letterSpacing: 1.6 }}
-				>
-					NO PROFIT DATA YET
+				<StyledText variant="extrabold" className="text-sm text-ink-500 mb-1">
+					{t('common:reports.top.noProfitTitle')}
 				</StyledText>
-				<StyledText variant="medium" className="text-ink-400 text-xs">
-					Add cost prices to products to see the most profitable items.
+				<StyledText variant="medium" className="text-ink-500 text-xs text-center">
+					{t('common:reports.top.noProfitBody')}
 				</StyledText>
 			</View>
 		);
@@ -55,18 +53,13 @@ export const ProfitabilityRanking = memo(function ProfitabilityRanking({ product
 	return (
 		<View>
 			<View className="mb-3 flex-row items-center justify-between">
-				<StyledText
-					variant="extrabold"
-					className="text-label text-ink-400"
-					style={{ letterSpacing: 1.4 }}
-				>
-					TUBO PER PIECE · ₱
+				<StyledText variant="medium" className="text-xs text-ink-500">
+					{t('common:reports.top.tuboPerPiece')}
 				</StyledText>
-				<StyledText
-					variant="medium"
-					className="text-mono text-ink-500 text-[10px]"
-				>
-					TOTAL {formatCurrency(products.reduce((s, p) => s + p.totalProfit, 0))}
+				<StyledText variant="semibold" className="text-xs text-ink-700">
+					{t('common:reports.top.total', {
+						amount: formatCurrency(products.reduce((s, p) => s + p.totalProfit, 0)),
+					})}
 				</StyledText>
 			</View>
 
@@ -107,9 +100,10 @@ export const ProfitabilityRanking = memo(function ProfitabilityRanking({ product
 									</StyledText>
 									<StyledText
 										variant="medium"
-										className="text-ink-500 text-[10px] mt-0.5"
+										className="text-ink-500 text-xs mt-0.5"
 									>
-										{product.unitsSold} units · {product.marginPercent.toFixed(1)}% margin
+										{t('common:reports.top.units', { count: product.unitsSold })} ·{' '}
+										{t('common:reports.top.margin', { pct: product.marginPercent.toFixed(1) })}
 									</StyledText>
 								</View>
 							</View>
@@ -122,9 +116,11 @@ export const ProfitabilityRanking = memo(function ProfitabilityRanking({ product
 								/>
 								<StyledText
 									variant="medium"
-									className="text-sage-600 text-[10px] mt-0.5"
+									className="text-sage-600 text-xs mt-0.5"
 								>
-									+{formatCurrency(product.profitPerUnit ?? 0)}/pc
+									{t('common:reports.top.perPiece', {
+										amount: formatCurrency(product.profitPerUnit ?? 0),
+									})}
 								</StyledText>
 							</View>
 						</View>

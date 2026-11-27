@@ -27,6 +27,8 @@ type CollapsibleSectionProps = {
   onToggle?: () => void;
   children: ReactNode;
   rightBadge?: ReactNode;
+  /** Rendered beside the chevron, e.g. an explainer button. */
+  info?: ReactNode;
 };
 
 const TONE_NUMBER_COLOR: Record<
@@ -68,6 +70,7 @@ export function CollapsibleSection({
   onToggle,
   children,
   rightBadge,
+  info,
 }: CollapsibleSectionProps) {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const isControlled = controlledExpanded !== undefined;
@@ -83,73 +86,78 @@ export function CollapsibleSection({
       testID={id ? `collapsible-section-${id}` : undefined}
       className="rounded-card bg-paper-50 shadow-paper overflow-hidden border border-ink-100"
     >
-      <Pressable
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityLabel={`${title}, ${isExpanded ? 'expanded' : 'collapsed'}`}
-        className="active:opacity-80"
-      >
-        {/* Top tone bar */}
-        <View className={`h-1 ${TONE_BAR[tone]}`} />
+      {/* Top tone bar */}
+      <View className={`h-1 ${TONE_BAR[tone]}`} />
 
-        <View className="px-4 pt-4 pb-4 flex-row items-center">
-          <View
-            className={`w-10 h-10 rounded-md items-center justify-center mr-3 ${TONE_ICON_BG[tone]}`}
-          >
-            {icon}
-          </View>
-
-          <View className="flex-1">
-            {number || rightBadge ? (
-              <View className="flex-row items-center">
-                {number ? (
-                  <StyledText
-                    variant="extrabold"
-                    className={`text-xs ${TONE_NUMBER_COLOR[tone]} mr-2`}
-                  >
-                    {number}
-                  </StyledText>
-                ) : null}
-                {rightBadge}
-              </View>
-            ) : null}
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-lg"
-              style={{ letterSpacing: -0.2 }}
+      {/* Info sits beside the header button so screen readers can reach both. */}
+      <View className="flex-row items-center">
+        <Pressable
+          onPress={handlePress}
+          accessibilityRole="button"
+          accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+          accessibilityState={{ expanded: isExpanded }}
+          className="flex-1 active:opacity-80"
+        >
+          <View className="pl-4 pr-3 pt-4 pb-4 flex-row items-center">
+            <View
+              className={`w-10 h-10 rounded-md items-center justify-center mr-3 ${TONE_ICON_BG[tone]}`}
             >
-              {title}
-            </StyledText>
-            {subtitle && (
+              {icon}
+            </View>
+
+            <View className="flex-1">
+              {number || rightBadge ? (
+                <View className="flex-row items-center">
+                  {number ? (
+                    <StyledText
+                      variant="extrabold"
+                      className={`text-xs ${TONE_NUMBER_COLOR[tone]} mr-2`}
+                    >
+                      {number}
+                    </StyledText>
+                  ) : null}
+                  {rightBadge}
+                </View>
+              ) : null}
               <StyledText
-                variant="medium"
-                className="text-ink-500 text-xs mt-0.5"
+                variant="extrabold"
+                className="text-ink-900 text-lg"
+                style={{ letterSpacing: -0.2 }}
               >
-                {subtitle}
+                {title}
               </StyledText>
-            )}
+              {subtitle && (
+                <StyledText
+                  variant="medium"
+                  className="text-ink-500 text-xs mt-0.5"
+                >
+                  {subtitle}
+                </StyledText>
+              )}
+            </View>
+
+            {/* Chevron stamp */}
+            <MotiView
+              animate={{ rotate: isExpanded ? '180deg' : '0deg' }}
+              transition={{ type: 'timing', duration: 180 }}
+              className="w-7 h-7 rounded-full border border-ink-200 items-center justify-center"
+            >
+              <FontAwesome name="chevron-down" size={11} color="#564E45" />
+            </MotiView>
           </View>
+        </Pressable>
+        {info && <View className="pr-4">{info}</View>}
+      </View>
 
-          {/* Chevron stamp */}
-          <MotiView
-            animate={{ rotate: isExpanded ? '180deg' : '0deg' }}
-            transition={{ type: 'timing', duration: 180 }}
-            className="w-7 h-7 rounded-full border border-ink-200 items-center justify-center"
-          >
-            <FontAwesome name="chevron-down" size={11} color="#564E45" />
-          </MotiView>
-        </View>
-
-        {/* Perforation rule between header and body */}
-        <View
-          style={{
-            marginHorizontal: 16,
-            borderBottomWidth: 1,
-            borderStyle: 'dashed',
-            borderColor: '#D1D5DC',
-          }}
-        />
-      </Pressable>
+      {/* Perforation rule between header and body */}
+      <View
+        style={{
+          marginHorizontal: 16,
+          borderBottomWidth: 1,
+          borderStyle: 'dashed',
+          borderColor: '#D1D5DC',
+        }}
+      />
 
       {/* Body */}
       <AnimatePresence>

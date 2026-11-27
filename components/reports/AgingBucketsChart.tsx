@@ -3,6 +3,7 @@ import { MoneyText } from '@/components/ui';
 import { AgingBucket, StockItem } from '@/types';
 import { MotiView } from 'moti';
 import { memo, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 type CreditAgingChartProps = {
@@ -48,6 +49,7 @@ export const CreditAgingChart = memo(function CreditAgingChart({
   buckets,
   totalOutstanding,
 }: CreditAgingChartProps) {
+  const { t } = useTranslation();
   const hasMounted = useRef(false);
   const animationKey = buckets.map((b) => `${b.range}:${b.amount}`).join('|');
 
@@ -60,15 +62,11 @@ export const CreditAgingChart = memo(function CreditAgingChart({
   if (buckets.length === 0) {
     return (
       <View className="py-4 items-center">
-        <StyledText
-          variant="extrabold"
-          className="text-label text-ink-300 mb-1"
-          style={{ letterSpacing: 1.6 }}
-        >
-          NO OUTSTANDING DEBT
+        <StyledText variant="extrabold" className="text-sm text-ink-500 mb-1">
+          {t('common:reports.aging.emptyTitle')}
         </StyledText>
-        <StyledText variant="medium" className="text-ink-400 text-xs">
-          All suki accounts are settled.
+        <StyledText variant="medium" className="text-ink-500 text-xs">
+          {t('common:reports.aging.emptyBody')}
         </StyledText>
       </View>
     );
@@ -107,10 +105,11 @@ export const CreditAgingChart = memo(function CreditAgingChart({
             >
               <StyledText
                 variant="extrabold"
-                className={`text-label ${stamp.text}`}
-                style={{ letterSpacing: 1.4 }}
+                className={`text-xs ${stamp.text}`}
               >
-                {bucket.range.toUpperCase()}
+                {t(`common:reports.aging.range.${index}`, {
+                  defaultValue: bucket.range,
+                })}
               </StyledText>
 
               <View className="mt-2">
@@ -123,17 +122,12 @@ export const CreditAgingChart = memo(function CreditAgingChart({
               </View>
 
               <View className="mt-2 flex-row items-baseline justify-between">
-                <StyledText
-                  variant="medium"
-                  className="text-ink-500 text-[10px] uppercase"
-                  style={{ letterSpacing: 0.6 }}
-                >
-                  {bucket.count} {bucket.count === 1 ? 'suki' : 'sukis'}
+                <StyledText variant="medium" className="text-ink-500 text-xs">
+                  {t('common:reports.aging.suki', { count: bucket.count })}
                 </StyledText>
                 <StyledText
                   variant="extrabold"
-                  className={`text-[10px] ${stamp.text}`}
-                  style={{ letterSpacing: 0.4 }}
+                  className={`text-xs ${stamp.text}`}
                 >
                   {Math.round(pct)}%
                 </StyledText>
@@ -184,6 +178,7 @@ export const StockMovementDetails = memo(function StockMovementDetails({
   fastMoving,
   slowMoving,
 }: StockMovementDetailsProps) {
+  const { t } = useTranslation();
   return (
     <View>
       {/* Ticker row */}
@@ -191,10 +186,10 @@ export const StockMovementDetails = memo(function StockMovementDetails({
         <View className="flex-1 p-3 border-r border-dashed border-ink-200">
           <StyledText
             variant="extrabold"
-            className="text-label text-sage-600 mb-1"
+            className="text-xs text-sage-600 mb-1"
             style={{ letterSpacing: 1.2 }}
           >
-            SOLD
+            {t('common:reports.stock.sold')}
           </StyledText>
           <StyledText
             variant="black"
@@ -203,17 +198,17 @@ export const StockMovementDetails = memo(function StockMovementDetails({
           >
             {itemsSold}
           </StyledText>
-          <StyledText variant="medium" className="text-ink-500 text-[10px]">
-            units out the door
+          <StyledText variant="medium" className="text-ink-500 text-xs">
+            {t('common:reports.stock.unitsOut')}
           </StyledText>
         </View>
         <View className="flex-1 p-3 border-r border-dashed border-ink-200">
           <StyledText
             variant="extrabold"
-            className="text-label text-semantic-warning mb-1"
+            className="text-xs text-semantic-warning-700 mb-1"
             style={{ letterSpacing: 1.2 }}
           >
-            LOW
+            {t('common:reports.stock.low')}
           </StyledText>
           <StyledText
             variant="black"
@@ -222,17 +217,17 @@ export const StockMovementDetails = memo(function StockMovementDetails({
           >
             {lowStockCount}
           </StyledText>
-          <StyledText variant="medium" className="text-ink-500 text-[10px]">
-            items need restock
+          <StyledText variant="medium" className="text-ink-500 text-xs">
+            {t('common:reports.stock.needRestock')}
           </StyledText>
         </View>
         <View className="flex-1 p-3">
           <StyledText
             variant="extrabold"
-            className="text-label text-semantic-danger mb-1"
+            className="text-xs text-semantic-danger mb-1"
             style={{ letterSpacing: 1.2 }}
           >
-            OUT
+            {t('common:reports.stock.out')}
           </StyledText>
           <StyledText
             variant="black"
@@ -241,8 +236,8 @@ export const StockMovementDetails = memo(function StockMovementDetails({
           >
             {outOfStockCount}
           </StyledText>
-          <StyledText variant="medium" className="text-ink-500 text-[10px]">
-            empty shelves
+          <StyledText variant="medium" className="text-ink-500 text-xs">
+            {t('common:reports.stock.emptyShelves')}
           </StyledText>
         </View>
       </View>
@@ -252,24 +247,20 @@ export const StockMovementDetails = memo(function StockMovementDetails({
         <View className="flex-1 rounded-md border border-ink-200 p-3 bg-sage-50/50">
           <View className="flex-row items-center mb-2">
             <View className="w-1.5 h-1.5 rounded-full bg-sage-500 mr-1.5" />
-            <StyledText
-              variant="extrabold"
-              className="text-label text-sage-700"
-              style={{ letterSpacing: 1.4 }}
-            >
-              FAST MOVERS
+            <StyledText variant="extrabold" className="text-xs text-sage-700">
+              {t('common:reports.stock.fast')}
             </StyledText>
           </View>
           {fastMoving.length === 0 ? (
-            <StyledText variant="medium" className="text-ink-400 text-[10px]">
-              None yet
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              {t('common:reports.stock.none')}
             </StyledText>
           ) : (
             fastMoving.slice(0, 4).map((item) => (
               <StyledText
                 key={item.id}
                 variant="medium"
-                className="text-ink-700 text-[10px] mt-1"
+                className="text-ink-700 text-xs mt-1"
                 numberOfLines={1}
               >
                 · {item.name}
@@ -283,22 +274,21 @@ export const StockMovementDetails = memo(function StockMovementDetails({
             <View className="w-1.5 h-1.5 rounded-full bg-semantic-warning mr-1.5" />
             <StyledText
               variant="extrabold"
-              className="text-label text-semantic-warning"
-              style={{ letterSpacing: 1.4 }}
+              className="text-xs text-semantic-warning-700"
             >
-              SLOW MOVERS
+              {t('common:reports.stock.slow')}
             </StyledText>
           </View>
           {slowMoving.length === 0 ? (
-            <StyledText variant="medium" className="text-ink-400 text-[10px]">
-              None yet
+            <StyledText variant="medium" className="text-ink-500 text-xs">
+              {t('common:reports.stock.none')}
             </StyledText>
           ) : (
             slowMoving.slice(0, 4).map((item) => (
               <StyledText
                 key={item.id}
                 variant="medium"
-                className="text-ink-700 text-[10px] mt-1"
+                className="text-ink-700 text-xs mt-1"
                 numberOfLines={1}
               >
                 · {item.name}

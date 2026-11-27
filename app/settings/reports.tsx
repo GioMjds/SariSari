@@ -1,22 +1,35 @@
 import { Prof, withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import {
-  CreditAgingChart,
-  StockMovementDetails,
+  AgingSkeleton,
   BentoGrid,
   BentoHero,
   BentoKPICard,
   CollapsibleSection,
+  CreditAgingChart,
   DateRangeSelector,
-  InsightCard,
-  ProfitabilityRanking,
-  SimpleBarChart,
-  TopProductsList,
-  PaymentSplitStrip,
+  DeltaChip,
   FinancialResultSection,
+  InfoButton,
+  InsightCard,
+  InsightsSkeleton,
+  KpiSkeleton,
+  PaymentSplitStrip,
+  ProfitabilityRanking,
+  ProfitFlowBar,
+  SessionsSkeleton,
+  SimpleBarChart,
+  StockMovementDetails,
+  StockSkeleton,
+  TopProductsList,
+  TopProductsSkeleton,
+  TrendSkeleton,
+  type Delta,
 } from '@/components/reports';
+import { getPreviousDateRange } from '@/components/reports/report-math';
+import { percentChange } from '@/components/home/home-state';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MoneyText, RefreshableScrollView, Skeleton } from '@/components/ui';
+import { MoneyText, RefreshableScrollView, Sheet } from '@/components/ui';
 import {
   useAgingBuckets,
   useCashEntries,
@@ -35,16 +48,13 @@ import {
   useTopSellingProducts,
 } from '@/hooks';
 import { formatPesos } from '@/lib/money';
-import { DateRange, DateRangeType } from '@/types';
-import {
-  formatCompactCurrency,
-  getDateRangeFromType,
-  profitSubline,
-} from '@/utils';
+import type { DateRange, DateRangeType } from '@/types';
+import type { CashSession } from '@/types/cash.types';
+import { formatCompactCurrency, getDateRangeFromType } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
@@ -60,34 +70,101 @@ import {
 
 const EMPTY_ARRAY: never[] = [];
 
+type SectionId = 'trend' | 'top' | 'stock' | 'aging' | 'cashbook';
+const SECTION_IDS: SectionId[] = ['trend', 'top', 'stock', 'aging', 'cashbook'];
+
+type ExplainKey =
+  | 'profit'
+  | 'sales'
+  | 'utang'
+  | 'stock'
+  | 'expenses'
+  | 'trend'
+  | 'top'
+  | 'stock_section'
+  | 'aging'
+  | 'cashbook';
+
+// Title shown on each explainer sheet, reusing the label the owner tapped.
+const EXPLAIN_TITLE: Record<ExplainKey, string> = {
+  profit: 'common:reports.hero.kicker',
+  sales: 'common:reports.kpi.sales',
+  utang: 'common:reports.kpi.utang',
+  stock: 'common:reports.kpi.stock',
+  expenses: 'common:reports.kpi.expenses',
+  trend: 'common:reports.sections.trend.title',
+  top: 'common:reports.sections.top.title',
+  stock_section: 'common:reports.sections.stock.title',
+  aging: 'common:reports.sections.aging.title',
+  cashbook: 'common:reports.sections.cashbook.title',
+};
+
+function rangesFor(type: DateRangeType) {
+  const now = new Date();
+  return {
+    current: getDateRangeFromType(type, now),
+    previous: getPreviousDateRange(type, now),
+  };
+}
+
 function ReportsScreen() {
   const { t } = useTranslation();
   const { section } = useLocalSearchParams<{ section?: string }>();
-  const requestedSection = typeof section === 'string' ? section : undefined;
+  const requestedSection = SECTION_IDS.find((id) => id === section);
 
   const queryClient = useQueryClient();
   const [dateRangeType, setDateRangeType] = useState<DateRangeType>('today');
-  const [dateRange, setDateRange] = useState<DateRange>(
-    getDateRangeFromType('today'),
+  const [ranges, setRanges] = useState<{
+    current: DateRange;
+    previous: DateRange;
+  }>(() => rangesFor('today'));
+  const dateRange = ranges.current;
+  const [explainKey, setExplainKey] = useState<ExplainKey | null>(null);
+  // Last opened explainer stays rendered while the sheet slides out.
+  const [shownExplainKey, setShownExplainKey] = useState<ExplainKey>('profit');
+
+  // Collapsed sections load their data only once the owner first opens them.
+  const [opened, setOpened] = useState<ReadonlySet<SectionId>>(
+    () => new Set([requestedSection ?? 'trend']),
+  );
+  const markOpened = useCallback(
+    (id: SectionId) =>
+      setOpened((prev) => (prev.has(id) ? prev : new Set(prev).add(id))),
+    [],
   );
 
   const { invalidateReports } = useReports();
 
   const kpisQuery = useReportKPIs(dateRange);
+  const prevKpisQuery = useReportKPIs(ranges.previous);
   const salesOverTimeQuery = useSalesOverTime(dateRange);
-  const topProductsQuery = useTopSellingProducts(dateRange, 5);
   const salesBreakdownQuery = useSalesBreakdown(dateRange);
-  const inventoryMovementQuery = useInventoryMovement(dateRange);
   const inventoryValueQuery = useInventoryValue();
   const lowStockItemsQuery = useLowStockItems(10);
-  const slowMovingProductsQuery = useSlowMovingProducts(dateRange, 5);
   const creditsOverviewQuery = useCreditsOverview(dateRange);
-  const agingBucketsQuery = useAgingBuckets();
-  const productProfitabilityQuery = useProductProfitability(dateRange, 10);
   const insightsQuery = useReportInsights(dateRange);
-  const sessionsQuery = useCashSessions();
+  const topProductsQuery = useTopSellingProducts(
+    dateRange,
+    5,
+    opened.has('top') || opened.has('stock'),
+  );
+  const productProfitabilityQuery = useProductProfitability(
+    dateRange,
+    10,
+    opened.has('top'),
+  );
+  const inventoryMovementQuery = useInventoryMovement(
+    dateRange,
+    opened.has('stock'),
+  );
+  const slowMovingProductsQuery = useSlowMovingProducts(
+    dateRange,
+    5,
+    opened.has('stock'),
+  );
+  const agingBucketsQuery = useAgingBuckets(opened.has('aging'));
+  const sessionsQuery = useCashSessions(opened.has('cashbook'));
 
-  const isInsightsLoading = insightsQuery.isLoading;
   const isKPIsLoading =
     kpisQuery.isLoading ||
     salesBreakdownQuery.isLoading ||
@@ -96,34 +173,33 @@ function ReportsScreen() {
   const isSalesTrendLoading =
     salesOverTimeQuery.isLoading || salesBreakdownQuery.isLoading;
   const isTopProductsLoading =
-    topProductsQuery.isLoading ||
-    productProfitabilityQuery.isLoading ||
-    kpisQuery.isLoading;
+    topProductsQuery.isLoading || productProfitabilityQuery.isLoading;
   const isStockLoading =
     inventoryMovementQuery.isLoading ||
-    inventoryValueQuery.isLoading ||
     lowStockItemsQuery.isLoading ||
-    slowMovingProductsQuery.isLoading;
-  const isCreditAgingLoading =
-    agingBucketsQuery.isLoading || creditsOverviewQuery.isLoading;
-  const isSessionsLoading = sessionsQuery.isLoading;
+    slowMovingProductsQuery.isLoading ||
+    topProductsQuery.isLoading;
+  const isCreditAgingLoading = agingBucketsQuery.isLoading;
 
-  const isRefreshing =
-    kpisQuery.isFetching ||
-    salesOverTimeQuery.isFetching ||
-    topProductsQuery.isFetching ||
-    salesBreakdownQuery.isFetching ||
-    inventoryMovementQuery.isFetching ||
-    inventoryValueQuery.isFetching ||
-    lowStockItemsQuery.isFetching ||
-    slowMovingProductsQuery.isFetching ||
-    creditsOverviewQuery.isFetching ||
-    agingBucketsQuery.isFetching ||
-    productProfitabilityQuery.isFetching ||
-    insightsQuery.isFetching ||
-    sessionsQuery.isFetching;
+  const isRefreshing = [
+    kpisQuery,
+    prevKpisQuery,
+    salesOverTimeQuery,
+    salesBreakdownQuery,
+    inventoryValueQuery,
+    lowStockItemsQuery,
+    creditsOverviewQuery,
+    insightsQuery,
+    topProductsQuery,
+    productProfitabilityQuery,
+    inventoryMovementQuery,
+    slowMovingProductsQuery,
+    agingBucketsQuery,
+    sessionsQuery,
+  ].some((q) => q.isFetching && !q.isLoading);
 
   const kpis = kpisQuery.data ?? DEFAULT_KPIS;
+  const prevKpis = prevKpisQuery.data;
   const salesOverTime = salesOverTimeQuery.data ?? EMPTY_ARRAY;
   const topProducts = topProductsQuery.data ?? EMPTY_ARRAY;
   const salesBreakdown = salesBreakdownQuery.data ?? DEFAULT_SALES_BREAKDOWN;
@@ -131,7 +207,6 @@ function ReportsScreen() {
     inventoryMovementQuery.data ?? DEFAULT_INVENTORY_MOVEMENT;
   const inventoryValue = inventoryValueQuery.data ?? DEFAULT_INVENTORY_VALUE;
   const lowStockItems = lowStockItemsQuery.data ?? EMPTY_ARRAY;
-  const fastMovingProducts = topProducts;
   const slowMovingProducts = slowMovingProductsQuery.data ?? EMPTY_ARRAY;
   const creditsOverview = creditsOverviewQuery.data ?? DEFAULT_CREDITS_OVERVIEW;
   const agingBuckets = agingBucketsQuery.data ?? EMPTY_ARRAY;
@@ -139,10 +214,15 @@ function ReportsScreen() {
   const insights = insightsQuery.data ?? EMPTY_ARRAY;
   const sessions = sessionsQuery.data ?? EMPTY_ARRAY;
 
-  const handleDateRangeChange = useCallback((type: DateRangeType) => {
-    setDateRangeType(type);
-    setDateRange(getDateRangeFromType(type));
-  }, []);
+  const handleDateRangeChange = useCallback(
+    (type: DateRangeType) => {
+      // Re-tapping the active chip would move the mid-day comparison window and refetch.
+      if (type === dateRangeType) return;
+      setDateRangeType(type);
+      setRanges(rangesFor(type));
+    },
+    [dateRangeType],
+  );
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([
@@ -151,46 +231,109 @@ function ReportsScreen() {
     ]);
   }, [invalidateReports, queryClient]);
 
-  const startDateStr = format(dateRange.startDate, 'yyyy-MM-dd');
-  const endDateStr = format(dateRange.endDate, 'yyyy-MM-dd');
-
-  const filteredSessions = (sessions || []).filter((session: any) => {
-    if (!session?.businessDate) return false;
-    return (
-      session.businessDate >= startDateStr && session.businessDate <= endDateStr
+  const filteredSessions = useMemo(() => {
+    const start = format(dateRange.startDate, 'yyyy-MM-dd');
+    const end = format(dateRange.endDate, 'yyyy-MM-dd');
+    return (sessions as CashSession[]).filter(
+      (s) =>
+        !!s.businessDate && s.businessDate >= start && s.businessDate <= end,
     );
-  });
+  }, [sessions, dateRange]);
 
   const tabBarBottomOffset = useTabBarBottomOffset();
+
+  const period = t(`common:reports.compare.${ranges.previous.label}`);
+  const makeDelta = (
+    current: number | null,
+    previous: number | null | undefined,
+  ): Delta | undefined => {
+    // Both sides must belong to the selected range, not a placeholder from the last one.
+    if (kpisQuery.isPlaceholderData || prevKpisQuery.isPlaceholderData)
+      return undefined;
+    if (current === null || previous == null) return undefined;
+    const pct = percentChange(current, previous);
+    if (pct === null) return undefined;
+    const key = pct > 0 ? 'up' : pct < 0 ? 'down' : 'same';
+    return {
+      pct,
+      label: t(`common:reports.compare.${key}`, { pct: Math.abs(pct), period }),
+    };
+  };
+
+  const profit = kpis.operatingProfit;
+  const revenue = kpis.totalSales + kpis.utangSales;
+  const profitDelta = makeDelta(profit, prevKpis?.operatingProfit);
+  const salesDelta = makeDelta(kpis.totalSales, prevKpis?.totalSales);
+  const expensesDelta = makeDelta(kpis.paidExpenses, prevKpis?.paidExpenses);
+
+  const heroHeadline =
+    profit === null
+      ? t('common:reports.hero.noCostHeadline')
+      : formatCompactCurrency(profit);
+  const heroSubline =
+    profit === null
+      ? t('common:reports.hero.missingCost')
+      : profit < 0
+        ? t('common:reports.hero.lossLine')
+        : t('common:reports.hero.profitLine');
+
+  const explain = (key: ExplainKey) => () => {
+    setShownExplainKey(key);
+    setExplainKey(key);
+  };
+  const info = (key: ExplainKey, tone: 'ink' | 'paper' = 'ink') => (
+    <InfoButton
+      onPress={explain(key)}
+      tone={tone}
+      label={t('common:reports.explain.a11y', { name: t(EXPLAIN_TITLE[key]) })}
+    />
+  );
+  const sectionProps = (id: SectionId) => ({
+    id,
+    title: t(`common:reports.sections.${id}.title`),
+    subtitle: t(`common:reports.sections.${id}.subtitle`),
+    defaultExpanded: opened.has(id),
+    onToggle: () => markOpened(id),
+    info: info(id === 'stock' ? 'stock_section' : id),
+  });
 
   // Sari's pose and line follow the most urgent thing in the data.
   // No pose while loading, so Sari is built once with the pose the data calls for.
   const sari: { state: SariState | null; text: string } = (() => {
-    if (isKPIsLoading || isStockLoading) {
-      return { state: null, text: 'Counting your numbers...' };
+    if (isKPIsLoading || lowStockItemsQuery.isLoading) {
+      return { state: null, text: t('common:reports.sari.loading') };
     }
-    if (kpis.totalSales === 0 && salesBreakdown.totalTransactions === 0) {
-      return {
-        state: 'reports',
-        text: 'No sales in this period yet. Make a sale and I will tally it.',
-      };
+    if (revenue === 0 && salesBreakdown.totalTransactions === 0) {
+      return { state: 'reports', text: t('common:reports.sari.noSales') };
     }
     if (lowStockItems.length > 0) {
-      const n = lowStockItems.length;
       return {
         state: 'low-stock',
-        text: `${n} ${n === 1 ? 'item is' : 'items are'} running low. Check your inventory.`,
+        text: t('common:reports.sari.lowStock', {
+          count: lowStockItems.length,
+        }),
       };
+    }
+    if (profit !== null && profit < 0) {
+      return { state: 'reports', text: t('common:reports.sari.loss') };
     }
     if (creditsOverview.outstanding > 0) {
       return {
         state: 'outstanding-balance',
-        text: `${formatCompactCurrency(creditsOverview.outstanding)} utang still unpaid from ${creditsOverview.activeAccounts} ${creditsOverview.activeAccounts === 1 ? 'suki' : 'sukis'}.`,
+        text: t('common:reports.sari.utang', {
+          amount: formatCompactCurrency(creditsOverview.outstanding),
+          count: creditsOverview.activeAccounts,
+        }),
       };
+    }
+    if (profit === null) {
+      return { state: 'reports', text: t('common:reports.hero.missingCost') };
     }
     return {
       state: 'sales',
-      text: `${formatCompactCurrency(kpis.totalSales)} in sales. Stock and utang look fine.`,
+      text: t('common:reports.sari.healthy', {
+        amount: formatCompactCurrency(profit),
+      }),
     };
   })();
 
@@ -212,13 +355,14 @@ function ReportsScreen() {
         isRefreshing={isRefreshing}
         onRefresh={handleRefresh}
       >
+        {/* Sari speech bubble */}
         <View className="px-5 flex-row items-center">
           <View className="flex-1 bg-paper-50 border border-ink-100 rounded-2xl px-4 py-3 shadow-paper">
             <StyledText
               variant="extrabold"
-              className="text-[10px] text-persimmon-600 uppercase tracking-wider mb-1"
+              className="text-xs text-persimmon-700 mb-1"
             >
-              Sari says
+              {t('common:reports.sariSays')}
             </StyledText>
             <StyledText
               variant="semibold"
@@ -258,314 +402,219 @@ function ReportsScreen() {
           </Prof>
         </View>
 
-        {/* ─── Smart Alerts / Insights ────────────────────────── */}
-        {(isInsightsLoading || insights.length > 0) && (
-          <View className="px-5 mt-2">
-            {isInsightsLoading ? (
-              <View className="mt-3 bg-paper-50 rounded-xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                <Skeleton width="40%" height={14} borderRadius={4} />
-                <Skeleton width="90%" height={12} borderRadius={4} />
-                <Skeleton width="70%" height={12} borderRadius={4} />
-              </View>
+        {/* Profit hero, money flow, and headline KPIs */}
+        <View className="px-5 mt-4">
+          {isKPIsLoading ? (
+            <Prof id="Reports:KpiSkeleton">
+              <KpiSkeleton />
+            </Prof>
+          ) : (
+            <Prof id="Reports:BentoGrid">
+              <BentoGrid>
+                <BentoHero
+                  animationKey={`${dateRangeType}-${profit}`}
+                  kicker={t('common:reports.hero.kicker')}
+                  headline={heroHeadline}
+                  subline={heroSubline}
+                  accessibilityLabel={`${t('common:reports.hero.kicker')}: ${heroHeadline}. ${heroSubline}`}
+                  accent={
+                    profit === null ? 'ink' : profit < 0 ? 'cinnamon' : 'sage'
+                  }
+                  icon={
+                    <FontAwesome name="line-chart" size={14} color="#FBF7EE" />
+                  }
+                  info={info('profit', 'paper')}
+                  delta={
+                    profitDelta && <DeltaChip delta={profitDelta} onDark />
+                  }
+                  footer={
+                    profit !== null && revenue > 0 ? (
+                      <ProfitFlowBar
+                        revenue={revenue}
+                        cost={kpis.inventoryCostOut}
+                        expenses={kpis.paidExpenses}
+                        profit={profit}
+                      />
+                    ) : undefined
+                  }
+                />
+
+                <View className="flex-row gap-3">
+                  <BentoKPICard
+                    kicker={t('common:reports.kpi.sales')}
+                    headline={formatCompactCurrency(kpis.totalSales)}
+                    subline={t('common:reports.kpi.salesSub', {
+                      count: salesBreakdown.totalTransactions,
+                      avg: formatCompactCurrency(
+                        salesBreakdown.averageTransactionValue,
+                      ),
+                    })}
+                    icon={
+                      <FontAwesome
+                        name="shopping-cart"
+                        size={16}
+                        color="#A1370C"
+                      />
+                    }
+                    accent="persimmon"
+                    info={info('sales')}
+                    delta={salesDelta && <DeltaChip delta={salesDelta} />}
+                  />
+                  <BentoKPICard
+                    kicker={t('common:reports.kpi.utang')}
+                    headline={formatCompactCurrency(
+                      creditsOverview.outstanding,
+                    )}
+                    subline={t('common:reports.kpi.utangSub', {
+                      count: creditsOverview.activeAccounts,
+                    })}
+                    icon={
+                      <FontAwesome
+                        name="credit-card"
+                        size={16}
+                        color="#391C0A"
+                      />
+                    }
+                    accent="cinnamon"
+                    info={info('utang')}
+                  />
+                </View>
+
+                <View className="flex-row gap-3">
+                  <BentoKPICard
+                    kicker={t('common:reports.kpi.stock')}
+                    headline={formatCompactCurrency(
+                      inventoryValue.currentStockValue,
+                    )}
+                    subline={
+                      inventoryValue.costCoverage !== null &&
+                      inventoryValue.costCoverage < 1
+                        ? t('common:reports.kpi.stockCoverage', {
+                            pct: Math.round(inventoryValue.costCoverage * 100),
+                          })
+                        : t('common:reports.kpi.stockRetail', {
+                            amount: formatCompactCurrency(
+                              inventoryValue.potentialSalesValue,
+                            ),
+                          })
+                    }
+                    icon={
+                      <FontAwesome name="archive" size={16} color="#3D5E1B" />
+                    }
+                    accent="sage"
+                    info={info('stock')}
+                  />
+                  <BentoKPICard
+                    kicker={t('common:reports.kpi.expenses')}
+                    headline={formatCompactCurrency(kpis.paidExpenses)}
+                    subline={t('common:reports.kpi.expensesSub')}
+                    icon={
+                      <FontAwesome name="money" size={16} color="#28231D" />
+                    }
+                    accent="ink"
+                    info={info('expenses')}
+                    delta={
+                      expensesDelta && (
+                        <DeltaChip delta={expensesDelta} goodWhenUp={false} />
+                      )
+                    }
+                  />
+                </View>
+              </BentoGrid>
+            </Prof>
+          )}
+        </View>
+
+        {/* Smart alerts */}
+        {(insightsQuery.isLoading || insights.length > 0) && (
+          <View className="px-5 mt-3">
+            {insightsQuery.isLoading ? (
+              <InsightsSkeleton />
             ) : (
               <View className="mt-3">
                 {insights.map((insight, index) => (
-                  <InsightCard key={index} {...insight} icon={insight.icon} />
+                  <InsightCard key={index} {...insight} />
                 ))}
               </View>
             )}
           </View>
         )}
 
-        {/* ─── Bento KPI grid ─────────────────────────────────── */}
-        <View className="px-5 mt-6">
-          {isKPIsLoading ? (
-            <Prof id="Reports:KpiSkeleton">
-              <View className="mt-3 gap-y-3">
-                <View className="bg-paper-50 rounded-2xl p-5 border border-ink-100/60 shadow-sm gap-y-3">
-                  <Skeleton width={140} height={12} borderRadius={4} />
-                  <Skeleton width={180} height={32} borderRadius={6} />
-                  <Skeleton width="60%" height={14} borderRadius={4} />
-                </View>
-
-                <View className="flex-row gap-3">
-                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                    <Skeleton width={90} height={10} borderRadius={4} />
-                    <Skeleton width={100} height={24} borderRadius={6} />
-                    <Skeleton width="80%" height={12} borderRadius={4} />
-                  </View>
-                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                    <Skeleton width={90} height={10} borderRadius={4} />
-                    <Skeleton width={100} height={24} borderRadius={6} />
-                    <Skeleton width="80%" height={12} borderRadius={4} />
-                  </View>
-                </View>
-
-                <View className="flex-row gap-3">
-                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                    <Skeleton width={90} height={10} borderRadius={4} />
-                    <Skeleton width={100} height={24} borderRadius={6} />
-                    <Skeleton width="80%" height={12} borderRadius={4} />
-                  </View>
-                  <View className="flex-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                    <Skeleton width={90} height={10} borderRadius={4} />
-                    <Skeleton width={100} height={24} borderRadius={6} />
-                    <Skeleton width="80%" height={12} borderRadius={4} />
-                  </View>
-                </View>
-
-                <View className="mt-1 bg-paper-50 rounded-2xl p-4 border border-ink-100/60 shadow-sm gap-y-2">
-                  <Skeleton width={140} height={14} borderRadius={4} />
-                  <Skeleton width="100%" height={40} borderRadius={8} />
-                </View>
-              </View>
-            </Prof>
-          ) : (
-            <View className="mt-3">
-              <Prof id="Reports:BentoGrid">
-                <BentoGrid>
-                  <BentoHero
-                    animationKey={`${dateRangeType}-${kpis.totalSales}`}
-                    kicker="Cash sales"
-                    headline={formatCompactCurrency(kpis.totalSales)}
-                    subline={`${salesBreakdown.totalTransactions} ${
-                      salesBreakdown.totalTransactions === 1
-                        ? 'transaction'
-                        : 'transactions'
-                    } · utang not counted until paid`}
-                    icon={
-                      <FontAwesome
-                        name="shopping-cart"
-                        size={14}
-                        color="#FBF7EE"
-                      />
-                    }
-                    accent="persimmon"
-                  />
-
-                  <View className="flex-row gap-3">
-                    <BentoKPICard
-                      kicker="Tubo (gross profit)"
-                      headline={
-                        kpis.totalProfit === null
-                          ? '—'
-                          : formatCompactCurrency(kpis.totalProfit)
-                      }
-                      subline={
-                        kpis.totalProfit === null
-                          ? 'Add cost prices to compute tubo'
-                          : `${profitSubline(kpis.marginPercent)} · includes utang`
-                      }
-                      icon={
-                        <FontAwesome
-                          name="line-chart"
-                          size={16}
-                          color="#3D5E1B"
-                        />
-                      }
-                      accent="sage"
-                    />
-                    <BentoKPICard
-                      kicker="Utang not yet paid"
-                      headline={formatCompactCurrency(
-                        creditsOverview.outstanding,
-                      )}
-                      subline={`${creditsOverview.activeAccounts} ${
-                        creditsOverview.activeAccounts === 1
-                          ? 'suki owes'
-                          : 'sukis owe'
-                      } you`}
-                      icon={
-                        <FontAwesome
-                          name="credit-card"
-                          size={16}
-                          color="#A1370C"
-                        />
-                      }
-                      accent="persimmon"
-                    />
-                  </View>
-
-                  <View className="flex-row gap-3">
-                    <BentoKPICard
-                      kicker="Stock value (at cost)"
-                      headline={formatCompactCurrency(
-                        inventoryValue.currentStockValue,
-                      )}
-                      subline={
-                        inventoryValue.costCoverage !== null &&
-                        inventoryValue.costCoverage < 1
-                          ? `${Math.round(
-                              inventoryValue.costCoverage * 100,
-                            )}% of stock has cost data`
-                          : `Potential retail: ${formatCompactCurrency(
-                              inventoryValue.potentialSalesValue,
-                            )}`
-                      }
-                      icon={
-                        <FontAwesome name="archive" size={16} color="#391C0A" />
-                      }
-                      accent="cinnamon"
-                    />
-                    <BentoKPICard
-                      kicker="Cash collected"
-                      headline={formatCompactCurrency(salesBreakdown.cashSales)}
-                      subline={`Avg ticket: ${formatCompactCurrency(
-                        salesBreakdown.averageTransactionValue,
-                      )}`}
-                      icon={
-                        <FontAwesome name="money" size={16} color="#3D5E1B" />
-                      }
-                      accent="sage"
-                    />
-                  </View>
-                </BentoGrid>
-              </Prof>
-
-              <View className="mt-4">
-                <Prof id="Reports:FinancialResult">
-                  <FinancialResultSection
-                    kpis={kpis}
-                    onOpenLedger={() => router.push('/settings/cash-entries')}
-                  />
-                </Prof>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* ─── Sales Trend & Payments ─────────────────────────── */}
-        <View className="px-5 mt-6">
-          <View>
-            <Prof id="Reports:Section1">
-              <CollapsibleSection
-                id="trend"
-                title="Sales and payments"
-                subtitle="Daily sales and how customers paid"
-                tone="persimmon"
-                icon={
-                  <FontAwesome name="bar-chart" size={16} color="#A1370C" />
-                }
-                defaultExpanded={
-                  requestedSection === 'trend' || requestedSection === undefined
-                }
-              >
-                {isSalesTrendLoading ? (
-                  <View className="py-2 gap-y-4">
-                    <Skeleton width="100%" height={180} borderRadius={12} />
-                    <View
-                      style={{
-                        borderBottomWidth: 1,
-                        borderStyle: 'dashed',
-                        borderColor: '#D1D5DC',
-                      }}
-                    />
-                    <View className="gap-y-2">
-                      <Skeleton width="100%" height={24} borderRadius={6} />
-                      <View className="flex-row justify-between">
-                        <Skeleton width={100} height={14} borderRadius={4} />
-                        <Skeleton width={100} height={14} borderRadius={4} />
-                      </View>
-                    </View>
-                  </View>
-                ) : (
-                  <View>
-                    <SimpleBarChart data={salesOverTime} height={200} />
-
-                    {/* Perforation between chart and breakdown */}
-                    <View
-                      style={{
-                        marginTop: 20,
-                        marginBottom: 12,
-                        borderBottomWidth: 1,
-                        borderStyle: 'dashed',
-                        borderColor: '#D1D5DC',
-                      }}
-                    />
-
-                    <PaymentSplitStrip
-                      cash={salesBreakdown.cashSales}
-                      credit={salesBreakdown.creditSales}
-                      total={kpis.totalSales}
-                      transactions={salesBreakdown.totalTransactions}
-                      avgTicket={salesBreakdown.averageTransactionValue}
-                    />
-                  </View>
-                )}
-              </CollapsibleSection>
+        {/* How kita was counted */}
+        {!isKPIsLoading && (
+          <View className="px-5 mt-4">
+            <Prof id="Reports:FinancialResult">
+              <FinancialResultSection
+                kpis={kpis}
+                onOpenLedger={() => router.push('/settings/cash-entries')}
+              />
             </Prof>
           </View>
+        )}
+
+        {/* Sales trend and payments */}
+        <View className="px-5 mt-6">
+          <Prof id="Reports:Section1">
+            <CollapsibleSection
+              {...sectionProps('trend')}
+              tone="persimmon"
+              icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
+            >
+              {isSalesTrendLoading ? (
+                <TrendSkeleton />
+              ) : (
+                <View>
+                  <SimpleBarChart data={salesOverTime} height={200} />
+                  {/* Perforation between chart and breakdown */}
+                  <View className="mt-5 mb-3 border-b border-dashed border-ink-200" />
+                  <PaymentSplitStrip
+                    cash={salesBreakdown.cashSales}
+                    credit={salesBreakdown.creditSales}
+                    total={kpis.totalSales}
+                    transactions={salesBreakdown.totalTransactions}
+                    avgTicket={salesBreakdown.averageTransactionValue}
+                  />
+                </View>
+              )}
+            </CollapsibleSection>
+          </Prof>
         </View>
 
-        {/* ─── Top Products ──────────────────────────────────── */}
+        {/* Top products */}
         <View className="px-5 mt-6">
           <Prof id="Reports:Section2">
             <CollapsibleSection
-              id="top"
-              title="Top products and profit"
-              subtitle="Best sellers and what earns the most"
+              {...sectionProps('top')}
               tone="cinnamon"
               icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
-              defaultExpanded={requestedSection === 'top'}
             >
               {isTopProductsLoading ? (
-                <View className="py-2 gap-y-4">
-                  <Skeleton width={160} height={12} borderRadius={4} />
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <View
-                      key={`top-prod-skel-${i}`}
-                      className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
-                    >
-                      <View className="flex-row items-center flex-1 mr-3 gap-2">
-                        <Skeleton width={24} height={24} circle />
-                        <Skeleton width="60%" height={14} borderRadius={4} />
-                      </View>
-                      <Skeleton width={70} height={16} borderRadius={4} />
-                    </View>
-                  ))}
-
-                  <View className="my-2 flex-row items-center">
-                    <View className="flex-1 h-px bg-ink-200" />
-                  </View>
-
-                  <Skeleton width={180} height={12} borderRadius={4} />
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <View
-                      key={`profit-skel-${i}`}
-                      className="flex-row items-center justify-between py-2 border-b border-ink-100/50"
-                    >
-                      <Skeleton width="50%" height={14} borderRadius={4} />
-                      <Skeleton width={60} height={14} borderRadius={4} />
-                    </View>
-                  ))}
-                </View>
+                <TopProductsSkeleton />
               ) : (
                 <View>
-                  {/* Top by revenue */}
                   <StyledText
                     variant="semibold"
                     className="text-sm text-ink-700 mb-3"
                   >
-                    Top sellers by sales
+                    {t('common:reports.top.bySales')}
                   </StyledText>
                   <TopProductsList products={topProducts} />
 
                   <View className="my-4 h-px bg-ink-200" />
 
-                  {/* Most profitable */}
                   <View className="flex-row items-center justify-between mb-3">
                     <StyledText
                       variant="semibold"
                       className="text-sm text-ink-700"
                     >
-                      Most profitable (tubo)
+                      {t('common:reports.top.mostProfit')}
                     </StyledText>
-                    {kpis.totalProfit === null && (
+                    {kpis.grossProfit === null && (
                       <StyledText
                         variant="medium"
                         className="text-ink-500 text-xs"
                       >
-                        Add cost prices
+                        {t('common:reports.top.addCost')}
                       </StyledText>
                     )}
                   </View>
@@ -576,48 +625,23 @@ function ReportsScreen() {
           </Prof>
         </View>
 
-        {/* ─── Stock Movement ────────────────────────────────── */}
+        {/* Stock movement */}
         <View className="px-5 mt-6">
           <Prof id="Reports:Section3">
             <CollapsibleSection
-              id="stock"
-              title="Stock and movement"
-              subtitle="What sold, what is running low"
+              {...sectionProps('stock')}
               tone="sage"
               icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
-              defaultExpanded={requestedSection === 'stock'}
             >
               {isStockLoading ? (
-                <View className="py-2 gap-y-4">
-                  <View className="flex-row flex-wrap gap-2">
-                    <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
-                      <Skeleton width={80} height={10} borderRadius={4} />
-                      <Skeleton width={50} height={20} borderRadius={4} />
-                    </View>
-                    <View className="w-[48%] bg-paper-50 p-3 rounded-xl border border-ink-100/60 gap-y-1.5">
-                      <Skeleton width={80} height={10} borderRadius={4} />
-                      <Skeleton width={50} height={20} borderRadius={4} />
-                    </View>
-                  </View>
-
-                  <View className="flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden bg-paper-50 p-3 gap-3">
-                    <View className="flex-1 gap-y-2">
-                      <Skeleton width={60} height={10} borderRadius={4} />
-                      <Skeleton width={80} height={16} borderRadius={4} />
-                    </View>
-                    <View className="flex-1 gap-y-2">
-                      <Skeleton width={60} height={10} borderRadius={4} />
-                      <Skeleton width={80} height={16} borderRadius={4} />
-                    </View>
-                  </View>
-                </View>
+                <StockSkeleton />
               ) : (
                 <View>
                   <StockMovementDetails
                     itemsSold={inventoryMovement.itemsSold}
                     lowStockCount={inventoryMovement.lowStockCount}
                     outOfStockCount={inventoryMovement.outOfStockCount}
-                    fastMoving={fastMovingProducts}
+                    fastMoving={topProducts}
                     slowMoving={slowMovingProducts}
                   />
 
@@ -628,7 +652,7 @@ function ReportsScreen() {
                         variant="semibold"
                         className="text-sm text-cinnamon-700 mb-1"
                       >
-                        At cost
+                        {t('common:reports.stock.atCost')}
                       </StyledText>
                       <MoneyText
                         value={inventoryValue.currentStockValue}
@@ -642,8 +666,11 @@ function ReportsScreen() {
                             variant="medium"
                             className="text-ink-500 text-xs mt-1"
                           >
-                            {Math.round(inventoryValue.costCoverage * 100)}%
-                            cost coverage
+                            {t('common:reports.stock.coverage', {
+                              pct: Math.round(
+                                inventoryValue.costCoverage * 100,
+                              ),
+                            })}
                           </StyledText>
                         )}
                     </View>
@@ -652,7 +679,7 @@ function ReportsScreen() {
                         variant="semibold"
                         className="text-sm text-sage-700 mb-1"
                       >
-                        At retail
+                        {t('common:reports.stock.atRetail')}
                       </StyledText>
                       <MoneyText
                         value={inventoryValue.potentialSalesValue}
@@ -664,12 +691,11 @@ function ReportsScreen() {
                         variant="medium"
                         className="text-ink-500 text-xs mt-1"
                       >
-                        Potential takings
+                        {t('common:reports.stock.retailNote')}
                       </StyledText>
                     </View>
                   </View>
 
-                  {/* Low stock alert */}
                   {lowStockItems.length > 0 && (
                     <View className="mt-4 rounded-xl border border-semantic-warning p-3 bg-semantic-warning-50">
                       <View className="flex-row items-center mb-2">
@@ -684,9 +710,9 @@ function ReportsScreen() {
                           variant="extrabold"
                           className="text-sm text-ink-900"
                         >
-                          {`Low stock: ${lowStockItems.length} ${
-                            lowStockItems.length === 1 ? 'item' : 'items'
-                          }`}
+                          {t('common:reports.stock.lowStock', {
+                            count: lowStockItems.length,
+                          })}
                         </StyledText>
                       </View>
                       {lowStockItems.slice(0, 4).map((item) => (
@@ -706,10 +732,12 @@ function ReportsScreen() {
                             className={`text-sm ${
                               item.quantity === 0
                                 ? 'text-semantic-danger'
-                                : 'text-semantic-warning'
+                                : 'text-semantic-warning-700'
                             }`}
                           >
-                            {item.quantity} left
+                            {t('common:reports.stock.left', {
+                              count: item.quantity,
+                            })}
                           </StyledText>
                         </View>
                       ))}
@@ -721,47 +749,31 @@ function ReportsScreen() {
           </Prof>
         </View>
 
-        {/* ─── Suki Credit Aging ─────────────────────────────── */}
+        {/* Utang aging */}
         <View className="px-5 mt-6">
           <Prof id="Reports:Section4">
             <CollapsibleSection
-              id="aging"
-              title="Utang aging"
-              subtitle="How long each suki has owed you"
+              {...sectionProps('aging')}
               tone="cinnamon"
               icon={
                 <FontAwesome name="hourglass-half" size={16} color="#391C0A" />
               }
-              defaultExpanded={requestedSection === 'aging'}
             >
               {isCreditAgingLoading ? (
-                <View className="py-2 gap-y-4">
-                  <Skeleton width="100%" height={140} borderRadius={12} />
-                  <View className="flex-row gap-3">
-                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
-                      <Skeleton width={60} height={10} borderRadius={4} />
-                      <Skeleton width={80} height={16} borderRadius={4} />
-                    </View>
-                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-paper-50 gap-y-2">
-                      <Skeleton width={60} height={10} borderRadius={4} />
-                      <Skeleton width={80} height={16} borderRadius={4} />
-                    </View>
-                  </View>
-                </View>
+                <AgingSkeleton />
               ) : (
                 <View>
                   <CreditAgingChart
                     buckets={agingBuckets}
                     totalOutstanding={creditsOverview.outstanding}
                   />
-
                   <View className="mt-4 flex-row gap-3">
                     <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-semantic-danger-50/30">
                       <StyledText
                         variant="semibold"
                         className="text-sm text-ink-700"
                       >
-                        Utang given
+                        {t('common:reports.aging.given')}
                       </StyledText>
                       <MoneyText
                         value={creditsOverview.issued}
@@ -775,7 +787,7 @@ function ReportsScreen() {
                         variant="semibold"
                         className="text-sm text-ink-700"
                       >
-                        Collected
+                        {t('common:reports.aging.collected')}
                       </StyledText>
                       <MoneyText
                         value={creditsOverview.collected}
@@ -791,42 +803,23 @@ function ReportsScreen() {
           </Prof>
         </View>
 
-        {/* ─── Cashbook History ──────────────────────────────── */}
+        {/* Cash drawer history */}
         <View className="px-5 mt-6">
           <Prof id="Reports:Section5">
             <CollapsibleSection
-              id="cashbook"
-              title="Cash drawer history"
-              subtitle="Daily drawer counts and any shortage or overage"
+              {...sectionProps('cashbook')}
               tone="cinnamon"
               icon={<FontAwesome name="book" size={16} color="#391C0A" />}
-              defaultExpanded={requestedSection === 'cashbook'}
             >
-              {isSessionsLoading ? (
-                <View className="py-2 gap-y-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <View
-                      key={`session-skel-${i}`}
-                      className="border border-ink-200 rounded-xl bg-paper-50 p-4 gap-y-2"
-                    >
-                      <View className="flex-row justify-between items-center">
-                        <Skeleton width={100} height={16} borderRadius={4} />
-                        <Skeleton width={50} height={18} borderRadius={10} />
-                      </View>
-                      <View className="flex-row gap-3">
-                        <Skeleton width={90} height={12} borderRadius={4} />
-                        <Skeleton width={90} height={12} borderRadius={4} />
-                      </View>
-                    </View>
-                  ))}
-                </View>
+              {sessionsQuery.isLoading ? (
+                <SessionsSkeleton />
               ) : filteredSessions.length === 0 ? (
                 <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
                   <StyledText
                     variant="regular"
-                    className="text-ink-400 text-sm"
+                    className="text-ink-500 text-sm"
                   >
-                    No past drawer sessions in this period.
+                    {t('common:reports.cashbook.empty')}
                   </StyledText>
                 </View>
               ) : (
@@ -840,23 +833,57 @@ function ReportsScreen() {
           </Prof>
         </View>
       </RefreshableScrollView>
+
+      <Sheet
+        visible={explainKey !== null}
+        onClose={() => setExplainKey(null)}
+        title={t(EXPLAIN_TITLE[shownExplainKey])}
+      >
+        <View className="gap-y-3 pb-2">
+          <StyledText
+            variant="medium"
+            className="text-base text-ink-800 leading-6"
+          >
+            {t(`common:reports.explain.${shownExplainKey}`)}
+          </StyledText>
+          {shownExplainKey === 'profit' && (
+            <StyledText
+              variant="medium"
+              className="text-base text-ink-800 leading-6"
+            >
+              {t('common:reports.explain.flow')}
+            </StyledText>
+          )}
+          <Pressable
+            onPress={() => setExplainKey(null)}
+            accessibilityRole="button"
+            className="mt-2 h-12 rounded-xl bg-ink-900 items-center justify-center active:opacity-80"
+          >
+            <StyledText variant="extrabold" className="text-paper-50 text-base">
+              {t('common:reports.explain.close')}
+            </StyledText>
+          </Pressable>
+        </View>
+      </Sheet>
     </View>
   );
 }
 
-function CashSessionRow({ session }: { session: any }) {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+function CashSessionRow({ session }: { session: CashSession }) {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
   const { data: entries = [], isLoading } = useCashEntries(
     isExpanded ? session.id : undefined,
   );
 
   return (
     <View className="mb-3 border border-ink-200 rounded-xl bg-paper-50 p-4">
-      {/* Clickable Header to Expand/Collapse */}
       <Pressable
-        onPress={() => setIsExpanded(!isExpanded)}
+        onPress={() => setIsExpanded((v) => !v)}
         accessibilityRole="button"
-        accessibilityLabel={`${session.businessDate} cash session`}
+        accessibilityLabel={t('common:reports.cashbook.sessionA11y', {
+          date: session.businessDate,
+        })}
         accessibilityState={{ expanded: isExpanded }}
         className="flex-row justify-between items-center"
       >
@@ -871,22 +898,28 @@ function CashSessionRow({ session }: { session: any }) {
               }`}
             >
               <StyledText variant="semibold" className="text-xs text-white">
-                {session.status}
+                {t(`common:reports.cashbook.status.${session.status}`)}
               </StyledText>
             </View>
           </View>
           <View className="flex-row mt-1.5 gap-x-3 gap-y-1 flex-wrap">
             <StyledText variant="regular" className="text-xs text-ink-500">
-              Opened: {formatPesos(session.openingCash)}
+              {t('common:reports.cashbook.opened', {
+                amount: formatPesos(session.openingCash),
+              })}
             </StyledText>
             {session.actualCash !== null && (
               <StyledText variant="regular" className="text-xs text-ink-500">
-                Counted: {formatPesos(session.actualCash)}
+                {t('common:reports.cashbook.counted', {
+                  amount: formatPesos(session.actualCash),
+                })}
               </StyledText>
             )}
             {session.expectedCash !== null && (
               <StyledText variant="regular" className="text-xs text-ink-500">
-                Expected: {formatPesos(session.expectedCash)}
+                {t('common:reports.cashbook.expected', {
+                  amount: formatPesos(session.expectedCash),
+                })}
               </StyledText>
             )}
           </View>
@@ -898,8 +931,9 @@ function CashSessionRow({ session }: { session: any }) {
               variant="semibold"
               className={`text-xs ${session.variance >= 0 ? 'text-sage-600' : 'text-semantic-danger'}`}
             >
-              Var: {session.variance >= 0 ? '+' : ''}
-              {formatPesos(session.variance)}
+              {t('common:reports.cashbook.variance', {
+                amount: `${session.variance >= 0 ? '+' : ''}${formatPesos(session.variance)}`,
+              })}
             </StyledText>
           )}
         </View>
@@ -911,42 +945,36 @@ function CashSessionRow({ session }: { session: any }) {
         />
       </Pressable>
 
-      {/* Expanded Section showing entries */}
       {isExpanded && (
         <View className="mt-4 pt-3 border-t border-dashed border-ink-200">
           <StyledText variant="semibold" className="text-ink-600 text-xs mb-2">
-            Manual Movements ({entries.length})
+            {t('common:reports.cashbook.movements', { count: entries.length })}
           </StyledText>
           {isLoading ? (
-            <View className="py-2 gap-y-2">
-              <Skeleton width="100%" height={20} borderRadius={4} />
-              <Skeleton width="100%" height={20} borderRadius={4} />
-            </View>
+            <SessionsSkeleton />
           ) : entries.length === 0 ? (
             <StyledText
               variant="regular"
               className="text-ink-500 text-xs italic py-1"
             >
-              No manual cash movements recorded.
+              {t('common:reports.cashbook.noMovements')}
             </StyledText>
           ) : (
-            <View className="space-y-1.5">
-              {entries.map((entry) => (
-                <View
-                  key={entry.id}
-                  className="flex-row justify-between items-center py-1"
-                >
-                  <View className="flex-1 mr-2">
-                    <View className="flex-row items-center gap-1.5 flex-wrap">
+            <View className="gap-y-1.5">
+              {entries.map((entry) => {
+                const isIn = entry.type === 'owner_addition';
+                const tone = isIn ? 'text-sage-600' : 'text-semantic-danger';
+                return (
+                  <View
+                    key={entry.id}
+                    className="flex-row justify-between items-center py-1"
+                  >
+                    <View className="flex-1 mr-2 flex-row items-center gap-1.5 flex-wrap">
                       <StyledText
                         variant="semibold"
-                        className={`text-xs ${
-                          entry.type === 'owner_addition'
-                            ? 'text-sage-600'
-                            : 'text-semantic-danger'
-                        }`}
+                        className={`text-xs ${tone}`}
                       >
-                        {entry.type.replace('_', ' ')}
+                        {t(`common:reports.cashbook.type.${entry.type}`)}
                       </StyledText>
                       <StyledText
                         variant="regular"
@@ -955,20 +983,13 @@ function CashSessionRow({ session }: { session: any }) {
                         {entry.notes}
                       </StyledText>
                     </View>
+                    <StyledText variant="medium" className={`text-xs ${tone}`}>
+                      {isIn ? '+' : '-'}
+                      {formatPesos(entry.amount)}
+                    </StyledText>
                   </View>
-                  <StyledText
-                    variant="medium"
-                    className={`text-xs ${
-                      entry.type === 'owner_addition'
-                        ? 'text-sage-600'
-                        : 'text-semantic-danger'
-                    }`}
-                  >
-                    {entry.type === 'owner_addition' ? '+' : '-'}
-                    {formatPesos(entry.amount)}
-                  </StyledText>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
         </View>

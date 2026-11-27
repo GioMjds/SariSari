@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
 import { TopSellingProduct } from '@/types';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 type TopProductsListProps = {
@@ -19,18 +20,15 @@ export const TopProductsList = memo(function TopProductsList({
   products,
   maxValue,
 }: TopProductsListProps) {
+  const { t } = useTranslation();
   if (products.length === 0) {
     return (
       <View className="py-4 items-center">
-        <StyledText
-          variant="extrabold"
-          className="text-label text-ink-300 mb-1"
-          style={{ letterSpacing: 1.6 }}
-        >
-          NO TOP SELLERS YET
+        <StyledText variant="extrabold" className="text-sm text-ink-500 mb-1">
+          {t('common:reports.top.emptyTitle')}
         </StyledText>
-        <StyledText variant="medium" className="text-ink-400 text-xs">
-          Once sales come in, they&apos;ll rank here.
+        <StyledText variant="medium" className="text-ink-500 text-xs">
+          {t('common:reports.top.emptyBody')}
         </StyledText>
       </View>
     );
@@ -81,10 +79,9 @@ export const TopProductsList = memo(function TopProductsList({
                   </StyledText>
                   <StyledText
                     variant="medium"
-                    className="text-ink-500 text-[10px] mt-0.5"
+                    className="text-ink-500 text-xs mt-0.5"
                   >
-                    {product.unitsSold}{' '}
-                    {product.unitsSold === 1 ? 'unit' : 'units'} moved out
+                    {t('common:reports.top.units', { count: product.unitsSold })}
                   </StyledText>
                 </View>
               </View>
