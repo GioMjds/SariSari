@@ -4,6 +4,19 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-27: Sale details (resibo) redesign
+
+- The hero now leads with the amount, then a status line with an icon (paid in cash, added to a customer's utang, or voided) and a relative time ("Today", "Yesterday"). The repeated "Paid in Full" title and Payment row are gone.
+- One ref format everywhere: `formatReceiptRef` (`SR-0123`), the same as the receipts list.
+- Voided and refunded sales show the reason, who did it, the note, and when, from `useSaleCorrections`. Price-corrected sales, which edit in place and are never cancelled, now show a notice, and each changed line shows the old price struck through.
+- The customer block links to `credit-details/{customer_credit_id}` when the sale has a linked customer.
+- Item rows have a qty column. The total is a receipt-style row under a double rule.
+- Profit: a "Show profit" row, collapsed on every visit, uses `saleProfit` in `utils/saleItems.ts` (the same formula as reports). Lines without a cost are counted and called out. Profit is never in the shared resibo.
+- Footer: "Share resibo" (primary) and "Fix sale" (secondary). Fix sale opens a sheet that explains void, refund, and edit price. Void and refund are disabled with a reason once `void_window_hours` has passed.
+- Delete moved from the header into a More sheet, with a two-step inline confirm, then the owner PIN (new `sale_delete` PIN action, on by default). Delete is hidden for sales with any correction, because `sale_corrections` references the sale and `deleteSale` would fail on the foreign key. More also has "Copy reference no.".
+- Share: `lib/saleReceipt.ts` builds a text resibo (React Native Share, with a clipboard fallback) and a black-and-white 80mm PDF (expo-print, then expo-sharing).
+- `SheetActionRow` gained an optional `disabled` prop.
+
 ## 2026-11-27: Home audit fixes
 
 - Errors: `isError` now also covers credit KPIs and cash entries, so a failed read shows the error state instead of zeros and "All caught up". A failed 7-day trend hides the chart instead of drawing empty bars.
@@ -926,3 +939,26 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - All Reports copy moved to the `reports` object in `locales/{en,tl}/common.json`, including the shared `DateRangeSelector`. Insight titles and messages still come in English from `getReportInsights`, and aging bucket labels come from the database.
 - Text below 12px was raised to 12px in report components. Dead `text-sage-800/900` classes were replaced.
 - Not verified on a device. No screenshots or video, because no emulator or adb was available.
+
+## 2026-11-27 - Receipts screen redesign
+
+- Receipts list now groups receipts by day, with each day's cash and utang totals.
+- The single "Sum" is replaced by a summary card that splits cash received from utang given.
+- Voided, refunded, and price-corrected receipts show a status badge and a struck-through total, and are left out of all totals.
+- SaleRow is now a compact 3-line ledger row that lies flat (no shadow) and uses sage and warning tokens.
+- Quick filter chips (Cash, Utang, Today, Last 7 Days, This Month) sit under search.
+- Receipt refs use one format, `SR-0042`, via `formatReceiptRef` in `utils/receipts.ts`, on both list and details.
+- Search accepts `#SR-0042`, `sr-42`, or `42`.
+- Decision: day totals cover the whole filtered set, so a day split across pages still shows its full total.
+
+## 2026-11-27 - Receipts audit fixes (harden, polish, typeset, optimize, adapt, animate)
+
+- Pager no longer covers the last receipt: list padding grows when the pager shows, and the pager stops counting the safe-area inset twice.
+- Receipts load errors show a retry state instead of the empty "Wala pang resibo" state.
+- Filter sheet now uses the shared `Sheet` (slide up, swipe down, labelled close, Reduce Motion) with radio roles and selected states; it resyncs with the quick chips on open.
+- Persimmon 600 fills on Apply filters, New Sale, and Try again; "Credit Only" renamed "Utang only".
+- `label-caps` raised from 10px to 11px app-wide; chips grow with font scale; row line 1 truncates instead of colliding.
+- Search uses `useDeferredValue`; day grouping pushes into arrays instead of copying.
+- List content capped at 640 wide and centered on iPad; taps go through while the keyboard is open.
+- Skeleton pulse and shimmer stop under Reduce Motion.
+- Decision: dark mode skipped; it needs an app-wide pass.

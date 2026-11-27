@@ -28,7 +28,7 @@ fontWeight: '400'
 lineHeight: 1.5
 label:
 fontFamily: 'StackSansText-Bold'
-fontSize: '10px'
+fontSize: '11px'
 fontWeight: '700'
 lineHeight: 1.3
 letterSpacing: '0.14em'
