@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   SectionList,
   RefreshControl,
-  Platform,
   StyleSheet,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -139,7 +138,8 @@ export const LedgerList = memo(function LedgerList({
       initialNumToRender={12}
       maxToRenderPerBatch={10}
       windowSize={9}
-      removeClippedSubviews={Platform.OS === 'android'}
+      // Clipping desyncs Fabric child indexes on Android and crashes addViewAt.
+      removeClippedSubviews={false}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.4}
       ListFooterComponent={

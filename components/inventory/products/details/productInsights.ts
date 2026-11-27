@@ -29,13 +29,17 @@ export function computeProductInsights(
   for (const tx of transactions) {
     const time = parseLedgerDate(tx.timestamp)?.getTime();
     if (time === undefined) continue;
-    if (tx.type === 'sale' && time >= since && time <= now) sold28 += tx.quantity;
+    if (tx.type === 'sale' && time >= since && time <= now)
+      sold28 += tx.quantity;
     if (tx.type !== 'restock') continue;
     if (lastRestockAt === null || time > lastRestockAt) {
       lastRestockAt = time;
       lastRestockQty = tx.quantity;
     }
-    if (tx.unit_cost != null && (lastUnitCostAt === null || time > lastUnitCostAt)) {
+    if (
+      tx.unit_cost != null &&
+      (lastUnitCostAt === null || time > lastUnitCostAt)
+    ) {
       lastUnitCost = tx.unit_cost;
       lastUnitCostAt = time;
     }
@@ -49,7 +53,14 @@ export function computeProductInsights(
           Math.max(1, Math.floor(quantity / (sold28 / SALES_WINDOW_DAYS)))
         : null;
 
-  return { sold28, daysLeft, lastRestockAt, lastRestockQty, lastUnitCost, lastUnitCostAt };
+  return {
+    sold28,
+    daysLeft,
+    lastRestockAt,
+    lastRestockQty,
+    lastUnitCost,
+    lastUnitCostAt,
+  };
 }
 
 // Margin is profit as a share of the selling price; null when price is zero.

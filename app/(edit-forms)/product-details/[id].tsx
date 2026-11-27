@@ -1,6 +1,7 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -22,7 +23,10 @@ import { Modal } from '@/components/ui';
 import { InventoryErrorState } from '@/components/inventory';
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { buildLedgerRows } from '@/components/inventory/ledger/ledgerMath';
-import type { InventoryEventType, InventoryTransaction } from '@/types/inventory.types';
+import type {
+  InventoryEventType,
+  InventoryTransaction,
+} from '@/types/inventory.types';
 import {
   computeProductInsights,
   ProductActionBar,
@@ -36,7 +40,18 @@ import {
   type ProductDetailTab,
 } from '@/components/inventory/products/details';
 
-const SCROLL_CONTENT_STYLE = { paddingTop: 8, paddingBottom: 24 } as const;
+// Tablets and landscape get one centered column instead of a stretched phone layout.
+const MAX_CONTENT_WIDTH = 640;
+const FRAME_STYLE = {
+  width: '100%',
+  maxWidth: MAX_CONTENT_WIDTH,
+  alignSelf: 'center',
+} as const;
+const SCROLL_CONTENT_STYLE = {
+  ...FRAME_STYLE,
+  paddingTop: 8,
+  paddingBottom: 24,
+} as const;
 // Scroll distance after which the hero's product name has left the screen.
 const TITLE_SWAP_OFFSET = 96;
 const EMPTY_TRANSACTIONS: InventoryTransaction[] = [];
@@ -67,12 +82,18 @@ function ProductDetailsPage() {
   const [logFormOpen, setLogFormOpen] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
   const showTitleRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollYRef = useRef(0);
+  const tabsYRef = useRef(0);
 
   const transactions = transactionsQuery.data ?? EMPTY_TRANSACTIONS;
   const quantity = product?.quantity ?? 0;
   const unitLabel = product?.retail_unit_name || t('ledgerUnitDefault');
 
-  const rows = useMemo(() => buildLedgerRows(transactions, quantity), [transactions, quantity]);
+  const rows = useMemo(
+    () => buildLedgerRows(transactions, quantity),
+    [transactions, quantity],
+  );
   const insights = useMemo(
     () => computeProductInsights(transactions, quantity),
     [transactions, quantity],
@@ -87,12 +108,14 @@ function ProductDetailsPage() {
   const productId = product?.id;
   const handleEdit = useCallback(() => {
     tapHaptic();
-    if (productId != null) router.push(`/(edit-forms)/edit-product/${productId}` as Href);
+    if (productId != null)
+      router.push(`/(edit-forms)/edit-product/${productId}` as Href);
   }, [productId]);
 
   const handleOpenLedger = useCallback(() => {
     tapHaptic();
-    if (productId != null) router.push(`/(edit-forms)/inventory-ledger/${productId}` as Href);
+    if (productId != null)
+      router.push(`/(edit-forms)/inventory-ledger/${productId}` as Href);
   }, [productId]);
 
   const openLogForm = useCallback((type: InventoryEventType) => {
@@ -100,9 +123,18 @@ function ProductDetailsPage() {
     setLogFormType(type);
     setLogFormOpen(true);
   }, []);
-  const handleRestock = useCallback(() => openLogForm('restock'), [openLogForm]);
-  const handleAdjust = useCallback(() => openLogForm('adjustment'), [openLogForm]);
-  const handleDamaged = useCallback(() => openLogForm('damaged'), [openLogForm]);
+  const handleRestock = useCallback(
+    () => openLogForm('restock'),
+    [openLogForm],
+  );
+  const handleAdjust = useCallback(
+    () => openLogForm('adjustment'),
+    [openLogForm],
+  );
+  const handleDamaged = useCallback(
+    () => openLogForm('damaged'),
+    [openLogForm],
+  );
   const handleCloseLogForm = useCallback(() => setLogFormOpen(false), []);
 
   const { refetch: refetchProduct } = productQuery;
@@ -124,7 +156,20 @@ function ProductDetailsPage() {
     setActiveTab(next);
   }, []);
 
-  const handleSeeAllMovements = useCallback(() => handleTabChange('movements'), [handleTabChange]);
+  // Bring the tab strip back into view when the jump starts from further down the page.
+  const handleSeeAllMovements = useCallback(() => {
+    handleTabChange('movements');
+    if (scrollYRef.current > tabsYRef.current) {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, tabsYRef.current - 8),
+        animated: true,
+      });
+    }
+  }, [handleTabChange]);
+
+  const handleTabsLayout = useCallback((e: LayoutChangeEvent) => {
+    tabsYRef.current = e.nativeEvent.layout.y;
+  }, []);
 
   const handleDelete = useCallback(() => setDeleteModalOpen(true), []);
   const handleCloseDelete = useCallback(() => setDeleteModalOpen(false), []);
@@ -148,18 +193,29 @@ function ProductDetailsPage() {
   }, [product, runWithPinGuard, deleteProductMutation, t]);
 
   // Re-renders only when the threshold is crossed, not on every scroll frame.
-  const handleScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const next = e.nativeEvent.contentOffset.y > TITLE_SWAP_OFFSET;
-    if (next !== showTitleRef.current) {
-      showTitleRef.current = next;
-      setShowTitle(next);
-    }
-  }, []);
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      scrollYRef.current = e.nativeEvent.contentOffset.y;
+      const next = scrollYRef.current > TITLE_SWAP_OFFSET;
+      if (next !== showTitleRef.current) {
+        showTitleRef.current = next;
+        setShowTitle(next);
+      }
+    },
+    [],
+  );
 
   const hasProduct = !!product;
   const topBar = (
-    <View className="flex-row items-center justify-between px-4 pt-2 pb-2">
-      <IconButton icon="arrow-back" label={t('ledgerBack')} onPress={handleBack} />
+    <View
+      className="flex-row items-center justify-between px-4 pt-2 pb-2"
+      style={FRAME_STYLE}
+    >
+      <IconButton
+        icon="arrow-back"
+        label={t('ledgerBack')}
+        onPress={handleBack}
+      />
       <StyledText
         variant="extrabold"
         accessibilityRole="header"
@@ -169,7 +225,11 @@ function ProductDetailsPage() {
         {showTitle && product ? product.name : t('details_title')}
       </StyledText>
       {hasProduct ? (
-        <IconButton icon="create-outline" label={t('details_edit')} onPress={handleEdit} />
+        <IconButton
+          icon="create-outline"
+          label={t('details_edit')}
+          onPress={handleEdit}
+        />
       ) : (
         <View className="w-11 h-11" />
       )}
@@ -183,7 +243,7 @@ function ProductDetailsPage() {
     body = (
       <InventoryErrorState
         title={t('details_loadErrorTitle')}
-        message={productQuery.error.message || t('errorUnknown')}
+        message={t('details_loadErrorBody')}
         onRetry={refetchProduct}
       />
     );
@@ -192,12 +252,18 @@ function ProductDetailsPage() {
       <View className="flex-1 justify-center items-center px-6">
         <View className="w-full bg-paper-50 rounded-2xl p-6 border border-ink-100 items-center">
           <View className="w-14 h-14 rounded-full bg-paper-100 items-center justify-center">
-            <Ionicons name="cube-outline" size={28} color="#7A7165" />
+            <Ionicons name="cube-outline" size={28} className="text-ink-400" />
           </View>
-          <StyledText variant="black" className="text-ink-900 text-xl mt-3 text-center">
+          <StyledText
+            variant="black"
+            className="text-ink-900 text-xl mt-3 text-center"
+          >
             {t('details_notFoundTitle')}
           </StyledText>
-          <StyledText variant="regular" className="text-ink-600 text-sm mt-1 text-center">
+          <StyledText
+            variant="regular"
+            className="text-ink-600 text-sm mt-1 text-center"
+          >
             {t('details_notFoundBody')}
           </StyledText>
           <Pressable
@@ -215,6 +281,7 @@ function ProductDetailsPage() {
   } else {
     body = (
       <ScrollView
+        ref={scrollRef}
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={SCROLL_CONTENT_STYLE}
@@ -222,17 +289,27 @@ function ProductDetailsPage() {
         scrollEventThrottle={32}
         refreshControl={
           <RefreshControl
-            refreshing={productQuery.isRefetching || transactionsQuery.isRefetching}
+            refreshing={
+              productQuery.isRefetching || transactionsQuery.isRefetching
+            }
             onRefresh={handleRefresh}
             tintColor="#E85A1F"
             colors={['#E85A1F']}
           />
         }
       >
-        <ProductDetailsHero product={product} insights={insights} unitLabel={unitLabel} />
+        <ProductDetailsHero
+          product={product}
+          insights={insights}
+          unitLabel={unitLabel}
+        />
 
-        <View className="px-4 mt-5">
-          <ProductDetailsTabs activeTab={activeTab} onChange={handleTabChange} counts={tabCounts} />
+        <View className="px-4 mt-5" onLayout={handleTabsLayout}>
+          <ProductDetailsTabs
+            activeTab={activeTab}
+            onChange={handleTabChange}
+            counts={tabCounts}
+          />
         </View>
 
         <View className="mt-4">
@@ -256,7 +333,11 @@ function ProductDetailsPage() {
             />
           )}
           {activeTab === 'pricing' && (
-            <ProductPricingTab product={product} insights={insights} unitLabel={unitLabel} />
+            <ProductPricingTab
+              product={product}
+              insights={insights}
+              unitLabel={unitLabel}
+            />
           )}
           {activeTab === 'supplier' && (
             <ProductSupplierTab
@@ -273,18 +354,30 @@ function ProductDetailsPage() {
   }
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View
+      className="flex-1 bg-background"
+      style={{
+        paddingTop: insets.top,
+        paddingLeft: insets.left,
+        paddingRight: insets.right,
+      }}
+    >
       {topBar}
       {body}
 
       {product && (
         <>
-          <View className="bg-paper-50" style={{ paddingBottom: insets.bottom }}>
-            <ProductActionBar
-              onRestock={handleRestock}
-              onAdjust={handleAdjust}
-              onDamaged={handleDamaged}
-            />
+          <View
+            className="bg-paper-50 border-t border-ink-100"
+            style={{ paddingBottom: insets.bottom }}
+          >
+            <View style={FRAME_STYLE}>
+              <ProductActionBar
+                onRestock={handleRestock}
+                onAdjust={handleAdjust}
+                onDamaged={handleDamaged}
+              />
+            </View>
           </View>
 
           <LogTransactionForm
@@ -303,8 +396,16 @@ function ProductDetailsPage() {
             title={t('deleteTitle')}
             description={`${t('deleteBody', { name: product.name })}\n${t('deleteWarning')}`}
             buttons={[
-              { text: t('cancel'), style: 'cancel', onPress: handleCloseDelete },
-              { text: t('deleteConfirm'), style: 'destructive', onPress: handleConfirmDelete },
+              {
+                text: t('cancel'),
+                style: 'cancel',
+                onPress: handleCloseDelete,
+              },
+              {
+                text: t('deleteConfirm'),
+                style: 'destructive',
+                onPress: handleConfirmDelete,
+              },
             ]}
             loading={deleteProductMutation.isPending}
           />
@@ -331,7 +432,7 @@ function IconButton({
       hitSlop={8}
       className="w-11 h-11 items-center justify-center rounded-full bg-paper-100 border border-ink-100 active:opacity-70"
     >
-      <Ionicons name={icon} size={20} color="#0E0C0A" />
+      <Ionicons name={icon} size={20} className="text-ink-900" />
     </Pressable>
   );
 }

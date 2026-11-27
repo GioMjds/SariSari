@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { View, Pressable, Linking } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
@@ -34,12 +34,20 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
 
   if (isLoading) {
     return (
-      <View className="mx-4 p-5 bg-paper-50 rounded-2xl border border-ink-100" accessibilityState={{ busy: true }}>
+      <View
+        className="mx-4 p-5 bg-paper-50 rounded-2xl border border-ink-100"
+        accessibilityState={{ busy: true }}
+      >
         <View className="flex-row items-center">
           <Skeleton width={48} height={48} borderRadius={12} />
           <View className="ml-4 flex-1">
             <Skeleton width="60%" height={16} borderRadius={4} />
-            <Skeleton width="35%" height={12} borderRadius={4} style={{ marginTop: 8 }} />
+            <Skeleton
+              width="35%"
+              height={12}
+              borderRadius={4}
+              style={{ marginTop: 8 }}
+            />
           </View>
         </View>
         <Skeleton height={48} borderRadius={12} style={{ marginTop: 20 }} />
@@ -51,10 +59,16 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
     return (
       <View className="mx-4 items-center px-6 py-8 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
         <SariMascot state="inventory" size={96} style={{ marginBottom: 12 }} />
-        <StyledText variant="extrabold" className="text-ink-900 text-lg text-center">
+        <StyledText
+          variant="extrabold"
+          className="text-ink-900 text-lg text-center"
+        >
           {t('details_noSupplierTitle')}
         </StyledText>
-        <StyledText variant="regular" className="text-ink-600 text-sm text-center mt-1 leading-5">
+        <StyledText
+          variant="regular"
+          className="text-ink-600 text-sm text-center mt-1 leading-5"
+        >
           {t('details_noSupplierBody')}
         </StyledText>
         <Pressable
@@ -62,8 +76,11 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
           accessibilityRole="button"
           className="mt-5 min-h-[48px] px-6 bg-persimmon-500 rounded-xl flex-row items-center justify-center active:bg-persimmon-700"
         >
-          <FontAwesome name="link" size={14} color="#FBF7EE" />
-          <StyledText variant="extrabold" className="text-paper-50 text-sm ml-2">
+          <Ionicons name="link-outline" size={16} className="text-paper-50" />
+          <StyledText
+            variant="extrabold"
+            className="text-paper-50 text-sm ml-2"
+          >
             {t('details_linkSupplier')}
           </StyledText>
         </Pressable>
@@ -80,13 +97,22 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
     <View className="mx-4 bg-paper-50 rounded-2xl border border-ink-100 p-5">
       <View className="flex-row items-center">
         <View className="w-12 h-12 rounded-xl bg-cinnamon-50 items-center justify-center mr-4">
-          <Ionicons name="business" size={24} color="#623418" />
+          <Ionicons name="business" size={24} className="text-cinnamon-500" />
         </View>
         <View className="flex-1">
-          <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-lg" numberOfLines={2}>
+          <StyledText
+            variant="extrabold"
+            accessibilityRole="header"
+            className="text-ink-900 text-lg"
+            numberOfLines={2}
+          >
             {supplier.name}
           </StyledText>
-          <StyledText variant="medium" className="text-ink-600 text-sm mt-0.5" style={{ fontVariant: ['tabular-nums'] }}>
+          <StyledText
+            variant="medium"
+            className="text-ink-600 text-sm mt-0.5"
+            style={{ fontVariant: ['tabular-nums'] }}
+          >
             {contact || t('details_noContact')}
           </StyledText>
         </View>
@@ -113,10 +139,17 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
         <StyledText variant="semibold" className="text-ink-500 text-xs">
           {t('details_lastDelivery')}
         </StyledText>
-        <StyledText variant="semibold" className="text-ink-900 text-sm mt-0.5" style={{ fontVariant: ['tabular-nums'] }}>
+        <StyledText
+          variant="semibold"
+          className="text-ink-900 text-sm mt-0.5"
+          style={{ fontVariant: ['tabular-nums'] }}
+        >
           {insights.lastRestockAt !== null && insights.lastRestockQty !== null
             ? t('details_onDate', {
-                value: t('details_qtyUnit', { count: insights.lastRestockQty, unit: unitLabel }),
+                value: t('details_qtyUnit', {
+                  count: insights.lastRestockQty,
+                  unit: unitLabel,
+                }),
                 date: format(insights.lastRestockAt, 'MMM d'),
               })
             : t('details_never')}
@@ -127,7 +160,10 @@ export const ProductSupplierTab = memo(function ProductSupplierTab({
         <StyledText variant="semibold" className="text-ink-500 text-xs">
           {t('details_supplierNotes')}
         </StyledText>
-        <StyledText variant="regular" className={`text-sm mt-0.5 leading-5 ${notes ? 'text-ink-900' : 'text-ink-500'}`}>
+        <StyledText
+          variant="regular"
+          className={`text-sm mt-0.5 leading-5 ${notes ? 'text-ink-900' : 'text-ink-500'}`}
+        >
           {notes || t('details_noNotes')}
         </StyledText>
       </View>
@@ -163,7 +199,7 @@ function ContactButton({
       accessibilityLabel={a11y}
       className="flex-1 min-h-[48px] bg-paper-100 border border-ink-200 rounded-xl flex-row items-center justify-center active:opacity-80"
     >
-      <Ionicons name={icon} size={16} color="#623418" />
+      <Ionicons name={icon} size={16} className="text-cinnamon-500" />
       <StyledText variant="extrabold" className="text-ink-900 text-sm ml-2">
         {label}
       </StyledText>

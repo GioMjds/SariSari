@@ -297,5 +297,7 @@
   "details_noNotes": "Walang naka-save na tala.",
   "details_lastDelivery": "Huling dagdag-stock",
   "details_contactFailed": "Hindi mabuksan ang phone app. Tingnan ang numero.",
+  "details_loadErrorBody": "Hindi na-load ang produkto. Tingnan kung may espasyo ang phone, saka subukan ulit.",
+  "details_notEnoughSales": "Kulang pa ang benta para matantiya",
   "details_qtyUnit": "{{count}} {{unit}}"
 }

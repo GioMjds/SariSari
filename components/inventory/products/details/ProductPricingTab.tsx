@@ -9,7 +9,9 @@ import { formatPesos } from '@/lib/money';
 import type { Product } from '@/types';
 import { marginPercent, type ProductInsights } from './productInsights';
 
-const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
+const TABULAR = StyleSheet.create({
+  nums: { fontVariant: ['tabular-nums'] },
+}).nums;
 
 interface ProductPricingTabProps {
   product: Product;
@@ -35,7 +37,11 @@ export const ProductPricingTab = memo(function ProductPricingTab({
         cost={product.cost_price ?? null}
       >
         {insights.lastUnitCost !== null && insights.lastUnitCostAt !== null && (
-          <StyledText variant="medium" className="text-ink-600 text-xs mt-3" style={TABULAR}>
+          <StyledText
+            variant="medium"
+            className="text-ink-600 text-xs mt-3"
+            style={TABULAR}
+          >
             {`${t('details_lastPaid')}: ${t('details_onDate', {
               value: formatPesos(insights.lastUnitCost),
               date: format(insights.lastUnitCostAt, 'MMM d'),
@@ -52,10 +58,22 @@ export const ProductPricingTab = memo(function ProductPricingTab({
         >
           {factor > 0 && (
             <View className="mt-3 pt-3 border-t border-dashed border-ink-200">
-              <StyledText variant="semibold" className="text-ink-900 text-sm" style={TABULAR}>
-                {t('details_conversion', { wholesale: wholesaleUnit, count: factor, unit: unitLabel })}
+              <StyledText
+                variant="semibold"
+                className="text-ink-900 text-sm"
+                style={TABULAR}
+              >
+                {t('details_conversion', {
+                  wholesale: wholesaleUnit,
+                  count: factor,
+                  unit: unitLabel,
+                })}
               </StyledText>
-              <StyledText variant="medium" className="text-ink-600 text-xs mt-0.5" style={TABULAR}>
+              <StyledText
+                variant="medium"
+                className="text-ink-600 text-xs mt-0.5"
+                style={TABULAR}
+              >
                 {`${t('details_perUnitWholesale', { unit: unitLabel })}: ${formatPesos(
                   product.wholesale_price! / factor,
                 )}`}
@@ -88,12 +106,19 @@ function PriceBlock({
 
   return (
     <View className="mx-4 mb-4 p-4 bg-paper-50 rounded-2xl border border-ink-100">
-      <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-sm mb-3">
+      <StyledText
+        variant="extrabold"
+        accessibilityRole="header"
+        className="text-ink-900 text-sm mb-3"
+      >
         {title}
       </StyledText>
       <View className="flex-row">
         <Cell label={t('details_price')} value={formatPesos(price)} />
-        <Cell label={t('details_cost')} value={cost !== null ? formatPesos(cost) : '—'} />
+        <Cell
+          label={t('details_cost')}
+          value={cost !== null ? formatPesos(cost) : '—'}
+        />
       </View>
 
       {profit !== null ? (
@@ -113,8 +138,15 @@ function PriceBlock({
         </View>
       ) : (
         <View className="flex-row items-center mt-3 p-3 rounded-xl bg-paper-100">
-          <Ionicons name="information-circle-outline" size={16} color="#564E45" />
-          <StyledText variant="medium" className="text-ink-700 text-xs ml-2 flex-1">
+          <Ionicons
+            name="information-circle-outline"
+            size={16}
+            className="text-ink-500"
+          />
+          <StyledText
+            variant="medium"
+            className="text-ink-700 text-xs ml-2 flex-1"
+          >
             {t('details_noCost')}
           </StyledText>
         </View>
@@ -122,8 +154,15 @@ function PriceBlock({
 
       {isLoss && (
         <View accessibilityRole="alert" className="flex-row items-center mt-2">
-          <Ionicons name="alert-circle" size={14} color="#C13030" />
-          <StyledText variant="semibold" className="text-semantic-danger text-xs ml-1.5 flex-1">
+          <Ionicons
+            name="alert-circle"
+            size={14}
+            className="text-semantic-danger"
+          />
+          <StyledText
+            variant="semibold"
+            className="text-semantic-danger text-xs ml-1.5 flex-1"
+          >
             {t('details_loss')}
           </StyledText>
         </View>
@@ -134,13 +173,30 @@ function PriceBlock({
   );
 }
 
-function Cell({ label, value, tone = 'text-ink-900' }: { label: string; value: string; tone?: string }) {
+function Cell({
+  label,
+  value,
+  tone = 'text-ink-900',
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
   return (
-    <View accessible accessibilityLabel={`${label}, ${value}`} className="flex-1">
+    <View
+      accessible
+      accessibilityLabel={`${label}, ${value}`}
+      className="flex-1"
+    >
       <StyledText variant="semibold" className="text-ink-500 text-xs">
         {label}
       </StyledText>
-      <StyledText variant="black" className={`text-lg ${tone}`} style={TABULAR} numberOfLines={1}>
+      <StyledText
+        variant="black"
+        className={`text-lg ${tone}`}
+        style={TABULAR}
+        numberOfLines={1}
+      >
         {value}
       </StyledText>
     </View>

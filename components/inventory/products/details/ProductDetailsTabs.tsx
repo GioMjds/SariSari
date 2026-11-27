@@ -1,21 +1,29 @@
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { MotiView } from 'moti';
 import { memo, useCallback, useRef, useState } from 'react';
-import { type LayoutChangeEvent, Pressable, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  type LayoutChangeEvent,
+  Pressable,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-export type ProductDetailTab = 'overview' | 'movements' | 'pricing' | 'supplier';
+export type ProductDetailTab =
+  'overview' | 'movements' | 'pricing' | 'supplier';
 
 interface TabDefinition {
   key: ProductDetailTab;
-  icon: keyof typeof FontAwesome.glyphMap;
+  icon: keyof typeof Ionicons.glyphMap;
 }
 
 const TABS = [
-  { key: 'overview', icon: 'cube' },
-  { key: 'movements', icon: 'history' },
-  { key: 'pricing', icon: 'tag' },
-  { key: 'supplier', icon: 'truck' },
+  { key: 'overview', icon: 'cube-outline' },
+  { key: 'movements', icon: 'time-outline' },
+  { key: 'pricing', icon: 'pricetag-outline' },
+  { key: 'supplier', icon: 'business-outline' },
 ] satisfies TabDefinition[];
 
 interface ProductDetailsTabsProps {
@@ -30,6 +38,7 @@ export const ProductDetailsTabs = memo(function ProductDetailsTabs({
   counts,
 }: ProductDetailsTabsProps) {
   const { t } = useTranslation('inventory');
+  const reducedMotion = useReducedMotion();
   const [metrics, setMetrics] = useState<
     Partial<Record<ProductDetailTab, { x: number; width: number }>>
   >({});
@@ -48,6 +57,15 @@ export const ProductDetailsTabs = memo(function ProductDetailsTabs({
     return layoutHandlersRef.current[key]!;
   }, []);
 
+  const handlePress = useCallback(
+    (key: ProductDetailTab, label: string) => {
+      if (key === activeTab) return;
+      onChange(key);
+      AccessibilityInfo.announceForAccessibility(label);
+    },
+    [activeTab, onChange],
+  );
+
   const active = metrics[activeTab];
 
   return (
@@ -56,20 +74,23 @@ export const ProductDetailsTabs = memo(function ProductDetailsTabs({
       accessibilityRole="tablist"
     >
       <View className="flex-row p-1 relative">
-        {/* Active pill sits behind the labels, placed from the measured tab. */}
-        <View
-          style={{
-            position: 'absolute',
-            top: 4,
-            bottom: 4,
-            left: 0,
-            borderRadius: 12,
-            backgroundColor: '#623418',
-            transform: [{ translateX: active?.x ?? 0 }],
-            width: active?.width ?? 0,
-          }}
-          pointerEvents="none"
-        />
+        {/* Tabs share equal widths, so the pill only slides on translateX. */}
+        {active && (
+          <MotiView
+            pointerEvents="none"
+            animate={{ translateX: active.x }}
+            transition={{ type: 'timing', duration: reducedMotion ? 0 : 200 }}
+            style={{
+              position: 'absolute',
+              top: 4,
+              bottom: 4,
+              left: 0,
+              width: active.width,
+            }}
+          >
+            <View className="flex-1 rounded-xl bg-cinnamon-500" />
+          </MotiView>
+        )}
 
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -80,17 +101,21 @@ export const ProductDetailsTabs = memo(function ProductDetailsTabs({
             <Pressable
               key={tab.key}
               onLayout={getTabLayoutHandler(tab.key)}
-              onPress={() => onChange(tab.key)}
+              onPress={() => handlePress(tab.key, label)}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
-              accessibilityLabel={t('details_tabA11y', { label })}
+              accessibilityLabel={
+                typeof count === 'number' && count > 0
+                  ? `${t('details_tabA11y', { label })}, ${count}`
+                  : t('details_tabA11y', { label })
+              }
               className="flex-1 min-h-[52px] py-2 rounded-xl items-center justify-center"
             >
               <View className="flex-row items-center">
-                <FontAwesome
+                <Ionicons
                   name={tab.icon}
-                  size={14}
-                  color={isActive ? '#FBF7EE' : '#7A7165'}
+                  size={16}
+                  className={isActive ? 'text-paper-50' : 'text-ink-500'}
                 />
                 {typeof count === 'number' && count > 0 && (
                   <View
@@ -100,7 +125,7 @@ export const ProductDetailsTabs = memo(function ProductDetailsTabs({
                   >
                     <StyledText
                       variant="extrabold"
-                      className={`text-[10px] ${isActive ? 'text-paper-50' : 'text-ink-700'}`}
+                      className={`text-[11px] ${isActive ? 'text-paper-50' : 'text-ink-700'}`}
                       style={{ fontVariant: ['tabular-nums'] }}
                     >
                       {count > 99 ? '99+' : count}

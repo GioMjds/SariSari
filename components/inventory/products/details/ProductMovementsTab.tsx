@@ -1,9 +1,12 @@
 import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { LedgerEmptyState, LedgerRowsSkeleton } from '@/components/inventory/ledger';
+import {
+  LedgerEmptyState,
+  LedgerRowsSkeleton,
+} from '@/components/inventory/ledger';
 import {
   bucketByDay,
   groupLedgerRows,
@@ -14,18 +17,36 @@ import {
 import { StockStrip } from '@/components/inventory/ledger/StockStrip';
 import type { InventoryEventType } from '@/types/inventory.types';
 
-const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
+const TABULAR = StyleSheet.create({
+  nums: { fontVariant: ['tabular-nums'] },
+}).nums;
 const STRIP_DAYS = 30;
 // The full ledger screen owns search, filters and paging; this tab is a quick look.
 const PREVIEW_LIMIT = 20;
 
-type EventTone = { icon: keyof typeof Ionicons.glyphMap; color: string; bg: string };
+type EventTone = {
+  icon: keyof typeof Ionicons.glyphMap;
+  iconClass: string;
+  bg: string;
+};
 
 const EVENT_TONE: Record<InventoryEventType, EventTone> = {
-  restock: { icon: 'arrow-down', color: '#3D5E1B', bg: 'bg-sage-50' },
-  sale: { icon: 'cart-outline', color: '#2E6FA8', bg: 'bg-semantic-info-50' },
-  damaged: { icon: 'warning-outline', color: '#C13030', bg: 'bg-semantic-danger-50' },
-  adjustment: { icon: 'swap-vertical', color: '#C77B0E', bg: 'bg-semantic-warning-50' },
+  restock: { icon: 'arrow-down', iconClass: 'text-sage-600', bg: 'bg-sage-50' },
+  sale: {
+    icon: 'cart-outline',
+    iconClass: 'text-semantic-info',
+    bg: 'bg-semantic-info-50',
+  },
+  damaged: {
+    icon: 'warning-outline',
+    iconClass: 'text-semantic-danger',
+    bg: 'bg-semantic-danger-50',
+  },
+  adjustment: {
+    icon: 'swap-vertical',
+    iconClass: 'text-semantic-warning',
+    bg: 'bg-semantic-warning-50',
+  },
 };
 
 interface ProductMovementsTabProps {
@@ -59,7 +80,8 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
   );
 
   if (isLoading) return <LedgerRowsSkeleton />;
-  if (rows.length === 0) return <LedgerEmptyState onLogTransaction={onRestock} />;
+  if (rows.length === 0)
+    return <LedgerEmptyState onLogTransaction={onRestock} />;
 
   return (
     <View className="pb-2">
@@ -76,8 +98,16 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
           })}
         />
         <View className="flex-row mt-4">
-          <Total label={t('movementFilterRestock')} value={`+${totals.added}`} tone="text-sage-700" />
-          <Total label={t('movementFilterSale')} value={`−${totals.sold}`} tone="text-ink-900" />
+          <Total
+            label={t('movementFilterRestock')}
+            value={`+${totals.added}`}
+            tone="text-sage-700"
+          />
+          <Total
+            label={t('movementFilterSale')}
+            value={`−${totals.sold}`}
+            tone="text-ink-900"
+          />
           <Total
             label={t('movementFilterDamaged')}
             value={`−${totals.damaged}`}
@@ -106,7 +136,9 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
               }`}
               style={TABULAR}
             >
-              {t('ledgerDayNet', { value: `${section.net > 0 ? '+' : ''}${section.net}` })}
+              {t('ledgerDayNet', {
+                value: `${section.net > 0 ? '+' : ''}${section.net}`,
+              })}
             </StyledText>
           </View>
           {section.data.map((row, i) => (
@@ -122,7 +154,10 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
       ))}
 
       {rows.length > PREVIEW_LIMIT && (
-        <StyledText variant="medium" className="text-ink-500 text-xs text-center mt-4">
+        <StyledText
+          variant="medium"
+          className="text-ink-500 text-xs text-center mt-4"
+        >
           {t('details_showingLatest', { count: PREVIEW_LIMIT })}
         </StyledText>
       )}
@@ -132,8 +167,11 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
         accessibilityRole="button"
         className="mx-4 mt-4 min-h-[48px] rounded-xl border border-ink-200 bg-paper-50 flex-row items-center justify-center active:opacity-80"
       >
-        <FontAwesome name="list-alt" size={14} color="#623418" />
-        <StyledText variant="extrabold" className="text-cinnamon-700 text-sm ml-2">
+        <Ionicons name="list-outline" size={16} className="text-cinnamon-500" />
+        <StyledText
+          variant="extrabold"
+          className="text-cinnamon-700 text-sm ml-2"
+        >
           {t('details_openLedger')}
         </StyledText>
       </Pressable>
@@ -141,9 +179,21 @@ export const ProductMovementsTab = memo(function ProductMovementsTab({
   );
 });
 
-function Total({ label, value, tone }: { label: string; value: string; tone: string }) {
+function Total({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+}) {
   return (
-    <View accessible accessibilityLabel={`${label}, ${value}`} className="flex-1">
+    <View
+      accessible
+      accessibilityLabel={`${label}, ${value}`}
+      className="flex-1"
+    >
       <StyledText variant="semibold" className="text-ink-500 text-xs">
         {label}
       </StyledText>
@@ -170,33 +220,55 @@ export const MovementRow = memo(function MovementRow({
   const tone = EVENT_TONE[row.type] ?? EVENT_TONE.adjustment;
   const note = readableNote(row.note, t);
   const positive = row.signed > 0;
-  const typeLabel = t(`movementType_${row.type}`, { defaultValue: t('movementType_other') });
+  const typeLabel = t(`movementType_${row.type}`, {
+    defaultValue: t('movementType_other'),
+  });
   const qtyText = `${positive ? '+' : ''}${row.signed}`;
   const balanceText = t('ledgerBalanceAfter', { count: row.balance });
 
   return (
     <View
       accessible
-      accessibilityLabel={[typeLabel, `${qtyText} ${unitLabel}`, row.timeLabel, balanceText, note]
+      accessibilityLabel={[
+        typeLabel,
+        `${qtyText} ${unitLabel}`,
+        row.timeLabel,
+        balanceText,
+        note,
+      ]
         .filter(Boolean)
         .join(', ')}
       className={`mx-4 px-4 py-3 bg-paper-50 border-x border-ink-100 flex-row items-center ${
         isFirst ? 'rounded-t-2xl border-t' : ''
       } ${isLast ? 'rounded-b-2xl border-b' : 'border-b border-b-paper-300'}`}
     >
-      <View className={`w-9 h-9 rounded-full items-center justify-center ${tone.bg}`}>
-        <Ionicons name={tone.icon} size={18} color={tone.color} />
+      <View
+        className={`w-9 h-9 rounded-full items-center justify-center ${tone.bg}`}
+      >
+        <Ionicons name={tone.icon} size={18} className={tone.iconClass} />
       </View>
       <View className="flex-1 mx-3">
-        <StyledText variant="semibold" className="text-ink-900 text-sm" numberOfLines={1}>
+        <StyledText
+          variant="semibold"
+          className="text-ink-900 text-sm"
+          numberOfLines={1}
+        >
           {typeLabel}
         </StyledText>
         {note ? (
-          <StyledText variant="regular" className="text-ink-600 text-sm mt-0.5" numberOfLines={2}>
+          <StyledText
+            variant="regular"
+            className="text-ink-600 text-sm mt-0.5"
+            numberOfLines={2}
+          >
             {note}
           </StyledText>
         ) : null}
-        <StyledText variant="medium" className="text-ink-400 text-xs mt-0.5" style={TABULAR}>
+        <StyledText
+          variant="medium"
+          className="text-ink-400 text-xs mt-0.5"
+          style={TABULAR}
+        >
           {row.timeLabel}
         </StyledText>
       </View>
@@ -208,7 +280,11 @@ export const MovementRow = memo(function MovementRow({
         >
           {qtyText}
         </StyledText>
-        <StyledText variant="medium" className="text-ink-500 text-xs mt-0.5" style={TABULAR}>
+        <StyledText
+          variant="medium"
+          className="text-ink-500 text-xs mt-0.5"
+          style={TABULAR}
+        >
           {balanceText}
         </StyledText>
       </View>

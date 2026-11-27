@@ -297,5 +297,7 @@
   "details_noNotes": "No notes saved.",
   "details_lastDelivery": "Last stock added",
   "details_contactFailed": "Could not open the phone app. Check the contact number.",
+  "details_loadErrorBody": "The product did not load. Check that the app has storage space, then try again.",
+  "details_notEnoughSales": "Not enough sales yet to estimate",
   "details_qtyUnit": "{{count}} {{unit}}"
 }

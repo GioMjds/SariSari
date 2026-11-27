@@ -1,16 +1,21 @@
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { memo, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { LOW_STOCK_THRESHOLD } from '@/constants/stocks';
-import { parseLedgerDate, type LedgerRowData } from '@/components/inventory/ledger/ledgerMath';
+import {
+  parseLedgerDate,
+  type LedgerRowData,
+} from '@/components/inventory/ledger/ledgerMath';
 import { formatPesos } from '@/lib/money';
 import type { Product } from '@/types';
 import { MovementRow } from './ProductMovementsTab';
 
-const TABULAR = StyleSheet.create({ nums: { fontVariant: ['tabular-nums'] } }).nums;
+const TABULAR = StyleSheet.create({
+  nums: { fontVariant: ['tabular-nums'] },
+}).nums;
 const RECENT_LIMIT = 3;
 
 interface ProductOverviewTabProps {
@@ -43,18 +48,31 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
     () =>
       rows.slice(0, RECENT_LIMIT).map((row) => ({
         ...row,
-        timeLabel: row.time ? `${format(row.time, 'MMM d')} · ${row.timeLabel}` : row.timeLabel,
+        timeLabel: row.time
+          ? `${format(row.time, 'MMM d')} · ${row.timeLabel}`
+          : row.timeLabel,
       })),
     [rows],
   );
 
   const info: { label: string; value: string }[] = [
-    { label: t('details_category'), value: product.category?.trim() || t('details_uncategorized') },
+    {
+      label: t('details_category'),
+      value: product.category?.trim() || t('details_uncategorized'),
+    },
     { label: t('details_sku'), value: product.sku || t('details_none') },
-    { label: t('details_barcode'), value: product.barcode || t('details_none') },
+    {
+      label: t('details_barcode'),
+      value: product.barcode || t('details_none'),
+    },
     { label: t('details_unit'), value: unitLabel },
     ...(product.wholesale_barcode
-      ? [{ label: t('details_wholesaleBarcode'), value: product.wholesale_barcode }]
+      ? [
+          {
+            label: t('details_wholesaleBarcode'),
+            value: product.wholesale_barcode,
+          },
+        ]
       : []),
     { label: t('details_added'), value: formatDate(product.created_at) },
     { label: t('details_updated'), value: formatDate(product.updated_at) },
@@ -69,14 +87,30 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
         </StyledText>
         <View className="flex-row">
           {cost !== null && (
-            <ValueCell label={t('details_atCost')} value={formatPesos(cost * product.quantity)} />
+            <ValueCell
+              label={t('details_atCost')}
+              value={formatPesos(cost * product.quantity)}
+            />
           )}
-          <ValueCell label={t('details_atPrice')} value={formatPesos(product.price * product.quantity)} />
+          <ValueCell
+            label={t('details_atPrice')}
+            value={formatPesos(product.price * product.quantity)}
+          />
         </View>
         <View className="flex-row items-center mt-3 pt-3 border-t border-dashed border-ink-200">
-          <Ionicons name="notifications-outline" size={14} color="#7A7165" />
-          <StyledText variant="medium" className="text-ink-600 text-xs ml-1.5 flex-1">
-            {t('details_lowAt', { count: LOW_STOCK_THRESHOLD, unit: unitLabel })}
+          <Ionicons
+            name="notifications-outline"
+            size={14}
+            className="text-ink-400"
+          />
+          <StyledText
+            variant="medium"
+            className="text-ink-600 text-xs ml-1.5 flex-1"
+          >
+            {t('details_lowAt', {
+              count: LOW_STOCK_THRESHOLD,
+              unit: unitLabel,
+            })}
           </StyledText>
         </View>
       </View>
@@ -103,7 +137,11 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
 
       {/* Product info */}
       <View className="mt-5">
-        <SectionHeader title={t('details_info')} action={t('details_infoEdit')} onAction={onEdit} />
+        <SectionHeader
+          title={t('details_info')}
+          action={t('details_infoEdit')}
+          onAction={onEdit}
+        />
         <View className="mx-4 bg-paper-50 rounded-2xl border border-ink-100">
           {info.map((row, idx) => (
             <View
@@ -111,7 +149,9 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
               accessible
               accessibilityLabel={`${row.label}, ${row.value}`}
               className={`px-4 py-3 flex-row items-center justify-between ${
-                idx < info.length - 1 ? 'border-b border-dashed border-ink-200' : ''
+                idx < info.length - 1
+                  ? 'border-b border-dashed border-ink-200'
+                  : ''
               }`}
             >
               <StyledText variant="medium" className="text-ink-500 text-sm">
@@ -137,8 +177,15 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
           accessibilityRole="button"
           className="min-h-[48px] flex-row items-center justify-center active:opacity-70"
         >
-          <FontAwesome name="trash" size={14} color="#C13030" />
-          <StyledText variant="extrabold" className="text-semantic-danger text-sm ml-2">
+          <Ionicons
+            name="trash-outline"
+            size={16}
+            className="text-semantic-danger"
+          />
+          <StyledText
+            variant="extrabold"
+            className="text-semantic-danger text-sm ml-2"
+          >
             {t('actionDeleteProduct')}
           </StyledText>
         </Pressable>
@@ -149,11 +196,20 @@ export const ProductOverviewTab = memo(function ProductOverviewTab({
 
 function ValueCell({ label, value }: { label: string; value: string }) {
   return (
-    <View accessible accessibilityLabel={`${label}, ${value}`} className="flex-1">
+    <View
+      accessible
+      accessibilityLabel={`${label}, ${value}`}
+      className="flex-1"
+    >
       <StyledText variant="semibold" className="text-ink-500 text-xs">
         {label}
       </StyledText>
-      <StyledText variant="black" className="text-ink-900 text-lg" style={TABULAR} numberOfLines={1}>
+      <StyledText
+        variant="black"
+        className="text-ink-900 text-lg"
+        style={TABULAR}
+        numberOfLines={1}
+      >
         {value}
       </StyledText>
     </View>
@@ -171,7 +227,11 @@ export function SectionHeader({
 }) {
   return (
     <View className="px-5 mb-2 flex-row items-center justify-between">
-      <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-sm">
+      <StyledText
+        variant="extrabold"
+        accessibilityRole="header"
+        className="text-ink-900 text-sm"
+      >
         {title}
       </StyledText>
       {action && onAction ? (

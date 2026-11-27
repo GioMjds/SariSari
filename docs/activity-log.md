@@ -4,6 +4,138 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-27: Home dashboard redesign
+
+- New order: Today card, New Sale plus 4 shortcuts, Needs attention, Money today, Top sellers today, Recent activity.
+- `DashboardTodayCard` shows cash sales today, change vs yesterday, sales and item counts, a 7-day bar strip, and a profit / utang given / collected row. Tapping it opens Reports.
+- `DashboardAttention` merges the old goal card, stock alert, stocktake nudge, and time-of-day suggestion into one list: out of stock, low stock, overdue utang, then stocktake due. It shows "All caught up" when the list is empty.
+- `DashboardMoneyToday` is a receipt-style cash flow: cash sales, utang collected, expenses, taken out, net cash. Utang given is left out because no cash moved.
+- `DashboardTopSellers` shows the top 3 by units. It shows no peso amounts because per-product revenue includes utang checkouts.
+- `DashboardSection` gives every section the same heading and card shell. Recent activity now uses it, plus translated See all and Cash/Utang labels.
+- Fix: pull-to-refresh invalidated `['cash']`, but cash entries use the `financial` key, so expenses never refreshed. It now also refreshes top sellers and the 7-day trend.
+- Low stock now excludes out-of-stock items, so the two attention rows never count the same product twice. Both rows add up to the alerts bell count.
+- New pure helpers in `components/home/home-state.ts` (`buildWeekSeries`, `percentChange`, `resolveStocktakeReminder`, `buildAttentionItems`), tested in `components/home/__tests__/home-state.test.ts`. `resolveHomeState` was removed.
+- Removed 14 home components: 8 were never imported, and 6 were replaced (`DashboardGoalCard`, `DashboardSuggestions`, `DashboardStockAlert`, `StocktakeNudge`, `DashboardKPIGrid`, `MiniInsightsCard`).
+- Copy is in `locales/{en,tl}/common.json` under `dashboard.*`. The orphaned `goals`, `suggestions`, `pulse`, `stockAlert`, and `homeSalesToday` keys were dropped.
+- "vs this time yesterday" compares today so far with yesterday from midnight to the same clock time (`getSaleStatsBetween`, `useYesterdaySoFarStats`). The chip hides when yesterday had no cash sales by that time.
+- Known gap: report queries (profit, top sellers, 7-day trend) are not invalidated after a sale, so they can lag by up to 2 minutes. Today's bar and the cash total use live stats.
+- Not verified on a device. No screenshots or video, because no emulator or adb was available.
+
+## 2026-11-27 — Category Details Redesign
+
+Redesigned `app/(edit-forms)/category/[id].tsx`, reached by tapping a card in Inventory > Categories.
+
+- **Priority order:** hero (name, product count, share of catalog, health stamp, 2 x 2 numbers), then Needs attention, then Best sellers, then the product list. The sticky bar keeps category value and Add Product.
+- **Hero numbers:** stock value at selling price, potential profit (only products with a cost price; shows coverage when some are missing), pieces on the shelf, and pieces sold in 28 days.
+- **Utang is not a sale:** sold units and revenue count cash checkouts only. Units given on utang show as a separate line ("N more on utang"). Decided with the user.
+- **Needs attention:** out of stock, running low, not moving (in stock, older than 7 days, nothing moved in 28 days, same rule as `stock-intelligence`), and missing cost price. Each row filters the list and scrolls to it. When nothing is wrong, a single sage line says so.
+- **Product list:** filter chips (only the ones with a count) and a sort control (Priority, Best selling, Value, A-Z). Priority puts out of stock first, then low, then not moving, with demand breaking ties. Rows open the product profile (`product-details/[id]`) instead of the edit form.
+- **Manage:** a `...` button opens the existing `CategoryActionSheet` (View products opens the Products tab filtered to this category, Rename, Delete). Delete pops back to Inventory. Decided with the user: no owner PIN, same as the Categories tab.
+- **Add Product** passes `prefillCategory`, so the add form starts with this category selected.
+- **Fix:** `updateCategory` renamed only the category row. Products reference categories by name, so a rename orphaned every product. It now renames `products.category` in the same transaction.
+- **Data:** new read-only `getRecentProductSales` (28-day cash and utang split per product) in `database/reports.ts` and `useRecentProductSales` in `hooks/useReports.ts`. The screen filters it to the category's products. The query is keyed by window, not category name, so a rename or a product moving in never leaves stale sales. The key sits under `['sales']`, so sales, voids, and refunds refresh it. No schema change.
+- **Review fixes:** no product is flagged "not moving" until sales have loaded, and Best sellers hides until then. Sort segments and text links meet the 44pt touch target.
+- **Logic:** `buildCategoryRows`, `summarizeCategory`, `selectCategoryRows`, `topSellers` in `components/inventory/category-details/categoryInsights.ts`, tested in `__tests__/categoryInsights.test.ts`.
+- Loading uses `CategoryDetailsSkeleton`. Motion is 220-240ms and respects reduced motion. Pull to refresh reloads all three queries.
+- Copy is English only, like the rest of the category screens. Moving it to `locales/{en,tl}` is a follow-up.
+- Not verified on a device. No screenshots or video.
+
+---
+
+## 2026-11-27 — Delivery Receipts List Redesign
+
+Redesigned `app/(edit-forms)/delivery-receipts/index.tsx`, the list screen reached from Inventory > Restock.
+
+- **One fetch, client split:** the screen calls `useDeliveryReceipts()` with no status. `partitionByStatus` in `components/receiving/receiptList.ts` splits by status, so tabs show live counts. Invalidation is unchanged because every key shares the `deliveryKeys.all` prefix.
+- **Smart default tab:** the screen opens on Drafts when any exist, otherwise on Received. The user's tab choice overrides it.
+- **Month card:** `DeliveryMonthCard` shows this month's received cost, delivery count, and short-delivery count, with Sari's reaction. It replaces the plain shortage banner and links to `/reports/supplier-shortages`.
+- **Status rows:** `DeliveryReceiptRow` draws drafts with a dashed border and a Continue cue, received rows with a shortage or Complete chip, and voided rows muted with a struck-through total. Chips pair an icon with text, so status never relies on color alone.
+- **Date sections:** `buildSections` flattens rows under Today, Yesterday, or dated headers, so the house `RefreshableFlatList` can render them.
+- **Search:** a compact `SearchBar` filters by supplier name or invoice number, and has its own no-match state.
+- **States:** skeleton rows while loading, Sari empty states per tab, and an error state with retry.
+- **Timestamps:** rows parse dates with `parseStoredTimestamp`. Draft `created_at` is SQLite UTC, which the old `new Date()` call read as local time.
+- **i18n:** new `receiving` keys in `en` and `tl`. The hardcoded "Go back" and "Loading" labels moved there too.
+
+Decision: all receipts load at once (marked as a shortcut in code). This is fine at sari-sari volume. Add paging only if a store reaches thousands of receipts.
+
+Next: full mock data for drafts, received, short, and voided receipts, then screenshots in `docs/screenshots`.
+
+### Audit fixes (same day)
+
+The impeccable audit scored the screen 12/20. These fixes address its P1 to P3 findings:
+
+- **Contrast:** new `semantic-warning-700` token (`#8F5A0A`, 5.2:1 on warning-50) for the Draft chip. The draft count badge uses `persimmon-600`. The voided total uses `ink-500`.
+- **Selected tab:** the active segment is now `ink-900` with paper text. Tabs are 48dp tall.
+- **Tokens:** `components/receiving/iconColors.ts` mirrors tailwind hex values for icon props. There is no raw hex left on the screen.
+- **Resilience:** a failed refetch keeps the cached list and shows an inline notice with retry. The full error screen appears only when there is no data.
+- **i18n:** section dates and row times use `toLocaleDateString` / `toLocaleTimeString` with `i18n.language`, the house pattern.
+- **Day change:** the Today, Yesterday and month memos key on the start of the current day.
+- **Font scale:** the row time moved under the invoice line, the supplier name wraps to 2 lines, the footer chips wrap, and tab text caps at `maxFontSizeMultiplier` 1.3.
+- **Keyboard:** the bottom bar hides while the keyboard is open (`useKeyboardState`), and iOS uses `automaticallyAdjustKeyboardInsets`.
+- **Tablet:** header, list, and CTA cap at 640 wide, centered.
+- **Search:** tab counts follow the query. The no-match copy names the tab.
+
+Not changed: white on `persimmon-500` (about 3.3:1) on the "Receive delivery" CTA. That pairing is the app-wide primary button, so it needs a product-wide token decision.
+
+### Mock data (same day)
+
+`MOCK_DELIVERY_RECEIPTS` and `MOCK_DELIVERY_LINES` in `scripts/sample-mock-datas.ts` seed 14 receipts across six suppliers:
+
+- 10 received: full, short, no invoice number, wholesale cases and boxes, a cost increase (Colgate) and a cost decrease (Piattos).
+- 2 voided, each with a reason.
+- 2 drafts, one of them with a quick-add new product.
+
+Dates are relative to the seed run, so the list covers today, yesterday, this month, and earlier months.
+
+`database/seed.ts` steps 13 and 14 insert them. Each line derives its stored values with `convertDeliveryLine`. `tests/lib/delivery-mock-data.test.ts` checks supplier matches, the one-draft-per-supplier rule, and that every line converts.
+
+Decisions:
+- No inventory transactions are seeded for these receipts. Product quantities stay as the product mock sets them.
+- Costs use the same integer scale as the mock products' `cost_price`.
+
+### Re-audit fixes (same day)
+
+The re-audit scored 15/20. These fixes address its remaining findings:
+
+- **CTA color:** the user chose this screen only. "Receive delivery" now uses `persimmon-600` (4.6:1) with `persimmon-700` when pressed. Other primary buttons still use `persimmon-500` until an app-wide decision.
+- **iOS refresh:** `RefreshableFlatList` now renders a plain `FlatList` with the native `RefreshControl` on iOS, so the rubber-band comes back. Android keeps the custom pull header. This affects every screen that uses the component.
+- **Live region:** the refresh-failed notice sets `accessibilityLiveRegion="polite"` for TalkBack.
+- **Bottom bar motion:** the bar slides in (`FadeInDown`, 200ms) and out (`FadeOutDown`, 140ms) with the keyboard. Reanimated skips it under Reduce Motion.
+
+---
+
+## 2026-11-27 — Movements Audit Fixes
+
+Applied the audit (`.impeccable/audit/2026-11-27T08-43-32Z__app-tabs-inventory-movements-tsx.md`) to the movements screen.
+
+- **Contrast:** the active ledger chip moved from persimmon-500 (3.40:1) to persimmon-600, matching the product form fix. This also changes the product ledger chips.
+- **No blank list while searching:** the movements and type-count queries use `keepPreviousData`. The list receives `selectedType="all"` because the database already filters by type, so old rows are never filtered to an empty card mid-load.
+- **States:** one render path. While loading, `LedgerRowsSkeleton` (split out of `LedgerSkeleton`) shows under the toolbar. The no-match case uses the shared `LedgerNoMatches` card with a "Clear search and filter" action. The store-empty card shows only on settled data.
+- **Pull-to-refresh:** refetches the list and the counts.
+- **Errors:** translated `movementsLoadErrorBody` replaces raw SQLite text; the raw error goes to `console.warn`. `InventoryErrorState` now uses the translated `errorRetry` key instead of hardcoded "Try again".
+- **Empty state:** wrapped in a `ScrollView` with FAB clearance. The CTA row wraps, the CTAs carry the button role, perforation dots are hidden from screen readers, radius is 16px, the resting shadow and the `label-caps` eyebrow are gone (the `movementsEmptyEyebrow` key was removed), and icons are Ionicons.
+- **Layout:** `TabGuide` moved into the list header via `LedgerToolbar showGuide={false}` plus `MovementsGuide`, so it scrolls away. Content is capped at 640 wide and centered on tablets.
+- **Perf:** `onEndReached` receives the stable `fetchNextPage`.
+
+Skipped: moving the `EVENT_TONE` hex values onto tokens. The project has no JS token map, and adding one is a system-wide change.
+
+---
+
+## 2026-11-27 — Movements Data Fixes
+
+Fixed six data bugs behind the Inventory > Movements screen.
+
+- **Raw note tags:** `readableNote` in `ledgerMath.ts` turns `[stocktake:<reason>] note`, `void:<id>` and `refund:<id>:<reason>` into translated labels from the `stocktake` and `corrections` namespaces. Applies to every `LedgerList`, including the product history ledger.
+- **Stale list after stocktake:** `useCommitStocktake` now calls `invalidateProductDependencies`, which covers the `['inventory_transactions']` movements keys. It used to invalidate only `['inventory']`.
+- **Mixed timestamp formats:** stocktake inserts now use the column default (`YYYY-MM-DD HH:MM:SS` UTC) like every other writer. Migration v27 rewrites existing ISO rows to that format. Seed data is normalized on insert. Raw string ordering and cursor paging are now chronological.
+- **UTC parsing:** `parseStoredTimestamp` reads the SQLite format as UTC. It used to read it as local time, which put CURRENT_TIMESTAMP rows 8 hours early in PH. This changes displayed times app-wide (sales rows, utang dates, product history) wherever values are stored in that format.
+- **Chip counts:** new `getInventoryTransactionTypeCounts` / `useInventoryTransactionTypeCounts` runs a `COUNT ... GROUP BY type` with the same search filter. Chips now show true totals instead of counts from loaded, already-filtered pages.
+- **Note search:** the movements SQL search also matches `t.note`. Searching shows the stored tag (`miscount`), not the translated label.
+
+Decision: the user picked both "drop counts" and "real counts query" for the chips; the real query was kept because it preserves the UI with correct data.
+
+---
+
 ## 2026-11-26 — Product Form Audit Fixes
 
 Applied the fixes from the impeccable audit (`.impeccable/audit/2026-11-26T12-51-26Z__components-inventory-products-form.md`).
@@ -729,3 +861,18 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - All new copy is in `locales/{en,tl}/utang.json` (`detail*` keys).
 - Removed: Payments and History tab components, `PaymentCard`, `ContactRow`, the old empty states.
 - Not verified on a device. No screenshots or video.
+
+## 2026-11-27: Product details redesign
+
+- Priority order on screen: stock on hand and selling price first, then a pace strip (sold in 28 days, days of stock left, last stock added), then a warning line when stock is out, low, or runs out within 7 days at the current pace.
+- Top bar: back, title (swaps to the product name after scrolling past the hero), and an Edit icon. Edit left the Overview body.
+- `ProductActionBar` pins Add stock (primary), Correct stock, and Damaged to the bottom on every tab.
+- Tabs went from 3 to 4: Overview (stock value at cost and at price, last 3 stock changes with See all, product info, Delete), History (30-day strip and totals, latest 20 changes grouped by day, link to the full stock ledger), Pricing (retail and wholesale price, cost, profit, margin, last paid unit cost, price history), Supplier (call, text, last stock added, notes, change supplier).
+- Delete is now behind the owner PIN with the new `product_delete` action (high risk, on by default). It shows in Settings, PIN policy.
+- Fixes: the old hero showed cost as `cost_price / 100`, but money is stored as integer pesos. The old Margin tile showed markup on cost; margin is now profit over selling price. Low stock now uses `<=` like the ledger and `getStatus`.
+- Loading uses `ProductDetailsSkeleton` and the ledger row skeleton instead of a spinner and mascot. A failed product read shows `InventoryErrorState` with retry.
+- New helper `computeProductInsights` and `marginPercent` in `productInsights.ts`, tested in `__tests__/productInsights.test.ts`.
+- `ProductHistoryTab` was renamed to `ProductMovementsTab` and reuses `ledgerMath`, `StockStrip`, `LedgerEmptyState`, and `LedgerRowsSkeleton`.
+- All copy is in `locales/{en,tl}/inventory.json` (`details_*` keys).
+- Assumption: transactions for this screen cover only the last 30 days, so "Last stock added" reads "None in 30 days" when empty.
+- Not verified on a device. No screenshots or video, because no emulator or adb was available.

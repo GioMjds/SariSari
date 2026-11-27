@@ -6,7 +6,13 @@ const tx = (
   quantity: number,
   timestamp: string,
   extra: Partial<InventoryTransaction> = {},
-): InventoryTransaction => ({ product_id: 1, type, quantity, timestamp, ...extra });
+): InventoryTransaction => ({
+  product_id: 1,
+  type,
+  quantity,
+  timestamp,
+  ...extra,
+});
 
 const NOW = new Date('2026-11-27T12:00:00Z').getTime();
 
@@ -29,7 +35,8 @@ describe('computeProductInsights', () => {
     expect(computeProductInsights([], 5, NOW).daysLeft).toBeNull();
     expect(computeProductInsights([], 0, NOW).daysLeft).toBe(0);
     expect(
-      computeProductInsights([tx('sale', 280, '2026-11-26T08:00:00Z')], 2, NOW).daysLeft,
+      computeProductInsights([tx('sale', 280, '2026-11-26T08:00:00Z')], 2, NOW)
+        .daysLeft,
     ).toBe(1);
   });
 
@@ -44,7 +51,9 @@ describe('computeProductInsights', () => {
       NOW,
     );
     expect(result.lastRestockQty).toBe(24);
-    expect(result.lastRestockAt).toBe(new Date('2026-11-15T08:00:00Z').getTime());
+    expect(result.lastRestockAt).toBe(
+      new Date('2026-11-15T08:00:00Z').getTime(),
+    );
     expect(result.lastUnitCost).toBe(9);
   });
 });
