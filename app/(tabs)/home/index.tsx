@@ -1,140 +1,77 @@
-import { StyledText } from '@/components/elements';
 import {
+  DashboardAttention,
   DashboardEmptyState,
   DashboardErrorState,
-  DashboardGoalCard,
-  DashboardKPIGrid,
+  DashboardMoneyToday,
   DashboardQuickActions,
   DashboardRecentSales,
-  DashboardStockAlert,
-  DashboardSuggestions,
+  DashboardTodayCard,
+  DashboardTopSellers,
   GettingStartedCard,
   HomeDestination,
   HomeOverviewSkeleton,
-  MiniInsightsCard,
-  StocktakeNudge,
 } from '@/components/home';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { RefreshableScrollView } from '@/components/ui';
 import { useHomeDashboardData } from '@/hooks/useHomeDashboardData';
-import { formatCurrency } from '@/utils';
 import { Prof, useChangeLog, withProf } from '@/utils/perf';
 import { Href, useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
 
 const routes = {
   addProduct: '/(edit-forms)/add-product',
   inventory: '/inventory',
+  restock: '/(tabs)/inventory/restock' as Href,
+  stocktake: '/(tabs)/inventory/stocktake' as Href,
   utang: '/(tabs)/customers/all',
-  cashEntries: '/settings/cash-entries',
   newSale: '/(tabs)/sales/pos',
-  customers: '/(tabs)/customers/collection',
   reports: '/settings/reports',
+  cashEntries: '/settings/cash-entries',
+  receipts: '/(tabs)/sales/receipts' as Href,
 } satisfies Record<HomeDestination, Href>;
 
-const RESTOCK = '/(tabs)/inventory/restock' as Href;
-const STOCKTAKE = '/(tabs)/inventory/stocktake' as Href;
 const SALE_DETAILS = '/(edit-forms)/sale-details/';
-const RECEIPTS = '/(tabs)/sales/receipts' as Href;
 
 function HomeScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
   const tabBarBottomOffset = useTabBarBottomOffset();
+  const data = useHomeDashboardData();
   const {
     stats,
     productCount,
     recentSales,
-    topProduct,
-    goal,
-    suggestions,
+    topSellers,
+    week,
+    changeVsYesterday,
+    attention,
     isError,
     isLoading,
     refreshing,
     refetchAll,
-  } = useHomeDashboardData();
-
-  const changeLogPayload = useMemo(
-    () => ({
-      stats,
-      productCount,
-      recentSales,
-      topProduct,
-      goal,
-      suggestions,
-      isError,
-      isLoading,
-      refreshing,
-      refetchAll,
-    }),
-    [
-      stats,
-      productCount,
-      recentSales,
-      topProduct,
-      goal,
-      suggestions,
-      isError,
-      isLoading,
-      refreshing,
-      refetchAll,
-    ],
-  );
-  useChangeLog('home/index', changeLogPayload);
+  } = data;
+  useChangeLog('home/index', data);
 
   const contentContainerStyle = useMemo(
     () => ({ paddingTop: 8, paddingBottom: tabBarBottomOffset + 24 }),
     [tabBarBottomOffset],
   );
 
-  const formattedTodaySales = useMemo(
-    () => formatCurrency(stats.todaySalesTotal),
-    [stats.todaySalesTotal],
-  );
-
-  // Navigation handlers — stable, so memo'd children never re-render from them.
-  const goNewSale = useCallback(() => router.push(routes.newSale), [router]);
-  const goAddProduct = useCallback(
-    () => router.push(routes.addProduct),
-    [router],
-  );
-  const goInventory = useCallback(
-    () => router.push(routes.inventory),
-    [router],
-  );
-  const goRestock = useCallback(() => router.push(RESTOCK), [router]);
-  const goStocktake = useCallback(() => router.push(STOCKTAKE), [router]);
-  const goUtang = useCallback(() => router.push(routes.utang), [router]);
-  const goReports = useCallback(() => router.push(routes.reports), [router]);
-
-  const handleGoalPress = useCallback(
-    () => router.push(routes[goal.destination]),
-    [router, goal.destination],
-  );
-
-  const handleSuggestionPress = useCallback(
+  // Stable handlers so memo'd sections never re-render from navigation props.
+  const go = useCallback(
     (destination: HomeDestination) => router.push(routes[destination]),
     [router],
   );
-
-  const handleKpiPress = useCallback(
-    (target: 'inventory' | 'cash' | 'customers' | 'reports') => {
-      if (target === 'inventory') router.push(routes.inventory);
-      else if (target === 'cash') router.push(routes.cashEntries);
-      else if (target === 'customers') router.push(routes.customers);
-      else router.push(routes.reports);
-    },
-    [router],
-  );
-
-  const handleOpenSale = useCallback(
+  const goNewSale = useCallback(() => go('newSale'), [go]);
+  const goAddProduct = useCallback(() => go('addProduct'), [go]);
+  const goRestock = useCallback(() => go('restock'), [go]);
+  const goUtang = useCallback(() => go('utang'), [go]);
+  const goReports = useCallback(() => go('reports'), [go]);
+  const goCashEntries = useCallback(() => go('cashEntries'), [go]);
+  const goReceipts = useCallback(() => go('receipts'), [go]);
+  const openSale = useCallback(
     (id: number) => router.push(`${SALE_DETAILS}${id}` as Href),
     [router],
   );
-
-  const handleSeeAllSales = useCallback(() => router.push(RECEIPTS), [router]);
 
   if (isLoading) return <HomeOverviewSkeleton />;
 
@@ -159,93 +96,56 @@ function HomeScreen() {
         />
       ) : (
         <>
-          <View className="px-4 mb-5">
-            <StyledText variant="medium" className="text-ink-600 text-sm">
-              {t('common:homeSalesToday', { defaultValue: 'Sales today' })}
-            </StyledText>
-            <StyledText
-              variant="extrabold"
-              className="text-ink-900 text-hero mt-1"
-            >
-              {formattedTodaySales}
-            </StyledText>
-            <StyledText variant="regular" className="text-ink-600 text-sm mt-1">
-              {t('common:homeTransactionsToday', {
-                count: stats.transactionCount,
-                defaultValue: '{{count}} sales rung up',
-              })}
-            </StyledText>
-          </View>
+          <Prof id="Home:DashboardTodayCard">
+            <DashboardTodayCard
+              salesTotal={stats.todaySalesTotal}
+              transactionCount={stats.transactionCount}
+              itemsSold={stats.itemsSold}
+              changeVsYesterday={changeVsYesterday}
+              week={week}
+              profitToday={stats.profitToday}
+              utangToday={stats.utangToday}
+              collectedToday={stats.collectedToday}
+              onPress={goReports}
+            />
+          </Prof>
 
           <Prof id="Home:DashboardQuickActions">
             <DashboardQuickActions
               onNewSale={goNewSale}
               onAddProduct={goAddProduct}
-              onAddStock={goInventory}
-              onOpenCredits={goUtang}
+              onRestock={goRestock}
+              onOpenUtang={goUtang}
               onOpenReports={goReports}
               overdueCount={stats.overdueCount}
             />
           </Prof>
 
-          <Prof id="Home:DashboardKPIGrid">
-            <DashboardKPIGrid
-              profitMargin={stats.profitMargin}
-              expensesToday={stats.expensesToday}
-              drawingsToday={stats.drawingsToday}
-              lowStockCount={stats.lowStockCount}
-              totalCredits={stats.overdueAmount}
-              creditCustomersCount={stats.overdueCount}
-              onDetailsPress={goReports}
-              onKpiPress={handleKpiPress}
+          <Prof id="Home:DashboardAttention">
+            <DashboardAttention items={attention} onPress={go} />
+          </Prof>
+
+          <Prof id="Home:DashboardMoneyToday">
+            <DashboardMoneyToday
+              cashSales={stats.todaySalesTotal}
+              collected={stats.collectedToday}
+              expenses={stats.expensesToday}
+              drawings={stats.drawingsToday}
+              onOpenCashEntries={goCashEntries}
             />
           </Prof>
 
-          <Prof id="Home:DashboardGoalCard">
-            <DashboardGoalCard
-              recommendation={goal}
-              onPress={handleGoalPress}
-            />
+          <Prof id="Home:DashboardTopSellers">
+            <DashboardTopSellers sellers={topSellers} onSeeReport={goReports} />
           </Prof>
-
-          {stats.lowStockCount > 0 && (
-            <Prof id="Home:DashboardStockAlert">
-              <DashboardStockAlert
-                lowStockCount={stats.lowStockCount}
-                onRestock={goRestock}
-              />
-            </Prof>
-          )}
-
-          <Prof id="Home:StocktakeNudge">
-            <StocktakeNudge onPress={goStocktake} />
-          </Prof>
-
-          {suggestions.length > 0 && (
-            <Prof id="Home:DashboardSuggestions">
-              <DashboardSuggestions
-                suggestions={suggestions}
-                onPress={handleSuggestionPress}
-              />
-            </Prof>
-          )}
 
           <Prof id="Home:DashboardRecentSales">
             <DashboardRecentSales
               sales={recentSales}
-              onOpenSale={handleOpenSale}
-              onSeeAll={handleSeeAllSales}
+              onOpenSale={openSale}
+              onSeeAll={goReceipts}
             />
           </Prof>
-
-          {topProduct && (
-            <Prof id="Home:MiniInsightsCard">
-              <MiniInsightsCard
-                topProductName={topProduct.name}
-                unitsSold={topProduct.unitsSold}
-              />
-            </Prof>
-          )}
         </>
       )}
     </RefreshableScrollView>

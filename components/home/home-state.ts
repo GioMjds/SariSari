@@ -1,92 +1,127 @@
+import { format, subDays } from 'date-fns';
+import type { SalesDataPoint } from '@/types/reports.types';
+
 export type HomeDestination =
   | 'addProduct'
   | 'inventory'
+  | 'restock'
+  | 'stocktake'
   | 'utang'
   | 'newSale'
   | 'reports'
-  | 'customers'
-  | 'cashEntries';
+  | 'cashEntries'
+  | 'receipts';
 
-export type HomeGoalKind =
-  | 'setupCatalog'
-  | 'outOfStock'
-  | 'lowStock'
-  | 'overdueCredits'
-  | 'firstSale'
-  | 'continueSelling'
-  | 'reviewReports';
+export interface DayTotal {
+  /** Local calendar day as yyyy-MM-dd. */
+  date: string;
+  amount: number;
+  isToday: boolean;
+}
 
-export interface HomeRecommendation {
-  kind: HomeGoalKind;
+/** Last 7 local days, oldest first; days without sales are zero. */
+export function buildWeekSeries(
+  points: SalesDataPoint[],
+  todayTotal: number,
+  now: Date = new Date(),
+): DayTotal[] {
+  const byDate = new Map(points.map((p) => [p.date, p.amount]));
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = format(subDays(now, 6 - i), 'yyyy-MM-dd');
+    const isToday = i === 6;
+    // Today uses the live stats total so a new sale shows before reports refetch.
+    return {
+      date,
+      amount: isToday ? todayTotal : (byDate.get(date) ?? 0),
+      isToday,
+    };
+  });
+}
+
+/** Whole-percent change, or null when there is no base to compare against. */
+export function percentChange(
+  current: number,
+  previous: number,
+): number | null {
+  if (previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+export type StocktakeReminder =
+  | { status: 'inProgress' }
+  | { status: 'never' }
+  | { status: 'stale'; days: number };
+
+export const STOCKTAKE_STALE_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Reminds the owner to finish an open count, or to count again after 30 days. */
+export function resolveStocktakeReminder(
+  hasActiveSession: boolean,
+  lastCompletedAt: number | null,
+  now: number = Date.now(),
+): StocktakeReminder | null {
+  if (hasActiveSession) return { status: 'inProgress' };
+  if (lastCompletedAt === null) return { status: 'never' };
+  const days = Math.floor((now - lastCompletedAt) / DAY_MS);
+  return days >= STOCKTAKE_STALE_DAYS ? { status: 'stale', days } : null;
+}
+
+export type AttentionKind =
+  'outOfStock' | 'lowStock' | 'overdueUtang' | 'stocktake';
+
+export interface AttentionItem {
+  kind: AttentionKind;
+  tone: 'danger' | 'warning' | 'info';
   destination: HomeDestination;
   count?: number;
+  amount?: number;
+  stocktake?: StocktakeReminder;
 }
 
-export interface HomeStateInput {
-  productCount: number;
+export interface AttentionInput {
   outOfStockCount: number;
-  /** Products with quantity above 0 and below LOW_STOCK_THRESHOLD. */
   lowStockCount: number;
-  hasAnySales: boolean;
   overdueCount: number;
-  hour: number;
+  overdueAmount: number;
+  stocktake: StocktakeReminder | null;
 }
 
-export interface HomeState {
-  goal: HomeRecommendation;
-  suggestions: HomeRecommendation[];
-  outOfStockCount: number;
-  lowStockCount: number;
-}
-
-export function resolveHomeState(input: HomeStateInput): HomeState {
-  const { outOfStockCount, lowStockCount } = input;
-
-  let goal: HomeRecommendation;
-
-  if (input.productCount === 0) {
-    goal = { kind: 'setupCatalog', destination: 'addProduct' };
-  } else if (outOfStockCount > 0) {
-    goal = {
+/** Ordered to-do list for the owner: empty shelves first, then utang, then counting. */
+export function buildAttentionItems(input: AttentionInput): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  if (input.outOfStockCount > 0) {
+    items.push({
       kind: 'outOfStock',
-      destination: 'inventory',
-      count: outOfStockCount,
-    };
-  } else if (lowStockCount > 0) {
-    goal = { kind: 'lowStock', destination: 'inventory', count: lowStockCount };
-  } else if (input.overdueCount > 0) {
-    goal = {
-      kind: 'overdueCredits',
+      tone: 'danger',
+      destination: 'restock',
+      count: input.outOfStockCount,
+    });
+  }
+  if (input.lowStockCount > 0) {
+    items.push({
+      kind: 'lowStock',
+      tone: 'warning',
+      destination: 'restock',
+      count: input.lowStockCount,
+    });
+  }
+  if (input.overdueCount > 0) {
+    items.push({
+      kind: 'overdueUtang',
+      tone: 'danger',
       destination: 'utang',
       count: input.overdueCount,
-    };
-  } else if (!input.hasAnySales) {
-    goal = { kind: 'firstSale', destination: 'newSale' };
-  } else {
-    goal = { kind: 'continueSelling', destination: 'newSale' };
+      amount: input.overdueAmount,
+    });
   }
-
-  // Time-of-day suggestions (05:00-11:59: Inventory, 12:00-17:59: New Sale, 18:00-04:59: Reports)
-  const suggestions: HomeRecommendation[] = [];
-  let timeSuggestion: HomeRecommendation | null = null;
-
-  if (input.hour >= 5 && input.hour < 12) {
-    timeSuggestion = { kind: 'lowStock', destination: 'inventory' };
-  } else if (input.hour >= 12 && input.hour < 18) {
-    timeSuggestion = { kind: 'continueSelling', destination: 'newSale' };
-  } else {
-    timeSuggestion = { kind: 'reviewReports', destination: 'reports' };
+  if (input.stocktake) {
+    items.push({
+      kind: 'stocktake',
+      tone: 'info',
+      destination: 'stocktake',
+      stocktake: input.stocktake,
+    });
   }
-
-  // Omit suggestion if its destination matches the primary goal destination
-  if (timeSuggestion && timeSuggestion.destination !== goal.destination) {
-    suggestions.push(timeSuggestion);
-  }
-
-  return {
-    goal,
-    suggestions,
-    outOfStockCount,
-    lowStockCount,
-  };
+  return items;
 }

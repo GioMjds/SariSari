@@ -1,243 +1,145 @@
-import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { MotiView } from 'moti';
+import { memo } from 'react';
+import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { StyledText } from '@/components/elements';
 import { useTranslation } from 'react-i18next';
+import { StyledText } from '@/components/elements';
 
 export interface DashboardQuickActionsProps {
   onNewSale: () => void;
   onAddProduct: () => void;
-  onAddStock: () => void;
-  onOpenCredits: () => void;
+  onRestock: () => void;
+  onOpenUtang: () => void;
   onOpenReports: () => void;
   overdueCount?: number;
 }
 
+type Glyph = keyof typeof FontAwesome.glyphMap;
+
 export const DashboardQuickActions = memo(function DashboardQuickActions({
   onNewSale,
   onAddProduct,
-  onAddStock,
-  onOpenCredits,
+  onRestock,
+  onOpenUtang,
   onOpenReports,
   overdueCount = 0,
 }: DashboardQuickActionsProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
+  const newSale = t('dashboard.quickActions.newSale');
+  const utang = t('dashboard.quickActions.utang', { defaultValue: 'Utang' });
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 8 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 300, delay: 100 }}
-    >
-      <View className="px-4 mb-6">
-        {/* Hero New Sale CTA */}
-        <NewSaleHero onPress={onNewSale} />
-
-        {/* Section header for secondary actions */}
-        <View className="flex-row items-center justify-between mb-3">
+    <View className="px-4 mb-6">
+      <Pressable
+        onPress={onNewSale}
+        accessibilityRole="button"
+        accessibilityLabel={newSale}
+        className="bg-persimmon-500 rounded-2xl px-4 flex-row items-center active:bg-persimmon-700"
+        style={{ minHeight: 64 }}
+      >
+        <View className="w-10 h-10 rounded-xl bg-persimmon-600 items-center justify-center mr-3">
+          <FontAwesome name="plus" size={18} color="#FAFAF7" />
+        </View>
+        <View className="flex-1">
+          <StyledText variant="extrabold" className="text-base text-paper-50">
+            {newSale}
+          </StyledText>
           <StyledText
-            variant="extrabold"
-            className="text-ink-700 text-sm"
+            variant="regular"
+            className="text-caption text-persimmon-50 mt-0.5"
+            numberOfLines={1}
           >
-            Quick actions
+            {t('dashboard.quickActions.newSaleSub', {
+              defaultValue: 'Ring up cash or utang',
+            })}
           </StyledText>
         </View>
+        <FontAwesome name="chevron-right" size={13} color="#FFE0D1" />
+      </Pressable>
 
-        {/* 2x2 secondary action grid */}
-        <View className="flex-row gap-3 mb-3">
-          <ActionCard
-            label={t('common:dashboard.quickActions.addProduct', {
-              defaultValue: 'Add Product',
-            })}
-            subtitle={t('common:dashboard.quickActions.addProductSub', {
-              defaultValue: 'New catalog item',
-            })}
-            icon="plus-square"
-            iconColor="#E85A1F"
-            iconBg="bg-persimmon-50"
-            onPress={onAddProduct}
-            accessibilityLabel={t('common:dashboard.quickActions.addProduct', {
-              defaultValue: 'Add Product',
-            })}
-          />
-          <ActionCard
-            label={t('common:dashboard.quickActions.addStock', {
-              defaultValue: 'Add Stock',
-            })}
-            subtitle={t('common:dashboard.quickActions.addStockSub', {
-              defaultValue: 'Update inventory',
-            })}
-            icon="database"
-            iconColor="#4F7A24"
-            iconBg="bg-sage-50"
-            onPress={onAddStock}
-            accessibilityLabel={t('common:dashboard.quickActions.addStock', {
-              defaultValue: 'Add Stock',
-            })}
-          />
-        </View>
-
-        <View className="flex-row gap-3">
-          <ActionCard
-            label={t('common:dashboard.quickActions.credits', {
-              defaultValue: 'Utang / Credits',
-            })}
-            subtitle={
-              overdueCount > 0
-                ? t('common:dashboard.quickActions.overdueCount', {
-                    defaultValue: '{{count}} overdue',
-                    count: overdueCount,
-                  })
-                : t('common:dashboard.quickActions.creditsSub', {
-                    defaultValue: 'Customer ledger',
-                  })
-            }
-            icon="credit-card"
-            iconColor="#C8460F"
-            iconBg="bg-persimmon-50"
-            {...(overdueCount > 0 ? { badge: overdueCount } : {})}
-            onPress={onOpenCredits}
-            accessibilityLabel={
-              overdueCount > 0
-                ? `${t('common:dashboard.quickActions.credits', { defaultValue: 'Utang / Credits' })} - ${t(
-                    'common:dashboard.quickActions.overdueCount',
-                    {
-                      defaultValue: '{{count}} overdue',
-                      count: overdueCount,
-                    },
-                  )}`
-                : t('common:dashboard.quickActions.credits', {
-                    defaultValue: 'Utang / Credits',
-                  })
-            }
-          />
-          <ActionCard
-            label={t('common:dashboard.quickActions.reports', {
-              defaultValue: 'Reports',
-            })}
-            subtitle={t('common:dashboard.quickActions.reportsSub', {
-              defaultValue: 'Sales & trends',
-            })}
-            icon="bar-chart"
-            iconColor="#2E6FA8"
-            iconBg="bg-semantic-info-50"
-            onPress={onOpenReports}
-            accessibilityLabel={t('common:dashboard.quickActions.reports', {
-              defaultValue: 'Reports',
-            })}
-          />
-        </View>
+      <View className="flex-row gap-2 mt-3">
+        <Shortcut
+          icon="plus-square"
+          label={t('dashboard.quickActions.addShort', {
+            defaultValue: 'Add item',
+          })}
+          onPress={onAddProduct}
+        />
+        <Shortcut
+          icon="truck"
+          label={t('dashboard.quickActions.restock', {
+            defaultValue: 'Restock',
+          })}
+          onPress={onRestock}
+        />
+        <Shortcut
+          icon="book"
+          label={utang}
+          badge={overdueCount}
+          a11yLabel={
+            overdueCount > 0
+              ? `${utang}, ${t('dashboard.quickActions.overdueCount', {
+                  count: overdueCount,
+                })}`
+              : utang
+          }
+          onPress={onOpenUtang}
+        />
+        <Shortcut
+          icon="bar-chart"
+          label={t('dashboard.quickActions.reports')}
+          onPress={onOpenReports}
+        />
       </View>
-    </MotiView>
+    </View>
   );
 });
 
-function NewSaleHero({ onPress }: { onPress: () => void }) {
-  const { t } = useTranslation();
-  const label = t('common:dashboard.quickActions.newSale', {
-    defaultValue: 'New Sale',
-  });
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.9}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      className="bg-persimmon-500 rounded-2xl p-4 mb-5 flex-row items-center border border-persimmon-600 press-scale"
-      style={{ minHeight: 64 }}
-    >
-      <View className="w-10 h-10 rounded-xl bg-persimmon-600 items-center justify-center mr-3">
-        <FontAwesome name="plus" size={18} color="#FFFFFF" />
-      </View>
-      <View className="flex-1">
-        <StyledText
-          variant="extrabold"
-          className="text-paper-50 text-base uppercase tracking-wider"
-        >
-          {label}
-        </StyledText>
-        <StyledText
-          variant="regular"
-          className="text-persimmon-100 text-xs mt-0.5"
-          numberOfLines={1}
-        >
-          Start a new transaction
-        </StyledText>
-      </View>
-      <FontAwesome name="chevron-right" size={13} color="#FFE0D1" />
-    </TouchableOpacity>
-  );
-}
-
-function ActionCard({
-  label,
-  subtitle,
+function Shortcut({
   icon,
-  iconColor,
-  iconBg,
-  badge,
+  label,
+  badge = 0,
+  a11yLabel,
   onPress,
-  accessibilityLabel,
 }: {
+  icon: Glyph;
   label: string;
-  subtitle: string;
-  icon: keyof typeof FontAwesome.glyphMap;
-  iconColor: string;
-  iconBg: string;
   badge?: number;
+  a11yLabel?: string;
   onPress: () => void;
-  accessibilityLabel: string;
 }) {
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
-      activeOpacity={0.85}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      className="flex-1 bg-paper-50 rounded-2xl p-3 border border-ink-100 press-scale"
-      style={{ minHeight: 92 }}
+      accessibilityLabel={a11yLabel ?? label}
+      className="flex-1 items-center bg-paper-50 rounded-2xl border border-ink-100 py-3 px-1 active:bg-paper-100"
+      style={{ minHeight: 76 }}
     >
-      {/* Icon row with optional badge */}
-      <View className="flex-row items-start justify-between mb-3">
-        <View
-          className={`w-8 h-8 rounded-lg items-center justify-center ${iconBg}`}
-        >
-          <FontAwesome name={icon} size={15} color={iconColor} />
-        </View>
-        {badge !== undefined && (
-          <View className="w-5 h-5 rounded-full bg-persimmon-500 items-center justify-center">
+      <View className="w-10 h-10 rounded-xl bg-persimmon-50 items-center justify-center">
+        <FontAwesome name={icon} size={17} color="#C8460F" />
+        {badge > 0 ? (
+          <View
+            className="absolute -top-1.5 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-semantic-danger border-2 border-paper-50 items-center justify-center"
+            importantForAccessibility="no-hide-descendants"
+          >
             <StyledText
               variant="extrabold"
-              className="text-paper-50"
-              style={{ fontSize: 10 }}
+              className="text-[11px] text-white"
+              maxFontSizeMultiplier={1.2}
             >
               {badge > 9 ? '9+' : badge}
             </StyledText>
           </View>
-        )}
+        ) : null}
       </View>
-
-      {/* Label + subtitle + chevron */}
-      <View className="flex-row items-end justify-between">
-        <View className="flex-1 mr-1">
-          <StyledText
-            variant="extrabold"
-            className="text-sm text-ink-900"
-            numberOfLines={1}
-          >
-            {label}
-          </StyledText>
-          <StyledText
-            variant="regular"
-            className="text-xs text-ink-500 mt-0.5"
-            numberOfLines={1}
-          >
-            {subtitle}
-          </StyledText>
-        </View>
-        <FontAwesome name="chevron-right" size={11} color="#A89F90" />
-      </View>
-    </TouchableOpacity>
+      <StyledText
+        variant="semibold"
+        className="text-caption text-ink-900 mt-1.5 text-center"
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {label}
+      </StyledText>
+    </Pressable>
   );
 }

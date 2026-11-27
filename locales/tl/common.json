@@ -18,45 +18,37 @@
   "addPayment": "Magdagdag ng Bayad",
   "addCredit": "Magdagdag ng Utang",
   "markAllAsPaid": "Markahan Lahat bilang Bayad",
-
   "dashboardEyebrow": "SENTRO NG KONTROL NG COUNTER",
   "dashboardTitle": "Dashboard",
   "dashboardSubtitle": "Ang inyong counter sa isang sulyap",
-
   "heroToday": "Ngayon",
   "heroTransactions": "{{count}} benta",
   "heroItemsSold": "MGA NABENTA",
   "heroCreditSales": "UTANG NA BENTA",
   "heroBreakdown": "DETALYE",
-
   "qaNewSale": "Bagong Benta",
   "qaAddStock": "Magdagdag ng Stock",
   "qaRecordPayment": "Mag-record ng Bayad",
-
   "alertsStockEyebrow": "Stock",
   "alertsStockValue": "{{count}}",
   "alertsStockSubtitleOutAndLow": "{{out}} ubos · {{low}} kaunti",
   "alertsStockSubtitleLowOnly": "{{count}} kaunting stock",
   "alertsStockA11y": "{{count}} na produkto na kailangang asikasuhin ang stock",
-
   "alertsUtangEyebrow": "Utang",
   "alertsUtangA11y": "Utang na {{amount}} pesos mula sa {{count}} suki",
   "alertsUtangSukiOne": "1 suki ang may utang",
   "alertsUtangSukiMany": "{{count}} suki ang may utang",
-
   "emptyEyebrow": "Maligayang Pagdating",
   "emptyTitle": "I-setup ang iyong counter",
   "emptyBody": "Magdagdag ng unang produkto para alam ng counter kung ano ang ibebenta.",
   "emptyAddProduct": "Magdagdag ng Produkto",
   "emptyFirstSale": "Simulan ang Unang Benta",
-
   "attentionStock": "Stock",
   "attentionSukis": "Utang",
   "attentionSales": "Mga Kamakailang Benta",
   "viewAll": "Tingnan lahat",
   "viewAllSales": "Tingnan lahat ng benta",
   "viewAllA11y": "Tingnan lahat ng {{label}}",
-
   "settingsTitle": "Mga Setting",
   "settingsSubtitle": "Tindahan at mga safeguard ng data",
   "settingsStoreSection": "Tindahan",
@@ -72,13 +64,11 @@
   "settingsFooter": "SariSari — isang gumaganang prototype.",
   "settingsSecuritySection": "Seguridad",
   "settingsSecuritySectionSub": "Protektahan ang mahahalagang aksyon gamit ang PIN.",
-
   "languagePickerTitle": "Piliin ang iyong wika",
   "languagePickerSubtitle": "Piliin ang wika na gusto mong gamitin ni Sari.",
   "languageEnglish": "English",
   "languageTagalog": "Tagalog",
   "languageActive": "Aktibo",
-
   "cloudBackupSectionTitle": "Cloud backup",
   "cloudBackupLinked": "Naka-link sa Google Drive",
   "cloudBackupUnlinked": "Hindi naka-link",
@@ -93,7 +83,6 @@
   "cloudBackupReauthBanner": "Expired na ang link sa Google Drive. I-link muli para magpatuloy.",
   "cloudBackupNotConfigured": "Hindi naka-configure ang Drive backup para sa build na ito. Mag-set ng extra.googleClientId sa app.json.",
   "cloudSyncPendingHint": "Awtomatikong ma-u-upload ang mga snapshot sa Wi-Fi.",
-
   "localSnapshotsSection": "Mga lokal na snapshot",
   "localSnapshotsCount_one": "1 sa 7 ang naka-imbak sa device na ito",
   "localSnapshotsCount_other": "{{count}} sa 7 ang naka-imbak sa device na ito",
@@ -109,11 +98,9 @@
   "settingsBackupYesterday": "Kagabi",
   "settingsBackupDaysAgo_one": "{{count}} araw nakakaraan",
   "settingsBackupDaysAgo_other": "{{count}} araw nakakaraan",
-
   "sariSays": "Sabi ni Sari",
   "sariSettingsTitle": "Nasa isang lugar lang lahat",
   "sariSettingsBody": "Dito mo aayusin ang tindahan, seguridad, at patakaran sa benta — dahan-dahan lang, ako na bahala sa counter.",
-
   "restorePickerTitle": "Mag-restore mula sa backup",
   "restorePickerTabLocal_one": "Lokal (1)",
   "restorePickerTabLocal_other": "Lokal ({{count}})",
@@ -123,27 +110,22 @@
   "restorePickerConfirmTitle": "Kumpirmahin ang restore",
   "restorePickerConfirmMessage": "Papalitan ng restore ang lahat ng kasalukuyang data. May ise-save munang safety copy.",
   "restorePickerConfirmAction": "I-restore ang napiling snapshot",
-
   "restoreInProgress": "Nire-restore…",
   "restoreSuccess": "Tapos na ang restore",
   "restoreFailedRollback": "Pumalya ang restore; nasa dati ang iyong data.",
   "backupNowFailed": "Pumalya ang backup. Pakisubukan muli.",
   "backupInsufficientDisk": "Kailangan ng {{mb}} MB na libre para mag-back up. Magbakante ng storage.",
   "backupFailedGeneric": "Pumalya ang backup.",
-
   "useCellularForCloud": "Gumamit ng cellular data para sa cloud upload",
-
   "cloudNewerBannerTitle": "May mas bagong backup sa Google Drive",
   "cloudNewerBannerSubtitle": "Cloud: {{cloud}} · Lokal: {{local}}",
   "cloudNewerBannerRestoreCta": "I-restore mula sa cloud",
   "cloudNewerBannerDismiss": "Isara",
   "cloudBackupConsentError": "Hindi ma-link ang Google Drive. Subukan muli.",
-
   "shareStatementTitle": "I-share ang Statement",
   "shareStatementMessage": "Piliin kung paano i-share ang statement sa iyong suki:",
   "shareAsText": "I-share bilang Text (SMS/Chat)",
   "shareAsPdf": "I-share bilang PDF Resibo",
-
   "homeTitle": "Home",
   "salesTitle": "Benta",
   "inventoryTitle": "Imbentaryo",
@@ -151,7 +133,6 @@
   "moreTitle": "Iba Pa",
   "utangTitle": "Utang",
   "reportsTitle": "Mga Ulat",
-
   "moreHomeTitle": "Iba pa",
   "moreHomeSubtitle": "Asikasuhin ang araw, unawain ang tindahan, at panatilihing ligtas ang iyong data.",
   "moreHomeEyebrow": "Mga gamit ng tindahan",
@@ -187,8 +168,6 @@
   "statusPlanned": "Nakaplano",
   "statusTesting": "Sinusubukan",
   "statusComingSoon": "Malapit na",
-  "homeSalesToday": "Benta ngayon",
-  "homeTransactionsToday": "{{count}} benta ang naitala",
   "settingsSalesSection": "Mga void at pagwawasto",
   "settingsSalesSectionSub": "Gaano katagal pagkatapos ng benta puwede pa itong i-void o itama.",
   "reportsSubtitle": "Benta, tubo, stock at utang sa anumang petsa",
@@ -214,7 +193,6 @@
   "backupCloudSectionSub": "I-link, i-sync, at pamahalaan ang cloud copy",
   "backupLocalSection": "Device na ito",
   "backupLocalSectionSub": "Gumawa at mag-restore ng mga lokal na snapshot",
-
   "barcode": {
     "invalid": "Hindi parang barcode iyan. Mga numero lang, 8-14 ang haba.",
     "cta": {
@@ -230,68 +208,15 @@
       "cameraUnavailable": "Hindi available ang camera. Pwede mong i-type ang barcode."
     }
   },
-
   "dashboard": {
-    "goals": {
-      "setupCatalog": {
-        "title": "Magdagdag ng mga unang paninda",
-        "description": "Magsimula sa pagdaragdag ng mga produkto sa listahan ng paninda para masubaybayan ang stock at ma-record ang benta.",
-        "cta": "Magdagdag ng Produkto"
-      },
-      "outOfStock": {
-        "title": "Mga produktong ubos na",
-        "description_one": "May {{count}} paninda na ubos na ang stock. Mag-restock na para hindi mawalan ng benta.",
-        "description_other": "May {{count}} paninda na ubos na ang stock. Mag-restock na para hindi mawalan ng benta.",
-        "cta": "Mag-restock ng Stock"
-      },
-      "lowStock": {
-        "title": "Pabawas na ang stock",
-        "description_one": "May {{count}} paninda na paubos na ang stock.",
-        "description_other": "May {{count}} paninda na paubos na ang stock.",
-        "cta": "Suriin ang Stock"
-      },
-      "overdueCredits": {
-        "title": "Lagpas na sa araw ang utang",
-        "description_one": "May {{count}} suki na kailangang singilin sa utang.",
-        "description_other": "May {{count}} suki na kailangang singilin sa utang.",
-        "cta": "Singilin ang Utang"
-      },
-      "firstSale": {
-        "title": "Handa na para sa unang benta",
-        "description": "Handa na ang paninda! I-record na ang unang benta sa tindahan.",
-        "cta": "Bagong Benta"
-      },
-      "continueSelling": {
-        "title": "Aktibo ang tindahan",
-        "description": "Mag-record ng benta, suriin ang utang, o mag-restock ng paninda.",
-        "cta": "Bagong Benta"
-      },
-      "reviewReports": {
-        "title": "Suriin ang iyong araw",
-        "description": "Tingnan ang benta at trend ngayong araw.",
-        "cta": "Tingnan ang Mga Ulat"
-      }
-    },
     "quickActions": {
       "newSale": "Bagong Benta",
-      "addProduct": "Magdagdag ng Produkto",
-      "addProductSub": "Bagong paninda sa katalogo",
-      "addStock": "Magdagdag ng Stock",
-      "addStockSub": "I-update ang imbentaryo",
-      "credits": "Utang / Credits",
-      "creditsSub": "Ledger ng suki",
       "reports": "Mga Ulat",
-      "reportsSub": "Benta at trend",
-      "overdueCount": "{{count}} lagpas na"
-    },
-    "suggestions": {
-      "morning": "Pagsusuri sa Umaga",
-      "afternoon": "Benta sa Hapon",
-      "evening": "Buod sa Gabi"
-    },
-    "pulse": {
-      "todayRevenue": "Benta Ngayong Araw",
-      "todaySales": "Bilang ng Benta"
+      "overdueCount": "{{count}} lagpas na",
+      "newSaleSub": "Cash o utang",
+      "addShort": "Bagong item",
+      "restock": "Mag-restock",
+      "utang": "Utang"
     },
     "recentActivity": {
       "title": "Kamakailang Gawain",
@@ -304,22 +229,55 @@
       "saleLabel": "Benta #{{id}}",
       "saleAccessibilityLabel": "Benta #{{id}}, {{total}}",
       "itemCount_one": "{{count}} paninda",
-      "itemCount_other": "{{count}} paninda"
+      "itemCount_other": "{{count}} paninda",
+      "cash": "Cash",
+      "utang": "Utang"
     },
     "stocktakeNudge": {
       "inProgress": "May bilang ng stock na hindi pa tapos",
       "never": "Hindi mo pa nabibilang ang estante",
       "stale_one": "{{count}} araw na mula sa huling bilang",
       "stale_other": "{{count}} araw na mula sa huling bilang",
-      "sub": "Sa pagbilang, makikita agad ang nawawala o sirang stock",
-      "cta": "Bilangin",
-      "continue": "Ituloy"
+      "sub": "Sa pagbilang, makikita agad ang nawawala o sirang stock"
     },
-    "stockAlert": {
-      "message_one": "{{count}} paninda na paubos na",
-      "message_other": "{{count}} paninda na paubos na",
-      "sub": "Mag-restock bago maubos",
-      "cta": "Mag-restock"
+    "today": {
+      "title": "Benta (cash) ngayon",
+      "countLine": "{{sales}} benta · {{items}} piraso",
+      "vsYesterday": "{{value}} kumpara kahapon",
+      "hint": "Buksan ang mga ulat",
+      "weekA11y": "Benta (cash) sa huling 7 araw, {{total}} lahat",
+      "profit": "Tubo",
+      "utangGiven": "Inutang",
+      "collected": "Nasingil"
+    },
+    "attention": {
+      "title": "Kailangang asikasuhin",
+      "outOfStock_one": "{{count}} paninda ang ubos na",
+      "outOfStock_other": "{{count}} paninda ang ubos na",
+      "outOfStockSub": "Mag-restock bago hanapin ng suki",
+      "lowStock_one": "{{count}} paninda ang paubos na",
+      "lowStock_other": "{{count}} paninda ang paubos na",
+      "lowStockSub": "Isama sa susunod na pamamalengke",
+      "overdue_one": "{{count}} suki ang lagpas na sa bayad",
+      "overdue_other": "{{count}} suki ang lagpas na sa bayad",
+      "overdueSub": "{{amount}} ang lagpas na",
+      "clearTitle": "Ayos ang lahat",
+      "clearSub": "Maayos ang stock at utang."
+    },
+    "money": {
+      "title": "Pera ngayong araw",
+      "action": "Talaan ng cash",
+      "cashSales": "Benta (cash)",
+      "collected": "Nasingil na utang",
+      "expenses": "Gastos",
+      "drawings": "Kinuha ng may-ari",
+      "net": "Natirang cash"
+    },
+    "topSellers": {
+      "title": "Pinakamabenta ngayon",
+      "action": "Ulat",
+      "units_one": "{{count}} piraso",
+      "units_other": "{{count}} piraso"
     }
   }
 }

@@ -18,45 +18,37 @@
   "addPayment": "Add Payment",
   "addCredit": "Add Credit",
   "markAllAsPaid": "Mark All as Paid",
-
   "dashboardEyebrow": "COUNTER COMMAND CENTER",
   "dashboardTitle": "Dashboard",
   "dashboardSubtitle": "Your counter at a glance",
-
   "heroToday": "Today",
   "heroTransactions": "{{count}} txn",
   "heroItemsSold": "ITEMS SOLD",
   "heroCreditSales": "CREDIT (UTANG) SALES",
   "heroBreakdown": "BREAKDOWN",
-
   "qaNewSale": "New Sale",
   "qaAddStock": "Add Stock",
   "qaRecordPayment": "Record Payment",
-
   "alertsStockEyebrow": "Stock",
   "alertsStockValue": "{{count}}",
   "alertsStockSubtitleOutAndLow": "{{out}} out · {{low}} low",
   "alertsStockSubtitleLowOnly": "{{low}} low stock",
   "alertsStockA11y": "{{count}} items need stock attention",
-
   "alertsUtangEyebrow": "Utang",
   "alertsUtangA11y": "Outstanding utang {{amount}} pesos across {{count}} customers",
   "alertsUtangSukiOne": "1 suki owes",
   "alertsUtangSukiMany": "{{count}} suki owe",
-
   "emptyEyebrow": "Welcome",
   "emptyTitle": "Set up your counter",
   "emptyBody": "Add your first product so the till knows what to sell.",
   "emptyAddProduct": "Add Product",
   "emptyFirstSale": "Start First Sale",
-
   "attentionStock": "Stock",
   "attentionSukis": "Utang",
   "attentionSales": "Recent sales",
   "viewAll": "View all",
   "viewAllSales": "View all sales",
   "viewAllA11y": "View all {{label}}",
-
   "settingsTitle": "Settings",
   "settingsSubtitle": "Store and data safeguards",
   "settingsStoreSection": "Store",
@@ -72,13 +64,11 @@
   "settingsFooter": "SariSari — a working prototype.",
   "settingsSecuritySection": "Security",
   "settingsSecuritySectionSub": "Protect sensitive store actions with a PIN.",
-
   "languagePickerTitle": "Choose your language",
   "languagePickerSubtitle": "Pick the language you want Sari to speak.",
   "languageEnglish": "English",
   "languageTagalog": "Tagalog",
   "languageActive": "Active",
-
   "cloudBackupSectionTitle": "Cloud backup",
   "cloudBackupLinked": "Linked to Google Drive",
   "cloudBackupUnlinked": "Not linked",
@@ -93,7 +83,6 @@
   "cloudBackupReauthBanner": "Google Drive link expired. Re-link to continue.",
   "cloudBackupNotConfigured": "Drive backup is not configured for this build. Set extra.googleClientId in app.json.",
   "cloudSyncPendingHint": "Snapshots will upload automatically on Wi-Fi.",
-
   "localSnapshotsSection": "Local snapshots",
   "localSnapshotsCount": "{{count}} of 7 kept on this device",
   "localSnapshotsCount_one": "1 of 7 kept on this device",
@@ -109,11 +98,9 @@
   "settingsBackupYesterday": "Yesterday",
   "settingsBackupDaysAgo_one": "{{count}} days ago",
   "settingsBackupDaysAgo_other": "{{count}} days ago",
-
   "sariSays": "Sari says",
   "sariSettingsTitle": "Everything in one place",
   "sariSettingsBody": "Update your store details, security, and sales rules — take your time, I'll keep the counter warm.",
-
   "restorePickerTitle": "Restore from backup",
   "restorePickerTabLocal_one": "Local (1)",
   "restorePickerTabLocal_other": "Local ({{count}})",
@@ -123,27 +110,22 @@
   "restorePickerConfirmTitle": "Confirm restore",
   "restorePickerConfirmMessage": "Restoring replaces all current data. A safety copy will be saved first.",
   "restorePickerConfirmAction": "Restore selected snapshot",
-
   "restoreInProgress": "Restoring…",
   "restoreSuccess": "Restore complete",
   "restoreFailedRollback": "Restore failed; your previous data is intact.",
   "backupNowFailed": "Backup failed. Please try again.",
   "backupInsufficientDisk": "Need {{mb}} MB free to back up. Please free some space.",
   "backupFailedGeneric": "Backup failed.",
-
   "useCellularForCloud": "Use cellular data for cloud uploads",
-
   "cloudNewerBannerTitle": "A newer backup is in Google Drive",
   "cloudNewerBannerSubtitle": "Cloud: {{cloud}} · Local: {{local}}",
   "cloudNewerBannerRestoreCta": "Restore from cloud",
   "cloudNewerBannerDismiss": "Dismiss",
   "cloudBackupConsentError": "Could not link Google Drive. Please try again.",
-
   "shareStatementTitle": "Share Statement",
   "shareStatementMessage": "Choose how you want to share the statement with your suki:",
   "shareAsText": "Share as Text (SMS/Chat)",
   "shareAsPdf": "Share as PDF Resibo",
-
   "homeTitle": "Home",
   "salesTitle": "Sales",
   "inventoryTitle": "Inventory",
@@ -151,7 +133,6 @@
   "moreTitle": "More",
   "utangTitle": "Utang",
   "reportsTitle": "Reports",
-
   "moreHomeTitle": "More",
   "moreHomeSubtitle": "Manage the day, understand the store, and keep your data safe.",
   "moreHomeEyebrow": "Store tools",
@@ -187,8 +168,6 @@
   "statusPlanned": "Planned",
   "statusTesting": "Testing",
   "statusComingSoon": "Coming soon",
-  "homeSalesToday": "Sales today",
-  "homeTransactionsToday": "{{count}} sales rung up",
   "settingsSalesSection": "Voids and corrections",
   "settingsSalesSectionSub": "How long after a sale it can still be voided or corrected.",
   "reportsSubtitle": "Sales, profit, stock and utang for any date range",
@@ -214,7 +193,6 @@
   "backupCloudSectionSub": "Link, sync, and manage your cloud copy",
   "backupLocalSection": "This device",
   "backupLocalSectionSub": "Create and restore rolling local snapshots",
-
   "barcode": {
     "invalid": "That doesn't look like a barcode. Digits only, 8–14 long.",
     "cta": {
@@ -230,68 +208,15 @@
       "cameraUnavailable": "Camera not available. You can type the barcode instead."
     }
   },
-
   "dashboard": {
-    "goals": {
-      "setupCatalog": {
-        "title": "Add your first items",
-        "description": "Start by adding products to your store catalog so you can track stock and record sales.",
-        "cta": "Add Product"
-      },
-      "outOfStock": {
-        "title": "Items out of stock",
-        "description_one": "You have {{count}} item out of stock. Restock now to avoid lost sales.",
-        "description_other": "You have {{count}} items out of stock. Restock now to avoid lost sales.",
-        "cta": "Restock Inventory"
-      },
-      "lowStock": {
-        "title": "Low stock alert",
-        "description_one": "You have {{count}} item running low on stock.",
-        "description_other": "You have {{count}} items running low on stock.",
-        "cta": "Check Inventory"
-      },
-      "overdueCredits": {
-        "title": "Overdue utang accounts",
-        "description_one": "{{count}} customer has overdue balances.",
-        "description_other": "{{count}} customers have overdue balances.",
-        "cta": "Review Utang"
-      },
-      "firstSale": {
-        "title": "Ready for your first sale",
-        "description": "Catalog is ready! Record your first store transaction.",
-        "cta": "New Sale"
-      },
-      "continueSelling": {
-        "title": "Store is active",
-        "description": "Record sales, check balances, or manage restocks.",
-        "cta": "New Sale"
-      },
-      "reviewReports": {
-        "title": "Review your day",
-        "description": "Check today's sales performance and trends.",
-        "cta": "View Reports"
-      }
-    },
     "quickActions": {
       "newSale": "New Sale",
-      "addProduct": "Add Product",
-      "addProductSub": "New catalog item",
-      "addStock": "Add Stock",
-      "addStockSub": "Update inventory",
-      "credits": "Utang / Credits",
-      "creditsSub": "Customer ledger",
       "reports": "Reports",
-      "reportsSub": "Sales & trends",
-      "overdueCount": "{{count}} overdue"
-    },
-    "suggestions": {
-      "morning": "Morning Check",
-      "afternoon": "Afternoon Rush",
-      "evening": "Evening Summary"
-    },
-    "pulse": {
-      "todayRevenue": "Today's Revenue",
-      "todaySales": "Today's Sales"
+      "overdueCount": "{{count}} overdue",
+      "newSaleSub": "Ring up cash or utang",
+      "addShort": "Add item",
+      "restock": "Restock",
+      "utang": "Utang"
     },
     "recentActivity": {
       "title": "Recent Activity",
@@ -304,22 +229,55 @@
       "saleLabel": "Sale #{{id}}",
       "saleAccessibilityLabel": "Sale #{{id}}, {{total}}",
       "itemCount_one": "{{count}} item",
-      "itemCount_other": "{{count}} items"
+      "itemCount_other": "{{count}} items",
+      "cash": "Cash",
+      "utang": "Utang"
     },
     "stocktakeNudge": {
       "inProgress": "Stock count in progress",
       "never": "You have not counted your shelf yet",
       "stale_one": "Last shelf count was {{count}} day ago",
       "stale_other": "Last shelf count was {{count}} days ago",
-      "sub": "Counting finds missing or damaged stock early",
-      "cta": "Count",
-      "continue": "Continue"
+      "sub": "Counting finds missing or damaged stock early"
     },
-    "stockAlert": {
-      "message_one": "{{count}} item running low",
-      "message_other": "{{count}} items running low",
-      "sub": "Restock before you run out",
-      "cta": "Restock"
+    "today": {
+      "title": "Cash sales today",
+      "countLine": "{{sales}} sales · {{items}} items",
+      "vsYesterday": "{{value}} vs yesterday",
+      "hint": "Opens reports",
+      "weekA11y": "Last 7 days cash sales, {{total}} total",
+      "profit": "Profit",
+      "utangGiven": "Utang given",
+      "collected": "Collected"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "outOfStock_one": "{{count}} item out of stock",
+      "outOfStock_other": "{{count}} items out of stock",
+      "outOfStockSub": "Restock before customers ask for it",
+      "lowStock_one": "{{count}} item running low",
+      "lowStock_other": "{{count}} items running low",
+      "lowStockSub": "Add to your next palengke list",
+      "overdue_one": "{{count}} suki overdue",
+      "overdue_other": "{{count}} suki overdue",
+      "overdueSub": "{{amount}} past due",
+      "clearTitle": "All caught up",
+      "clearSub": "Stock and utang look good."
+    },
+    "money": {
+      "title": "Money today",
+      "action": "Cash entries",
+      "cashSales": "Cash sales",
+      "collected": "Utang collected",
+      "expenses": "Expenses",
+      "drawings": "Taken out",
+      "net": "Net cash"
+    },
+    "topSellers": {
+      "title": "Top sellers today",
+      "action": "Report",
+      "units_one": "{{count}} pc",
+      "units_other": "{{count}} pcs"
     }
   }
 }

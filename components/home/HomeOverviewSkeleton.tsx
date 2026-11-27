@@ -11,54 +11,41 @@ type SkeletonLayout = NonNullable<ComponentProps<typeof Skeleton>['layout']>;
 export function HomeOverviewSkeleton() {
   const tabBarBottomOffset = useTabBarBottomOffset();
 
+  // Mirrors the live layout so content lands where the bones were.
   const layout = [
     {
-      key: 'hero-kpi-card',
+      key: 'today-card',
       width: '100%',
-      height: 110,
+      height: 270,
+      borderRadius: 16,
+      marginBottom: 16,
+    },
+    {
+      key: 'new-sale',
+      width: '100%',
+      height: 64,
       borderRadius: 16,
       marginBottom: 12,
     },
     {
-      key: 'kpi-grid',
-      width: '100%',
-      height: 220,
-      borderRadius: 20,
-      marginBottom: 12,
-    },
-    {
-      key: 'goal-card',
-      width: '100%',
-      height: 160,
-      borderRadius: 20,
-      marginBottom: 12,
-    },
-    {
-      key: 'quick-actions-card',
-      width: '100%',
-      height: 180,
-      borderRadius: 20,
-      marginBottom: 12,
-    },
-    {
-      key: 'suggestions-card',
-      width: '100%',
-      height: 56,
-      borderRadius: 14,
-      marginBottom: 12,
-    },
-    {
-      key: 'recent-sales-card',
-      width: '100%',
-      height: 220,
-      borderRadius: 20,
-      marginBottom: 12,
-    },
-    {
-      key: 'mini-insights-card',
+      key: 'shortcuts',
       width: '100%',
       height: 76,
-      borderRadius: 20,
+      borderRadius: 16,
+      marginBottom: 24,
+    },
+    {
+      key: 'attention',
+      width: '100%',
+      height: 180,
+      borderRadius: 16,
+      marginBottom: 24,
+    },
+    {
+      key: 'money',
+      width: '100%',
+      height: 220,
+      borderRadius: 16,
       marginBottom: 16,
     },
   ] satisfies SkeletonLayout;
