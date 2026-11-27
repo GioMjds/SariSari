@@ -1,6 +1,8 @@
 import { withProf } from '@/utils/perf';
 import {
   FilterChips,
+  ReceiptDayHeader,
+  ReceiptsSummary,
   SaleRow,
   SalesEmptyState,
   SalesFilterModal,
@@ -8,11 +10,15 @@ import {
 } from '@/components/sales';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { Pagination, RefreshableFlatList } from '@/components/ui';
-import { StyledText } from '@/components/elements';
 import { SalesFilterState, ITEMS_PER_PAGE } from '@/constants';
 import { useAllSales, useTodayStats } from '@/hooks';
-import { SaleWithItems } from '@/types';
-import { parseStoredTimestamp } from '@/utils';
+import {
+  buildReceiptRows,
+  formatReceiptRef,
+  parseStoredTimestamp,
+  ReceiptRow,
+  summarizeReceipts,
+} from '@/utils';
 import { Href, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { FlatList, View } from 'react-native';
@@ -24,11 +30,10 @@ import {
   subDays,
   subMonths,
 } from 'date-fns';
-import { formatPesos } from '@/lib';
 
 function Receipts() {
   const router = useRouter();
-  const flatListRef = useRef<FlatList<SaleWithItems>>(null);
+  const flatListRef = useRef<FlatList<ReceiptRow>>(null);
 
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -52,11 +57,13 @@ function Receipts() {
     let filtered = [...sales];
 
     if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase().trim();
+      const q = searchQuery.toLowerCase().trim().replace(/^#/, '');
       filtered = filtered.filter((sale) => {
         if (sale.customer_name?.toLowerCase().includes(q)) return true;
-        const refStr = `#sr-${String(sale.id).padStart(4, '0')}`;
-        if (refStr.includes(q) || String(sale.id) === q) return true;
+        const ref = formatReceiptRef(sale.id).toLowerCase();
+        // Accepts "sr-0042", "sr-42", or a bare "42".
+        if (ref.includes(q) || q.replace(/^sr-?0*/, '') === String(sale.id))
+          return true;
         if (
           sale.items?.some((item) =>
             item.product_name.toLowerCase().includes(q),
@@ -120,14 +127,15 @@ function Receipts() {
     });
   }, [sales, filters, searchQuery]);
 
-  const filteredTotalAmount = useMemo(() => {
-    return filteredSales.reduce((acc, sale) => acc + (sale.total || 0), 0);
-  }, [filteredSales]);
+  const summary = useMemo(
+    () => summarizeReceipts(filteredSales),
+    [filteredSales],
+  );
 
-  const paginatedSales = useMemo(() => {
+  const rows = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredSales.slice(startIndex, endIndex);
+    const pageSales = filteredSales.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    return buildReceiptRows(pageSales, filteredSales);
   }, [filteredSales, currentPage]);
 
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -178,17 +186,17 @@ function Receipts() {
     router.push('/reports/corrections' as Href);
   }, [router]);
 
-  const renderSaleItem = useCallback(
-    ({ item }: { item: SaleWithItems }) => {
-      return <SaleRow sale={item} onPress={handleSalePress} />;
-    },
+  const renderRow = useCallback(
+    ({ item }: { item: ReceiptRow }) =>
+      item.kind === 'day' ? (
+        <ReceiptDayHeader label={item.label} cash={item.cash} utang={item.utang} />
+      ) : (
+        <SaleRow sale={item.sale} onPress={handleSalePress} />
+      ),
     [handleSalePress],
   );
 
-  const keyExtractor = useCallback(
-    (item: SaleWithItems) => item.id.toString(),
-    [],
-  );
+  const keyExtractor = useCallback((item: ReceiptRow) => item.key, []);
 
   const listHeader = useMemo(() => {
     return (
@@ -199,38 +207,19 @@ function Receipts() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onOpenCorrectionsReport={handleOpenCorrectionsReport}
+          onFiltersChange={handleApplyFilters}
         />
 
-        {filteredSales.length > 0 && (
-          <View className="px-4 pt-1 pb-3 flex-row items-center justify-between">
-            <StyledText variant="extrabold" className="label-caps text-ink-400">
-              {filteredSales.length}{' '}
-              {filteredSales.length === 1 ? 'Receipt' : 'Receipts'} Found
-            </StyledText>
-            <View className="flex-row items-baseline">
-              <StyledText
-                variant="regular"
-                className="text-ink-500 text-xs mr-1"
-              >
-                Sum:
-              </StyledText>
-              <StyledText
-                variant="extrabold"
-                className="text-persimmon-600 text-xs"
-              >
-                {formatPesos(filteredTotalAmount)}
-              </StyledText>
-            </View>
-          </View>
-        )}
+        {summary.count > 0 && <ReceiptsSummary {...summary} />}
       </View>
     );
   }, [
     filters,
     searchQuery,
-    filteredSales.length,
-    filteredTotalAmount,
+    summary,
     handleOpenFilters,
+    handleOpenCorrectionsReport,
+    handleApplyFilters,
   ]);
 
   const listEmpty = useMemo(() => {
@@ -251,12 +240,12 @@ function Receipts() {
   return (
     <View className="flex-1 bg-paper-200">
       <View className="flex-1">
-        <RefreshableFlatList<SaleWithItems>
+        <RefreshableFlatList<ReceiptRow>
           ref={flatListRef}
           isRefreshing={refreshing}
           onRefresh={onRefresh}
-          data={paginatedSales}
-          renderItem={renderSaleItem}
+          data={rows}
+          renderItem={renderRow}
           keyExtractor={keyExtractor}
           contentContainerStyle={{ paddingBottom: tabBarBottomOffset + 24 }}
           showsVerticalScrollIndicator={false}

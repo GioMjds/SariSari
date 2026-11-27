@@ -9,3 +9,5 @@ export * from './SalesHeader';
 export * from './TodayStatsHero';
 export * from './add-sales';
 export * from './sale-details';
+export * from './ReceiptDayHeader';
+export * from './ReceiptsSummary';

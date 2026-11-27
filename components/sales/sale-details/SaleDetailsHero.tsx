@@ -1,29 +1,17 @@
 import { StyledText } from '@/components/elements';
 import { ReceiptHeroMeta, StatusStamp } from '@/components/ui';
 import { SaleWithItems } from '@/types';
-import { parseStoredTimestamp } from '@/utils';
+import { formatReceiptRef, getCancelledKind, parseStoredTimestamp } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { View } from 'react-native';
-
-const CANCELLED = {
-  void: { title: 'Voided Sale', stamp: 'VOIDED', note: 'Voided' },
-  refund: { title: 'Refunded Sale', stamp: 'REFUNDED', note: 'Refunded' },
-  price_correction: {
-    title: 'Price Corrected',
-    stamp: 'CORRECTED',
-    note: 'Replaced by a price correction',
-  },
-} as const;
 
 // Top of the resibo: title, status stamp, cancellation notice, buyer, and meta rows.
 export function SaleDetailsHero({ sale }: { sale: SaleWithItems }) {
   const isCredit = sale.payment_type === 'credit';
   const ts = parseStoredTimestamp(sale.timestamp) || new Date();
   const cancelledAt = parseStoredTimestamp(sale.cancelled_at);
-  const cancelled = sale.cancelled_at
-    ? CANCELLED[sale.cancelled_by_kind ?? 'void']
-    : null;
+  const cancelled = getCancelledKind(sale);
   const customerName = sale.customer_name?.trim();
   const pieces = sale.items.reduce((sum, item) => sum + item.quantity, 0);
   const lines = sale.items.length;
@@ -87,7 +75,7 @@ export function SaleDetailsHero({ sale }: { sale: SaleWithItems }) {
 
       <ReceiptHeroMeta
         rows={[
-          { label: 'Ref No.', value: `R-${String(sale.id).padStart(6, '0')}` },
+          { label: 'Ref No.', value: formatReceiptRef(sale.id) },
           { label: 'Payment', value: isCredit ? 'Utang (credit)' : 'Cash' },
           {
             label: 'Items',

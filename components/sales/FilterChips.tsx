@@ -1,7 +1,13 @@
-import { SalesFilterState } from '@/constants';
+import {
+  DateRangeFilter,
+  dateRangeOptions,
+  PaymentTypeFilter,
+  SalesFilterState,
+} from '@/constants';
+import { StyledText } from '@/components/elements';
 import { FontAwesome } from '@expo/vector-icons';
 import { memo } from 'react';
-import { TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface FilterChipsProps {
   filters: SalesFilterState;
@@ -9,6 +15,56 @@ interface FilterChipsProps {
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   onOpenCorrectionsReport?: () => void;
+  onFiltersChange?: (filters: SalesFilterState) => void;
+}
+
+const PAYMENT_CHIPS: { value: PaymentTypeFilter; label: string }[] = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'credit', label: 'Utang' },
+];
+const QUICK_DATES: DateRangeFilter[] = ['today', 'last7days', 'thisMonth'];
+const dateLabel = (value: DateRangeFilter) =>
+  dateRangeOptions.find((o) => o.value === value)?.label ?? value;
+
+function Chip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      hitSlop={{ top: 6, bottom: 6 }}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`Filter ${label}`}
+      className={`flex-row items-center h-9 px-3.5 rounded-pill border ${
+        selected
+          ? 'bg-persimmon-50 border-persimmon-500'
+          : 'bg-paper-50 border-ink-200'
+      }`}
+    >
+      {selected && (
+        <FontAwesome
+          name="check"
+          size={10}
+          color="#A1370C"
+          style={{ marginRight: 6 }}
+        />
+      )}
+      <StyledText
+        variant={selected ? 'extrabold' : 'medium'}
+        className={`text-sm ${selected ? 'text-persimmon-700' : 'text-ink-700'}`}
+      >
+        {label}
+      </StyledText>
+    </TouchableOpacity>
+  );
 }
 
 export const FilterChips = memo(function FilterChips({
@@ -17,9 +73,15 @@ export const FilterChips = memo(function FilterChips({
   searchQuery = '',
   onSearchChange,
   onOpenCorrectionsReport,
+  onFiltersChange,
 }: FilterChipsProps) {
   const hasActiveModalFilters =
     filters.paymentType !== 'all' || filters.dateRange !== 'all';
+  // A range picked in the modal that has no quick chip shows up first as an active chip.
+  const dateChips =
+    filters.dateRange !== 'all' && !QUICK_DATES.includes(filters.dateRange)
+      ? [filters.dateRange, ...QUICK_DATES]
+      : QUICK_DATES;
 
   return (
     <View className="mb-3">
@@ -81,6 +143,53 @@ export const FilterChips = memo(function FilterChips({
           </TouchableOpacity>
         )}
       </View>
+
+      {onFiltersChange && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            gap: 8,
+            alignItems: 'center',
+          }}
+        >
+          {PAYMENT_CHIPS.map((chip) => {
+            const selected = filters.paymentType === chip.value;
+            return (
+              <Chip
+                key={chip.value}
+                label={chip.label}
+                selected={selected}
+                onPress={() =>
+                  onFiltersChange({
+                    ...filters,
+                    paymentType: selected ? 'all' : chip.value,
+                  })
+                }
+              />
+            );
+          })}
+          <View className="w-px h-5 bg-ink-200 mx-1" />
+          {dateChips.map((value) => {
+            const selected = filters.dateRange === value;
+            return (
+              <Chip
+                key={value}
+                label={dateLabel(value)}
+                selected={selected}
+                onPress={() =>
+                  onFiltersChange({
+                    ...filters,
+                    dateRange: selected ? 'all' : value,
+                  })
+                }
+              />
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 });
