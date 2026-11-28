@@ -1,6 +1,7 @@
 import { withProf } from '@/utils/perf';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import {
   ProductSearchCatalog,
   CustomerPickerModal,
@@ -50,7 +51,29 @@ function POSScreen() {
   const selectedCustomer = useCartStore((s) => s.selectedCustomer);
   const paymentType = useCartStore((s) => s.paymentType);
   const clearCart = useCartStore((s) => s.clearCart);
+  const creditHandoff = useCartStore((s) => s.creditHandoff);
   const addToast = useToastStore((s) => s.addToast);
+
+  const applyCreditHandoff = useCallback((suki: Customer) => {
+    useCartStore.setState({
+      paymentType: 'credit',
+      selectedCustomer: suki,
+      returnToCustomerId: suki.id,
+      creditHandoff: null,
+    });
+  }, []);
+
+  // Suki sent from credit details: apply now, or ask first when a cart is in progress.
+  useFocusEffect(
+    useCallback(() => {
+      if (!creditHandoff) return;
+      if (useCartStore.getState().cartItems.length === 0) {
+        applyCreditHandoff(creditHandoff);
+      } else {
+        setShowConflictModal(true);
+      }
+    }, [creditHandoff, applyCreditHandoff]),
+  );
 
   const cartItemsRef = useRef(cart.cartItems);
   const toggleUnitRef = useRef(cart.toggleUnit);
@@ -182,9 +205,16 @@ function POSScreen() {
   );
 
   const handleParkCurrentAndSwitch = useCallback(async () => {
-    if (!targetResumeCart) return;
-    setShowConflictModal(false);
     const autoLabel = `Cart • ${cartItems.length} items`;
+    if (!targetResumeCart) {
+      if (!creditHandoff) return;
+      setShowConflictModal(false);
+      const parked = await handleParkCurrentCart(autoLabel);
+      if (parked) applyCreditHandoff(creditHandoff);
+      else useCartStore.setState({ creditHandoff: null });
+      return;
+    }
+    setShowConflictModal(false);
 
     if (parkedCarts.length >= 3) {
       try {
@@ -255,13 +285,27 @@ function POSScreen() {
     handleParkCurrentCart,
     handleExecuteResume,
     addToast,
+    creditHandoff,
+    applyCreditHandoff,
   ]);
 
   const handleReplaceCurrent = useCallback(async () => {
-    if (!targetResumeCart) return;
+    if (!targetResumeCart) {
+      if (!creditHandoff) return;
+      setShowConflictModal(false);
+      clearCart();
+      applyCreditHandoff(creditHandoff);
+      return;
+    }
     setShowConflictModal(false);
     await handleExecuteResume(targetResumeCart);
-  }, [targetResumeCart, handleExecuteResume]);
+  }, [
+    targetResumeCart,
+    handleExecuteResume,
+    creditHandoff,
+    clearCart,
+    applyCreditHandoff,
+  ]);
 
   const handleOpenParkedListModal = useCallback(() => {
     setShowParkedListModal(true);
@@ -364,6 +408,7 @@ function POSScreen() {
         onClose={() => {
           setShowConflictModal(false);
           setTargetResumeCart(null);
+          useCartStore.setState({ creditHandoff: null });
         }}
         onParkCurrentAndSwitch={handleParkCurrentAndSwitch}
         onReplaceCurrent={handleReplaceCurrent}

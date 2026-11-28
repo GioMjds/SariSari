@@ -4,7 +4,7 @@ import {
   DuePresetConfig,
   DUE_PRESETS,
   formatDueChip,
-} from './useAddCreditForm';
+} from '@/lib/dueDates';
 import { StyledText } from '@/components/elements';
 
 interface DueDateChipsProps {

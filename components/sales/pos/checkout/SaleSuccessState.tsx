@@ -41,6 +41,7 @@ interface SaleSuccessStateProps {
   insets: { top: number; bottom: number; left: number; right: number };
   onNewSale: () => void;
   onViewReceipts: () => void;
+  onBackToSuki?: (() => void) | undefined;
 }
 
 export function SaleSuccessState({
@@ -54,6 +55,7 @@ export function SaleSuccessState({
   insets,
   onNewSale,
   onViewReceipts,
+  onBackToSuki,
 }: SaleSuccessStateProps) {
   const reducedMotion = useReducedMotion();
   const { width, height } = useWindowDimensions();
@@ -185,14 +187,19 @@ export function SaleSuccessState({
           className={`px-4 gap-3 ${isLandscape ? 'flex-row-reverse' : ''}`}
           style={COLUMN}
         >
+          {/* Started from a suki page, so going back there is the primary action. */}
           <Pressable
-            onPress={onNewSale}
+            onPress={onBackToSuki ?? onNewSale}
             accessibilityRole="button"
-            accessibilityLabel="Start a new sale"
+            accessibilityLabel={
+              onBackToSuki
+                ? `Back to ${customerName ?? 'suki'} credit details`
+                : 'Start a new sale'
+            }
             className={`min-h-[56px] rounded-2xl bg-persimmon-600 flex-row items-center justify-center active:bg-persimmon-700 ${isLandscape ? 'flex-1' : ''}`}
           >
             <FontAwesome
-              name="plus"
+              name={onBackToSuki ? 'arrow-left' : 'plus'}
               size={14}
               color={ICON_COLOR.paper}
               style={{ marginRight: 8 }}
@@ -201,7 +208,7 @@ export function SaleSuccessState({
               variant="extrabold"
               className="text-paper-50 text-[16px]"
             >
-              New sale
+              {onBackToSuki ? 'Back to suki' : 'New sale'}
             </StyledText>
           </Pressable>
 

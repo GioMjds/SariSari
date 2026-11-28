@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
@@ -42,6 +42,8 @@ export interface CheckoutFormProps {
   onDismissError: () => void;
   clearCart: () => void;
   onPark: (() => void) | undefined;
+  // Credit-only extras (limit panel, due date) shown under the suki picker.
+  creditSlot?: ReactNode;
 }
 
 export function CheckoutForm({
@@ -65,6 +67,7 @@ export function CheckoutForm({
   onDismissError,
   clearCart,
   onPark,
+  creditSlot,
 }: CheckoutFormProps) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -93,6 +96,7 @@ export function CheckoutForm({
             Choose a suki to record this on the utang ledger.
           </StyledText>
         )}
+        {creditSlot}
       </View>
 
       {/* Items header with inline clear confirm */}

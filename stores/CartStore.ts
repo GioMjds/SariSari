@@ -8,6 +8,10 @@ interface CartState {
   cartItems: NewSaleItem[];
   paymentType: 'cash' | 'credit';
   selectedCustomer: Customer | string | null;
+  // Suki sent from credit details, applied by POS on focus.
+  creditHandoff: Customer | null;
+  // Suki page to return to after a handed-off credit checkout.
+  returnToCustomerId: number | null;
 
   addItem: (
     product: Product,
@@ -28,6 +32,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   cartItems: [],
   paymentType: 'cash',
   selectedCustomer: null,
+  creditHandoff: null,
+  returnToCustomerId: null,
 
   addItem: (product, selectedUnit = 'retail') => {
     const prev = get().cartItems;
@@ -200,7 +206,12 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   clearCart: () => {
-    set({ cartItems: [], paymentType: 'cash', selectedCustomer: null });
+    set({
+      cartItems: [],
+      paymentType: 'cash',
+      selectedCustomer: null,
+      returnToCustomerId: null,
+    });
   },
 
   setPaymentType: (type) => {

@@ -123,6 +123,7 @@ export const insertSale = async (
   customer_credit_id?: number,
   overrideReasonCode?: OverrideReasonCode,
   overrideReasonNote?: string | null,
+  due_date?: string | null,
 ): Promise<number> => {
   if (!items || items.length === 0) {
     throw new Error('Cannot insert a sale with no items');
@@ -255,11 +256,12 @@ export const insertSale = async (
         );
       }
       const creditResult = await db.runAsync(
-        "INSERT INTO credit_transactions (customer_id, amount, status, date, override_reason_code, override_reason_note) VALUES (?, ?, 'unpaid', ?, ?, ?)",
+        "INSERT INTO credit_transactions (customer_id, amount, status, date, due_date, override_reason_code, override_reason_note) VALUES (?, ?, 'unpaid', ?, ?, ?, ?)",
         [
           customer_credit_id,
           total,
           timestamp,
+          due_date || null,
           overrideReasonCode || null,
           overrideReasonNote || null,
         ],

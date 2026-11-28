@@ -13,6 +13,12 @@ import { Alert } from '@/utils';
 import { logger } from '@/lib/logger';
 import type { ScanResolution } from '@/lib/barcodes/types';
 import { useCartLines } from './useCartLines';
+import type { OverrideReasonResult } from '@/components/utang/credit-guardrails';
+
+export interface CreditSubmitExtras {
+  dueDate: string;
+  override: OverrideReasonResult | null;
+}
 
 export function useCart() {
   const cartLines = useCartLines();
@@ -174,7 +180,8 @@ export function useCart() {
     setPendingAddProductBarcode(null);
   }, []);
 
-  const submit = useCallback(async (): Promise<boolean> => {
+  const submit = useCallback(
+    async (credit?: CreditSubmitExtras): Promise<boolean> => {
     if (cartLines.cartItems.length === 0 || insertSaleMutation.isPending) {
       return false;
     }
@@ -212,6 +219,17 @@ export function useCart() {
         ...(customerCreditId !== undefined
           ? { customer_credit_id: customerCreditId }
           : {}),
+        ...(cartLines.paymentType === 'credit' && credit
+          ? {
+              due_date: credit.dueDate || null,
+              ...(credit.override
+                ? {
+                    overrideReasonCode: credit.override.code,
+                    overrideReasonNote: credit.override.note,
+                  }
+                : {}),
+            }
+          : {}),
       });
 
       cartLines.clearCart();
@@ -245,7 +263,9 @@ export function useCart() {
       );
       return false;
     }
-  }, [cartLines, insertSaleMutation]);
+    },
+    [cartLines, insertSaleMutation],
+  );
 
   return {
     // Domain data

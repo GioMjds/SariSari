@@ -215,6 +215,7 @@ export function useInsertSale() {
       customer_credit_id,
       overrideReasonCode,
       overrideReasonNote,
+      due_date,
     }: InsertSaleParams) =>
       insertSale(
         items,
@@ -223,9 +224,22 @@ export function useInsertSale() {
         customer_credit_id,
         overrideReasonCode,
         overrideReasonNote,
+        due_date,
       ),
-    onSuccess: () => {
+    onSuccess: (_id, vars) => {
       invalidateSaleDependencies(queryClient);
+      // Prefix keys, since credit screens key by route string id, not number.
+      if (vars.payment_type === 'credit') {
+        for (const key of [
+          'customer',
+          'customer-details',
+          'credit-history',
+          'customer-credit-summary',
+          'collection-queue',
+        ]) {
+          queryClient.invalidateQueries({ queryKey: [key] });
+        }
+      }
     },
   });
 }

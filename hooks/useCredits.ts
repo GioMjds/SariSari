@@ -1,4 +1,3 @@
-import { db } from '@/configs/sqlite';
 import { useTranslation } from 'react-i18next';
 import {
   deleteCreditTransaction,
@@ -13,7 +12,6 @@ import {
   getCustomer,
   getCustomerWithDetails,
   getPaymentsByCustomer,
-  insertCreditTransaction,
   insertCustomer,
   insertPayment,
   markAllCreditsAsPaid,
@@ -39,7 +37,6 @@ import type {
   CreditTransaction,
   Customer,
   CustomerWithDetails,
-  NewCredit,
   NewCustomer,
   NewPayment,
   Payment,
@@ -197,56 +194,6 @@ export function useDeleteCustomer() {
     onError: () => {
       addToast({
         message: 'Failed to delete customer',
-        variant: 'danger',
-        duration: 5000,
-      });
-    },
-  });
-}
-
-export function useInsertCredit() {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const { addToast } = useToastStore();
-  return useMutation({
-    mutationFn: async (data: NewCredit | NewCredit[]) => {
-      const credits = Array.isArray(data) ? data : [data];
-      await db.withTransactionAsync(async () => {
-        for (const credit of credits) {
-          await insertCreditTransaction(credit);
-        }
-      });
-    },
-    onSuccess: (_res, vars) => {
-      const customerId = Array.isArray(vars)
-        ? vars[0]?.customer_id
-        : vars?.customer_id;
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      if (customerId) {
-        queryClient.invalidateQueries({
-          queryKey: ['customer', customerId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['customer-details', customerId],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['credit-history', customerId],
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: ['credit-kpis'] });
-      queryClient.invalidateQueries({
-        queryKey: ['collection-queue'],
-      });
-      addToast({
-        message: 'Credit transaction(s) added successfully',
-        variant: 'success',
-        duration: 5000,
-      });
-      router.back();
-    },
-    onError: () => {
-      addToast({
-        message: 'Failed to add credit transaction(s)',
         variant: 'danger',
         duration: 5000,
       });

@@ -120,6 +120,8 @@ export interface InsertSaleParams {
   customer_credit_id?: number;
   overrideReasonCode?: OverrideReasonCode;
   overrideReasonNote?: string | null;
+  // YYYY-MM-DD due date for the utang row; credit sales only.
+  due_date?: string | null;
 }
 
 // Parameters for getSalesByDateRange function

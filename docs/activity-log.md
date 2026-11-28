@@ -1072,3 +1072,15 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `ICON_COLOR.warningStrong` and `KEYBOARD_TOOLBAR_THEME` added to `lib/theme.ts`; Add Customer uses the shared toolbar theme too.
 - New `common` keys `goBackA11y` and `done`; `ProductFormHeader` back label is translated on every screen that uses it.
 - Not verified on a device.
+
+## 2026-11-28 - Utang goes through POS only
+
+- Removed the Add Credit screen (`app/(edit-forms)/add-credit/`, `components/utang/add-credit/`, `useInsertCredit`). It recorded utang without reducing stock or creating a sale, so it disagreed with POS.
+- "Add Credit" on credit details now sets `creditHandoff` in `CartStore` and opens `/(tabs)/sales/pos`. POS applies it on focus: credit mode plus that suki. A busy cart opens `ActiveCartConflictModal` (park and switch, or replace).
+- POS credit checkout gained the guardrails from Add Credit: `SukiPanel`, the new shared `SoftWarnModal`, `OverrideReasonModal`, and block-on-exceed. Override reason is now saved on POS credit sales.
+- Due date chips (`components/sales/pos/checkout/DueDateChips.tsx`, presets in `lib/dueDates.ts`) show for credit. `insertSale` writes `due_date` to the credit row; no migration, the column already existed.
+- Success screen shows "Back to suki" when the checkout started from a suki page (`returnToCustomerId`, cleared with the cart).
+- Credit sales now refresh the per-customer queries (customer, details, history, credit summary, collection queue), so the suki balance is not stale.
+- Decision (owner): free-text or old-notebook debts are no longer recordable. Every utang needs catalog products and lowers stock.
+- `insertCreditTransaction` in `database/credits.ts` has no caller now; kept for a future old-debt import.
+- Not verified on a device: no screenshots yet.

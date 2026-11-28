@@ -23,6 +23,15 @@ import {
 } from './checkout/SaleSuccessState';
 import { calculateTotalPieces } from '@/lib';
 import { ICON_COLOR } from '@/lib/theme';
+import type { DuePreset } from '@/lib/dueDates';
+import { useCustomerCreditSummary } from '@/hooks';
+import {
+  OverrideReasonModal,
+  SoftWarnModal,
+  SukiPanel,
+  type OverrideReasonResult,
+} from '@/components/utang/credit-guardrails';
+import { DueDateChips } from './checkout/DueDateChips';
 
 export interface CheckoutModalProps {
   visible: boolean;
@@ -38,6 +47,7 @@ interface RecordedCheckout {
   piecesLabel: string;
   lines: RecordedLine[];
   recordedAt: number;
+  returnToCustomerId: number | null;
 }
 
 export function CheckoutModal({
@@ -63,6 +73,24 @@ export function CheckoutModal({
   // Snapshot of the cart at submit, since a successful submit clears the cart store.
   const [recorded, setRecorded] = useState<RecordedCheckout | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [dueDate, setDueDate] = useState('');
+  const [duePreset, setDuePreset] = useState<DuePreset>('none');
+  const [overrideReason, setOverrideReason] =
+    useState<OverrideReasonResult | null>(null);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [showSoftWarnModal, setShowSoftWarnModal] = useState(false);
+
+  const selectedCustomerId =
+    selectedCustomer && typeof selectedCustomer === 'object'
+      ? selectedCustomer.id
+      : undefined;
+  const { data: creditSummary = null } =
+    useCustomerCreditSummary(selectedCustomerId);
+
+  // An override belongs to one suki, so drop it when the suki changes.
+  useEffect(() => {
+    setOverrideReason(null);
+  }, [selectedCustomerId]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevPaymentTypeRef = useRef(paymentType);
@@ -154,7 +182,14 @@ export function CheckoutModal({
   const isCredit = paymentType === 'credit';
   const customerMissing = isCredit && !selectedCustomer;
   const isEmpty = cartItems.length === 0;
-  const isSubmitDisabled = isSubmitting || cart.isSubmitDisabled || isEmpty;
+  const wouldExceedLimit =
+    isCredit &&
+    creditSummary?.creditLimit != null &&
+    creditSummary.creditLimit - creditSummary.balance - cart.total < 0;
+  const blockOnExceed = creditSummary?.blockOnExceed ?? false;
+  const blockedByLimit = wouldExceedLimit && blockOnExceed && !overrideReason;
+  const isSubmitDisabled =
+    isSubmitting || cart.isSubmitDisabled || isEmpty || blockedByLimit;
 
   const itemCountLabel = useMemo(
     () =>
@@ -179,11 +214,18 @@ export function CheckoutModal({
     if (timerRef.current) clearTimeout(timerRef.current);
     clearCart();
     setIsSuccess(false);
+    setDueDate('');
+    setDuePreset('none');
+    setOverrideReason(null);
     onClose();
   }, [clearCart, onClose]);
 
-  const handleConfirmSubmit = useCallback(async () => {
+  const handleConfirmSubmit = useCallback(async (skipSoftWarn = false) => {
     if (isSubmitDisabled) return;
+    if (wouldExceedLimit && !blockOnExceed && !overrideReason && !skipSoftWarn) {
+      setShowSoftWarnModal(true);
+      return;
+    }
     triggerHaptic(Haptics.ImpactFeedbackStyle.Medium);
     setIsSubmitting(true);
     setSubmitError(null);
@@ -204,9 +246,11 @@ export function CheckoutModal({
         lineTotal: item.price * item.quantity,
       })),
       recordedAt: Date.now(),
+      // Snapshot now, since a successful submit clears it with the cart.
+      returnToCustomerId: useCartStore.getState().returnToCustomerId,
     });
     try {
-      const success = await cart.submit();
+      const success = await cart.submit({ dueDate, override: overrideReason });
       if (success) {
         setIsSuccess(true);
         Haptics.notificationAsync(
@@ -235,6 +279,10 @@ export function CheckoutModal({
     customerName,
     itemCountLabel,
     piecesLabel,
+    wouldExceedLimit,
+    blockOnExceed,
+    overrideReason,
+    dueDate,
   ]);
 
   const handleViewReceipts = useCallback(() => {
@@ -242,6 +290,21 @@ export function CheckoutModal({
     router.push('/(tabs)/sales/receipts' as Href);
     handleDismissSuccess();
   }, [handleDismissSuccess, triggerHaptic]);
+
+  const returnToCustomerId = recorded?.returnToCustomerId ?? null;
+  const handleBackToSuki = useMemo(
+    () =>
+      returnToCustomerId != null
+        ? () => {
+            triggerHaptic(Haptics.ImpactFeedbackStyle.Light);
+            handleDismissSuccess();
+            router.navigate(
+              `/(edit-forms)/credit-details/${returnToCustomerId}` as Href,
+            );
+          }
+        : undefined,
+    [returnToCustomerId, handleDismissSuccess, triggerHaptic],
+  );
 
   const handleRetry = useCallback(() => {
     setSubmitError(null);
@@ -372,6 +435,7 @@ export function CheckoutModal({
                   insets={insets}
                   onNewSale={handleDismissSuccess}
                   onViewReceipts={handleViewReceipts}
+                  onBackToSuki={handleBackToSuki}
                 />
               ) : (
                 <CheckoutForm
@@ -390,7 +454,29 @@ export function CheckoutModal({
                   insets={insets}
                   onUpdateQuantity={updateQuantity}
                   onRemoveItem={handleRemoveItem}
-                  onConfirmSubmit={handleConfirmSubmit}
+                  onConfirmSubmit={() => void handleConfirmSubmit()}
+                  creditSlot={
+                    isCredit && selectedCustomerId != null ? (
+                      <>
+                        {creditSummary && (
+                          <SukiPanel
+                            summary={creditSummary}
+                            pendingTotal={cart.total}
+                            mode="compact"
+                            onRequestOverride={() => setShowOverrideModal(true)}
+                          />
+                        )}
+                        <DueDateChips
+                          dueDate={dueDate}
+                          activePreset={duePreset}
+                          onPresetSelect={(preset) => {
+                            setDuePreset(preset.id);
+                            setDueDate(preset.resolve());
+                          }}
+                        />
+                      </>
+                    ) : null
+                  }
                   onRetry={handleRetry}
                   onDismissError={() => setSubmitError(null)}
                   clearCart={clearCart}
@@ -414,6 +500,28 @@ export function CheckoutModal({
         onSelectOneOffName={(name) => {
           setCustomer(name);
           setShowCustomerPicker(false);
+        }}
+      />
+
+      <SoftWarnModal
+        visible={showSoftWarnModal}
+        onClose={() => setShowSoftWarnModal(false)}
+        onContinue={() => {
+          setShowSoftWarnModal(false);
+          void handleConfirmSubmit(true);
+        }}
+        onRecordReason={() => {
+          setShowSoftWarnModal(false);
+          setShowOverrideModal(true);
+        }}
+      />
+
+      <OverrideReasonModal
+        visible={showOverrideModal}
+        onClose={() => setShowOverrideModal(false)}
+        onSubmit={(result) => {
+          setOverrideReason(result);
+          setShowOverrideModal(false);
         }}
       />
     </>

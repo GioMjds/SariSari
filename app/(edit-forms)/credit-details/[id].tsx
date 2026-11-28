@@ -14,7 +14,7 @@ import {
   useDeleteCustomer,
   useProfile,
 } from '@/hooks';
-import { useModalStore } from '@/stores';
+import { useCartStore, useModalStore } from '@/stores';
 import { splitCredits } from '@/lib/creditDetails';
 import { CreditTransaction } from '@/types/credits.types';
 import { StyledText } from '@/components/elements';
@@ -94,7 +94,10 @@ function CustomerDetails() {
   const handleAddCredit = useCallback(() => {
     if (!customer) return;
     Haptics.selectionAsync().catch(() => {});
-    router.push(`/(edit-forms)/add-credit/${customer.id}` as Href);
+    // POS applies this suki on focus, so utang goes through the stock-aware checkout.
+    const { credits: _c, payments: _p, ...suki } = customer;
+    useCartStore.setState({ creditHandoff: suki });
+    router.push('/(tabs)/sales/pos' as Href);
   }, [customer]);
 
   const handleAddPayment = useCallback(() => {
