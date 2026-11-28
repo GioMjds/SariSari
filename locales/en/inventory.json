@@ -392,5 +392,17 @@
   "expiryDateInvalid": "Use a real date, YYYY-MM-DD.",
   "expiryDateClear": "Clear",
   "expiryDatePick": "Pick date",
-  "expiryDateDone": "Done"
+  "expiryDateDone": "Done",
+  "expiryStatusExpired": "Expired {{count}}d ago",
+  "expiryStatusToday": "Expires today",
+  "expiryStatusLeft": "{{count}}d left",
+  "expiryPickerNoDate": "No date chosen",
+  "expiryPickerConfirm": "Set date",
+  "expiryPickerToday": "Today",
+  "expiryPickerPrevMonth": "Previous month",
+  "expiryPickerNextMonth": "Next month",
+  "expiryPickerChooseMonth": "Choose month and year",
+  "expiryPickerPrevYear": "Previous year",
+  "expiryPickerNextYear": "Next year",
+  "expiryPickerWindow": "Near-expiry window ({{count}} days)"
 }

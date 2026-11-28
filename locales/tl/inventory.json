@@ -392,5 +392,17 @@
   "expiryDateInvalid": "Maglagay ng tamang petsa, YYYY-MM-DD.",
   "expiryDateClear": "Burahin",
   "expiryDatePick": "Pumili ng petsa",
-  "expiryDateDone": "Tapos na"
+  "expiryDateDone": "Tapos na",
+  "expiryStatusExpired": "Nag-expire {{count}} araw na ang nakalipas",
+  "expiryStatusToday": "Mag-e-expire ngayon",
+  "expiryStatusLeft": "{{count}} araw na lang",
+  "expiryPickerNoDate": "Walang napiling petsa",
+  "expiryPickerConfirm": "Itakda ang petsa",
+  "expiryPickerToday": "Ngayon",
+  "expiryPickerPrevMonth": "Nakaraang buwan",
+  "expiryPickerNextMonth": "Susunod na buwan",
+  "expiryPickerChooseMonth": "Pumili ng buwan at taon",
+  "expiryPickerPrevYear": "Nakaraang taon",
+  "expiryPickerNextYear": "Susunod na taon",
+  "expiryPickerWindow": "Malapit nang mag-expire ({{count}} araw)"
 }

@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { Platform, Pressable, TextInput, View } from 'react-native';
-import DateTimePicker, {
-  DateTimePickerAndroid,
-} from '@react-native-community/datetimepicker';
+import { Pressable, TextInput, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
-import { Sheet } from '@/components/ui/Sheet';
+import {
+  DatePickerSheet,
+  type DateDescription,
+} from '@/components/ui/DatePickerSheet';
+import { useNearExpiryDays } from '@/hooks/useAppSetting';
 import { addDaysIso } from '@/lib/dueDates';
 import {
   EXPIRY_QUICK_PICKS,
+  daysUntilExpiry,
   expiryFromToday,
   formatExpiryInput,
   isValidIsoDate,
@@ -20,31 +22,24 @@ interface Props {
   onChange: (next: string) => void;
 }
 
-const toDate = (iso: string): Date => {
-  if (!isValidIsoDate(iso)) return new Date();
-  const [y, m, d] = iso.split('-').map(Number) as [number, number, number];
-  return new Date(y, m - 1, d);
-};
-
-/** Optional expiry date: pick from a calendar, type YYYYMMDD, or tap a quick pick counted from today. */
+/** Optional expiry date: open the calendar, type YYYYMMDD, or tap a quick pick counted from today. */
 export function ExpiryDateField({ value, onChange }: Props) {
   const { t } = useTranslation('inventory');
+  const windowDays = useNearExpiryDays();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const invalid = value !== '' && !isValidIsoDate(value);
-  // iOS shows the calendar in a sheet; Android opens its native dialog.
-  const [iosOpen, setIosOpen] = useState(false);
 
-  const openPicker = () => {
-    if (Platform.OS === 'android') {
-      DateTimePickerAndroid.open({
-        value: toDate(value),
-        mode: 'date',
-        onChange: (event, date) => {
-          if (event.type === 'set' && date) onChange(addDaysIso(0, date.getTime()));
-        },
-      });
-    } else {
-      setIosOpen(true);
+  const describe = (iso: string): DateDescription | null => {
+    const days = daysUntilExpiry(iso);
+    if (days === null) return null;
+    if (days < 0) {
+      return { tone: 'danger', text: t('expiryStatusExpired', { count: -days }) };
     }
+    if (days === 0) return { tone: 'danger', text: t('expiryStatusToday') };
+    return {
+      tone: days <= windowDays ? 'warning' : 'ok',
+      text: t('expiryStatusLeft', { count: days }),
+    };
   };
 
   return (
@@ -77,11 +72,11 @@ export function ExpiryDateField({ value, onChange }: Props) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('expiryDatePick')}
-          onPress={openPicker}
-          className="px-3 py-1.5 rounded-full border border-cinnamon-500 bg-cinnamon-500 flex-row items-center gap-1.5 active:opacity-80"
+          onPress={() => setPickerOpen(true)}
+          className="min-h-[44px] px-4 rounded-full bg-cinnamon-500 flex-row items-center justify-center gap-1.5 active:opacity-80"
         >
-          <FontAwesome name="calendar" size={12} color="#FBF7EE" />
-          <StyledText variant="semibold" className="text-xs text-paper-50">
+          <FontAwesome name="calendar" size={13} color="#FBF7EE" />
+          <StyledText variant="semibold" className="text-sm text-paper-50">
             {t('expiryDatePick')}
           </StyledText>
         </Pressable>
@@ -91,9 +86,9 @@ export function ExpiryDateField({ value, onChange }: Props) {
             accessibilityRole="button"
             accessibilityLabel={`${t('expiryDateLabel')}: ${pick.label}`}
             onPress={() => onChange(expiryFromToday(pick.days))}
-            className="px-3 py-1.5 rounded-full border border-ink-200 bg-paper-50 active:bg-paper-100"
+            className="min-h-[44px] px-4 rounded-full border border-ink-200 bg-paper-50 items-center justify-center active:bg-paper-100"
           >
-            <StyledText variant="semibold" className="text-xs text-ink-700">
+            <StyledText variant="semibold" className="text-sm text-ink-700">
               {pick.label}
             </StyledText>
           </Pressable>
@@ -103,34 +98,40 @@ export function ExpiryDateField({ value, onChange }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t('expiryDateClear')}
             onPress={() => onChange('')}
-            className="px-3 py-1.5 rounded-full border border-ink-200 bg-paper-50 active:bg-paper-100"
+            className="min-h-[44px] px-4 rounded-full border border-ink-200 bg-paper-50 items-center justify-center active:bg-paper-100"
           >
-            <StyledText variant="semibold" className="text-xs text-ink-700">
+            <StyledText variant="semibold" className="text-sm text-ink-700">
               {t('expiryDateClear')}
             </StyledText>
           </Pressable>
         ) : null}
       </View>
-      <Sheet visible={iosOpen} onClose={() => setIosOpen(false)}>
-        <DateTimePicker
-          value={toDate(value)}
-          mode="date"
-          display="inline"
-          onChange={(_event, date) => {
-            if (date) onChange(addDaysIso(0, date.getTime()));
-          }}
-        />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('expiryDateDone')}
-          onPress={() => setIosOpen(false)}
-          className="min-h-[48px] rounded-xl items-center justify-center bg-cinnamon-500 active:opacity-80"
-        >
-          <StyledText variant="extrabold" className="text-base text-paper-50">
-            {t('expiryDateDone')}
-          </StyledText>
-        </Pressable>
-      </Sheet>
+
+      <DatePickerSheet
+        visible={pickerOpen}
+        value={value}
+        onClose={() => setPickerOpen(false)}
+        onConfirm={(iso) => {
+          onChange(iso);
+          setPickerOpen(false);
+        }}
+        highlight={{ from: addDaysIso(0), to: addDaysIso(windowDays) }}
+        shortcuts={EXPIRY_QUICK_PICKS}
+        describe={describe}
+        labels={{
+          title: t('expiryDateLabel'),
+          noDate: t('expiryPickerNoDate'),
+          confirm: t('expiryPickerConfirm'),
+          clear: t('expiryDateClear'),
+          today: t('expiryPickerToday'),
+          prevMonth: t('expiryPickerPrevMonth'),
+          nextMonth: t('expiryPickerNextMonth'),
+          chooseMonth: t('expiryPickerChooseMonth'),
+          prevYear: t('expiryPickerPrevYear'),
+          nextYear: t('expiryPickerNextYear'),
+          highlight: t('expiryPickerWindow', { count: windowDays }),
+        }}
+      />
     </View>
   );
 }
