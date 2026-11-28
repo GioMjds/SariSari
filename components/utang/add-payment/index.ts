@@ -3,7 +3,7 @@ export { PaymentAmountCard } from './PaymentAmountCard';
 export { AllocationReceipt } from './AllocationReceipt';
 export { PaymentMethodSelector } from './PaymentMethodSelector';
 export { NotesField } from './NotesField';
-export { SubmitButton } from './SubmitButton';
+export { PaymentSubmitBar, PAYMENT_SUBMIT_BAR_HEIGHT } from './PaymentSubmitBar';
 export {
   useAddPaymentForm,
   QUICK_PAY_PRESETS,

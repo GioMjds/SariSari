@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { NewPayment, Payment } from '@/types';
 import { parsePesosInput, tryParsePesosInput } from '@/lib/money';
 import { CreditTransaction } from '@/types/credits.types';
 import { useCustomer, useCustomerCredits, useInsertPayment } from '@/hooks';
 import { getCurrentLocalTimestamp } from '@/utils/timezone';
+import { capPayment } from './paymentMath';
 
 /**
  * Form values for the Add Payment screen.
@@ -107,6 +107,19 @@ export function useAddPaymentForm() {
     return (unpaidCredits as CreditTransaction[]).find((c: CreditTransaction) => c.id === parsedId) ?? null;
   }, [creditId, unpaidCredits]);
 
+  // `allCredits` is ordered date DESC; FIFO means oldest first.
+  const fifo = useMemo(
+    () =>
+      [...unpaidCredits].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      ),
+    [unpaidCredits],
+  );
+
+  // The most this payment can record: one credit in Quick Settle, else the whole balance.
+  const owed = pinnedCredit
+    ? pinnedCredit.amount - pinnedCredit.amount_paid
+    : (customer?.outstanding_balance ?? 0);
 
 
   const insertPayment = useInsertPayment();
@@ -124,18 +137,16 @@ export function useAddPaymentForm() {
     [amount, setValue],
   );
 
-  /** Set the payment to exactly the suki's outstanding balance. */
+  /** Set the payment to exactly what is owed. */
   const payFullBalance = useCallback(() => {
     amountTouchedRef.current = true;
-    if (!customer) return;
-    setValue('amount', customer.outstanding_balance.toString());
-  }, [customer, setValue]);
+    if (owed > 0) setValue('amount', owed.toString());
+  }, [owed, setValue]);
 
   const payHalfBalance = useCallback(() => {
     amountTouchedRef.current = true;
-    if (!customer) return;
-    setValue('amount', Math.floor(customer.outstanding_balance / 2).toString());
-  }, [customer, setValue]);
+    if (owed > 0) setValue('amount', Math.floor(owed / 2).toString());
+  }, [owed, setValue]);
 
   /** Reset the payment amount to empty. */
   const clearAmount = useCallback(() => {
@@ -191,11 +202,6 @@ export function useAddPaymentForm() {
       return { rows, unallocated: remaining };
     }
 
-    // `allCredits` is ordered date DESC; FIFO means oldest first.
-    const fifo = [...unpaidCredits].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-
     if (remaining <= 0) {
       return { rows, unallocated: 0 };
     }
@@ -221,7 +227,7 @@ export function useAddPaymentForm() {
     }
 
     return { rows, unallocated: Math.max(0, remaining) };
-  }, [amount, unpaidCredits, pinnedCredit]);
+  }, [amount, fifo, pinnedCredit]);
 
   // ─── Derived display values ────────────────────────────────────
 
@@ -229,14 +235,16 @@ export function useAddPaymentForm() {
     ? (tryParsePesosInput(amount) as number)
     : 0;
   const outstandingBalance = customer?.outstanding_balance ?? 0;
-  const remainingBalance = outstandingBalance - parsedAmount;
+  const { recorded: recordedAmount, change } = capPayment(parsedAmount, owed);
+  const remainingBalance = outstandingBalance - recordedAmount;
   const willClearAll =
-    parsedAmount > 0 && remainingBalance <= 0 && outstandingBalance > 0;
+    recordedAmount > 0 && remainingBalance <= 0 && outstandingBalance > 0;
   const hasAllocation = allocation.rows.length > 0;
   const isAmountValid = amount !== '' && amount !== '0';
+  const oldestCreditDate = fifo[0]?.date ?? null;
 
   const isSubmitDisabled =
-    insertPayment.isPending || !isAmountValid || parsedAmount <= 0;
+    insertPayment.isPending || !isAmountValid || recordedAmount <= 0;
 
   // ─── Submit ────────────────────────────────────────────────────
 
@@ -246,7 +254,8 @@ export function useAddPaymentForm() {
       // When Quick Settle pinned a credit, send the targeted
       // allocation; otherwise let the DB do FIFO.
       credit_transaction_id: pinnedCredit?.id ?? null,
-      amount: parsePesosInput(data.amount),
+      // Never record more than is owed; the excess is change handed back.
+      amount: capPayment(parsePesosInput(data.amount), owed).recorded,
       payment_method: data.paymentMethod,
       notes: data.notes?.trim() ?? null,
       date: getCurrentLocalTimestamp(),
@@ -279,6 +288,10 @@ export function useAddPaymentForm() {
 
     // Derived
     parsedAmount,
+    recordedAmount,
+    change,
+    owed,
+    oldestCreditDate,
     outstandingBalance,
     remainingBalance,
     willClearAll,

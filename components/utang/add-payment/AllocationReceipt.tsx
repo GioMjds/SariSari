@@ -1,201 +1,138 @@
-import { FontAwesome } from '@expo/vector-icons';
 import { View } from 'react-native';
-import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
+import { parseStoredTimestamp } from '@/utils/timezone';
 import { StyledText } from '@/components/elements';
+import { StatusPill } from '@/components/ui';
+import { SariMascot } from '@/components/mascot';
+import { Perforations } from '@/components/utang/credit-details/Perforations';
+import { shortDate } from '@/components/utang/credit-details/labels';
 import { AllocationRow } from './useAddPaymentForm';
 
 interface AllocationReceiptProps {
   rows: AllocationRow[];
-  unallocated: number;
+  /** Unpaid credits on the account, touched or not. */
+  openCount: number;
   hasAmount: boolean;
-  pinnedCreditLabel?: string;
+  quickSettle: boolean;
+  customerName: string;
 }
 
+// Shows exactly which utang items this payment pays, mirroring the DB allocation.
 export function AllocationReceipt({
   rows,
-  unallocated,
+  openCount,
   hasAmount,
-  pinnedCreditLabel = '',
+  quickSettle,
+  customerName,
 }: AllocationReceiptProps) {
-  if (rows.length === 0) {
+  const { t } = useTranslation('utang');
+
+  if (openCount === 0) {
     return (
-      <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4">
-        <StyledText variant="black" className="label-caps text-cinnamon-500">
-          Allocation Receipt
+      <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-5 items-center">
+        <SariMascot state="balance-cleared" size={96} />
+        <StyledText variant="extrabold" className="text-ink-900 text-base mt-2">
+          {t('addPaymentNothingTitle')}
         </StyledText>
-        <View className="mt-3 items-center py-6">
-          <FontAwesome name="list-alt" size={28} color="#A89F90" />
-          <StyledText
-            variant="medium"
-            className="text-ink-400 text-sm mt-2 text-center"
-          >
-            {hasAmount
-              ? 'Payment exceeds outstanding balance'
-              : 'No unpaid credits for this suki'}
-          </StyledText>
-        </View>
+        <StyledText variant="regular" className="text-ink-600 text-sm mt-1 text-center">
+          {t('addPaymentNothingBody', { name: customerName })}
+        </StyledText>
       </View>
     );
   }
 
+  const touched = rows.filter((r) => r.applied > 0 || quickSettle);
+  const untouched = openCount - touched.length;
+
   return (
-    <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 overflow-hidden">
-      <View className="mb-2 flex-row items-center justify-between">
-        <StyledText variant="black" className="label-caps text-cinnamon-500">
-          {pinnedCreditLabel ? 'Quick Settle' : 'Allocation Receipt'}
+    <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper">
+      <View className="px-4 pt-4 pb-2 flex-row items-baseline justify-between">
+        <StyledText variant="semibold" accessibilityRole="header" className="text-ink-700 text-sm">
+          {t('addPaymentAppliesTo')}
         </StyledText>
-        <StyledText variant="medium" className="text-ink-400 text-xs">
-          {pinnedCreditLabel ? 'Targeted credit' : 'FIFO · oldest first'}
+        <StyledText variant="medium" className="text-ink-500 text-xs">
+          {quickSettle ? t('addPaymentThisItemOnly') : t('addPaymentOldestFirst')}
         </StyledText>
       </View>
 
-      {pinnedCreditLabel && (
-        <View className="bg-persimmon-50 border border-persimmon-300 rounded-xl px-3 py-2 mb-2 flex-row items-center">
-          <FontAwesome name="bolt" size={12} color="#C8460F" />
-          <StyledText
-            variant="medium"
-            className="text-persimmon-700 text-xs ml-1.5 flex-1"
-            numberOfLines={1}
-          >
-            {pinnedCreditLabel}
-          </StyledText>
+      {!hasAmount && !quickSettle ? (
+        <StyledText variant="regular" className="text-ink-600 text-sm px-4 pb-4">
+          {t('addPaymentAppliesEmpty')}
+        </StyledText>
+      ) : (
+        <View className="px-4 pb-4">
+          {touched.map((row, index) => (
+            <View
+              key={row.credit.id}
+              className={index > 0 ? 'border-t border-dashed border-ink-200 mt-3 pt-3' : ''}
+            >
+              <AllocationRowItem row={row} />
+            </View>
+          ))}
+          {untouched > 0 && (
+            <StyledText variant="medium" className="text-ink-500 text-xs mt-3">
+              {t(untouched === 1 ? 'addPaymentMoreOpenSingular' : 'addPaymentMoreOpenPlural', {
+                count: untouched,
+              })}
+            </StyledText>
+          )}
         </View>
       )}
 
-      <View className="bg-paper-100 rounded-xl border border-ink-100 p-3">
-        {rows.map((row, index) => (
-          <View key={row.credit.id}>
-            {index > 0 && (
-              <View className="border-t border-dashed border-ink-200 my-2.5" />
-            )}
-            <AllocationRowItem row={row} />
-          </View>
-        ))}
-
-        {unallocated > 0 && (
-          <>
-            <View className="border-t border-dashed border-ink-200 my-2.5" />
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <FontAwesome
-                  name="exclamation-circle"
-                  size={12}
-                  color="#C77B0E"
-                />
-                <StyledText
-                  variant="semibold"
-                  className="text-semantic-warning text-xs ml-1.5"
-                >
-                  Unallocated
-                </StyledText>
-              </View>
-              <StyledText
-                variant="extrabold"
-                className="text-semantic-warning text-sm"
-              >
-                {formatPesos(unallocated)}
-              </StyledText>
-            </View>
-          </>
-        )}
-      </View>
+      <Perforations negativeBottom />
     </View>
   );
 }
 
-interface AllocationRowItemProps {
-  row: AllocationRow;
-}
+function AllocationRowItem({ row }: { row: AllocationRow }) {
+  const { t } = useTranslation('utang');
+  const { credit, applied, remainingAfter } = row;
+  const name = credit.product_name || t('detailCreditFallback');
+  const parsed = parseStoredTimestamp(credit.date);
+  const date = parsed && !Number.isNaN(parsed.getTime()) ? shortDate(parsed) : '';
 
-function AllocationRowItem({ row }: AllocationRowItemProps) {
-  const { credit, applied, owedBefore, remainingAfter } = row;
-
-  const stateColor = row.fullyCovered
-    ? 'text-semantic-success'
+  const status = row.fullyCovered
+    ? { variant: 'success' as const, label: t('addPaymentStatusPaid') }
     : row.partiallyCovered
-      ? 'text-semantic-warning'
-      : 'text-ink-400';
-
-  const stateBg = row.fullyCovered
-    ? 'bg-sage-50'
-    : row.partiallyCovered
-      ? 'bg-semantic-warning-50'
-      : 'bg-paper-50';
-
-  const stateLabel = row.fullyCovered
-    ? 'Covered'
-    : row.partiallyCovered
-      ? 'Partial'
-      : 'Unpaid';
-
-  const stateIcon: 'check-circle' | 'circle-o' | 'minus-circle' =
-    row.fullyCovered
-      ? 'check-circle'
-      : row.partiallyCovered
-        ? 'minus-circle'
-        : 'circle-o';
+      ? { variant: 'warning' as const, label: t('addPaymentStatusPartial') }
+      : { variant: 'neutral' as const, label: t('addPaymentStatusOpen') };
 
   return (
-    <View>
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 pr-2">
-          <StyledText
-            variant="extrabold"
-            className={`text-sm ${row.fullyCovered || row.partiallyCovered ? 'text-ink-900' : 'text-ink-500'}`}
-            numberOfLines={1}
-          >
-            {credit.product_name || 'Credit'}
-          </StyledText>
-          <StyledText variant="medium" className="text-ink-400 text-xs mt-0.5">
-            {format(new Date(credit.date), 'MMM dd, yyyy')} ·{' '}
-            {formatPesos(credit.amount)}
-          </StyledText>
-        </View>
-        <View
-          className={`flex-row items-center px-2 py-1 rounded-pill ${stateBg}`}
-        >
-          <FontAwesome
-            name={stateIcon}
-            size={10}
-            color={
-              row.fullyCovered
-                ? '#4F7A24'
-                : row.partiallyCovered
-                  ? '#C77B0E'
-                  : '#7A7165'
-            }
-          />
-          <StyledText
-            variant="extrabold"
-            className={`text-[10px] uppercase tracking-wider ml-1 ${stateColor}`}
-          >
-            {stateLabel}
-          </StyledText>
-        </View>
+    <View
+      accessible
+      accessibilityLabel={t('addPaymentRowA11y', {
+        name,
+        date,
+        applied: formatPesos(applied),
+        left: formatPesos(remainingAfter),
+      })}
+    >
+      <View className="flex-row items-center justify-between">
+        <StyledText variant="extrabold" className="text-ink-900 text-sm flex-1 mr-2" numberOfLines={1}>
+          {name}
+        </StyledText>
+        <StatusPill variant={status.variant} size="sm">
+          {status.label}
+        </StatusPill>
       </View>
-
-      <View className="mt-1.5 flex-row items-baseline justify-between">
-        <StyledText variant="medium" className="text-ink-500 text-xs">
-          {row.partiallyCovered
-            ? `${formatPesos(applied)} of ${formatPesos(owedBefore)}`
-            : `${formatPesos(owedBefore)} owed`}
+      <View className="mt-1 flex-row items-baseline justify-between">
+        <StyledText variant="regular" className="text-ink-500 text-xs">
+          {date ? `${date} · ` : ''}
+          {remainingAfter > 0
+            ? t('addPaymentRowLeft', { amount: formatPesos(remainingAfter) })
+            : formatPesos(credit.amount)}
         </StyledText>
         {applied > 0 && (
-          <StyledText variant="extrabold" className={`text-sm ${stateColor}`}>
+          <StyledText
+            variant="extrabold"
+            className="text-ink-900 text-sm"
+            style={{ fontVariant: ['tabular-nums'] }}
+          >
             −{formatPesos(applied)}
           </StyledText>
         )}
       </View>
-
-      {row.partiallyCovered && (
-        <StyledText
-          variant="medium"
-          className="text-ink-400 text-[10px] mt-0.5"
-        >
-          {formatPesos(remainingAfter)} still owed
-        </StyledText>
-      )}
     </View>
   );
 }
