@@ -1,8 +1,8 @@
-import { FC } from 'react';
+import { FC, useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { FastLaneProduct } from '@/database/products';
-import { useFastLaneProducts } from '@/hooks/useProducts';
+import { useFastLaneProducts, useToggleFavorite } from '@/hooks/useProducts';
 import { FastLaneCard } from './FastLaneCard';
 import { StyledText } from '@/components/elements';
 
@@ -12,6 +12,13 @@ interface FastLaneSectionProps {
 
 export const FastLaneSection: FC<FastLaneSectionProps> = ({ onAddToCart }) => {
   const { data: fastLaneProducts = [], isLoading } = useFastLaneProducts();
+  // One shared mutation instead of one observer per card.
+  const { mutate: toggleFavorite } = useToggleFavorite();
+  const handleToggleFavorite = useCallback(
+    (product: FastLaneProduct) =>
+      toggleFavorite({ productId: product.id, isFavorite: !product.is_favorite }),
+    [toggleFavorite],
+  );
 
   if (isLoading) return null;
 
@@ -54,6 +61,7 @@ export const FastLaneSection: FC<FastLaneSectionProps> = ({ onAddToCart }) => {
             key={product.id}
             product={product}
             onAddToCart={onAddToCart}
+            onToggleFavorite={handleToggleFavorite}
           />
         ))}
       </ScrollView>

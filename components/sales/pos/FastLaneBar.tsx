@@ -1,8 +1,8 @@
-import { FC } from 'react';
+import { FC, useCallback } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StyledText } from '@/components/elements';
 import { FastLaneProduct } from '@/database/products';
-import { useFastLaneProducts } from '@/hooks/useProducts';
+import { useFastLaneProducts, useToggleFavorite } from '@/hooks/useProducts';
 import { FastLaneCard } from './FastLaneCard';
 
 interface FastLaneBarProps {
@@ -11,6 +11,12 @@ interface FastLaneBarProps {
 
 export const FastLaneBar: FC<FastLaneBarProps> = ({ onAddToCart }) => {
   const { data: fastLaneProducts = [], isLoading } = useFastLaneProducts();
+  const { mutate: toggleFavorite } = useToggleFavorite();
+  const handleToggleFavorite = useCallback(
+    (product: FastLaneProduct) =>
+      toggleFavorite({ productId: product.id, isFavorite: !product.is_favorite }),
+    [toggleFavorite],
+  );
 
   if (isLoading || fastLaneProducts.length === 0) {
     return (
@@ -38,6 +44,7 @@ export const FastLaneBar: FC<FastLaneBarProps> = ({ onAddToCart }) => {
             key={product.id}
             product={product}
             onAddToCart={onAddToCart}
+            onToggleFavorite={handleToggleFavorite}
           />
         ))}
       </ScrollView>

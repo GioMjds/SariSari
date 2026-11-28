@@ -1,8 +1,7 @@
-import { FC } from 'react';
+import { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { FastLaneProduct } from '@/database/products';
-import { useToggleFavorite } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { ProductThumb } from '@/components/ui/ProductThumb';
 
@@ -14,13 +13,14 @@ const CARD_OUT_OF_STOCK_CLASS =
 interface FastLaneCardProps {
   product: FastLaneProduct;
   onAddToCart: (product: FastLaneProduct, quantity: number) => void;
+  onToggleFavorite: (product: FastLaneProduct) => void;
 }
 
-export const FastLaneCard: FC<FastLaneCardProps> = ({
+export const FastLaneCard = memo(function FastLaneCard({
   product,
   onAddToCart,
-}) => {
-  const toggleFavorite = useToggleFavorite();
+  onToggleFavorite,
+}: FastLaneCardProps) {
   const isOutOfStock = product.quantity <= 0;
   const hasWholesale =
     product.wholesale_price != null &&
@@ -28,12 +28,7 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
     product.conversion_factor != null &&
     product.conversion_factor >= 2;
 
-  const handleToggleFav = () => {
-    toggleFavorite.mutate({
-      productId: product.id,
-      isFavorite: !product.is_favorite,
-    });
-  };
+  const handleToggleFav = () => onToggleFavorite(product);
 
   return (
     <View
@@ -110,4 +105,4 @@ export const FastLaneCard: FC<FastLaneCardProps> = ({
       )}
     </View>
   );
-};
+});
