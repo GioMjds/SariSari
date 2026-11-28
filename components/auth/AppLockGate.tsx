@@ -17,6 +17,7 @@ import {
   getBiometricCapability,
   type BiometricLabel,
 } from '@/lib/auth/biometrics';
+import { resolveLaunchLock } from '@/lib/auth/appLock';
 import { ICON_COLOR } from '@/lib/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 
@@ -47,24 +48,16 @@ export const AppLockGate: FC<Props> = ({ isReady, children }) => {
     if (!isReady || resolution !== 'pending') return;
     let isMounted = true;
     Promise.all([
-      getAppSetting('app_launch_lock_enabled'),
-      isOwnerPinConfigured(),
+      resolveLaunchLock(
+        () => getAppSetting('app_launch_lock_enabled'),
+        isOwnerPinConfigured,
+      ),
       useAuthStore.getState().hydrateLockout(),
-    ])
-      .then(([flag, hasPin]) => {
-        if (!isMounted) return;
-        if (flag === '1' && hasPin) {
-          setResolution('armed');
-        } else {
-          setResolution('inert');
-          markUnlocked();
-        }
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setResolution('inert');
-        markUnlocked();
-      });
+    ]).then(([next]) => {
+      if (!isMounted) return;
+      setResolution(next);
+      if (next === 'inert') markUnlocked();
+    });
     return () => {
       isMounted = false;
     };
