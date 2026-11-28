@@ -17,6 +17,8 @@ import {
   useAddCustomerForm,
 } from '@/components/utang/add-customer';
 import { ProductFormHeader } from '@/components/inventory/products/form';
+import { useTranslation } from 'react-i18next';
+import { KEYBOARD_TOOLBAR_THEME } from '@/lib/theme';
 
 // Height of the sticky save bar, so the focused field scrolls clear of it.
 const SAVE_BAR_HEIGHT = 76;
@@ -25,14 +27,11 @@ const IS_IOS = Platform.OS === 'ios';
 // Caps the form on tablets so labels and fields stay close together.
 const CONTENT = 'w-full max-w-[560px] self-center';
 
-const TOOLBAR_THEME = {
-  light: { primary: '#C8460F', disabled: '#A89F90', background: '#F2F0E8', ripple: '#E6E3D8' },
-  dark: { primary: '#C8460F', disabled: '#A89F90', background: '#F2F0E8', ripple: '#E6E3D8' },
-};
 
 function AddCustomer() {
   const form = useAddCustomerForm();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation('common');
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
@@ -64,7 +63,7 @@ function AddCustomer() {
         </View>
       </KeyboardStickyView>
 
-      {IS_IOS ? <KeyboardToolbar theme={TOOLBAR_THEME} doneText="Done" /> : null}
+      {IS_IOS ? <KeyboardToolbar theme={KEYBOARD_TOOLBAR_THEME} doneText={t('done')} /> : null}
     </SafeAreaView>
   );
 }

@@ -204,5 +204,12 @@
   "addPaymentSubmit": "Record payment",
   "addPaymentSubmitAmount": "Record {{amount}} payment",
   "addPaymentSubmitSaving": "Saving…",
-  "addPaymentSubmitHint": "Enter an amount first"
+  "addPaymentSubmitHint": "Enter an amount first",
+  "addPaymentToastSuccess": "Payment recorded",
+  "addPaymentToastError": "Payment not saved. Your entry is still here, so you can try again.",
+  "addPaymentLoadErrorTitle": "Can't open this suki",
+  "addPaymentLoadErrorBody": "They may have been deleted. Go back and pick the suki again.",
+  "addPaymentA11yPartial": "New balance {{amount}}",
+  "addPaymentA11yCleared": "Fully paid. Balance becomes {{amount}}",
+  "addPaymentA11yChange": "Give back {{change}} change"
 }

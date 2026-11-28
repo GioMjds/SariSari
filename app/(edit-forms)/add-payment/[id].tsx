@@ -10,9 +10,12 @@ import {
   KeyboardToolbar,
 } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
+import { KEYBOARD_TOOLBAR_THEME } from '@/lib/theme';
 import { ProductFormHeader } from '@/components/inventory/products/form';
 import {
   AddPaymentHeader,
+  AddPaymentSkeleton,
+  AddPaymentLoadError,
   PaymentAmountCard,
   AllocationReceipt,
   PaymentMethodSelector,
@@ -25,35 +28,37 @@ import {
 const IS_IOS = Platform.OS === 'ios';
 const CONTENT = 'w-full max-w-[560px] self-center';
 
-const TOOLBAR_THEME = {
-  light: {
-    primary: '#C8460F',
-    disabled: '#A89F90',
-    background: '#F2F0E8',
-    ripple: '#E6E3D8',
-  },
-  dark: {
-    primary: '#C8460F',
-    disabled: '#A89F90',
-    background: '#F2F0E8',
-    ripple: '#E6E3D8',
-  },
-};
-
 function AddPaymentTransaction() {
   const form = useAddPaymentForm();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('utang');
+  const { t: tc } = useTranslation('common');
   const quickSettle = !!form.pinnedCredit;
+  const header = (
+    <ProductFormHeader
+      title={quickSettle ? t('addPaymentTitleQuick') : t('addPaymentTitle')}
+      onBack={form.router.back}
+    />
+  );
 
-  if (!form.customer) return null;
+  if (!form.customer) {
+    return (
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+        {header}
+        {form.customerLoading ? (
+          <View className={CONTENT}>
+            <AddPaymentSkeleton />
+          </View>
+        ) : (
+          <AddPaymentLoadError onBack={form.router.back} />
+        )}
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <ProductFormHeader
-        title={quickSettle ? t('addPaymentTitleQuick') : t('addPaymentTitle')}
-        onBack={form.router.back}
-      />
+      {header}
 
       <KeyboardAwareScrollView
         className="flex-1"
@@ -91,6 +96,7 @@ function AddPaymentTransaction() {
             openCount={form.unpaidCredits.length}
             hasAmount={form.recordedAmount > 0}
             quickSettle={quickSettle}
+            loading={form.creditsLoading}
             customerName={form.customer.name}
           />
 
@@ -111,6 +117,7 @@ function AddPaymentTransaction() {
               disabled={form.isSubmitDisabled}
               isPending={form.insertPayment.isPending}
               amount={form.recordedAmount}
+              nothingOwed={!form.creditsLoading && form.owed <= 0}
               onPress={form.submit}
             />
           </View>
@@ -118,7 +125,7 @@ function AddPaymentTransaction() {
       </KeyboardStickyView>
 
       {IS_IOS ? (
-        <KeyboardToolbar theme={TOOLBAR_THEME} doneText="Done" />
+        <KeyboardToolbar theme={KEYBOARD_TOOLBAR_THEME} doneText={tc('done')} />
       ) : null}
     </SafeAreaView>
   );

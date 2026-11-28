@@ -3,6 +3,7 @@ import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 import { Customer } from '@/types';
 import { formatPesos } from '@/lib/money';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui';
@@ -22,6 +23,7 @@ export function AddPaymentHeader({
   oldestDate,
 }: AddPaymentHeaderProps) {
   const { t } = useTranslation('utang');
+  const reducedMotion = useReducedMotion();
   const balance = customer.outstanding_balance;
   const oldest = oldestDate ? parseStoredTimestamp(oldestDate) : null;
 
@@ -29,7 +31,9 @@ export function AddPaymentHeader({
     openCount > 0
       ? [
           t(
-            openCount === 1 ? 'detailOpenItemsSingular' : 'detailOpenItemsPlural',
+            openCount === 1
+              ? 'detailOpenItemsSingular'
+              : 'detailOpenItemsPlural',
             { count: openCount },
           ),
           oldest && !Number.isNaN(oldest.getTime())
@@ -42,7 +46,7 @@ export function AddPaymentHeader({
 
   return (
     <MotiView
-      from={{ opacity: 0, translateY: 8 }}
+      from={{ opacity: 0, translateY: reducedMotion ? 0 : 8 }}
       animate={{ opacity: 1, translateY: 0 }}
       transition={{ type: 'timing', duration: 240 }}
     >
@@ -52,13 +56,25 @@ export function AddPaymentHeader({
         className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper px-4 py-4"
       >
         <View className="flex-row items-center">
-          <CustomerAvatar name={customer.name} photoUri={customer.photo_uri} size={48} />
+          <CustomerAvatar
+            name={customer.name}
+            photoUri={customer.photo_uri}
+            size={48}
+          />
           <View className="flex-1 ml-3 mr-2">
-            <StyledText variant="extrabold" className="text-ink-900 text-lg" numberOfLines={1}>
+            <StyledText
+              variant="extrabold"
+              className="text-ink-900 text-lg"
+              numberOfLines={1}
+            >
               {customer.name}
             </StyledText>
             {customer.phone ? (
-              <StyledText variant="regular" className="text-ink-500 text-sm" numberOfLines={1}>
+              <StyledText
+                variant="regular"
+                className="text-ink-500 text-sm"
+                numberOfLines={1}
+              >
                 {customer.phone}
               </StyledText>
             ) : null}

@@ -204,5 +204,12 @@
   "addPaymentSubmit": "Itala ang bayad",
   "addPaymentSubmitAmount": "Itala ang bayad na {{amount}}",
   "addPaymentSubmitSaving": "Sine-save…",
-  "addPaymentSubmitHint": "Maglagay muna ng halaga"
+  "addPaymentSubmitHint": "Maglagay muna ng halaga",
+  "addPaymentToastSuccess": "Naitala ang bayad",
+  "addPaymentToastError": "Hindi na-save ang bayad. Nandito pa ang inilagay mo, kaya puwede mong subukan ulit.",
+  "addPaymentLoadErrorTitle": "Hindi mabuksan ang suki na ito",
+  "addPaymentLoadErrorBody": "Baka nabura na siya. Bumalik at piliin ulit ang suki.",
+  "addPaymentA11yPartial": "Bagong balanse {{amount}}",
+  "addPaymentA11yCleared": "Bayad na lahat. Magiging {{amount}} ang balanse",
+  "addPaymentA11yChange": "Sukli {{change}}"
 }

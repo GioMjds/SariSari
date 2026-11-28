@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
 import { parseStoredTimestamp } from '@/utils/timezone';
 import { StyledText } from '@/components/elements';
-import { StatusPill } from '@/components/ui';
+import { Skeleton, StatusPill } from '@/components/ui';
 import { SariMascot } from '@/components/mascot';
 import { Perforations } from '@/components/utang/credit-details/Perforations';
 import { shortDate } from '@/components/utang/credit-details/labels';
@@ -15,6 +15,8 @@ interface AllocationReceiptProps {
   openCount: number;
   hasAmount: boolean;
   quickSettle: boolean;
+  /** Credits still loading; avoids a false "Nothing to collect". */
+  loading?: boolean;
   customerName: string;
 }
 
@@ -24,9 +26,19 @@ export function AllocationReceipt({
   openCount,
   hasAmount,
   quickSettle,
+  loading = false,
   customerName,
 }: AllocationReceiptProps) {
   const { t } = useTranslation('utang');
+
+  if (loading) {
+    return (
+      <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-4 gap-3">
+        <Skeleton width={90} height={14} />
+        <Skeleton width={'100%'} height={36} borderRadius={8} />
+      </View>
+    );
+  }
 
   if (openCount === 0) {
     return (
@@ -35,7 +47,10 @@ export function AllocationReceipt({
         <StyledText variant="extrabold" className="text-ink-900 text-base mt-2">
           {t('addPaymentNothingTitle')}
         </StyledText>
-        <StyledText variant="regular" className="text-ink-600 text-sm mt-1 text-center">
+        <StyledText
+          variant="regular"
+          className="text-ink-600 text-sm mt-1 text-center"
+        >
           {t('addPaymentNothingBody', { name: customerName })}
         </StyledText>
       </View>
@@ -48,16 +63,25 @@ export function AllocationReceipt({
   return (
     <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper">
       <View className="px-4 pt-4 pb-2 flex-row items-baseline justify-between">
-        <StyledText variant="semibold" accessibilityRole="header" className="text-ink-700 text-sm">
+        <StyledText
+          variant="semibold"
+          accessibilityRole="header"
+          className="text-ink-700 text-sm"
+        >
           {t('addPaymentAppliesTo')}
         </StyledText>
         <StyledText variant="medium" className="text-ink-500 text-xs">
-          {quickSettle ? t('addPaymentThisItemOnly') : t('addPaymentOldestFirst')}
+          {quickSettle
+            ? t('addPaymentThisItemOnly')
+            : t('addPaymentOldestFirst')}
         </StyledText>
       </View>
 
       {!hasAmount && !quickSettle ? (
-        <StyledText variant="regular" className="text-ink-600 text-sm px-4 pb-4">
+        <StyledText
+          variant="regular"
+          className="text-ink-600 text-sm px-4 pb-4"
+        >
           {t('addPaymentAppliesEmpty')}
         </StyledText>
       ) : (
@@ -65,16 +89,25 @@ export function AllocationReceipt({
           {touched.map((row, index) => (
             <View
               key={row.credit.id}
-              className={index > 0 ? 'border-t border-dashed border-ink-200 mt-3 pt-3' : ''}
+              className={
+                index > 0
+                  ? 'border-t border-dashed border-ink-200 mt-3 pt-3'
+                  : ''
+              }
             >
               <AllocationRowItem row={row} />
             </View>
           ))}
           {untouched > 0 && (
             <StyledText variant="medium" className="text-ink-500 text-xs mt-3">
-              {t(untouched === 1 ? 'addPaymentMoreOpenSingular' : 'addPaymentMoreOpenPlural', {
-                count: untouched,
-              })}
+              {t(
+                untouched === 1
+                  ? 'addPaymentMoreOpenSingular'
+                  : 'addPaymentMoreOpenPlural',
+                {
+                  count: untouched,
+                },
+              )}
             </StyledText>
           )}
         </View>
@@ -90,7 +123,8 @@ function AllocationRowItem({ row }: { row: AllocationRow }) {
   const { credit, applied, remainingAfter } = row;
   const name = credit.product_name || t('detailCreditFallback');
   const parsed = parseStoredTimestamp(credit.date);
-  const date = parsed && !Number.isNaN(parsed.getTime()) ? shortDate(parsed) : '';
+  const date =
+    parsed && !Number.isNaN(parsed.getTime()) ? shortDate(parsed) : '';
 
   const status = row.fullyCovered
     ? { variant: 'success' as const, label: t('addPaymentStatusPaid') }
@@ -109,7 +143,11 @@ function AllocationRowItem({ row }: { row: AllocationRow }) {
       })}
     >
       <View className="flex-row items-center justify-between">
-        <StyledText variant="extrabold" className="text-ink-900 text-sm flex-1 mr-2" numberOfLines={1}>
+        <StyledText
+          variant="extrabold"
+          className="text-ink-900 text-sm flex-1 mr-2"
+          numberOfLines={1}
+        >
           {name}
         </StyledText>
         <StatusPill variant={status.variant} size="sm">

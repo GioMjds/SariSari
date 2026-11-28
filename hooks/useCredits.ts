@@ -1,4 +1,5 @@
 import { db } from '@/configs/sqlite';
+import { useTranslation } from 'react-i18next';
 import {
   deleteCreditTransaction,
   deleteCustomer,
@@ -280,6 +281,7 @@ export function useDeleteCredit() {
 }
 
 export function useInsertPayment() {
+  const { t } = useTranslation('utang');
   const queryClient = useQueryClient();
   const router = useRouter();
   const { addToast } = useToastStore();
@@ -307,7 +309,7 @@ export function useInsertPayment() {
         queryKey: ['collection-queue'],
       });
       addToast({
-        message: 'Payment added successfully',
+        message: t('addPaymentToastSuccess'),
         variant: 'success',
         duration: 5000,
       });
@@ -315,7 +317,7 @@ export function useInsertPayment() {
     },
     onError: () => {
       addToast({
-        message: 'Failed to add payment',
+        message: t('addPaymentToastError'),
         variant: 'danger',
         duration: 5000,
       });

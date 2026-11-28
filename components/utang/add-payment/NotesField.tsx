@@ -4,6 +4,7 @@ import { Control, Controller } from 'react-hook-form';
 import { Pressable, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { ICON_COLOR } from '@/lib/theme';
 import { PaymentFormData } from './useAddPaymentForm';
 
 interface NotesFieldProps {
@@ -22,8 +23,11 @@ export function NotesField({ control }: NotesFieldProps) {
         accessibilityRole="button"
         className="press-scale self-start flex-row items-center min-h-[44px] px-1"
       >
-        <FontAwesome name="plus" size={12} color="#A1370C" />
-        <StyledText variant="extrabold" className="text-persimmon-700 text-sm ml-2">
+        <FontAwesome name="plus" size={12} color={ICON_COLOR.persimmonStrong} />
+        <StyledText
+          variant="extrabold"
+          className="text-persimmon-700 text-sm ml-2"
+        >
           {t('addPaymentAddNote')}
         </StyledText>
       </Pressable>
@@ -32,7 +36,11 @@ export function NotesField({ control }: NotesFieldProps) {
 
   return (
     <View className="bg-paper-50 rounded-2xl border border-ink-100 shadow-paper p-4">
-      <StyledText variant="semibold" nativeID="payment-note-label" className="text-ink-700 text-sm mb-2">
+      <StyledText
+        variant="semibold"
+        nativeID="payment-note-label"
+        className="text-ink-700 text-sm mb-2"
+      >
         {t('addPaymentNoteLabel')}
       </StyledText>
       <Controller
@@ -44,7 +52,7 @@ export function NotesField({ control }: NotesFieldProps) {
             onChangeText={onChange}
             autoFocus
             placeholder={t('addPaymentNotePlaceholder')}
-            placeholderTextColor="#A89F90"
+            placeholderTextColor={ICON_COLOR.inkFaint}
             multiline
             numberOfLines={3}
             textAlignVertical="top"

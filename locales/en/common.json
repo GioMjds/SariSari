@@ -6,6 +6,8 @@
   "delete": "Delete",
   "confirm": "Confirm",
   "back": "Back",
+  "goBackA11y": "Go back",
+  "done": "Done",
   "loading": "Loading…",
   "close": "Close",
   "search": "Search",

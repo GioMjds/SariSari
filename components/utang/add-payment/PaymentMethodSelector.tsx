@@ -3,6 +3,7 @@ import { Control, Controller } from 'react-hook-form';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { ICON_COLOR } from '@/lib/theme';
 import { methodLabel } from '@/components/utang/credit-details/labels';
 import { PaymentFormData } from './useAddPaymentForm';
 
@@ -12,11 +13,12 @@ interface PaymentMethodSelectorProps {
   control: Control<PaymentFormData>;
 }
 
-const METHOD_OPTIONS: { id: Method; icon: 'money' | 'bank' | 'ellipsis-h' }[] = [
-  { id: 'cash', icon: 'money' },
-  { id: 'bank_transfer', icon: 'bank' },
-  { id: 'other', icon: 'ellipsis-h' },
-];
+const METHOD_OPTIONS: { id: Method; icon: 'money' | 'bank' | 'ellipsis-h' }[] =
+  [
+    { id: 'cash', icon: 'money' },
+    { id: 'bank_transfer', icon: 'bank' },
+    { id: 'other', icon: 'ellipsis-h' },
+  ];
 
 /** PaymentMethodSelector - Cash / Bank transfer / Other as a single-choice segmented control. */
 export function PaymentMethodSelector({ control }: PaymentMethodSelectorProps) {
@@ -49,7 +51,11 @@ export function PaymentMethodSelector({ control }: PaymentMethodSelectorProps) {
                       : 'bg-paper-100 border-ink-200 active:bg-paper-200'
                   }`}
                 >
-                  <FontAwesome name={option.icon} size={14} color={active ? '#FBF7EE' : '#564E45'} />
+                  <FontAwesome
+                    name={option.icon}
+                    size={14}
+                    color={active ? ICON_COLOR.paper : ICON_COLOR.inkMuted}
+                  />
                   <StyledText
                     variant="extrabold"
                     numberOfLines={1}

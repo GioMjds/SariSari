@@ -71,27 +71,29 @@ export function useAddPaymentForm() {
     creditId?: string;
   }>();
 
-
-  const { control, handleSubmit, setValue, reset } =
-    useForm<PaymentFormData>({
-      defaultValues: {
-        amount: '',
-        paymentMethod: 'cash',
-        notes: '',
-      },
-    });
+  const { control, handleSubmit, setValue, reset } = useForm<PaymentFormData>({
+    defaultValues: {
+      amount: '',
+      paymentMethod: 'cash',
+      notes: '',
+    },
+  });
 
   const amount = useWatch({ control, name: 'amount' });
   const amountTouchedRef = useRef(false);
 
   // Customer + unpaid credits from the query cache.
-  const { data: customer } = useCustomer(id);
-  const { data: allCredits = [] } = useCustomerCredits(id);
+  const { data: customer, isLoading: customerLoading } = useCustomer(id);
+  const { data: allCredits = [], isLoading: creditsLoading } =
+    useCustomerCredits(id);
 
   // FIFO operates oldest-to-newest; the SQL layer already orders by
   // date DESC, so reverse here for the live allocation walk.
   const unpaidCredits = useMemo(
-    () => (allCredits as CreditTransaction[]).filter((c: CreditTransaction) => c.status !== 'paid'),
+    () =>
+      (allCredits as CreditTransaction[]).filter(
+        (c: CreditTransaction) => c.status !== 'paid',
+      ),
     [allCredits],
   );
 
@@ -104,14 +106,18 @@ export function useAddPaymentForm() {
     if (!creditId) return null;
     const parsedId = Number(creditId);
     if (!Number.isFinite(parsedId)) return null;
-    return (unpaidCredits as CreditTransaction[]).find((c: CreditTransaction) => c.id === parsedId) ?? null;
+    return (
+      (unpaidCredits as CreditTransaction[]).find(
+        (c: CreditTransaction) => c.id === parsedId,
+      ) ?? null
+    );
   }, [creditId, unpaidCredits]);
 
-  // `allCredits` is ordered date DESC; FIFO means oldest first.
+  // Same key as the DB's `ORDER BY date ASC` (a string sort), so the preview matches what gets paid.
   const fifo = useMemo(
     () =>
-      [...unpaidCredits].sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      [...unpaidCredits].sort((a, b) =>
+        a.date === b.date ? a.id - b.id : a.date < b.date ? -1 : 1,
       ),
     [unpaidCredits],
   );
@@ -121,8 +127,9 @@ export function useAddPaymentForm() {
     ? pinnedCredit.amount - pinnedCredit.amount_paid
     : (customer?.outstanding_balance ?? 0);
 
-
   const insertPayment = useInsertPayment();
+  // Blocks a second tap before `isPending` re-renders, so one payment is never saved twice.
+  const submittingRef = useRef(false);
 
   // ─── Preset handlers ───────────────────────────────────────────
 
@@ -249,6 +256,7 @@ export function useAddPaymentForm() {
   // ─── Submit ────────────────────────────────────────────────────
 
   const submit = handleSubmit((data) => {
+    if (submittingRef.current) return;
     const payload: NewPayment = {
       customer_id: Number(id),
       // When Quick Settle pinned a credit, send the targeted
@@ -261,7 +269,12 @@ export function useAddPaymentForm() {
       date: getCurrentLocalTimestamp(),
     };
 
-    insertPayment.mutate(payload);
+    submittingRef.current = true;
+    insertPayment.mutate(payload, {
+      onError: () => {
+        submittingRef.current = false;
+      },
+    });
   });
 
   return {
@@ -299,7 +312,9 @@ export function useAddPaymentForm() {
     isAmountValid,
     isSubmitDisabled,
 
-    // Mutation state
+    // Query + mutation state
+    customerLoading,
+    creditsLoading,
     insertPayment,
 
     // Handlers

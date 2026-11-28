@@ -1,5 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import { ICON_COLOR } from '@/lib/theme';
 import { StyledText } from '@/components/elements';
 
 interface ProductFormHeaderProps {
@@ -13,16 +15,17 @@ export function ProductFormHeader({
   subtitle,
   onBack,
 }: ProductFormHeaderProps) {
+  const { t } = useTranslation('common');
   return (
     <View className="bg-background border-b border-paper-300">
       <View className="flex-row items-center px-2 pt-1 pb-2">
         <Pressable
           onPress={onBack}
           accessibilityRole="button"
-          accessibilityLabel="Go back"
+          accessibilityLabel={t('goBackA11y')}
           className="w-12 h-12 rounded-full items-center justify-center active:bg-paper-100"
         >
-          <FontAwesome name="arrow-left" size={18} color="#0E0C0A" />
+          <FontAwesome name="arrow-left" size={18} color={ICON_COLOR.ink} />
         </Pressable>
         <View className="flex-1 ml-1">
           <StyledText

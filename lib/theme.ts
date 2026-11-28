@@ -92,4 +92,17 @@ export const ICON_COLOR = {
   sageStrong: '#2C4413', // sage-700
   cinnamon: '#623418', // cinnamon-500
   danger: '#C13030', // semantic-danger
+  warningStrong: '#8F5A0A', // semantic-warning-700
 } as const;
+
+// react-native-keyboard-controller toolbar colors; the app ships light-only, so both modes match.
+const KEYBOARD_TOOLBAR_LIGHT = {
+  primary: '#C8460F',
+  disabled: '#A89F90',
+  background: '#F2F0E8',
+  ripple: '#E6E3D8',
+};
+export const KEYBOARD_TOOLBAR_THEME = {
+  light: KEYBOARD_TOOLBAR_LIGHT,
+  dark: KEYBOARD_TOOLBAR_LIGHT,
+};

@@ -32,7 +32,8 @@ const variantMap = {
   },
   warning: {
     bg: 'bg-semantic-warning-50',
-    text: 'text-semantic-warning',
+    // warning-700 keeps 5.2:1 on warning-50; the base warning tone is under 4.5:1.
+    text: 'text-semantic-warning-700',
     border: 'border-semantic-warning',
   },
   info: {
