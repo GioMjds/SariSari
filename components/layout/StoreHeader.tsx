@@ -47,12 +47,15 @@ function useActiveTab(): SariTab {
   return current ?? lastTab;
 }
 
-export const StoreHeader = memo(function StoreHeader() {
+// Thin wrapper: useSegments fires on every sub-tab change, so only the primitive tab reaches the memoized view.
+export function StoreHeader() {
+  return <StoreHeaderView tab={useActiveTab()} />;
+}
+
+const StoreHeaderView = memo(function StoreHeaderView({ tab }: { tab: SariTab }) {
   const router = useRouter();
   // Narrow subscription: does NOT trigger every sales/cash/report query.
   const { alerts, alertCount } = useHomeAlerts();
-  const tab = useActiveTab();
-
   useSystemNotifications(alerts);
 
   const [builtTabs, setBuiltTabs] = useState<SariTab[]>([tab]);

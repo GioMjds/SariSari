@@ -14,7 +14,6 @@ const TOP_TABS_SCREEN_OPTIONS = {
   swipeEnabled: false,
   lazy: true,
   lazyPreloadDistance: 0,
-  freezeOnBlur: true,
 } as const;
 
 const DEFAULT_TAB = CUSTOMERS_SUB_TABS[0];
