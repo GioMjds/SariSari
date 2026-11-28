@@ -444,7 +444,7 @@ function DeliveryReceiptEditor() {
 
       {isLoadingDetail ? (
         <View className="flex-1 items-center justify-center">
-          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
+          <SariMascot state="loading" size={230} accessibilityLabel="Loading" />
         </View>
       ) : !isDraft && detail ? (
         <ReadOnlyReceipt

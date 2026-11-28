@@ -100,7 +100,7 @@ export const AuthScreenShell: FC<Props> = ({
           state={sari}
           size={132}
           {...(sariLabel !== undefined && { accessibilityLabel: sariLabel })}
-          animated={true}
+          animated={false}
         />
         {titleArt ? (
           <View

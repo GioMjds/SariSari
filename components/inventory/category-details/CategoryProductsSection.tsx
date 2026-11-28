@@ -295,7 +295,10 @@ export function CategoryProductsSection({
                 accessibilityLabel={t('category_sortA11y', { label })}
                 hitSlop={{ top: 4, bottom: 4 }}
                 className={`flex-1 rounded-pill min-h-[40px] px-1 items-center justify-center ${
-                  selected ? 'bg-paper-50 shadow-paper' : ''
+                  // shadow-none keeps the shadow CSS variables set from first render, or css-interop crashes on toggle.
+                  selected
+                    ? 'bg-paper-50 shadow-paper'
+                    : 'bg-transparent shadow-none'
                 }`}
               >
                 <StyledText

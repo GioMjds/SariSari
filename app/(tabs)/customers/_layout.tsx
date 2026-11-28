@@ -8,13 +8,14 @@ import { TopTabs, type SubTabItem } from '@/components/navigation';
 import { useCustomers, useCreditKPIs } from '@/hooks/useCredits';
 import { useTabProgress } from '@/hooks';
 import { CUSTOMERS_SUB_TABS } from '@/constants/tabs';
+import { MaterialTopTabNavigationOptions } from '@react-navigation/material-top-tabs';
 
 const TOP_TABS_SCREEN_OPTIONS = {
   tabBarStyle: { display: 'none' as const },
   swipeEnabled: false,
   lazy: true,
   lazyPreloadDistance: 0,
-} as const;
+} as const satisfies MaterialTopTabNavigationOptions;
 
 const DEFAULT_TAB = CUSTOMERS_SUB_TABS[0];
 
