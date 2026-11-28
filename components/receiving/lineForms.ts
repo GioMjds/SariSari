@@ -38,6 +38,7 @@ export function lineFormFromProduct(
     expectedQty: '',
     receivedQty: '',
     unitCost: cost != null ? String(cost) : '',
+    expiryDate: '',
   };
 }
 
@@ -56,6 +57,7 @@ export function lineFormFromQuickAdd(p: QuickAddProductInput): DraftLineForm {
     expectedQty: '',
     receivedQty: '',
     unitCost: '',
+    expiryDate: '',
   };
 }
 
@@ -77,6 +79,7 @@ export function lineFormFromReceiptLine(
     expectedQty: String(line.enteredExpectedQty),
     receivedQty: String(line.enteredReceivedQty),
     unitCost: String(line.enteredUnitCost),
+    expiryDate: line.expiryDate ?? '',
   };
 }
 

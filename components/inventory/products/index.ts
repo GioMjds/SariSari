@@ -7,3 +7,5 @@ export * from './ProductActionMenuModal';
 export * from './ProductFilterModal';
 export * from './FilterPill';
 
+
+export * from './NearExpirySummary';

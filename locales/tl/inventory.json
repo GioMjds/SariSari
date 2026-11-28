@@ -185,6 +185,7 @@
   "logStepUp": "Dagdagan ng isa",
   "logReason": "Ano ang nangyari?",
   "logReason_expired": "Nag-expire",
+  "logReason_returned": "Ibinalik sa supplier",
   "logReason_broken": "Sira o tumutulo",
   "logReason_lost": "Nawala",
   "logReason_pests": "Kinain ng peste",
@@ -386,5 +387,8 @@
   "category_addProduct": "Magdagdag ng Produkto",
   "category_addProductA11y": "Magdagdag ng produkto sa kategoryang ito",
   "category_value": "Halaga ng kategorya · {{products}}",
-  "category_valueA11y": "Halaga ng kategorya {{value}}"
+  "category_valueA11y": "Halaga ng kategorya {{value}}",
+  "expiryDateLabel": "Petsa ng expiry (opsyonal)",
+  "expiryDateInvalid": "Maglagay ng tamang petsa, YYYY-MM-DD.",
+  "expiryDateClear": "Burahin"
 }

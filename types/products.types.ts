@@ -18,6 +18,8 @@ export interface Product {
   conversion_factor?: number | null;
   wholesale_barcode?: string | null;
   is_favorite: boolean;
+  expiry_date?: string | null;
+  expiry_warn_days?: number | null;
 }
 
 // Parameters for insertProduct function
@@ -37,6 +39,8 @@ export interface InsertProductParams {
   wholesale_cost_price?: number | null;
   conversion_factor?: number | null;
   wholesale_barcode?: string | null;
+  expiry_date?: string | null;
+  expiry_warn_days?: number | null;
 }
 
 // Parameters for updateProduct function
@@ -57,4 +61,6 @@ export interface UpdateProductParams {
   wholesale_cost_price?: number | null;
   conversion_factor?: number | null;
   wholesale_barcode?: string | null;
+  expiry_date?: string | null;
+  expiry_warn_days?: number | null;
 }

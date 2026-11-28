@@ -185,6 +185,7 @@
   "logStepUp": "One more",
   "logReason": "What happened?",
   "logReason_expired": "Expired",
+  "logReason_returned": "Returned to supplier",
   "logReason_broken": "Broken or leaking",
   "logReason_lost": "Lost or missing",
   "logReason_pests": "Eaten by pests",
@@ -386,5 +387,8 @@
   "category_addProduct": "Add Product",
   "category_addProductA11y": "Add product to this category",
   "category_value": "Category value · {{products}}",
-  "category_valueA11y": "Category value {{value}}"
+  "category_valueA11y": "Category value {{value}}",
+  "expiryDateLabel": "Expiry date (optional)",
+  "expiryDateInvalid": "Use a real date, YYYY-MM-DD.",
+  "expiryDateClear": "Clear"
 }

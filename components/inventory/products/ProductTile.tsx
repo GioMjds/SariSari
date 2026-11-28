@@ -6,6 +6,7 @@ import { MoneyText } from '@/components/ui/MoneyText';
 import { ProductThumb } from '@/components/ui/ProductThumb';
 import { StockBadge, getStockLabel } from '@/components/ui/StockBadge';
 import { calculateBulkSavings } from '@/lib';
+import { ExpiryBadge } from '@/components/inventory/ExpiryBadge';
 import type { Product } from '@/types/products.types';
 import { PRESS_CARD } from './ProductRow';
 
@@ -102,6 +103,9 @@ function ProductTileImpl({
         >
           {category ?? 'Uncategorized'}
         </StyledText>
+        <View className="flex-row mt-1">
+          <ExpiryBadge product={product} />
+        </View>
       </View>
     </Pressable>
   );

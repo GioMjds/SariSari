@@ -6,6 +6,7 @@ import type {
 import type { PalengkeRestockItem } from '@/types/stock-intelligence.types';
 import { InvalidDeliveryLineError } from '@/lib/deliveryReceipt';
 import { parsePesosInput } from '@/lib/money';
+import { isValidIsoDate } from '@/lib/expiry';
 
 export interface DraftLineForm {
   key: string;
@@ -20,6 +21,7 @@ export interface DraftLineForm {
   expectedQty: string;
   receivedQty: string;
   unitCost: string;
+  expiryDate: string;
 }
 
 let keyCounter = 0;
@@ -77,13 +79,17 @@ const parseCost = (label: string, raw: string): number => {
 export const isLineComplete = (form: DraftLineForm): boolean =>
   parseQtyInput(form.receivedQty) !== null &&
   parseCostInput(form.unitCost) !== null &&
-  (form.expectedQty.trim() === '' || parseQtyInput(form.expectedQty) !== null);
+  (form.expectedQty.trim() === '' || parseQtyInput(form.expectedQty) !== null) &&
+  (form.expiryDate === '' || isValidIsoDate(form.expiryDate));
 
 export function toLineInput(form: DraftLineForm): DeliveryLineInput {
   const expected =
     form.expectedQty.trim() === ''
       ? 0
       : parseWhole('Expected', form.expectedQty);
+  if (form.expiryDate !== '' && !isValidIsoDate(form.expiryDate)) {
+    throw new InvalidDeliveryLineError('Expiry date must be YYYY-MM-DD');
+  }
   return {
     productId: form.productId,
     newProduct: form.newProduct,
@@ -91,6 +97,7 @@ export function toLineInput(form: DraftLineForm): DeliveryLineInput {
     enteredExpectedQty: expected,
     enteredReceivedQty: parseWhole('Received', form.receivedQty),
     enteredUnitCost: parseCost('Unit cost', form.unitCost),
+    expiryDate: form.expiryDate.trim() || null,
   };
 }
 
@@ -110,5 +117,6 @@ export function seedLinesFromPlan(
     expectedQty: String(item.suggestedQuantity),
     receivedQty: '',
     unitCost: item.costPrice != null ? String(item.costPrice) : '',
+    expiryDate: '',
   }));
 }

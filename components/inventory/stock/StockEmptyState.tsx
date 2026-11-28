@@ -33,7 +33,7 @@ const COPY: Record<StockFilter, { title: string; subtitle: string }> = {
   },
   near_expiry: {
     title: 'Nothing near expiry',
-    subtitle: 'Items expiring within 7 days will appear here.',
+    subtitle: 'Items inside your expiry warning window will appear here.',
   },
 };
 

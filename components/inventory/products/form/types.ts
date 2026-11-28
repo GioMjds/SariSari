@@ -1,3 +1,4 @@
+import { isValidIsoDate } from '@/lib/expiry';
 import type { Product } from '@/types/products.types';
 
 /** Field shape shared by the Add and Edit product screens. */
@@ -20,6 +21,8 @@ export interface ProductFormData {
   wholesalePrice: string;
   wholesaleCostPrice: string;
   wholesaleBarcode: string;
+  expiryDate: string;
+  expiryWarnDays: string;
 }
 
 export const PRODUCT_FORM_DEFAULTS: ProductFormData = {
@@ -41,12 +44,24 @@ export const PRODUCT_FORM_DEFAULTS: ProductFormData = {
   wholesalePrice: '',
   wholesaleCostPrice: '',
   wholesaleBarcode: '',
+  expiryDate: '',
+  expiryWarnDays: '',
 };
 
 export const MARKUP_PRESETS = [0.1, 0.2, 0.3, 0.5] as const;
 export type MarkupPreset = (typeof MARKUP_PRESETS)[number];
 
 export const STOCK_PRESETS = [5, 10, 20] as const;
+
+/** Form expiry text as a stored date, or null when blank or not a real date. */
+export const expiryToStored = (s: string): string | null =>
+  isValidIsoDate(s.trim()) ? s.trim() : null;
+
+/** Form warn-days text as a positive whole number, or null to use the store setting. */
+export const warnDaysToStored = (s: string): number | null => {
+  const n = Number.parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 export const safeTrim = (s?: string | null) => (s ?? '').trim();
 

@@ -83,6 +83,10 @@ export const applyInventoryTransaction = async (
     throw new Error("Can't go below zero.");
   }
 
+  // Damaged rows snapshot the current cost so write-off loss stays correct if cost changes later.
+  const recordedCost =
+    type === 'damaged' && unit_cost === null ? product.cost_price : unit_cost;
+
   // 3. Insert into inventory_transactions
   const result = await db.runAsync(
     'INSERT INTO inventory_transactions (product_id, type, quantity, note, adjustment_sign, unit_cost, supplier_id, receipt_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -92,7 +96,7 @@ export const applyInventoryTransaction = async (
       quantity,
       note,
       adjustment_sign,
-      unit_cost,
+      recordedCost,
       supplier_id,
       receipt_id,
     ],
@@ -268,3 +272,15 @@ export const getInventoryTransactionsPage = async (params: {
   return { items: rows, nextCursor };
 };
 
+
+/** Peso cost of stock written off as damaged in the last N days, from the cost snapshot on each row. */
+export const getWriteOffCost = async (days: number): Promise<number> => {
+  const row = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(quantity * unit_cost), 0) AS total
+     FROM inventory_transactions
+     WHERE type = 'damaged' AND unit_cost IS NOT NULL
+       AND timestamp >= datetime('now', ?)`,
+    [`-${Math.max(1, Math.floor(days))} days`],
+  );
+  return Math.round(row?.total ?? 0);
+};

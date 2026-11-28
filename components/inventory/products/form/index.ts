@@ -6,3 +6,4 @@ export * from './ProductDetailsSection';
 export * from './ProductCodesSection';
 export * from './ProductPricingSection';
 export * from './ProductStockSection';
+export * from './ProductExpirySection';

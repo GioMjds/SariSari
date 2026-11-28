@@ -18,6 +18,7 @@ import {
   ProductFormFooter,
   ProductFormHeader,
   ProductPricingSection,
+  ProductExpirySection,
   ProductStockSection,
   FORM_CONTENT_STYLE,
 } from '@/components/inventory/products/form';
@@ -66,6 +67,7 @@ function EditProduct() {
           onRestock={() => form.setStockSheet('restock')}
           onAdjust={() => form.setStockSheet('adjust')}
         />
+        <ProductExpirySection control={form.control} />
 
         <ProductMetaCard
           createdAt={product.created_at}

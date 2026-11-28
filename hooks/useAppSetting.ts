@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAppSetting, setAppSetting } from '@/database/settings';
+import { NEAR_EXPIRY_WINDOW_DAYS } from '@/constants/stocks';
 import type { AppSettingKey } from '@/types/settings.types';
 
 const appSettingKey = {
@@ -34,4 +35,11 @@ export const useSetAppSetting = (key: AppSettingKey) => {
     onSettled: () =>
       qc.invalidateQueries({ queryKey: appSettingKey.appSettingKey(key) }),
   });
+};
+
+/** Store-wide near-expiry window in days, defaulting until the owner sets it. */
+export const useNearExpiryDays = (): number => {
+  const { value } = useAppSetting('near_expiry_days');
+  const n = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : NEAR_EXPIRY_WINDOW_DAYS;
 };

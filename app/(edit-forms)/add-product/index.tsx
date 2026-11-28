@@ -11,6 +11,7 @@ import {
   ProductFormFooter,
   ProductFormHeader,
   ProductPricingSection,
+  ProductExpirySection,
   ProductStockSection,
   FORM_CONTENT_STYLE,
 } from '@/components/inventory/products/form';
@@ -48,6 +49,7 @@ function AddProduct() {
           onPressScanCase={() => form.openScanner('wholesaleBarcode')}
         />
         <ProductStockSection mode="add" control={form.control} />
+        <ProductExpirySection control={form.control} />
       </KeyboardAwareScrollView>
 
       <ProductFormFooter

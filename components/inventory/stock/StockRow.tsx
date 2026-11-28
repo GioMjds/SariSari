@@ -5,7 +5,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { StyledText } from '@/components/elements';
 import { MoneyText } from '@/components/ui/MoneyText';
 import { ProductStatusChip } from '@/components/inventory/ProductStatusChip';
-import { getStatus } from '@/types/inventory.types';
+import { useNearExpiryDays } from '@/hooks/useAppSetting';
+import { daysUntilProductExpiry, getStatus } from '@/types/inventory.types';
 import { getProductImageUri } from '@/lib';
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
     price: number;
     cost_price?: number;
     image_uri?: string | null;
+    expiry_date?: string | null;
+    expiry_warn_days?: number | null;
   };
   onPress: (id: number) => void;
   onLongPress?: (id: number) => void;
@@ -23,7 +26,9 @@ interface Props {
 }
 
 function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
-  const status = getStatus(product as any);
+  const windowDays = useNearExpiryDays();
+  const status = getStatus(product as any, Date.now(), windowDays);
+  const expiryDays = daysUntilProductExpiry(product);
   const showRestock = status === 'low_stock' || status === 'out_of_stock';
   const placeholderText = product.name
     ? product.name.trim().charAt(0).toUpperCase()
@@ -78,7 +83,7 @@ function StockRowImpl({ product, onPress, onLongPress, onRestock }: Props) {
         </View>
       </View>
       <View className="items-end gap-1 shrink-0">
-        <ProductStatusChip status={status} />
+        <ProductStatusChip status={status} expiryDays={expiryDays} />
         {showRestock && onRestock ? (
           <TouchableOpacity
             onPress={() => onRestock(product.id)}

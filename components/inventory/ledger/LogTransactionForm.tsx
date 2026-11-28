@@ -37,7 +37,7 @@ const confirmKey = {
   adjustment: 'logConfirm_adjustment',
 } satisfies Record<InventoryEventType, string>;
 
-const DAMAGE_REASONS = ['expired', 'broken', 'lost', 'pests'] as const;
+const DAMAGE_REASONS = ['expired', 'returned', 'broken', 'lost', 'pests'] as const;
 
 interface StepButtonProps {
   icon: IconName;

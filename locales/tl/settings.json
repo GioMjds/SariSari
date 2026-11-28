@@ -115,5 +115,11 @@
       "pin_policy_change": "Baguhin ang mga kailangan ng PIN",
       "biometric_enable": "I-on ang biometric na pag-apruba"
     }
+  },
+  "near_expiry": {
+    "section": "Expiry",
+    "title": "Babala sa malapit nang mag-expire (araw)",
+    "help": "Lalabas na malapit nang mag-expire ang produkto ilang araw bago ang petsa nito. Default na 7. Maaari itong baguhin sa bawat produkto.",
+    "invalid": "Maglagay ng bilang ng araw mula 1 hanggang 365."
   }
 }

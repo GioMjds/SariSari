@@ -10,6 +10,7 @@ import {
   type DraftLineForm,
 } from '@/lib/deliveryForm';
 import { formatPesos } from '@/lib/money';
+import { ExpiryDateField } from '@/components/inventory/ExpiryDateField';
 
 interface Props {
   form: DraftLineForm;
@@ -148,6 +149,13 @@ export function DeliveryLineRow({ form, onChange, onRemove }: Props) {
           invalid={costInvalid}
           keyboardType="decimal-pad"
           onChangeText={(v) => set({ unitCost: v })}
+        />
+      </View>
+
+      <View className="mt-3">
+        <ExpiryDateField
+          value={form.expiryDate}
+          onChange={(v) => set({ expiryDate: v })}
         />
       </View>
 

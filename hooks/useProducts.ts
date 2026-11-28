@@ -16,6 +16,7 @@ import {
   type ProductFilterType,
   toggleProductFavorite,
 } from '@/database/products';
+import { getNearExpiryDays } from '@/database/settings';
 import { useToastStore } from '@/stores/ToastStore';
 import {
   InsertProductParams,
@@ -182,7 +183,7 @@ export function usePaginatedProducts(
       options?.alert,
     ),
     initialPageParam: null as ProductsPageCursor | null,
-    queryFn: ({ pageParam }) => {
+    queryFn: async ({ pageParam }) => {
       const params: {
         cursor: ProductsPageCursor | null;
         limit: number;
@@ -191,6 +192,7 @@ export function usePaginatedProducts(
         category?: string;
         supplier?: string;
         alert?: string;
+        nearExpiryDays?: number;
       } = {
         cursor: pageParam,
         limit: PAGE_SIZE,
@@ -200,6 +202,9 @@ export function usePaginatedProducts(
       if (options?.category !== undefined) params.category = options.category;
       if (options?.supplier !== undefined) params.supplier = options.supplier;
       if (options?.alert !== undefined) params.alert = options.alert;
+      if (filter === 'near_expiry' || options?.alert === 'near_expiry') {
+        params.nearExpiryDays = await getNearExpiryDays();
+      }
       return getProductsPage(params);
     },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -259,6 +264,8 @@ export function useProducts() {
       wholesale_cost_price,
       conversion_factor,
       wholesale_barcode,
+      expiry_date,
+      expiry_warn_days,
     }: InsertProductParams) => {
       let permanentImageUri: string | null = null;
       if (image_uri) {
@@ -281,6 +288,8 @@ export function useProducts() {
           wholesale_cost_price,
           conversion_factor,
           wholesale_barcode,
+          expiry_date,
+          expiry_warn_days,
         );
       } catch (error) {
         if (permanentImageUri) await deleteLocalProductImage(permanentImageUri);
@@ -331,6 +340,8 @@ export function useProducts() {
       wholesale_cost_price,
       conversion_factor,
       wholesale_barcode,
+      expiry_date,
+      expiry_warn_days,
     }: UpdateProductParams) => {
       const existingProduct = await getProduct(id);
       let finalImageUri = existingProduct?.image_uri || null;
@@ -362,6 +373,8 @@ export function useProducts() {
         wholesale_cost_price,
         conversion_factor,
         wholesale_barcode,
+        expiry_date,
+        expiry_warn_days,
       );
     },
     onSuccess: (_, variables) => {

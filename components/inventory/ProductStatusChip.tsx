@@ -8,6 +8,8 @@ export type ProductStockStatus =
 
 export interface ProductStatusChipProps {
   status: ProductStockStatus;
+  /** Days to expiry; relabels the near-expiry chip with the actual time left. */
+  expiryDays?: number | null;
 }
 
 interface StatusConfig {
@@ -62,8 +64,18 @@ const STATUS_CONFIG = {
   },
 } satisfies Record<ProductStockStatus, StatusConfig>;
 
-export function ProductStatusChip({ status }: ProductStatusChipProps) {
-  const cfg = STATUS_CONFIG[status];
+const expiryLabel = (days: number): string =>
+  days < 0 ? 'Expired' : days === 0 ? 'Expires today' : `${days}d left`;
+
+export function ProductStatusChip({
+  status,
+  expiryDays,
+}: ProductStatusChipProps) {
+  const base = STATUS_CONFIG[status];
+  const cfg =
+    status === 'near_expiry' && expiryDays != null
+      ? { ...base, label: expiryLabel(expiryDays) }
+      : base;
   return (
     <View
       accessibilityRole="text"

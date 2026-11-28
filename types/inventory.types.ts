@@ -2,6 +2,7 @@ import {
   LOW_STOCK_THRESHOLD,
   NEAR_EXPIRY_WINDOW_DAYS,
 } from '@/constants/stocks';
+import { daysUntilExpiry } from '@/lib/expiry';
 
 export type ProductStockStatus =
   'healthy' | 'low_stock' | 'out_of_stock' | 'near_expiry' | 'newly_added';
@@ -43,24 +44,34 @@ export interface InsertInventoryV2 {
 export interface ProductLike {
   quantity: number;
   expiry_date?: number | string | null;
+  expiry_warn_days?: number | null;
   created_at: number | string;
+}
+
+/** Whole days from today to the product's expiry (negative once expired), or null if none. */
+export function daysUntilProductExpiry(
+  product: Pick<ProductLike, 'expiry_date'>,
+  now: number = Date.now(),
+): number | null {
+  const raw = product.expiry_date;
+  if (!raw) return null;
+  if (typeof raw === 'number') {
+    return Math.floor((raw - now) / (1000 * 60 * 60 * 24));
+  }
+  return daysUntilExpiry(raw, new Date(now));
 }
 
 export function getStatus(
   product: ProductLike,
   now: number = Date.now(),
+  windowDays: number = NEAR_EXPIRY_WINDOW_DAYS,
 ): ProductStockStatus {
   if (product.quantity === 0) return 'out_of_stock';
   if (product.expiry_date) {
-    const expiryMs =
-      typeof product.expiry_date === 'number'
-        ? product.expiry_date
-        : new Date(product.expiry_date).getTime();
-    if (!isNaN(expiryMs)) {
-      const daysUntilExpiry = (expiryMs - now) / (1000 * 60 * 60 * 24);
-      if (daysUntilExpiry >= 0 && daysUntilExpiry <= NEAR_EXPIRY_WINDOW_DAYS) {
-        return 'near_expiry';
-      }
+    const days = daysUntilProductExpiry(product, now);
+    // Already-expired stock still on the shelf counts as near expiry until written off.
+    if (days !== null && days <= (product.expiry_warn_days ?? windowDays)) {
+      return 'near_expiry';
     }
   }
   if (product.quantity <= LOW_STOCK_THRESHOLD) return 'low_stock';

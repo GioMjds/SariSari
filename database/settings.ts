@@ -1,3 +1,4 @@
+import { NEAR_EXPIRY_WINDOW_DAYS } from '@/constants/stocks';
 import { db } from '@/configs/sqlite';
 import { AppSettingKey, AppSettingRow } from '@/types';
 import { loadOnboardingState } from '@/lib/onboardingStorage';
@@ -60,4 +61,11 @@ export const setAppSetting = async (
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
     [key, value, now],
   );
+};
+
+/** Store-wide near-expiry warning window in days; falls back to the default. */
+export const getNearExpiryDays = async (): Promise<number> => {
+  const raw = await getAppSetting('near_expiry_days');
+  const n = Number.parseInt(raw ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : NEAR_EXPIRY_WINDOW_DAYS;
 };

@@ -115,5 +115,11 @@
       "pin_policy_change": "Change PIN approvals",
       "biometric_enable": "Turn on biometric approval"
     }
+  },
+  "near_expiry": {
+    "section": "Expiry",
+    "title": "Near-expiry warning (days)",
+    "help": "Products show as near expiry this many days before their date. Default 7. You can override it per product.",
+    "invalid": "Enter a number of days from 1 to 365."
   }
 }

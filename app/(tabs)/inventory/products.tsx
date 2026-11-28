@@ -4,6 +4,7 @@ import { InventoryErrorState } from '@/components/inventory/InventoryErrorState'
 import { LogTransactionForm } from '@/components/inventory/ledger';
 import { BulkMoveCategoryModal } from '@/components/inventory/modals';
 import {
+  NearExpirySummary,
   ProductActionMenuModal,
   ProductFilterModal,
   ProductsEmptyState,
@@ -322,6 +323,8 @@ function ProductsScreen() {
           <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
         </View>
       </View>
+
+      {alert === 'near_expiry' ? <NearExpirySummary /> : null}
 
       {/* Skeleton fills only the list slot so search and the view toggle stay mounted. */}
       {isLoading ? (

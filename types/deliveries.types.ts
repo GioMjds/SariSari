@@ -14,6 +14,7 @@ export interface DeliveryLineInput {
   enteredExpectedQty: number;
   enteredReceivedQty: number;
   enteredUnitCost: number;
+  expiryDate?: string | null;
 }
 
 export interface SaveDeliveryDraftInput {
@@ -41,6 +42,7 @@ export interface DeliveryReceiptLine {
   actualUnitCost: number;
   shortageQty: number;
   conversionFactorUsed: number;
+  expiryDate: string | null;
 }
 
 export interface DeliveryReceiptSummary {

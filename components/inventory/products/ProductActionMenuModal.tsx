@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/SheetActions';
 import { ProductStatusChip } from '@/components/inventory/ProductStatusChip';
 import { getProductImageUri } from '@/lib';
-import { getStatus } from '@/types/inventory.types';
+import { useNearExpiryDays } from '@/hooks/useAppSetting';
+import { daysUntilProductExpiry, getStatus } from '@/types/inventory.types';
 import type { Product } from '@/types/products.types';
 import { useStocktakeGuard } from '@/hooks/useStocktake';
 
@@ -130,6 +131,7 @@ const ProductHeader = memo(function ProductHeader({
   product: Product;
   onClose: () => void;
 }) {
+  const windowDays = useNearExpiryDays();
   const imageUri = getProductImageUri(product.image_uri);
   const initial = product.name.trim().charAt(0).toUpperCase() || '?';
 
@@ -169,7 +171,10 @@ const ProductHeader = memo(function ProductHeader({
         </StyledText>
         <View className="flex-row items-center flex-wrap gap-2 mt-2">
           <MoneyText value={product.price ?? 0} size="md" className="text-ink-900" />
-          <ProductStatusChip status={getStatus(product as any)} />
+          <ProductStatusChip
+            status={getStatus(product as any, Date.now(), windowDays)}
+            expiryDays={daysUntilProductExpiry(product)}
+          />
           <StyledText
             variant="medium"
             className="text-caption text-ink-500"

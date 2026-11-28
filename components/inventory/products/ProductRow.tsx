@@ -6,6 +6,7 @@ import { ProductThumb } from '@/components/ui/ProductThumb';
 import { StockBadge, getStockLabel } from '@/components/ui/StockBadge';
 import { calculateBulkSavings } from '@/lib';
 import { FontAwesome } from '@expo/vector-icons';
+import { ExpiryBadge } from '@/components/inventory/ExpiryBadge';
 import type { Product } from '@/types/products.types';
 
 interface Props {
@@ -80,6 +81,7 @@ function ProductRowImpl({
         </StyledText>
         <View className="flex-row items-center flex-wrap gap-1.5">
           <StockBadge quantity={quantity} />
+          <ExpiryBadge product={product} />
           {hasWholesale ? (
             <View className="flex-row items-center bg-sage-50 border border-sage-200 rounded-full px-2 py-0.5">
               <FontAwesome name="cubes" size={10} color="#4F7A24" />

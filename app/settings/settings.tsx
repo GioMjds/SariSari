@@ -11,6 +11,7 @@ import { LanguagePickerDialog } from '@/components/settings/LanguagePickerDialog
 import { SupportedLanguage } from '@/lib/i18n';
 import { OwnerPinSettingsCard } from '@/components/settings/OwnerPinSettingsCard';
 import { VoidWindowCard } from '@/components/settings/VoidWindowCard';
+import { NearExpiryDaysCard } from '@/components/settings/NearExpiryDaysCard';
 import { PinPolicyCard } from '@/components/settings/PinPolicyCard';
 import {
   SettingsRow,
@@ -115,6 +116,10 @@ function Settings() {
 
         <SettingsSection title={t('common:settingsSalesSection')}>
           <VoidWindowCard />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings:near_expiry.section')}>
+          <NearExpiryDaysCard />
         </SettingsSection>
       </KeyboardAwareScrollView>
 

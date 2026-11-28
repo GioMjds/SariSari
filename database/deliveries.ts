@@ -131,6 +131,7 @@ interface LineRow {
   actual_unit_cost: number;
   shortage_qty: number;
   conversion_factor_used: number;
+  expiry_date: string | null;
 }
 
 export const getReceiptRow = async (id: number): Promise<ReceiptRow | null> =>
@@ -205,8 +206,8 @@ const insertLine = async (
        receipt_id, product_id, new_product_name, new_product_price, new_product_barcode,
        entered_unit, entered_expected_qty, entered_received_qty, entered_unit_cost,
        expected_qty, received_qty, expected_unit_cost, actual_unit_cost,
-       shortage_qty, conversion_factor_used
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       shortage_qty, conversion_factor_used, expiry_date
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       receiptId,
       line.productId,
@@ -223,6 +224,7 @@ const insertLine = async (
       c.actualUnitCost,
       c.shortageQty,
       c.conversionFactorUsed,
+      line.expiryDate?.trim() || null,
     ],
   );
 };
@@ -321,6 +323,7 @@ const mapLine = (r: LineRow): DeliveryReceiptLine => ({
   actualUnitCost: r.actual_unit_cost,
   shortageQty: r.shortage_qty,
   conversionFactorUsed: r.conversion_factor_used,
+  expiryDate: r.expiry_date,
 });
 
 const SUMMARY_SELECT = `
@@ -513,6 +516,13 @@ const runCommit = async (
           receipt_id: receiptId,
           note,
         });
+        // Earliest date wins; a later delivery never pushes the date out.
+        if (line.expiry_date) {
+          await db.runAsync(
+            'UPDATE products SET expiry_date = ? WHERE id = ? AND (expiry_date IS NULL OR ? < expiry_date)',
+            [line.expiry_date, productId, line.expiry_date],
+          );
+        }
       }
     }
 

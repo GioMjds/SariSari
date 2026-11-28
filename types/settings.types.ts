@@ -1,5 +1,6 @@
 export type AppSettingKey =
   | 'void_window_hours'
+  | 'near_expiry_days'
   | 'owner_pin_discount_threshold_pesos'
   | 'owner_pin_discount_threshold_percent'
   | 'biometric_unlock_enabled'

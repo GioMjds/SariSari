@@ -12,6 +12,8 @@ import {
   type ProductFormData,
   findBarcodeConflict,
   safeTrim,
+  expiryToStored,
+  warnDaysToStored,
 } from '../products/form';
 import type { ScanTarget } from '../products/add-product';
 
@@ -33,6 +35,8 @@ const toFormValues = (p: Product): ProductFormData => ({
   wholesalePrice: p.wholesale_price ? String(p.wholesale_price) : '',
   wholesaleCostPrice: p.wholesale_cost_price ? String(p.wholesale_cost_price) : '',
   wholesaleBarcode: p.wholesale_barcode ?? '',
+  expiryDate: p.expiry_date ?? '',
+  expiryWarnDays: p.expiry_warn_days ? String(p.expiry_warn_days) : '',
 });
 
 export function useEditProductForm() {
@@ -130,6 +134,9 @@ export function useEditProductForm() {
         wholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null,
       conversion_factor: wholesale && Number.isFinite(factor) && factor >= 2 ? factor : null,
       wholesale_barcode: wholesale ? safeTrim(data.wholesaleBarcode) || null : null,
+      // An invalid date saves as cleared; the field shows the error while typing.
+      expiry_date: expiryToStored(data.expiryDate),
+      expiry_warn_days: warnDaysToStored(data.expiryWarnDays),
     };
     if (data.costPerPiece) payload.cost_price = parsePesosInput(data.costPerPiece);
     if (safeTrim(data.category)) payload.category = safeTrim(data.category);

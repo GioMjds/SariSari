@@ -1247,4 +1247,32 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v28.');
   }
+
+  if (currentVersion < 29) {
+    console.log('Running migration to v29 (Product expiry dates)...');
+    await db.withTransactionAsync(async () => {
+      const addColumn = async (table: string, col: string, ddl: string) => {
+        const cols = await db.getAllAsync<{ name: string }>(
+          `PRAGMA table_info(${table})`,
+        );
+        if (!cols.some((c) => c.name === col)) {
+          await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${ddl};`);
+        }
+      };
+      await addColumn('products', 'expiry_date', 'expiry_date TEXT');
+      await addColumn(
+        'products',
+        'expiry_warn_days',
+        'expiry_warn_days INTEGER',
+      );
+      await addColumn(
+        'delivery_receipt_lines',
+        'expiry_date',
+        'expiry_date TEXT',
+      );
+
+      await db.execAsync('PRAGMA user_version = 29;');
+    });
+    console.log('Database migrated to v29.');
+  }
 }

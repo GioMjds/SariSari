@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { useProducts } from '@/hooks/useProducts';
+import { useNearExpiryDays } from '@/hooks/useAppSetting';
+import { useQuery } from '@tanstack/react-query';
+import { getWriteOffCost } from '@/database/inventory';
+import { productKeys, useProducts } from '@/hooks/useProducts';
 import {
   getStatus,
   type InventoryOverviewCounts,
@@ -27,6 +30,7 @@ const ZERO_COUNTS = {
 
 export function useInventoryOverview(): InventoryOverview {
   const { getAllProductsQuery } = useProducts();
+  const windowDays = useNearExpiryDays();
   const data = useMemo(
     () => getAllProductsQuery.data ?? [],
     [getAllProductsQuery.data],
@@ -48,7 +52,7 @@ export function useInventoryOverview(): InventoryOverview {
       if (qty === 0) counts.out += 1;
       else if (qty > MAX_STOCK_THRESHOLD) counts.overstock += 1;
 
-      const status: ProductStockStatus = getStatus(p, now);
+      const status: ProductStockStatus = getStatus(p, now, windowDays);
       if (status === 'low_stock') counts.low += 1;
       else if (status === 'near_expiry') counts.nearExpiry += 1;
       else if (status === 'healthy' || status === 'newly_added')
@@ -61,7 +65,7 @@ export function useInventoryOverview(): InventoryOverview {
       unitCount,
       counts,
     };
-  }, [data, now]);
+  }, [data, now, windowDays]);
 
   return {
     ...computed,
@@ -69,4 +73,12 @@ export function useInventoryOverview(): InventoryOverview {
     error: getAllProductsQuery.error,
     refetch: () => getAllProductsQuery.refetch?.(),
   };
+}
+
+/** Cost of stock written off as damaged or expired in the last 30 days. */
+export function useWriteOffCost(days = 30) {
+  return useQuery({
+    queryKey: [...productKeys.all, 'writeOffCost', days],
+    queryFn: () => getWriteOffCost(days),
+  });
 }

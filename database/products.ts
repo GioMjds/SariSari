@@ -1,3 +1,4 @@
+import { NEAR_EXPIRY_WINDOW_DAYS } from '@/constants/stocks';
 import { Product } from '@/types/products.types';
 import { db } from '../configs/sqlite';
 import { upsertCatalogProduct } from './catalog';
@@ -136,6 +137,8 @@ export const insertProduct = async (
   wholesale_cost_price?: number | null,
   conversion_factor?: number | null,
   wholesale_barcode?: string | null,
+  expiry_date?: string | null,
+  expiry_warn_days?: number | null,
 ): Promise<number> => {
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
@@ -157,8 +160,9 @@ export const insertProduct = async (
       const result = await db.runAsync(
         `INSERT INTO products (
           name, sku, price, quantity, cost_price, category, barcode, supplier_id, image_uri,
-          retail_unit_name, wholesale_unit_name, wholesale_price, wholesale_cost_price, conversion_factor, wholesale_barcode
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          retail_unit_name, wholesale_unit_name, wholesale_price, wholesale_cost_price, conversion_factor, wholesale_barcode,
+          expiry_date, expiry_warn_days
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           name,
           sku,
@@ -175,6 +179,8 @@ export const insertProduct = async (
           wholesale_cost_price ?? null,
           conversion_factor ?? null,
           normalizedWholesaleBarcode,
+          expiry_date ?? null,
+          expiry_warn_days ?? null,
         ],
       );
       productId = result.lastInsertRowId;
@@ -245,6 +251,8 @@ export const updateProduct = async (
   wholesale_cost_price?: number | null,
   conversion_factor?: number | null,
   wholesale_barcode?: string | null,
+  expiry_date?: string | null,
+  expiry_warn_days?: number | null,
 ) => {
   const normalizedBarcode = normalizeBarcode(barcode);
   const normalizedWholesaleBarcode = normalizeBarcode(wholesale_barcode);
@@ -292,6 +300,13 @@ export const updateProduct = async (
           id,
         ],
       );
+      // Undefined means the caller did not touch expiry, so keep stored values.
+      if (expiry_date !== undefined || expiry_warn_days !== undefined) {
+        await db.runAsync(
+          'UPDATE products SET expiry_date = ?, expiry_warn_days = ? WHERE id = ?',
+          [expiry_date ?? null, expiry_warn_days ?? null, id],
+        );
+      }
       if (current) {
         const oldCost = current.cost_price ?? null;
         const newCost = cost_price ?? null;
@@ -402,6 +417,7 @@ export const getProductsPage = async (params: {
   category?: string | undefined;
   supplier?: string | undefined;
   alert?: string | undefined;
+  nearExpiryDays?: number | undefined;
 }): Promise<ProductsPage> => {
   const search = (params.search ?? '').trim();
   const searchPattern = `%${search.toLowerCase()}%`;
@@ -409,6 +425,11 @@ export const getProductsPage = async (params: {
   const category = (params.category ?? '').trim();
   const supplier = (params.supplier ?? '').trim();
   const alert = (params.alert ?? '').trim();
+  const nearExpiryDays = Math.max(
+    1,
+    Math.floor(params.nearExpiryDays ?? NEAR_EXPIRY_WINDOW_DAYS),
+  );
+  const nearExpiryCondition = `expiry_date IS NOT NULL AND date(expiry_date) <= date('now', '+' || COALESCE(expiry_warn_days, ${nearExpiryDays}) || ' days')`;
   const cursorName = params.cursor?.name ?? '';
   const cursorId = params.cursor?.id ?? 0;
   const limit = Math.max(1, Math.floor(params.limit));
@@ -427,7 +448,8 @@ export const getProductsPage = async (params: {
   } else if (filter === 'new') {
     filterCondition = "julianday('now') - julianday(created_at) <= 7";
   } else if (filter === 'near_expiry') {
-    filterCondition = 'wholesale_unit_name IS NOT NULL';
+    // shortcut: list stays in name order for cursor paging, so soonest-first is shown by the row label only.
+    filterCondition = nearExpiryCondition;
   }
 
   let alertCondition = '1=1';
@@ -437,6 +459,8 @@ export const getProductsPage = async (params: {
     alertCondition = 'quantity > 0 AND quantity <= 5';
   } else if (alert === 'overstock') {
     alertCondition = 'quantity >= 100';
+  } else if (alert === 'near_expiry') {
+    alertCondition = nearExpiryCondition;
   }
 
   const rows = await db.getAllAsync<Product>(

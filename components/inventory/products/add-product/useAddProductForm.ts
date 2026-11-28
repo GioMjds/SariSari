@@ -13,6 +13,8 @@ import {
   findBarcodeConflict,
   generateSku,
   safeTrim,
+  expiryToStored,
+  warnDaysToStored,
 } from '../form';
 
 export type ScanTarget = 'barcode' | 'wholesaleBarcode';
@@ -178,6 +180,8 @@ export function useAddProductForm() {
           wholesale && data.wholesaleCostPrice ? parsePesosInput(data.wholesaleCostPrice) : null,
         conversion_factor: wholesale && Number.isFinite(factor) && factor >= 2 ? factor : null,
         wholesale_barcode: wholesale ? safeTrim(data.wholesaleBarcode) || null : null,
+        expiry_date: expiryToStored(data.expiryDate),
+        expiry_warn_days: warnDaysToStored(data.expiryWarnDays),
       },
       {
         onSuccess: () => {
