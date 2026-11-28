@@ -4,6 +4,29 @@ A running log of work in progress, fixes in flight, and decisions worth referrin
 
 ---
 
+## 2026-11-28: Supplier payables (challenge #4)
+
+- Intent was confirmed in an interview. The owner should see what they owe each supplier and when it is due, before the agent arrives. Decisions are recorded in `obsidian-vault/03-Technical/ADR-004-supplier-payables.md`.
+- Schema v28 adds `supplier_payables`, `supplier_payments`, `supplier_payment_allocations`, and `suppliers.payment_terms_days`. The repo is `database/supplierPayables.ts`.
+- Committing a delivery receipt now creates a payable at the invoice amount. The review step shows a Paid now / Pay later choice (`components/receiving/CommitPaymentChoice.tsx`). Suppliers with terms default to Pay later, all others to Paid now.
+- Cash supplier payments are a new `supplier_payment` branch of the `cash_movements` view.
+- Voiding a receipt with payments is refused until the payment is reversed.
+- New screens are `app/(edit-forms)/supplier-payables/index.tsx` (balances) and `[supplierId].tsx` (open payables, payment history, record payment, opening balance, reverse). Both are opened from the Restock summary card and the Home attention card (`supplierDue`).
+- New owner PIN actions are `supplier_payment` and `supplier_opening_balance`. The payment sheet opens the PIN prompt from `Sheet.onClosed`.
+- Tests are `tests/database/supplier-payables.test.ts` (7 cases) and a `supplierDue` case in `home-state.test.ts`.
+- Not done: screenshots and video, because the app was not run on a device in this session.
+
+---
+
+## 2026-11-27: Sale details audit fixes (harden, adapt, quieter, polish)
+
+- Contrast: the "Bill to" label on paper-100 moved from ink-400 (about 4.2:1) to sentence-case ink-500.
+- Text scaling: the footer buttons stack above font scale 1.3 and their labels shrink and wrap. The scroll padding uses the footer's measured height. The qty column min width grows with `fontScale` (capped at 1.8x).
+- PIN hand-off: `Sheet` has a new `onClosed` callback. It fires from `Modal.onDismiss` on iOS and when the sheet unmounts on Android, and `Modal` stays rendered while hidden so iOS can send that event. Delete now waits for the More sheet to close before it opens the PIN prompt. `product-details` still uses the old close-then-guard pattern.
+- iPad: the ticket, skeleton, and footer buttons are capped at 480 pt and centered.
+- Quieter: uppercase tracked labels now appear only on the receipt strip, the column header, and Total. The hero label, meta rows (`ReceiptHeroMeta caps={false}`), customer label, and header title use sentence case. The "thank you" divider label is gone.
+- Polish: `ICON_COLOR` in `lib/theme.ts` replaces the raw icon hex values in sale-details. iOS now picks the share format from an action sheet. Disabled sheet rows show a lock icon instead of the chevron. The profit row's screen-reader label covers the case where no item has a cost price.
+
 ## 2026-11-27: Sale details (resibo) redesign
 
 - The hero now leads with the amount, then a status line with an icon (paid in cash, added to a customer's utang, or voided) and a relative time ("Today", "Yesterday"). The repeated "Paid in Full" title and Payment row are gone.
@@ -962,3 +985,90 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - List content capped at 640 wide and centered on iPad; taps go through while the keyboard is open.
 - Skeleton pulse and shimmer stop under Reduce Motion.
 - Decision: dark mode skipped; it needs an app-wide pass.
+
+## 2026-11-28 - Sale success screen redesign with Lottie
+
+- Added `lottie-react-native` (~7.3.1). It is a native module, so run `npx expo run:android` before testing.
+- Two hand-authored Lottie files in `assets/lottie/`. Cash: a coin drops into a sage disc and a check draws. Utang: a ledger card fills its lines and gets a cinnamon check badge. Each plays once (1.6 s) and holds its last frame.
+- The Lottie replaces the animated Sari mascot on this screen only. Sari's 10 looping SVG layers were the main source of lag.
+- Reduce Motion shows the last Lottie frame and skips the card entrance.
+- The receipt card now uses `ReceiptHero` (sage for cash, cinnamon for utang). It shows the total, up to 5 sold lines with quantity, unit and line total ("+N more items" after that), plus Items, Pieces, Payment and Suki rows.
+- Added the record time ("Today, 3:42 PM"). Utang copy states it is not counted in sales until paid.
+- The New sale button moved to Persimmon 600, which fixes the Fill Contrast Rule break. The duplicate "PHP" suffix was removed.
+- The live region now sits on the title only, instead of announcing the whole screen.
+- `CheckoutModal` snapshots the cart lines and the record time at submit, because a successful submit clears the cart.
+- `lottie-assets.test.ts` checks the shape of both JSON files.
+- Decision: no share or print action, because `cart.submit()` returns no sale id to link to.
+
+## 2026-11-28 - Sale success audit fixes (harden, adapt, colorize, polish)
+
+- The outcome and total are announced on arrival with `announceForAccessibility`. The live region was removed because it does not fire on mount.
+- Line rows include the line total in their screen-reader label.
+- `MoneyText` gains `shrinkToFit`, which shrinks one line instead of truncating. The hero total uses it, so large font scales never clip a peso figure.
+- Content and footer are capped at 560 wide and centered on tablets. The root pads the left and right safe-area insets.
+- In landscape the Lottie shrinks to 96 and the two buttons sit side by side.
+- Icon colors use `ICON_COLOR` from `lib/theme.ts`. `ReceiptHero` perforations use `bg-paper-200` instead of a raw hex.
+- `ReceiptHero` header labels drop `opacity-90`, which lifts the sage header to about 4.85:1. This also changes sale details.
+- Utang note moved to ink-900 per the Receipt Contrast Rule.
+- Decision: dark mode stays out of scope. It is still an app-wide pass.
+
+## 2026-11-28 - Owner PIN and launch lock audit fixes (harden, adapt, polish, clarify, distill, optimize, animate)
+
+- The launch lock now renders in a native `Modal`. Sheets and dialogs left open before backgrounding stay underneath it on resume.
+- While locked or resolving, the app tree behind the lock is hidden from VoiceOver and TalkBack (`accessibilityElementsHidden`, `importantForAccessibility="no-hide-descendants"`). Before this, a screen reader could focus and activate store screens behind the lock.
+- Android Back on the lock screen exits the app instead of navigating the hidden stack.
+- Failed PIN attempts and the lockout end time persist in `app_settings` under `owner_pin_lockout`. Killing the app no longer resets the 60-second lockout. The lock gate loads the saved value when the DB is ready. Decision approved by the owner before the change.
+- Biometric unlock on the lock screen clears failed attempts, matching the PIN guard.
+- New `useOwnerPinEntry` hook holds the keypad, verify, and lockout logic once. `AppLockGate` and `OwnerPinModal` both use it.
+- The lock screen now uses `AuthScreenShell`, which gained a `titleArt` slot. The wordmark heading reads "SariSari is locked" to screen readers. The mascot is static (132) to match the other PIN screens.
+- Wrong PIN, lockout start, and verify failure are announced once with `announceForAccessibility`. The live regions were removed: iOS ignores them, and TalkBack repeated the countdown every second.
+- PIN boxes size with `flex-1` up to 56 px, so six boxes fit a 360 dp phone. They used to need 408 px.
+- Keypad digits cap at 1.4x font scale and box digits at 1.3x, so large text sizes no longer clip.
+- The keypad dims only during lockout, not on every PIN check.
+- "Forgot PIN?" uses persimmon-700. The `AuthButton` primary fill is persimmon-600 and presses to persimmon-700 (Fill Contrast Rule).
+- The biometric key reads "Unlock with face" or "Unlock with fingerprint" and shows a face-scan icon for face unlock.
+- The PIN progress value ("3 of 6 digits entered") and the "Owner PIN unavailable" alert are translated (en, tl).
+- The PIN modal fades instead of sliding under Reduce Motion.
+- Icon colors use `ICON_COLOR` from `lib/theme.ts`, which gained `persimmon`.
+- `tests/stores/useAuthStore.test.ts` covers lockout save, restore, clear, and a corrupt row.
+- Not verified on a device: no emulator was available, so no screenshots were taken.
+
+## 2026-11-28 - Launch lock fails closed
+
+- If the launch lock cannot read its settings, it now checks again whether an Owner PIN exists. It stays locked if a PIN exists or that check also fails. It opens only when the PIN is known to be absent.
+- Logic lives in `resolveLaunchLock` (`lib/auth/appLock.ts`), covered by `tests/lib/app-lock.test.ts`.
+- Decision (approved by the owner): a broken DB with a PIN set shows the lock screen instead of skipping it. "Forgot PIN?" stays available.
+
+## 2026-11-28 - First screen waits for the database
+
+- The lock gate no longer remounts the app at launch (from the audit fixes). The old remount also hid a race: `app/index.tsx` could route to home before the database finished opening.
+- `configs/startup.ts` exports `whenDatabaseReady()`, a promise that resolves once `initializeDatabases` succeeds. EntryGate waits for it and for the onboarding state before the splash exits and routes.
+- Decision: the Stack stays mounted from the first render. Expo Router does not support deferring the root navigator, and navigating before it mounts throws "Attempted to navigate before mounting the Root Layout component".
+- Residual risk: a cold-start deep link or notification that opens a screen directly skips EntryGate. Its queries can run before the DB is ready and rely on React Query retries.
+
+## 2026-11-28 - Record Payment screen redesign
+
+- `app/(edit-forms)/add-payment/[id].tsx` now uses the shared `ProductFormHeader` top bar, a light suki strip, and a sticky submit bar (same `KeyboardStickyView` pattern as Add Customer).
+- Suki strip (`AddPaymentHeader`): avatar, name, phone, "Owes" balance, and "3 open items · oldest from Nov 2". Replaces the dark cinnamon hero card and its redundant labels.
+- Amount card: visible "Amount received" label, large tabular input, one chip row (Full, Half, +20, +50, +100, +500), and a live result line (new balance, Fully paid / Item paid pill, change to give back). The separate Pay Full, Pay Half, and Clear buttons are gone.
+- "Applies to" receipt lists only the credits this payment touches, with Paid / Partial pills and "+N more items stay open". No unpaid credits shows Sari (`balance-cleared`) and "Nothing to collect".
+- Payment method is a radio group reusing `methodLabel`. Notes hide behind "Add a note".
+- Submit bar: persimmon-600 fill, label "Record ₱X payment", "Enter an amount first" when empty, spinner while saving.
+- Decision (approved by the owner): payments are capped at what is owed. Cap is the pinned credit in Quick Settle, else the outstanding balance. The extra shows as change to give back and is never stored. Logic in `components/utang/add-payment/paymentMath.ts`, covered by its test.
+- Full and Half chips now use the pinned credit's amount in Quick Settle instead of the whole balance.
+- All copy moved to `addPayment*` keys in `locales/en|tl/utang.json`. The success and error toasts in `hooks/useCredits.ts` are still English-only.
+- Not verified on a device: no screenshots taken yet.
+
+## 2026-11-28 - Record Payment audit fixes
+
+- Audit (14/20) saved in `.impeccable/audit/`. Fixes below cover every P1-P3 finding except the SQL tiebreak.
+- Double submit: a ref in `useAddPaymentForm` blocks a second tap before `isPending` re-renders; cleared on error.
+- Loading: `AddPaymentSkeleton` while the customer loads, `AddPaymentLoadError` (Sari + Back) when it is missing, receipt skeleton while credits load.
+- FIFO preview sorts by the raw date string with `id` as tiebreak, matching `ORDER BY date ASC`. Not changed: the SQL has no `id` tiebreak, so two credits with the identical timestamp may still differ. Adding `, id ASC` changes payment logic and needs owner approval.
+- Screen readers: one announcement 900 ms after typing stops (new balance, fully paid, change). The live region was removed.
+- `StatusPill` warning text is now `semantic-warning-700` everywhere in the app.
+- Disabled submit is paper-200 with ink-700 text and a pencil icon; says "Nothing to collect" when nothing is owed.
+- Chips 48 dp; amount input and peso sign cap at 1.4x font scale.
+- `ICON_COLOR.warningStrong` and `KEYBOARD_TOOLBAR_THEME` added to `lib/theme.ts`; Add Customer uses the shared toolbar theme too.
+- New `common` keys `goBackA11y` and `done`; `ProductFormHeader` back label is translated on every screen that uses it.
+- Not verified on a device.

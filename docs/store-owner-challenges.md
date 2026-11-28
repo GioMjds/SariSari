@@ -17,7 +17,7 @@ Coverage: Done, Partial, Gap. Based on `database/`, `lib/`, `app/` as of this da
 | 1   | Utang never collected; capital silently locked in the notebook                | Partial  | FIFO ledger, follow-ups, aging, limit meter        | Limit not enforced at sale time (planned). No risk profile. No suki-facing reminder flow beyond call/SMS.                                                                           |
 | 2   | Phone lost, broken, or wiped; all records gone                                | Partial  | `lib/backup/*` (bundle, Drive, scheduler, restore) | `PRODUCT.md` says "no automatic cloud backup" but a scheduler and Drive code exist. Confirm real behavior and fix the doc. Restore-to-new-phone drill is untested with real owners. |
 | 3   | Capital leak: owner takes cash and goods for home use, so "profit" is a guess | Partial  | `owner-draw.tsx`, cash entries                     | Goods taken for home use (not cash) is not a first-class event.                                                                                                                     |
-| 4   | Supplier credit: owner owes the agent or wholesaler (utang sa supplier)       | Gap      | No payables table                                  | Largest blind spot. Cash flow looks fine until the supplier visit. Needs payable per delivery, due date, partial payment.                                                           |
+| 4   | Supplier credit: owner owes the agent or wholesaler (utang sa supplier)       | Done     | `database/supplierPayables.ts`, migration v28, ADR-004 | No push reminders, aging report, or per-payable due-date edit yet.                                                                                                                  |
 | 5   | Helper or family theft, wrong change, unrecorded sales                        | Partial  | Owner PIN policy, corrections, cash sessions       | No per-helper identity on sales, so no accountability. Shrinkage cannot be traced to a person.                                                                                      |
 
 ## S2: Weekly margin and time loss
@@ -47,7 +47,7 @@ Coverage: Done, Partial, Gap. Based on `database/`, `lib/`, `app/` as of this da
 
 ## Recommended order
 
-1. Supplier payables (4). Highest severity, zero coverage, clear data model.
+1. ~~Supplier payables (4).~~ Done 2026-11-28, see ADR-004.
 2. Backup truth check (2). Cheap: verify behavior, fix the doc, run a restore drill.
 3. Helper identity on sales (5). Small schema change, large trust gain. Touches auth, so confirm with the owner first.
 4. Expiry per delivery line (7). Optional field, near-expiry list.

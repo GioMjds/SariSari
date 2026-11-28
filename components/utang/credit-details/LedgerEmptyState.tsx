@@ -16,7 +16,7 @@ export function LedgerEmptyState({
 }: LedgerEmptyStateProps) {
   return (
     <View className="items-center py-8 px-6 bg-paper-50 rounded-2xl border border-dashed border-ink-200">
-      <SariMascot state={sari} size={96} defer />
+      <SariMascot state={sari} size={96} animated={false} />
       <StyledText
         variant="extrabold"
         className="text-ink-900 text-base mt-2 text-center"

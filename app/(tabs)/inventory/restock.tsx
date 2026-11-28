@@ -26,12 +26,12 @@ import { useTranslation } from 'react-i18next';
 
 type TabType = 'reorder' | 'slow_movers' | 'watch_list' | 'saved_plans';
 
-const FILTER_IDS: TabType[] = [
+const FILTER_IDS = [
   'reorder',
   'slow_movers',
   'watch_list',
   'saved_plans',
-];
+] satisfies TabType[];
 
 function RestockScreen() {
   const router = useRouter();
@@ -280,11 +280,11 @@ function RestockScreen() {
 
   const empty = isLoading ? (
     <View className="items-center py-10">
-      <SariMascot state="loading" size={96} accessibilityLabel="Loading" defer />
+      <SariMascot state="loading" size={96} accessibilityLabel="Loading" animated={false} />
     </View>
   ) : (
     <View className="items-center py-8 px-4">
-      <SariMascot state="inventory" size={120} defer />
+      <SariMascot state="inventory" size={120} animated={false} />
       <StyledText variant="extrabold" className="text-lg text-ink-900 text-center mb-1">
         {t(`restockEmpty_${activeTab}_title`)}
       </StyledText>

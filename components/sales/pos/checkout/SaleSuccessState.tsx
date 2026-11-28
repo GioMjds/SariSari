@@ -15,9 +15,9 @@ import { MoneyText, ReceiptHero, ReceiptHeroMeta } from '@/components/ui';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { formatPesos } from '@/lib/money';
 import { ICON_COLOR } from '@/lib/theme';
+import SALE_ANIMATION from '@/assets/lottie/sale-recorded.json';
+import UTANG_ANIMATION from '@/assets/lottie/utang-recorded.json';
 
-const SALE_ANIMATION = require('@/assets/lottie/sale-recorded.json');
-const UTANG_ANIMATION = require('@/assets/lottie/utang-recorded.json');
 const MAX_LINES = 5;
 // Keeps the receipt and buttons at a scannable width on tablets and wide windows.
 const COLUMN = { width: '100%', maxWidth: 560, alignSelf: 'center' } as const;
@@ -105,7 +105,10 @@ export function SaleSuccessState({
             >
               {title}
             </StyledText>
-            <StyledText variant="medium" className="text-ink-500 text-[14px] mt-1">
+            <StyledText
+              variant="medium"
+              className="text-ink-500 text-[14px] mt-1"
+            >
               {time}
             </StyledText>
             {!isCash && (
@@ -129,7 +132,10 @@ export function SaleSuccessState({
               headerLabel={isCash ? 'CASH SALE' : 'UTANG'}
             >
               <View className="px-5 pt-5">
-                <StyledText variant="medium" className="text-ink-500 text-[13px]">
+                <StyledText
+                  variant="medium"
+                  className="text-ink-500 text-[13px]"
+                >
                   {isCash ? 'Total received' : 'Utang added'}
                 </StyledText>
                 <MoneyText
@@ -191,7 +197,10 @@ export function SaleSuccessState({
               color={ICON_COLOR.paper}
               style={{ marginRight: 8 }}
             />
-            <StyledText variant="extrabold" className="text-paper-50 text-[16px]">
+            <StyledText
+              variant="extrabold"
+              className="text-paper-50 text-[16px]"
+            >
               New sale
             </StyledText>
           </Pressable>
@@ -208,7 +217,10 @@ export function SaleSuccessState({
               color={ICON_COLOR.ink}
               style={{ marginRight: 8 }}
             />
-            <StyledText variant="extrabold" className="text-ink-800 text-[15px]">
+            <StyledText
+              variant="extrabold"
+              className="text-ink-800 text-[15px]"
+            >
               View receipts
             </StyledText>
           </Pressable>

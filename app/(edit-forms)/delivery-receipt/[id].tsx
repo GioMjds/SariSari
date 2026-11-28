@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
-import { Sheet } from '@/components/ui';
+import { Sheet, Modal } from '@/components/ui';
 import { CommitPaymentChoice } from '@/components/receiving/CommitPaymentChoice';
 import { DeliveryLineRow } from '@/components/receiving/DeliveryLineRow';
 import { ProductPickerSheet } from '@/components/receiving/ProductPickerSheet';
@@ -28,7 +28,6 @@ import {
   lineFormFromReceiptLine,
   mergeSeededLines,
 } from '@/components/receiving/lineForms';
-import { Modal } from '@/components/ui';
 import {
   DraftAlreadyExistsError,
   useCommitDeliveryReceipt,
@@ -398,7 +397,8 @@ function DeliveryReceiptEditor() {
     suppliers.find((s) => s.id === supplierId)?.paymentTermsDays ?? null;
   // Suppliers with terms default to Pay later; the rest are paid on delivery.
   const paidNow = paidNowPick ?? supplierTerms === null;
-  const dueInDays = dueDaysPick ?? (supplierTerms !== null ? String(supplierTerms) : '');
+  const dueInDays =
+    dueDaysPick ?? (supplierTerms !== null ? String(supplierTerms) : '');
 
   const isLoadingDetail =
     receiptId !== null &&
