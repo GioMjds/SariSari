@@ -65,8 +65,8 @@ export default function CustomersLayout() {
   );
 
   const handleDuePress = useCallback(
-    () => handleTabPress('collection'),
-    [handleTabPress],
+    () => router.navigate('/(tabs)/customers/collection' as Href),
+    [router],
   );
 
   const header = useMemo(
