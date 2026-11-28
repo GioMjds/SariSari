@@ -90,9 +90,11 @@
       "router": {},
       "privacyPolicyUrl": "https://giomjds.github.io/SariSari/",
       "eas": {
-        "projectId": "982c08c5-26c3-4edc-b8f3-64830767ef23"
-      }
+        "projectId": "c34a052f-a879-434a-b87c-4deb5d16c560"
+      },
+      "googleClientId": "",
+      "appVariant": "production"
     },
-    "owner": "mimic1"
+    "owner": "mimic-works"
   }
 }
