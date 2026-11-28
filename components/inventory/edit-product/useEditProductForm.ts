@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { type NavigationAction, useNavigation, usePreventRemove } from '@react-navigation/native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useGetProduct, useProducts } from '@/hooks';
 import { parsePesosInput, tryParsePesosInput } from '@/lib';
 import { validateBarcode } from '@/lib/barcodes/format';
@@ -58,6 +58,7 @@ export function useEditProductForm() {
     control,
     handleSubmit,
     setValue,
+    watch,
     formState: { isDirty },
   } = useForm<ProductFormData>({
     defaultValues: values,
@@ -66,7 +67,8 @@ export function useEditProductForm() {
     resetOptions: { keepDirtyValues: true, keepDirty: true },
   });
 
-  const [name, price, barcode] = useWatch({ control, name: ['productName', 'price', 'barcode'] });
+  // watch, not useWatch: useWatch stays on the empty defaults when the product loads after first render.
+  const [name, price, barcode] = watch(['productName', 'price', 'barcode']);
 
   const barcodeConflictProduct = useMemo(
     () => findBarcodeConflict(getAllProductsQuery.data ?? [], barcode, productId),
