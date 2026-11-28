@@ -38,7 +38,7 @@ Owners take goods on credit from agents and wholesalers. Until now the app had n
 - Push reminders before the due date.
 - Payable aging report and a supplier statement.
 - Editing a single payable's due date after commit.
-- Returnable bottle deposits (challenge #12).
+- Returnable bottle deposits (challenge #12). Supplier-side empties ledger: see ADR-006.
 
 ## Related
 

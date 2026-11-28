@@ -11,18 +11,16 @@ import Animated, {
   withDelay,
   withSpring,
   Easing,
+  cancelAnimation,
   interpolate,
 } from 'react-native-reanimated';
 
 export interface LoadingBarProps {
-  /** Size variant of the tally beads */
   size?: 'sm' | 'md' | 'lg';
-  /** Color palette variant */
   colorScheme?: 'brand' | 'persimmon' | 'sage' | 'ink';
-  /** NativeWind class name wrapper for layout & margins */
   className?: string;
-  /** Optional test identifier */
   testID?: string;
+  paused?: boolean;
 }
 
 const SIZE_MAP = {
@@ -43,12 +41,24 @@ interface BeadItemProps {
   color: string;
   beadWidth: number;
   beadHeight: number;
+  paused: boolean;
 }
 
-function BeadItem({ index, color, beadWidth, beadHeight }: BeadItemProps) {
+function BeadItem({
+  index,
+  color,
+  beadWidth,
+  beadHeight,
+  paused,
+}: BeadItemProps) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
+    if (paused) {
+      cancelAnimation(progress);
+      progress.value = 0;
+      return;
+    }
     progress.value = withRepeat(
       withDelay(
         index * 120,
@@ -60,7 +70,7 @@ function BeadItem({ index, color, beadWidth, beadHeight }: BeadItemProps) {
       -1,
       false,
     );
-  }, [index, progress]);
+  }, [index, progress, paused]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -93,6 +103,7 @@ export function LoadingBar({
   colorScheme = 'brand',
   className = '',
   testID = 'loading-bar',
+  paused = false,
 }: LoadingBarProps) {
   const config = SIZE_MAP[size];
   const colors = COLOR_MAP[colorScheme];
@@ -119,6 +130,7 @@ export function LoadingBar({
             color={color}
             beadWidth={config.beadWidth}
             beadHeight={config.beadHeight}
+            paused={paused}
           />
         ))}
       </View>
@@ -130,17 +142,7 @@ export interface PullToRefreshHeaderProps {
   isRefreshing: boolean;
   label?: string;
   className?: string;
-  /**
-   * Live scroll offset (negative while pulling past the top). When provided,
-   * the header animates directly from this value so the LoadingBar tracks the
-   * user's finger in real time. When omitted, the header falls back to a
-   * snap animation driven only by `isRefreshing` toggling.
-   */
   scrollY?: SharedValue<number>;
-  /**
-   * Pull distance (px) at which the header reaches its full visible size.
-   * Only used when `scrollY` is provided. Defaults to 80.
-   */
   refreshThreshold?: number;
 }
 
@@ -212,7 +214,7 @@ export function PullToRefreshHeader({
   return (
     <Animated.View style={animatedStyle} className={`px-4 ${className}`}>
       <View className="items-center justify-center py-3">
-        <LoadingBar size="md" colorScheme="brand" />
+        <LoadingBar size="md" colorScheme="brand" paused={!isRefreshing} />
       </View>
     </Animated.View>
   );

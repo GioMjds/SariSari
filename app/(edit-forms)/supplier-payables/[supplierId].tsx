@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, parseISO } from 'date-fns';
-import { Href, useLocalSearchParams } from 'expo-router';
+import { Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
@@ -49,6 +49,7 @@ function SupplierPayableDetail() {
   const { t } = useTranslation('receiving');
   const addToast = useToastStore((s) => s.addToast);
   const { runWithPinGuard } = useOwnerPinGuard();
+  const router = useRouter();
 
   const supplierQuery = useGetSupplier(supplierId);
   const payablesQuery = useSupplierPayables(supplierId);
@@ -226,6 +227,10 @@ function SupplierPayableDetail() {
               {hasOpening ? null : (
                 <ActionButton label={t('setOpeningBalance')} onPress={() => openSheet('opening')} />
               )}
+              <ActionButton
+                label={t('emptiesLink')}
+                onPress={() => router.push(`/(edit-forms)/supplier-empties/${supplierId}` as Href)}
+              />
             </View>
           </View>
 

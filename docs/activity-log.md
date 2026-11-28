@@ -1096,3 +1096,41 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Not changed: hero `animationKey` still includes profit. Keying on range alone would animate in the previous range's placeholder value and then swap the number without motion.
 - Not measured on a device. Compare `Reports:Section1..5` and `settings/reports` `[perf] RENDER` lines for range switch, section open, and pull to refresh.
 - Unrelated and still open: the `RefreshableScrollView` scroll-stutter fix from 2026-11-15 was never re-tested on a device.
+
+## 2026-11-28 - Expiry and near-expiry goods (challenge #7)
+
+- Migration v29: `products.expiry_date`, `products.expiry_warn_days`, `delivery_receipt_lines.expiry_date`. Decision recorded in `obsidian-vault/03-Technical/ADR-005-expiry-earliest-date-per-product.md`.
+- Delivery lines take an optional expiry (`components/inventory/ExpiryDateField.tsx`, typed YYYYMMDD or quick picks). `commitDeliveryReceipt` keeps the earliest date per product. The product form has an Expiry section (date and warn days).
+- Settings has a new Expiry section (`NearExpiryDaysCard`, key `near_expiry_days`, default 7). `getNearExpiryDays` feeds the paged query; `useNearExpiryDays` feeds status and counts.
+- The `near_expiry` filter and alert now filter on expiry with the store window or per-product override. Expired stock still on the shelf counts. `getStatus` takes the window; `ProductStatusChip` shows days left or Expired.
+- Near-expiry alert view shows `NearExpirySummary`: cost at risk and 30-day write-off cost.
+- Damaged transactions now snapshot `cost_price` into `unit_cost`. "Returned to supplier" is a new damage reason.
+- Tests: `tests/database/expiry.test.ts`, `tests/lib/expiry.test.ts`. Full suite passes (142).
+- Skipped: soonest-first ordering (list pages by name), a dedicated near-expiry tab, preset reason on the write-off sheet, rollback of the expiry date when a receipt is voided.
+- Not verified on a device: no screenshot or video yet.
+
+## 2026-11-28 - Expiry sample seeder
+
+- `database/seedExpiry.ts` adds 8 dev-only products (`EXP-001` to `EXP-008`) with dates relative to today: expired, today, inside window, per-product override, far, no date, and zero stock. Skips SKUs that already exist.
+- `configs/startup.ts` runs it in `__DEV__` when `EXPO_PUBLIC_SEED_EXPIRY=1`. It works on a non-empty database, unlike `seedDatabase`.
+
+## 2026-11-28 Supplier empties ledger (challenge 12), data layer
+
+- Interview confirmed scope: softdrink empties owed to suppliers, weekly count at swap, no per-sale taps.
+- Added migration v30 (`supplier_empties`, `empties_movements`), `database/supplierEmpties.ts`, `types/supplierEmpties.types.ts`, `tests/database/supplier-empties.test.ts` (5 passing).
+- Decision: shortfall is not posted to payables in v1, because `receipt_id NULL` payables mean opening balance. See ADR-006.
+- Not done: swap screen, locale keys, screenshots. Migration v30 sits in `database/migrations.ts` beside uncommitted v29 expiry work; nothing committed.
+
+### Supplier empties ledger, screen
+
+- Added `hooks/useSupplierEmpties.ts`, `app/(edit-forms)/supplier-empties/[supplierId].tsx`, 18 `empties*` keys in `locales/{en,tl}/receiving.json`, and an "Empties owed" button on the supplier payables detail screen.
+- No owner PIN: the ledger moves no cash.
+- Checked: tsc clean for these files, `tests/database` 21 passing. Not checked: screen on a device, screenshot, video.
+
+## 2026-11-28 - Custom date picker sheet (replaces native dialog)
+
+- New `components/ui/DatePickerSheet.tsx` (on `Sheet`) and `components/ui/CalendarGrid.tsx`; pure helpers in `lib/calendar.ts`. Generic props: `value`, `highlight` band, `shortcuts`, `describe` status, `labels`.
+- Picks stay a draft until "Set date". Month arrows, swipe, and a month and year grid for far-ahead dates. Today ring, optional highlight band, status chip with icon (expired, today, in window, ok).
+- `ExpiryDateField` now opens it, with the store warning window as the band. The native picker import is gone from that field; `@react-native-community/datetimepicker` stays in `package.json`, unused.
+- Month names are English only. Reduced motion turns off the slide and fade.
+- Tests: `tests/lib/calendar.test.ts`. Not verified on a device.

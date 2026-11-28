@@ -7,7 +7,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { FontAwesome } from '@expo/vector-icons';
@@ -206,6 +206,18 @@ function EditSupplier() {
           />
 
           <PaymentTermsCard control={control} />
+
+          <Pressable
+            onPress={() => router.push(`/(edit-forms)/supplier-empties/${id}` as Href)}
+            accessibilityRole="button"
+            accessibilityLabel={t('emptiesLink', { ns: 'receiving' })}
+            className="mt-3 min-h-[48px] px-4 rounded-xl flex-row items-center justify-between border border-ink-200 bg-paper-100 active:opacity-80"
+          >
+            <StyledText variant="extrabold" className="text-ink-800 text-sm">
+              {t('emptiesLink', { ns: 'receiving' })}
+            </StyledText>
+            <FontAwesome name="chevron-right" size={12} color="#A39C96" />
+          </Pressable>
 
           <View className="my-1 border-t border-dashed border-ink-300" />
 

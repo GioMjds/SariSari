@@ -20,62 +20,81 @@ type CashSummaryState =
   | { status: 'error' }
   | { status: 'ready'; paidExpenses: Pesos; ownerDrawings: Pesos };
 
+type Translator = ReturnType<typeof useTranslation>['t'];
+type FinancialTotalsResult = ReturnType<typeof useFinancialTotals>;
+type LocalSnapshotsResult = ReturnType<typeof useLocalSnapshots>;
+
+function getCashSummaryState(
+  financialTotals: FinancialTotalsResult,
+): CashSummaryState {
+  if (financialTotals.isLoading) return { status: 'loading' };
+  if (financialTotals.isError || !financialTotals.data)
+    return { status: 'error' };
+  return {
+    status: 'ready',
+    paidExpenses: financialTotals.data.paidExpenses,
+    ownerDrawings: financialTotals.data.ownerDrawings,
+  };
+}
+
+function getRepriceSupportingText(t: Translator, count: number): string {
+  return count > 0
+    ? t('common:moreHomeRepriceSubCount', { count: count })
+    : t('common:moreHomeRepriceSub');
+}
+
+function getBackupSupportingText(
+  snapshots: LocalSnapshotsResult,
+  t: Translator,
+  language: string,
+): string {
+  if (snapshots.isLoading) return t('common:moreHomeBackupLoading');
+  if (snapshots.isError) return t('common:moreHomeBackupError');
+
+  const latest = snapshots.data?.[0];
+  if (!latest) return t('common:moreHomeBackupEmpty');
+
+  return t('common:moreHomeBackupLatest', {
+    when: formatLocalBackupTimestamp(latest.createdAt, language),
+  });
+}
+
+function getCashSupportingText(state: CashSummaryState, t: Translator): string {
+  if (state.status === 'loading') return t('common:moreHomeCashLoading');
+  if (state.status === 'error') return t('common:moreHomeCashError');
+
+  // "Empty" is only ever relevant in the ready branch — keep it inline.
+  if (state.paidExpenses === 0 && state.ownerDrawings === 0) {
+    return t('common:moreHomeCashEmpty');
+  }
+
+  return t('common:moreHomeCashSummary', {
+    expenses: formatPesos(state.paidExpenses),
+    drawings: formatPesos(state.ownerDrawings),
+  });
+}
+
 export function MoreHomeScreen() {
   const { t, i18n } = useTranslation();
   const today = getTodayDateString();
   const financialTotals = useFinancialTotals(today, today);
   const snapshots = useLocalSnapshots();
   const repriceFlags = useRepriceFlags();
-  const repriceCount = repriceFlags.data?.length ?? 0;
-  const repriceSupportingText =
-    repriceCount > 0
-      ? t('common:moreHomeRepriceSubCount', { count: repriceCount })
-      : t('common:moreHomeRepriceSub');
   const navigate = useMoreDestinationNavigation();
   const bottomOffset = useTabBarBottomOffset();
   const { width } = useWindowDimensions();
   const horizontalPadding = width >= 768 ? 24 : 16;
 
-  const cashState: CashSummaryState = financialTotals.isLoading
-    ? { status: 'loading' }
-    : financialTotals.isError || !financialTotals.data
-      ? { status: 'error' }
-      : {
-          status: 'ready',
-          paidExpenses: financialTotals.data.paidExpenses,
-          ownerDrawings: financialTotals.data.ownerDrawings,
-        };
+  const cashState = getCashSummaryState(financialTotals);
+  const repriceCount = repriceFlags.data?.length ?? 0;
 
-  const isEmpty =
-    cashState.status === 'ready' &&
-    cashState.paidExpenses === 0 &&
-    cashState.ownerDrawings === 0;
-
-  const latestSnapshot = snapshots.data?.[0];
-  const backupSupportingText = snapshots.isLoading
-    ? t('common:moreHomeBackupLoading')
-    : snapshots.isError
-      ? t('common:moreHomeBackupError')
-      : latestSnapshot
-        ? t('common:moreHomeBackupLatest', {
-            when: formatLocalBackupTimestamp(
-              latestSnapshot.createdAt,
-              i18n.language,
-            ),
-          })
-        : t('common:moreHomeBackupEmpty');
-
-  const supportingText =
-    cashState.status === 'loading'
-      ? t('common:moreHomeCashLoading')
-      : cashState.status === 'error'
-        ? t('common:moreHomeCashError')
-        : isEmpty
-          ? t('common:moreHomeCashEmpty')
-          : t('common:moreHomeCashSummary', {
-              expenses: formatPesos(cashState.paidExpenses),
-              drawings: formatPesos(cashState.ownerDrawings),
-            });
+  const repriceSupportingText = getRepriceSupportingText(t, repriceCount);
+  const backupSupportingText = getBackupSupportingText(
+    snapshots,
+    t,
+    i18n.language,
+  );
+  const supportingText = getCashSupportingText(cashState, t);
 
   return (
     <View className="flex-1 bg-paper-200">

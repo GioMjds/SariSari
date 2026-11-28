@@ -1275,4 +1275,36 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v29.');
   }
+
+  if (currentVersion < 30) {
+    console.log('Running migration to v30 (Supplier empties ledger)...');
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS supplier_empties (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          supplier_id TEXT NOT NULL REFERENCES suppliers(id),
+          name TEXT NOT NULL,
+          deposit_pesos INTEGER NOT NULL CHECK(deposit_pesos >= 0),
+          archived_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_supplier_empties_supplier
+          ON supplier_empties(supplier_id);
+
+        CREATE TABLE IF NOT EXISTS empties_movements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          empties_id INTEGER NOT NULL REFERENCES supplier_empties(id),
+          delta INTEGER NOT NULL CHECK(delta != 0),
+          kind TEXT NOT NULL
+            CHECK(kind IN ('received_full', 'handed_back', 'written_off', 'count_adjust')),
+          note TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_empties_movements_type
+          ON empties_movements(empties_id);
+      `);
+
+      await db.execAsync('PRAGMA user_version = 30;');
+    });
+    console.log('Database migrated to v30.');
+  }
 }

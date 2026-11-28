@@ -111,11 +111,11 @@ function SupplierPayablesScreen() {
           }
           ListEmptyComponent={
             <View className="items-center py-10 px-6 gap-2">
-              <SariMascot state="empty" size={88} accessibilityLabel="" />
-              <StyledText variant="extrabold" className="text-ink-900 text-base text-center">
+              <SariMascot state="empty" size={230} accessibilityLabel="" animated={false} />
+              <StyledText variant="extrabold" className="text-ink-900 text-xl text-center">
                 {t('payablesEmpty')}
               </StyledText>
-              <StyledText variant="regular" className="text-ink-600 text-xs text-center">
+              <StyledText variant="regular" className="text-ink-600 text-base text-center">
                 {t('payablesEmptyHint')}
               </StyledText>
             </View>
