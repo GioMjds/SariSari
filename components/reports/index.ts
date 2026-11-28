@@ -12,3 +12,5 @@ export * from './TopProductsList';
 export * from './FinancialResultSection';
 export * from './ProfitFlowBar';
 export * from './ReportsSkeletons';
+export * from './ReportSections';
+export * from './CashbookSection';

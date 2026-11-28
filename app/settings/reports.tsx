@@ -1,12 +1,12 @@
 import { Prof, withProf } from '@/utils/perf';
 import { StyledText } from '@/components/elements';
 import {
-  AgingSkeleton,
+  AgingBody,
   BentoGrid,
   BentoHero,
   BentoKPICard,
+  CashbookBody,
   CollapsibleSection,
-  CreditAgingChart,
   DateRangeSelector,
   DeltaChip,
   FinancialResultSection,
@@ -14,47 +14,34 @@ import {
   InsightCard,
   InsightsSkeleton,
   KpiSkeleton,
-  PaymentSplitStrip,
-  ProfitabilityRanking,
   ProfitFlowBar,
-  SessionsSkeleton,
-  SimpleBarChart,
-  StockMovementDetails,
-  StockSkeleton,
-  TopProductsList,
-  TopProductsSkeleton,
-  TrendSkeleton,
+  StockBody,
+  TopProductsBody,
+  TrendBody,
   type Delta,
 } from '@/components/reports';
 import { getPreviousDateRange } from '@/components/reports/report-math';
 import { percentChange } from '@/components/home/home-state';
 import { router, useLocalSearchParams } from 'expo-router';
-import { MoneyText, RefreshableScrollView, Sheet } from '@/components/ui';
+import { RefreshableScrollView, Sheet } from '@/components/ui';
 import {
-  useAgingBuckets,
-  useCashEntries,
-  useCashSessions,
   useCreditsOverview,
-  useInventoryMovement,
   useInventoryValue,
   useLowStockItems,
-  useProductProfitability,
   useReportInsights,
   useReportKPIs,
   useReports,
   useSalesBreakdown,
-  useSalesOverTime,
-  useSlowMovingProducts,
-  useTopSellingProducts,
 } from '@/hooks';
-import { formatPesos } from '@/lib/money';
 import type { DateRange, DateRangeType } from '@/types';
-import type { CashSession } from '@/types/cash.types';
 import { formatCompactCurrency, getDateRangeFromType } from '@/utils';
 import { FontAwesome } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import {
+  useIsFetching,
+  useQueryClient,
+  type Query,
+} from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { useTabBarBottomOffset } from '@/components/layout';
 import { goBackToMore, MoreDetailHeader } from '@/components/more';
@@ -62,7 +49,6 @@ import { SariMascot, type SariState } from '@/components/mascot';
 import { useTranslation } from 'react-i18next';
 import {
   DEFAULT_CREDITS_OVERVIEW,
-  DEFAULT_INVENTORY_MOVEMENT,
   DEFAULT_INVENTORY_VALUE,
   DEFAULT_KPIS,
   DEFAULT_SALES_BREAKDOWN,
@@ -99,6 +85,15 @@ const EXPLAIN_TITLE: Record<ExplainKey, string> = {
   cashbook: 'common:reports.sections.cashbook.title',
 };
 
+// A refetch of data already on screen, from any report or cash query, including open sections.
+const isScreenRefetch = (query: Query) => {
+  const root = String(query.queryKey[0]);
+  return (
+    query.state.data !== undefined &&
+    (root.startsWith('report-') || root === 'cash')
+  );
+};
+
 function rangesFor(type: DateRangeType) {
   const now = new Date();
   return {
@@ -123,96 +118,45 @@ function ReportsScreen() {
   // Last opened explainer stays rendered while the sheet slides out.
   const [shownExplainKey, setShownExplainKey] = useState<ExplainKey>('profit');
 
-  // Collapsed sections load their data only once the owner first opens them.
-  const [opened, setOpened] = useState<ReadonlySet<SectionId>>(
-    () => new Set([requestedSection ?? 'trend']),
-  );
-  const markOpened = useCallback(
-    (id: SectionId) =>
-      setOpened((prev) => (prev.has(id) ? prev : new Set(prev).add(id))),
-    [],
-  );
+  // Collapsed section bodies mount, and so fetch, only once opened.
+  const initialSection = requestedSection ?? 'trend';
 
   const { invalidateReports } = useReports();
 
   const kpisQuery = useReportKPIs(dateRange);
   const prevKpisQuery = useReportKPIs(ranges.previous);
-  const salesOverTimeQuery = useSalesOverTime(dateRange);
   const salesBreakdownQuery = useSalesBreakdown(dateRange);
   const inventoryValueQuery = useInventoryValue();
   const lowStockItemsQuery = useLowStockItems(10);
   const creditsOverviewQuery = useCreditsOverview(dateRange);
   const insightsQuery = useReportInsights(dateRange);
-  const topProductsQuery = useTopSellingProducts(
-    dateRange,
-    5,
-    opened.has('top') || opened.has('stock'),
-  );
-  const productProfitabilityQuery = useProductProfitability(
-    dateRange,
-    10,
-    opened.has('top'),
-  );
-  const inventoryMovementQuery = useInventoryMovement(
-    dateRange,
-    opened.has('stock'),
-  );
-  const slowMovingProductsQuery = useSlowMovingProducts(
-    dateRange,
-    5,
-    opened.has('stock'),
-  );
-  const agingBucketsQuery = useAgingBuckets(opened.has('aging'));
-  const sessionsQuery = useCashSessions(opened.has('cashbook'));
 
   const isKPIsLoading =
     kpisQuery.isLoading ||
     salesBreakdownQuery.isLoading ||
     creditsOverviewQuery.isLoading ||
     inventoryValueQuery.isLoading;
-  const isSalesTrendLoading =
-    salesOverTimeQuery.isLoading || salesBreakdownQuery.isLoading;
-  const isTopProductsLoading =
-    topProductsQuery.isLoading || productProfitabilityQuery.isLoading;
-  const isStockLoading =
-    inventoryMovementQuery.isLoading ||
-    lowStockItemsQuery.isLoading ||
-    slowMovingProductsQuery.isLoading ||
-    topProductsQuery.isLoading;
-  const isCreditAgingLoading = agingBucketsQuery.isLoading;
 
-  const isRefreshing = [
-    kpisQuery,
-    prevKpisQuery,
-    salesOverTimeQuery,
-    salesBreakdownQuery,
-    inventoryValueQuery,
-    lowStockItemsQuery,
-    creditsOverviewQuery,
-    insightsQuery,
-    topProductsQuery,
-    productProfitabilityQuery,
-    inventoryMovementQuery,
-    slowMovingProductsQuery,
-    agingBucketsQuery,
-    sessionsQuery,
-  ].some((q) => q.isFetching && !q.isLoading);
+  // Header queries also count while showing the previous range as a placeholder.
+  const isRefreshing =
+    useIsFetching({ predicate: isScreenRefetch }) > 0 ||
+    [
+      kpisQuery,
+      prevKpisQuery,
+      salesBreakdownQuery,
+      inventoryValueQuery,
+      lowStockItemsQuery,
+      creditsOverviewQuery,
+      insightsQuery,
+    ].some((q) => q.isFetching && !q.isLoading);
 
   const kpis = kpisQuery.data ?? DEFAULT_KPIS;
   const prevKpis = prevKpisQuery.data;
-  const salesOverTime = salesOverTimeQuery.data ?? EMPTY_ARRAY;
-  const topProducts = topProductsQuery.data ?? EMPTY_ARRAY;
   const salesBreakdown = salesBreakdownQuery.data ?? DEFAULT_SALES_BREAKDOWN;
-  const inventoryMovement =
-    inventoryMovementQuery.data ?? DEFAULT_INVENTORY_MOVEMENT;
   const inventoryValue = inventoryValueQuery.data ?? DEFAULT_INVENTORY_VALUE;
   const lowStockItems = lowStockItemsQuery.data ?? EMPTY_ARRAY;
-  const slowMovingProducts = slowMovingProductsQuery.data ?? EMPTY_ARRAY;
   const creditsOverview = creditsOverviewQuery.data ?? DEFAULT_CREDITS_OVERVIEW;
-  const agingBuckets = agingBucketsQuery.data ?? EMPTY_ARRAY;
-  const productProfitability = productProfitabilityQuery.data ?? EMPTY_ARRAY;
   const insights = insightsQuery.data ?? EMPTY_ARRAY;
-  const sessions = sessionsQuery.data ?? EMPTY_ARRAY;
 
   const handleDateRangeChange = useCallback(
     (type: DateRangeType) => {
@@ -230,15 +174,6 @@ function ReportsScreen() {
       queryClient.invalidateQueries({ queryKey: ['cash'] }),
     ]);
   }, [invalidateReports, queryClient]);
-
-  const filteredSessions = useMemo(() => {
-    const start = format(dateRange.startDate, 'yyyy-MM-dd');
-    const end = format(dateRange.endDate, 'yyyy-MM-dd');
-    return (sessions as CashSession[]).filter(
-      (s) =>
-        !!s.businessDate && s.businessDate >= start && s.businessDate <= end,
-    );
-  }, [sessions, dateRange]);
 
   const tabBarBottomOffset = useTabBarBottomOffset();
 
@@ -292,8 +227,7 @@ function ReportsScreen() {
     id,
     title: t(`common:reports.sections.${id}.title`),
     subtitle: t(`common:reports.sections.${id}.subtitle`),
-    defaultExpanded: opened.has(id),
-    onToggle: () => markOpened(id),
+    defaultExpanded: id === initialSection,
     info: info(id === 'stock' ? 'stock_section' : id),
   });
 
@@ -560,22 +494,7 @@ function ReportsScreen() {
               tone="persimmon"
               icon={<FontAwesome name="bar-chart" size={16} color="#A1370C" />}
             >
-              {isSalesTrendLoading ? (
-                <TrendSkeleton />
-              ) : (
-                <View>
-                  <SimpleBarChart data={salesOverTime} height={200} />
-                  {/* Perforation between chart and breakdown */}
-                  <View className="mt-5 mb-3 border-b border-dashed border-ink-200" />
-                  <PaymentSplitStrip
-                    cash={salesBreakdown.cashSales}
-                    credit={salesBreakdown.creditSales}
-                    total={kpis.totalSales}
-                    transactions={salesBreakdown.totalTransactions}
-                    avgTicket={salesBreakdown.averageTransactionValue}
-                  />
-                </View>
-              )}
+              <TrendBody dateRange={dateRange} />
             </CollapsibleSection>
           </Prof>
         </View>
@@ -588,39 +507,7 @@ function ReportsScreen() {
               tone="cinnamon"
               icon={<FontAwesome name="trophy" size={16} color="#391C0A" />}
             >
-              {isTopProductsLoading ? (
-                <TopProductsSkeleton />
-              ) : (
-                <View>
-                  <StyledText
-                    variant="semibold"
-                    className="text-sm text-ink-700 mb-3"
-                  >
-                    {t('common:reports.top.bySales')}
-                  </StyledText>
-                  <TopProductsList products={topProducts} />
-
-                  <View className="my-4 h-px bg-ink-200" />
-
-                  <View className="flex-row items-center justify-between mb-3">
-                    <StyledText
-                      variant="semibold"
-                      className="text-sm text-ink-700"
-                    >
-                      {t('common:reports.top.mostProfit')}
-                    </StyledText>
-                    {kpis.grossProfit === null && (
-                      <StyledText
-                        variant="medium"
-                        className="text-ink-500 text-xs"
-                      >
-                        {t('common:reports.top.addCost')}
-                      </StyledText>
-                    )}
-                  </View>
-                  <ProfitabilityRanking products={productProfitability} />
-                </View>
-              )}
+              <TopProductsBody dateRange={dateRange} />
             </CollapsibleSection>
           </Prof>
         </View>
@@ -633,118 +520,7 @@ function ReportsScreen() {
               tone="sage"
               icon={<FontAwesome name="archive" size={16} color="#3D5E1B" />}
             >
-              {isStockLoading ? (
-                <StockSkeleton />
-              ) : (
-                <View>
-                  <StockMovementDetails
-                    itemsSold={inventoryMovement.itemsSold}
-                    lowStockCount={inventoryMovement.lowStockCount}
-                    outOfStockCount={inventoryMovement.outOfStockCount}
-                    fastMoving={topProducts}
-                    slowMoving={slowMovingProducts}
-                  />
-
-                  {/* Inventory value sub-block */}
-                  <View className="mt-4 flex-row items-stretch border border-ink-200 rounded-xl overflow-hidden">
-                    <View className="flex-1 p-3 border-r border-dashed border-ink-200 bg-cinnamon-50/40">
-                      <StyledText
-                        variant="semibold"
-                        className="text-sm text-cinnamon-700 mb-1"
-                      >
-                        {t('common:reports.stock.atCost')}
-                      </StyledText>
-                      <MoneyText
-                        value={inventoryValue.currentStockValue}
-                        size="md"
-                        variant="default"
-                        className="text-ink-900 text-sm"
-                      />
-                      {inventoryValue.costCoverage !== null &&
-                        inventoryValue.costCoverage < 1 && (
-                          <StyledText
-                            variant="medium"
-                            className="text-ink-500 text-xs mt-1"
-                          >
-                            {t('common:reports.stock.coverage', {
-                              pct: Math.round(
-                                inventoryValue.costCoverage * 100,
-                              ),
-                            })}
-                          </StyledText>
-                        )}
-                    </View>
-                    <View className="flex-1 p-3 bg-sage-50/40">
-                      <StyledText
-                        variant="semibold"
-                        className="text-sm text-sage-700 mb-1"
-                      >
-                        {t('common:reports.stock.atRetail')}
-                      </StyledText>
-                      <MoneyText
-                        value={inventoryValue.potentialSalesValue}
-                        size="md"
-                        variant="success"
-                        className="text-sm"
-                      />
-                      <StyledText
-                        variant="medium"
-                        className="text-ink-500 text-xs mt-1"
-                      >
-                        {t('common:reports.stock.retailNote')}
-                      </StyledText>
-                    </View>
-                  </View>
-
-                  {lowStockItems.length > 0 && (
-                    <View className="mt-4 rounded-xl border border-semantic-warning p-3 bg-semantic-warning-50">
-                      <View className="flex-row items-center mb-2">
-                        <View className="w-6 h-6 rounded-full bg-semantic-warning items-center justify-center mr-2">
-                          <FontAwesome
-                            name="exclamation"
-                            size={12}
-                            color="#FBF7EE"
-                          />
-                        </View>
-                        <StyledText
-                          variant="extrabold"
-                          className="text-sm text-ink-900"
-                        >
-                          {t('common:reports.stock.lowStock', {
-                            count: lowStockItems.length,
-                          })}
-                        </StyledText>
-                      </View>
-                      {lowStockItems.slice(0, 4).map((item) => (
-                        <View
-                          key={item.id}
-                          className="flex-row items-center justify-between mt-1"
-                        >
-                          <StyledText
-                            variant="medium"
-                            className="text-ink-700 text-sm flex-1"
-                            numberOfLines={1}
-                          >
-                            · {item.name}
-                          </StyledText>
-                          <StyledText
-                            variant="extrabold"
-                            className={`text-sm ${
-                              item.quantity === 0
-                                ? 'text-semantic-danger'
-                                : 'text-semantic-warning-700'
-                            }`}
-                          >
-                            {t('common:reports.stock.left', {
-                              count: item.quantity,
-                            })}
-                          </StyledText>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              )}
+              <StockBody dateRange={dateRange} />
             </CollapsibleSection>
           </Prof>
         </View>
@@ -759,46 +535,7 @@ function ReportsScreen() {
                 <FontAwesome name="hourglass-half" size={16} color="#391C0A" />
               }
             >
-              {isCreditAgingLoading ? (
-                <AgingSkeleton />
-              ) : (
-                <View>
-                  <CreditAgingChart
-                    buckets={agingBuckets}
-                    totalOutstanding={creditsOverview.outstanding}
-                  />
-                  <View className="mt-4 flex-row gap-3">
-                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-semantic-danger-50/30">
-                      <StyledText
-                        variant="semibold"
-                        className="text-sm text-ink-700"
-                      >
-                        {t('common:reports.aging.given')}
-                      </StyledText>
-                      <MoneyText
-                        value={creditsOverview.issued}
-                        size="md"
-                        variant="danger"
-                        className="text-sm"
-                      />
-                    </View>
-                    <View className="flex-1 p-3 border border-ink-200 rounded-xl bg-sage-50">
-                      <StyledText
-                        variant="semibold"
-                        className="text-sm text-ink-700"
-                      >
-                        {t('common:reports.aging.collected')}
-                      </StyledText>
-                      <MoneyText
-                        value={creditsOverview.collected}
-                        size="md"
-                        variant="success"
-                        className="text-sm"
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
+              <AgingBody dateRange={dateRange} />
             </CollapsibleSection>
           </Prof>
         </View>
@@ -811,24 +548,7 @@ function ReportsScreen() {
               tone="cinnamon"
               icon={<FontAwesome name="book" size={16} color="#391C0A" />}
             >
-              {sessionsQuery.isLoading ? (
-                <SessionsSkeleton />
-              ) : filteredSessions.length === 0 ? (
-                <View className="bg-paper-50 rounded-xl border border-dashed border-ink-200 p-6 items-center">
-                  <StyledText
-                    variant="regular"
-                    className="text-ink-500 text-sm"
-                  >
-                    {t('common:reports.cashbook.empty')}
-                  </StyledText>
-                </View>
-              ) : (
-                <View>
-                  {filteredSessions.map((session) => (
-                    <CashSessionRow key={session.id} session={session} />
-                  ))}
-                </View>
-              )}
+              <CashbookBody dateRange={dateRange} />
             </CollapsibleSection>
           </Prof>
         </View>
@@ -865,135 +585,6 @@ function ReportsScreen() {
           </Pressable>
         </View>
       </Sheet>
-    </View>
-  );
-}
-
-function CashSessionRow({ session }: { session: CashSession }) {
-  const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const { data: entries = [], isLoading } = useCashEntries(
-    isExpanded ? session.id : undefined,
-  );
-
-  return (
-    <View className="mb-3 border border-ink-200 rounded-xl bg-paper-50 p-4">
-      <Pressable
-        onPress={() => setIsExpanded((v) => !v)}
-        accessibilityRole="button"
-        accessibilityLabel={t('common:reports.cashbook.sessionA11y', {
-          date: session.businessDate,
-        })}
-        accessibilityState={{ expanded: isExpanded }}
-        className="flex-row justify-between items-center"
-      >
-        <View className="flex-1 mr-2">
-          <View className="flex-row items-center gap-2">
-            <StyledText variant="extrabold" className="text-ink-900 text-sm">
-              {session.businessDate}
-            </StyledText>
-            <View
-              className={`px-2 py-0.5 rounded-full ${
-                session.status === 'open' ? 'bg-sage-700' : 'bg-ink-600'
-              }`}
-            >
-              <StyledText variant="semibold" className="text-xs text-white">
-                {t(`common:reports.cashbook.status.${session.status}`)}
-              </StyledText>
-            </View>
-          </View>
-          <View className="flex-row mt-1.5 gap-x-3 gap-y-1 flex-wrap">
-            <StyledText variant="regular" className="text-xs text-ink-500">
-              {t('common:reports.cashbook.opened', {
-                amount: formatPesos(session.openingCash),
-              })}
-            </StyledText>
-            {session.actualCash !== null && (
-              <StyledText variant="regular" className="text-xs text-ink-500">
-                {t('common:reports.cashbook.counted', {
-                  amount: formatPesos(session.actualCash),
-                })}
-              </StyledText>
-            )}
-            {session.expectedCash !== null && (
-              <StyledText variant="regular" className="text-xs text-ink-500">
-                {t('common:reports.cashbook.expected', {
-                  amount: formatPesos(session.expectedCash),
-                })}
-              </StyledText>
-            )}
-          </View>
-        </View>
-
-        <View className="items-end mr-4">
-          {session.variance !== null && (
-            <StyledText
-              variant="semibold"
-              className={`text-xs ${session.variance >= 0 ? 'text-sage-600' : 'text-semantic-danger'}`}
-            >
-              {t('common:reports.cashbook.variance', {
-                amount: `${session.variance >= 0 ? '+' : ''}${formatPesos(session.variance)}`,
-              })}
-            </StyledText>
-          )}
-        </View>
-
-        <FontAwesome
-          name={isExpanded ? 'chevron-up' : 'chevron-down'}
-          size={12}
-          color="#564E45"
-        />
-      </Pressable>
-
-      {isExpanded && (
-        <View className="mt-4 pt-3 border-t border-dashed border-ink-200">
-          <StyledText variant="semibold" className="text-ink-600 text-xs mb-2">
-            {t('common:reports.cashbook.movements', { count: entries.length })}
-          </StyledText>
-          {isLoading ? (
-            <SessionsSkeleton />
-          ) : entries.length === 0 ? (
-            <StyledText
-              variant="regular"
-              className="text-ink-500 text-xs italic py-1"
-            >
-              {t('common:reports.cashbook.noMovements')}
-            </StyledText>
-          ) : (
-            <View className="gap-y-1.5">
-              {entries.map((entry) => {
-                const isIn = entry.type === 'owner_addition';
-                const tone = isIn ? 'text-sage-600' : 'text-semantic-danger';
-                return (
-                  <View
-                    key={entry.id}
-                    className="flex-row justify-between items-center py-1"
-                  >
-                    <View className="flex-1 mr-2 flex-row items-center gap-1.5 flex-wrap">
-                      <StyledText
-                        variant="semibold"
-                        className={`text-xs ${tone}`}
-                      >
-                        {t(`common:reports.cashbook.type.${entry.type}`)}
-                      </StyledText>
-                      <StyledText
-                        variant="regular"
-                        className="text-xs text-ink-500"
-                      >
-                        {entry.notes}
-                      </StyledText>
-                    </View>
-                    <StyledText variant="medium" className={`text-xs ${tone}`}>
-                      {isIn ? '+' : '-'}
-                      {formatPesos(entry.amount)}
-                    </StyledText>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 }
