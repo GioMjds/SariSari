@@ -1,29 +1,21 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
+const SCREEN_OPTIONS = {
+  headerShown: false,
+  presentation: 'card',
+  // Platform slide keeps forward and back spatially distinct.
+  animation: 'default',
+  gestureEnabled: true,
+  freezeOnBlur: true,
+  contentStyle: { backgroundColor: '#FAFAF7' },
+} as const;
+
 export default function EditFormsLayout() {
   return (
     <>
       <StatusBar style="dark" backgroundColor="#F7F6F2" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          presentation: 'card',
-          // Platform slide keeps forward and back spatially distinct.
-          animation: 'default',
-          gestureEnabled: true,
-          contentStyle: { backgroundColor: '#FAFAF7' },
-        }}
-      >
-        <Stack.Screen name="add-product/index" />
-        <Stack.Screen name="edit-product/[id]" />
-        <Stack.Screen name="product-details/[id]" />
-        <Stack.Screen name="inventory-ledger/[productId]" />
-        <Stack.Screen name="add-supplier/index" />
-        <Stack.Screen name="add-payment/[id]" />
-        <Stack.Screen name="sale-correction/[id]" />
-        <Stack.Screen name="price-correction/[id]" />
-      </Stack>
+      <Stack screenOptions={SCREEN_OPTIONS} />
     </>
   );
 }
