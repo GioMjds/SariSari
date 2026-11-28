@@ -2,6 +2,7 @@ import { Controller } from 'react-hook-form';
 import { TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
+import { ICON_COLOR } from '@/lib/theme';
 
 /** Parses the terms field: blank means pay on delivery. */
 export const parseTermsDays = (v: string): number | null =>
@@ -13,10 +14,10 @@ export function PaymentTermsCard({ control }: { control: any }) {
   const { t } = useTranslation('receiving');
   return (
     <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mt-3 mb-4">
-      <StyledText variant="black" className="label-caps text-cinnamon-500">
+      <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-base">
         {t('paymentTermsLabel')}
       </StyledText>
-      <StyledText variant="regular" className="text-ink-400 text-xs mt-0.5 mb-3">
+      <StyledText variant="regular" className="text-ink-600 text-xs mt-0.5 mb-3">
         {t('paymentTermsHint')}
       </StyledText>
       <Controller
@@ -31,9 +32,9 @@ export function PaymentTermsCard({ control }: { control: any }) {
               keyboardType="number-pad"
               maxLength={3}
               placeholder="-"
-              placeholderTextColor="#A89F90"
+              placeholderTextColor={ICON_COLOR.inkMuted}
               accessibilityLabel={t('paymentTermsLabel')}
-              className="w-20 bg-paper-100 border border-ink-200 rounded-xl px-3 py-3 text-ink-900 text-base text-center font-stack-sans"
+              className="min-w-20 min-h-[44px] bg-paper-100 border border-ink-200 rounded-xl px-3 text-ink-900 text-base text-center font-stack-sans"
             />
             <StyledText variant="semibold" className="text-ink-900 text-sm">
               {t('days')}

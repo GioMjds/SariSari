@@ -127,7 +127,7 @@
   "payablesLinkHint": "Tingnan ang utang mo sa bawat supplier at itala ang bayad.",
   "payablesTotalOwed": "Kabuuang utang",
   "payablesEmpty": "Wala kang utang sa supplier.",
-  "payablesEmptyHint": "Lalabas dito ang deliveries na minarkahang Bayaran mamaya.",
+  "payablesEmptyHint": "Lalabas dito ang deliveries na minarkahang bayaran mamaya.",
   "payablesNextDue": "Bayaran sa {{date}}",
   "payablesOverdue": "Lampas na mula {{date}}",
   "payablesNoDue": "Walang takdang petsa",
@@ -168,5 +168,16 @@
   "days": "araw",
   "dueInDaysLabel": "Ilang araw bago bayaran",
   "paymentTermsLabel": "Palugit sa bayad",
-  "paymentTermsHint": "Ilang araw bago mo kailangang bayaran ang delivery. Iwanang blangko kung bayad pagdating."
+  "paymentTermsHint": "Ilang araw bago mo kailangang bayaran ang delivery. Iwanang blangko kung bayad pagdating.",
+  "loadingPayables": "Nilo-load ang utang sa supplier",
+  "supplierMissing": "Nabura na ang supplier na ito. Hindi na makikita rito ang utang nito.",
+  "paymentPinDescription": "Magbayad ng {{amount}} kay {{supplier}}",
+  "openingPinDescription": "Panimulang utang na {{amount}} kay {{supplier}}",
+  "reversePinDescription": "Bawiin ang bayad na {{amount}} kay {{supplier}}",
+  "reverseConfirmTitle": "Bawiin ang bayad na ito?",
+  "reverseConfirmBody": "Babalik ang {{amount}} sa utang mo kay {{supplier}}. Kung cash ang bayad, babalik din ito sa inaasahang cash sa kaha.",
+  "showAllPayments": "Ipakita lahat ng {{count}} bayad",
+  "showFewerPayments": "Ipakita ang mas kaunti",
+  "noDueDateHint": "Walang takdang petsa. Mananatili ito sa listahan ng hindi pa bayad hanggang bayaran mo.",
+  "dueInHint": "Bilang mula ngayon. Burahin para walang takdang petsa."
 }

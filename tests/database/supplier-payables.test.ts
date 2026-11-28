@@ -7,6 +7,7 @@ import {
   getPayablesDueSummary,
   getSupplierBalances,
   getSupplierPayables,
+  hasOpeningBalance,
   initCashMovementsView,
   initCashTables,
   initCorrectionsTable,
@@ -90,6 +91,13 @@ describe('supplier payables', () => {
     expect(payable.amountPaid).toBe(0);
     expect(payable.dueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(await drawerDelta()).toBe(0);
+  });
+
+  it('an explicit null due date overrides supplier terms', async () => {
+    const s = await createSupplier({ name: 'Agent I', contact: null, notes: null, paymentTermsDays: 7 });
+    await commitDeliveryReceipt(await seedReceipt(s.id), { paidNow: false, dueDate: null });
+    expect((await getSupplierPayables(s.id))[0]!.dueDate).toBeNull();
+    expect(await hasOpeningBalance(s.id)).toBe(false);
   });
 
   it('Paid now leaves nothing owed and takes cash from the drawer', async () => {

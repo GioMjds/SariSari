@@ -171,6 +171,15 @@ export const createOpeningBalance = async (
   return id;
 };
 
+/** True when the supplier has an active opening balance, paid or not. */
+export const hasOpeningBalance = async (supplierId: string): Promise<boolean> => {
+  const row = await db.getFirstAsync<{ id: number }>(
+    'SELECT id FROM supplier_payables WHERE supplier_id = ? AND receipt_id IS NULL AND cancelled_at IS NULL',
+    [supplierId],
+  );
+  return row !== null;
+};
+
 /** Reverses a payment's allocations and deletes it. */
 export const deleteSupplierPayment = async (id: number): Promise<void> => {
   await db.withTransactionAsync(async () => {

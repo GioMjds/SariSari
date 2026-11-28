@@ -49,5 +49,6 @@ export interface PayablesDueSummary {
 /** Payment choice made when committing a delivery receipt. */
 export interface CommitPaymentChoice {
   paidNow: boolean;
-  dueDate?: string | null; // YYYY-MM-DD, used only for Pay later
+  /** Pay later only: YYYY-MM-DD, null for no due date, omitted to use supplier terms. */
+  dueDate?: string | null;
 }

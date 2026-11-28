@@ -6,6 +6,7 @@ import {
   getSupplierBalances,
   getSupplierPayables,
   getSupplierPaymentHistory,
+  hasOpeningBalance,
   insertSupplierPayment,
 } from '@/database/supplierPayables';
 import { deliveryKeys } from '@/hooks/useDeliveryReceipts';
@@ -25,7 +26,15 @@ export const supplierPayableKeys = {
   open: (supplierId: string) => [...supplierPayableKeys.all, 'open', supplierId] as const,
   payments: (supplierId: string) => [...supplierPayableKeys.all, 'payments', supplierId] as const,
   due: (today: string) => [...supplierPayableKeys.all, 'due', today] as const,
+  opening: (supplierId: string) => [...supplierPayableKeys.all, 'opening', supplierId] as const,
 };
+
+export const useHasOpeningBalance = (supplierId: string) =>
+  useQuery({
+    queryKey: supplierPayableKeys.opening(supplierId),
+    queryFn: () => hasOpeningBalance(supplierId),
+    enabled: !!supplierId,
+  });
 
 export const useSupplierBalances = () =>
   useQuery({ queryKey: supplierPayableKeys.balances(), queryFn: getSupplierBalances });

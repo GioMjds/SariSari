@@ -1,28 +1,36 @@
 import { withProf } from '@/utils/perf';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, parseISO } from 'date-fns';
 import { Href, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
-import { PayablesHeader, dueMeta } from '@/components/payables/PayablesHeader';
+import {
+  PAYABLES_COLUMN,
+  PayablesError,
+  PayablesHeader,
+  PayablesSkeleton,
+  dueMeta,
+} from '@/components/payables/PayablesHeader';
 import { deliveryErrorMessage } from '@/components/receiving/deliveryErrors';
-import { Sheet } from '@/components/ui';
+import { Modal, Sheet } from '@/components/ui';
 import { useOwnerPinGuard } from '@/hooks/useOwnerPinGuard';
 import {
   OpeningBalanceExistsError,
   useCreateOpeningBalance,
   useDeleteSupplierPayment,
   useRecordSupplierPayment,
+  useHasOpeningBalance,
   useSupplierPayables,
   useSupplierPaymentHistory,
 } from '@/hooks/useSupplierPayables';
 import { useGetSupplier } from '@/hooks/useSuppliers';
 import { formatPesos } from '@/lib/money';
+import { ICON_COLOR } from '@/lib/theme';
 import { useToastStore } from '@/stores';
-import type { SupplierPaymentMethod } from '@/types/supplierPayables.types';
+import type { SupplierPayment, SupplierPaymentMethod } from '@/types/supplierPayables.types';
 import { addDaysToDate, getTodayDateString } from '@/utils/timezone';
 
 const LIST_ROUTE = '/(edit-forms)/supplier-payables' as Href;
@@ -33,6 +41,8 @@ const METHODS: { value: SupplierPaymentMethod; key: string }[] = [
 ];
 const shortDate = (d: string) => format(parseISO(d), 'MMM d');
 const toWholePesos = (v: string) => (/^\d+$/.test(v) ? Number(v) : 0);
+// shortcut: history renders the latest rows inline; virtualize if owners need years of payments.
+const HISTORY_PREVIEW = 20;
 
 function SupplierPayableDetail() {
   const { supplierId = '' } = useLocalSearchParams<{ supplierId: string }>();
@@ -43,6 +53,7 @@ function SupplierPayableDetail() {
   const supplierQuery = useGetSupplier(supplierId);
   const payablesQuery = useSupplierPayables(supplierId);
   const historyQuery = useSupplierPaymentHistory(supplierId);
+  const openingQuery = useHasOpeningBalance(supplierId);
   const recordMutation = useRecordSupplierPayment();
   const deleteMutation = useDeleteSupplierPayment();
   const openingMutation = useCreateOpeningBalance();
@@ -52,6 +63,8 @@ function SupplierPayableDetail() {
   const [method, setMethod] = useState<SupplierPaymentMethod>('cash');
   const [note, setNote] = useState('');
   const [dueDays, setDueDays] = useState('');
+  const [reverseTarget, setReverseTarget] = useState<SupplierPayment | null>(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   // Double-tap guard on top of the disabled buttons.
   const busy = useRef(false);
   // PIN prompt queued until the sheet has fully closed, so iOS can present it.
@@ -60,6 +73,8 @@ function SupplierPayableDetail() {
   const supplier = supplierQuery.data ?? null;
   const payables = payablesQuery.data ?? [];
   const history = historyQuery.data ?? [];
+  const shownHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW);
+  const hasOpening = openingQuery.data === true;
   const owed = payables.reduce((sum, p) => sum + p.amount - p.amountPaid, 0);
   const today = getTodayDateString();
   const amountValue = toWholePesos(amount);
@@ -122,7 +137,7 @@ function SupplierPayableDetail() {
       void guarded(
         'supplier_payment',
         t('paymentPinTitle'),
-        `Pay ${formatPesos(amountValue)} to ${supplierName}`,
+        t('paymentPinDescription', { amount: formatPesos(amountValue), supplier: supplierName }),
         () => recordMutation.mutateAsync({ supplierId, amount: amountValue, paymentMethod: method, notes: note }),
         'paymentRecordedToast',
       );
@@ -131,24 +146,37 @@ function SupplierPayableDetail() {
       void guarded(
         'supplier_opening_balance',
         t('openingPinTitle'),
-        `Opening balance ${formatPesos(amountValue)} for ${supplierName}`,
+        t('openingPinDescription', { amount: formatPesos(amountValue), supplier: supplierName }),
         () => openingMutation.mutateAsync({ supplierId, amount: amountValue, dueDate }),
         'openingSavedToast',
       );
     }
   };
 
-  const handleReverse = (paymentId: number, paymentAmount: number) => {
+  // Confirmed first, because the owner can switch this PIN off and a reversal raises the debt again.
+  const confirmReverse = () => {
+    const target = reverseTarget;
+    setReverseTarget(null);
+    if (!target) return;
     void guarded(
       'supplier_payment',
       t('paymentPinTitle'),
-      `Reverse ${formatPesos(paymentAmount)} payment to ${supplier?.name ?? ''}`,
-      () => deleteMutation.mutateAsync(paymentId),
+      t('reversePinDescription', { amount: formatPesos(target.amount), supplier: supplier?.name ?? '' }),
+      () => deleteMutation.mutateAsync(target.id),
       'paymentReversedToast',
     );
   };
 
-  const loading = supplierQuery.isLoading || payablesQuery.isLoading;
+  const loading = supplierQuery.isLoading || payablesQuery.isLoading || historyQuery.isLoading;
+  // A failed read must never pass as "nothing owed".
+  const failed = supplierQuery.isError || payablesQuery.isError || historyQuery.isError;
+  const missing = supplierQuery.isSuccess && supplier === null;
+  const retry = () => {
+    void supplierQuery.refetch();
+    void payablesQuery.refetch();
+    void historyQuery.refetch();
+    void openingQuery.refetch();
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
@@ -165,13 +193,20 @@ function SupplierPayableDetail() {
       />
 
       {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <SariMascot state="loading" size={96} accessibilityLabel="Loading" />
+        <PayablesSkeleton rows={2} />
+      ) : failed ? (
+        <PayablesError onRetry={retry} />
+      ) : missing ? (
+        <View className="flex-1 items-center justify-center px-6 gap-2" style={PAYABLES_COLUMN}>
+          <SariMascot state="empty" size={88} accessibilityLabel="" />
+          <StyledText variant="semibold" className="text-ink-800 text-sm text-center">
+            {t('supplierMissing')}
+          </StyledText>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-          <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-4">
-            <StyledText variant="black" className="label-caps text-cinnamon-500">
+        <ScrollView contentContainerStyle={[{ padding: 16, paddingBottom: 40 }, PAYABLES_COLUMN]}>
+          <View className="bg-paper-50 rounded-2xl shadow-paper border border-ink-100 p-4 mb-6">
+            <StyledText variant="semibold" className="text-ink-700 text-sm">
               {t('payablesTotalOwed')}
             </StyledText>
             <StyledText
@@ -181,41 +216,42 @@ function SupplierPayableDetail() {
             >
               {formatPesos(owed)}
             </StyledText>
-            <View className="flex-row gap-x-3 mt-4">
+            <View className="flex-row flex-wrap gap-3 mt-4">
               <ActionButton
                 label={t('recordPayment')}
                 primary
                 disabled={owed <= 0}
                 onPress={() => openSheet('payment')}
               />
-              <ActionButton label={t('setOpeningBalance')} onPress={() => openSheet('opening')} />
+              {hasOpening ? null : (
+                <ActionButton label={t('setOpeningBalance')} onPress={() => openSheet('opening')} />
+              )}
             </View>
           </View>
 
-          <SectionLabel text={t('payablesOpenHeading')} />
+          <SectionHeading text={t('payablesOpenHeading')} />
           {payables.length === 0 ? (
             <EmptyLine text={t('payablesEmpty')} />
           ) : (
             payables.map((p) => {
               const due = dueMeta(p.dueDate, today, t, shortDate);
               const left = p.amount - p.amountPaid;
+              const name = p.receiptId !== null ? t('receiptLabel', { id: p.receiptId }) : t('openingBalance');
               return (
                 <View
                   key={p.id}
-                  className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper flex-row items-center"
+                  className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 flex-row flex-wrap items-center gap-x-3 gap-y-1"
                   accessible
-                  accessibilityLabel={`${p.receiptId !== null ? t('receiptLabel', { id: p.receiptId }) : t('openingBalance')}, ${t('amountLeft', { amount: formatPesos(left) })}, ${due.label}`}
+                  accessibilityLabel={`${name}, ${t('amountLeft', { amount: formatPesos(left) })}, ${due.label}`}
                 >
-                  <View className="flex-1 mr-3">
+                  <View className="flex-1 min-w-[140px]">
                     <StyledText variant="extrabold" className="text-ink-900 text-sm">
-                      {p.receiptId !== null
-                        ? t('receiptLabel', { id: p.receiptId })
-                        : t('openingBalance')}
+                      {name}
                       {p.invoiceNo ? ` · ${p.invoiceNo}` : ''}
                     </StyledText>
                     <StyledText
                       variant="semibold"
-                      className={`text-xs mt-0.5 ${due.overdue ? 'text-semantic-danger' : 'text-ink-500'}`}
+                      className={`text-xs mt-0.5 ${due.overdue ? 'text-semantic-danger' : 'text-ink-600'}`}
                     >
                       {due.label}
                     </StyledText>
@@ -232,43 +268,55 @@ function SupplierPayableDetail() {
             })
           )}
 
-          <SectionLabel text={t('payablesHistoryHeading')} />
+          <SectionHeading text={t('payablesHistoryHeading')} />
           {history.length === 0 ? (
             <EmptyLine text={t('payablesNoHistory')} />
           ) : (
-            history.map((h) => (
+            shownHistory.map((h) => (
               <View
                 key={h.id}
-                className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 shadow-paper flex-row items-center"
+                className="bg-paper-50 rounded-2xl border border-ink-100 p-4 mb-3 flex-row flex-wrap items-center gap-x-3 gap-y-2"
               >
-                <View className="flex-1 mr-3">
+                <View className="flex-1 min-w-[140px]">
                   <StyledText
                     variant="extrabold"
                     className="text-ink-900 text-sm"
                     style={{ fontVariant: ['tabular-nums'] }}
                   >
-                    {formatPesos(h.amount)} ·{' '}
-                    {t(METHODS.find((m) => m.value === h.paymentMethod)?.key ?? 'methodOther')}
+                    {`${formatPesos(h.amount)} · ${t(METHODS.find((m) => m.value === h.paymentMethod)?.key ?? 'methodOther')}`}
                   </StyledText>
-                  <StyledText variant="regular" className="text-ink-500 text-xs mt-0.5" numberOfLines={1}>
+                  <StyledText variant="regular" className="text-ink-600 text-xs mt-0.5" numberOfLines={2}>
                     {shortDate(h.businessDate)}
                     {h.notes ? ` · ${h.notes}` : ''}
                   </StyledText>
                 </View>
                 <Pressable
-                  onPress={() => handleReverse(h.id, h.amount)}
+                  onPress={() => setReverseTarget(h)}
                   disabled={deleteMutation.isPending}
+                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   accessibilityRole="button"
                   accessibilityLabel={`${t('reversePayment')} ${formatPesos(h.amount)}`}
-                  className="px-3 py-2 rounded-xl bg-paper-200 border border-ink-200 active:bg-paper-300"
+                  accessibilityState={{ disabled: deleteMutation.isPending }}
+                  className="min-h-[44px] px-4 rounded-xl items-center justify-center bg-paper-100 border border-ink-200 active:bg-paper-200"
                 >
-                  <StyledText variant="semibold" className="text-xs text-semantic-danger">
+                  <StyledText variant="extrabold" className="text-sm text-semantic-danger">
                     {t('reversePayment')}
                   </StyledText>
                 </Pressable>
               </View>
             ))
           )}
+          {history.length > HISTORY_PREVIEW ? (
+            <Pressable
+              onPress={() => setShowAllHistory((v) => !v)}
+              accessibilityRole="button"
+              className="min-h-[44px] items-center justify-center rounded-xl active:bg-paper-100"
+            >
+              <StyledText variant="extrabold" className="text-sm text-persimmon-700">
+                {showAllHistory ? t('showFewerPayments') : t('showAllPayments', { count: history.length })}
+              </StyledText>
+            </Pressable>
+          ) : null}
         </ScrollView>
       )}
 
@@ -291,10 +339,10 @@ function SupplierPayableDetail() {
             onChangeText={(v) => setAmount(v.replace(/\D/g, ''))}
             keyboardType="number-pad"
             accessibilityLabel={t('paymentAmount')}
-            className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-3 text-ink-900 text-base font-stack-sans"
+            className="min-h-[48px] bg-paper-100 border border-ink-200 rounded-xl px-3 text-ink-900 text-base font-stack-sans"
           />
           {sheet === 'payment' && amountValue > owed ? (
-            <StyledText variant="semibold" className="text-semantic-danger text-xs">
+            <StyledText variant="semibold" className="text-semantic-danger text-xs" accessibilityLiveRegion="polite">
               {t('errorOverpay', { amount: formatPesos(owed) })}
             </StyledText>
           ) : null}
@@ -312,11 +360,14 @@ function SupplierPayableDetail() {
                     accessibilityRole="radio"
                     accessibilityState={{ checked: active }}
                     accessibilityLabel={t(m.key)}
-                    className={`flex-1 min-h-[44px] rounded-xl items-center justify-center border ${
+                    className={`flex-1 min-h-[44px] px-1 rounded-xl items-center justify-center border ${
                       active ? 'bg-cinnamon-500 border-cinnamon-500' : 'bg-paper-100 border-paper-300'
                     }`}
                   >
-                    <StyledText variant="semibold" className={`text-xs ${active ? 'text-paper-50' : 'text-ink-700'}`}>
+                    <StyledText
+                      variant="semibold"
+                      className={`text-xs text-center ${active ? 'text-paper-50' : 'text-ink-700'}`}
+                    >
                       {t(m.key)}
                     </StyledText>
                   </Pressable>
@@ -327,28 +378,33 @@ function SupplierPayableDetail() {
               value={note}
               onChangeText={setNote}
               placeholder={t('paymentNote')}
-              placeholderTextColor="#A89F90"
+              placeholderTextColor={ICON_COLOR.inkMuted}
               accessibilityLabel={t('paymentNote')}
-              className="bg-paper-100 border border-ink-200 rounded-xl px-3 py-3 text-ink-900 text-base font-stack-sans"
+              className="min-h-[48px] bg-paper-100 border border-ink-200 rounded-xl px-3 text-ink-900 text-base font-stack-sans"
             />
           </>
         ) : (
-          <View className="flex-row items-center gap-x-2">
-            <StyledText variant="semibold" className="text-ink-900 text-sm">
-              {t('dueIn')}
-            </StyledText>
-            <TextInput
-              value={dueDays}
-              onChangeText={(v) => setDueDays(v.replace(/\D/g, ''))}
-              keyboardType="number-pad"
-              maxLength={3}
-              placeholder="-"
-              placeholderTextColor="#A89F90"
-              accessibilityLabel={t('dueInDaysLabel')}
-              className="w-16 bg-paper-100 border border-ink-200 rounded-xl px-3 py-2 text-ink-900 text-base text-center font-stack-sans"
-            />
-            <StyledText variant="semibold" className="text-ink-900 text-sm">
-              {t('days')}
+          <View className="gap-y-1.5">
+            <View className="flex-row flex-wrap items-center gap-2">
+              <StyledText variant="semibold" className="text-ink-900 text-sm">
+                {t('dueIn')}
+              </StyledText>
+              <TextInput
+                value={dueDays}
+                onChangeText={(v) => setDueDays(v.replace(/\D/g, ''))}
+                keyboardType="number-pad"
+                maxLength={3}
+                placeholder="-"
+                placeholderTextColor={ICON_COLOR.inkMuted}
+                accessibilityLabel={t('dueInDaysLabel')}
+                className="min-w-16 min-h-[44px] bg-paper-100 border border-ink-200 rounded-xl px-3 text-ink-900 text-base text-center font-stack-sans"
+              />
+              <StyledText variant="semibold" className="text-ink-900 text-sm">
+                {t('days')}
+              </StyledText>
+            </View>
+            <StyledText variant="regular" className="text-ink-600 text-xs">
+              {dueDays === '' ? t('noDueDateHint') : t('dueInHint')}
             </StyledText>
           </View>
         )}
@@ -358,6 +414,21 @@ function SupplierPayableDetail() {
           <ActionButton label={t('save')} primary disabled={!amountValid} onPress={handleSave} />
         </View>
       </Sheet>
+
+      <Modal
+        visible={reverseTarget !== null}
+        onClose={() => setReverseTarget(null)}
+        title={t('reverseConfirmTitle')}
+        description={t('reverseConfirmBody', {
+          amount: formatPesos(reverseTarget?.amount ?? 0),
+          supplier: supplier?.name ?? '',
+        })}
+        variant="danger"
+        buttons={[
+          { text: t('cancel'), style: 'cancel', onPress: () => setReverseTarget(null) },
+          { text: t('reversePayment'), style: 'destructive', onPress: confirmReverse },
+        ]}
+      />
     </SafeAreaView>
   );
 }
@@ -373,34 +444,32 @@ function ActionButton({
   disabled?: boolean;
   onPress: () => void;
 }) {
+  // Light text needs persimmon-600 or darker (DESIGN.md Fill Contrast Rule); disabled keeps ink text readable.
+  const surface = disabled
+    ? 'bg-paper-300'
+    : primary
+      ? 'bg-persimmon-600 active:bg-persimmon-700'
+      : 'border border-ink-200 bg-paper-100 active:bg-paper-200';
+  const text = disabled ? 'text-ink-500' : primary ? 'text-paper-50' : 'text-ink-800';
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      className={`flex-1 min-h-[44px] rounded-xl items-center justify-center ${
-        disabled
-          ? 'bg-paper-300'
-          : primary
-            ? 'bg-persimmon-500'
-            : 'border border-ink-200 bg-paper-100'
-      }`}
+      className={`flex-1 min-w-[140px] min-h-[48px] px-3 rounded-xl items-center justify-center ${surface}`}
     >
-      <StyledText
-        variant="extrabold"
-        className={`text-sm ${primary || disabled ? 'text-paper-50' : 'text-ink-700'}`}
-      >
+      <StyledText variant="extrabold" className={`text-sm text-center ${text}`}>
         {label}
       </StyledText>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
-function SectionLabel({ text }: { text: string }) {
+function SectionHeading({ text }: { text: string }) {
   return (
-    <StyledText variant="black" accessibilityRole="header" className="label-caps text-cinnamon-500 mb-3 mt-2">
+    <StyledText variant="extrabold" accessibilityRole="header" className="text-ink-900 text-base mb-3">
       {text}
     </StyledText>
   );
@@ -408,7 +477,7 @@ function SectionLabel({ text }: { text: string }) {
 
 function EmptyLine({ text }: { text: string }) {
   return (
-    <StyledText variant="regular" className="text-ink-500 text-xs mb-4">
+    <StyledText variant="regular" className="text-ink-600 text-sm mb-6">
       {text}
     </StyledText>
   );

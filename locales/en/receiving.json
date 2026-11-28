@@ -168,5 +168,16 @@
   "days": "days",
   "dueInDaysLabel": "Days until payment is due",
   "paymentTermsLabel": "Payment terms",
-  "paymentTermsHint": "Days you have to pay after a delivery. Leave blank if you pay on delivery."
+  "paymentTermsHint": "Days you have to pay after a delivery. Leave blank if you pay on delivery.",
+  "loadingPayables": "Loading supplier payables",
+  "supplierMissing": "This supplier was deleted. Its payables are no longer shown here.",
+  "paymentPinDescription": "Pay {{amount}} to {{supplier}}",
+  "openingPinDescription": "Opening balance of {{amount}} for {{supplier}}",
+  "reversePinDescription": "Reverse the {{amount}} payment to {{supplier}}",
+  "reverseConfirmTitle": "Reverse this payment?",
+  "reverseConfirmBody": "{{amount}} goes back on what you owe {{supplier}}. A cash payment also comes back into the expected drawer cash.",
+  "showAllPayments": "Show all {{count}} payments",
+  "showFewerPayments": "Show fewer payments",
+  "noDueDateHint": "No due date. It stays on the unpaid list until you pay it.",
+  "dueInHint": "Counted from today. Clear the field for no due date."
 }

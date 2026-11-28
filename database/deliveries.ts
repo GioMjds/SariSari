@@ -552,10 +552,14 @@ const recordReceiptPayable = async (
   );
   const terms = supplier?.payment_terms_days ?? null;
   const paidNow = payment?.paidNow ?? terms === null;
+  // An explicit null means no due date; an omitted dueDate falls back to the supplier's terms.
+  const termsDue =
+    terms !== null ? addDaysToDate(receivedAt ?? new Date().toISOString(), terms) : null;
   const dueDate = paidNow
     ? null
-    : (payment?.dueDate ??
-      (terms !== null ? addDaysToDate(receivedAt ?? new Date().toISOString(), terms) : null));
+    : payment?.dueDate !== undefined
+      ? payment.dueDate
+      : termsDue;
 
   await insertPayableTx(supplierId, receiptId, amount, dueDate);
   if (paidNow) {
