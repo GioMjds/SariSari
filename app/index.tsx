@@ -1,6 +1,7 @@
 import { withProf } from '@/utils/perf';
 import { SplashWordmark } from '@/components/splash/SplashWordmark';
 import { loadOnboardingState } from '@/lib';
+import { whenDatabaseReady } from '@/configs/startup';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -16,7 +17,11 @@ function EntryGate() {
     let isMounted = true;
 
     const run = async () => {
-      const state = await loadOnboardingState();
+      // The navigator mounts before the DB opens, so hold the splash until home can query it.
+      const [state] = await Promise.all([
+        loadOnboardingState(),
+        whenDatabaseReady(),
+      ]);
       if (
         process.env.EXPO_PUBLIC_FORCE_ONBOARDING !== 'true' &&
         state?.completed

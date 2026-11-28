@@ -16,6 +16,13 @@ import {
 import { seedDatabase } from '@/database/seed';
 
 let databaseInitialized = false;
+let markDatabaseReady: () => void = () => {};
+const databaseReady = new Promise<void>((resolve) => {
+  markDatabaseReady = resolve;
+});
+
+// Resolves once the tables exist, so the first screen can wait before routing.
+export const whenDatabaseReady = (): Promise<void> => databaseReady;
 
 const executeWithRetry = async <T>(
   fn: () => Promise<T>,
@@ -63,6 +70,7 @@ export const initializeDatabases = async () => {
     if (__DEV__) await seedDatabase();
 
     databaseInitialized = true;
+    markDatabaseReady();
   } catch (error) {
     databaseInitialized = false;
     console.error('✗ Database initialization failed:', error);
