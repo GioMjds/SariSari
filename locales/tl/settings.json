@@ -55,7 +55,10 @@
     "reset_new_sub": "Pumili ng 6 na bagong digit.",
     "reset_success_title": "Na-reset na ang PIN",
     "reset_success_sub": "Handa nang gamitin ang bago mong Owner PIN.",
-    "reset_failed": "Hindi na-reset ang PIN. Pakisubukan muli."
+    "reset_failed": "Hindi na-reset ang PIN. Pakisubukan muli.",
+    "progress_a11y": "{{count}} sa {{total}} na digit ang nailagay",
+    "unavailable_title": "Hindi magamit ang Owner PIN",
+    "unavailable_body": "Hindi ma-check ang Owner PIN ngayon. Subukang muli."
   },
   "biometrics": {
     "cancel_label": "Kanselahin",
@@ -78,7 +81,10 @@
     "lock_subtitle": "Ilagay ang Owner PIN mo para mabuksan ang tindahan.",
     "lock_retry": "Subukang muli",
     "lock_use_pin": "Gamitin ang Owner PIN",
-    "lock_sari_label": "Si Sari na nagbabantay ng tindahan"
+    "lock_sari_label": "Si Sari na nagbabantay ng tindahan",
+    "lock_biometric_face": "I-unlock gamit ang mukha",
+    "lock_biometric_fingerprint": "I-unlock gamit ang fingerprint",
+    "lock_biometric_generic": "I-unlock gamit ang biometrics"
   },
   "pin_policy": {
     "section": "Mga kailangan ng PIN",

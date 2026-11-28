@@ -87,6 +87,7 @@ export const ICON_COLOR = {
   inkMuted: '#564E45', // ink-500
   inkFaint: '#A89F90', // ink-300
   paper: '#FBF7EE', // light text on filled buttons
+  persimmon: '#E85A1F', // persimmon-500, icons and large accents only
   persimmonStrong: '#A1370C', // persimmon-700
   sageStrong: '#2C4413', // sage-700
   cinnamon: '#623418', // cinnamon-500

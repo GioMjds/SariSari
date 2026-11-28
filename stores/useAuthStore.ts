@@ -1,4 +1,15 @@
 import { create } from 'zustand';
+import { getAppSetting, setAppSetting } from '@/database/settings';
+
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_MS = 60_000;
+
+// Persists so killing the app does not reset the failed-attempt lockout.
+const saveLockout = (failedAttempts: number, lockoutUntil: number | null) =>
+  void setAppSetting(
+    'owner_pin_lockout',
+    JSON.stringify({ failedAttempts, lockoutUntil }),
+  ).catch(() => {});
 
 interface AuthState {
   isPinConfigured: boolean;
@@ -7,6 +18,7 @@ interface AuthState {
   isAppUnlocked: boolean;
   lastBackgroundedAt: number | null;
   setIsPinConfigured: (status: boolean) => void;
+  hydrateLockout: () => Promise<void>;
   registerFailedAttempt: () => void;
   resetFailedAttempts: () => void;
   clearExpiredLockout: () => void;
@@ -24,22 +36,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAppUnlocked: false,
   lastBackgroundedAt: null,
   setIsPinConfigured: (status: boolean) => set({ isPinConfigured: status }),
-  registerFailedAttempt: () => {
-    const nextAttempts = get().failedAttempts + 1;
-    if (nextAttempts >= 3) {
+  hydrateLockout: async () => {
+    try {
+      const raw = await getAppSetting('owner_pin_lockout');
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        failedAttempts?: number;
+        lockoutUntil?: number | null;
+      };
       set({
-        failedAttempts: nextAttempts,
-        lockoutUntil: Date.now() + 60_000,
+        failedAttempts: Number(saved.failedAttempts) || 0,
+        lockoutUntil:
+          typeof saved.lockoutUntil === 'number' ? saved.lockoutUntil : null,
       });
-    } else {
-      set({ failedAttempts: nextAttempts });
+    } catch {
+      // Unreadable row: keep the in-memory defaults.
     }
   },
-  resetFailedAttempts: () => set({ failedAttempts: 0, lockoutUntil: null }),
+  registerFailedAttempt: () => {
+    const failedAttempts = get().failedAttempts + 1;
+    const lockoutUntil =
+      failedAttempts >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : get().lockoutUntil;
+    set({ failedAttempts, lockoutUntil });
+    saveLockout(failedAttempts, lockoutUntil);
+  },
+  resetFailedAttempts: () => {
+    set({ failedAttempts: 0, lockoutUntil: null });
+    saveLockout(0, null);
+  },
   clearExpiredLockout: () => {
     const lockoutUntil = get().lockoutUntil;
     if (lockoutUntil && Date.now() > lockoutUntil) {
       set({ lockoutUntil: null, failedAttempts: 0 });
+      saveLockout(0, null);
     }
   },
   isLockedOut: () => {

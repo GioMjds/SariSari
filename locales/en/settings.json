@@ -55,7 +55,10 @@
     "reset_new_sub": "Pick 6 new digits.",
     "reset_success_title": "PIN reset",
     "reset_success_sub": "Your new Owner PIN is ready to use.",
-    "reset_failed": "Could not reset your PIN. Please try again."
+    "reset_failed": "Could not reset your PIN. Please try again.",
+    "progress_a11y": "{{count}} of {{total}} digits entered",
+    "unavailable_title": "Owner PIN unavailable",
+    "unavailable_body": "Owner PIN check is not working right now. Please try again."
   },
   "biometrics": {
     "cancel_label": "Cancel",
@@ -78,7 +81,10 @@
     "lock_subtitle": "Enter your Owner PIN to open your store.",
     "lock_retry": "Try again",
     "lock_use_pin": "Use Owner PIN",
-    "lock_sari_label": "Sari guarding the store"
+    "lock_sari_label": "Sari guarding the store",
+    "lock_biometric_face": "Unlock with face",
+    "lock_biometric_fingerprint": "Unlock with fingerprint",
+    "lock_biometric_generic": "Unlock with biometrics"
   },
   "pin_policy": {
     "section": "PIN approvals",

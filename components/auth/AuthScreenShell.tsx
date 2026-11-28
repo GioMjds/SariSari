@@ -5,9 +5,11 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SariMascot, type SariState } from '@/components/mascot';
 import { StyledText } from '@/components/elements/StyledText';
+import { ICON_COLOR } from '@/lib/theme';
 
 interface Props {
   title: string;
+  titleArt?: ReactNode;
   subtitle?: string;
   sari: SariState;
   sariLabel?: string;
@@ -22,6 +24,7 @@ interface Props {
 
 export const AuthScreenShell: FC<Props> = ({
   title,
+  titleArt,
   subtitle,
   sari,
   sariLabel,
@@ -50,7 +53,7 @@ export const AuthScreenShell: FC<Props> = ({
             hitSlop={8}
             className="w-12 h-12 rounded-full items-center justify-center active:bg-paper-300 active:scale-95"
           >
-            <FontAwesome name="arrow-left" size={16} color="#28231D" />
+            <FontAwesome name="arrow-left" size={16} color={ICON_COLOR.ink} />
           </Pressable>
         ) : (
           <View className="w-12 h-12" />
@@ -97,16 +100,26 @@ export const AuthScreenShell: FC<Props> = ({
           state={sari}
           size={132}
           {...(sariLabel !== undefined && { accessibilityLabel: sariLabel })}
-          animated={false}
-          defer
+          animated={true}
         />
-        <StyledText
-          variant="extrabold"
-          accessibilityRole="header"
-          className="text-h2 text-ink-900 text-center mt-2"
-        >
-          {title}
-        </StyledText>
+        {titleArt ? (
+          <View
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={title}
+            className="mt-2 items-center"
+          >
+            {titleArt}
+          </View>
+        ) : (
+          <StyledText
+            variant="extrabold"
+            accessibilityRole="header"
+            className="text-h2 text-ink-900 text-center mt-2"
+          >
+            {title}
+          </StyledText>
+        )}
         {subtitle ? (
           <StyledText
             variant="regular"
@@ -148,7 +161,7 @@ export const AuthButton: FC<any> = ({
         blocked ? 'opacity-45' : 'active:scale-95'
       } ${
         variant === 'primary'
-          ? 'bg-persimmon-500'
+          ? 'bg-persimmon-600 active:bg-persimmon-700'
           : variant === 'success'
             ? 'bg-sage-500'
             : 'bg-paper-50 border border-paper-300'

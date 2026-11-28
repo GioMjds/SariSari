@@ -2,6 +2,7 @@ import { StyledText } from '@/components/elements/StyledText';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { FC, useEffect } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -55,7 +56,7 @@ const SinglePinBox: FC<{
   }));
 
   let boxClass =
-    'w-14 h-14 rounded-full border-2 items-center justify-center mx-1.5 ';
+    'flex-1 max-w-[56px] aspect-square rounded-full border-2 items-center justify-center mx-1 ';
   if (status === 'error') {
     boxClass += 'border-semantic-danger bg-semantic-danger-50';
   } else if (status === 'success') {
@@ -85,7 +86,11 @@ const SinglePinBox: FC<{
             <View className={dotClass} />
           </Animated.View>
         ) : (
-          <StyledText variant="extrabold" className="text-2xl text-ink-900">
+          <StyledText
+            variant="extrabold"
+            maxFontSizeMultiplier={1.3}
+            className="text-2xl text-ink-900"
+          >
             {char}
           </StyledText>
         ))}
@@ -103,6 +108,7 @@ export const PinBoxes: FC<Props> = ({
   testID,
   accessibilityLabel,
 }) => {
+  const { t } = useTranslation('settings');
   const shift = useSharedValue(0);
   const reducedMotion = useReducedMotion();
 
@@ -125,14 +131,16 @@ export const PinBoxes: FC<Props> = ({
   }));
 
   return (
-    <View testID={testID} className="flex-row justify-center">
+    <View testID={testID} className="w-full flex-row justify-center">
       <Animated.View
         accessible
         accessibilityRole="text"
         accessibilityLabel={accessibilityLabel}
-        accessibilityValue={{ text: `${value.length} of ${length}` }}
+        accessibilityValue={{
+          text: t('pin.progress_a11y', { count: value.length, total: length }),
+        }}
         style={shakeStyle}
-        className="flex-row"
+        className="w-full max-w-[384px] flex-row justify-center"
       >
         {Array.from({ length }, (_, idx) => {
           const char = value[idx];

@@ -4,6 +4,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements/StyledText';
+import { ICON_COLOR } from '@/lib/theme';
 
 interface Props {
   onDigit: (digit: string) => void;
@@ -51,6 +52,7 @@ export const PinPad: FC<Props> = ({
               >
                 <StyledText
                   variant="semibold"
+                  maxFontSizeMultiplier={1.4}
                   className="text-4xl text-ink-900"
                 >
                   {digit}
@@ -74,7 +76,11 @@ export const PinPad: FC<Props> = ({
             onPress={() => press('0')}
             className="flex-1 mx-1.5 h-20 rounded-2xl bg-paper-50 border border-paper-300 items-center justify-center shadow-sm active:bg-paper-100 active:scale-95"
           >
-            <StyledText variant="semibold" className="text-4xl text-ink-900">
+            <StyledText
+              variant="semibold"
+              maxFontSizeMultiplier={1.4}
+              className="text-4xl text-ink-900"
+            >
               0
             </StyledText>
           </Pressable>
@@ -91,7 +97,7 @@ export const PinPad: FC<Props> = ({
             }}
             className="flex-1 mx-1.5 h-20 rounded-2xl items-center justify-center active:bg-paper-100 active:scale-95"
           >
-            <FontAwesome name="angle-left" size={36} color="#564E45" />
+            <FontAwesome name="angle-left" size={36} color={ICON_COLOR.inkMuted} />
           </Pressable>
         </View>
       </View>

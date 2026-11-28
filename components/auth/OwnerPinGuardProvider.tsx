@@ -105,8 +105,8 @@ export const OwnerPinGuardProvider: FC<{
     } catch {
       setActiveOptions(null);
       Alert.alert(
-        'Owner PIN Unavailable',
-        'Owner PIN verification is currently unavailable. Please try again.',
+        t('pin.unavailable_title', { ns: 'settings' }),
+        t('pin.unavailable_body', { ns: 'settings' }),
       );
       options.onCancel?.();
       return;
