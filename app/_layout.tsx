@@ -1,176 +1,69 @@
 import '../global.css';
 import '@/lib/css-interop';
-import { GlobalModal, Toast } from '@/components/ui';
-import { DatabaseErrorScreen } from '@/components/system/DatabaseErrorScreen';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { initializeDatabases } from '@/configs';
-import { initI18n } from '@/lib/i18n';
-import { useFonts } from 'expo-font';
+import { useEffect } from 'react';
+import { View } from 'react-native';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
-import { StatusBar } from 'expo-status-bar';
-import { AppState, View } from 'react-native';
-import { useCallback, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@react-navigation/native';
-import { NAV_THEME } from '@/lib/theme';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { consumeQueue, runStartupChecks, subscribeCounter } from '@/lib/backup';
-import { useSchedulerInputs } from '@/hooks/useBackup';
-import { safeNavigate } from '@/lib/navigation';
-import { CloudNewerBanner } from '@/components/settings/backup';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from 'react-native-reanimated';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { PortalHost } from '@rn-primitives/portal';
+import { GlobalModal, Toast } from '@/components/ui';
+import { DatabaseErrorScreen } from '@/components/system/DatabaseErrorScreen';
+import { CloudNewerBanner } from '@/components/settings/backup';
 import { OwnerPinGuardProvider } from '@/components/auth/OwnerPinGuardProvider';
 import { AppLockGate } from '@/components/auth/AppLockGate';
-import { useAuthStore } from '@/stores/useAuthStore';
-import { isBiometricPromptActive } from '@/lib/auth/biometrics';
-import { shouldRelockOnResume } from '@/lib/auth/appLock';
-import { PortalHost } from '@rn-primitives/portal';
+import { useAppBootstrap } from '@/hooks/useAppBootstrap';
+import { useAppLockOnResume } from '@/hooks/useAppLockOnResume';
+import { useBackupScheduler } from '@/hooks/useBackupScheduler';
+import { useCloudNewerBanner } from '@/hooks/useCloudNewerBanner';
+import { NAV_THEME } from '@/lib/theme';
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
 
+// Keep the splash up until useAppBootstrap hides it.
 SplashScreen.preventAutoHideAsync();
 
-const STARTUP_CHECKS_DELAY_MS = 5000;
+const PAGE_BG = '#F7F6F2';
+const FILL_PAGE = { flex: 1, backgroundColor: PAGE_BG } as const;
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5000,
-    },
-  },
+  defaultOptions: { queries: { staleTime: 5000 } },
 });
 
+function BackupBanner() {
+  const { dismissed, restore, dismiss } = useCloudNewerBanner();
+  if (dismissed) return null;
+  return <CloudNewerBanner onRestorePress={restore} onDismiss={dismiss} />;
+}
+
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    'StackSansText-Regular': require('../assets/fonts/StackSansText-Regular.ttf'),
-    'StackSansText-ExtraLight': require('../assets/fonts/StackSansText-ExtraLight.ttf'),
-    'StackSansText-Light': require('../assets/fonts/StackSansText-Light.ttf'),
-    'StackSansText-Medium': require('../assets/fonts/StackSansText-Medium.ttf'),
-    'StackSansText-SemiBold': require('../assets/fonts/StackSansText-SemiBold.ttf'),
-    'StackSansText-Bold': require('../assets/fonts/StackSansText-Bold.ttf'),
-  });
-
-  const [dbInitError, setDbInitError] = useState<string | null>(null);
-  const [dbReady, setDbReady] = useState<boolean>(false);
-  const [i18nReady, setI18nReady] = useState<boolean>(false);
-  const schedulerInputs = useSchedulerInputs();
-  const markBackgrounded = useAuthStore((s) => s.markBackgrounded);
-  const requireUnlock = useAuthStore((s) => s.requireUnlock);
-
-  const runDbInit = useCallback(async () => {
-    setDbInitError(null);
-    setDbReady(false);
-    try {
-      await initializeDatabases();
-      setDbReady(true);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      setDbInitError(errorMessage);
-      console.error('Failed to initialize database:', errorMessage);
-    }
-  }, []);
-
-  const runI18nInit = useCallback(async () => {
-    try {
-      await initI18n();
-      setI18nReady(true);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.warn(
-        'Failed to initialize i18n, falling back to English:',
-        message,
-      );
-      setI18nReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!fontsLoaded) return;
-    runDbInit();
-    runI18nInit();
-  }, [fontsLoaded, runDbInit, runI18nInit]);
-
-  useEffect(() => {
-    if (fontsLoaded && i18nReady) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, i18nReady]);
+  const { uiReady, dbReady, dbInitError, retryDb } = useAppBootstrap();
 
   useEffect(() => {
     void NavigationBar.setButtonStyleAsync('dark').catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!fontsLoaded || !i18nReady || !dbReady || dbInitError) return;
-    // Wait so the snapshot and WAL checkpoint do not queue ahead of first-screen queries.
-    const startupChecksTimer = setTimeout(
-      () => void runStartupChecks(schedulerInputs),
-      STARTUP_CHECKS_DELAY_MS,
-    );
-    const unsubCounter = subscribeCounter(schedulerInputs);
-    const subAppState = AppState.addEventListener('change', (state) => {
-      if (state === 'background' || state === 'inactive') {
-        markBackgrounded();
-      } else if (state === 'active') {
-        const { lastBackgroundedAt } = useAuthStore.getState();
-        if (
-          shouldRelockOnResume(
-            lastBackgroundedAt,
-            Date.now(),
-            isBiometricPromptActive(),
-          )
-        ) {
-          requireUnlock();
-        }
-        void consumeQueue(schedulerInputs);
-      }
-    });
-    return () => {
-      clearTimeout(startupChecksTimer);
-      unsubCounter();
-      subAppState.remove();
-    };
-  }, [
-    fontsLoaded,
-    i18nReady,
-    dbReady,
-    dbInitError,
-    schedulerInputs,
-    markBackgrounded,
-    requireUnlock,
-  ]);
-
-  const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
-
-  const handleBannerRestore = useCallback(() => {
-    safeNavigate.push('/settings/backup');
-  }, []);
-
-  const handleBannerDismiss = useCallback(async () => {
-    setBannerDismissed(true);
-    await AsyncStorage.setItem(
-      'cloud_newer_banner_dismissed_at',
-      String(Date.now()),
-    );
-  }, []);
+  useAppLockOnResume(uiReady && dbReady);
+  useBackupScheduler(uiReady && dbReady);
 
   if (dbInitError) {
     return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+      <GestureHandlerRootView style={FILL_PAGE}>
         <SafeAreaProvider>
-          <StatusBar style="dark" backgroundColor="#F7F6F2" />
-          <DatabaseErrorScreen message={dbInitError} onRetry={runDbInit} />
+          <StatusBar style="dark" backgroundColor={PAGE_BG} />
+          <DatabaseErrorScreen message={dbInitError} onRetry={retryDb} />
         </SafeAreaProvider>
       </GestureHandlerRootView>
     );
@@ -178,26 +71,21 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME.light}>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+      <GestureHandlerRootView style={FILL_PAGE}>
         <KeyboardProvider>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
               <OwnerPinGuardProvider isReady={dbReady}>
                 <AppLockGate isReady={dbReady}>
-                  <View style={{ flex: 1, backgroundColor: '#F7F6F2' }}>
+                  <View style={FILL_PAGE}>
                     <Stack
                       screenOptions={{
                         headerShown: false,
-                        contentStyle: { backgroundColor: '#F7F6F2' },
+                        contentStyle: { backgroundColor: PAGE_BG },
                       }}
                     />
                     <PortalHost />
-                    {fontsLoaded && i18nReady && !bannerDismissed ? (
-                      <CloudNewerBanner
-                        onRestorePress={handleBannerRestore}
-                        onDismiss={handleBannerDismiss}
-                      />
-                    ) : null}
+                    {uiReady ? <BackupBanner /> : null}
                   </View>
                   <Toast />
                   <GlobalModal />

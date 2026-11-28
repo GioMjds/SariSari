@@ -8,38 +8,41 @@ import { View } from 'react-native';
 
 type Target = '/onboarding' | '/home';
 
+const FORCE_ONBOARDING = process.env.EXPO_PUBLIC_FORCE_ONBOARDING === 'true';
+
+async function resolveEntryTarget(): Promise<Target> {
+  const [state] = await Promise.all([
+    loadOnboardingState(),
+    whenDatabaseReady(),
+  ]);
+  return !FORCE_ONBOARDING && state?.completed ? '/home' : '/onboarding';
+}
+
 function EntryGate() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const targetRef = useRef<Target>('/onboarding');
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
-    const run = async () => {
-      // The navigator mounts before the DB opens, so hold the splash until home can query it.
-      const [state] = await Promise.all([
-        loadOnboardingState(),
-        whenDatabaseReady(),
-      ]);
-      if (
-        process.env.EXPO_PUBLIC_FORCE_ONBOARDING !== 'true' &&
-        state?.completed
-      ) {
-        targetRef.current = '/home';
-      }
-
-      if (isMounted) setReady(true);
-    };
-
-    void run();
+    resolveEntryTarget()
+      .then((target) => {
+        if (cancelled) return;
+        targetRef.current = target;
+        setReady(true);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        if (__DEV__) console.warn('Failed to resolve entry target', error);
+        setReady(true);
+      });
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
   }, []);
 
-  // Splash finished its exit: hand off to the first real screen.
   const handleDone = useCallback(() => {
     router.replace(targetRef.current);
   }, [router]);

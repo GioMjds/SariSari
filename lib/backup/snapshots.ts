@@ -1,15 +1,3 @@
-// lib/backup/snapshots.ts
-// Local rolling snapshot manager. Owns the on-disk layout
-// `{documentDirectory}SQLiteBackups/{auto,safety}/` and the prune policy.
-//
-// Snapshots are 1:1 copies of `sarisari.db` taken after a WAL checkpoint
-// so the snapshot file is internally consistent. `auto/` is the rolling
-// 7-deep history; `safety/` holds pre-restore copies that are NEVER
-// pruned (they exist for rollback). The two directories are physically
-// separate so a bug in the rolling prune cannot touch safety copies.
-//
-// See `docs/superpowers/specs/2026-06-27-data-backup-restore-design.md` §3.
-
 import { File, Directory, Paths } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
@@ -19,7 +7,9 @@ import type { Result, Snapshot } from './types';
 import { BackupError } from './types';
 
 const DB_NAME = 'sarisari.db';
-const docUri = Paths.document.uri.endsWith('/') ? Paths.document.uri : `${Paths.document.uri}/`;
+const docUri = Paths.document.uri.endsWith('/')
+  ? Paths.document.uri
+  : `${Paths.document.uri}/`;
 const DB_DIR = `${docUri}SQLite/`;
 export const DB_PATH = `${DB_DIR}${DB_NAME}`;
 
@@ -27,15 +17,10 @@ const BACKUP_ROOT = `${docUri}SQLiteBackups/`;
 export const AUTO_DIR = `${BACKUP_ROOT}auto/`;
 export const SAFETY_DIR = `${BACKUP_ROOT}safety/`;
 
-// Keeps the prune mechanic obvious at every callsite.
 const ROLLING_KEEP = 7;
 
-// Snapshots smaller than this are treated as half-written and rejected by
-// `validate()` (spec §10). Exposed here so tests can assert against the
-// same constant.
 export const MIN_VALID_BYTES = 1024;
 
-// AsyncStorage keys (spec §3.7, §4.7).
 export const AS_KEY_LAST_BACKUP_AT = 'last_backup_at';
 export const AS_KEY_CLOUD_SYNC_PENDING = 'cloud_sync_pending';
 export const AS_KEY_CLOUD_ALLOW_CELLULAR = 'cloud_allow_cellular';
@@ -44,22 +29,9 @@ export const AS_KEY_CLOUD_LINKED = 'cloud_linked';
 export const AUTO_PREFIX = 'sarisari_snapshot_';
 export const SAFETY_PREFIX = 'sarisari_safety_';
 
-/**
- * Two-digit zero-padded number helper. `pad2(7) === '07'`. Used for the
- * ISO-style timestamp suffix.
- */
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const pad3 = (n: number) => String(n).padStart(3, '0');
 
-/**
- * Format a `Date` as `YYYY-MM-DD_HH-mm-ss-{ms3}`. The 3-digit millisecond
- * suffix is the spec's guard against same-second collisions on rapid
- * manual "Backup now" taps.
- *
- * Example: `formatStamp(new Date('2026-06-27T14:02:31.421Z'))` →
- * `'2026-06-27_14-02-31-421'` (using local time so the filename matches
- * what the user sees on the wall clock).
- */
 export const formatStamp = (date: Date = new Date()): string => {
   const yyyy = date.getFullYear();
   const mm = pad2(date.getMonth() + 1);
@@ -71,11 +43,6 @@ export const formatStamp = (date: Date = new Date()): string => {
   return `${yyyy}-${mm}-${dd}_${HH}-${MM}-${SS}-${ms3}`;
 };
 
-/**
- * Create `auto/` and `safety/` if missing. Idempotent — `makeDirectoryAsync`
- * with `intermediates: true` is a no-op when the directory already exists
- * (verified at the test level). Spec §3.1.
- */
 export const ensureBackupDirs = async (): Promise<void> => {
   const autoDir = new Directory(AUTO_DIR);
   if (!autoDir.exists) {
@@ -87,16 +54,6 @@ export const ensureBackupDirs = async (): Promise<void> => {
   }
 };
 
-/**
- * Convert a raw file listing to a typed `Snapshot[]`. Newest-first by
- * ISO prefix. Defensive: skips entries that fail `getInfoAsync` (e.g. the
- * file was deleted between readdir and stat — happens under concurrent
- * prune).
- *
- * Filters by the prefix matching `kind` — auto listings ignore safety
- * filenames and vice versa, so a misfiled file can never be mistaken for
- * a snapshot of the other kind.
- */
 const toSnapshots = async (
   dirPath: string,
   kind: 'auto' | 'safety',
@@ -121,43 +78,22 @@ const toSnapshots = async (
   return out;
 };
 
-/**
- * List the rolling auto snapshots, newest-first. Always includes any
- * snapshots present on disk — callers must check `length` against the
- * cap and prune if needed.
- */
 export const listAutoSnapshots = async (): Promise<Snapshot[]> => {
   return toSnapshots(AUTO_DIR, 'auto');
 };
 
-/**
- * List the safety copies (pre-restore), newest-first. These are NEVER
- * pruned by the rolling policy.
- */
 export const listSafetyCopies = async (): Promise<Snapshot[]> => {
   return toSnapshots(SAFETY_DIR, 'safety');
 };
 
-/**
- * Most recent safety copy, or `null` if none exist. Used by the restore
- * pipeline for rollback when the live overwrite fails.
- */
 export const findLatestSafetyCopy = async (): Promise<Snapshot | null> => {
   const list = await listSafetyCopies();
   return list[0] ?? null;
 };
 
-/**
- * Delete the oldest snapshots so that `keep` remain (newest). ISO-prefixed
- * filenames sort chronologically, so the first slice is the oldest.
- *
- * Safety copies live in a different directory and are physically
- * incapable of being pruned by this routine. `idempotent: true` on
- * `deleteAsync` swallows races if a file disappears mid-prune.
- *
- * Spec §3.5.
- */
-export const pruneAutoSnapshots = async (keep: number = ROLLING_KEEP): Promise<void> => {
+export const pruneAutoSnapshots = async (
+  keep: number = ROLLING_KEEP,
+): Promise<void> => {
   const list = await listAutoSnapshots();
   if (list.length <= keep) return;
   const toDelete = list.slice(keep);
@@ -173,18 +109,9 @@ export const pruneAutoSnapshots = async (keep: number = ROLLING_KEEP): Promise<v
   }
 };
 
-/**
- * Pre-flight disk-space check. Throws `insufficient_disk` if free space is
- * less than 5× the DB size — the spec's safety margin to avoid a half-
- * written snapshot if the device is near full.
- *
- * Spec §3.3. Falls back to a no-op when `getFreeDiskStorageAsync` is
- * unavailable (it throws on some web targets); the snapshot still proceeds.
- */
 const assertDiskSpace = async (): Promise<void> => {
   const dbFile = new File(DB_PATH);
   if (!dbFile.exists || dbFile.size === 0) {
-    // No DB on disk yet — nothing to snapshot. Caller should bail.
     throw {
       kind: 'insufficient_disk',
       freeBytes: 0,
@@ -196,8 +123,6 @@ const assertDiskSpace = async (): Promise<void> => {
   try {
     freeBytes = Paths.availableDiskSpace;
   } catch {
-    // Disk-space query unavailable (web, simulator quirks); let the
-    // snapshot proceed. The OS will surface a real error on the copy.
     return;
   }
   const needBytes = dbBytes * 5;
@@ -210,25 +135,9 @@ const assertDiskSpace = async (): Promise<void> => {
   }
 };
 
-/**
- * Copy the live DB to `auto/<stamp>.db`. Caller is responsible for
- * deciding when to call this (scheduler / counter / manual).
- *
- * Steps per spec §3.4:
- *   1. disk-space pre-flight
- *   2. `PRAGMA wal_checkpoint(TRUNCATE)` — a snapshot of an unflushed WAL
- *      is corrupt on restore.
- *   3. `copyAsync` (NOT atomic — see spec §10 "App killed during snapshot")
- *   4. prune to 7
-
- *   5. write `last_backup_at` to AsyncStorage
- *   6. reset the counter
- *
- * Returns `Result` rather than throwing for the user-recoverable cases
- * (insufficient disk) so the caller can render a Toast. Throws for
- * truly unexpected errors (FileSystem failure, etc.).
- */
-export const createLocalSnapshot = async (): Promise<Result<Snapshot, BackupError>> => {
+export const createLocalSnapshot = async (): Promise<
+  Result<Snapshot, BackupError>
+> => {
   await ensureBackupDirs();
 
   try {
@@ -296,47 +205,34 @@ export const createLocalSnapshot = async (): Promise<Result<Snapshot, BackupErro
   };
 };
 
-/**
- * Snapshot taken immediately before a destructive restore. Lives in
- * `safety/` and is NEVER pruned. The newest safety copy is used as the
- * rollback target if the live overwrite fails mid-write.
- *
- * Returns the safety copy record on success, `null` if the source DB
- * doesn't exist (first-ever run, no point in a safety copy of nothing).
- */
-export const createPreRestoreSafetyCopy = async (): Promise<Snapshot | null> => {
-  await ensureBackupDirs();
+export const createPreRestoreSafetyCopy =
+  async (): Promise<Snapshot | null> => {
+    await ensureBackupDirs();
 
-  const dbFile = new File(DB_PATH);
-  if (!dbFile.exists) return null;
+    const dbFile = new File(DB_PATH);
+    if (!dbFile.exists) return null;
 
-  // WAL checkpoint first so the safety copy is internally consistent
-  // — same rule as the auto snapshot.
-  try {
-    await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
-  } catch {
-    // Best-effort: a safety copy of a live WAL may not be perfect, but
-    // it's better than overwriting without any rollback path.
-  }
+    try {
+      await db.execAsync('PRAGMA wal_checkpoint(TRUNCATE);');
+    } catch {
+      // Best-effort: a safety copy of a live WAL may not be perfect, but
+      // it's better than overwriting without any rollback path.
+    }
 
-  const stamp = formatStamp();
-  const filename = `${SAFETY_PREFIX}${stamp}.db`;
-  const dest = `${SAFETY_DIR}${filename}`;
-  const destFile = new File(dest);
-  await dbFile.copy(destFile);
+    const stamp = formatStamp();
+    const filename = `${SAFETY_PREFIX}${stamp}.db`;
+    const dest = `${SAFETY_DIR}${filename}`;
+    const destFile = new File(dest);
+    await dbFile.copy(destFile);
 
-  return {
-    path: dest,
-    bytes: destFile.size,
-    createdAt: Date.now(),
-    kind: 'safety',
+    return {
+      path: dest,
+      bytes: destFile.size,
+      createdAt: Date.now(),
+      kind: 'safety',
+    };
   };
-};
 
-/**
- * Public path helpers. Tests use these to assert against the layout
- * without re-deriving strings.
- */
 export const PATHS = {
   DB_PATH,
   DB_DIR,
@@ -345,10 +241,6 @@ export const PATHS = {
   SAFETY_DIR,
 } as const;
 
-/**
- * Probe the DB at `filePath` with a fresh read-only handle (spec §6).
- * Exposed so the restore pipeline can use the same connection pattern as
- * the integrity checker. Not exported in `index.ts`.
- */
-export const openProbeDatabase = (filePath: string): Promise<SQLite.SQLiteDatabase> =>
-  SQLite.openDatabaseAsync(filePath);
+export const openProbeDatabase = (
+  filePath: string,
+): Promise<SQLite.SQLiteDatabase> => SQLite.openDatabaseAsync(filePath);

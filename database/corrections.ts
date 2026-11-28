@@ -65,7 +65,7 @@ interface RawSaleCorrectionLineRow {
   price_delta: number;
 }
 
-interface RawSaleCorrectionReporrtRow extends RawSaleCorrectionRow {}
+interface RawSaleCorrectionReportRow extends RawSaleCorrectionRow {}
 
 const mapRow = (row: RawSaleCorrectionRow): SaleCorrection => ({
   id: row.id,

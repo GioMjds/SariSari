@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as AuthSession from 'expo-auth-session';
-import { getSalesCount } from '@/database/sales';
 import {
   createLocalSnapshot,
   exchangeCodeForTokens,
@@ -37,28 +36,9 @@ export const backupKeys = {
 
 export const useSchedulerInputs = () => {
   const { profile } = useProfile();
-  const [salesCount, setSalesCount] = useState<number>(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const count = await getSalesCount();
-        if (!cancelled) setSalesCount(count);
-      } catch {}
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const storeName = profile?.storeName ?? null;
   const ownerName = profile?.ownerName ?? null;
-
-  return useMemo(
-    () => ({ storeName, ownerName, salesCount }),
-    [storeName, ownerName, salesCount],
-  );
+  return useMemo(() => ({ storeName, ownerName }), [storeName, ownerName]);
 };
 
 export const useLocalSnapshots = () =>
@@ -314,4 +294,3 @@ export const useBackup = () => {
     isCreating: backupNow.isPending,
   };
 };
-

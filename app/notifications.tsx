@@ -1,36 +1,42 @@
-import { withProf } from '@/utils/perf';
-import { useCallback, useMemo, useState } from 'react';
-import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
-import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FontAwesome } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { Href, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useTranslation } from 'react-i18next';
-import { StyledText } from '@/components/elements';
-import { MoreDetailHeader } from '@/components/more';
 import { FollowUpSheet } from '@/components/customers/FollowUpSheet';
+import { StyledText } from '@/components/elements';
 import { RestockSheet } from '@/components/inventory/modals';
+import { MoreDetailHeader } from '@/components/more';
 import {
   AlertCard,
   NotificationsHero,
   summarizeAlerts,
   type AlertActionKind,
 } from '@/components/notifications';
-import { useHomeAlerts } from '@/hooks/useHomeAlerts';
 import {
   useMarkCollectionContacted,
   useSetCollectionFollowUp,
 } from '@/hooks/useCredits';
+import { useHomeAlerts } from '@/hooks/useHomeAlerts';
 import type {
   DynamicHomeAlert,
   HomeAlertType,
 } from '@/hooks/useSystemNotifications';
+import { withProf } from '@/utils/perf';
+import { FontAwesome } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { Href, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AccessibilityInfo, Pressable, ScrollView, View } from 'react-native';
+import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Filter = 'all' | 'stock' | 'utang';
 
-const FILTERS: { key: Filter; labelKey: string; types: HomeAlertType[] }[] = [
+type FilterDef = {
+  key: Filter;
+  labelKey: string;
+  types: HomeAlertType[];
+};
+
+const FILTERS: FilterDef[] = [
   { key: 'all', labelKey: 'filterAll', types: [] },
   { key: 'stock', labelKey: 'filterStock', types: ['low_stock'] },
   {
@@ -40,6 +46,10 @@ const FILTERS: { key: Filter; labelKey: string; types: HomeAlertType[] }[] = [
   },
 ];
 
+const FILTER_BY_KEY: Record<Filter, FilterDef> = Object.fromEntries(
+  FILTERS.map((f) => [f.key, f]),
+) as Record<Filter, FilterDef>;
+
 type Row =
   | { kind: 'header'; key: string; urgent: boolean; count: number }
   | { kind: 'alert'; key: string; alert: DynamicHomeAlert };
@@ -47,222 +57,149 @@ type Row =
 const PALENGKE_MIN_ITEMS = 3;
 const CONTENT_MAX_WIDTH = 560;
 
-const matches = (f: (typeof FILTERS)[number], a: DynamicHomeAlert) =>
-  f.types.length === 0 || f.types.includes(a.type);
+type Translator = ReturnType<typeof useTranslation>['t'];
 
-function NotificationsScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { t } = useTranslation('notifications');
-  const { alerts, isLoading, isError, refetch } = useHomeAlerts();
-  const [filter, setFilter] = useState<Filter>('all');
-  // Held as an object so RestockSheet sees a stable reference and keeps its form state.
-  const [restockTarget, setRestockTarget] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  // Mounted on first use only: the sheet reads every product and supplier.
-  const [restockMounted, setRestockMounted] = useState(false);
-  const [followUpFor, setFollowUpFor] = useState<DynamicHomeAlert | null>(
-    null,
-  );
+function matchesFilter(filter: Filter, alert: DynamicHomeAlert): boolean {
+  const { types } = FILTER_BY_KEY[filter];
+  return types.length === 0 || types.includes(alert.type);
+}
 
-  const { mutate: setFollowUp } = useSetCollectionFollowUp();
-  const {
-    mutate: markContacted,
-    isPending: isMarking,
-    variables: markingId,
-  } = useMarkCollectionContacted();
-
-  const summary = useMemo(() => summarizeAlerts(alerts), [alerts]);
-  const stockCount = summary.out + summary.low;
-
-  const rows = useMemo<Row[]>(() => {
-    const active = FILTERS.find((f) => f.key === filter)!;
-    const visible = alerts.filter((a) => matches(active, a));
-    const out: Row[] = [];
-    for (const urgent of [true, false]) {
-      const group = visible.filter((a) => a.urgent === urgent);
-      if (group.length === 0) continue;
-      out.push({
-        kind: 'header',
-        key: `h:${urgent}`,
-        urgent,
-        count: group.length,
-      });
-      for (const a of group) out.push({ kind: 'alert', key: a.id, alert: a });
+function buildRows(alerts: DynamicHomeAlert[], filter: Filter): Row[] {
+  const visible = alerts.filter((a) => matchesFilter(filter, a));
+  const rows: Row[] = [];
+  for (const urgent of [true, false] as const) {
+    const group = visible.filter((a) => a.urgent === urgent);
+    if (group.length === 0) continue;
+    rows.push({
+      kind: 'header',
+      key: `h:${urgent}`,
+      urgent,
+      count: group.length,
+    });
+    for (const alert of group) {
+      rows.push({ kind: 'alert', key: alert.id, alert });
     }
-    return out;
-  }, [alerts, filter]);
+  }
+  return rows;
+}
 
-  const handleBack = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/home' as Href);
-  }, [router]);
-
-  const handleAction = useCallback(
-    (alert: DynamicHomeAlert, kind: AlertActionKind) => {
-      const id = alert.entityId;
-      const productPath = `/(edit-forms)/product-details/${id}` as Href;
-      const ledgerPath = `/(edit-forms)/credit-details/${id}` as Href;
-
-      if (kind === 'followUp') {
-        setFollowUpFor(alert);
-        return;
-      }
-      if (alert.type === 'low_stock') {
-        if (kind === 'primary') {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
-            () => {},
-          );
-          setRestockMounted(true);
-          setRestockTarget({ id, name: alert.title });
-        } else router.push(productPath);
-        return;
-      }
-      if (kind === 'primary') {
-        router.push(`/(edit-forms)/add-payment/${id}` as Href);
-      } else if (kind === 'secondary' && alert.type === 'overdue_debts') {
-        // Success haptic only once the contact is saved, so a failed write never feels done.
-        markContacted(id, {
-          onSuccess: () =>
-            void Haptics.notificationAsync(
-              Haptics.NotificationFeedbackType.Success,
-            ).catch(() => {}),
-        });
-      } else {
-        router.push(ledgerPath);
-      }
-    },
-    [router, markContacted],
-  );
-
-  const handleSelectFollowUp = useCallback(
-    (followUpBy: string | null) => {
-      if (followUpFor) {
-        setFollowUp({ customerId: followUpFor.entityId, followUpBy });
-      }
-      setFollowUpFor(null);
-    },
-    [followUpFor, setFollowUp],
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Row }) =>
-      item.kind === 'header' ? (
-        <View
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={`${t(item.urgent ? 'sectionUrgent' : 'sectionWatch')}, ${item.count}`}
-          className="px-4 pt-4 pb-1.5 flex-row items-center"
-        >
-          <StyledText variant="extrabold" className="text-ink-800 text-base">
-            {t(item.urgent ? 'sectionUrgent' : 'sectionWatch')}
-          </StyledText>
-          <View
-            className={`ml-2 min-w-6 px-2 py-0.5 rounded-full items-center ${
-              item.urgent ? 'bg-semantic-danger' : 'bg-paper-400'
-            }`}
-          >
-            <StyledText
-              variant="extrabold"
-              className={`text-xs ${item.urgent ? 'text-white' : 'text-ink-700'}`}
-            >
-              {item.count}
-            </StyledText>
-          </View>
-        </View>
-      ) : (
-        <Animated.View entering={FadeIn.duration(200)}>
-          <AlertCard
-            alert={item.alert}
-            isBusy={isMarking && markingId === item.alert.entityId}
-            onAction={handleAction}
-          />
-        </Animated.View>
-      ),
-    [t, isMarking, markingId, handleAction],
-  );
-
-  // The resolved card leaves the list, so say what happened instead of dropping focus.
-  const handleRestocked = useCallback(() => {
-    if (restockTarget) {
-      AccessibilityInfo.announceForAccessibility(
-        t('announceRestocked', { name: restockTarget.name }),
-      );
+function buildFilterCounts(alerts: DynamicHomeAlert[]): Record<Filter, number> {
+  const counts: Record<Filter, number> = { all: 0, stock: 0, utang: 0 };
+  for (const alert of alerts) {
+    for (const { key } of FILTERS) {
+      if (matchesFilter(key, alert)) counts[key] += 1;
     }
-  }, [restockTarget, t]);
+  }
+  return counts;
+}
 
-  const showPalengke =
-    !isError &&
-    stockCount >= PALENGKE_MIN_ITEMS &&
-    (filter === 'all' || filter === 'stock');
-  const subtitle = isError
-    ? undefined
-    : isLoading
-      ? t('heroLoading')
-      : alerts.length === 0
-        ? t('subtitleClear')
-        : t('subtitle', { count: alerts.length });
+function getSubtitle(
+  t: Translator,
+  state: { isError: boolean; isLoading: boolean; alertCount: number },
+): string | undefined {
+  if (state.isError) return undefined;
+  if (state.isLoading) return t('heroLoading');
+  if (state.alertCount === 0) return t('subtitleClear');
+  return t('subtitle', { count: state.alertCount });
+}
 
-  const listHeader = (
-    <>
-      <NotificationsHero
-        total={alerts.length}
-        summary={summary}
-        isLoading={isLoading}
-        isError={isError}
-        onRetry={refetch}
-      />
-      {!isError && alerts.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-          className="mt-2"
-          accessibilityRole="tablist"
+function shouldShowPalengke(state: {
+  isError: boolean;
+  stockCount: number;
+  filter: Filter;
+}): boolean {
+  if (state.isError) return false;
+  if (state.stockCount < PALENGKE_MIN_ITEMS) return false;
+  return state.filter === 'all' || state.filter === 'stock';
+}
+
+function SectionHeader({
+  urgent,
+  count,
+  t,
+}: {
+  urgent: boolean;
+  count: number;
+  t: Translator;
+}) {
+  const labelKey = urgent ? 'sectionUrgent' : 'sectionWatch';
+  return (
+    <View
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={`${t(labelKey)}, ${count}`}
+      className="px-4 pt-4 pb-1.5 flex-row items-center"
+    >
+      <StyledText variant="extrabold" className="text-ink-800 text-base">
+        {t(labelKey)}
+      </StyledText>
+      <View
+        className={`ml-2 min-w-6 px-2 py-0.5 rounded-full items-center ${
+          urgent ? 'bg-semantic-danger' : 'bg-paper-400'
+        }`}
+      >
+        <StyledText
+          variant="extrabold"
+          className={`text-xs ${urgent ? 'text-white' : 'text-ink-700'}`}
         >
-          {FILTERS.map((f) => {
-            const count = alerts.filter((a) => matches(f, a)).length;
-            const active = filter === f.key;
-            const label = t(f.labelKey);
-            return (
-              <Pressable
-                key={f.key}
-                onPress={() => {
-                  Haptics.selectionAsync().catch(() => {});
-                  setFilter(f.key);
-                }}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={t('filterA11y', { label, count })}
-                className={`min-h-11 px-4 rounded-full border flex-row items-center ${
-                  active
-                    ? 'bg-ink-900 border-ink-900'
-                    : 'bg-paper-50 border-paper-300 active:bg-paper-100'
-                }`}
-              >
-                <StyledText
-                  variant="semibold"
-                  className={`text-sm ${active ? 'text-paper-50' : 'text-ink-700'}`}
-                >
-                  {label}
-                </StyledText>
-                <StyledText
-                  variant="extrabold"
-                  className={`text-sm ml-1.5 ${active ? 'text-paper-200' : 'text-ink-400'}`}
-                >
-                  {count}
-                </StyledText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
-    </>
+          {count}
+        </StyledText>
+      </View>
+    </View>
   );
+}
 
-  const listFooter = showPalengke ? (
+function FilterChip({
+  label,
+  count,
+  active,
+  onPress,
+  accessibilityLabel,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={accessibilityLabel}
+      className={`min-h-11 px-4 rounded-full border flex-row items-center ${
+        active
+          ? 'bg-ink-900 border-ink-900'
+          : 'bg-paper-50 border-paper-300 active:bg-paper-100'
+      }`}
+    >
+      <StyledText
+        variant="semibold"
+        className={`text-sm ${active ? 'text-paper-50' : 'text-ink-700'}`}
+      >
+        {label}
+      </StyledText>
+      <StyledText
+        variant="extrabold"
+        className={`text-sm ml-1.5 ${active ? 'text-paper-200' : 'text-ink-400'}`}
+      >
+        {count}
+      </StyledText>
+    </Pressable>
+  );
+}
+
+function PalengkeFooter({
+  stockCount,
+  onPress,
+  t,
+}: {
+  stockCount: number;
+  onPress: () => void;
+  t: Translator;
+}) {
+  return (
     <View className="mx-4 mt-4 p-4 rounded-2xl border border-dashed border-ink-300 bg-paper-100">
       <View className="flex-row items-center">
         <FontAwesome
@@ -278,7 +215,7 @@ function NotificationsScreen() {
         {t('palengkeBody', { count: stockCount })}
       </StyledText>
       <Pressable
-        onPress={() => router.push('/settings/palengke-sheet' as Href)}
+        onPress={onPress}
         accessibilityRole="button"
         className="mt-3 min-h-12 rounded-xl border border-cinnamon-500 bg-paper-50 active:bg-cinnamon-50 items-center justify-center"
       >
@@ -287,6 +224,176 @@ function NotificationsScreen() {
         </StyledText>
       </Pressable>
     </View>
+  );
+}
+
+function NotificationsScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { t } = useTranslation('notifications');
+  const { alerts, isLoading, isError, refetch } = useHomeAlerts();
+  const [filter, setFilter] = useState<Filter>('all');
+  const [restockTarget, setRestockTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [restockMounted, setRestockMounted] = useState(false);
+  const [followUpFor, setFollowUpFor] = useState<DynamicHomeAlert | null>(null);
+
+  const { mutate: setFollowUp } = useSetCollectionFollowUp();
+  const {
+    mutate: markContacted,
+    isPending: isMarking,
+    variables: markingId,
+  } = useMarkCollectionContacted();
+
+  const summary = useMemo(() => summarizeAlerts(alerts), [alerts]);
+  const stockCount = summary.out + summary.low;
+  const rows = useMemo(() => buildRows(alerts, filter), [alerts, filter]);
+  const filterCounts = useMemo(() => buildFilterCounts(alerts), [alerts]);
+
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/home' as Href);
+  }, [router]);
+
+  const openRestock = useCallback((alert: DynamicHomeAlert) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setRestockMounted(true);
+    setRestockTarget({ id: alert.entityId, name: alert.title });
+  }, []);
+
+  const handleStockAlert = useCallback(
+    (alert: DynamicHomeAlert, kind: AlertActionKind) => {
+      if (kind === 'primary') openRestock(alert);
+      else
+        router.push(`/(edit-forms)/product-details/${alert.entityId}` as Href);
+    },
+    [openRestock, router],
+  );
+
+  const handleCreditAlert = useCallback(
+    (alert: DynamicHomeAlert, kind: AlertActionKind) => {
+      const id = alert.entityId;
+      if (kind === 'primary') {
+        router.push(`/(edit-forms)/add-payment/${id}` as Href);
+        return;
+      }
+      if (kind === 'secondary' && alert.type === 'overdue_debts') {
+        markContacted(id, {
+          onSuccess: () =>
+            void Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Success,
+            ).catch(() => {}),
+        });
+        return;
+      }
+      router.push(`/(edit-forms)/credit-details/${id}` as Href);
+    },
+    [router, markContacted],
+  );
+
+  const handleAction = useCallback(
+    (alert: DynamicHomeAlert, kind: AlertActionKind) => {
+      if (kind === 'followUp') {
+        setFollowUpFor(alert);
+        return;
+      }
+      if (alert.type === 'low_stock') handleStockAlert(alert, kind);
+      else handleCreditAlert(alert, kind);
+    },
+    [handleStockAlert, handleCreditAlert],
+  );
+
+  const handleSelectFollowUp = useCallback(
+    (followUpBy: string | null) => {
+      if (followUpFor) {
+        setFollowUp({ customerId: followUpFor.entityId, followUpBy });
+      }
+      setFollowUpFor(null);
+    },
+    [followUpFor, setFollowUp],
+  );
+
+  const handleRestocked = useCallback(() => {
+    if (restockTarget) {
+      AccessibilityInfo.announceForAccessibility(
+        t('announceRestocked', { name: restockTarget.name }),
+      );
+    }
+  }, [restockTarget, t]);
+
+  const handleFilterChange = useCallback((next: Filter) => {
+    Haptics.selectionAsync().catch(() => {});
+    setFilter(next);
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Row }) =>
+      item.kind === 'header' ? (
+        <SectionHeader urgent={item.urgent} count={item.count} t={t} />
+      ) : (
+        <Animated.View entering={FadeIn.duration(200)}>
+          <AlertCard
+            alert={item.alert}
+            isBusy={isMarking && markingId === item.alert.entityId}
+            onAction={handleAction}
+          />
+        </Animated.View>
+      ),
+    [t, isMarking, markingId, handleAction],
+  );
+
+  const showPalengke = shouldShowPalengke({ isError, stockCount, filter });
+  const subtitle = getSubtitle(t, {
+    isError,
+    isLoading,
+    alertCount: alerts.length,
+  });
+  const showFilterStrip = !isError && alerts.length > 0;
+
+  const listHeader = (
+    <>
+      <NotificationsHero
+        total={alerts.length}
+        summary={summary}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+      />
+      {showFilterStrip ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+          className="mt-2"
+          accessibilityRole="tablist"
+        >
+          {FILTERS.map(({ key, labelKey }) => {
+            const label = t(labelKey);
+            const count = filterCounts[key];
+            return (
+              <FilterChip
+                key={key}
+                label={label}
+                count={count}
+                active={filter === key}
+                onPress={() => handleFilterChange(key)}
+                accessibilityLabel={t('filterA11y', { label, count })}
+              />
+            );
+          })}
+        </ScrollView>
+      ) : null}
+    </>
+  );
+
+  const listFooter = showPalengke ? (
+    <PalengkeFooter
+      stockCount={stockCount}
+      onPress={() => router.push('/settings/palengke-sheet' as Href)}
+      t={t}
+    />
   ) : null;
 
   return (
@@ -316,7 +423,6 @@ function NotificationsScreen() {
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        // Capped and centered so tablets get a readable column; side insets clear landscape cutouts.
         contentContainerStyle={{
           width: '100%',
           maxWidth: CONTENT_MAX_WIDTH,

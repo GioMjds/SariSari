@@ -1,4 +1,11 @@
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  ComponentProps,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { Platform, ScrollViewProps, StyleProp, ViewStyle } from 'react-native';
 import {
   Gesture,
@@ -16,6 +23,12 @@ import { PullToRefreshHeader } from './LoadingBar';
 import { scheduleOnRN } from 'react-native-worklets';
 
 const AnimatedRNGHScrollView = Animated.createAnimatedComponent(RNGHScrollView);
+
+// Reanimated's prop types clash with RN's under exactOptionalPropertyTypes (id, hitSlop), so cast the spread.
+type AnimatedScrollViewProps = Omit<
+  ComponentProps<typeof AnimatedRNGHScrollView>,
+  'key'
+>;
 
 interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'onScroll'> {
   isRefreshing: boolean;
@@ -109,7 +122,7 @@ export function RefreshableScrollView({
           refreshThreshold={refreshThreshold}
         />
         <AnimatedRNGHScrollView
-          {...scrollViewProps}
+          {...(scrollViewProps as AnimatedScrollViewProps)}
           ref={scrollRef}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
