@@ -107,7 +107,15 @@ const CASH_MOVEMENTS_VIEW_SQL = `
            cash_drawer_delta,
            'E-service ' || transaction_type
       FROM digital_transactions
-     WHERE voided_at IS NULL AND cash_drawer_delta <> 0`;
+     WHERE voided_at IS NULL AND cash_drawer_delta <> 0
+    UNION ALL
+    SELECT 'supplier_payment',
+           CAST(id AS TEXT),
+           business_date,
+           -amount,
+           'Supplier payment (cash)'
+      FROM supplier_payments
+     WHERE payment_method = 'cash'`;
 
 export const initDigitalServicesTables = async (): Promise<void> => {
   await db.execAsync(`

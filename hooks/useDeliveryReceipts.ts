@@ -17,6 +17,7 @@ import type {
   DeliveryReceiptStatus,
   SaveDeliveryDraftInput,
 } from '@/types/deliveries.types';
+import type { CommitPaymentChoice } from '@/types/supplierPayables.types';
 
 // Screens never import database/, so the named receiving errors and the
 // shortage-line row type are re-exported from here.
@@ -125,8 +126,13 @@ function invalidateAfterStockChange(
 export function useCommitDeliveryReceipt() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (receiptId: number) => commitDeliveryReceipt(receiptId),
-    onSuccess: () => invalidateAfterStockChange(queryClient),
+    mutationFn: (v: { receiptId: number; payment?: CommitPaymentChoice }) =>
+      commitDeliveryReceipt(v.receiptId, v.payment),
+    onSuccess: () => {
+      invalidateAfterStockChange(queryClient);
+      void queryClient.invalidateQueries({ queryKey: ['supplier-payables'] });
+      void queryClient.invalidateQueries({ queryKey: ['digital-services'] });
+    },
   });
 }
 
@@ -136,7 +142,10 @@ export function useVoidDeliveryReceipt() {
   return useMutation({
     mutationFn: (v: { receiptId: number; reason: string }) =>
       voidDeliveryReceipt(v.receiptId, v.reason),
-    onSuccess: () => invalidateAfterStockChange(queryClient),
+    onSuccess: () => {
+      invalidateAfterStockChange(queryClient);
+      void queryClient.invalidateQueries({ queryKey: ['supplier-payables'] });
+    },
   });
 }
 

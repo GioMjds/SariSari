@@ -77,7 +77,8 @@ export interface CashMovement {
     | 'utang_payment'
     | 'expense'
     | 'owner_drawing'
-    | 'e_service';
+    | 'e_service'
+    | 'supplier_payment';
   sourceId: string;
   businessDate: string;
   amountDelta: number;

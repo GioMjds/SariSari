@@ -47,6 +47,14 @@ export const getTodayDateString = (): string => {
   return `${year}-${month}-${day}`;
 };
 
+/** Local YYYY-MM-DD of an ISO timestamp, plus a number of days. */
+export const addDaysToDate = (iso: string, days: number): string => {
+  const d = new Date(iso);
+  d.setDate(d.getDate() + days);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 /**
  * Alternative: Store timestamps with offset information
  * Returns ISO string that includes local timezone info

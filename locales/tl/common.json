@@ -270,7 +270,12 @@
       "overdue_other": "{{count}} suki ang lagpas na sa bayad",
       "overdueSub": "{{amount}} ang lagpas na",
       "clearTitle": "Ayos ang lahat",
-      "clearSub": "Maayos ang stock at utang."
+      "clearSub": "Maayos ang stock at utang.",
+      "supplierOverdue_one": "{{count}} bayad sa supplier ang lampas na",
+      "supplierOverdue_other": "{{count}} bayad sa supplier ang lampas na",
+      "supplierDueSoon_one": "{{count}} bayad sa supplier ang malapit na",
+      "supplierDueSoon_other": "{{count}} bayad sa supplier ang malapit na",
+      "supplierDueSub": "{{amount}} ang babayaran. Buksan ang utang sa supplier."
     },
     "money": {
       "title": "Pera ngayong araw",

@@ -12,7 +12,14 @@ import type {
   SaveDeliveryDraftInput,
   SupplierShortageRow,
 } from '../types/deliveries.types';
+import type { CommitPaymentChoice } from '../types/supplierPayables.types';
 import { applyInventoryTransaction } from './inventory';
+import { addDaysToDate } from '../utils/timezone';
+import {
+  cancelReceiptPayableTx,
+  insertPayableTx,
+  insertSupplierPaymentTx,
+} from './supplierPayables';
 
 export class ReceiptNotDraftError extends Error {
   receiptId: number;
@@ -99,6 +106,7 @@ interface ReceiptRow {
   invoice_no: string | null;
   invoice_photo_uri: string | null;
   note: string | null;
+  received_at: string | null;
   created_at: string;
   committed_at: string | null;
   voided_at: string | null;
@@ -446,19 +454,23 @@ const commitsInFlight = new Set<number>();
 
 export const commitDeliveryReceipt = async (
   receiptId: number,
+  payment?: CommitPaymentChoice,
 ): Promise<void> => {
   if (commitsInFlight.has(receiptId)) {
     throw new ReceiptNotDraftError(receiptId, 'being committed');
   }
   commitsInFlight.add(receiptId);
   try {
-    await runCommit(receiptId);
+    await runCommit(receiptId, payment);
   } finally {
     commitsInFlight.delete(receiptId);
   }
 };
 
-const runCommit = async (receiptId: number): Promise<void> => {
+const runCommit = async (
+  receiptId: number,
+  payment?: CommitPaymentChoice,
+): Promise<void> => {
   await db.withTransactionAsync(async () => {
     const receipt = await getReceiptRow(receiptId);
     if (!receipt) throw new Error(`Delivery receipt ${receiptId} not found`);
@@ -511,7 +523,49 @@ const runCommit = async (receiptId: number): Promise<void> => {
     if (flipped.changes !== 1) {
       throw new ReceiptNotDraftError(receiptId, 'not a draft');
     }
+
+    await recordReceiptPayable(receiptId, receipt.supplier_id, receipt.received_at, payment);
   });
+};
+
+/**
+ * Creates the supplier debt for a committed receipt at the invoice amount.
+ * Without an explicit choice, suppliers with terms default to Pay later and
+ * suppliers without terms to Paid now (cash). Runs inside the commit transaction.
+ */
+const recordReceiptPayable = async (
+  receiptId: number,
+  supplierId: string,
+  receivedAt: string | null,
+  payment?: CommitPaymentChoice,
+): Promise<void> => {
+  const total = await db.getFirstAsync<{ total: number }>(
+    'SELECT COALESCE(SUM(entered_received_qty * entered_unit_cost), 0) AS total FROM delivery_receipt_lines WHERE receipt_id = ?',
+    [receiptId],
+  );
+  const amount = total?.total ?? 0;
+  if (amount <= 0) return;
+
+  const supplier = await db.getFirstAsync<{ payment_terms_days: number | null }>(
+    'SELECT payment_terms_days FROM suppliers WHERE id = ?',
+    [supplierId],
+  );
+  const terms = supplier?.payment_terms_days ?? null;
+  const paidNow = payment?.paidNow ?? terms === null;
+  const dueDate = paidNow
+    ? null
+    : (payment?.dueDate ??
+      (terms !== null ? addDaysToDate(receivedAt ?? new Date().toISOString(), terms) : null));
+
+  await insertPayableTx(supplierId, receiptId, amount, dueDate);
+  if (paidNow) {
+    await insertSupplierPaymentTx({
+      supplierId,
+      amount,
+      paymentMethod: 'cash',
+      notes: `Paid on delivery, receipt #${receiptId}`,
+    });
+  }
 };
 
 // withTransactionAsync is not exclusive, so overlapping voids of one receipt must be rejected here.
@@ -580,6 +634,7 @@ const runVoid = async (
         onHand: t.on_hand,
       }));
     if (shortfalls.length > 0) throw new VoidWouldGoNegativeError(shortfalls);
+    await cancelReceiptPayableTx(receiptId);
 
     for (const t of totals) {
       await applyInventoryTransaction({

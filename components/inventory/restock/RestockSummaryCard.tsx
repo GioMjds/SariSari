@@ -9,6 +9,7 @@ interface RestockSummaryCardProps {
   buyCount: number;
   estimatedTotal: number;
   onReceiveDelivery: () => void;
+  onOpenPayables: () => void;
 }
 
 // Explains the Restock tab and totals the current buy list.
@@ -16,6 +17,7 @@ export function RestockSummaryCard({
   buyCount,
   estimatedTotal,
   onReceiveDelivery,
+  onOpenPayables,
 }: RestockSummaryCardProps) {
   const { t } = useTranslation('inventory');
   const { t: tReceiving } = useTranslation('receiving');
@@ -70,6 +72,26 @@ export function RestockSummaryCard({
           </StyledText>
           <StyledText variant="regular" className="text-xs text-ink-600">
             {t('restockDeliveryHint')}
+          </StyledText>
+        </View>
+        <FontAwesome name="chevron-right" size={12} color="#564E45" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={onOpenPayables}
+        accessibilityRole="button"
+        accessibilityLabel={tReceiving('payablesTitle')}
+        accessibilityHint={tReceiving('payablesLinkHint')}
+        className="min-h-[48px] px-4 bg-paper-100 border border-ink-200 rounded-xl flex-row items-center gap-x-3 active:bg-paper-200"
+      >
+        <FontAwesome name="book" size={16} color="#28231D" />
+        <View className="flex-1 py-2">
+          <StyledText variant="extrabold" className="text-sm text-ink-900">
+            {tReceiving('payablesTitle')}
+          </StyledText>
+          <StyledText variant="regular" className="text-xs text-ink-600">
+            {tReceiving('payablesLinkHint')}
           </StyledText>
         </View>
         <FontAwesome name="chevron-right" size={12} color="#564E45" />

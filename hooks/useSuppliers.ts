@@ -14,6 +14,7 @@ export interface InsertSupplierParams {
   name: string;
   contact?: string | null;
   notes?: string | null;
+  paymentTermsDays?: number | null;
   productIds?: number[];
 }
 
@@ -43,9 +44,9 @@ export function useSuppliers() {
 
   // Mutation: Insert a new supplier
   const insertSupplierMutation = useMutation({
-    mutationFn: ({ name, contact, notes, productIds }: InsertSupplierParams) =>
+    mutationFn: ({ name, contact, notes, paymentTermsDays, productIds }: InsertSupplierParams) =>
       createSupplierWithProducts(
-        { name, contact: contact ?? null, notes: notes ?? null },
+        { name, contact: contact ?? null, notes: notes ?? null, paymentTermsDays: paymentTermsDays ?? null },
         productIds ?? []
       ),
     onSuccess: () => {

@@ -270,7 +270,12 @@
       "overdue_other": "{{count}} suki overdue",
       "overdueSub": "{{amount}} past due",
       "clearTitle": "All caught up",
-      "clearSub": "Stock and utang look good."
+      "clearSub": "Stock and utang look good.",
+      "supplierOverdue_one": "{{count}} supplier payment overdue",
+      "supplierOverdue_other": "{{count}} supplier payments overdue",
+      "supplierDueSoon_one": "{{count}} supplier payment due soon",
+      "supplierDueSoon_other": "{{count}} supplier payments due soon",
+      "supplierDueSub": "{{amount}} to pay. Open supplier payables."
     },
     "money": {
       "title": "Money today",

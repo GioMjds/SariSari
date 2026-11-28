@@ -1188,4 +1188,63 @@ export async function runMigrations() {
     });
     console.log('Database migrated to v27.');
   }
+
+  if (currentVersion < 28) {
+    console.log('Running migration to v28 (Supplier payables)...');
+    await db.withTransactionAsync(async () => {
+      const cols = await db.getAllAsync<{ name: string }>(
+        'PRAGMA table_info(suppliers)',
+      );
+      // Fresh installs already get the column from initSuppliersTable.
+      if (!cols.some((c) => c.name === 'payment_terms_days')) {
+        await db.execAsync(
+          'ALTER TABLE suppliers ADD COLUMN payment_terms_days INTEGER;',
+        );
+      }
+
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS supplier_payables (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          supplier_id TEXT NOT NULL REFERENCES suppliers(id),
+          receipt_id INTEGER UNIQUE REFERENCES delivery_receipts(id),
+          amount INTEGER NOT NULL CHECK(amount > 0),
+          amount_paid INTEGER NOT NULL DEFAULT 0,
+          due_date TEXT,
+          created_at TEXT NOT NULL,
+          cancelled_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_supplier_payables_supplier
+          ON supplier_payables(supplier_id, cancelled_at);
+
+        CREATE TABLE IF NOT EXISTS supplier_payments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          supplier_id TEXT NOT NULL REFERENCES suppliers(id),
+          amount INTEGER NOT NULL CHECK(amount > 0),
+          payment_method TEXT NOT NULL
+            CHECK(payment_method IN ('cash', 'bank_transfer', 'other')),
+          business_date TEXT NOT NULL,
+          notes TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_supplier_payments_date
+          ON supplier_payments(business_date);
+        CREATE INDEX IF NOT EXISTS idx_supplier_payments_supplier
+          ON supplier_payments(supplier_id);
+
+        CREATE TABLE IF NOT EXISTS supplier_payment_allocations (
+          payment_id INTEGER NOT NULL
+            REFERENCES supplier_payments(id) ON DELETE CASCADE,
+          payable_id INTEGER NOT NULL REFERENCES supplier_payables(id),
+          amount INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_supplier_alloc_payment
+          ON supplier_payment_allocations(payment_id);
+        CREATE INDEX IF NOT EXISTS idx_supplier_alloc_payable
+          ON supplier_payment_allocations(payable_id);
+      `);
+
+      await db.execAsync('PRAGMA user_version = 28;');
+    });
+    console.log('Database migrated to v28.');
+  }
 }

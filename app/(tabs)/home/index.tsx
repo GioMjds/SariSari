@@ -29,6 +29,7 @@ const routes = {
   reports: '/settings/reports',
   cashEntries: '/settings/cash-entries',
   receipts: '/(tabs)/sales/receipts' as Href,
+  supplierPayables: '/(edit-forms)/supplier-payables' as Href,
 } satisfies Record<HomeDestination, Href>;
 
 const SALE_DETAILS = '/(edit-forms)/sale-details/';

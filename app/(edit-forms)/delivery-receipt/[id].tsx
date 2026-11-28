@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { Sheet } from '@/components/ui';
+import { CommitPaymentChoice } from '@/components/receiving/CommitPaymentChoice';
 import { DeliveryLineRow } from '@/components/receiving/DeliveryLineRow';
 import { ProductPickerSheet } from '@/components/receiving/ProductPickerSheet';
 import { deliveryErrorMessage } from '@/components/receiving/deliveryErrors';
@@ -51,6 +52,7 @@ import {
 import { convertDeliveryLine, costChange } from '@/lib/deliveryReceipt';
 import { formatPesos } from '@/lib/money';
 import { useToastStore } from '@/stores';
+import { addDaysToDate } from '@/utils/timezone';
 import type {
   DeliveryLineInput,
   DeliveryReceiptDetail,
@@ -107,6 +109,9 @@ function DeliveryReceiptEditor() {
   const [voidSheetOpen, setVoidSheetOpen] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [discardOpen, setDiscardOpen] = useState(false);
+  // Null until the owner picks, so the supplier's terms decide the default.
+  const [paidNowPick, setPaidNowPick] = useState<boolean | null>(null);
+  const [dueDaysPick, setDueDaysPick] = useState<string | null>(null);
   // The committed receipt whose cost increases are being reviewed, if any.
   const [repriceReceiptId, setRepriceReceiptId] = useState<number | null>(null);
 
@@ -173,6 +178,7 @@ function DeliveryReceiptEditor() {
 
   const review = useMemo(() => {
     let totalCost = 0;
+    let invoiceTotal = 0;
     let shortageValue = 0;
     const changes: CostChangeRow[] = [];
     for (const form of lines) {
@@ -186,6 +192,7 @@ function DeliveryReceiptEditor() {
           conversionFactor: form.conversionFactor,
         });
         totalCost += c.receivedQty * c.actualUnitCost;
+        invoiceTotal += input.enteredReceivedQty * input.enteredUnitCost;
         // Same basis as the shortage report: last cost, else actual cost.
         shortageValue +=
           c.shortageQty * (form.lastCostPrice ?? c.actualUnitCost);
@@ -197,7 +204,7 @@ function DeliveryReceiptEditor() {
         // Incomplete or invalid line; the review step is gated on allComplete.
       }
     }
-    return { totalCost, shortageValue, changes };
+    return { totalCost, invoiceTotal, shortageValue, changes };
   }, [lines]);
 
   const goBack = () => {
@@ -305,7 +312,16 @@ function DeliveryReceiptEditor() {
     try {
       savedId = await persist(false);
       if (savedId === null) return;
-      await commitMutation.mutateAsync(savedId);
+      await commitMutation.mutateAsync({
+        receiptId: savedId,
+        payment: {
+          paidNow,
+          dueDate:
+            !paidNow && dueInDays !== ''
+              ? addDaysToDate(new Date().toISOString(), Number(dueInDays))
+              : null,
+        },
+      });
       addToast({ message: t('committedToast'), variant: 'success' });
       // The delivery is already saved. A failed lookup must not look like a
       // failed commit, so fall through to the list; the flags stay available
@@ -378,6 +394,11 @@ function DeliveryReceiptEditor() {
     detail?.supplierName ??
     suppliers.find((s) => s.id === supplierId)?.name ??
     null;
+  const supplierTerms =
+    suppliers.find((s) => s.id === supplierId)?.paymentTermsDays ?? null;
+  // Suppliers with terms default to Pay later; the rest are paid on delivery.
+  const paidNow = paidNowPick ?? supplierTerms === null;
+  const dueInDays = dueDaysPick ?? (supplierTerms !== null ? String(supplierTerms) : '');
 
   const isLoadingDetail =
     receiptId !== null &&
@@ -443,12 +464,23 @@ function DeliveryReceiptEditor() {
           >
             <View className="px-4 mt-2">
               {reviewOpen && allComplete ? (
-                <ReviewCard
-                  totalCost={review.totalCost}
-                  shortageValue={review.shortageValue}
-                  changes={review.changes}
-                  t={t}
-                />
+                <>
+                  <ReviewCard
+                    totalCost={review.totalCost}
+                    shortageValue={review.shortageValue}
+                    changes={review.changes}
+                    t={t}
+                  />
+                  {review.invoiceTotal > 0 ? (
+                    <CommitPaymentChoice
+                      amount={review.invoiceTotal}
+                      paidNow={paidNow}
+                      dueInDays={dueInDays}
+                      onChangePaidNow={setPaidNowPick}
+                      onChangeDueInDays={setDueDaysPick}
+                    />
+                  ) : null}
+                </>
               ) : (
                 <>
                   {/* Supplier */}

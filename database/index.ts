@@ -17,5 +17,6 @@ export * from './corrections';
 export * from './settings';
 export * from './auth';
 export * from './deliveries';
+export * from './supplierPayables';
 
 export * from './digitalServices';

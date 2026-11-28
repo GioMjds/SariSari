@@ -17,6 +17,7 @@ import { useProducts, usePaginatedProducts } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { SariMascot } from '@/components/mascot';
 import { Modal } from '@/components/ui';
+import { PaymentTermsCard, parseTermsDays } from '@/components/payables/PaymentTermsCard';
 import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
 
@@ -24,6 +25,7 @@ interface SupplierFormData {
   name: string;
   contact: string;
   notes: string;
+  terms: string;
 }
 
 function EditSupplier() {
@@ -67,6 +69,7 @@ function EditSupplier() {
       name: '',
       contact: '',
       notes: '',
+      terms: '',
     },
   });
 
@@ -76,6 +79,7 @@ function EditSupplier() {
         name: supplier.name,
         contact: supplier.contact || '',
         notes: supplier.notes || '',
+        terms: supplier.paymentTermsDays != null ? String(supplier.paymentTermsDays) : '',
       });
     }
   }, [supplier, reset]);
@@ -116,6 +120,7 @@ function EditSupplier() {
           name: data.name.trim(),
           contact: data.contact.trim() || null,
           notes: data.notes.trim() || null,
+          paymentTermsDays: parseTermsDays(data.terms),
         },
         productIds: selectedProductIds,
       },
@@ -199,6 +204,8 @@ function EditSupplier() {
             setFocusedField={setFocusedField}
             t={t}
           />
+
+          <PaymentTermsCard control={control} />
 
           <View className="my-1 border-t border-dashed border-ink-300" />
 

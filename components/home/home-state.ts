@@ -1,5 +1,6 @@
 import { format, subDays } from 'date-fns';
 import type { SalesDataPoint } from '@/types/reports.types';
+import type { PayablesDueSummary } from '@/types/supplierPayables.types';
 
 export type HomeDestination =
   | 'addProduct'
@@ -10,7 +11,8 @@ export type HomeDestination =
   | 'newSale'
   | 'reports'
   | 'cashEntries'
-  | 'receipts';
+  | 'receipts'
+  | 'supplierPayables';
 
 export interface DayTotal {
   /** Local calendar day as yyyy-MM-dd. */
@@ -68,7 +70,7 @@ export function resolveStocktakeReminder(
 }
 
 export type AttentionKind =
-  'outOfStock' | 'lowStock' | 'overdueUtang' | 'stocktake';
+  'outOfStock' | 'lowStock' | 'overdueUtang' | 'supplierDue' | 'stocktake';
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -77,6 +79,8 @@ export interface AttentionItem {
   count?: number;
   amount?: number;
   stocktake?: StocktakeReminder;
+  /** supplierDue only: true when the count is overdue, false when only due soon. */
+  overdue?: boolean;
 }
 
 export interface AttentionInput {
@@ -84,10 +88,11 @@ export interface AttentionInput {
   lowStockCount: number;
   overdueCount: number;
   overdueAmount: number;
+  supplierDue?: PayablesDueSummary | null;
   stocktake: StocktakeReminder | null;
 }
 
-/** Ordered to-do list for the owner: empty shelves first, then utang, then counting. */
+/** Ordered to-do list for the owner: empty shelves, utang, supplier debt, then counting. */
 export function buildAttentionItems(input: AttentionInput): AttentionItem[] {
   const items: AttentionItem[] = [];
   if (input.outOfStockCount > 0) {
@@ -113,6 +118,18 @@ export function buildAttentionItems(input: AttentionInput): AttentionItem[] {
       destination: 'utang',
       count: input.overdueCount,
       amount: input.overdueAmount,
+    });
+  }
+  const due = input.supplierDue;
+  if (due && (due.overdueCount > 0 || due.dueSoonCount > 0)) {
+    const overdue = due.overdueCount > 0;
+    items.push({
+      kind: 'supplierDue',
+      tone: overdue ? 'danger' : 'warning',
+      destination: 'supplierPayables',
+      count: overdue ? due.overdueCount : due.dueSoonCount,
+      amount: overdue ? due.overdueAmount : due.dueSoonAmount,
+      overdue,
     });
   }
   if (input.stocktake) {

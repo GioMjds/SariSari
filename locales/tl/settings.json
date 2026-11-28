@@ -104,6 +104,8 @@
       "sale_price_correction": "Itama ang presyo ng benta",
       "stock_adjustment": "Ayusin ang stock",
       "delivery_receipt_void": "I-void ang delivery receipt",
+      "supplier_payment": "Magtala o magbawi ng bayad sa supplier",
+      "supplier_opening_balance": "Itakda ang panimulang utang sa supplier",
       "product_delete": "Burahin ang produkto",
       "sale_delete": "Burahin ang benta",
       "credit_limit_override": "Lampasan ang credit limit",

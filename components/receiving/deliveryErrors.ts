@@ -7,7 +7,12 @@ import {
   ReceiptNotDraftError,
   VoidWouldGoNegativeError,
 } from '@/hooks/useDeliveryReceipts';
+import {
+  ReceiptHasPaymentsError,
+  SupplierOverpaymentError,
+} from '@/hooks/useSupplierPayables';
 import { InvalidDeliveryLineError } from '@/lib/deliveryReceipt';
+import { formatPesos } from '@/lib/money';
 
 /**
  * Maps a receiving error to owner-facing copy in the `receiving` namespace.
@@ -24,6 +29,10 @@ export function deliveryErrorMessage(err: unknown, t: TFunction): string {
     return names
       ? `${t('errorVoidTooLow')} ${t('errorVoidProducts', { names })}`
       : t('errorVoidTooLow');
+  }
+  if (err instanceof ReceiptHasPaymentsError) return t('errorVoidHasPayments');
+  if (err instanceof SupplierOverpaymentError) {
+    return t('errorOverpay', { amount: formatPesos(err.owed) });
   }
   if (err instanceof InvalidDeliveryLineError) return err.message;
   return t('errorGeneric');

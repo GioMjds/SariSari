@@ -9,7 +9,8 @@ export const initSuppliersTable = async () => {
       name TEXT NOT NULL,
       contact TEXT,
       notes TEXT,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      payment_terms_days INTEGER
     );
     CREATE INDEX IF NOT EXISTS idx_suppliers_name ON suppliers(name);
   `);
@@ -21,6 +22,7 @@ interface SupplierRow {
   contact: string | null;
   notes: string | null;
   created_at: number;
+  payment_terms_days: number | null;
 }
 
 function rowToSupplier(row: SupplierRow): Supplier {
@@ -30,6 +32,7 @@ function rowToSupplier(row: SupplierRow): Supplier {
     contact: row.contact,
     notes: row.notes,
     createdAt: row.created_at,
+    paymentTermsDays: row.payment_terms_days ?? null,
   };
 }
 
@@ -52,10 +55,10 @@ export const createSupplier = async (input: NewSupplier): Promise<Supplier> => {
   const id = Crypto.randomUUID();
   const createdAt = Date.now();
   await db.runAsync(
-    'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
-    [id, input.name, input.contact ?? null, input.notes ?? null, createdAt],
+    'INSERT INTO suppliers (id, name, contact, notes, created_at, payment_terms_days) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, input.name, input.contact ?? null, input.notes ?? null, createdAt, input.paymentTermsDays ?? null],
   );
-  return { id, createdAt, ...input };
+  return { id, createdAt, ...input, paymentTermsDays: input.paymentTermsDays ?? null };
 };
 
 export const updateSupplier = async (
@@ -73,10 +76,11 @@ export const updateSupplier = async (
   const name = patch.name !== undefined ? patch.name : current.name;
   const contact = patch.contact !== undefined ? patch.contact : current.contact;
   const notes = patch.notes !== undefined ? patch.notes : current.notes;
+  const terms = patch.paymentTermsDays !== undefined ? patch.paymentTermsDays : current.payment_terms_days;
 
   await db.runAsync(
-    'UPDATE suppliers SET name = ?, contact = ?, notes = ? WHERE id = ?',
-    [name, contact ?? null, notes ?? null, id],
+    'UPDATE suppliers SET name = ?, contact = ?, notes = ?, payment_terms_days = ? WHERE id = ?',
+    [name, contact ?? null, notes ?? null, terms ?? null, id],
   );
 };
 
@@ -101,10 +105,11 @@ export const updateSupplierWithProducts = async (
     const name = patch.name !== undefined ? patch.name : current.name;
     const contact = patch.contact !== undefined ? patch.contact : current.contact;
     const notes = patch.notes !== undefined ? patch.notes : current.notes;
+    const terms = patch.paymentTermsDays !== undefined ? patch.paymentTermsDays : current.payment_terms_days;
 
     await db.runAsync(
-      'UPDATE suppliers SET name = ?, contact = ?, notes = ? WHERE id = ?',
-      [name, contact ?? null, notes ?? null, id],
+      'UPDATE suppliers SET name = ?, contact = ?, notes = ?, payment_terms_days = ? WHERE id = ?',
+      [name, contact ?? null, notes ?? null, terms ?? null, id],
     );
 
     // Detach all products currently linked to this supplier.
@@ -133,8 +138,8 @@ export const createSupplierWithProducts = async (
     const id = Crypto.randomUUID();
     const createdAt = Date.now();
     await db.runAsync(
-      'INSERT INTO suppliers (id, name, contact, notes, created_at) VALUES (?, ?, ?, ?, ?)',
-      [id, input.name, input.contact ?? null, input.notes ?? null, createdAt],
+      'INSERT INTO suppliers (id, name, contact, notes, created_at, payment_terms_days) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, input.name, input.contact ?? null, input.notes ?? null, createdAt, input.paymentTermsDays ?? null],
     );
     if (productIds.length > 0) {
       const placeholders = productIds.map(() => '?').join(',');
@@ -143,7 +148,7 @@ export const createSupplierWithProducts = async (
         [id, ...productIds],
       );
     }
-    inserted = { id, createdAt, ...input };
+    inserted = { id, createdAt, ...input, paymentTermsDays: input.paymentTermsDays ?? null };
   });
   if (!inserted) {
     throw new Error('createSupplierWithProducts: transaction did not complete');

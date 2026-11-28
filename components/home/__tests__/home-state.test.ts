@@ -111,4 +111,30 @@ describe('buildAttentionItems', () => {
       destination: 'utang',
     });
   });
+
+  it('flags overdue supplier debt as danger before due-soon debt', () => {
+    const summary = { overdueCount: 1, overdueAmount: 900, dueSoonCount: 2, dueSoonAmount: 300 };
+    const [item] = buildAttentionItems({ ...clear, supplierDue: summary });
+    expect(item).toMatchObject({
+      kind: 'supplierDue',
+      tone: 'danger',
+      count: 1,
+      amount: 900,
+      overdue: true,
+      destination: 'supplierPayables',
+    });
+
+    const [soon] = buildAttentionItems({
+      ...clear,
+      supplierDue: { ...summary, overdueCount: 0, overdueAmount: 0 },
+    });
+    expect(soon).toMatchObject({ tone: 'warning', count: 2, amount: 300, overdue: false });
+
+    expect(
+      buildAttentionItems({
+        ...clear,
+        supplierDue: { overdueCount: 0, overdueAmount: 0, dueSoonCount: 0, dueSoonAmount: 0 },
+      }),
+    ).toEqual([]);
+  });
 });

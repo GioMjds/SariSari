@@ -10,6 +10,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { usePaginatedProducts } from '@/hooks/useProducts';
 import { StyledText } from '@/components/elements';
 import { Modal } from '@/components/ui';
+import { PaymentTermsCard, parseTermsDays } from '@/components/payables/PaymentTermsCard';
 import { useTranslation } from 'react-i18next';
 import { formatPesos } from '@/lib/money';
 
@@ -17,6 +18,7 @@ interface SupplierFormData {
   name: string;
   contact: string;
   notes: string;
+  terms: string;
 }
 
 function AddSupplier() {
@@ -50,6 +52,7 @@ function AddSupplier() {
       name: '',
       contact: '',
       notes: '',
+      terms: '',
     },
   });
 
@@ -75,6 +78,7 @@ function AddSupplier() {
         name: data.name.trim(),
         contact: data.contact.trim() || null,
         notes: data.notes.trim() || null,
+        paymentTermsDays: parseTermsDays(data.terms),
         productIds: selectedProductIds,
       },
       {
@@ -151,6 +155,8 @@ function AddSupplier() {
             setFocusedField={setFocusedField}
             t={t}
           />
+
+          <PaymentTermsCard control={control} />
 
           <View className="my-1 border-t border-dashed border-ink-300" />
 

@@ -222,6 +222,9 @@ function RestockScreen() {
         onReceiveDelivery={() =>
           router.push('/(edit-forms)/delivery-receipts' as Href)
         }
+        onOpenPayables={() =>
+          router.push('/(edit-forms)/supplier-payables' as Href)
+        }
       />
       <TabGuide
         guideId="restock"

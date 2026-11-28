@@ -104,6 +104,8 @@
       "sale_price_correction": "Correct sale prices",
       "stock_adjustment": "Adjust stock",
       "delivery_receipt_void": "Void a delivery receipt",
+      "supplier_payment": "Record or reverse a supplier payment",
+      "supplier_opening_balance": "Set a supplier opening balance",
       "product_delete": "Delete a product",
       "sale_delete": "Delete a sale",
       "credit_limit_override": "Override a credit limit",

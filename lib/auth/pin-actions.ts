@@ -27,6 +27,8 @@ export const PIN_ACTIONS = [
   action('sale_price_correction', 'high'),
   action('stock_adjustment', 'low'),
   action('delivery_receipt_void', 'high'),
+  action('supplier_payment', 'high'),
+  action('supplier_opening_balance', 'high'),
   action('product_delete', 'high'),
   action('sale_delete', 'high'),
   action('credit_limit_override', 'high'),

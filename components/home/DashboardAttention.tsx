@@ -25,6 +25,7 @@ const ICONS = {
   outOfStock: 'ban',
   lowStock: 'exclamation-triangle',
   overdueUtang: 'clock-o',
+  supplierDue: 'truck',
   stocktake: 'clipboard',
 } satisfies Record<AttentionItem['kind'], Glyph>;
 
@@ -44,6 +45,18 @@ function describe(item: AttentionItem, t: TFunction) {
       return {
         title: t('dashboard.attention.overdue', { count: item.count }),
         sub: t('dashboard.attention.overdueSub', {
+          amount: formatPesos(item.amount ?? 0),
+        }),
+      };
+    case 'supplierDue':
+      return {
+        title: t(
+          item.overdue
+            ? 'dashboard.attention.supplierOverdue'
+            : 'dashboard.attention.supplierDueSoon',
+          { count: item.count },
+        ),
+        sub: t('dashboard.attention.supplierDueSub', {
           amount: formatPesos(item.amount ?? 0),
         }),
       };

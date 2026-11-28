@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { FINANCIAL_QUERY_KEY, useFinancialTotals } from './useFinancial';
 import { useCreditKPIs } from './useCredits';
+import { usePayablesDueSummary } from './useSupplierPayables';
 import { useProductStockSummary } from './useProducts';
 import {
   useRecentSales,
@@ -121,6 +122,8 @@ export function useHomeDashboardData() {
     isLoading: weekLoading,
   } = useSalesOverTime(weekRange);
   const { data: yesterdaySoFar } = useYesterdaySoFarStats();
+  // Supplier debt is a soft reminder like stocktake, so it never blocks the first render.
+  const { data: supplierDue } = usePayablesDueSummary(today);
 
   // Stocktake is a soft reminder, so it never holds back the first render.
   const { data: activeStocktake } = useActiveStocktakeSession();
@@ -203,10 +206,11 @@ export function useHomeDashboardData() {
         lowStockCount: stats.lowStockCount,
         overdueCount: stats.overdueCount,
         overdueAmount: stats.overdueAmount,
+        supplierDue: supplierDue ?? null,
         // A brand new store has nothing to count yet.
         stocktake: productCount > 0 ? stocktakeReminder : null,
       }),
-    [stats, stocktakeReminder, productCount],
+    [stats, supplierDue, stocktakeReminder, productCount],
   );
 
   const topSellers = useMemo<TopSeller[]>(
@@ -241,6 +245,7 @@ export function useHomeDashboardData() {
           queryKey: ['report-sales-over-time'],
         }),
         queryClient.invalidateQueries({ queryKey: stocktakeKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ['supplier-payables'] }),
       ]);
     } finally {
       setRefreshing(false);
