@@ -123,7 +123,11 @@ export const useCartStore = create<CartState>((set, get) => ({
       })
       .filter(Boolean) as NewSaleItem[];
 
-    if (calculateCartProductPieces(next, productId) > targetItem.stock) {
+    // Only increases can exceed stock; a decrease must never be blocked.
+    if (
+      delta > 0 &&
+      calculateCartProductPieces(next, productId) > targetItem.stock
+    ) {
       logger.warn(
         {
           event: 'cart_over_stock',

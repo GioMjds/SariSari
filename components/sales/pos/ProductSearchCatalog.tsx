@@ -12,7 +12,12 @@ import { useToggleFavorite } from '@/hooks/useProducts';
 import { ProductRow } from './ProductRow';
 import { FastLaneSection } from './FastLaneSection';
 import { FastLaneProduct } from '@/database/products';
-import { usePOSSearchStore, useViewModeStore, type ViewMode } from '@/stores';
+import {
+  useCartStore,
+  usePOSSearchStore,
+  useViewModeStore,
+  type ViewMode,
+} from '@/stores';
 import {
   GRID_COLUMN_STYLE,
   ViewModeToggle,
@@ -84,6 +89,9 @@ export function ProductSearchCatalog({
     [setViewMode],
   );
   const isGrid = viewMode === 'grid';
+
+  // FlatList is pure; without extraData, rows keep stale cart quantities.
+  const cartItems = useCartStore((s) => s.cartItems);
 
   // One shared mutation instead of one observer per row.
   const { mutate: toggleFavorite } = useToggleFavorite();
@@ -216,9 +224,9 @@ export function ProductSearchCatalog({
       ) : (
         <Prof id="POS:ProductList">
           <FlatList
-            // numColumns cannot change on a mounted FlatList, so remount per mode.
             key={viewMode}
             data={filteredProducts}
+            extraData={cartItems}
             keyExtractor={(item) => item.id.toString()}
             numColumns={isGrid ? 2 : 1}
             {...(isGrid ? { columnWrapperStyle: GRID_COLUMN_STYLE } : {})}

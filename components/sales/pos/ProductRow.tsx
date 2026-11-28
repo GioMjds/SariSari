@@ -215,7 +215,7 @@ function ProductRowImpl({
     inCart && cartLine ? (
       <View
         className={`flex-row items-center justify-between bg-paper-200 border border-paper-300 rounded-xl p-0.5 ${
-          isGrid ? '' : 'w-[124px]'
+          isGrid ? '' : 'w-[140px]'
         }`}
       >
         <Pressable
