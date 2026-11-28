@@ -19,6 +19,7 @@ const TOP_TABS_SCREEN_OPTIONS = {
 const SUB_TAB_SEGMENTS = [
   'products',
   'categories',
+  'suppliers',
   'movements',
   'stocktake',
   'restock',
@@ -27,6 +28,7 @@ const SUB_TAB_SEGMENTS = [
 const INVENTORY_TAB_DEFS = [
   { key: 'products', label: 'Products' },
   { key: 'categories', label: 'Categories' },
+  { key: 'suppliers', label: 'Suppliers' },
   { key: 'movements', label: 'Movements' },
   { key: 'stocktake', label: 'Stocktake' },
   { key: 'restock', label: 'Restock' },

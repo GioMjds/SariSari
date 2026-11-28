@@ -1134,3 +1134,34 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - `ExpiryDateField` now opens it, with the store warning window as the band. The native picker import is gone from that field; `@react-native-community/datetimepicker` stays in `package.json`, unused.
 - Month names are English only. Reduced motion turns off the slide and fade.
 - Tests: `tests/lib/calendar.test.ts`. Not verified on a device.
+
+## 2026-11-28 - Suppliers sub-tab (Inventory)
+
+- New sub-tab `suppliers` (third, after Categories): `app/(tabs)/inventory/suppliers.tsx`, `components/inventory/suppliers/` (tab, card, action sheet, skeleton), pure helper `lib/supplierList.ts`.
+- Row: name, contact, terms, "Owe" badge (danger when overdue) and empties-to-return badge. Tap opens a sheet: Payables, Empties ledger, Edit Supplier. Search by name or contact; sorted owed first, then A to Z. Suppliers with nothing owed still list, since the list starts from `listSuppliers`.
+- New query `getAllEmptiesOwed` (`database/supplierEmpties.ts`) and hook `useAllEmptiesOwed`; no schema change. 19 `supplier*` keys in `locales/{en,tl}/inventory.json`.
+- Closes the gap where the empties ledger and Edit Supplier had no entry point for suppliers without payables.
+- Tests: `tests/lib/supplierList.test.ts`, one case added to `tests/database/supplier-empties.test.ts`; 10 passing. tsc and eslint clean for touched files.
+- Not verified on a device: no emulator reachable from the agent. No screenshot or video. Back from the empties ledger still goes to the payables list.
+
+### Suppliers sub-tab, audit fixes (impeccable harden, colorize, clarify, polish, adapt)
+
+- Harden: loading waits for suppliers, balances and empties; a failed balances or empties query shows a retry banner and the sheet says "Balance not loaded" instead of "Nothing owed".
+- Colorize: empty-state CTA uses persimmon-600 and drops the glow. `CategoriesEmpty` still has the old CTA (out of scope).
+- Clarify: row label now includes contact, terms and overdue; empties badge has singular and plural keys; code defaults removed, copy lives in `locales/{en,tl}/inventory.json`.
+- Polish: ellipsis replaces chevron, `ICON_COLOR` replaces raw hex, shared `useSupplierLabels` and `SupplierAvatar`, stable refetch callback.
+- Adapt: list capped at 640 wide and centered. Not verified on a tablet or device.
+
+## 2026-11-28 - Sub-tab underline fix (SubTabControl)
+
+- Cause: tabs scroll horizontally with 6 sub-tabs, but the underline sat outside the scroller, so it drifted from the active tab. Selecting a tab also swapped to a wider bold weight, shifting neighbours.
+- Fix in `components/navigation/SubTabControl.tsx`: underline subtracts the scroll offset (`useAnimatedScrollHandler`), active tab auto-scrolls into view, a hidden bold twin reserves each label's widest width.
+- Shared by Sales, Inventory and Customers tabs. Not verified on a device.
+
+### Sub-tab control, audit fixes (impeccable colorize, harden, optimize, distill)
+
+- Colorize: action badge fill is persimmon-600 with 12px text (was persimmon-500, 11px).
+- Harden: centering waits for a measured viewport width (new `lib/subTabLayout.ts` `centerOffset`, tested in `tests/lib/subTabLayout.test.ts`) and re-centers on viewport change.
+- Optimize: no shared-value writes during render; `inputRange` is memoized instead of rebuilt per frame.
+- Distill: removed unused `layoutVersion`, `activeIndexShared` and the internal progress path. `SubTabControl` now requires `progress`; all three callers pass it through `SubTabScreenShell`.
+- Not verified on a device.

@@ -1,6 +1,7 @@
 import {
   createEmptiesType,
   createSupplier,
+  getAllEmptiesOwed,
   getEmptiesBalances,
   initCashMovementsView,
   initCashTables,
@@ -59,6 +60,16 @@ describe('supplier empties ledger', () => {
     const r = await recordSwapCount({ emptiesId, receivedFull: 10, handedBack: 7, physicalCount: 2 });
     expect(r).toEqual({ expectedOwed: 3, shortfall: 1, shortfallPesos: 10 });
     expect((await getEmptiesBalances(supplierId))[0]!.owed).toBe(2);
+  });
+
+  it('getAllEmptiesOwed returns only suppliers with a positive balance', async () => {
+    const owing = await seed();
+    const settled = await seed();
+    await recordSwapCount({ emptiesId: owing.emptiesId, receivedFull: 5, handedBack: 0, physicalCount: 5 });
+    await recordSwapCount({ emptiesId: settled.emptiesId, receivedFull: 4, handedBack: 4, physicalCount: 0 });
+    const owed = await getAllEmptiesOwed();
+    expect(owed.get(owing.supplierId)).toBe(5);
+    expect(owed.has(settled.supplierId)).toBe(false);
   });
 
   it('preview does not write', async () => {

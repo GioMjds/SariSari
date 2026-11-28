@@ -73,6 +73,19 @@ export const getEmptiesBalances = async (
   }));
 };
 
+/** Empties still owed per supplier, for list badges; only positive totals are returned. */
+export const getAllEmptiesOwed = async (): Promise<Map<string, number>> => {
+  const rows = await db.getAllAsync<{ supplier_id: string; owed: number }>(
+    `SELECT e.supplier_id, SUM(m.delta) AS owed
+     FROM supplier_empties e
+     JOIN empties_movements m ON m.empties_id = e.id
+     WHERE e.archived_at IS NULL
+     GROUP BY e.supplier_id
+     HAVING SUM(m.delta) > 0`,
+  );
+  return new Map(rows.map((r) => [r.supplier_id, r.owed]));
+};
+
 /** Preview of a swap count: owed after the swap versus what the owner holds. */
 export const previewSwapCount = async (
   input: SwapCountInput,

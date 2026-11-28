@@ -46,6 +46,7 @@ export const SALES_SUB_TABS = ['pos', 'receipts'] as const;
 export const INVENTORY_SUB_TABS = [
   'products',
   'categories',
+  'suppliers',
   'movements',
   'stocktake',
   'restock',
