@@ -17,7 +17,10 @@ import { useCart } from '@/components/sales/pos/useCart';
 import { logger } from '@/lib/logger';
 import { CustomerPickerModal } from './CustomerPickerModal';
 import { CheckoutForm } from './checkout/CheckoutForm';
-import { SaleSuccessState } from './checkout/SaleSuccessState';
+import {
+  SaleSuccessState,
+  type RecordedLine,
+} from './checkout/SaleSuccessState';
 import { calculateTotalPieces } from '@/lib';
 
 export interface CheckoutModalProps {
@@ -32,6 +35,8 @@ interface RecordedCheckout {
   customerName: string | undefined;
   itemCountLabel: string;
   piecesLabel: string;
+  lines: RecordedLine[];
+  recordedAt: number;
 }
 
 export function CheckoutModal({
@@ -187,6 +192,17 @@ export function CheckoutModal({
       customerName,
       itemCountLabel,
       piecesLabel,
+      lines: cartItems.map((item) => ({
+        key: `${item.product_id}-${item.selected_unit ?? 'retail'}`,
+        name: item.product_name,
+        quantity: item.quantity,
+        unitName:
+          item.selected_unit === 'wholesale'
+            ? (item.wholesale_unit_name ?? 'Box')
+            : (item.retail_unit_name ?? 'Pc'),
+        lineTotal: item.price * item.quantity,
+      })),
+      recordedAt: Date.now(),
     });
     try {
       const success = await cart.submit();
@@ -211,6 +227,7 @@ export function CheckoutModal({
     }
   }, [
     cart,
+    cartItems,
     isSubmitDisabled,
     triggerHaptic,
     paymentType,
@@ -349,6 +366,8 @@ export function CheckoutModal({
                   piecesLabel={recorded.piecesLabel}
                   paymentType={recorded.paymentType}
                   customerName={recorded.customerName}
+                  lines={recorded.lines}
+                  recordedAt={recorded.recordedAt}
                   insets={insets}
                   onNewSale={handleDismissSuccess}
                   onViewReceipts={handleViewReceipts}
