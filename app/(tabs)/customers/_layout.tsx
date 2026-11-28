@@ -63,9 +63,23 @@ export default function CustomersLayout() {
     [router, activeTab],
   );
 
-  const handleDuePress = useCallback(() => {
-    handleTabPress('collection');
-  }, [handleTabPress]);
+  const handleDuePress = useCallback(
+    () => handleTabPress('collection'),
+    [handleTabPress],
+  );
+
+  const header = useMemo(
+    () => (
+      <CustomersHeader
+        totalCredit={totalOutstanding}
+        debtorCount={debtorCount}
+        overdueCount={overdueCount}
+        collectedToday={collectedToday}
+        onOverduePress={handleDuePress}
+      />
+    ),
+    [totalOutstanding, debtorCount, overdueCount, collectedToday, handleDuePress],
+  );
 
   return (
     <SubTabScreenShell<CustomersSubTab>
@@ -73,15 +87,7 @@ export default function CustomersLayout() {
       activeTab={activeTab}
       onTabPress={handleTabPress}
       progress={progress}
-      belowTabsSlot={
-        <CustomersHeader
-          totalCredit={totalOutstanding}
-          debtorCount={debtorCount}
-          overdueCount={overdueCount}
-          collectedToday={collectedToday}
-          onOverduePress={handleDuePress}
-        />
-      }
+      belowTabsSlot={header}
     >
       <View className="flex-1 bg-paper-200 relative">
         <TopTabs
