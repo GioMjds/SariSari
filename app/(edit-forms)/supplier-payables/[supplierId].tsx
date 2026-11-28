@@ -448,8 +448,8 @@ function ActionButton({
   const surface = disabled
     ? 'bg-paper-300'
     : primary
-      ? 'bg-persimmon-600 active:bg-persimmon-700'
-      : 'border border-ink-200 bg-paper-100 active:bg-paper-200';
+      ? 'bg-persimmon-600'
+      : 'border border-ink-200 bg-paper-100';
   const text = disabled ? 'text-ink-500' : primary ? 'text-paper-50' : 'text-ink-800';
   return (
     <Pressable
@@ -458,7 +458,8 @@ function ActionButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      className={`flex-1 min-w-[140px] min-h-[48px] px-3 rounded-xl items-center justify-center ${surface}`}
+      // Keep `active:` constant; toggling pseudo-classes after mount crashes css-interop.
+      className={`flex-1 min-w-[140px] min-h-[48px] px-3 rounded-xl items-center justify-center active:opacity-80 ${surface}`}
     >
       <StyledText variant="extrabold" className={`text-sm text-center ${text}`}>
         {label}
