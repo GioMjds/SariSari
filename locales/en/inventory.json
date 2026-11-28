@@ -390,5 +390,7 @@
   "category_valueA11y": "Category value {{value}}",
   "expiryDateLabel": "Expiry date (optional)",
   "expiryDateInvalid": "Use a real date, YYYY-MM-DD.",
-  "expiryDateClear": "Clear"
+  "expiryDateClear": "Clear",
+  "expiryDatePick": "Pick date",
+  "expiryDateDone": "Done"
 }

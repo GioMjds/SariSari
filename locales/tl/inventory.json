@@ -390,5 +390,7 @@
   "category_valueA11y": "Halaga ng kategorya {{value}}",
   "expiryDateLabel": "Petsa ng expiry (opsyonal)",
   "expiryDateInvalid": "Maglagay ng tamang petsa, YYYY-MM-DD.",
-  "expiryDateClear": "Burahin"
+  "expiryDateClear": "Burahin",
+  "expiryDatePick": "Pumili ng petsa",
+  "expiryDateDone": "Tapos na"
 }
