@@ -41,7 +41,7 @@ function Header({ tone, label }: { tone: Tone; label: string }) {
         <View className="w-2 h-2 rounded-full bg-paper-50 mr-3" />
         <StyledText
           variant="extrabold"
-          className={`label-caps ${TONE_HEADER_TEXT[tone]} opacity-90`}
+          className={`label-caps ${TONE_HEADER_TEXT[tone]}`}
         >
           {label}
         </StyledText>
@@ -71,8 +71,7 @@ export function ReceiptHero({
           {Array.from({ length: perforations }).map((_, i) => (
             <View
               key={`top-${i}`}
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: '#F7F6F2' }}
+              className="w-3 h-3 rounded-full bg-paper-200"
             />
           ))}
         </View>
@@ -90,8 +89,7 @@ export function ReceiptHero({
           {Array.from({ length: perforations }).map((_, i) => (
             <View
               key={`bot-${i}`}
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: '#F7F6F2' }}
+              className="w-3 h-3 rounded-full bg-paper-200"
             />
           ))}
         </View>

@@ -22,6 +22,7 @@ import {
   type RecordedLine,
 } from './checkout/SaleSuccessState';
 import { calculateTotalPieces } from '@/lib';
+import { ICON_COLOR } from '@/lib/theme';
 
 export interface CheckoutModalProps {
   visible: boolean;
@@ -355,7 +356,7 @@ export function CheckoutModal({
                   accessibilityLabel="Close checkout"
                   className="w-12 h-12 rounded-full bg-paper-100 border border-paper-300 items-center justify-center active:bg-paper-300"
                 >
-                  <FontAwesome name="times" size={20} color="#28231D" />
+                  <FontAwesome name="times" size={20} color={ICON_COLOR.ink} />
                 </Pressable>
               </View>
 
