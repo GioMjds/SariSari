@@ -11,6 +11,7 @@ const TOP_TABS_SCREEN_OPTIONS = {
   swipeEnabled: false,
   lazy: true,
   lazyPreloadDistance: 0,
+  freezeOnBlur: true,
 } as const;
 
 const SALES_TAB_DEFS = [

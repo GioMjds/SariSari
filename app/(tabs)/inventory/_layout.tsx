@@ -14,16 +14,8 @@ const TOP_TABS_SCREEN_OPTIONS = {
   swipeEnabled: false,
   lazy: true,
   lazyPreloadDistance: 0,
+  freezeOnBlur: true,
 } as const;
-
-const SUB_TAB_SEGMENTS = [
-  'products',
-  'categories',
-  'suppliers',
-  'movements',
-  'stocktake',
-  'restock',
-] satisfies InventorySubTab[];
 
 const INVENTORY_TAB_DEFS = [
   { key: 'products', label: 'Products' },
@@ -37,7 +29,7 @@ const INVENTORY_TAB_DEFS = [
 const DEFAULT_TAB = INVENTORY_SUB_TABS[0];
 
 function isInventorySubTab(segment: string): segment is InventorySubTab {
-  return (SUB_TAB_SEGMENTS as readonly string[]).includes(segment);
+  return (INVENTORY_SUB_TABS as readonly string[]).includes(segment);
 }
 
 export default function InventoryLayout() {
