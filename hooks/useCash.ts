@@ -94,11 +94,10 @@ export function useDeleteCashEntry() {
   });
 }
 
-export function useCashSessions(enabled = true) {
+export function useCashSessions() {
   return useQuery({
     queryKey: cashKeys.sessions(),
     queryFn: () => listCashSessions(),
-    enabled,
   });
 }
 

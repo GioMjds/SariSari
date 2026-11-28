@@ -67,11 +67,7 @@ export const useRecentProductSales = (days = 28) =>
     queryFn: () => getRecentProductSales(days),
   });
 
-export const useTopSellingProducts = (
-  dateRange: DateRange,
-  limit = 10,
-  enabled = true,
-) =>
+export const useTopSellingProducts = (dateRange: DateRange, limit = 10) =>
   useQuery<TopSellingProduct[]>({
     queryKey: [
       'report-top-products',
@@ -80,7 +76,7 @@ export const useTopSellingProducts = (
       limit,
     ],
     queryFn: () => getTopSellingProducts(dateRange, limit),
-    enabled: enabled && !!dateRange,
+    enabled: !!dateRange,
     placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   });
@@ -99,7 +95,7 @@ export const useSalesBreakdown = (dateRange: DateRange) =>
   });
 
 // Inventory
-export const useInventoryMovement = (dateRange: DateRange, enabled = true) =>
+export const useInventoryMovement = (dateRange: DateRange) =>
   useQuery<InventoryMovement>({
     queryKey: [
       'report-inventory-movement',
@@ -107,7 +103,7 @@ export const useInventoryMovement = (dateRange: DateRange, enabled = true) =>
       dateRange.endDate,
     ],
     queryFn: () => getInventoryMovement(dateRange),
-    enabled: enabled && !!dateRange,
+    enabled: !!dateRange,
     placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   });
@@ -126,11 +122,7 @@ export const useLowStockItems = (threshold = 10) =>
     staleTime: 2 * 60 * 1000,
   });
 
-export const useSlowMovingProducts = (
-  dateRange: DateRange,
-  limit = 10,
-  enabled = true,
-) =>
+export const useSlowMovingProducts = (dateRange: DateRange, limit = 10) =>
   useQuery<StockItem[]>({
     queryKey: [
       'report-slow-moving',
@@ -139,7 +131,7 @@ export const useSlowMovingProducts = (
       limit,
     ],
     queryFn: () => getSlowMovingProducts(dateRange, limit),
-    enabled: enabled && !!dateRange,
+    enabled: !!dateRange,
     placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   });
@@ -158,21 +150,16 @@ export const useCreditsOverview = (dateRange: DateRange) =>
     staleTime: 2 * 60 * 1000,
   });
 
-export const useAgingBuckets = (enabled = true) =>
+export const useAgingBuckets = () =>
   useQuery<AgingBucket[]>({
     queryKey: ['report-aging-buckets'],
     queryFn: () => getAgingBuckets(),
-    enabled,
     staleTime: 2 * 60 * 1000,
   });
 
 // Profitability & insights
 
-export const useProductProfitability = (
-  dateRange: DateRange,
-  limit = 10,
-  enabled = true,
-) =>
+export const useProductProfitability = (dateRange: DateRange, limit = 10) =>
   useQuery<ProductProfitability[]>({
     queryKey: [
       'report-product-profitability',
@@ -181,7 +168,7 @@ export const useProductProfitability = (
       limit,
     ],
     queryFn: () => getProductProfitability(dateRange, limit),
-    enabled: enabled && !!dateRange,
+    enabled: !!dateRange,
     placeholderData: keepPreviousData,
     staleTime: 2 * 60 * 1000,
   });

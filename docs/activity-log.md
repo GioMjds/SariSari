@@ -1084,3 +1084,15 @@ Branch `feat/owner-pin-policy`. Spec: `docs/superpowers/specs/2026-11-14-owner-p
 - Decision (owner): free-text or old-notebook debts are no longer recordable. Every utang needs catalog products and lowers stock.
 - `insertCreditTransaction` in `database/credits.ts` has no caller now; kept for a future old-debt import.
 - Not verified on a device: no screenshots yet.
+
+## 2026-11-28 - Reports screen render isolation
+
+- `ReportsScreen` subscribed to 14 queries, so every query settling re-rendered the whole screen, including open sections and the chart. A range switch fired about 10 such re-renders.
+- Section bodies moved to memoized components that own their queries: `TrendBody`, `TopProductsBody`, `StockBody`, `AgingBody` (`components/reports/ReportSections.tsx`) and `CashbookBody` with `CashSessionRow` (`components/reports/CashbookSection.tsx`). A query settling now re-renders only its own section.
+- The screen keeps 7 header queries (KPIs, previous KPIs, sales breakdown, inventory value, low stock, utang overview, insights). Shared keys dedupe in React Query, so a section and the header read one cache entry.
+- Fetch on first open now comes from `CollapsibleSection` mounting children only when expanded. The `opened` set and the `enabled` arguments are no longer passed. The `?section=` deep link still opens that section.
+- `isRefreshing` uses `useIsFetching` over report and cash keys that already have data, plus the header queries, so open sections still show the pull bar.
+- Trade-off: closing a section unmounts its queries. Reopening shows cached data until garbage collection, then a skeleton.
+- Not changed: hero `animationKey` still includes profit. Keying on range alone would animate in the previous range's placeholder value and then swap the number without motion.
+- Not measured on a device. Compare `Reports:Section1..5` and `settings/reports` `[perf] RENDER` lines for range switch, section open, and pull to refresh.
+- Unrelated and still open: the `RefreshableScrollView` scroll-stutter fix from 2026-11-15 was never re-tested on a device.
