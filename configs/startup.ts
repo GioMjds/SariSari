@@ -14,6 +14,7 @@ import {
   runMigrations,
 } from '@/database';
 import { seedDatabase } from '@/database/seed';
+import { seedExpirySamples } from '@/database/seedExpiry';
 
 let databaseInitialized = false;
 let markDatabaseReady: () => void = () => {};
@@ -68,6 +69,10 @@ export const initializeDatabases = async () => {
     });
 
     if (__DEV__) await seedDatabase();
+    // Opt in with EXPO_PUBLIC_SEED_EXPIRY=1 to add sample expiry products.
+    if (__DEV__ && process.env['EXPO_PUBLIC_SEED_EXPIRY'] === '1') {
+      await seedExpirySamples();
+    }
 
     databaseInitialized = true;
     markDatabaseReady();
